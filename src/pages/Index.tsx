@@ -1,9 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import CitySearch from '@/components/CitySearch';
 import PharmacyCard from '@/components/PharmacyCard';
 import FileUpload from '@/components/FileUpload';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { LogOut, User } from 'lucide-react';
 
 // Mock data for demonstration
 const MOCK_PHARMACIES = [
@@ -34,8 +36,24 @@ const MOCK_PHARMACIES = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [selectedPharmacy, setSelectedPharmacy] = React.useState<number | null>(null);
   const [prescription, setPrescription] = React.useState<File | null>(null);
+
+  // Mock user data (replace with actual auth state later)
+  const mockUser = {
+    name: "John Doe",
+    email: "john@example.com"
+  };
+
+  const handleLogout = () => {
+    // Add actual logout logic later
+    navigate('/login');
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+  };
 
   const handleSearch = (city: string) => {
     toast({
@@ -78,6 +96,26 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header with user info */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <User className="h-6 w-6 text-primary" />
+              <span className="font-medium text-gray-900">{mockUser.name}</span>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="flex items-center space-x-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </Button>
+          </div>
+        </div>
+      </header>
+
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="text-center mb-12 animate-fade-in">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
