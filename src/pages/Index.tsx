@@ -5,7 +5,7 @@ import PharmacyCard from '@/components/PharmacyCard';
 import FileUpload from '@/components/FileUpload';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, FilePlus } from 'lucide-react';
 
 // Mock data for demonstration
 const MOCK_PHARMACIES = [
@@ -96,7 +96,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with user info */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
@@ -104,14 +103,24 @@ const Index = () => {
               <User className="h-6 w-6 text-primary" />
               <span className="font-medium text-gray-900">{mockUser.name}</span>
             </div>
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="flex items-center space-x-2"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </Button>
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/create-prescription')}
+                className="flex items-center space-x-2"
+              >
+                <FilePlus className="h-4 w-4" />
+                <span>Create Prescription</span>
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="flex items-center space-x-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
