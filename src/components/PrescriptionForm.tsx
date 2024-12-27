@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,14 +10,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
+import MedicationFields from "./MedicationFields";
+import ViewPrescription from "./ViewPrescription";
 
 interface PrescriptionFormData {
   patientName: string;
@@ -33,6 +28,8 @@ interface PrescriptionFormData {
 }
 
 const PrescriptionForm = () => {
+  const [submittedData, setSubmittedData] = useState<PrescriptionFormData & { createdAt: string } | null>(null);
+
   const form = useForm<PrescriptionFormData>({
     defaultValues: {
       patientName: "",
@@ -51,7 +48,11 @@ const PrescriptionForm = () => {
   });
 
   const onSubmit = (data: PrescriptionFormData) => {
-    console.log("Prescription Data:", data);
+    const prescriptionWithDate = {
+      ...data,
+      createdAt: new Date().toLocaleString(),
+    };
+    setSubmittedData(prescriptionWithDate);
     toast({
       title: "Prescription Created",
       description: "The prescription has been successfully created.",
@@ -70,6 +71,10 @@ const PrescriptionForm = () => {
       },
     ]);
   };
+
+  if (submittedData) {
+    return <ViewPrescription data={submittedData} />;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
@@ -150,77 +155,7 @@ const PrescriptionForm = () => {
           <div className="space-y-4">
             <h3 className="font-semibold">Medications</h3>
             {form.watch("medications").map((_, index) => (
-              <div key={index} className="grid grid-cols-4 gap-4 p-4 border rounded-lg">
-                <FormField
-                  control={form.control}
-                  name={`medications.${index}.name`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Medication Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`medications.${index}.frequency`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Frequency</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select frequency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`medications.${index}.dosesPerFrequency`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Doses per {form.watch(`medications.${index}.frequency`)}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select doses" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1">Once</SelectItem>
-                          <SelectItem value="2">Twice</SelectItem>
-                          <SelectItem value="3">Three times</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`medications.${index}.quantity`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantity</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" min="1" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <MedicationFields key={index} form={form} index={index} />
             ))}
             <Button
               type="button"
