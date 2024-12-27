@@ -3,14 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn, Mail, Key } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
-  const [userType, setUserType] = useState<"user" | "pharmacy">("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +39,7 @@ const Login = () => {
           title: "Success",
           description: "Logged in successfully",
         });
-        navigate("/create-prescription");
+        navigate("/");
       }
     } catch (error) {
       toast({
@@ -60,26 +58,11 @@ const Login = () => {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Login</CardTitle>
           <CardDescription>
-            Choose your account type and enter your credentials
+            Enter your email and password to login
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <RadioGroup
-              defaultValue="user"
-              onValueChange={(value) => setUserType(value as "user" | "pharmacy")}
-              className="flex flex-col space-y-1 mb-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="user" id="user" />
-                <Label htmlFor="user">Customer</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="pharmacy" id="pharmacy" />
-                <Label htmlFor="pharmacy">Pharmacy</Label>
-              </div>
-            </RadioGroup>
-
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -113,7 +96,7 @@ const Login = () => {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              <LogIn className="mr-2" />
+              <LogIn className="mr-2 h-4 w-4" />
               {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
