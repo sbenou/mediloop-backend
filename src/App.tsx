@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import CreatePrescription from "./pages/CreatePrescription";
 import MyPrescriptions from "./pages/MyPrescriptions";
+import ViewPrescription from "./components/ViewPrescription";
 
 const queryClient = new QueryClient();
 
