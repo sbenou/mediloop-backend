@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -22,9 +22,13 @@ interface PrescriptionData {
   createdAt: string;
 }
 
-const ViewPrescription = ({ data }: { data: PrescriptionData }) => {
+const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPharmacies, setShowPharmacies] = useState(false);
+  
+  // Use location state if available, otherwise use default data
+  const data = location.state?.data || defaultData;
 
   // Mock pharmacy data - in a real app, this would come from an API
   const pharmacies = [
@@ -45,12 +49,10 @@ const ViewPrescription = ({ data }: { data: PrescriptionData }) => {
   ];
 
   const handleEdit = () => {
-    // In a real app, you would navigate to edit route with prescription ID
     navigate("/create-prescription", { state: { data } });
   };
 
   const handleDelete = () => {
-    // In a real app, you would call an API to delete the prescription
     toast({
       title: "Prescription Deleted",
       description: "The prescription has been successfully deleted.",
@@ -59,7 +61,6 @@ const ViewPrescription = ({ data }: { data: PrescriptionData }) => {
   };
 
   const handleSendToPharmachy = (pharmacyName: string) => {
-    // In a real app, you would send the prescription to the selected pharmacy
     toast({
       title: "Prescription Sent",
       description: `The prescription has been sent to ${pharmacyName}.`,

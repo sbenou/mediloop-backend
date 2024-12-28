@@ -24,7 +24,21 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/create-prescription" element={<CreatePrescription />} />
           <Route path="/my-prescriptions" element={<MyPrescriptions />} />
-          <Route path="/prescription/:id" element={<ViewPrescription />} />
+          <Route 
+            path="/prescription/:id" 
+            element={
+              <ViewPrescription 
+                data={{
+                  patientName: "",
+                  patientAddress: "",
+                  doctorName: "",
+                  doctorAddress: "",
+                  medications: [],
+                  createdAt: "",
+                }} 
+              />
+            } 
+          />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
