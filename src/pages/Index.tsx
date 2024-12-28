@@ -5,9 +5,9 @@ import PharmacyCard from '@/components/PharmacyCard';
 import FileUpload from '@/components/FileUpload';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
-import { LogOut, User, FilePlus } from 'lucide-react';
+import UserMenu from '@/components/UserMenu';
+import { FilePlus } from 'lucide-react';
 
-// Mock data for demonstration
 const MOCK_PHARMACIES = [
   {
     id: 1,
@@ -39,21 +39,6 @@ const Index = () => {
   const navigate = useNavigate();
   const [selectedPharmacy, setSelectedPharmacy] = React.useState<number | null>(null);
   const [prescription, setPrescription] = React.useState<File | null>(null);
-
-  // Mock user data (replace with actual auth state later)
-  const mockUser = {
-    name: "John Doe",
-    email: "john@example.com"
-  };
-
-  const handleLogout = () => {
-    // Add actual logout logic later
-    navigate('/login');
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    });
-  };
 
   const handleSearch = (city: string) => {
     toast({
@@ -100,27 +85,16 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <User className="h-6 w-6 text-primary" />
-              <span className="font-medium text-gray-900">{mockUser.name}</span>
+              <UserMenu />
             </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/create-prescription')}
-                className="flex items-center space-x-2"
-              >
-                <FilePlus className="h-4 w-4" />
-                <span>Create Prescription</span>
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={handleLogout}
-                className="flex items-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/create-prescription')}
+              className="flex items-center space-x-2"
+            >
+              <FilePlus className="h-4 w-4" />
+              <span>Create Prescription</span>
+            </Button>
           </div>
         </div>
       </header>

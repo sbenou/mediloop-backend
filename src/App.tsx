@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import CreatePrescription from "./pages/CreatePrescription";
+import MyPrescriptions from "./pages/MyPrescriptions";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/create-prescription" element={<CreatePrescription />} />
+          <Route path="/my-prescriptions" element={<MyPrescriptions />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
