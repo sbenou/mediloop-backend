@@ -84,7 +84,7 @@ const MyPrescriptions = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate('/', { state: { data: prescription } })}
+                    onClick={() => navigate(`/prescription/${prescription.id}`, { state: { data: prescription } })}
                     className="flex items-center space-x-2"
                   >
                     <Eye className="h-4 w-4" />

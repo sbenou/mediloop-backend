@@ -23,6 +23,7 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/create-prescription" element={<CreatePrescription />} />
           <Route path="/my-prescriptions" element={<MyPrescriptions />} />
+          <Route path="/prescription/:id" element={<ViewPrescription />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
