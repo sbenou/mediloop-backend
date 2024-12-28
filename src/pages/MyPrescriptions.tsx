@@ -9,6 +9,13 @@ import {
 } from "@/components/ui/table";
 import { FilePlus, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 // Mock data - in a real app, this would come from an API
 const MOCK_PRESCRIPTIONS = [
@@ -51,6 +58,18 @@ const MyPrescriptions = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <Breadcrumb className="mb-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink onClick={() => navigate('/')}>Home</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink>My Prescriptions</BreadcrumbLink>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-primary">My Prescriptions</h1>
         <Button
