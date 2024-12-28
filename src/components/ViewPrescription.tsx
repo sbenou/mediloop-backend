@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { FileEdit, FilePlus, Trash2, Send } from "lucide-react";
+import { FileEdit, FilePlus, Trash2, Send, ArrowLeft } from "lucide-react";
 import PharmacyCard from "./PharmacyCard";
 
 interface Medication {
@@ -70,6 +70,15 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6 animate-fade-in">
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/my-prescriptions')}
+        className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to My Prescriptions
+      </Button>
+
       <Card className="w-full shadow-lg">
         <CardHeader className="bg-primary/5 border-b">
           <CardTitle className="text-2xl font-bold text-primary">Prescription Details</CardTitle>
