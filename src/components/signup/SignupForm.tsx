@@ -41,11 +41,11 @@ export const SignupForm = () => {
       });
 
       if (authError) {
-        if (authError.message.includes('rate_limit')) {
+        if (authError.message.includes('rate_limit') || authError.status === 429) {
           toast({
             variant: "destructive",
-            title: "Please wait",
-            description: "For security purposes, please wait a few seconds before trying again.",
+            title: "Too many attempts",
+            description: "Please wait a few minutes before trying to sign up again.",
           });
           return;
         }
@@ -84,6 +84,7 @@ export const SignupForm = () => {
       });
       console.error("Signup error:", error);
     } finally {
+      // Add a longer delay before allowing new attempts
       setTimeout(() => {
         setIsSubmitting(false);
       }, 7000);
