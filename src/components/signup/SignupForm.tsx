@@ -27,7 +27,7 @@ export const SignupForm = () => {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Sign up the user
+      // Step 1: Sign up the user with their metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -56,17 +56,10 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Step 2: Wait for session to be established
-      const { data: session } = await supabase.auth.getSession();
-      
-      if (!session.session) {
-        throw new Error("Session not established");
-      }
-
-      // Step 3: Create the profile with established session
+      // Step 2: Create the profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([
+        .upsert([
           {
             id: authData.user.id,
             role: userRole,
@@ -74,7 +67,9 @@ export const SignupForm = () => {
             email,
             license_number: licenseNumber || null,
           }
-        ]);
+        ], {
+          onConflict: 'id'
+        });
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
