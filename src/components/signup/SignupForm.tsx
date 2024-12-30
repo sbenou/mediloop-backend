@@ -27,7 +27,7 @@ export const SignupForm = () => {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Sign up the user with profile data in metadata
+      // Step 1: Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -56,7 +56,7 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Step 2: Create the profile using the authenticated session
+      // Step 2: Create the profile
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([
@@ -67,7 +67,9 @@ export const SignupForm = () => {
             email,
             license_number: licenseNumber || null,
           }
-        ]);
+        ])
+        .select('id')
+        .single();
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
