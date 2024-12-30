@@ -71,21 +71,29 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Instead of using insert, we'll use RPC to create the profile
-      // This assumes you have a stored procedure that handles the profile creation with proper permissions
-      const { data: profileData, error: profileError } = await supabase
-        .rpc('create_profile', {
-          user_id: authData.user.id,
-          user_role: userRole,
-          user_full_name: name,
-          user_email: email,
-          user_license_number: licenseNumber || null
-        });
+      // Check if profile exists first
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', authData.user.id)
+        .single();
 
-      console.log("Profile creation response:", { profileData, profileError });
+      if (!existingProfile) {
+        // Only create profile if it doesn't exist
+        const { data: profileData, error: profileError } = await supabase
+          .rpc('create_profile', {
+            user_id: authData.user.id,
+            user_role: userRole,
+            user_full_name: name,
+            user_email: email,
+            user_license_number: licenseNumber || null
+          });
 
-      if (profileError) {
-        throw profileError;
+        console.log("Profile creation response:", { profileData, profileError });
+
+        if (profileError && !profileError.message.includes('duplicate key value')) {
+          throw profileError;
+        }
       }
 
       toast({
