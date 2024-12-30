@@ -4,9 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserPlus, Mail, Key, User } from "lucide-react";
 import { RoleSelector } from "./RoleSelector";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
-import { useNavigate } from "react-router-dom";
+import { useSignup } from "./useSignup";
 
 export type UserRole = "patient" | "doctor" | "pharmacist" | "delivery";
 
@@ -16,114 +14,11 @@ export const SignupForm = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [rateLimitExpiresAt, setRateLimitExpiresAt] = useState<number | null>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { handleSignup, isSubmitting, rateLimitExpiresAt } = useSignup();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (rateLimitExpiresAt && Date.now() < rateLimitExpiresAt) {
-      const remainingMinutes = Math.ceil((rateLimitExpiresAt - Date.now()) / 60000);
-      toast({
-        variant: "destructive",
-        title: "Rate Limit Active",
-        description: `Please wait ${remainingMinutes} minute(s) before trying again.`,
-      });
-      return;
-    }
-
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-
-    try {
-      console.log("Starting signup process...");
-      
-      // Sign up the user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            role: userRole,
-            full_name: name,
-            license_number: licenseNumber || null,
-          }
-        }
-      });
-
-      console.log("Auth signup response:", { authData, authError });
-
-      if (authError) {
-        if (authError.message.includes('email rate limit') || 
-            authError.code === 'over_email_send_rate_limit') {
-          const rateLimitDuration = 5 * 60 * 1000;
-          const expiresAt = Date.now() + rateLimitDuration;
-          
-          setRateLimitExpiresAt(expiresAt);
-          setIsSubmitting(false);
-
-          toast({
-            variant: "destructive",
-            title: "Email Rate Limit Reached",
-            description: "Too many signup attempts. Please wait 5 minutes before requesting another verification email.",
-          });
-          return;
-        }
-        throw authError;
-      }
-
-      if (!authData.user?.id) {
-        throw new Error("User creation failed");
-      }
-
-      console.log("Attempting to create profile for user:", authData.user.id);
-
-      // Create the profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            role: userRole,
-            full_name: name,
-            email: email,
-            license_number: licenseNumber || null
-          }
-        ])
-        .select()
-        .single();
-
-      console.log("Profile creation response:", { profileData, profileError });
-
-      if (profileError) {
-        // If profile already exists, this is fine - continue with success flow
-        if (profileError.code === '23505') {
-          console.log("Profile already exists, continuing with signup flow");
-        } else {
-          // For other profile creation errors, throw the error
-          throw profileError;
-        }
-      }
-
-      toast({
-        title: "Account created successfully",
-        description: "Please check your email to verify your account.",
-      });
-      
-      navigate('/login');
-    } catch (error: any) {
-      console.error("Detailed signup error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to create account",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    await handleSignup(email, password, name, userRole, licenseNumber);
   };
 
   return (
