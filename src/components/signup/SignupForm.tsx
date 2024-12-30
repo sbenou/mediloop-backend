@@ -27,6 +27,7 @@ export const SignupForm = () => {
     setIsSubmitting(true);
 
     try {
+      // Step 1: Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -51,34 +52,41 @@ export const SignupForm = () => {
         throw authError;
       }
 
-      if (authData) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: authData.user?.id,
-              role: userRole,
-              full_name: name,
-              email,
-              license_number: licenseNumber,
-            }
-          ]);
-
-        if (profileError) throw profileError;
-
-        toast({
-          title: "Account created",
-          description: "Please check your email to verify your account.",
-        });
-        
-        navigate('/login');
+      if (!authData.user?.id) {
+        throw new Error("User creation failed");
       }
+
+      // Step 2: Create the profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: authData.user.id,
+            role: userRole,
+            full_name: name,
+            email,
+            license_number: licenseNumber || null,
+          }
+        ]);
+
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        throw new Error("Failed to create profile");
+      }
+
+      toast({
+        title: "Account created successfully",
+        description: "Please check your email to verify your account.",
+      });
+      
+      navigate('/login');
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create account",
       });
+      console.error("Signup error:", error);
     } finally {
       // Re-enable the submit button after 7 seconds
       setTimeout(() => {
