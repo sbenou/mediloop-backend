@@ -6,7 +6,6 @@ import FileUpload from '@/components/FileUpload';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import UserMenu from '@/components/UserMenu';
-import { FilePlus } from 'lucide-react';
 
 const MOCK_PHARMACIES = [
   {
@@ -87,14 +86,6 @@ const Index = () => {
             <div className="flex items-center space-x-3">
               <UserMenu />
             </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/create-prescription')}
-              className="flex items-center space-x-2"
-            >
-              <FilePlus className="h-4 w-4" />
-              <span>Create Prescription</span>
-            </Button>
           </div>
         </div>
       </header>

@@ -1,19 +1,73 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus, Mail, Key, User } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+
+type UserRole = "patient" | "doctor" | "pharmacist" | "delivery";
 
 const Signup = () => {
-  const [userType, setUserType] = useState<"user" | "pharmacy">("user");
+  const [userRole, setUserRole] = useState<UserRole>("patient");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Signup logic will be implemented later with Supabase
-    console.log("Signup attempt for:", userType);
+
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role: userRole,
+            full_name: name,
+            license_number: licenseNumber,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (authData) {
+        // Create a profile in the profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: authData.user?.id,
+              role: userRole,
+              full_name: name,
+              email,
+              license_number: licenseNumber,
+            }
+          ]);
+
+        if (profileError) throw profileError;
+
+        toast({
+          title: "Account created",
+          description: "Please check your email to verify your account.",
+        });
+        
+        navigate('/login');
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
   };
 
   return (
@@ -28,17 +82,25 @@ const Signup = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <RadioGroup
-              defaultValue="user"
-              onValueChange={(value) => setUserType(value as "user" | "pharmacy")}
+              defaultValue="patient"
+              onValueChange={(value) => setUserRole(value as UserRole)}
               className="flex flex-col space-y-1 mb-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="user" id="signup-user" />
-                <Label htmlFor="signup-user">Customer</Label>
+                <RadioGroupItem value="patient" id="signup-patient" />
+                <Label htmlFor="signup-patient">Patient</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="pharmacy" id="signup-pharmacy" />
-                <Label htmlFor="signup-pharmacy">Pharmacy</Label>
+                <RadioGroupItem value="doctor" id="signup-doctor" />
+                <Label htmlFor="signup-doctor">Doctor</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="pharmacist" id="signup-pharmacist" />
+                <Label htmlFor="signup-pharmacist">Pharmacist</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="delivery" id="signup-delivery" />
+                <Label htmlFor="signup-delivery">Delivery Person</Label>
               </div>
             </RadioGroup>
 
@@ -51,6 +113,8 @@ const Signup = () => {
                   placeholder="Enter your full name"
                   className="pl-8"
                   required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               </div>
             </div>
@@ -65,6 +129,8 @@ const Signup = () => {
                   type="email"
                   className="pl-8"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>
@@ -79,17 +145,21 @@ const Signup = () => {
                   placeholder="Create a password"
                   className="pl-8"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
 
-            {userType === "pharmacy" && (
+            {(userRole === "doctor" || userRole === "pharmacist") && (
               <div className="space-y-2">
-                <Label htmlFor="license">Pharmacy License Number</Label>
+                <Label htmlFor="license">Professional License Number</Label>
                 <Input
                   id="license"
-                  placeholder="Enter pharmacy license number"
+                  placeholder="Enter your license number"
                   required
+                  value={licenseNumber}
+                  onChange={(e) => setLicenseNumber(e.target.value)}
                 />
               </div>
             )}
