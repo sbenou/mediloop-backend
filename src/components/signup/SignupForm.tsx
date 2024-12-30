@@ -56,7 +56,14 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Step 2: Create the profile
+      // Step 2: Wait for session to be established
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session.session) {
+        throw new Error("Session not established");
+      }
+
+      // Step 3: Create the profile with established session
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([
@@ -67,9 +74,7 @@ export const SignupForm = () => {
             email,
             license_number: licenseNumber || null,
           }
-        ])
-        .select('id')
-        .single();
+        ]);
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
