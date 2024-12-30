@@ -24,7 +24,6 @@ export const SignupForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if rate limit is still active
     if (rateLimitExpiresAt && Date.now() < rateLimitExpiresAt) {
       const remainingMinutes = Math.ceil((rateLimitExpiresAt - Date.now()) / 60000);
       toast({
@@ -54,10 +53,9 @@ export const SignupForm = () => {
       });
 
       if (authError) {
-        // Specific handling for email rate limit
         if (authError.message.includes('email rate limit') || 
             authError.code === 'over_email_send_rate_limit') {
-          const rateLimitDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+          const rateLimitDuration = 5 * 60 * 1000;
           const expiresAt = Date.now() + rateLimitDuration;
           
           setRateLimitExpiresAt(expiresAt);
@@ -77,18 +75,31 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile using RPC
-      const { error: profileError } = await supabase.rpc('create_profile', {
-        user_id: authData.user.id,
-        user_role: userRole,
-        user_full_name: name,
-        user_email: email,
-        user_license_number: licenseNumber || null
-      });
+      try {
+        // Create the profile using RPC
+        const { error: profileError } = await supabase.rpc('create_profile', {
+          user_id: authData.user.id,
+          user_role: userRole,
+          user_full_name: name,
+          user_email: email,
+          user_license_number: licenseNumber || null
+        });
 
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        throw new Error("Failed to create profile. Please try again.");
+        if (profileError) {
+          // Check for duplicate profile error
+          if (profileError.code === '23505') {
+            // Profile already exists, this is fine - continue with success flow
+            console.log("Profile already exists, continuing with signup flow");
+          } else {
+            // For other profile creation errors, throw the error
+            throw profileError;
+          }
+        }
+      } catch (profileError: any) {
+        // Only throw if it's not a duplicate key error
+        if (profileError.code !== '23505') {
+          throw profileError;
+        }
       }
 
       toast({
@@ -105,10 +116,9 @@ export const SignupForm = () => {
       });
       console.error("Signup error:", error);
     } finally {
-      // Ensure isSubmitting is reset after a delay
       setTimeout(() => {
         setIsSubmitting(false);
-      }, 300000); // 5 minutes cooldown
+      }, 300000);
     }
   };
 
