@@ -26,6 +26,19 @@ const Login = () => {
       });
 
       if (error) {
+        // Check specifically for email not confirmed error
+        if (error.message.includes('Email not confirmed') || 
+            (typeof error === 'object' && 
+             'code' in error && 
+             error.code === 'email_not_confirmed')) {
+          toast({
+            variant: "destructive",
+            title: "Email Not Confirmed",
+            description: "Please check your email and confirm your account before logging in. Don't forget to check your spam folder.",
+          });
+          return;
+        }
+
         toast({
           variant: "destructive",
           title: "Error",
