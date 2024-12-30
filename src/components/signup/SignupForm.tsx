@@ -27,7 +27,7 @@ export const SignupForm = () => {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Sign up the user
+      // Step 1: Sign up the user with profile data in metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -35,7 +35,7 @@ export const SignupForm = () => {
           data: {
             role: userRole,
             full_name: name,
-            license_number: licenseNumber,
+            license_number: licenseNumber || null,
           }
         }
       });
@@ -56,7 +56,7 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Step 2: Create the profile
+      // Step 2: Create the profile using the authenticated session
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([
@@ -71,7 +71,7 @@ export const SignupForm = () => {
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
-        throw new Error("Failed to create profile");
+        throw new Error("Failed to create profile. Please try again.");
       }
 
       toast({
@@ -88,7 +88,6 @@ export const SignupForm = () => {
       });
       console.error("Signup error:", error);
     } finally {
-      // Re-enable the submit button after 7 seconds
       setTimeout(() => {
         setIsSubmitting(false);
       }, 7000);
