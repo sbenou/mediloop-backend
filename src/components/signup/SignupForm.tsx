@@ -56,18 +56,17 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            role: userRole,
-            full_name: name,
-            email,
-            license_number: licenseNumber || null,
-          }
-        ]);
+      // Create the profile using the service role client
+      const { error: profileError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          role: userRole,
+          full_name: name,
+          license_number: licenseNumber || null,
+        }
+      });
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
