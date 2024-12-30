@@ -27,7 +27,7 @@ export const SignupForm = () => {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Sign up the user
+      // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -56,17 +56,7 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Step 2: Sign in to establish session
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        throw signInError;
-      }
-
-      // Step 3: Create the profile with established session
+      // Create the profile
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([
