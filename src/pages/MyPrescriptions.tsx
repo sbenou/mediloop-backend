@@ -61,7 +61,12 @@ const MyPrescriptions = () => {
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink onClick={() => navigate('/')}>Home</BreadcrumbLink>
+            <BreadcrumbLink 
+              onClick={() => navigate('/')} 
+              className="hover:text-primary hover:underline cursor-pointer"
+            >
+              Home
+            </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
