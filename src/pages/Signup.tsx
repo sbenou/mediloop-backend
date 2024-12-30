@@ -17,11 +17,18 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -36,7 +43,22 @@ const Signup = () => {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message.includes('rate_limit')) {
+          toast({
+            variant: "destructive",
+            title: "Please wait",
+            description: "For security purposes, please wait a few seconds before trying again.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: authError.message,
+          });
+        }
+        return;
+      }
 
       if (authData) {
         // Create a profile in the profiles table
@@ -67,6 +89,11 @@ const Signup = () => {
         title: "Error",
         description: error.message,
       });
+    } finally {
+      // Re-enable the submit button after 7 seconds
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 7000);
     }
   };
 
@@ -164,9 +191,9 @@ const Signup = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
               <UserPlus className="mr-2" />
-              Sign Up
+              {isSubmitting ? "Please wait..." : "Sign Up"}
             </Button>
           </form>
         </CardContent>
