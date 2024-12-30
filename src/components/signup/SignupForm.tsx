@@ -56,18 +56,14 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert([
-          {
-            id: authData.user.id,
-            role: userRole,
-            full_name: name,
-            email,
-            license_number: licenseNumber || null,
-          }
-        ]);
+      // Create the profile using RPC instead of direct table access
+      const { error: profileError } = await supabase.rpc('create_profile', {
+        user_id: authData.user.id,
+        user_role: userRole,
+        user_full_name: name,
+        user_email: email,
+        user_license_number: licenseNumber || null
+      });
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
