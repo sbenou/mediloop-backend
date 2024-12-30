@@ -17,11 +17,24 @@ export const SignupForm = () => {
   const [name, setName] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rateLimitExpiresAt, setRateLimitExpiresAt] = useState<number | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if rate limit is still active
+    if (rateLimitExpiresAt && Date.now() < rateLimitExpiresAt) {
+      const remainingMinutes = Math.ceil((rateLimitExpiresAt - Date.now()) / 60000);
+      toast({
+        variant: "destructive",
+        title: "Rate Limit Active",
+        description: `Please wait ${remainingMinutes} minute(s) before trying again.`,
+      });
+      return;
+    }
+
     if (isSubmitting) return;
 
     setIsSubmitting(true);
@@ -41,11 +54,15 @@ export const SignupForm = () => {
       });
 
       if (authError) {
-        // Check for email rate limit specifically
+        // Specific handling for email rate limit
         if (authError.message.includes('email rate limit') || 
-            (typeof authError === 'object' && 
-             'code' in authError && 
-             authError.code === 'over_email_send_rate_limit')) {
+            authError.code === 'over_email_send_rate_limit') {
+          const rateLimitDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+          const expiresAt = Date.now() + rateLimitDuration;
+          
+          setRateLimitExpiresAt(expiresAt);
+          setIsSubmitting(false);
+
           toast({
             variant: "destructive",
             title: "Email Rate Limit Reached",
@@ -88,10 +105,10 @@ export const SignupForm = () => {
       });
       console.error("Signup error:", error);
     } finally {
-      // Longer cooldown for email rate limits (5 minutes = 300000ms)
+      // Ensure isSubmitting is reset after a delay
       setTimeout(() => {
         setIsSubmitting(false);
-      }, 300000);
+      }, 300000); // 5 minutes cooldown
     }
   };
 
@@ -159,7 +176,11 @@ export const SignupForm = () => {
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={isSubmitting || (rateLimitExpiresAt !== null && Date.now() < rateLimitExpiresAt)}
+      >
         <UserPlus className="mr-2 h-4 w-4" />
         {isSubmitting ? "Please wait..." : "Sign Up"}
       </Button>
