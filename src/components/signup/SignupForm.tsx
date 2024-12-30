@@ -56,10 +56,10 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile without selecting the result
+      // Create the profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([
+        .upsert([
           {
             id: authData.user.id,
             role: userRole,
