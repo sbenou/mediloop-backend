@@ -71,15 +71,16 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Check if profile exists first
-      const { data: existingProfile } = await supabase
+      // Check if profile exists first, without using .single()
+      const { data: existingProfiles, error: profileCheckError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('id', authData.user.id)
-        .single();
+        .eq('id', authData.user.id);
 
-      if (!existingProfile) {
-        // Only create profile if it doesn't exist
+      console.log("Profile check response:", { existingProfiles, profileCheckError });
+
+      if (!existingProfiles?.length) {
+        // Only create profile if no profiles were found
         const { data: profileData, error: profileError } = await supabase
           .rpc('create_profile', {
             user_id: authData.user.id,
