@@ -39,6 +39,8 @@ export const SignupForm = () => {
     setIsSubmitting(true);
 
     try {
+      console.log("Starting signup process...");
+      
       // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -51,6 +53,8 @@ export const SignupForm = () => {
           }
         }
       });
+
+      console.log("Auth signup response:", { authData, authError });
 
       if (authError) {
         if (authError.message.includes('email rate limit') || 
@@ -75,29 +79,31 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      try {
-        // Create the profile using RPC
-        const { error: profileError } = await supabase.rpc('create_profile', {
-          user_id: authData.user.id,
-          user_role: userRole,
-          user_full_name: name,
-          user_email: email,
-          user_license_number: licenseNumber || null
-        });
+      console.log("Attempting to create profile for user:", authData.user.id);
 
-        if (profileError) {
-          // Check for duplicate profile error
-          if (profileError.code === '23505') {
-            // Profile already exists, this is fine - continue with success flow
-            console.log("Profile already exists, continuing with signup flow");
-          } else {
-            // For other profile creation errors, throw the error
-            throw profileError;
+      // Create the profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: authData.user.id,
+            role: userRole,
+            full_name: name,
+            email: email,
+            license_number: licenseNumber || null
           }
-        }
-      } catch (profileError: any) {
-        // Only throw if it's not a duplicate key error
-        if (profileError.code !== '23505') {
+        ])
+        .select()
+        .single();
+
+      console.log("Profile creation response:", { profileData, profileError });
+
+      if (profileError) {
+        // If profile already exists, this is fine - continue with success flow
+        if (profileError.code === '23505') {
+          console.log("Profile already exists, continuing with signup flow");
+        } else {
+          // For other profile creation errors, throw the error
           throw profileError;
         }
       }
@@ -109,16 +115,14 @@ export const SignupForm = () => {
       
       navigate('/login');
     } catch (error: any) {
+      console.error("Detailed signup error:", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to create account",
       });
-      console.error("Signup error:", error);
     } finally {
-      setTimeout(() => {
-        setIsSubmitting(false);
-      }, 300000);
+      setIsSubmitting(false);
     }
   };
 
