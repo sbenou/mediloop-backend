@@ -56,7 +56,7 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile
+      // Create the profile without selecting the result
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([
@@ -67,8 +67,7 @@ export const SignupForm = () => {
             email,
             license_number: licenseNumber || null,
           }
-        ])
-        .select();
+        ]);
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
