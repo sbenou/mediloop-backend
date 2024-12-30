@@ -41,11 +41,15 @@ export const SignupForm = () => {
       });
 
       if (authError) {
-        if (authError.message.includes('rate_limit') || authError.status === 429) {
+        // Check for email rate limit specifically
+        if (authError.message.includes('email rate limit') || 
+            (typeof authError === 'object' && 
+             'code' in authError && 
+             authError.code === 'over_email_send_rate_limit')) {
           toast({
             variant: "destructive",
-            title: "Too many attempts",
-            description: "Please wait a few minutes before trying to sign up again.",
+            title: "Email Rate Limit Reached",
+            description: "Too many signup attempts. Please wait 5 minutes before requesting another verification email.",
           });
           return;
         }
@@ -56,7 +60,7 @@ export const SignupForm = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile using RPC instead of direct table access
+      // Create the profile using RPC
       const { error: profileError } = await supabase.rpc('create_profile', {
         user_id: authData.user.id,
         user_role: userRole,
@@ -84,10 +88,10 @@ export const SignupForm = () => {
       });
       console.error("Signup error:", error);
     } finally {
-      // Add a longer delay before allowing new attempts
+      // Longer cooldown for email rate limits (5 minutes = 300000ms)
       setTimeout(() => {
         setIsSubmitting(false);
-      }, 7000);
+      }, 300000);
     }
   };
 
