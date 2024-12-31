@@ -17,10 +17,11 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
   const [suggestions, setSuggestions] = useState<CityResult[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (value.length < 2) {
+      if (searchTerm.length < 2) {
         setSuggestions([]);
         return;
       }
@@ -28,7 +29,7 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            value
+            searchTerm
           )}&limit=5&featuretype=city`
         );
         const data = await response.json();
@@ -41,7 +42,7 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
 
     const timeoutId = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(timeoutId);
-  }, [value]);
+  }, [searchTerm]);
 
   const handleSelect = (cityName: string) => {
     setValue(cityName);
@@ -59,19 +60,28 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
               type="text"
               placeholder="Enter your city..."
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e) => {
+                setValue(e.target.value);
+                setSearchTerm(e.target.value);
+                setOpen(true);
+              }}
               className="pl-10 h-12 text-lg rounded-xl border-gray-200 focus:border-primary focus:ring-primary transition-all duration-200"
             />
           </div>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
           <Command>
-            <CommandInput placeholder="Search cities..." />
+            <CommandInput 
+              placeholder="Search cities..." 
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
             <CommandEmpty>No cities found.</CommandEmpty>
             <CommandGroup>
               {suggestions.map((city) => (
                 <CommandItem
                   key={city.place_id}
+                  value={city.display_name}
                   onSelect={() => handleSelect(city.display_name)}
                   className="cursor-pointer"
                 >
