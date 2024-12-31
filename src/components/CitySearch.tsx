@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 interface CitySearchProps {
   onSearch: (city: string) => void;
@@ -44,6 +45,12 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
+  const handleSearch = () => {
+    if (value) {
+      onSearch(value);
+    }
+  };
+
   const handleSelect = (cityName: string) => {
     setValue(cityName);
     onSearch(cityName);
@@ -54,8 +61,7 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
     <div className="relative w-full max-w-xl mx-auto">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <div className="relative flex items-center">
             <Input
               type="text"
               placeholder="Enter your city..."
@@ -65,8 +71,16 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
                 setSearchTerm(e.target.value);
                 setOpen(true);
               }}
-              className="pl-10 h-12 text-lg rounded-xl border-gray-200 focus:border-primary focus:ring-primary transition-all duration-200"
+              className="pl-10 pr-12 h-12 text-lg rounded-xl border-gray-200 focus:border-primary focus:ring-primary transition-all duration-200"
             />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-2"
+              onClick={handleSearch}
+            >
+              <Search className="h-5 w-5 text-gray-500 hover:text-primary" />
+            </Button>
           </div>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
