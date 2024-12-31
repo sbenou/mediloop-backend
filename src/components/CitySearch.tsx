@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface CitySearchProps {
@@ -76,19 +76,21 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
-            <CommandEmpty>No cities found.</CommandEmpty>
-            <CommandGroup>
-              {suggestions.map((city) => (
-                <CommandItem
-                  key={city.place_id}
-                  value={city.display_name}
-                  onSelect={() => handleSelect(city.display_name)}
-                  className="cursor-pointer"
-                >
-                  {city.display_name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            <CommandList>
+              <CommandEmpty>No cities found.</CommandEmpty>
+              <CommandGroup>
+                {suggestions.map((city) => (
+                  <CommandItem
+                    key={city.place_id}
+                    value={city.display_name}
+                    onSelect={() => handleSelect(city.display_name)}
+                    className="cursor-pointer"
+                  >
+                    {city.display_name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
