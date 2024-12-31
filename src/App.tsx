@@ -9,6 +9,7 @@ import Signup from "./pages/Signup";
 import CreatePrescription from "./pages/CreatePrescription";
 import MyPrescriptions from "./pages/MyPrescriptions";
 import ViewPrescription from "./components/ViewPrescription";
+import DoctorConnections from "./pages/DoctorConnections";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/create-prescription" element={<CreatePrescription />} />
           <Route path="/my-prescriptions" element={<MyPrescriptions />} />
+          <Route path="/doctor-connections" element={<DoctorConnections />} />
           <Route 
             path="/prescription/:id" 
             element={
