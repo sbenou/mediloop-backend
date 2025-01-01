@@ -31,14 +31,26 @@ const PharmacySelection = () => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
+      // First, get the user's pharmacy selection
+      const { data: userPharmacy, error: userPharmacyError } = await supabase
         .from('user_pharmacies')
-        .select('pharmacy_id, pharmacies(*)')
+        .select('pharmacy_id')
         .eq('user_id', session.user.id)
         .single();
       
-      if (error && error.code !== 'PGRST116') throw error;
-      return data?.pharmacies;
+      if (userPharmacyError && userPharmacyError.code !== 'PGRST116') throw userPharmacyError;
+      
+      if (!userPharmacy) return null;
+      
+      // Then, get the pharmacy details
+      const { data: pharmacy, error: pharmacyError } = await supabase
+        .from('pharmacies')
+        .select('*')
+        .eq('id', userPharmacy.pharmacy_id)
+        .single();
+      
+      if (pharmacyError) throw pharmacyError;
+      return pharmacy;
     },
     enabled: !!session?.user?.id,
   });
