@@ -26,12 +26,13 @@ const AddressManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newAddress, setNewAddress] = useState({
+  const [newAddress, setNewAddress] = useState<Omit<Address, 'id' | 'user_id'>>({
     street: "",
     city: "",
     postal_code: "",
     country: "",
-    type: "secondary" as AddressType,
+    type: "secondary",
+    is_default: false  // Add this line to include is_default
   });
 
   const { data: addresses, isLoading } = useQuery({
@@ -49,12 +50,15 @@ const AddressManagement = () => {
 
   const addAddressMutation = useMutation({
     mutationFn: async (address: Omit<Address, 'id' | 'user_id'>) => {
+      // Determine if this should be the default address
+      const addressToInsert = {
+        ...address,
+        is_default: !addresses?.length || address.is_default
+      };
+
       const { data, error } = await supabase
         .from('addresses')
-        .insert([{
-          ...address,
-          is_default: !addresses?.length,
-        }])
+        .insert([addressToInsert])
         .select()
         .single();
 
@@ -70,6 +74,7 @@ const AddressManagement = () => {
         postal_code: "",
         country: "",
         type: "secondary",
+        is_default: false
       });
       toast({
         title: "Address added",
