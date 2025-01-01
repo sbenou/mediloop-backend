@@ -1,81 +1,54 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CitySearch from '@/components/CitySearch';
-import PharmacyCard from '@/components/PharmacyCard';
-import FileUpload from '@/components/FileUpload';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import UserMenu from '@/components/UserMenu';
-
-const MOCK_PHARMACIES = [
-  {
-    id: 1,
-    name: "HealthCare Pharmacy",
-    address: "123 Medical Center Dr",
-    distance: "0.5 miles",
-    hours: "Open until 9 PM",
-    phone: "(555) 123-4567"
-  },
-  {
-    id: 2,
-    name: "City Drugs",
-    address: "456 Health Ave",
-    distance: "0.8 miles",
-    hours: "Open until 10 PM",
-    phone: "(555) 234-5678"
-  },
-  {
-    id: 3,
-    name: "Community Pharmacy",
-    address: "789 Wellness Blvd",
-    distance: "1.2 miles",
-    hours: "Open until 8 PM",
-    phone: "(555) 345-6789"
-  }
-];
+import { useQuery } from '@tanstack/react-query';
+import { searchPharmacies } from '@/lib/overpass';
 
 const Index = () => {
   const navigate = useNavigate();
-  const [selectedPharmacy, setSelectedPharmacy] = React.useState<number | null>(null);
-  const [prescription, setPrescription] = React.useState<File | null>(null);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
 
-  const handleSearch = (city: string) => {
-    toast({
-      title: "Searching pharmacies",
-      description: `Finding pharmacies in ${city}...`,
-    });
-  };
+  const { data: pharmacies, isLoading } = useQuery({
+    queryKey: ['pharmacies', coordinates],
+    queryFn: async () => {
+      if (!coordinates) return [];
+      return searchPharmacies(coordinates.lat, coordinates.lon);
+    },
+    enabled: !!coordinates,
+  });
 
-  const handlePharmacySelect = (id: number) => {
-    setSelectedPharmacy(id);
-    toast({
-      title: "Pharmacy selected",
-      description: "Please upload your prescription to continue.",
-    });
-  };
-
-  const handleFileSelect = (file: File) => {
-    setPrescription(file);
-    toast({
-      title: "Prescription uploaded",
-      description: "Your prescription has been successfully uploaded.",
-    });
-  };
-
-  const handleSubmit = () => {
-    if (!selectedPharmacy || !prescription) {
+  const handleSearch = async (city: string) => {
+    try {
+      // First get coordinates from the city name using Nominatim
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`
+      );
+      const data = await response.json();
+      
+      if (data.length > 0) {
+        setCoordinates({
+          lat: parseFloat(data[0].lat),
+          lon: parseFloat(data[0].lon)
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Location not found",
+          description: "Could not find coordinates for the specified city.",
+        });
+      }
+    } catch (error) {
+      console.error('Error searching city:', error);
       toast({
-        title: "Missing information",
-        description: "Please select a pharmacy and upload your prescription.",
         variant: "destructive",
+        title: "Search Error",
+        description: "Failed to search for pharmacies. Please try again.",
       });
-      return;
     }
-
-    toast({
-      title: "Order submitted",
-      description: "Your order has been successfully submitted. We'll contact you soon.",
-    });
   };
 
   return (
@@ -104,29 +77,53 @@ const Index = () => {
           <CitySearch onSearch={handleSearch} />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
-          {MOCK_PHARMACIES.map((pharmacy) => (
-            <PharmacyCard
-              key={pharmacy.id}
-              {...pharmacy}
-              onSelect={() => handlePharmacySelect(pharmacy.id)}
-            />
+        {isLoading && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {pharmacies?.map((pharmacy) => (
+            <Card key={pharmacy.id} className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-lg">{pharmacy.name}</h3>
+                    <p className="text-sm text-gray-500">{pharmacy.address}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">{pharmacy.hours}</p>
+                    <p className="text-sm text-gray-500">{pharmacy.phone}</p>
+                    <p className="text-sm font-medium text-primary">{pharmacy.distance}</p>
+                  </div>
+                  <Button 
+                    className="w-full"
+                    onClick={() => {
+                      toast({
+                        title: "Pharmacy Selected",
+                        description: `You've selected ${pharmacy.name} as your pharmacy.`,
+                      });
+                    }}
+                  >
+                    Select Pharmacy
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-        {selectedPharmacy && (
-          <div className="max-w-2xl mx-auto animate-slide-up">
-            <h2 className="text-2xl font-semibold mb-6">Upload Prescription</h2>
-            <FileUpload onFileSelect={handleFileSelect} />
-            
-            <Button
-              onClick={handleSubmit}
-              className="w-full mt-8 h-12 text-lg bg-primary hover:bg-primary/90 text-white transition-colors duration-200"
-              disabled={!prescription}
-            >
-              Submit Order
-            </Button>
-          </div>
+        {pharmacies?.length === 0 && coordinates && !isLoading && (
+          <p className="text-center text-gray-500">No pharmacies found in this area</p>
         )}
       </div>
     </div>
