@@ -32,27 +32,45 @@ const AddressManagement = () => {
     postal_code: "",
     country: "",
     type: "secondary",
-    is_default: false  // Add this line to include is_default
+    is_default: false
+  });
+
+  // Get the current user's ID
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      return session;
+    },
   });
 
   const { data: addresses, isLoading } = useQuery({
     queryKey: ['addresses'],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
       const { data, error } = await supabase
         .from('addresses')
         .select('*')
+        .eq('user_id', session.user.id)
         .order('is_default', { ascending: false });
       
       if (error) throw error;
       return data as Address[];
     },
+    enabled: !!session?.user?.id, // Only run query if we have a user ID
   });
 
   const addAddressMutation = useMutation({
     mutationFn: async (address: Omit<Address, 'id' | 'user_id'>) => {
-      // Determine if this should be the default address
+      if (!session?.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const addressToInsert = {
         ...address,
+        user_id: session.user.id,
         is_default: !addresses?.length || address.is_default
       };
 
@@ -85,10 +103,15 @@ const AddressManagement = () => {
 
   const deleteAddressMutation = useMutation({
     mutationFn: async (addressId: string) => {
+      if (!session?.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const { error } = await supabase
         .from('addresses')
         .delete()
-        .eq('id', addressId);
+        .eq('id', addressId)
+        .eq('user_id', session.user.id);
 
       if (error) throw error;
     },
@@ -103,9 +126,14 @@ const AddressManagement = () => {
 
   const setDefaultAddressMutation = useMutation({
     mutationFn: async (addressId: string) => {
+      if (!session?.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const { error: updateError } = await supabase
         .from('addresses')
         .update({ is_default: false })
+        .eq('user_id', session.user.id)
         .neq('id', addressId);
 
       if (updateError) throw updateError;
@@ -113,7 +141,8 @@ const AddressManagement = () => {
       const { error } = await supabase
         .from('addresses')
         .update({ is_default: true })
-        .eq('id', addressId);
+        .eq('id', addressId)
+        .eq('user_id', session.user.id);
 
       if (error) throw error;
     },
