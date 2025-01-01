@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import PharmacyCard from "@/components/PharmacyCard";
 
@@ -26,31 +25,41 @@ const PharmacySelection = () => {
     },
   });
 
-  const { data: defaultPharmacy } = useQuery({
+  const { data: defaultPharmacy, isError: isPharmacyError } = useQuery({
     queryKey: ['defaultPharmacy'],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      // First, get the user's pharmacy selection
-      const { data: userPharmacy, error: userPharmacyError } = await supabase
-        .from('user_pharmacies')
-        .select('pharmacy_id')
-        .eq('user_id', session.user.id)
-        .single();
-      
-      if (userPharmacyError && userPharmacyError.code !== 'PGRST116') throw userPharmacyError;
-      
-      if (!userPharmacy) return null;
-      
-      // Then, get the pharmacy details
-      const { data: pharmacy, error: pharmacyError } = await supabase
-        .from('pharmacies')
-        .select('*')
-        .eq('id', userPharmacy.pharmacy_id)
-        .single();
-      
-      if (pharmacyError) throw pharmacyError;
-      return pharmacy;
+      try {
+        const { data: userPharmacy, error: userPharmacyError } = await supabase
+          .from('user_pharmacies')
+          .select('pharmacy_id')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        if (userPharmacyError) {
+          console.error('Error fetching user pharmacy:', userPharmacyError);
+          return null;
+        }
+        
+        if (!userPharmacy) return null;
+        
+        const { data: pharmacy, error: pharmacyError } = await supabase
+          .from('pharmacies')
+          .select('*')
+          .eq('id', userPharmacy.pharmacy_id)
+          .single();
+        
+        if (pharmacyError) {
+          console.error('Error fetching pharmacy details:', pharmacyError);
+          return null;
+        }
+        
+        return pharmacy;
+      } catch (error) {
+        console.error('Database error:', error);
+        return null;
+      }
     },
     enabled: !!session?.user?.id,
   });
@@ -59,20 +68,28 @@ const PharmacySelection = () => {
     mutationFn: async (pharmacyId: string) => {
       if (!session?.user?.id) throw new Error('Not authenticated');
 
-      // Delete existing default pharmacy if any
-      await supabase
-        .from('user_pharmacies')
-        .delete()
-        .eq('user_id', session.user.id);
+      try {
+        // Delete existing default pharmacy if any
+        await supabase
+          .from('user_pharmacies')
+          .delete()
+          .eq('user_id', session.user.id);
 
-      // Set new default pharmacy
-      const { error } = await supabase
-        .from('user_pharmacies')
-        .insert([
-          { user_id: session.user.id, pharmacy_id: pharmacyId }
-        ]);
+        // Set new default pharmacy
+        const { error } = await supabase
+          .from('user_pharmacies')
+          .insert([
+            { user_id: session.user.id, pharmacy_id: pharmacyId }
+          ]);
 
-      if (error) throw error;
+        if (error) {
+          console.error('Error setting default pharmacy:', error);
+          throw error;
+        }
+      } catch (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['defaultPharmacy'] });
@@ -81,9 +98,17 @@ const PharmacySelection = () => {
         description: "Your default pharmacy has been updated successfully.",
       });
     },
+    onError: (error) => {
+      console.error('Mutation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update default pharmacy. Please try again later.",
+        variant: "destructive",
+      });
+    },
   });
 
-  // Mock pharmacy data (replace with real API call in production)
+  // Mock pharmacy data (will be used until database is properly set up)
   const mockPharmacies: Pharmacy[] = [
     {
       id: "1",
