@@ -25,7 +25,7 @@ const PharmacySelection = () => {
     },
   });
 
-  const { data: defaultPharmacy, isError: isPharmacyError } = useQuery({
+  const { data: defaultPharmacy } = useQuery({
     queryKey: ['defaultPharmacy'],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -35,7 +35,7 @@ const PharmacySelection = () => {
           .from('user_pharmacies')
           .select('pharmacy_id')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle(); // Changed from single() to maybeSingle()
         
         if (userPharmacyError) {
           console.error('Error fetching user pharmacy:', userPharmacyError);
