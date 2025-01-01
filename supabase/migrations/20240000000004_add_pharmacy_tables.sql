@@ -53,3 +53,10 @@ CREATE POLICY "Users can delete their own pharmacy selection"
     FOR DELETE
     TO authenticated
     USING (auth.uid() = user_id);
+
+-- Insert some sample pharmacies
+INSERT INTO public.pharmacies (name, address, city, postal_code, phone, hours)
+VALUES 
+    ('City Pharmacy', '123 Main St', 'Los Angeles', '90001', '(555) 123-4567', '9 AM - 9 PM'),
+    ('Health Plus Pharmacy', '456 Oak Ave', 'Los Angeles', '90002', '(555) 987-6543', '8 AM - 10 PM')
+ON CONFLICT DO NOTHING;
