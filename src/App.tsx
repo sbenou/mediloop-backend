@@ -11,6 +11,7 @@ import MyPrescriptions from "./pages/MyPrescriptions";
 import ViewPrescription from "./components/ViewPrescription";
 import DoctorConnections from "./pages/DoctorConnections";
 import FindDoctor from "./pages/FindDoctor";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/my-prescriptions" element={<MyPrescriptions />} />
           <Route path="/doctor-connections" element={<DoctorConnections />} />
           <Route path="/find-doctor" element={<FindDoctor />} />
+          <Route path="/settings" element={<Settings />} />
           <Route 
             path="/prescription/:id" 
             element={

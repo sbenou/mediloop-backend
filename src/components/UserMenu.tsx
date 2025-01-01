@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, FileText } from "lucide-react";
+import { User, LogOut, FileText, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 
@@ -43,6 +43,13 @@ const UserMenu = () => {
         >
           <FileText className="mr-2 h-4 w-4" />
           My Prescriptions
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigate('/settings')}
+          className="cursor-pointer"
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          Settings
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={handleLogout}
