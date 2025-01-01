@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import PharmacyCard from "@/components/PharmacyCard";
 
 interface Pharmacy {
@@ -35,7 +35,7 @@ const PharmacySelection = () => {
           .from('user_pharmacies')
           .select('pharmacy_id')
           .eq('user_id', session.user.id)
-          .maybeSingle(); // Changed from single() to maybeSingle()
+          .maybeSingle();
         
         if (userPharmacyError) {
           console.error('Error fetching user pharmacy:', userPharmacyError);
@@ -108,10 +108,10 @@ const PharmacySelection = () => {
     },
   });
 
-  // Mock pharmacy data (will be used until database is properly set up)
+  // Mock pharmacy data with proper UUIDs
   const mockPharmacies: Pharmacy[] = [
     {
-      id: "1",
+      id: "123e4567-e89b-12d3-a456-426614174000",
       name: "City Pharmacy",
       address: "123 Main St",
       hours: "9 AM - 9 PM",
@@ -119,7 +119,7 @@ const PharmacySelection = () => {
       distance: "0.5 miles"
     },
     {
-      id: "2",
+      id: "123e4567-e89b-12d3-a456-426614174001",
       name: "Health Plus Pharmacy",
       address: "456 Oak Ave",
       hours: "8 AM - 10 PM",
