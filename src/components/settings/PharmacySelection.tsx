@@ -25,6 +25,22 @@ const PharmacySelection = () => {
     },
   });
 
+  const { data: pharmacies } = useQuery({
+    queryKey: ['pharmacies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pharmacies')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching pharmacies:', error);
+        return [];
+      }
+      
+      return data || [];
+    },
+  });
+
   const { data: defaultPharmacy } = useQuery({
     queryKey: ['defaultPharmacy'],
     queryFn: async () => {
@@ -68,6 +84,17 @@ const PharmacySelection = () => {
     mutationFn: async (pharmacyId: string) => {
       if (!session?.user?.id) throw new Error('Not authenticated');
 
+      // First check if the pharmacy exists
+      const { data: pharmacy, error: pharmacyError } = await supabase
+        .from('pharmacies')
+        .select('id')
+        .eq('id', pharmacyId)
+        .single();
+
+      if (pharmacyError || !pharmacy) {
+        throw new Error('Selected pharmacy does not exist in the database');
+      }
+
       try {
         // Delete existing default pharmacy if any
         await supabase
@@ -102,31 +129,17 @@ const PharmacySelection = () => {
       console.error('Mutation error:', error);
       toast({
         title: "Error",
-        description: "Failed to update default pharmacy. Please try again later.",
+        description: "Failed to update default pharmacy. Please ensure the pharmacy exists in our system.",
         variant: "destructive",
       });
     },
   });
 
-  // Mock pharmacy data with proper UUIDs
-  const mockPharmacies: Pharmacy[] = [
-    {
-      id: "123e4567-e89b-12d3-a456-426614174000",
-      name: "City Pharmacy",
-      address: "123 Main St",
-      hours: "9 AM - 9 PM",
-      phone: "(555) 123-4567",
-      distance: "0.5 miles"
-    },
-    {
-      id: "123e4567-e89b-12d3-a456-426614174001",
-      name: "Health Plus Pharmacy",
-      address: "456 Oak Ave",
-      hours: "8 AM - 10 PM",
-      phone: "(555) 987-6543",
-      distance: "1.2 miles"
-    }
-  ];
+  // Use actual pharmacies from the database instead of mock data
+  const availablePharmacies: Pharmacy[] = pharmacies?.map(pharmacy => ({
+    ...pharmacy,
+    distance: "N/A" // Distance calculation would be implemented separately
+  })) || [];
 
   if (!session?.user?.id) {
     return <div>Please log in to select a default pharmacy.</div>;
@@ -138,7 +151,7 @@ const PharmacySelection = () => {
         <CardTitle>Select Default Pharmacy</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {mockPharmacies.map((pharmacy) => (
+        {availablePharmacies.map((pharmacy) => (
           <PharmacyCard
             key={pharmacy.id}
             {...pharmacy}
