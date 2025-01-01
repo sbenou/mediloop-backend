@@ -11,6 +11,8 @@ interface OverpassResult {
       'addr:city'?: string;
       'contact:phone'?: string;
       opening_hours?: string;
+      'healthcare'?: string;
+      'healthcare:speciality'?: string;
     };
   }>;
 }
@@ -49,6 +51,47 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
     distance: calculateDistance(lat, lon, element.lat, element.lon),
     hours: element.tags.opening_hours || 'Hours not available',
     phone: element.tags['contact:phone'] || 'Phone not available',
+    coordinates: {
+      lat: element.lat,
+      lon: element.lon
+    }
+  }));
+};
+
+export const searchDoctors = async (lat: number, lon: number, radius: number = 5000) => {
+  const query = `
+    [out:json][timeout:25];
+    (
+      node["healthcare"="doctor"](around:${radius},${lat},${lon});
+      node["amenity"="doctors"](around:${radius},${lat},${lon});
+    );
+    out body;
+    >;
+    out skel qt;
+  `;
+
+  const response = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    body: query,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch doctors');
+  }
+
+  const data: OverpassResult = await response.json();
+  
+  return data.elements.map(element => ({
+    id: element.id.toString(),
+    full_name: element.tags.name || 'Unnamed Doctor',
+    address: [
+      element.tags['addr:housenumber'],
+      element.tags['addr:street'],
+      element.tags['addr:city'],
+      element.tags['addr:postcode']
+    ].filter(Boolean).join(', '),
+    city: element.tags['addr:city'] || '',
+    license_number: element.tags['healthcare:speciality'] || 'General Practice',
     coordinates: {
       lat: element.lat,
       lon: element.lon
