@@ -6,12 +6,13 @@ interface Doctor {
   full_name: string;
   city: string;
   license_number: string;
+  source?: 'database' | 'overpass';
 }
 
 interface DoctorListProps {
   doctors: Doctor[] | undefined;
   isLoading: boolean;
-  onConnect: (doctorId: string) => void;
+  onConnect: (doctorId: string, source: 'database' | 'overpass') => void;
   searchCity: string;
 }
 
@@ -36,7 +37,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         <DoctorCard
           key={doctor.id}
           {...doctor}
-          onConnect={onConnect}
+          onConnect={() => onConnect(doctor.id, doctor.source || 'database')}
         />
       ))}
     </div>

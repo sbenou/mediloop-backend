@@ -11,6 +11,7 @@ interface Doctor {
   full_name: string;
   city: string;
   license_number: string;
+  source?: 'database' | 'overpass';
 }
 
 const DoctorSearch = () => {
@@ -47,6 +48,12 @@ const DoctorSearch = () => {
         parseFloat(coordinates.lon)
       );
 
+      // Add source field to Overpass results
+      const formattedOverpassDoctors = overpassDoctors.map(doc => ({
+        ...doc,
+        source: 'overpass' as const
+      }));
+
       // Get doctors from database
       const { data: dbDoctors, error } = await supabase
         .from("profiles")
@@ -56,10 +63,16 @@ const DoctorSearch = () => {
 
       if (error) throw error;
 
+      // Add source field to database results
+      const formattedDbDoctors = (dbDoctors || []).map(doc => ({
+        ...doc,
+        source: 'database' as const
+      }));
+
       // Combine and deduplicate results
       const allDoctors = [
-        ...(dbDoctors || []),
-        ...overpassDoctors
+        ...formattedDbDoctors,
+        ...formattedOverpassDoctors
       ];
 
       // Remove duplicates based on id
@@ -68,8 +81,17 @@ const DoctorSearch = () => {
     enabled: !!coordinates,
   });
 
-  const sendConnectionRequest = async (doctorId: string) => {
+  const sendConnectionRequest = async (doctorId: string, source: 'database' | 'overpass') => {
     try {
+      // Only send connection request for database doctors
+      if (source === 'overpass') {
+        toast({
+          title: "Information",
+          description: "Connection requests are only available for registered doctors.",
+        });
+        return;
+      }
+
       const { error } = await supabase.rpc("handle_connection_request", {
         doctor_id: doctorId,
         status: "pending"
