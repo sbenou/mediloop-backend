@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,12 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
     }
   };
 
+  const handleClear = () => {
+    setValue('');
+    setSearchTerm('');
+    setSuggestions([]);
+  };
+
   const handleSelect = (cityName: string) => {
     setValue(cityName);
     onSearch(cityName);
@@ -71,19 +77,31 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
                 setSearchTerm(e.target.value);
                 setOpen(true);
               }}
-              className="pl-10 pr-12 h-12 text-lg rounded-xl border-gray-200 focus:border-primary focus:ring-primary transition-all duration-200"
+              className="pl-10 pr-24 h-12 text-lg rounded-xl border-gray-200 focus:border-primary focus:ring-primary transition-all duration-200"
             />
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-2"
-              onClick={handleSearch}
-            >
-              <Search className="h-5 w-5 text-gray-500 hover:text-primary" />
-            </Button>
+            <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex items-center gap-1 mr-2">
+              {value && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClear}
+                  className="hover:bg-transparent"
+                >
+                  <X className="h-5 w-5 text-gray-500 hover:text-destructive" />
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={handleSearch}
+                className="hover:bg-transparent"
+              >
+                <Search className="h-5 w-5 text-gray-500 hover:text-primary" />
+              </Button>
+            </div>
           </div>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command>
             <CommandInput 
               placeholder="Search cities..." 
