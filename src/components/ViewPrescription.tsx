@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { FileEdit, FilePlus, Trash2, Send, ArrowLeft } from "lucide-react";
-import PharmacyCard from "./PharmacyCard";
+import { ArrowLeft } from "lucide-react";
+import PrescriptionDetails from "./prescription/PrescriptionDetails";
+import PrescriptionActions from "./prescription/PrescriptionActions";
+import PharmacyList from "./prescription/PharmacyList";
 
 interface Medication {
   name: string;
@@ -22,27 +23,15 @@ interface PrescriptionData {
   createdAt: string;
 }
 
-interface Pharmacy {
-  id: string;
-  name: string;
-  address: string;
-  distance: string;
-  hours: string;
-  phone: string;
-  email: string;
-}
-
 const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showPharmacies, setShowPharmacies] = useState(false);
   const [defaultPharmacyId, setDefaultPharmacyId] = useState<string | null>(null);
   
-  // Use location state if available, otherwise use default data
   const data = location.state?.data || defaultData;
 
-  // Mock pharmacy data - in a real app, this would come from an API
-  const pharmacies: Pharmacy[] = [
+  const pharmacies = [
     {
       id: "pharmacy-1",
       name: "HealthCare Pharmacy",
@@ -88,7 +77,7 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
       setDefaultPharmacyId(pharmacyId);
       toast({
         title: "Default Pharmacy Set",
-        description: `This pharmacy has been set as your default.`,
+        description: "This pharmacy has been set as your default.",
       });
     } else {
       setDefaultPharmacyId(null);
@@ -106,106 +95,22 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
         Back to My Prescriptions
       </Button>
 
-      <Card className="w-full shadow-lg">
-        <CardHeader className="bg-primary/5 border-b">
-          <CardTitle className="text-2xl font-bold text-primary">Prescription Details</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <h3 className="font-semibold text-lg text-primary">Patient Details</h3>
-              <div className="space-y-2">
-                <p className="text-sm"><span className="text-gray-600 font-medium">Name:</span> {data.patientName}</p>
-                <p className="text-sm"><span className="text-gray-600 font-medium">Address:</span> {data.patientAddress}</p>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <h3 className="font-semibold text-lg text-primary">Doctor Details</h3>
-              <div className="space-y-2">
-                <p className="text-sm"><span className="text-gray-600 font-medium">Name:</span> {data.doctorName}</p>
-                <p className="text-sm"><span className="text-gray-600 font-medium">Address:</span> {data.doctorAddress}</p>
-              </div>
-            </div>
-          </div>
+      <PrescriptionDetails {...data} />
 
-          <div className="space-y-4">
-            <h3 className="font-semibold text-lg text-primary">Medications</h3>
-            <div className="space-y-4">
-              {data.medications.map((medication, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-accent/5">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <p className="text-sm"><span className="text-gray-600 font-medium">Name:</span> {medication.name}</p>
-                    <p className="text-sm"><span className="text-gray-600 font-medium">Frequency:</span> {medication.frequency}</p>
-                    <p className="text-sm"><span className="text-gray-600 font-medium">Doses:</span> {medication.dosesPerFrequency} times per {medication.frequency}</p>
-                    <p className="text-sm"><span className="text-gray-600 font-medium">Quantity:</span> {medication.quantity}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-right text-sm text-gray-600">
-            Created on: {data.createdAt}
-          </div>
-
-          <div className="flex flex-wrap gap-4 justify-end pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={() => navigate("/create-prescription")}
-              className="gap-2"
-            >
-              <FilePlus className="w-4 h-4" />
-              New Prescription
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleEdit}
-              className="gap-2"
-            >
-              <FileEdit className="w-4 h-4" />
-              Modify
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </Button>
-            <Button
-              onClick={() => setShowPharmacies(true)}
-              className="gap-2"
-            >
-              <Send className="w-4 h-4" />
-              Send to Pharmacy
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <PrescriptionActions
+        onNew={() => navigate("/create-prescription")}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onSend={() => setShowPharmacies(true)}
+      />
 
       {showPharmacies && (
-        <div className="space-y-4 animate-slide-up">
-          <h2 className="text-xl font-semibold text-primary">Select a Pharmacy</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {pharmacies.map((pharmacy) => (
-              <PharmacyCard
-                key={pharmacy.id}
-                id={pharmacy.id}
-                name={pharmacy.name}
-                address={pharmacy.address}
-                distance={pharmacy.distance}
-                hours={pharmacy.hours}
-                phone={pharmacy.phone}
-                email={pharmacy.email}
-                onSelect={() => handleSendToPharmachy(pharmacy.name)}
-                onSetDefault={(isDefault) => handleSetDefaultPharmacy(pharmacy.id, isDefault)}
-                isDefault={defaultPharmacyId === pharmacy.id}
-                showUpload={true}
-              />
-            ))}
-          </div>
-        </div>
+        <PharmacyList
+          pharmacies={pharmacies}
+          onSelect={handleSendToPharmachy}
+          onSetDefault={handleSetDefaultPharmacy}
+          defaultPharmacyId={defaultPharmacyId}
+        />
       )}
     </div>
   );

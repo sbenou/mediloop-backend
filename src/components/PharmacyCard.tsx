@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, MapPin, Phone, Mail, Star } from "lucide-react";
@@ -32,10 +32,9 @@ const PharmacyCard = ({
   isDefault,
   showUpload = false
 }: PharmacyCardProps) => {
-  const [showPrescriptionUpload, setShowPrescriptionUpload] = React.useState(false);
+  const [showPrescriptionUpload, setShowPrescriptionUpload] = useState(false);
 
   const handleFileSelect = (file: File) => {
-    // Handle file upload logic here
     console.log('Selected file:', file);
   };
 
@@ -101,7 +100,6 @@ const PharmacyCard = ({
             <FileUpload onFileSelect={handleFileSelect} />
             <Button 
               onClick={() => {
-                // Handle send prescription logic
                 console.log('Sending prescription...');
               }}
               className="w-full"
