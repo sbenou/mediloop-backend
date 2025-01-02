@@ -92,6 +92,7 @@ export const searchDoctors = async (lat: number, lon: number, radius: number = 5
     ].filter(Boolean).join(', '),
     city: element.tags['addr:city'] || '',
     license_number: element.tags['healthcare:speciality'] || 'General Practice',
+    email: element.tags['contact:email'] || element.tags['email'] || undefined,
     coordinates: {
       lat: element.lat,
       lon: element.lon

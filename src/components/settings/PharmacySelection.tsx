@@ -10,6 +10,7 @@ interface Pharmacy {
   address: string;
   hours: string;
   phone: string;
+  email?: string;
   distance: string;
 }
 
@@ -46,54 +47,38 @@ const PharmacySelection = () => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      try {
-        const { data: userPharmacy, error: userPharmacyError } = await supabase
-          .from('user_pharmacies')
-          .select('pharmacy_id')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        if (userPharmacyError) {
-          console.error('Error fetching user pharmacy:', userPharmacyError);
-          return null;
-        }
-        
-        if (!userPharmacy) return null;
-        
-        const { data: pharmacy, error: pharmacyError } = await supabase
-          .from('pharmacies')
-          .select('*')
-          .eq('id', userPharmacy.pharmacy_id)
-          .single();
-        
-        if (pharmacyError) {
-          console.error('Error fetching pharmacy details:', pharmacyError);
-          return null;
-        }
-        
-        return pharmacy;
-      } catch (error) {
-        console.error('Database error:', error);
+      const { data: userPharmacy, error: userPharmacyError } = await supabase
+        .from('user_pharmacies')
+        .select('pharmacy_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      
+      if (userPharmacyError) {
+        console.error('Error fetching user pharmacy:', userPharmacyError);
         return null;
       }
+      
+      if (!userPharmacy) return null;
+      
+      const { data: pharmacy, error: pharmacyError } = await supabase
+        .from('pharmacies')
+        .select('*')
+        .eq('id', userPharmacy.pharmacy_id)
+        .single();
+      
+      if (pharmacyError) {
+        console.error('Error fetching pharmacy details:', pharmacyError);
+        return null;
+      }
+      
+      return pharmacy;
     },
     enabled: !!session?.user?.id,
   });
 
   const setDefaultPharmacyMutation = useMutation({
-    mutationFn: async (pharmacyId: string) => {
+    mutationFn: async (pharmacyId: string | null) => {
       if (!session?.user?.id) throw new Error('Not authenticated');
-
-      // First check if the pharmacy exists
-      const { data: pharmacy, error: pharmacyError } = await supabase
-        .from('pharmacies')
-        .select('id')
-        .eq('id', pharmacyId)
-        .single();
-
-      if (pharmacyError || !pharmacy) {
-        throw new Error('Selected pharmacy does not exist in the database');
-      }
 
       try {
         // Delete existing default pharmacy if any
@@ -102,16 +87,15 @@ const PharmacySelection = () => {
           .delete()
           .eq('user_id', session.user.id);
 
-        // Set new default pharmacy
-        const { error } = await supabase
-          .from('user_pharmacies')
-          .insert([
-            { user_id: session.user.id, pharmacy_id: pharmacyId }
-          ]);
+        if (pharmacyId) {
+          // Set new default pharmacy
+          const { error } = await supabase
+            .from('user_pharmacies')
+            .insert([
+              { user_id: session.user.id, pharmacy_id: pharmacyId }
+            ]);
 
-        if (error) {
-          console.error('Error setting default pharmacy:', error);
-          throw error;
+          if (error) throw error;
         }
       } catch (error) {
         console.error('Database error:', error);
@@ -129,17 +113,11 @@ const PharmacySelection = () => {
       console.error('Mutation error:', error);
       toast({
         title: "Error",
-        description: "Failed to update default pharmacy. Please ensure the pharmacy exists in our system.",
+        description: "Failed to update default pharmacy. Please try again.",
         variant: "destructive",
       });
     },
   });
-
-  // Use actual pharmacies from the database instead of mock data
-  const availablePharmacies: Pharmacy[] = pharmacies?.map(pharmacy => ({
-    ...pharmacy,
-    distance: "N/A" // Distance calculation would be implemented separately
-  })) || [];
 
   if (!session?.user?.id) {
     return <div>Please log in to select a default pharmacy.</div>;
@@ -148,16 +126,25 @@ const PharmacySelection = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Select Default Pharmacy</CardTitle>
+        <CardTitle>Default Pharmacy</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {availablePharmacies.map((pharmacy) => (
-          <PharmacyCard
-            key={pharmacy.id}
-            {...pharmacy}
-            onSelect={() => setDefaultPharmacyMutation.mutate(pharmacy.id)}
-          />
-        ))}
+        {defaultPharmacy ? (
+          <div className="space-y-4">
+            <PharmacyCard
+              {...defaultPharmacy}
+              onSelect={() => {}}
+              onSetDefault={(isDefault) => {
+                if (!isDefault) {
+                  setDefaultPharmacyMutation.mutate(null);
+                }
+              }}
+              isDefault={true}
+            />
+          </div>
+        ) : (
+          <p className="text-muted-foreground">No default pharmacy selected</p>
+        )}
       </CardContent>
     </Card>
   );

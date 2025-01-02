@@ -1,24 +1,31 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Mail } from "lucide-react";
 
 interface DoctorCardProps {
   id: string;
   full_name: string;
   license_number: string;
   city: string;
+  email?: string;
   onConnect: (doctorId: string) => void;
 }
 
-const DoctorCard = ({ id, full_name, license_number, city, onConnect }: DoctorCardProps) => {
+const DoctorCard = ({ id, full_name, license_number, city, email, onConnect }: DoctorCardProps) => {
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
-          <div>
+          <div className="space-y-2">
             <h3 className="font-semibold text-lg">{full_name}</h3>
             <p className="text-sm text-gray-500">License: {license_number}</p>
             <p className="text-sm text-gray-500">{city}</p>
+            {email && (
+              <p className="text-sm text-gray-500 flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                {email}
+              </p>
+            )}
           </div>
           <Button
             variant="outline"
