@@ -13,6 +13,7 @@ import DoctorConnections from "./pages/DoctorConnections";
 import FindDoctor from "./pages/FindDoctor";
 import Settings from "./pages/Settings";
 import MyOrders from "./pages/MyOrders";
+import Products from "./pages/Products";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/find-doctor" element={<FindDoctor />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/my-orders" element={<MyOrders />} />
+          <Route path="/products/:pharmacyId" element={<Products />} />
           <Route 
             path="/prescription/:id" 
             element={

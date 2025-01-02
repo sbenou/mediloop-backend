@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, MapPin, Phone, Mail } from "lucide-react";
@@ -29,6 +30,13 @@ const PharmacyCard = ({
   onSetDefault,
   isDefault
 }: PharmacyCardProps) => {
+  const navigate = useNavigate();
+
+  const handleOrder = () => {
+    onSelect(id);
+    navigate(`/products/${id}`);
+  };
+
   return (
     <Card className="w-full p-6 hover:shadow-lg transition-shadow duration-200 animate-fade-in">
       <div className="flex justify-between items-start">
@@ -81,7 +89,7 @@ const PharmacyCard = ({
       
       <div className="mt-4">
         <Button 
-          onClick={() => onSelect(id)}
+          onClick={handleOrder}
           className="w-full"
         >
           Order
