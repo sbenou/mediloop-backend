@@ -33,6 +33,7 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
   // Mock pharmacy data - in a real app, this would come from an API
   const pharmacies = [
     {
+      id: "pharmacy-1",
       name: "HealthCare Pharmacy",
       address: "123 Medical St, CA",
       distance: "0.5 miles",
@@ -40,6 +41,7 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
       phone: "(555) 123-4567"
     },
     {
+      id: "pharmacy-2",
       name: "City Drugs",
       address: "456 Health Ave, CA",
       distance: "1.2 miles",
@@ -163,9 +165,10 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
           <div className="grid md:grid-cols-2 gap-4">
             {pharmacies.map((pharmacy) => (
               <PharmacyCard
-                key={pharmacy.name}
+                key={pharmacy.id}
                 {...pharmacy}
                 onSelect={() => handleSendToPharmachy(pharmacy.name)}
+                showUpload={true}
               />
             ))}
           </div>
