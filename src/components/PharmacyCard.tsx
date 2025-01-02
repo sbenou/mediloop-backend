@@ -20,6 +20,7 @@ interface PharmacyCardProps {
 }
 
 const PharmacyCard = ({ 
+  id,
   name, 
   address, 
   distance, 
@@ -47,12 +48,12 @@ const PharmacyCard = ({
             {onSetDefault && (
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id={`default-${name}`}
+                  id={`default-${id}`}
                   checked={isDefault}
                   onCheckedChange={(checked) => onSetDefault(checked as boolean)}
                 />
                 <label
-                  htmlFor={`default-${name}`}
+                  htmlFor={`default-${id}`}
                   className="text-sm text-muted-foreground"
                 >
                   Set as default

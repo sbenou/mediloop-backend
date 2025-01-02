@@ -29,12 +29,14 @@ interface Pharmacy {
   distance: string;
   hours: string;
   phone: string;
+  email: string;
 }
 
 const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showPharmacies, setShowPharmacies] = useState(false);
+  const [defaultPharmacyId, setDefaultPharmacyId] = useState<string | null>(null);
   
   // Use location state if available, otherwise use default data
   const data = location.state?.data || defaultData;
@@ -47,7 +49,8 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
       address: "123 Medical St, CA",
       distance: "0.5 miles",
       hours: "9:00 AM - 9:00 PM",
-      phone: "(555) 123-4567"
+      phone: "(555) 123-4567",
+      email: "contact@healthcarepharmacy.com"
     },
     {
       id: "pharmacy-2",
@@ -55,7 +58,8 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
       address: "456 Health Ave, CA",
       distance: "1.2 miles",
       hours: "8:00 AM - 10:00 PM",
-      phone: "(555) 987-6543"
+      phone: "(555) 987-6543",
+      email: "info@citydrugs.com"
     }
   ];
 
@@ -77,6 +81,18 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
       description: `The prescription has been sent to ${pharmacyName}.`,
     });
     setShowPharmacies(false);
+  };
+
+  const handleSetDefaultPharmacy = (pharmacyId: string, isDefault: boolean) => {
+    if (isDefault) {
+      setDefaultPharmacyId(pharmacyId);
+      toast({
+        title: "Default Pharmacy Set",
+        description: `This pharmacy has been set as your default.`,
+      });
+    } else {
+      setDefaultPharmacyId(null);
+    }
   };
 
   return (
@@ -181,7 +197,10 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
                 distance={pharmacy.distance}
                 hours={pharmacy.hours}
                 phone={pharmacy.phone}
+                email={pharmacy.email}
                 onSelect={() => handleSendToPharmachy(pharmacy.name)}
+                onSetDefault={(isDefault) => handleSetDefaultPharmacy(pharmacy.id, isDefault)}
+                isDefault={defaultPharmacyId === pharmacy.id}
                 showUpload={true}
               />
             ))}
