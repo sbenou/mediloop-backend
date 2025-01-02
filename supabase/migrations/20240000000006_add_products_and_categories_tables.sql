@@ -53,45 +53,76 @@ CREATE POLICY "Products are viewable by all authenticated users"
     TO authenticated
     USING (true);
 
--- Insert sample data
-INSERT INTO public.categories (name, type) VALUES
-    ('Pain Relief', 'medication'),
-    ('Antibiotics', 'medication'),
-    ('Vitamins', 'parapharmacy'),
-    ('Skincare', 'parapharmacy')
+-- Insert sample data for categories
+INSERT INTO public.categories (id, name, type) VALUES
+    ('c1', 'Pain Relief', 'medication'),
+    ('c2', 'Antibiotics', 'medication'),
+    ('c3', 'Vitamins', 'parapharmacy'),
+    ('c4', 'Skincare', 'parapharmacy')
 ON CONFLICT DO NOTHING;
 
--- Insert sample subcategories
-INSERT INTO public.subcategories (name, category_id)
-SELECT 'Painkillers', id FROM public.categories WHERE name = 'Pain Relief'
+-- Insert sample subcategories with explicit IDs
+INSERT INTO public.subcategories (id, name, category_id) VALUES
+    ('s1', 'Painkillers', 'c1'),
+    ('s2', 'Anti-inflammatory', 'c1'),
+    ('s3', 'Broad Spectrum', 'c2'),
+    ('s4', 'Multivitamins', 'c3'),
+    ('s5', 'Face Care', 'c4')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.subcategories (name, category_id)
-SELECT 'Anti-inflammatory', id FROM public.categories WHERE name = 'Pain Relief'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.subcategories (name, category_id)
-SELECT 'Broad Spectrum', id FROM public.categories WHERE name = 'Antibiotics'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.subcategories (name, category_id)
-SELECT 'Multivitamins', id FROM public.categories WHERE name = 'Vitamins'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.subcategories (name, category_id)
-SELECT 'Face Care', id FROM public.categories WHERE name = 'Skincare'
-ON CONFLICT DO NOTHING;
-
--- Insert sample products
-INSERT INTO public.products (name, description, price, type, requires_prescription, category_id, subcategory_id)
-SELECT 
-    'Sample Product 1',
-    'This is a sample product description',
-    9.99,
-    c.type,
-    CASE WHEN c.type = 'medication' THEN true ELSE false END,
-    c.id,
-    s.id
-FROM public.categories c
-JOIN public.subcategories s ON s.category_id = c.id
-LIMIT 1;
+-- Insert sample products with explicit pharmacy_id
+INSERT INTO public.products (
+    name, 
+    description, 
+    price, 
+    type, 
+    requires_prescription, 
+    pharmacy_id,
+    category_id, 
+    subcategory_id,
+    image_url
+) VALUES
+    (
+        'Ibuprofen 400mg',
+        'Effective pain relief for headaches and mild pain',
+        12.99,
+        'medication',
+        false,
+        '1067588497',
+        'c1',
+        's1',
+        'https://placehold.co/400x400'
+    ),
+    (
+        'Amoxicillin 500mg',
+        'Broad-spectrum antibiotic for bacterial infections',
+        24.99,
+        'medication',
+        true,
+        '1067588497',
+        'c2',
+        's3',
+        'https://placehold.co/400x400'
+    ),
+    (
+        'Vitamin D3 1000IU',
+        'Daily supplement for bone health',
+        15.99,
+        'parapharmacy',
+        false,
+        '1067588497',
+        'c3',
+        's4',
+        'https://placehold.co/400x400'
+    ),
+    (
+        'Hydrating Face Cream',
+        'Daily moisturizer for all skin types',
+        29.99,
+        'parapharmacy',
+        false,
+        '1067588497',
+        'c4',
+        's5',
+        'https://placehold.co/400x400'
+    );
