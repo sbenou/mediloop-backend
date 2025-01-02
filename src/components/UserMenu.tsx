@@ -4,17 +4,33 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, FileText, Settings } from "lucide-react";
+import { User, LogOut, FileText, Settings, ShoppingBag, UserCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 const UserMenu = () => {
   const navigate = useNavigate();
-  const mockUser = {
-    name: "John Doe",
-    email: "john@example.com",
-  };
+  
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleLogout = () => {
     navigate('/login');
@@ -35,8 +51,23 @@ const UserMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
-          {mockUser.name}
+          {userProfile?.full_name}
         </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => navigate('/my-details')}
+          className="cursor-pointer"
+        >
+          <UserCircle className="mr-2 h-4 w-4" />
+          My Personal Details
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigate('/my-orders')}
+          className="cursor-pointer"
+        >
+          <ShoppingBag className="mr-2 h-4 w-4" />
+          My Orders
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => navigate('/my-prescriptions')}
           className="cursor-pointer"
@@ -51,6 +82,7 @@ const UserMenu = () => {
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleLogout}
           className="cursor-pointer text-destructive focus:text-destructive"

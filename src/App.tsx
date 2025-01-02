@@ -12,6 +12,7 @@ import ViewPrescription from "./components/ViewPrescription";
 import DoctorConnections from "./pages/DoctorConnections";
 import FindDoctor from "./pages/FindDoctor";
 import Settings from "./pages/Settings";
+import MyOrders from "./pages/MyOrders";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/doctor-connections" element={<DoctorConnections />} />
           <Route path="/find-doctor" element={<FindDoctor />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/my-orders" element={<MyOrders />} />
           <Route 
             path="/prescription/:id" 
             element={
