@@ -8,8 +8,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { format, subMonths, startOfYear } from "date-fns";
+import { Package2 } from "lucide-react";
 
 const MyOrders = () => {
   const [timeFilter, setTimeFilter] = useState("current-month");
@@ -66,24 +75,51 @@ const MyOrders = () => {
       </div>
 
       {isLoading ? (
-        <div>Loading orders...</div>
+        <div className="text-center py-8">Loading orders...</div>
       ) : (
-        <div className="space-y-4">
-          {orders?.map((order) => (
-            <Card key={order.id}>
-              <CardHeader>
-                <CardTitle>
-                  Order #{order.id} - {format(new Date(order.created_at), 'PPP')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p>Status: {order.status}</p>
-                  <p>Total: ${order.total}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="rounded-md border">
+          <Table>
+            <TableCaption>A list of your recent orders.</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Order ID</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {orders && orders.length > 0 ? (
+                orders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">#{order.id}</TableCell>
+                    <TableCell>{format(new Date(order.created_at), 'PPP')}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        order.status === 'completed' 
+                          ? 'bg-green-100 text-green-800'
+                          : order.status === 'processing'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Package2 className="h-8 w-8" />
+                      <p>No orders found for this period</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
