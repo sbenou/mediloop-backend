@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import CitySearch from '@/components/CitySearch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import UserMenu from '@/components/UserMenu';
 import { useQuery } from '@tanstack/react-query';
 import { searchPharmacies } from '@/lib/overpass';
+import PharmacyCard from '@/components/PharmacyCard';
 
 const Index = () => {
   const navigate = useNavigate();
   const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
+  const [defaultPharmacyId, setDefaultPharmacyId] = useState<string | null>(null);
 
   const { data: pharmacies, isLoading } = useQuery({
     queryKey: ['pharmacies', coordinates],
@@ -23,7 +25,6 @@ const Index = () => {
 
   const handleSearch = async (city: string) => {
     try {
-      // First get coordinates from the city name using Nominatim
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`
       );
@@ -48,6 +49,31 @@ const Index = () => {
         title: "Search Error",
         description: "Failed to search for pharmacies. Please try again.",
       });
+    }
+  };
+
+  const handlePharmacySelect = (pharmacyId: string) => {
+    const selectedPharmacy = pharmacies?.find(p => p.id === pharmacyId);
+    if (selectedPharmacy) {
+      toast({
+        title: "Pharmacy Selected",
+        description: `Prescription sent to ${selectedPharmacy.name}.`,
+      });
+    }
+  };
+
+  const handleSetDefaultPharmacy = (pharmacyId: string, isDefault: boolean) => {
+    if (isDefault) {
+      setDefaultPharmacyId(pharmacyId);
+      const pharmacy = pharmacies?.find(p => p.id === pharmacyId);
+      if (pharmacy) {
+        toast({
+          title: "Default Pharmacy Set",
+          description: `${pharmacy.name} has been set as your default pharmacy.`,
+        });
+      }
+    } else {
+      setDefaultPharmacyId(null);
     }
   };
 
@@ -93,32 +119,13 @@ const Index = () => {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {pharmacies?.map((pharmacy) => (
-            <Card key={pharmacy.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{pharmacy.name}</h3>
-                    <p className="text-sm text-gray-500">{pharmacy.address}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">{pharmacy.hours}</p>
-                    <p className="text-sm text-gray-500">{pharmacy.phone}</p>
-                    <p className="text-sm font-medium text-primary">{pharmacy.distance}</p>
-                  </div>
-                  <Button 
-                    className="w-full"
-                    onClick={() => {
-                      toast({
-                        title: "Pharmacy Selected",
-                        description: `You've selected ${pharmacy.name} as your pharmacy.`,
-                      });
-                    }}
-                  >
-                    Select Pharmacy
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <PharmacyCard
+              key={pharmacy.id}
+              {...pharmacy}
+              onSelect={handlePharmacySelect}
+              onSetDefault={handleSetDefaultPharmacy}
+              isDefault={defaultPharmacyId === pharmacy.id}
+            />
           ))}
         </div>
 

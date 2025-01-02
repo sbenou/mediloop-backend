@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, MapPin, Phone, Mail, Send } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import FileUpload from "./FileUpload";
 
 interface PharmacyCardProps {
@@ -40,6 +40,7 @@ const PharmacyCard = ({
       description: `File "${file.name}" has been uploaded successfully.`,
     });
     onSelect(id);
+    setShowPrescriptionUpload(false);
   };
 
   return (
@@ -53,11 +54,15 @@ const PharmacyCard = ({
                 <Checkbox
                   id={`default-${id}`}
                   checked={isDefault}
-                  onCheckedChange={(checked) => onSetDefault(id, checked as boolean)}
+                  onCheckedChange={(checked) => {
+                    if (onSetDefault) {
+                      onSetDefault(id, checked as boolean);
+                    }
+                  }}
                 />
                 <label
                   htmlFor={`default-${id}`}
-                  className="text-sm text-muted-foreground"
+                  className="text-sm text-muted-foreground cursor-pointer"
                 >
                   Set as default
                 </label>
@@ -98,6 +103,13 @@ const PharmacyCard = ({
         ) : (
           <div className="space-y-4 animate-slide-up">
             <FileUpload onFileSelect={handleFileSelect} />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowPrescriptionUpload(false)}
+            >
+              Cancel
+            </Button>
           </div>
         )}
       </div>
