@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
@@ -17,36 +17,90 @@ interface Doctor {
 const DoctorSearch = () => {
   const [searchCity, setSearchCity] = useState("");
   const [coordinates, setCoordinates] = useState<{ lat: string; lon: string } | null>(null);
+  const [searchRadius, setSearchRadius] = useState(2000); // Start with 2km radius
+
+  // Fetch user's default address
+  const { data: userAddress } = useQuery({
+    queryKey: ['userAddress'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('is_default', true)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Auto-search based on user's address
+  useEffect(() => {
+    if (userAddress?.city) {
+      handleCitySearch(userAddress.city);
+    }
+  }, [userAddress]);
+
+  const handleCitySearch = async (city: string) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`
+      );
+      const data = await response.json();
+      
+      if (data.length > 0) {
+        setCoordinates({
+          lat: data[0].lat,
+          lon: data[0].lon
+        });
+        setSearchRadius(2000); // Reset radius on new search
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Location not found",
+          description: "Could not find coordinates for the specified city.",
+        });
+      }
+    } catch (error) {
+      console.error('Error searching city:', error);
+      toast({
+        variant: "destructive",
+        title: "Search Error",
+        description: "Failed to search for doctors. Please try again.",
+      });
+    }
+  };
 
   const { data: locationData, isLoading: isLoadingLocation } = useQuery({
     queryKey: ["cityLocation", searchCity],
     queryFn: async () => {
       if (!searchCity) return null;
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          searchCity
-        )}&limit=1`
-      );
-      const data = await response.json();
-      if (data.length > 0) {
-        setCoordinates({ lat: data[0].lat, lon: data[0].lon });
-        return data[0];
-      }
-      return null;
+      return handleCitySearch(searchCity);
     },
     enabled: searchCity.length > 0,
   });
 
   const { data: doctors, isLoading: isLoadingDoctors } = useQuery({
-    queryKey: ["doctors", coordinates],
+    queryKey: ["doctors", coordinates, searchRadius],
     queryFn: async () => {
       if (!coordinates) return [];
       
-      // Get doctors from Overpass API
+      // Get doctors from Overpass API with current radius
       const overpassDoctors = await searchDoctors(
         parseFloat(coordinates.lat),
-        parseFloat(coordinates.lon)
+        parseFloat(coordinates.lon),
+        searchRadius
       );
+
+      // If no results and radius can be increased
+      if (overpassDoctors.length === 0 && searchRadius < 10000) {
+        setSearchRadius(prev => Math.min(prev * 2, 10000));
+        return [];
+      }
 
       // Add source field to Overpass results
       const formattedOverpassDoctors = overpassDoctors.map(doc => ({
