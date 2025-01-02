@@ -18,7 +18,13 @@ const Index = () => {
     queryKey: ['pharmacies', coordinates],
     queryFn: async () => {
       if (!coordinates) return [];
-      return searchPharmacies(coordinates.lat, coordinates.lon);
+      const results = await searchPharmacies(coordinates.lat, coordinates.lon);
+      // Transform the results to include required fields and correct types
+      return results.map(pharmacy => ({
+        ...pharmacy,
+        id: pharmacy.id.toString(), // Convert number to string
+        email: `info@${pharmacy.name.toLowerCase().replace(/\s+/g, '')}.com`, // Add default email
+      }));
     },
     enabled: !!coordinates,
   });
