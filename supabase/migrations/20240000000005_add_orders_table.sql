@@ -1,3 +1,6 @@
+-- First enable the moddatetime extension
+create extension if not exists moddatetime schema extensions;
+
 create type order_status as enum ('pending', 'processing', 'shipped', 'delivered', 'cancelled');
 
 create table public.orders (
@@ -26,7 +29,7 @@ create policy "Users can update their own orders"
 
 -- Add updated_at trigger
 create trigger handle_updated_at before update on public.orders
-  for each row execute procedure moddatetime (updated_at);
+  for each row execute procedure moddatetime();
 
 -- Create index for faster queries
 create index orders_user_id_idx on public.orders(user_id);
