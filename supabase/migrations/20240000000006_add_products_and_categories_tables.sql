@@ -53,35 +53,69 @@ CREATE POLICY "Products are viewable by all authenticated users"
     TO authenticated
     USING (true);
 
--- Insert sample data for categories
-INSERT INTO public.categories (id, name, type) VALUES
-    ('c1', 'Pain Relief', 'medication'),
-    ('c2', 'Antibiotics', 'medication'),
-    ('c3', 'Vitamins', 'parapharmacy'),
-    ('c4', 'Skincare', 'parapharmacy')
-ON CONFLICT DO NOTHING;
+-- Insert sample data for categories with proper UUIDs
+DO $$
+DECLARE
+    pain_relief_id UUID;
+    antibiotics_id UUID;
+    vitamins_id UUID;
+    skincare_id UUID;
+    painkillers_id UUID;
+    antiinflam_id UUID;
+    broad_spectrum_id UUID;
+    multivitamins_id UUID;
+    face_care_id UUID;
+BEGIN
+    -- Insert categories and store their IDs
+    INSERT INTO public.categories (name, type) 
+    VALUES ('Pain Relief', 'medication') 
+    RETURNING id INTO pain_relief_id;
+    
+    INSERT INTO public.categories (name, type) 
+    VALUES ('Antibiotics', 'medication') 
+    RETURNING id INTO antibiotics_id;
+    
+    INSERT INTO public.categories (name, type) 
+    VALUES ('Vitamins', 'parapharmacy') 
+    RETURNING id INTO vitamins_id;
+    
+    INSERT INTO public.categories (name, type) 
+    VALUES ('Skincare', 'parapharmacy') 
+    RETURNING id INTO skincare_id;
 
--- Insert sample subcategories with explicit IDs
-INSERT INTO public.subcategories (id, name, category_id) VALUES
-    ('s1', 'Painkillers', 'c1'),
-    ('s2', 'Anti-inflammatory', 'c1'),
-    ('s3', 'Broad Spectrum', 'c2'),
-    ('s4', 'Multivitamins', 'c3'),
-    ('s5', 'Face Care', 'c4')
-ON CONFLICT DO NOTHING;
+    -- Insert subcategories using the category IDs
+    INSERT INTO public.subcategories (name, category_id)
+    VALUES ('Painkillers', pain_relief_id)
+    RETURNING id INTO painkillers_id;
 
--- Insert sample products with explicit pharmacy_id
-INSERT INTO public.products (
-    name, 
-    description, 
-    price, 
-    type, 
-    requires_prescription, 
-    pharmacy_id,
-    category_id, 
-    subcategory_id,
-    image_url
-) VALUES
+    INSERT INTO public.subcategories (name, category_id)
+    VALUES ('Anti-inflammatory', pain_relief_id)
+    RETURNING id INTO antiinflam_id;
+
+    INSERT INTO public.subcategories (name, category_id)
+    VALUES ('Broad Spectrum', antibiotics_id)
+    RETURNING id INTO broad_spectrum_id;
+
+    INSERT INTO public.subcategories (name, category_id)
+    VALUES ('Multivitamins', vitamins_id)
+    RETURNING id INTO multivitamins_id;
+
+    INSERT INTO public.subcategories (name, category_id)
+    VALUES ('Face Care', skincare_id)
+    RETURNING id INTO face_care_id;
+
+    -- Insert sample products
+    INSERT INTO public.products (
+        name,
+        description,
+        price,
+        type,
+        requires_prescription,
+        pharmacy_id,
+        category_id,
+        subcategory_id,
+        image_url
+    ) VALUES
     (
         'Ibuprofen 400mg',
         'Effective pain relief for headaches and mild pain',
@@ -89,9 +123,9 @@ INSERT INTO public.products (
         'medication',
         false,
         '1067588497',
-        'c1',
-        's1',
-        'https://placehold.co/400x400'
+        pain_relief_id,
+        painkillers_id,
+        'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
     ),
     (
         'Amoxicillin 500mg',
@@ -100,9 +134,9 @@ INSERT INTO public.products (
         'medication',
         true,
         '1067588497',
-        'c2',
-        's3',
-        'https://placehold.co/400x400'
+        antibiotics_id,
+        broad_spectrum_id,
+        'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
     ),
     (
         'Vitamin D3 1000IU',
@@ -111,9 +145,9 @@ INSERT INTO public.products (
         'parapharmacy',
         false,
         '1067588497',
-        'c3',
-        's4',
-        'https://placehold.co/400x400'
+        vitamins_id,
+        multivitamins_id,
+        'https://images.unsplash.com/photo-1577401132921-cb39bb0adcff?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
     ),
     (
         'Hydrating Face Cream',
@@ -122,7 +156,8 @@ INSERT INTO public.products (
         'parapharmacy',
         false,
         '1067588497',
-        'c4',
-        's5',
-        'https://placehold.co/400x400'
+        skincare_id,
+        face_care_id,
+        'https://images.unsplash.com/photo-1556229162-5c63ed9c4efb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
     );
+END $$;
