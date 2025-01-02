@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, MapPin, Phone, Mail, Send } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/hooks/use-toast";
-import FileUpload from "./FileUpload";
+import { Clock, MapPin, Phone, Mail } from "lucide-react";
 
 interface PharmacyCardProps {
   id: string;
@@ -13,7 +10,7 @@ interface PharmacyCardProps {
   distance: string;
   hours: string;
   phone: string;
-  email: string;
+  email?: string | null;
   onSelect: (id: string) => void;
   onSetDefault?: (id: string, isDefault: boolean) => void;
   isDefault?: boolean;
@@ -31,18 +28,6 @@ const PharmacyCard = ({
   onSetDefault,
   isDefault
 }: PharmacyCardProps) => {
-  const [showPrescriptionUpload, setShowPrescriptionUpload] = useState(false);
-
-  const handleFileSelect = (file: File) => {
-    console.log('Selected file:', file);
-    toast({
-      title: "Prescription Uploaded",
-      description: `File "${file.name}" has been uploaded successfully.`,
-    });
-    onSelect(id);
-    setShowPrescriptionUpload(false);
-  };
-
   return (
     <Card className="w-full p-6 hover:shadow-lg transition-shadow duration-200 animate-fade-in">
       <div className="flex justify-between items-start">
@@ -81,37 +66,25 @@ const PharmacyCard = ({
             <Phone className="h-4 w-4 mr-2" />
             <span className="text-sm">{phone}</span>
           </div>
-          <div className="flex items-center text-gray-600">
-            <Mail className="h-4 w-4 mr-2" />
-            <span className="text-sm">{email}</span>
-          </div>
+          {email && (
+            <div className="flex items-center text-gray-600">
+              <Mail className="h-4 w-4 mr-2" />
+              <span className="text-sm">{email}</span>
+            </div>
+          )}
         </div>
         <div className="text-right">
           <span className="text-sm font-medium text-primary">{distance}</span>
         </div>
       </div>
       
-      <div className="mt-4 space-y-4">
-        {!showPrescriptionUpload ? (
-          <Button 
-            onClick={() => setShowPrescriptionUpload(true)}
-            className="w-full"
-          >
-            <Send className="mr-2 h-4 w-4" />
-            Send Prescription
-          </Button>
-        ) : (
-          <div className="space-y-4 animate-slide-up">
-            <FileUpload onFileSelect={handleFileSelect} />
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowPrescriptionUpload(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
+      <div className="mt-4">
+        <Button 
+          onClick={() => onSelect(id)}
+          className="w-full"
+        >
+          Order
+        </Button>
       </div>
     </Card>
   );

@@ -7,7 +7,7 @@ interface DoctorCardProps {
   full_name: string;
   license_number: string;
   city: string;
-  email?: string;
+  email?: string | null;
   onConnect: (doctorId: string) => void;
 }
 

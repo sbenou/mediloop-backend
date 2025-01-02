@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CitySearch from '@/components/CitySearch';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,26 +8,67 @@ import UserMenu from '@/components/UserMenu';
 import { useQuery } from '@tanstack/react-query';
 import { searchPharmacies } from '@/lib/overpass';
 import PharmacyCard from '@/components/PharmacyCard';
+import { supabase } from '@/lib/supabase';
 
 const Index = () => {
   const navigate = useNavigate();
   const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
+  const [searchRadius, setSearchRadius] = useState(2000); // Start with 2km radius
   const [defaultPharmacyId, setDefaultPharmacyId] = useState<string | null>(null);
 
-  const { data: pharmacies, isLoading } = useQuery({
-    queryKey: ['pharmacies', coordinates],
+  // Fetch user's address
+  const { data: userAddress } = useQuery({
+    queryKey: ['userAddress'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('is_default', true)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Auto-search based on user's address
+  useEffect(() => {
+    if (userAddress?.city) {
+      handleSearch(userAddress.city);
+    }
+  }, [userAddress]);
+
+  const { data: pharmacies, isLoading, refetch } = useQuery({
+    queryKey: ['pharmacies', coordinates, searchRadius],
     queryFn: async () => {
       if (!coordinates) return [];
-      const results = await searchPharmacies(coordinates.lat, coordinates.lon);
-      // Transform the results to include required fields and correct types
+      const results = await searchPharmacies(coordinates.lat, coordinates.lon, searchRadius);
+      
+      // If no results and radius can be increased
+      if (results.length === 0 && searchRadius < 10000) {
+        setSearchRadius(prev => Math.min(prev * 2, 10000));
+        return [];
+      }
+
       return results.map(pharmacy => ({
         ...pharmacy,
-        id: pharmacy.id.toString(), // Convert number to string
-        email: `info@${pharmacy.name.toLowerCase().replace(/\s+/g, '')}.com`, // Add default email
+        id: pharmacy.id.toString(),
+        email: null,
       }));
     },
     enabled: !!coordinates,
   });
+
+  // Refetch when radius changes
+  useEffect(() => {
+    if (coordinates) {
+      refetch();
+    }
+  }, [searchRadius, refetch, coordinates]);
 
   const handleSearch = async (city: string) => {
     try {
@@ -41,6 +82,7 @@ const Index = () => {
           lat: parseFloat(data[0].lat),
           lon: parseFloat(data[0].lon)
         });
+        setSearchRadius(2000); // Reset radius on new search
       } else {
         toast({
           variant: "destructive",
@@ -59,13 +101,7 @@ const Index = () => {
   };
 
   const handlePharmacySelect = (pharmacyId: string) => {
-    const selectedPharmacy = pharmacies?.find(p => p.id === pharmacyId);
-    if (selectedPharmacy) {
-      toast({
-        title: "Pharmacy Selected",
-        description: `Prescription sent to ${selectedPharmacy.name}.`,
-      });
-    }
+    navigate(`/products/${pharmacyId}`);
   };
 
   const handleSetDefaultPharmacy = (pharmacyId: string, isDefault: boolean) => {
@@ -101,7 +137,7 @@ const Index = () => {
             Find Nearby Pharmacies
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Search for pharmacies in your area and upload your prescription for delivery
+            Search for pharmacies in your area
           </p>
         </div>
 
