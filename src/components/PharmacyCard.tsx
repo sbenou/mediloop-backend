@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, MapPin, Phone, Mail } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PharmacyCardProps {
   id: string;
