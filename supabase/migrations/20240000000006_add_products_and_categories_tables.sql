@@ -65,7 +65,11 @@ DECLARE
     broad_spectrum_id UUID;
     multivitamins_id UUID;
     face_care_id UUID;
+    pharmacy_id UUID;
 BEGIN
+    -- Set the pharmacy_id as a proper UUID
+    pharmacy_id := '67588497-1067-4000-a000-000000000000';  -- Converting the numeric ID to a UUID format
+
     -- Insert categories and store their IDs
     INSERT INTO public.categories (name, type) 
     VALUES ('Pain Relief', 'medication') 
@@ -103,7 +107,7 @@ BEGIN
     INSERT INTO public.subcategories (name, category_id)
     VALUES ('Face Care', skincare_id)
     RETURNING id INTO face_care_id;
-
+    
     -- Insert sample products
     INSERT INTO public.products (
         name,
@@ -122,7 +126,7 @@ BEGIN
         12.99,
         'medication',
         false,
-        '1067588497',
+        pharmacy_id,
         pain_relief_id,
         painkillers_id,
         'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
@@ -133,7 +137,7 @@ BEGIN
         24.99,
         'medication',
         true,
-        '1067588497',
+        pharmacy_id,
         antibiotics_id,
         broad_spectrum_id,
         'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
@@ -144,7 +148,7 @@ BEGIN
         15.99,
         'parapharmacy',
         false,
-        '1067588497',
+        pharmacy_id,
         vitamins_id,
         multivitamins_id,
         'https://images.unsplash.com/photo-1577401132921-cb39bb0adcff?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
@@ -155,7 +159,7 @@ BEGIN
         29.99,
         'parapharmacy',
         false,
-        '1067588497',
+        pharmacy_id,
         skincare_id,
         face_care_id,
         'https://images.unsplash.com/photo-1556229162-5c63ed9c4efb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
