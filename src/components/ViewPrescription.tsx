@@ -22,6 +22,15 @@ interface PrescriptionData {
   createdAt: string;
 }
 
+interface Pharmacy {
+  id: string;
+  name: string;
+  address: string;
+  distance: string;
+  hours: string;
+  phone: string;
+}
+
 const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,7 +40,7 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
   const data = location.state?.data || defaultData;
 
   // Mock pharmacy data - in a real app, this would come from an API
-  const pharmacies = [
+  const pharmacies: Pharmacy[] = [
     {
       id: "pharmacy-1",
       name: "HealthCare Pharmacy",
@@ -166,7 +175,12 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
             {pharmacies.map((pharmacy) => (
               <PharmacyCard
                 key={pharmacy.id}
-                {...pharmacy}
+                id={pharmacy.id}
+                name={pharmacy.name}
+                address={pharmacy.address}
+                distance={pharmacy.distance}
+                hours={pharmacy.hours}
+                phone={pharmacy.phone}
                 onSelect={() => handleSendToPharmachy(pharmacy.name)}
                 showUpload={true}
               />
