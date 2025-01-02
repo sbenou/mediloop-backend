@@ -12,7 +12,7 @@ interface Pharmacy {
 
 interface PharmacyListProps {
   pharmacies: Pharmacy[];
-  onSelect: (pharmacyName: string) => void;
+  onSelect: (pharmacyId: string) => void;
   onSetDefault: (pharmacyId: string, isDefault: boolean) => void;
   defaultPharmacyId: string | null;
 }
@@ -30,17 +30,10 @@ const PharmacyList = ({
         {pharmacies.map((pharmacy) => (
           <PharmacyCard
             key={pharmacy.id}
-            id={pharmacy.id}
-            name={pharmacy.name}
-            address={pharmacy.address}
-            distance={pharmacy.distance}
-            hours={pharmacy.hours}
-            phone={pharmacy.phone}
-            email={pharmacy.email}
-            onSelect={() => onSelect(pharmacy.name)}
-            onSetDefault={(isDefault) => onSetDefault(pharmacy.id, isDefault)}
+            {...pharmacy}
+            onSelect={onSelect}
+            onSetDefault={onSetDefault}
             isDefault={defaultPharmacyId === pharmacy.id}
-            showUpload={true}
           />
         ))}
       </div>

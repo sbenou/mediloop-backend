@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, MapPin, Phone, Mail, Star } from "lucide-react";
+import { Clock, MapPin, Phone, Mail, Send } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/components/ui/use-toast";
 import FileUpload from "./FileUpload";
 
 interface PharmacyCardProps {
@@ -12,11 +13,10 @@ interface PharmacyCardProps {
   distance: string;
   hours: string;
   phone: string;
-  email?: string;
-  onSelect: () => void;
-  onSetDefault?: (isDefault: boolean) => void;
+  email: string;
+  onSelect: (id: string) => void;
+  onSetDefault?: (id: string, isDefault: boolean) => void;
   isDefault?: boolean;
-  showUpload?: boolean;
 }
 
 const PharmacyCard = ({ 
@@ -29,13 +29,17 @@ const PharmacyCard = ({
   email,
   onSelect,
   onSetDefault,
-  isDefault,
-  showUpload = false
+  isDefault
 }: PharmacyCardProps) => {
   const [showPrescriptionUpload, setShowPrescriptionUpload] = useState(false);
 
   const handleFileSelect = (file: File) => {
     console.log('Selected file:', file);
+    toast({
+      title: "Prescription Uploaded",
+      description: `File "${file.name}" has been uploaded successfully.`,
+    });
+    onSelect(id);
   };
 
   return (
@@ -49,7 +53,7 @@ const PharmacyCard = ({
                 <Checkbox
                   id={`default-${id}`}
                   checked={isDefault}
-                  onCheckedChange={(checked) => onSetDefault(checked as boolean)}
+                  onCheckedChange={(checked) => onSetDefault(id, checked as boolean)}
                 />
                 <label
                   htmlFor={`default-${id}`}
@@ -72,12 +76,10 @@ const PharmacyCard = ({
             <Phone className="h-4 w-4 mr-2" />
             <span className="text-sm">{phone}</span>
           </div>
-          {email && (
-            <div className="flex items-center text-gray-600">
-              <Mail className="h-4 w-4 mr-2" />
-              <span className="text-sm">{email}</span>
-            </div>
-          )}
+          <div className="flex items-center text-gray-600">
+            <Mail className="h-4 w-4 mr-2" />
+            <span className="text-sm">{email}</span>
+          </div>
         </div>
         <div className="text-right">
           <span className="text-sm font-medium text-primary">{distance}</span>
@@ -85,27 +87,17 @@ const PharmacyCard = ({
       </div>
       
       <div className="mt-4 space-y-4">
-        <Button 
-          onClick={() => {
-            onSelect();
-            setShowPrescriptionUpload(true);
-          }}
-          className="w-full"
-        >
-          Select Pharmacy
-        </Button>
-
-        {showUpload && showPrescriptionUpload && (
+        {!showPrescriptionUpload ? (
+          <Button 
+            onClick={() => setShowPrescriptionUpload(true)}
+            className="w-full"
+          >
+            <Send className="mr-2 h-4 w-4" />
+            Send Prescription
+          </Button>
+        ) : (
           <div className="space-y-4 animate-slide-up">
             <FileUpload onFileSelect={handleFileSelect} />
-            <Button 
-              onClick={() => {
-                console.log('Sending prescription...');
-              }}
-              className="w-full"
-            >
-              Send Prescription
-            </Button>
           </div>
         )}
       </div>

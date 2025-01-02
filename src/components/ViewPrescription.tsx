@@ -64,20 +64,24 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
     navigate("/");
   };
 
-  const handleSendToPharmachy = (pharmacyName: string) => {
-    toast({
-      title: "Prescription Sent",
-      description: `The prescription has been sent to ${pharmacyName}.`,
-    });
-    setShowPharmacies(false);
+  const handleSendToPharmacy = (pharmacyId: string) => {
+    const pharmacy = pharmacies.find(p => p.id === pharmacyId);
+    if (pharmacy) {
+      toast({
+        title: "Prescription Sent",
+        description: `The prescription has been sent to ${pharmacy.name}.`,
+      });
+      setShowPharmacies(false);
+    }
   };
 
   const handleSetDefaultPharmacy = (pharmacyId: string, isDefault: boolean) => {
     if (isDefault) {
       setDefaultPharmacyId(pharmacyId);
+      const pharmacy = pharmacies.find(p => p.id === pharmacyId);
       toast({
         title: "Default Pharmacy Set",
-        description: "This pharmacy has been set as your default.",
+        description: `${pharmacy?.name} has been set as your default pharmacy.`,
       });
     } else {
       setDefaultPharmacyId(null);
@@ -107,7 +111,7 @@ const ViewPrescription = ({ data: defaultData }: { data: PrescriptionData }) => 
       {showPharmacies && (
         <PharmacyList
           pharmacies={pharmacies}
-          onSelect={handleSendToPharmachy}
+          onSelect={handleSendToPharmacy}
           onSetDefault={handleSetDefaultPharmacy}
           defaultPharmacyId={defaultPharmacyId}
         />
