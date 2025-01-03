@@ -29,6 +29,7 @@ const DoctorSearch = () => {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
+    enabled: true, // Always enable the query to handle address updates
   });
 
   // Auto-search based on user's address
@@ -36,7 +37,7 @@ const DoctorSearch = () => {
     if (userAddress?.city) {
       handleCitySearch(userAddress.city);
     }
-  }, [userAddress]);
+  }, [userAddress, handleCitySearch]);
 
   const sendConnectionRequest = async (doctorId: string, source: 'database' | 'overpass') => {
     try {
@@ -75,7 +76,7 @@ const DoctorSearch = () => {
     if (doctors?.length === 0 && searchRadius < 10000) {
       setSearchRadius(prev => Math.min(prev * 2, 10000));
     }
-  }, [doctors, searchRadius]);
+  }, [doctors, searchRadius, setSearchRadius]);
 
   return (
     <div className="space-y-6">
