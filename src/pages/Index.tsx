@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CitySearch from '@/components/CitySearch';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +15,55 @@ const Index = () => {
   const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
   const [searchRadius, setSearchRadius] = useState(2000); // Start with 2km radius
   const [defaultPharmacyId, setDefaultPharmacyId] = useState<string | null>(null);
+
+  // Handle email confirmation
+  useEffect(() => {
+    const handleEmailConfirmation = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const error = params.get('error');
+      const error_description = params.get('error_description');
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+      const type = params.get('type');
+
+      if (error || error_description) {
+        toast({
+          variant: "destructive",
+          title: "Email Confirmation Error",
+          description: error_description || "Failed to confirm email address",
+        });
+        navigate('/login');
+        return;
+      }
+
+      if (type === 'signup' && access_token && refresh_token) {
+        // Set the session
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token,
+          refresh_token,
+        });
+
+        if (sessionError) {
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Failed to set authentication session",
+          });
+          navigate('/login');
+          return;
+        }
+
+        toast({
+          title: "Email Confirmed",
+          description: "Your email has been successfully confirmed. You can now log in.",
+        });
+        navigate('/login');
+        return;
+      }
+    };
+
+    handleEmailConfirmation();
+  }, [navigate]);
 
   // Fetch user's address
   const { data: userAddress } = useQuery({
