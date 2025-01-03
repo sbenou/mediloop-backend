@@ -71,21 +71,35 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile
-      const { error: profileError } = await supabase
-        .rpc('create_profile', {
-          user_id: authData.user.id,
-          user_role: userRole,
-          user_full_name: name,
-          user_email: email,
-          user_license_number: licenseNumber || null
-        });
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', authData.user.id)
+        .single();
 
-      console.log("Profile creation response:", { profileError });
+      // Only create profile if it doesn't exist
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .rpc('create_profile', {
+            user_id: authData.user.id,
+            user_role: userRole,
+            user_full_name: name,
+            user_email: email,
+            user_license_number: licenseNumber || null
+          });
 
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        throw profileError;
+        console.log("Profile creation response:", { profileError });
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          // Don't throw the error since the user was created successfully
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "Account created but profile setup incomplete. Please contact support.",
+          });
+        }
       }
 
       toast({
