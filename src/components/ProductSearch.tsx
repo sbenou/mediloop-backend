@@ -33,9 +33,9 @@ export const ProductSearch = ({ pharmacyId }: ProductSearchProps) => {
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
         
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
   });

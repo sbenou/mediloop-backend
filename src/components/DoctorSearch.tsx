@@ -24,9 +24,9 @@ const DoctorSearch = () => {
         .select('*')
         .eq('user_id', session.user.id)
         .eq('is_default', true)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
   });
