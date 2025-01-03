@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CitySearch from '@/components/CitySearch';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,61 +9,13 @@ import { useQuery } from '@tanstack/react-query';
 import { searchPharmacies } from '@/lib/overpass';
 import PharmacyCard from '@/components/PharmacyCard';
 import { supabase } from '@/lib/supabase';
+import EmailConfirmationHandler from '@/components/auth/EmailConfirmationHandler';
 
 const Index = () => {
   const navigate = useNavigate();
   const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
   const [searchRadius, setSearchRadius] = useState(2000); // Start with 2km radius
   const [defaultPharmacyId, setDefaultPharmacyId] = useState<string | null>(null);
-
-  // Handle email confirmation
-  useEffect(() => {
-    const handleEmailConfirmation = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const error = params.get('error');
-      const error_description = params.get('error_description');
-      const access_token = params.get('access_token');
-      const refresh_token = params.get('refresh_token');
-      const type = params.get('type');
-
-      if (error || error_description) {
-        toast({
-          variant: "destructive",
-          title: "Email Confirmation Error",
-          description: error_description || "Failed to confirm email address",
-        });
-        navigate('/login');
-        return;
-      }
-
-      if (type === 'signup' && access_token && refresh_token) {
-        // Set the session
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token,
-          refresh_token,
-        });
-
-        if (sessionError) {
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "Failed to set authentication session",
-          });
-          navigate('/login');
-          return;
-        }
-
-        toast({
-          title: "Email Confirmed",
-          description: "Your email has been successfully confirmed. You can now log in.",
-        });
-        navigate('/login');
-        return;
-      }
-    };
-
-    handleEmailConfirmation();
-  }, [navigate]);
 
   // Fetch user's address
   const { data: userAddress } = useQuery({
@@ -97,7 +49,6 @@ const Index = () => {
       if (!coordinates) return [];
       const results = await searchPharmacies(coordinates.lat, coordinates.lon, searchRadius);
       
-      // If no results and radius can be increased
       if (results.length === 0 && searchRadius < 10000) {
         setSearchRadius(prev => Math.min(prev * 2, 10000));
         return [];
@@ -163,6 +114,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <EmailConfirmationHandler />
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
