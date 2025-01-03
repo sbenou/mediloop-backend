@@ -20,12 +20,15 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      console.log("Attempting login with email:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Login error:", error);
+        
         if (error.message.includes('Email not confirmed')) {
           toast({
             variant: "destructive",
@@ -45,11 +48,11 @@ const Login = () => {
             description: error.message,
           });
         }
-        setIsLoading(false);
         return;
       }
 
       if (data.user) {
+        console.log("Login successful:", data.user.id);
         toast({
           title: "Success",
           description: "Logged in successfully",
@@ -57,6 +60,7 @@ const Login = () => {
         navigate("/");
       }
     } catch (error) {
+      console.error("Unexpected error during login:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -90,6 +94,7 @@ const Login = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -106,6 +111,7 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
             </div>
