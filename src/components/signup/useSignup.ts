@@ -32,17 +32,12 @@ export const useSignup = () => {
     setIsSubmitting(true);
 
     try {
-      console.log("Starting signup process...");
+      console.log("Starting signup process with:", { email, name, userRole, licenseNumber });
       
-      // First, sign up the user with minimal metadata
+      // Create the auth user first
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            full_name: name,
-          }
-        }
       });
 
       console.log("Auth signup response:", { authData, authError });
@@ -68,6 +63,20 @@ export const useSignup = () => {
 
       if (!authData.user?.id) {
         throw new Error("User creation failed");
+      }
+
+      // Update user metadata
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          full_name: name,
+          role: userRole,
+          license_number: licenseNumber || null,
+        }
+      });
+
+      if (metadataError) {
+        console.error("Metadata update error:", metadataError);
+        throw new Error("Failed to update user metadata");
       }
 
       // Create the profile using RPC
@@ -96,19 +105,11 @@ export const useSignup = () => {
     } catch (error: any) {
       console.error("Detailed signup error:", error);
       
-      if (error.message.includes('Database error finding user')) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "There was an issue creating your account. Please try again in a few moments.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message || "Failed to create account",
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to create account",
+      });
     } finally {
       setIsSubmitting(false);
     }
