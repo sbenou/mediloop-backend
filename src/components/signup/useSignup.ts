@@ -34,6 +34,7 @@ export const useSignup = () => {
     try {
       console.log("Starting signup process...");
       
+      // First, sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -71,30 +72,20 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Check if profile exists first, without using .single()
-      const { data: existingProfiles, error: profileCheckError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', authData.user.id);
+      // Create the profile using RPC
+      const { error: profileError } = await supabase
+        .rpc('create_profile', {
+          user_id: authData.user.id,
+          user_role: userRole,
+          user_full_name: name,
+          user_email: email,
+          user_license_number: licenseNumber || null
+        });
 
-      console.log("Profile check response:", { existingProfiles, profileCheckError });
+      console.log("Profile creation response:", { profileError });
 
-      if (!existingProfiles?.length) {
-        // Only create profile if no profiles were found
-        const { data: profileData, error: profileError } = await supabase
-          .rpc('create_profile', {
-            user_id: authData.user.id,
-            user_role: userRole,
-            user_full_name: name,
-            user_email: email,
-            user_license_number: licenseNumber || null
-          });
-
-        console.log("Profile creation response:", { profileData, profileError });
-
-        if (profileError && !profileError.message.includes('duplicate key value')) {
-          throw profileError;
-        }
+      if (profileError && !profileError.message.includes('duplicate key value')) {
+        throw profileError;
       }
 
       toast({
@@ -105,11 +96,21 @@ export const useSignup = () => {
       navigate('/login');
     } catch (error: any) {
       console.error("Detailed signup error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to create account",
-      });
+      
+      // Handle the specific database error
+      if (error.message.includes('Database error finding user')) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "There was an issue creating your account. Please try again in a few moments.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to create account",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
