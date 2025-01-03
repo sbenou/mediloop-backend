@@ -71,35 +71,51 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // First check if profile exists
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', authData.user.id)
-        .single();
+      // Add a small delay to ensure the auth user is created in the database
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Only create profile if it doesn't exist
-      if (!existingProfile) {
-        const { error: profileError } = await supabase
-          .rpc('create_profile', {
-            user_id: authData.user.id,
-            user_role: userRole,
-            user_full_name: name,
-            user_email: email,
-            user_license_number: licenseNumber || null
-          });
+      try {
+        // First check if profile exists
+        const { data: existingProfile, error: profileCheckError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', authData.user.id)
+          .maybeSingle(); // Use maybeSingle instead of single to handle no results gracefully
 
-        console.log("Profile creation response:", { profileError });
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-          // Don't throw the error since the user was created successfully
-          toast({
-            variant: "destructive",
-            title: "Warning",
-            description: "Account created but profile setup incomplete. Please contact support.",
-          });
+        if (profileCheckError) {
+          console.error("Error checking existing profile:", profileCheckError);
         }
+
+        // Only create profile if it doesn't exist
+        if (!existingProfile) {
+          const { error: profileError } = await supabase
+            .rpc('create_profile', {
+              user_id: authData.user.id,
+              user_role: userRole,
+              user_full_name: name,
+              user_email: email,
+              user_license_number: licenseNumber || null
+            });
+
+          console.log("Profile creation response:", { profileError });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+            // Don't throw the error since the user was created successfully
+            toast({
+              variant: "destructive",
+              title: "Warning",
+              description: "Account created but profile setup incomplete. Please contact support.",
+            });
+          }
+        }
+      } catch (profileError) {
+        console.error("Profile creation/check error:", profileError);
+        toast({
+          variant: "destructive",
+          title: "Warning",
+          description: "Account created but profile setup incomplete. Please contact support.",
+        });
       }
 
       toast({
