@@ -8,8 +8,15 @@ TRUNCATE TABLE
     profiles
 CASCADE;
 
--- Also clean up auth.users table
+-- Clean up all auth-related tables
 DELETE FROM auth.users;
+DELETE FROM auth.identities;
+DELETE FROM auth.sessions;
+DELETE FROM auth.refresh_tokens;
+DELETE FROM auth.mfa_factors;
+DELETE FROM auth.mfa_challenges;
+DELETE FROM auth.mfa_amr_claims;
+DELETE FROM auth.flow_state;
 
 -- Re-enable triggers
 SET session_replication_role = 'origin';
