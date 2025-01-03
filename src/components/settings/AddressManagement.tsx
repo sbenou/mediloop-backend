@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import AddressForm from "./AddressForm";
 import AddressList from "./AddressList";
 import { Address } from "./types";
 
 const AddressManagement = () => {
+  const [showAddressForm, setShowAddressForm] = useState(false);
+
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -38,18 +43,30 @@ const AddressManagement = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Add New Address</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AddressForm 
-            userId={session.user.id}
-            onSuccess={() => {}}
-            existingAddresses={addresses || []}
-          />
-        </CardContent>
-      </Card>
+      <div className="flex justify-end">
+        <Button
+          onClick={() => setShowAddressForm(!showAddressForm)}
+          className="mb-4"
+        >
+          <Plus className="mr-2" />
+          {showAddressForm ? "Cancel" : "Add New Address"}
+        </Button>
+      </div>
+
+      {showAddressForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add New Address</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AddressForm 
+              userId={session.user.id}
+              onSuccess={() => setShowAddressForm(false)}
+              existingAddresses={addresses || []}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
