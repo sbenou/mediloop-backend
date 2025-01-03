@@ -27,8 +27,7 @@ const Login = () => {
       });
 
       if (error) {
-        console.error("Login error:", error);
-        setIsLoading(false);
+        console.error("Login error:", error.message);
         
         if (error.message.includes('Email not confirmed')) {
           toast({
@@ -62,7 +61,6 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Unexpected error during login:", error);
-      setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Error",
