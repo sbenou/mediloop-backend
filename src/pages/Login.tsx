@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,27 +7,67 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LogIn, Mail, Key } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Handle email confirmation
+  useEffect(() => {
+    const errorDescription = searchParams.get("error_description");
+    if (errorDescription) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorDescription,
+      });
+      return;
+    }
+
+    // Check if this is a redirect from email verification
+    const access_token = searchParams.get("access_token");
+    const refresh_token = searchParams.get("refresh_token");
+    const type = searchParams.get("type");
+
+    if (type === "signup" && access_token && refresh_token) {
+      // Set the session
+      supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      }).then(({ data, error }) => {
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "There was an error confirming your email. Please try logging in.",
+          });
+        } else if (data?.session) {
+          toast({
+            title: "Success",
+            description: "Your email has been confirmed. You are now logged in.",
+          });
+          navigate("/");
+        }
+      });
+    }
+  }, [searchParams, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      console.log("Attempting login with email:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        console.error("Login error:", error.message);
         if (error.message.includes('Email not confirmed')) {
           toast({
             variant: "destructive",
@@ -51,7 +91,6 @@ const Login = () => {
       }
 
       if (data.user) {
-        console.log("Login successful:", data.user.id);
         toast({
           title: "Success",
           description: "Logged in successfully",
