@@ -32,14 +32,20 @@ const Login = () => {
             title: "Email Not Confirmed",
             description: "Please check your email and confirm your account before logging in. Don't forget to check your spam folder.",
           });
-          return;
+        } else if (error.message.includes('Invalid login credentials')) {
+          toast({
+            variant: "destructive",
+            title: "Invalid Credentials",
+            description: "The email or password you entered is incorrect. Please try again.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message,
+          });
         }
-
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        });
+        setIsLoading(false);
         return;
       }
 
