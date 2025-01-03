@@ -34,15 +34,13 @@ export const useSignup = () => {
     try {
       console.log("Starting signup process...");
       
-      // First, sign up the user
+      // First, sign up the user with minimal metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            role: userRole,
             full_name: name,
-            license_number: licenseNumber || null,
           }
         }
       });
@@ -84,8 +82,9 @@ export const useSignup = () => {
 
       console.log("Profile creation response:", { profileError });
 
-      if (profileError && !profileError.message.includes('duplicate key value')) {
-        throw profileError;
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        throw new Error("Failed to create user profile");
       }
 
       toast({
@@ -97,7 +96,6 @@ export const useSignup = () => {
     } catch (error: any) {
       console.error("Detailed signup error:", error);
       
-      // Handle the specific database error
       if (error.message.includes('Database error finding user')) {
         toast({
           variant: "destructive",
