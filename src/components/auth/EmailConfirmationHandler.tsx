@@ -18,6 +18,11 @@ const EmailConfirmationHandler = () => {
       // Clear URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
 
+      // If there are no relevant parameters, don't show any messages
+      if (!type && !error && !error_description) {
+        return;
+      }
+
       if (error || error_description) {
         console.error('Email confirmation error:', { error, error_description });
         toast({
@@ -56,6 +61,7 @@ const EmailConfirmationHandler = () => {
       }
     };
 
+    // Run immediately when component mounts
     handleEmailConfirmation();
   }, [navigate]);
 
