@@ -34,17 +34,10 @@ export const useSignup = () => {
     try {
       console.log("Starting signup process with:", { email, name, userRole, licenseNumber });
       
-      // Include all user metadata during initial signup
+      // First, try to sign up the user with minimal data
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            full_name: name,
-            role: userRole,
-            license_number: licenseNumber || null,
-          }
-        }
       });
 
       console.log("Auth signup response:", { authData, authError });
@@ -72,7 +65,23 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile using RPC
+      // After successful signup, update user metadata
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          full_name: name,
+          role: userRole,
+          license_number: licenseNumber || null,
+        }
+      });
+
+      console.log("Metadata update response:", { metadataError });
+
+      if (metadataError) {
+        console.error("Metadata update error:", metadataError);
+        throw metadataError;
+      }
+
+      // Finally, create the profile
       const { error: profileError } = await supabase
         .rpc('create_profile', {
           user_id: authData.user.id,
@@ -86,7 +95,7 @@ export const useSignup = () => {
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
-        throw new Error("Failed to create user profile");
+        throw profileError;
       }
 
       toast({
