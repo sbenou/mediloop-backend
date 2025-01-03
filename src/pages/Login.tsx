@@ -97,7 +97,7 @@ const Login = () => {
         });
         navigate("/");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Unexpected error during login:", error);
       toast({
         variant: "destructive",
