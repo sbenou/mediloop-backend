@@ -7,9 +7,17 @@ interface GeocodingResult {
   lon?: string;
 }
 
-export const searchCity = async (query: string): Promise<GeocodingResult[]> => {
+interface GeocodingResponse {
+  results: GeocodingResult[];
+  error?: {
+    type: 'timeout' | 'network' | 'not_found';
+    message: string;
+  };
+}
+
+export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased timeout to 10 seconds
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
     const response = await fetch(
@@ -26,25 +34,48 @@ export const searchCity = async (query: string): Promise<GeocodingResult[]> => {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return {
+        results: [],
+        error: {
+          type: 'network',
+          message: 'Network error occurred while searching for the city.'
+        }
+      };
     }
 
     const data = await response.json();
-    return data;
+    return { results: data };
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
       console.error('Request timed out:', error);
-      return []; // Return empty array instead of throwing
+      return {
+        results: [],
+        error: {
+          type: 'timeout',
+          message: 'The search request timed out. Please try again.'
+        }
+      };
     }
     console.error('Geocoding error:', error);
-    return []; // Return empty array for other errors too
+    return {
+      results: [],
+      error: {
+        type: 'network',
+        message: 'Failed to search for the city. Please try again.'
+      }
+    };
   }
 };
 
 export const getCoordinates = async (city: string): Promise<{ lat: string; lon: string } | null> => {
   try {
-    const results = await searchCity(city);
+    const { results, error } = await searchCity(city);
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+    
     if (results.length > 0 && results[0].lat && results[0].lon) {
       return {
         lat: results[0].lat,
@@ -54,6 +85,6 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
     return null;
   } catch (error) {
     console.error('Error getting coordinates:', error);
-    return null;
+    throw error;
   }
 };

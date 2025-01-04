@@ -83,12 +83,22 @@ const Index = () => {
           description: "Could not find coordinates for the specified city.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching city:', error);
+      
+      let errorMessage = "Failed to search for location. ";
+      if (error.name === 'AbortError') {
+        errorMessage = "The search request timed out. Please try again.";
+      } else if (!navigator.onLine) {
+        errorMessage += "Please check your internet connection.";
+      } else {
+        errorMessage += "Please try again in a few moments.";
+      }
+
       toast({
         variant: "destructive",
         title: "Search Error",
-        description: "Failed to search for pharmacies. Please try again.",
+        description: errorMessage,
       });
     }
   };
