@@ -28,8 +28,17 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
 
       setIsLoading(true);
       try {
-        const results = await searchCity(searchTerm);
-        setSuggestions(results);
+        const response = await searchCity(searchTerm);
+        if (response.error) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: response.error.message,
+          });
+          setSuggestions([]);
+        } else {
+          setSuggestions(response.results);
+        }
       } catch (error) {
         console.error('Error fetching suggestions:', error);
         toast({
