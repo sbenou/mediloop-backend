@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
 
 interface CitySearchProps {
   onSearch: (city: string) => void;
@@ -19,6 +20,7 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
   const [value, setValue] = useState('');
   const [suggestions, setSuggestions] = useState<CityResult[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -27,17 +29,45 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
         return;
       }
 
+      setIsLoading(true);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
             searchTerm
-          )}&limit=5&featuretype=city`
+          )}&limit=5&featuretype=city`,
+          {
+            headers: {
+              'User-Agent': 'Lovable Health App',
+              'Accept-Language': 'en'
+            },
+            signal: controller.signal
+          }
         );
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
         setSuggestions(data);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching city suggestions:', error);
         setSuggestions([]);
+        
+        if (error.name !== 'AbortError') { // Don't show error for aborted requests
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to fetch city suggestions. Please try typing the full city name.",
+          });
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -109,7 +139,9 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
               onValueChange={setSearchTerm}
             />
             <CommandList>
-              <CommandEmpty>No cities found.</CommandEmpty>
+              <CommandEmpty>
+                {isLoading ? "Loading..." : "No cities found."}
+              </CommandEmpty>
               <CommandGroup>
                 {suggestions.map((city) => (
                   <CommandItem
