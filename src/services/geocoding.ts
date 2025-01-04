@@ -9,14 +9,14 @@ interface GeocodingResult {
 
 export const searchCity = async (query: string): Promise<GeocodingResult[]> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased timeout to 10 seconds
 
   try {
     const response = await fetch(
       `${NOMINATIM_BASE_URL}/search?format=json&q=${encodeURIComponent(query)}&limit=5&featuretype=city`,
       {
         headers: {
-          'User-Agent': 'Lovable Health App (development)',
+          'User-Agent': 'MediHop Health App (development)',
           'Accept-Language': 'en'
         },
         signal: controller.signal
@@ -29,10 +29,16 @@ export const searchCity = async (query: string): Promise<GeocodingResult[]> => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data;
   } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      console.error('Request timed out:', error);
+      return []; // Return empty array instead of throwing
+    }
     console.error('Geocoding error:', error);
-    throw error;
+    return []; // Return empty array for other errors too
   }
 };
 
@@ -48,6 +54,6 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
     return null;
   } catch (error) {
     console.error('Error getting coordinates:', error);
-    throw error;
+    return null;
   }
 };
