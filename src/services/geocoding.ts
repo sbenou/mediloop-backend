@@ -15,9 +15,22 @@ interface GeocodingResponse {
   };
 }
 
+// Keep track of the current request
+let currentRequest: AbortController | null = null;
+
 export const searchCity = async (query: string): Promise<GeocodingResponse> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  // Cancel any pending request
+  if (currentRequest) {
+    currentRequest.abort();
+  }
+
+  // Create new abort controller for this request
+  currentRequest = new AbortController();
+  const timeoutId = setTimeout(() => {
+    if (currentRequest) {
+      currentRequest.abort();
+    }
+  }, 15000); // Increased timeout to 15 seconds
 
   try {
     const response = await fetch(
@@ -27,11 +40,12 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
           'User-Agent': 'MediHop Health App (development)',
           'Accept-Language': 'en'
         },
-        signal: controller.signal
+        signal: currentRequest.signal
       }
     );
 
     clearTimeout(timeoutId);
+    currentRequest = null;
 
     if (!response.ok) {
       return {
@@ -47,8 +61,9 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     return { results: data };
   } catch (error: any) {
     clearTimeout(timeoutId);
+    currentRequest = null;
+
     if (error.name === 'AbortError') {
-      console.error('Request timed out:', error);
       return {
         results: [],
         error: {
@@ -57,7 +72,7 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
         }
       };
     }
-    console.error('Geocoding error:', error);
+
     return {
       results: [],
       error: {

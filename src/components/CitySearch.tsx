@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 import { Command, CommandInput, CommandList } from "@/components/ui/command";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { searchCity } from '@/services/geocoding';
 import CitySearchSuggestions from './city/CitySearchSuggestions';
+import { useDebouncedCallback } from 'use-debounce';
 
 interface CitySearchProps {
   onSearch: (city: string) => void;
@@ -19,42 +20,45 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (searchTerm.length < 2) {
-        setSuggestions([]);
-        return;
-      }
+  // Debounce the fetch suggestions function
+  const debouncedFetchSuggestions = useDebouncedCallback(async (term: string) => {
+    if (term.length < 2) {
+      setSuggestions([]);
+      return;
+    }
 
-      setIsLoading(true);
-      try {
-        const response = await searchCity(searchTerm);
-        if (response.error) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: response.error.message,
-          });
-          setSuggestions([]);
-        } else {
-          setSuggestions(response.results);
-        }
-      } catch (error) {
-        console.error('Error fetching suggestions:', error);
+    setIsLoading(true);
+    try {
+      const response = await searchCity(term);
+      if (response.error) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to fetch city suggestions. Please try typing the full city name.",
+          description: response.error.message,
         });
         setSuggestions([]);
-      } finally {
-        setIsLoading(false);
+      } else {
+        setSuggestions(response.results);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch city suggestions. Please try typing the full city name.",
+      });
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, 500); // 500ms debounce
 
-    const timeoutId = setTimeout(fetchSuggestions, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  useEffect(() => {
+    debouncedFetchSuggestions(searchTerm);
+    return () => {
+      debouncedFetchSuggestions.cancel();
+    };
+  }, [searchTerm, debouncedFetchSuggestions]);
 
   const handleSearch = () => {
     if (value) {
