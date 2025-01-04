@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandInput, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { searchCity } from '@/services/geocoding';
+import CitySearchSuggestions from './city/CitySearchSuggestions';
 
 interface CitySearchProps {
   onSearch: (city: string) => void;
 }
 
-interface CityResult {
-  display_name: string;
-  place_id: number;
-}
-
 const CitySearch = ({ onSearch }: CitySearchProps) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
-  const [suggestions, setSuggestions] = useState<CityResult[]>([]);
+  const [suggestions, setSuggestions] = useState<Array<{ display_name: string; place_id: number }>>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,42 +27,17 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
       }
 
       setIsLoading(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            searchTerm
-          )}&limit=5&featuretype=city`,
-          {
-            headers: {
-              'User-Agent': 'Lovable Health App',
-              'Accept-Language': 'en'
-            },
-            signal: controller.signal
-          }
-        );
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setSuggestions(data);
-      } catch (error: any) {
-        console.error('Error fetching city suggestions:', error);
+        const results = await searchCity(searchTerm);
+        setSuggestions(results);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch city suggestions. Please try typing the full city name.",
+        });
         setSuggestions([]);
-        
-        if (error.name !== 'AbortError') { // Don't show error for aborted requests
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to fetch city suggestions. Please try typing the full city name.",
-          });
-        }
       } finally {
         setIsLoading(false);
       }
@@ -139,21 +111,11 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
               onValueChange={setSearchTerm}
             />
             <CommandList>
-              <CommandEmpty>
-                {isLoading ? "Loading..." : "No cities found."}
-              </CommandEmpty>
-              <CommandGroup>
-                {suggestions.map((city) => (
-                  <CommandItem
-                    key={city.place_id}
-                    value={city.display_name}
-                    onSelect={() => handleSelect(city.display_name)}
-                    className="cursor-pointer"
-                  >
-                    {city.display_name}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              <CitySearchSuggestions
+                isLoading={isLoading}
+                suggestions={suggestions}
+                onSelect={handleSelect}
+              />
             </CommandList>
           </Command>
         </PopoverContent>

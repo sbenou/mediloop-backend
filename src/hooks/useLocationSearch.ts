@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
+import { getCoordinates } from "@/services/geocoding";
 
 export const useLocationSearch = () => {
   const [coordinates, setCoordinates] = useState<{ lat: string; lon: string } | null>(null);
@@ -9,33 +10,10 @@ export const useLocationSearch = () => {
     if (!city) return false;
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`,
-        {
-          headers: {
-            'User-Agent': 'Lovable Health App', // Nominatim requires a User-Agent
-            'Accept-Language': 'en' // Prefer English results
-          },
-          signal: controller.signal
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const coords = await getCoordinates(city);
       
-      if (data.length > 0) {
-        setCoordinates({
-          lat: data[0].lat,
-          lon: data[0].lon
-        });
+      if (coords) {
+        setCoordinates(coords);
         setSearchRadius(2000); // Reset radius on new search
         return true;
       } else {
