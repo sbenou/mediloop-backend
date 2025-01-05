@@ -37,15 +37,18 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   // Clean up any pending requests first
   cleanupPendingRequests();
 
-  // Create new abort controller for this request
-  currentRequest = new AbortController();
-  
-  // Set timeout
-  currentTimeout = setTimeout(() => {
-    cleanupPendingRequests();
-  }, 15000); // 15 seconds timeout
-
   try {
+    // Create new abort controller for this request
+    currentRequest = new AbortController();
+    
+    // Set timeout
+    const timeoutPromise = new Promise<GeocodingResponse>((_, reject) => {
+      currentTimeout = setTimeout(() => {
+        cleanupPendingRequests();
+        reject(new Error('Request timeout'));
+      }, 15000); // 15 seconds timeout
+    });
+
     const params = new URLSearchParams({
       format: 'json',
       q: query,
@@ -56,7 +59,7 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     const nominatimUrl = `${NOMINATIM_BASE_URL}/search?${params.toString()}`;
     console.log('Sending request to:', nominatimUrl);
     
-    const response = await fetch(nominatimUrl, {
+    const fetchPromise = fetch(nominatimUrl, {
       signal: currentRequest.signal,
       headers: {
         'Accept': 'application/json',
@@ -65,8 +68,12 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
       referrerPolicy: 'no-referrer'
     });
 
-    // Clean up after successful request
-    cleanupPendingRequests();
+    // Race between fetch and timeout
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
+
+    // If we get here, the fetch completed before the timeout
+    clearTimeout(currentTimeout);
+    currentTimeout = null;
 
     if (!response.ok) {
       console.error('Nominatim API error:', response.status, response.statusText);
@@ -94,9 +101,6 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
 
     return { results: data };
   } catch (error: any) {
-    // Clean up on error
-    cleanupPendingRequests();
-
     console.error('Error in searchCity:', error);
 
     if (error.name === 'AbortError') {
@@ -116,6 +120,9 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
         message: 'Failed to search for the city. Please check your internet connection and try again.'
       }
     };
+  } finally {
+    // Always clean up
+    cleanupPendingRequests();
   }
 };
 
