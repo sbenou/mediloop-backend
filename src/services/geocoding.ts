@@ -1,6 +1,9 @@
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
 const CORS_PROXY = 'https://cors-proxy.lovable.workers.dev';
 
+// Keep track of the current request
+let currentRequest: AbortController | null = null;
+
 interface GeocodingResult {
   display_name: string;
   place_id: number;
@@ -15,9 +18,6 @@ interface GeocodingResponse {
     message: string;
   };
 }
-
-// Keep track of the current request
-let currentRequest: AbortController | null = null;
 
 export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   // Cancel any pending request
@@ -46,7 +46,6 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     const response = await fetch(`${CORS_PROXY}/?url=${encodeURIComponent(nominatimUrl)}`, {
       headers: {
         'Accept': 'application/json',
-        'Origin': window.location.origin
       },
       signal: currentRequest.signal,
       mode: 'cors',
