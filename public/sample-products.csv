@@ -1,0 +1,5 @@
+name,price,type,requires_prescription,description
+Ibuprofen 400mg,12.99,medication,true,Effective pain relief medication
+Vitamin C 1000mg,15.99,parapharmacy,false,Immune system support supplement
+Face Moisturizer,29.99,parapharmacy,false,Daily hydrating face cream
+Amoxicillin 500mg,24.99,medication,true,Broad-spectrum antibiotic
