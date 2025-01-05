@@ -1,0 +1,96 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+
+export interface ProductFiltersState {
+  type?: string;
+  category?: string;
+  subcategory?: string;
+}
+
+export interface ProductQueryConfig {
+  searchTerm: string;
+  currentPage: number;
+  filters: ProductFiltersState;
+  sortBy: string;
+  itemsPerPage: number;
+}
+
+export const useProductQuery = ({
+  searchTerm,
+  currentPage,
+  filters,
+  sortBy,
+  itemsPerPage
+}: ProductQueryConfig) => {
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle();
+        
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+  });
+
+  return useQuery({
+    queryKey: ['products', searchTerm, currentPage, filters, sortBy],
+    queryFn: async () => {
+      let query = supabase
+        .from('products')
+        .select('*', { count: 'exact' });
+      
+      if (userProfile?.role !== 'pharmacist') {
+        query = query.eq('type', 'parapharmacy');
+      } else if (filters.type) {
+        query = query.eq('type', filters.type);
+      }
+      
+      if (filters.category) {
+        query = query.eq('category_id', filters.category);
+      }
+      if (filters.subcategory) {
+        query = query.eq('subcategory_id', filters.subcategory);
+      }
+      
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
+      
+      switch (sortBy) {
+        case 'name':
+          query = query.order('name');
+          break;
+        case 'price-asc':
+          query = query.order('price');
+          break;
+        case 'price-desc':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'popular':
+          query = query.order('popularity', { ascending: false });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
+      }
+      
+      const from = (currentPage - 1) * itemsPerPage;
+      query = query.range(from, from + itemsPerPage - 1);
+      
+      const { data, error, count } = await query;
+      if (error) throw error;
+      
+      return {
+        products: data,
+        total: count || 0
+      };
+    },
+    enabled: !!userProfile,
+  });
+};
