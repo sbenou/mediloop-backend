@@ -42,7 +42,7 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     currentRequest = new AbortController();
     
     // Set timeout
-    const timeoutPromise = new Promise<GeocodingResponse>((_, reject) => {
+    const timeoutPromise = new Promise<never>((_, reject) => {
       currentTimeout = setTimeout(() => {
         cleanupPendingRequests();
         reject(new Error('Request timeout'));
@@ -63,13 +63,13 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
       signal: currentRequest.signal,
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'FindDoctorApp/1.0'
+        'User-Agent': 'FindDoctorApp/1.0',
       },
       referrerPolicy: 'no-referrer'
     });
 
     // Race between fetch and timeout
-    const response = await Promise.race([fetchPromise, timeoutPromise]);
+    const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
 
     // If we get here, the fetch completed before the timeout
     clearTimeout(currentTimeout);
@@ -85,16 +85,11 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
 
     if (!Array.isArray(data)) {
       console.error('Unexpected response format:', data);
-      throw new Error('Invalid response format from Nominatim API');
-    }
-
-    if (data.length === 0) {
-      console.log('No results found for query:', query);
       return {
         results: [],
         error: {
-          type: 'not_found',
-          message: `No results found for "${query}". Please try a different city name.`
+          type: 'network',
+          message: 'Received invalid response format from the server.'
         }
       };
     }
