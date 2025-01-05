@@ -30,7 +30,7 @@ const DoctorSearch = () => {
       return data;
     },
     staleTime: Infinity, // Keep the data fresh indefinitely
-    cacheTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 5 * 60 * 1000, // Cache for 5 minutes (renamed from cacheTime)
   });
 
   // Auto-search based on user's address - only run once when component mounts
