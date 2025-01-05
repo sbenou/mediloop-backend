@@ -19,24 +19,40 @@ export const useLocationSearch = () => {
         setSearchRadius(2000); // Reset radius on new search
         return true;
       } else {
+        // Check if we have cached coordinates
+        const cachedCoords = sessionStorage.getItem(`coords-${city}`);
+        if (cachedCoords) {
+          const parsedCoords = JSON.parse(cachedCoords);
+          setCoordinates(parsedCoords);
+          return true;
+        }
+        
         toast({
-          variant: "destructive",
           title: "Location not found",
-          description: "Could not find coordinates for the specified city. Please try another city name.",
+          description: "Using cached data if available. Please try another city name.",
         });
         return false;
       }
     } catch (error: any) {
       console.error('Error searching city:', error);
       
-      // Only show toast for non-network errors
-      if (!error.message?.includes('NetworkError')) {
+      // Check for cached data
+      const cachedCoords = sessionStorage.getItem(`coords-${city}`);
+      if (cachedCoords) {
+        const parsedCoords = JSON.parse(cachedCoords);
+        setCoordinates(parsedCoords);
         toast({
-          variant: "destructive",
-          title: "Search Error",
-          description: "Failed to search location. Please try again in a few moments.",
+          title: "Using cached data",
+          description: "Showing results from previous search.",
         });
+        return true;
       }
+      
+      toast({
+        variant: "destructive",
+        title: "Search Error",
+        description: "Failed to search location. Using cached data if available.",
+      });
       return false;
     } finally {
       setIsSearching(false);

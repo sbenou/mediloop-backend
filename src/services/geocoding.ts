@@ -18,6 +18,13 @@ export const searchCity = async (query: string): Promise<SearchResponse> => {
   console.info('Searching for city:', query);
   
   try {
+    // Check cache first
+    const cachedData = sessionStorage.getItem(`city-search-${query}`);
+    if (cachedData) {
+      console.info('Returning cached city search results');
+      return JSON.parse(cachedData);
+    }
+
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&featuretype=city`;
     console.info('Sending request to:', nominatimUrl);
 
@@ -33,12 +40,20 @@ export const searchCity = async (query: string): Promise<SearchResponse> => {
     }
 
     const data = await response.json();
+    // Cache the successful response
+    sessionStorage.setItem(`city-search-${query}`, JSON.stringify({ results: data }));
     return { results: data };
   } catch (error: any) {
     console.error('Error in searchCity:', error);
+    // Try to get from cache on error
+    const cachedData = sessionStorage.getItem(`city-search-${query}`);
+    if (cachedData) {
+      console.info('Returning cached data after error');
+      return JSON.parse(cachedData);
+    }
     return {
       error: {
-        message: 'Failed to search for the city. Please check your internet connection and try again.'
+        message: 'Failed to search for the city. Using cached data if available.'
       }
     };
   }
@@ -50,6 +65,7 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
   try {
     const cachedData = sessionStorage.getItem(`coords-${city}`);
     if (cachedData) {
+      console.info('Returning cached coordinates');
       return JSON.parse(cachedData);
     }
 
@@ -74,7 +90,7 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
         lon: data[0].lon
       };
       
-      // Cache the coordinates in sessionStorage
+      // Cache the coordinates
       sessionStorage.setItem(`coords-${city}`, JSON.stringify(coords));
       return coords;
     }
@@ -84,6 +100,7 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
     // Try to get from cache even if request fails
     const cachedData = sessionStorage.getItem(`coords-${city}`);
     if (cachedData) {
+      console.info('Returning cached coordinates after error');
       return JSON.parse(cachedData);
     }
     return null;
