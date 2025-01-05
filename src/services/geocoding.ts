@@ -25,8 +25,7 @@ export const searchCity = async (query: string): Promise<SearchResponse> => {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'FindDoctorApp/1.0',
-      },
-      mode: 'cors'
+      }
     });
 
     if (!response.ok) {
@@ -49,14 +48,18 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
   console.info('Getting coordinates for city:', city);
   
   try {
+    const cachedData = sessionStorage.getItem(`coords-${city}`);
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`;
     
     const response = await fetch(nominatimUrl, {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'FindDoctorApp/1.0',
-      },
-      mode: 'cors'
+      }
     });
 
     if (!response.ok) {
@@ -66,19 +69,23 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
     const data = await response.json();
     
     if (data && data.length > 0) {
-      return {
+      const coords = {
         lat: data[0].lat,
         lon: data[0].lon
       };
+      
+      // Cache the coordinates in sessionStorage
+      sessionStorage.setItem(`coords-${city}`, JSON.stringify(coords));
+      return coords;
     }
     return null;
   } catch (error: any) {
     console.error('Error getting coordinates:', error);
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Failed to get location coordinates. Please try again.",
-    });
+    // Try to get from cache even if request fails
+    const cachedData = sessionStorage.getItem(`coords-${city}`);
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
     return null;
   }
 };
