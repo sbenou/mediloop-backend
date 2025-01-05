@@ -1,4 +1,5 @@
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
+const CORS_PROXY = 'https://cors-proxy.lovable.workers.dev';
 
 interface GeocodingResult {
   display_name: string;
@@ -30,11 +31,11 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     if (currentRequest) {
       currentRequest.abort();
     }
-  }, 15000); // Increased timeout to 15 seconds
+  }, 15000); // 15 seconds timeout
 
   try {
     const response = await fetch(
-      `${NOMINATIM_BASE_URL}/search?format=json&q=${encodeURIComponent(query)}&limit=5&featuretype=city`,
+      `${CORS_PROXY}/${NOMINATIM_BASE_URL}/search?format=json&q=${encodeURIComponent(query)}&limit=5&featuretype=city`,
       {
         headers: {
           'User-Agent': 'MediHop Health App (development)',
