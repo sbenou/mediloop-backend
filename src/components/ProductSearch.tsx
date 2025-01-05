@@ -53,7 +53,8 @@ export const ProductSearch = ({ pharmacyId }: ProductSearchProps) => {
         .from('products')
         .select('*', { count: 'exact' });
       
-      if (pharmacyId) {
+      // Only apply pharmacy_id filter if it's a valid UUID
+      if (pharmacyId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pharmacyId)) {
         query = query.eq('pharmacy_id', pharmacyId);
       }
       
