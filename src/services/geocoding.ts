@@ -1,5 +1,4 @@
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
-const CORS_PROXY = 'https://cors-proxy.lovable.workers.dev';
 
 // Keep track of the current request
 let currentRequest: AbortController | null = null;
@@ -53,14 +52,14 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     });
 
     const nominatimUrl = `${NOMINATIM_BASE_URL}/search?${params.toString()}`;
-    const proxyUrl = `${CORS_PROXY}/?url=${encodeURIComponent(nominatimUrl)}`;
     
-    const response = await fetch(proxyUrl, {
+    const response = await fetch(nominatimUrl, {
       signal: currentRequest.signal,
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'User-Agent': 'FindDoctorApp/1.0'
       },
-      mode: 'cors'
+      referrerPolicy: 'no-referrer'
     });
 
     // Clean up after successful request
