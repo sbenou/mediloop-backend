@@ -7,7 +7,7 @@ interface FileUploadProps {
   onFileSelect: (file: File) => void;
 }
 
-const FileUpload = ({ onFileSelect }: FileUploadProps) => {
+export default function FileUpload({ onFileSelect }: FileUploadProps) {
   const [file, setFile] = React.useState<File | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -66,6 +66,4 @@ const FileUpload = ({ onFileSelect }: FileUploadProps) => {
       )}
     </div>
   );
-};
-
-export default FileUpload;
+}

@@ -11,7 +11,7 @@ import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { CartPreview } from "./CartPreview";
-import { FileUpload } from "./FileUpload";
+import FileUpload from "./FileUpload";
 import { toast } from "./ui/use-toast";
 
 const ITEMS_PER_PAGE = 12;
