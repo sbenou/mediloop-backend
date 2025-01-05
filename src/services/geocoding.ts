@@ -32,7 +32,8 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     const response = await fetch(nominatimUrl, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'FindDoctorApp/1.0 (your@email.com)'
+        'User-Agent': 'FindDoctorApp/1.0',
+        'Referer': window.location.origin
       },
       referrerPolicy: 'origin'
     });
