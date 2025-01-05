@@ -34,31 +34,34 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   }, 15000); // 15 seconds timeout
 
   try {
-    const encodedUrl = encodeURIComponent(`${NOMINATIM_BASE_URL}/search?format=json&q=${encodeURIComponent(query)}&limit=5&featuretype=city`);
-    const response = await fetch(
-      `${CORS_PROXY}/${encodedUrl}`,
-      {
-        headers: {
-          'User-Agent': 'MediHop Health App (development)',
-          'Accept-Language': 'en',
-          'Origin': window.location.origin
-        },
-        signal: currentRequest.signal,
-        mode: 'cors'
-      }
-    );
+    const baseUrl = `${NOMINATIM_BASE_URL}/search`;
+    const params = new URLSearchParams({
+      format: 'json',
+      q: query,
+      limit: '5',
+      featuretype: 'city'
+    });
+    
+    const nominatimUrl = `${baseUrl}?${params.toString()}`;
+    const encodedUrl = encodeURIComponent(nominatimUrl);
+    
+    const response = await fetch(`${CORS_PROXY}/${encodedUrl}`, {
+      headers: {
+        'User-Agent': 'MediHop Health App (development)',
+        'Accept-Language': 'en',
+        'Origin': window.location.origin,
+        'Accept': 'application/json'
+      },
+      signal: currentRequest.signal,
+      mode: 'cors',
+      credentials: 'omit'
+    });
 
     clearTimeout(timeoutId);
     currentRequest = null;
 
     if (!response.ok) {
-      return {
-        results: [],
-        error: {
-          type: 'network',
-          message: 'Network error occurred while searching for the city.'
-        }
-      };
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
