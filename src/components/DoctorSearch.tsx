@@ -12,7 +12,7 @@ const DoctorSearch = () => {
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch } = useLocationSearch();
   const { doctors, isLoading: isLoadingDoctors } = useDoctorSearch(coordinates, searchRadius);
 
-  // Fetch user's default address only once
+  // Fetch user's default address
   const { data: userAddress } = useQuery({
     queryKey: ['userAddress'],
     queryFn: async () => {
@@ -29,17 +29,30 @@ const DoctorSearch = () => {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    staleTime: Infinity, // Keep the data fresh indefinitely
-    gcTime: 5 * 60 * 1000, // Cache for 5 minutes (renamed from cacheTime)
+    staleTime: Infinity,
+    gcTime: 5 * 60 * 1000,
   });
 
-  // Auto-search based on user's address - only run once when component mounts
+  // Auto-search based on user's address
   useEffect(() => {
     if (userAddress?.city && !searchCity) {
       handleCitySearch(userAddress.city);
       setSearchCity(userAddress.city);
+      setSearchRadius(2000); // Start with 2km radius
     }
   }, [userAddress, handleCitySearch, searchCity]);
+
+  // Increase radius when no doctors found
+  useEffect(() => {
+    if (coordinates && doctors?.length === 0 && searchRadius < 10000) {
+      const newRadius = Math.min(searchRadius * 2, 10000);
+      setSearchRadius(newRadius);
+      toast({
+        title: "Expanding Search",
+        description: `No doctors found within ${searchRadius/1000}km. Searching within ${newRadius/1000}km.`,
+      });
+    }
+  }, [doctors, coordinates, searchRadius, setSearchRadius]);
 
   const sendConnectionRequest = async (doctorId: string, source: 'database' | 'overpass') => {
     try {
@@ -72,15 +85,9 @@ const DoctorSearch = () => {
     }
   };
 
-  // Increase radius only when no doctors found and coordinates exist
-  useEffect(() => {
-    if (doctors?.length === 0 && coordinates && searchRadius < 10000) {
-      setSearchRadius(prev => Math.min(prev * 2, 10000));
-    }
-  }, [doctors, coordinates, searchRadius, setSearchRadius]);
-
   const handleSearch = async (city: string) => {
     setSearchCity(city);
+    setSearchRadius(2000); // Reset to 2km when searching new city
     await handleCitySearch(city);
   };
 
