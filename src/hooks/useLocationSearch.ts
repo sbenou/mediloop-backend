@@ -4,11 +4,13 @@ import { getCoordinates } from "@/services/geocoding";
 
 export const useLocationSearch = () => {
   const [coordinates, setCoordinates] = useState<{ lat: string; lon: string } | null>(null);
-  const [searchRadius, setSearchRadius] = useState(2000); // Start with 2km radius
+  const [searchRadius, setSearchRadius] = useState(2000);
+  const [isSearching, setIsSearching] = useState(false);
 
   const handleCitySearch = async (city: string) => {
-    if (!city) return false;
+    if (!city || isSearching) return false;
 
+    setIsSearching(true);
     try {
       const coords = await getCoordinates(city);
       
@@ -27,21 +29,17 @@ export const useLocationSearch = () => {
     } catch (error: any) {
       console.error('Error searching city:', error);
       
-      let errorMessage = "Failed to search for location. ";
-      if (error.name === 'AbortError') {
-        errorMessage += "Request timed out. Please try again.";
-      } else if (!navigator.onLine) {
-        errorMessage += "Please check your internet connection.";
-      } else {
-        errorMessage += "Please try again in a few moments.";
+      // Only show toast for non-network errors
+      if (!error.message?.includes('NetworkError')) {
+        toast({
+          variant: "destructive",
+          title: "Search Error",
+          description: "Failed to search location. Please try again in a few moments.",
+        });
       }
-
-      toast({
-        variant: "destructive",
-        title: "Search Error",
-        description: errorMessage,
-      });
       return false;
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -49,6 +47,7 @@ export const useLocationSearch = () => {
     coordinates,
     searchRadius,
     setSearchRadius,
-    handleCitySearch
+    handleCitySearch,
+    isSearching
   };
 };

@@ -12,7 +12,7 @@ const DoctorSearch = () => {
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch } = useLocationSearch();
   const { doctors, isLoading: isLoadingDoctors } = useDoctorSearch(coordinates, searchRadius);
 
-  // Fetch user's default address
+  // Fetch user's default address only once
   const { data: userAddress } = useQuery({
     queryKey: ['userAddress'],
     queryFn: async () => {
@@ -29,19 +29,20 @@ const DoctorSearch = () => {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    enabled: true, // Always enable the query to handle address updates
+    staleTime: Infinity, // Keep the data fresh indefinitely
+    cacheTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Auto-search based on user's address
+  // Auto-search based on user's address - only run once when component mounts
   useEffect(() => {
-    if (userAddress?.city) {
+    if (userAddress?.city && !searchCity) {
       handleCitySearch(userAddress.city);
+      setSearchCity(userAddress.city);
     }
-  }, [userAddress, handleCitySearch]);
+  }, [userAddress, handleCitySearch, searchCity]);
 
   const sendConnectionRequest = async (doctorId: string, source: 'database' | 'overpass') => {
     try {
-      // Only send connection request for database doctors
       if (source === 'overpass') {
         toast({
           title: "Information",
@@ -71,16 +72,21 @@ const DoctorSearch = () => {
     }
   };
 
-  // Check if we need to increase radius when no doctors are found
+  // Increase radius only when no doctors found and coordinates exist
   useEffect(() => {
-    if (doctors?.length === 0 && searchRadius < 10000) {
+    if (doctors?.length === 0 && coordinates && searchRadius < 10000) {
       setSearchRadius(prev => Math.min(prev * 2, 10000));
     }
-  }, [doctors, searchRadius, setSearchRadius]);
+  }, [doctors, coordinates, searchRadius, setSearchRadius]);
+
+  const handleSearch = async (city: string) => {
+    setSearchCity(city);
+    await handleCitySearch(city);
+  };
 
   return (
     <div className="space-y-6">
-      <CitySearch onSearch={setSearchCity} />
+      <CitySearch onSearch={handleSearch} />
       <DoctorList
         doctors={doctors}
         isLoading={isLoadingDoctors}
