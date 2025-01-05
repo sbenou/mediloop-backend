@@ -34,21 +34,10 @@ interface GeocodingResponse {
 export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   console.log('Searching for city:', query);
   
-  // Clean up any pending requests first
-  cleanupPendingRequests();
-
   try {
     // Create new abort controller for this request
     currentRequest = new AbortController();
     
-    // Set timeout
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      currentTimeout = setTimeout(() => {
-        cleanupPendingRequests();
-        reject(new Error('Request timeout'));
-      }, 15000); // 15 seconds timeout
-    });
-
     const params = new URLSearchParams({
       format: 'json',
       q: query,
@@ -59,7 +48,7 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     const nominatimUrl = `${NOMINATIM_BASE_URL}/search?${params.toString()}`;
     console.log('Sending request to:', nominatimUrl);
     
-    const fetchPromise = fetch(nominatimUrl, {
+    const response = await fetch(nominatimUrl, {
       signal: currentRequest.signal,
       headers: {
         'Accept': 'application/json',
@@ -68,16 +57,15 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
       referrerPolicy: 'no-referrer'
     });
 
-    // Race between fetch and timeout
-    const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
-
-    // If we get here, the fetch completed before the timeout
-    clearTimeout(currentTimeout);
-    currentTimeout = null;
-
     if (!response.ok) {
       console.error('Nominatim API error:', response.status, response.statusText);
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return {
+        results: [],
+        error: {
+          type: 'network',
+          message: 'Failed to fetch results from the server. Please try again.'
+        }
+      };
     }
 
     const data = await response.json();
@@ -98,14 +86,9 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   } catch (error: any) {
     console.error('Error in searchCity:', error);
 
+    // Don't treat AbortError as an error that needs user notification
     if (error.name === 'AbortError') {
-      return {
-        results: [],
-        error: {
-          type: 'timeout',
-          message: 'The search request timed out. Please try again.'
-        }
-      };
+      return { results: [] };
     }
 
     return {
