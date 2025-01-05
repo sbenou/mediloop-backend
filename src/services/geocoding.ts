@@ -26,15 +26,15 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
       featuretype: 'city'
     });
 
-    // Add a proxy URL to handle CORS
-    const nominatimUrl = `https://cors-anywhere.herokuapp.com/${NOMINATIM_BASE_URL}/search?${params.toString()}`;
+    const nominatimUrl = `${NOMINATIM_BASE_URL}/search?${params.toString()}`;
     console.log('Sending request to:', nominatimUrl);
     
     const response = await fetch(nominatimUrl, {
       headers: {
         'Accept': 'application/json',
-        'Origin': window.location.origin
-      }
+        'User-Agent': 'FindDoctorApp/1.0 (your@email.com)'
+      },
+      referrerPolicy: 'origin'
     });
 
     if (!response.ok) {
