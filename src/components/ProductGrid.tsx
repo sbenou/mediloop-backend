@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { useCart } from "@/contexts/CartContext";
 
 interface Product {
   id: string;
@@ -20,7 +21,9 @@ interface ProductGridProps {
 }
 
 export const ProductGrid = ({ products, isLoading, userRole }: ProductGridProps) => {
-  const addToCart = (product: Product) => {
+  const { addToCart } = useCart();
+
+  const handleAddToCart = (product: Product) => {
     if (product.requires_prescription && userRole !== 'pharmacist') {
       toast({
         variant: "destructive",
@@ -30,9 +33,11 @@ export const ProductGrid = ({ products, isLoading, userRole }: ProductGridProps)
       return;
     }
     
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} has been added to your cart.`,
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image_url: product.image_url,
     });
   };
 
@@ -77,7 +82,7 @@ export const ProductGrid = ({ products, isLoading, userRole }: ProductGridProps)
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => addToCart(product)}
+                onClick={() => handleAddToCart(product)}
                 className="flex items-center space-x-2"
               >
                 <ShoppingCart className="h-4 w-4" />
