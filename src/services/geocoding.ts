@@ -14,6 +14,19 @@ interface SearchResponse {
   };
 }
 
+interface OverpassResponse {
+  elements: Array<{
+    id: number;
+    lat: number;
+    lon: number;
+    tags: {
+      name?: string;
+      'addr:city'?: string;
+      place?: string;
+    };
+  }>;
+}
+
 export const searchCity = async (query: string): Promise<SearchResponse> => {
   console.info('Searching for city:', query);
   
@@ -25,13 +38,17 @@ export const searchCity = async (query: string): Promise<SearchResponse> => {
       return JSON.parse(cachedData);
     }
 
-    const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&featuretype=city`;
-    console.info('Sending request to:', nominatimUrl);
+    const overpassQuery = `
+      [out:json][timeout:25];
+      area[name="${query}"][admin_level~"8|6|4"];
+      out center;
+    `;
 
-    const response = await fetch(nominatimUrl, {
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: overpassQuery,
       headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'FindDoctorApp/1.0',
+        'Content-Type': 'application/x-www-form-urlencoded',
       }
     });
 
@@ -39,10 +56,20 @@ export const searchCity = async (query: string): Promise<SearchResponse> => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: OverpassResponse = await response.json();
+    
+    // Transform Overpass results to match expected format
+    const results = data.elements.map((element, index) => ({
+      place_id: element.id || index,
+      lat: element.lat.toString(),
+      lon: element.lon.toString(),
+      display_name: element.tags.name || query
+    }));
+
     // Cache the successful response
-    sessionStorage.setItem(`city-search-${query}`, JSON.stringify({ results: data }));
-    return { results: data };
+    const responseData = { results };
+    sessionStorage.setItem(`city-search-${query}`, JSON.stringify(responseData));
+    return responseData;
   } catch (error: any) {
     console.error('Error in searchCity:', error);
     // Try to get from cache on error
@@ -69,12 +96,17 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
       return JSON.parse(cachedData);
     }
 
-    const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`;
-    
-    const response = await fetch(nominatimUrl, {
+    const overpassQuery = `
+      [out:json][timeout:25];
+      area[name="${city}"][admin_level~"8|6|4"];
+      out center;
+    `;
+
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: overpassQuery,
       headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'FindDoctorApp/1.0',
+        'Content-Type': 'application/x-www-form-urlencoded',
       }
     });
 
@@ -82,12 +114,12 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: OverpassResponse = await response.json();
     
-    if (data && data.length > 0) {
+    if (data.elements && data.elements.length > 0) {
       const coords = {
-        lat: data[0].lat,
-        lon: data[0].lon
+        lat: data.elements[0].lat.toString(),
+        lon: data.elements[0].lon.toString()
       };
       
       // Cache the coordinates
