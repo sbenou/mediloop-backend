@@ -1,20 +1,9 @@
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
 
 // Keep track of the current request
 let currentRequest: AbortController | null = null;
-let currentTimeout: NodeJS.Timeout | null = null;
-
-// Cleanup function to abort any pending requests
-const cleanupPendingRequests = () => {
-  if (currentRequest) {
-    currentRequest.abort();
-    currentRequest = null;
-  }
-  if (currentTimeout) {
-    clearTimeout(currentTimeout);
-    currentTimeout = null;
-  }
-};
 
 interface GeocodingResult {
   display_name: string;
@@ -31,11 +20,29 @@ interface GeocodingResponse {
   };
 }
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const fetchWithRetry = async (url: string, options: RequestInit, retries = MAX_RETRIES): Promise<Response> => {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    if (retries > 0 && error instanceof Error && error.name !== 'AbortError') {
+      console.log(`Retrying request, ${retries} attempts remaining`);
+      await delay(RETRY_DELAY);
+      return fetchWithRetry(url, options, retries - 1);
+    }
+    throw error;
+  }
+};
+
 export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   console.log('Searching for city:', query);
   
   try {
-    // Create new abort controller for this request
     currentRequest = new AbortController();
     
     const params = new URLSearchParams({
@@ -48,25 +55,15 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     const nominatimUrl = `${NOMINATIM_BASE_URL}/search?${params.toString()}`;
     console.log('Sending request to:', nominatimUrl);
     
-    const response = await fetch(nominatimUrl, {
+    const response = await fetchWithRetry(nominatimUrl, {
       signal: currentRequest.signal,
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'FindDoctorApp/1.0',
+        'User-Agent': 'FindDoctorApp/1.0'
       },
-      referrerPolicy: 'no-referrer'
+      referrerPolicy: 'no-referrer',
+      mode: 'cors'
     });
-
-    if (!response.ok) {
-      console.error('Nominatim API error:', response.status, response.statusText);
-      return {
-        results: [],
-        error: {
-          type: 'network',
-          message: 'Failed to fetch results from the server. Please try again.'
-        }
-      };
-    }
 
     const data = await response.json();
     console.log('Received data:', data);
@@ -86,7 +83,6 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   } catch (error: any) {
     console.error('Error in searchCity:', error);
 
-    // Don't treat AbortError as an error that needs user notification
     if (error.name === 'AbortError') {
       return { results: [] };
     }
@@ -99,8 +95,10 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
       }
     };
   } finally {
-    // Always clean up
-    cleanupPendingRequests();
+    if (currentRequest) {
+      currentRequest.abort();
+      currentRequest = null;
+    }
   }
 };
 

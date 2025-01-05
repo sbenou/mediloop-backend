@@ -17,6 +17,11 @@ interface OverpassResult {
   }>;
 }
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const searchPharmacies = async (lat: number, lon: number, radius: number = 5000) => {
   const query = `
     [out:json][timeout:25];
@@ -28,34 +33,51 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
     out skel qt;
   `;
 
-  const response = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    body: query,
-  });
+  let retries = MAX_RETRIES;
+  
+  while (retries > 0) {
+    try {
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: query,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        mode: 'cors'
+      });
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch pharmacies');
+      if (!response.ok) {
+        throw new Error('Failed to fetch pharmacies');
+      }
+
+      const data: OverpassResult = await response.json();
+      
+      return data.elements.map(element => ({
+        id: element.id,
+        name: element.tags.name || 'Unnamed Pharmacy',
+        address: [
+          element.tags['addr:housenumber'],
+          element.tags['addr:street'],
+          element.tags['addr:city'],
+          element.tags['addr:postcode']
+        ].filter(Boolean).join(', '),
+        distance: calculateDistance(lat, lon, element.lat, element.lon),
+        hours: element.tags.opening_hours || 'Hours not available',
+        phone: element.tags['contact:phone'] || 'Phone not available',
+        coordinates: {
+          lat: element.lat,
+          lon: element.lon
+        }
+      }));
+    } catch (error) {
+      console.error(`Error fetching pharmacies (${retries} retries left):`, error);
+      retries--;
+      if (retries === 0) throw error;
+      await delay(RETRY_DELAY);
+    }
   }
 
-  const data: OverpassResult = await response.json();
-  
-  return data.elements.map(element => ({
-    id: element.id,
-    name: element.tags.name || 'Unnamed Pharmacy',
-    address: [
-      element.tags['addr:housenumber'],
-      element.tags['addr:street'],
-      element.tags['addr:city'],
-      element.tags['addr:postcode']
-    ].filter(Boolean).join(', '),
-    distance: calculateDistance(lat, lon, element.lat, element.lon),
-    hours: element.tags.opening_hours || 'Hours not available',
-    phone: element.tags['contact:phone'] || 'Phone not available',
-    coordinates: {
-      lat: element.lat,
-      lon: element.lon
-    }
-  }));
+  throw new Error('Failed to fetch pharmacies after all retries');
 };
 
 export const searchDoctors = async (lat: number, lon: number, radius: number = 5000) => {
@@ -70,34 +92,51 @@ export const searchDoctors = async (lat: number, lon: number, radius: number = 5
     out skel qt;
   `;
 
-  const response = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    body: query,
-  });
+  let retries = MAX_RETRIES;
+  
+  while (retries > 0) {
+    try {
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: query,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        mode: 'cors'
+      });
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch doctors');
+      if (!response.ok) {
+        throw new Error('Failed to fetch doctors');
+      }
+
+      const data: OverpassResult = await response.json();
+      
+      return data.elements.map(element => ({
+        id: element.id.toString(),
+        full_name: element.tags.name || 'Unnamed Doctor',
+        address: [
+          element.tags['addr:housenumber'],
+          element.tags['addr:street'],
+          element.tags['addr:city'],
+          element.tags['addr:postcode']
+        ].filter(Boolean).join(', '),
+        city: element.tags['addr:city'] || '',
+        license_number: element.tags['healthcare:speciality'] || 'General Practice',
+        email: element.tags['contact:email'] || element.tags['email'] || undefined,
+        coordinates: {
+          lat: element.lat,
+          lon: element.lon
+        }
+      }));
+    } catch (error) {
+      console.error(`Error fetching doctors (${retries} retries left):`, error);
+      retries--;
+      if (retries === 0) throw error;
+      await delay(RETRY_DELAY);
+    }
   }
 
-  const data: OverpassResult = await response.json();
-  
-  return data.elements.map(element => ({
-    id: element.id.toString(),
-    full_name: element.tags.name || 'Unnamed Doctor',
-    address: [
-      element.tags['addr:housenumber'],
-      element.tags['addr:street'],
-      element.tags['addr:city'],
-      element.tags['addr:postcode']
-    ].filter(Boolean).join(', '),
-    city: element.tags['addr:city'] || '',
-    license_number: element.tags['healthcare:speciality'] || 'General Practice',
-    email: element.tags['contact:email'] || element.tags['email'] || undefined,
-    coordinates: {
-      lat: element.lat,
-      lon: element.lon
-    }
-  }));
+  throw new Error('Failed to fetch doctors after all retries');
 };
 
 // Haversine formula for calculating distance between two points
