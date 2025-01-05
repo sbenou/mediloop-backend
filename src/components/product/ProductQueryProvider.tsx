@@ -15,6 +15,18 @@ export interface ProductQueryConfig {
   itemsPerPage: number;
 }
 
+interface UserProfile {
+  id: string;
+  role: string;
+  // ... add other profile fields if needed
+}
+
+interface ProductQueryResult {
+  products: any[];
+  total: number;
+  userProfile: UserProfile | null;
+}
+
 export const useProductQuery = ({
   searchTerm,
   currentPage,
@@ -88,8 +100,9 @@ export const useProductQuery = ({
       
       return {
         products: data,
-        total: count || 0
-      };
+        total: count || 0,
+        userProfile
+      } as ProductQueryResult;
     },
     enabled: !!userProfile,
   });
