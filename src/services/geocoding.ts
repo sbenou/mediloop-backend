@@ -4,6 +4,18 @@ const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
 let currentRequest: AbortController | null = null;
 let currentTimeout: NodeJS.Timeout | null = null;
 
+// Cleanup function to abort any pending requests
+const cleanupPendingRequests = () => {
+  if (currentRequest) {
+    currentRequest.abort();
+    currentRequest = null;
+  }
+  if (currentTimeout) {
+    clearTimeout(currentTimeout);
+    currentTimeout = null;
+  }
+};
+
 interface GeocodingResult {
   display_name: string;
   place_id: number;
@@ -19,19 +31,9 @@ interface GeocodingResponse {
   };
 }
 
-// Cleanup function to abort any pending requests
-const cleanupPendingRequests = () => {
-  if (currentRequest) {
-    currentRequest.abort();
-    currentRequest = null;
-  }
-  if (currentTimeout) {
-    clearTimeout(currentTimeout);
-    currentTimeout = null;
-  }
-};
-
 export const searchCity = async (query: string): Promise<GeocodingResponse> => {
+  console.log('Searching for city:', query);
+  
   // Clean up any pending requests first
   cleanupPendingRequests();
 
@@ -52,6 +54,7 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     });
 
     const nominatimUrl = `${NOMINATIM_BASE_URL}/search?${params.toString()}`;
+    console.log('Sending request to:', nominatimUrl);
     
     const response = await fetch(nominatimUrl, {
       signal: currentRequest.signal,
@@ -66,14 +69,35 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     cleanupPendingRequests();
 
     if (!response.ok) {
+      console.error('Nominatim API error:', response.status, response.statusText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('Received data:', data);
+
+    if (!Array.isArray(data)) {
+      console.error('Unexpected response format:', data);
+      throw new Error('Invalid response format from Nominatim API');
+    }
+
+    if (data.length === 0) {
+      console.log('No results found for query:', query);
+      return {
+        results: [],
+        error: {
+          type: 'not_found',
+          message: `No results found for "${query}". Please try a different city name.`
+        }
+      };
+    }
+
     return { results: data };
   } catch (error: any) {
     // Clean up on error
     cleanupPendingRequests();
+
+    console.error('Error in searchCity:', error);
 
     if (error.name === 'AbortError') {
       return {
@@ -89,26 +113,32 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
       results: [],
       error: {
         type: 'network',
-        message: 'Failed to search for the city. Please try again.'
+        message: 'Failed to search for the city. Please check your internet connection and try again.'
       }
     };
   }
 };
 
 export const getCoordinates = async (city: string): Promise<{ lat: string; lon: string } | null> => {
+  console.log('Getting coordinates for city:', city);
+  
   try {
     const { results, error } = await searchCity(city);
     
     if (error) {
+      console.error('Error getting coordinates:', error);
       throw new Error(error.message);
     }
     
     if (results.length > 0 && results[0].lat && results[0].lon) {
+      console.log('Found coordinates:', { lat: results[0].lat, lon: results[0].lon });
       return {
         lat: results[0].lat,
         lon: results[0].lon
       };
     }
+
+    console.log('No coordinates found for city:', city);
     return null;
   } catch (error) {
     console.error('Error getting coordinates:', error);
