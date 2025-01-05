@@ -3,6 +3,7 @@ const CORS_PROXY = 'https://cors-proxy.lovable.workers.dev';
 
 // Keep track of the current request
 let currentRequest: AbortController | null = null;
+let currentTimeout: NodeJS.Timeout | null = null;
 
 interface GeocodingResult {
   display_name: string;
@@ -19,18 +20,28 @@ interface GeocodingResponse {
   };
 }
 
-export const searchCity = async (query: string): Promise<GeocodingResponse> => {
-  // Cancel any pending request
+// Cleanup function to abort any pending requests
+const cleanupPendingRequests = () => {
   if (currentRequest) {
     currentRequest.abort();
+    currentRequest = null;
   }
+  if (currentTimeout) {
+    clearTimeout(currentTimeout);
+    currentTimeout = null;
+  }
+};
+
+export const searchCity = async (query: string): Promise<GeocodingResponse> => {
+  // Clean up any pending requests first
+  cleanupPendingRequests();
 
   // Create new abort controller for this request
   currentRequest = new AbortController();
-  const timeoutId = setTimeout(() => {
-    if (currentRequest) {
-      currentRequest.abort();
-    }
+  
+  // Set timeout
+  currentTimeout = setTimeout(() => {
+    cleanupPendingRequests();
   }, 15000); // 15 seconds timeout
 
   try {
@@ -52,8 +63,8 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
       mode: 'cors'
     });
 
-    clearTimeout(timeoutId);
-    currentRequest = null;
+    // Clean up after successful request
+    cleanupPendingRequests();
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -62,8 +73,8 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     const data = await response.json();
     return { results: data };
   } catch (error: any) {
-    clearTimeout(timeoutId);
-    currentRequest = null;
+    // Clean up on error
+    cleanupPendingRequests();
 
     if (error.name === 'AbortError') {
       return {
