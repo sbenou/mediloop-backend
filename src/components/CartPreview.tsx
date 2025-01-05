@@ -1,6 +1,6 @@
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "./ui/button";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 
 export const CartPreview = () => {
