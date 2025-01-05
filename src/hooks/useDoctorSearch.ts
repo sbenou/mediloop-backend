@@ -56,6 +56,8 @@ export const useDoctorSearch = (
       return Array.from(new Map(allDoctors.map(item => [item.id, item])).values());
     },
     enabled: !!coordinates,
+    staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
   });
 
   return { doctors, isLoading };
