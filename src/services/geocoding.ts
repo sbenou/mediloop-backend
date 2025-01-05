@@ -42,14 +42,14 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
     });
 
     const nominatimUrl = `${NOMINATIM_BASE_URL}/search?${params.toString()}`;
+    const proxyUrl = `${CORS_PROXY}/?url=${encodeURIComponent(nominatimUrl)}`;
     
-    const response = await fetch(`${CORS_PROXY}/?url=${encodeURIComponent(nominatimUrl)}`, {
-      headers: {
-        'Accept': 'application/json',
-      },
+    const response = await fetch(proxyUrl, {
       signal: currentRequest.signal,
-      mode: 'cors',
-      credentials: 'omit'
+      headers: {
+        'Accept': 'application/json'
+      },
+      mode: 'cors'
     });
 
     clearTimeout(timeoutId);
