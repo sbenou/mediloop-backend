@@ -34,23 +34,19 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   }, 15000); // 15 seconds timeout
 
   try {
-    const baseUrl = `${NOMINATIM_BASE_URL}/search`;
     const params = new URLSearchParams({
       format: 'json',
       q: query,
       limit: '5',
       featuretype: 'city'
     });
+
+    const nominatimUrl = `${NOMINATIM_BASE_URL}/search?${params.toString()}`;
     
-    const nominatimUrl = `${baseUrl}?${params.toString()}`;
-    const encodedUrl = encodeURIComponent(nominatimUrl);
-    
-    const response = await fetch(`${CORS_PROXY}/${encodedUrl}`, {
+    const response = await fetch(`${CORS_PROXY}/?url=${encodeURIComponent(nominatimUrl)}`, {
       headers: {
-        'User-Agent': 'MediHop Health App (development)',
-        'Accept-Language': 'en',
-        'Origin': window.location.origin,
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Origin': window.location.origin
       },
       signal: currentRequest.signal,
       mode: 'cors',
