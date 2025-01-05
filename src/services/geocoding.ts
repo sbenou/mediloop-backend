@@ -26,15 +26,15 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
       featuretype: 'city'
     });
 
-    const nominatimUrl = `${NOMINATIM_BASE_URL}/search?${params.toString()}`;
+    // Add a proxy URL to handle CORS
+    const nominatimUrl = `https://cors-anywhere.herokuapp.com/${NOMINATIM_BASE_URL}/search?${params.toString()}`;
     console.log('Sending request to:', nominatimUrl);
     
     const response = await fetch(nominatimUrl, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'FindDoctorApp/1.0'
-      },
-      referrerPolicy: 'no-referrer'
+        'Origin': window.location.origin
+      }
     });
 
     if (!response.ok) {
@@ -59,11 +59,6 @@ export const searchCity = async (query: string): Promise<GeocodingResponse> => {
   } catch (error: any) {
     console.error('Error in searchCity:', error);
     
-    // Don't treat AbortError as a user-facing error since it's expected
-    if (error.name === 'AbortError') {
-      return { results: [] };
-    }
-
     return {
       results: [],
       error: {
@@ -82,18 +77,16 @@ export const getCoordinates = async (city: string): Promise<{ lat: string; lon: 
     
     if (error) {
       console.error('Error getting coordinates:', error);
-      throw new Error(error.message);
+      return null;
     }
     
     if (results.length > 0 && results[0].lat && results[0].lon) {
-      console.log('Found coordinates:', { lat: results[0].lat, lon: results[0].lon });
       return {
         lat: results[0].lat,
         lon: results[0].lon
       };
     }
 
-    console.log('No coordinates found for city:', city);
     return null;
   } catch (error) {
     console.error('Error getting coordinates:', error);
