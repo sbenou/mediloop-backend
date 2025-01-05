@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.subcategories (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
--- Create products table
+-- Create products table (removed pharmacy_id)
 CREATE TABLE IF NOT EXISTS public.products (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS public.products (
     image_url TEXT,
     type TEXT NOT NULL CHECK (type IN ('medication', 'parapharmacy')),
     requires_prescription BOOLEAN DEFAULT false,
-    pharmacy_id UUID REFERENCES public.pharmacies(id) ON DELETE CASCADE,
     category_id UUID REFERENCES public.categories(id),
     subcategory_id UUID REFERENCES public.subcategories(id),
     popularity INTEGER DEFAULT 0,
@@ -53,7 +52,7 @@ CREATE POLICY "Products are viewable by all authenticated users"
     TO authenticated
     USING (true);
 
--- Insert sample data for categories with proper UUIDs
+-- Insert sample data for categories
 DO $$
 DECLARE
     pain_relief_id UUID;
@@ -65,11 +64,7 @@ DECLARE
     broad_spectrum_id UUID;
     multivitamins_id UUID;
     face_care_id UUID;
-    pharmacy_id UUID;
 BEGIN
-    -- Set the pharmacy_id as a proper UUID
-    pharmacy_id := '67588497-1067-4000-a000-000000000000';  -- Converting the numeric ID to a UUID format
-
     -- Insert categories and store their IDs
     INSERT INTO public.categories (name, type) 
     VALUES ('Pain Relief', 'medication') 
@@ -108,14 +103,13 @@ BEGIN
     VALUES ('Face Care', skincare_id)
     RETURNING id INTO face_care_id;
     
-    -- Insert sample products
+    -- Insert sample products (removed pharmacy_id from inserts)
     INSERT INTO public.products (
         name,
         description,
         price,
         type,
         requires_prescription,
-        pharmacy_id,
         category_id,
         subcategory_id,
         image_url
@@ -126,7 +120,6 @@ BEGIN
         12.99,
         'medication',
         false,
-        pharmacy_id,
         pain_relief_id,
         painkillers_id,
         'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
@@ -137,7 +130,6 @@ BEGIN
         24.99,
         'medication',
         true,
-        pharmacy_id,
         antibiotics_id,
         broad_spectrum_id,
         'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
@@ -148,7 +140,6 @@ BEGIN
         15.99,
         'parapharmacy',
         false,
-        pharmacy_id,
         vitamins_id,
         multivitamins_id,
         'https://images.unsplash.com/photo-1577401132921-cb39bb0adcff?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
@@ -159,7 +150,6 @@ BEGIN
         29.99,
         'parapharmacy',
         false,
-        pharmacy_id,
         skincare_id,
         face_care_id,
         'https://images.unsplash.com/photo-1556229162-5c63ed9c4efb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
