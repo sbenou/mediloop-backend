@@ -40,14 +40,11 @@ export const useSignup = () => {
     setIsSubmitting(true);
 
     try {
-      // Map the frontend role to database role
-      const databaseRole = roleMapping[userRole];
-      
       // First, get the role ID
       const { data: roleData, error: roleError } = await supabase
         .from('roles')
         .select('id')
-        .eq('name', databaseRole)
+        .eq('name', roleMapping[userRole])
         .single();
 
       if (roleError) {
@@ -55,16 +52,16 @@ export const useSignup = () => {
       }
 
       if (!roleData?.id) {
-        throw new Error(`Role '${databaseRole}' not found`);
+        throw new Error(`Role '${roleMapping[userRole]}' not found`);
       }
 
-      // Create auth user
+      // Create auth user with minimal metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name,
+            full_name: name,
           },
         },
       });
@@ -92,14 +89,14 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile
+      // Create the profile with the correct structure
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
           id: authData.user.id,
           email,
           full_name: name,
-          role_id: roleData.id,
+          role: roleMapping[userRole], // Use the role name directly
           license_number: licenseNumber || null,
         });
 
