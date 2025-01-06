@@ -1,6 +1,9 @@
--- First drop the existing constraint if it exists
+-- First drop the existing constraints if they exist
 ALTER TABLE profiles
 DROP CONSTRAINT IF EXISTS profiles_role_check;
+
+ALTER TABLE profiles
+DROP CONSTRAINT IF EXISTS valid_role;
 
 -- Add role column to profiles table if it doesn't exist
 DO $$ 
@@ -13,15 +16,12 @@ BEGIN
     END IF;
 END $$;
 
--- Add new check constraint to limit possible roles
-ALTER TABLE profiles
-DROP CONSTRAINT IF EXISTS valid_role;
+-- Update any existing rows with invalid or NULL roles to 'user'
+UPDATE profiles 
+SET role = 'user' 
+WHERE role IS NULL OR role NOT IN ('user', 'doctor', 'pharmacist', 'superadmin');
 
+-- Add new check constraint to limit possible roles
 ALTER TABLE profiles
 ADD CONSTRAINT valid_role 
 CHECK (role IN ('user', 'doctor', 'pharmacist', 'superadmin'));
-
--- Update existing rows to have 'user' role if null
-UPDATE profiles 
-SET role = 'user' 
-WHERE role IS NULL;
