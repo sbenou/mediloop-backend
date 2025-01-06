@@ -178,7 +178,7 @@ export const RoleManagementTable = () => {
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Roles</CardTitle>
+          <CardTitle>Role Management</CardTitle>
           <Button 
             onClick={handleAdd} 
             size="sm"
