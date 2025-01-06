@@ -71,7 +71,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
   const handleForgotPassword = async (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("Handling forgot password for email:", email);
     
     if (!email) {
       toast({
@@ -98,8 +97,10 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       } else {
         console.log("Password reset email sent successfully");
         toast({
+          variant: "default",
           title: "Check Your Email",
           description: "If an account exists with this email, you will receive password reset instructions.",
+          duration: 5000,
         });
       }
     } catch (error: any) {
