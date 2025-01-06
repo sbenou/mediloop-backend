@@ -77,9 +77,9 @@ export const ProductUploader = () => {
         });
       } else {
         toast({
-          variant: "destructive",
+          variant: "default",
           title: "No new products",
-          description: `All ${result.skippedCount} products already exist in the database.`,
+          description: `There were no new products found to upload. All ${result.skippedCount} products already exist in the database.`,
           duration: 5000,
         });
       }

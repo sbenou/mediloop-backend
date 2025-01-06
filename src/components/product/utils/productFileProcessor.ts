@@ -85,10 +85,6 @@ export const processProductFile = async (
       }
     }
 
-    if (newProducts.length === 0) {
-      throw new Error(`All ${skippedCount} products already exist in the database.`);
-    }
-
     return { newProducts, skippedCount };
   } catch (error) {
     console.error('File processing error:', error);
