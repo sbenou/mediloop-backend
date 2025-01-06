@@ -40,28 +40,14 @@ export const useSignup = () => {
     setIsSubmitting(true);
 
     try {
-      // First, get the role ID
-      const { data: roleData, error: roleError } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('name', roleMapping[userRole])
-        .single();
-
-      if (roleError) {
-        throw new Error(`Failed to fetch role ID: ${roleError.message}`);
-      }
-
-      if (!roleData?.id) {
-        throw new Error(`Role '${roleMapping[userRole]}' not found`);
-      }
-
-      // Create auth user with minimal metadata
+      // Create auth user first
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: name,
+            role: roleMapping[userRole], // Store role in auth metadata
           },
         },
       });
@@ -89,16 +75,16 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile with the correct structure
+      // Create the profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .insert([{
           id: authData.user.id,
           email,
           full_name: name,
-          role: roleMapping[userRole], // Use the role name directly
+          role: roleMapping[userRole],
           license_number: licenseNumber || null,
-        });
+        }]);
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
