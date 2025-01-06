@@ -63,30 +63,30 @@ export const processProductFile = async (
     let newProducts = [];
     let skippedCount = 0;
 
-    for (const product of products) {
-      const { data: existingProduct } = await supabase
-        .from('products')
-        .select('name')
-        .eq('name', product.name)
-        .maybeSingle();
+    // Check for existing products in a single query
+    const { data: existingProducts } = await supabase
+      .from('products')
+      .select('name')
+      .in('name', products.map(p => p!.name));
 
-      if (!existingProduct) {
-        newProducts.push(product);
-      } else {
-        skippedCount++;
+    const existingProductNames = new Set(existingProducts?.map(p => p.name) || []);
+
+    // Filter out existing products
+    newProducts = products.filter(product => !existingProductNames.has(product!.name));
+    skippedCount = products.length - newProducts.length;
+
+    if (newProducts.length > 0) {
+      const { error } = await supabase
+        .from('products')
+        .insert(newProducts);
+
+      if (error) {
+        throw error;
       }
     }
 
     if (newProducts.length === 0) {
       throw new Error(`All ${skippedCount} products already exist in the database.`);
-    }
-
-    const { error } = await supabase
-      .from('products')
-      .insert(newProducts);
-
-    if (error) {
-      throw error;
     }
 
     return { newProducts, skippedCount };
