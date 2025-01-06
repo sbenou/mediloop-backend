@@ -32,20 +32,16 @@ CREATE POLICY "Enable insert for authenticated users only"
     FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');
 
--- Add updated_at trigger if it doesn't exist
-DO $$ 
+-- Create or replace the updated_at function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
 BEGIN
-    CREATE OR REPLACE FUNCTION update_updated_at_column()
-    RETURNS TRIGGER AS $$
-    BEGIN
-        NEW.updated_at = TIMEZONE('utc'::text, NOW());
-        RETURN NEW;
-    END;
-    $$ language 'plpgsql';
-EXCEPTION
-    WHEN duplicate_function THEN NULL;
-END $$;
+    NEW.updated_at = TIMEZONE('utc'::text, NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
+-- Create the trigger
 DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at
     BEFORE UPDATE ON public.profiles
