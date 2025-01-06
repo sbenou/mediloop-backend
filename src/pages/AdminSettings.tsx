@@ -93,7 +93,7 @@ const AdminSettings = () => {
           </TabsTrigger>
           <TabsTrigger value="users">
             <Users className="h-4 w-4 mr-2" />
-            User Management
+            Users
           </TabsTrigger>
           <TabsTrigger value="roles">
             <Shield className="h-4 w-4 mr-2" />
