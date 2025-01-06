@@ -5,7 +5,7 @@ export const getBaseUrl = () => {
   const url = window.location.href;
   if (url.includes('lovableproject.com')) {
     const projectId = url.split('.lovableproject.com')[0].split('//')[1];
-    return `https://lovable.dev/projects/${projectId}/reset-password`;
+    return `https://${projectId}.lovableproject.com/reset-password`;
   }
   const projectsIndex = url.indexOf('/projects/');
   if (projectsIndex !== -1) {
