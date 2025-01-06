@@ -1,3 +1,7 @@
+-- First drop the existing constraint if it exists
+ALTER TABLE profiles
+DROP CONSTRAINT IF EXISTS profiles_role_check;
+
 -- Add role column to profiles table if it doesn't exist
 DO $$ 
 BEGIN
@@ -9,7 +13,7 @@ BEGIN
     END IF;
 END $$;
 
--- Add check constraint to limit possible roles
+-- Add new check constraint to limit possible roles
 ALTER TABLE profiles
 DROP CONSTRAINT IF EXISTS valid_role;
 
