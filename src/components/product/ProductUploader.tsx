@@ -65,7 +65,7 @@ export const ProductUploader = () => {
   }
 
   const handleFileUpload = async (file: File) => {
-    toast({
+    const toastId = toast({
       title: "Processing file",
       description: "Please wait while we process your products file...",
     });
@@ -151,6 +151,13 @@ export const ProductUploader = () => {
             skippedCount++;
           }
         }
+
+        // Dismiss the processing toast
+        toast({
+          id: toastId,
+          title: "Processing complete",
+          description: "File processing has finished.",
+        });
 
         if (newProducts.length === 0) {
           toast({
