@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 interface Role {
   id: string;
@@ -12,19 +14,85 @@ interface Role {
   description: string;
 }
 
-const initialRoles: Role[] = [
-  { id: '1', name: 'user', description: 'Regular user with basic access' },
-  { id: '2', name: 'doctor', description: 'Medical professional with patient management access' },
-  { id: '3', name: 'pharmacist', description: 'Pharmacy staff with medication management access' },
-  { id: '4', name: 'superadmin', description: 'Full system access and management capabilities' },
-];
-
 export const RoleManagementTable = () => {
-  const [roles, setRoles] = useState<Role[]>(initialRoles);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: roles = [], isLoading } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('roles')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data as Role[];
+    },
+  });
+
+  const createRoleMutation = useMutation({
+    mutationFn: async (newRole: Omit<Role, 'id'>) => {
+      const { data, error } = await supabase
+        .from('roles')
+        .insert([newRole])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      toast({
+        title: "Role added",
+        description: "A new role has been added successfully.",
+      });
+    },
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ id, ...role }: Role) => {
+      const { data, error } = await supabase
+        .from('roles')
+        .update(role)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      toast({
+        title: "Role updated",
+        description: "The role has been successfully updated.",
+      });
+    },
+  });
+
+  const deleteRoleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('roles')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      toast({
+        title: "Role deleted",
+        description: "The role has been successfully deleted.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleEdit = (role: Role) => {
     setIsEditing(role.id);
@@ -32,41 +100,29 @@ export const RoleManagementTable = () => {
     setEditDescription(role.description);
   };
 
-  const handleSave = (id: string) => {
-    setRoles(roles.map(role => 
-      role.id === id 
-        ? { ...role, name: editName, description: editDescription }
-        : role
-    ));
+  const handleSave = async (id: string) => {
+    await updateRoleMutation.mutateAsync({
+      id,
+      name: editName,
+      description: editDescription,
+    });
     setIsEditing(null);
-    toast({
-      title: "Role updated",
-      description: "The role has been successfully updated.",
-    });
   };
 
-  const handleDelete = (id: string) => {
-    setRoles(roles.filter(role => role.id !== id));
-    toast({
-      title: "Role deleted",
-      description: "The role has been successfully deleted.",
-      variant: "destructive",
-    });
+  const handleDelete = async (id: string) => {
+    await deleteRoleMutation.mutateAsync(id);
   };
 
-  const handleAdd = () => {
-    const newRole: Role = {
-      id: String(Date.now()),
+  const handleAdd = async () => {
+    await createRoleMutation.mutateAsync({
       name: "New Role",
       description: "Description for new role",
-    };
-    setRoles([...roles, newRole]);
-    handleEdit(newRole);
-    toast({
-      title: "Role added",
-      description: "A new role has been added. Please edit its details.",
     });
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card>
