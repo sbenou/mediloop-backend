@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.subcategories (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
--- Create products table (removed pharmacy_id)
+-- Create products table (without pharmacy_id)
 CREATE TABLE IF NOT EXISTS public.products (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
