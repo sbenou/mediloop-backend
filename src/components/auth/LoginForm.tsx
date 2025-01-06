@@ -14,6 +14,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [resetRequestTime, setResetRequestTime] = useState(0);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,6 +79,19 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       return;
     }
 
+    // Check if enough time has passed since the last request
+    const now = Date.now();
+    const timeSinceLastRequest = now - resetRequestTime;
+    if (timeSinceLastRequest < 11000) { // 11 seconds in milliseconds
+      const remainingSeconds = Math.ceil((11000 - timeSinceLastRequest) / 1000);
+      toast({
+        variant: "destructive",
+        title: "Please Wait",
+        description: `For security purposes, you can only request this after ${remainingSeconds} seconds.`,
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -85,13 +99,24 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       });
 
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Unable to process your request at this time. Please try again later.",
-        });
+        if (error.message.includes('rate_limit')) {
+          toast({
+            variant: "destructive",
+            title: "Too Many Requests",
+            description: "Please wait a few seconds before trying again.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Unable to process your request at this time. Please try again later.",
+          });
+        }
         return;
       }
+
+      // Update the last request time
+      setResetRequestTime(now);
 
       toast({
         title: "Password Reset Instructions Sent",
