@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { processProductFile } from './utils/productFileProcessor';
 import { Category, Subcategory } from './types/product';
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 export const ProductUploader = () => {
   const { toast } = useToast();
@@ -96,9 +97,42 @@ export const ProductUploader = () => {
     }
   };
 
+  const handleClearProducts = async () => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .neq('id', 0); // This ensures we delete all rows
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "All products have been cleared from the database.",
+        duration: 5000,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to clear products",
+        duration: 5000,
+      });
+    }
+  };
+
   return (
     <div className="p-4 border rounded-lg">
-      <h3 className="font-medium mb-4">Upload Products</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-medium">Upload Products</h3>
+        <Button 
+          variant="destructive" 
+          size="sm"
+          onClick={handleClearProducts}
+        >
+          Clear All Products
+        </Button>
+      </div>
       <FileUpload onFileSelect={handleFileUpload} />
     </div>
   );
