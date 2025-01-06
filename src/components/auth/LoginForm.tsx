@@ -124,7 +124,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
-            description: "Please wait a few minutes before requesting another password reset email.",
+            description: "Please wait a few seconds before requesting another password reset email.",
             duration: 5000,
           });
         } else {
@@ -152,10 +152,10 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         duration: 5000,
       });
     } finally {
-      // Set a longer timeout before allowing another attempt
+      // Set a shorter timeout before allowing another attempt
       setTimeout(() => {
         setIsSendingReset(false);
-      }, 60000); // Wait 1 minute before allowing another attempt
+      }, 10000); // Wait 10 seconds before allowing another attempt
     }
   };
 
