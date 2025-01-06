@@ -34,7 +34,7 @@ export const RoleManagementTable = () => {
       const { data, error } = await supabase
         .from('roles')
         .select('*')
-        .order('name');
+        .order('created_at', { ascending: true });
       
       if (error) throw error;
       return data as Role[];
