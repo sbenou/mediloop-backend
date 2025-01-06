@@ -42,36 +42,37 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       if (error) {
         console.error("Password reset error:", error);
         
-        // Parse the error message from the JSON string if it exists
+        // Try to parse the error body if it exists
         let errorBody;
         try {
-          errorBody = error.message && JSON.parse(error.message);
+          errorBody = JSON.parse(error.message);
         } catch {
-          errorBody = null;
+          // If parsing fails, just use the raw message
+          errorBody = { message: error.message };
         }
-        
+
+        // Check for rate limit errors
         if (
           error.status === 429 || 
-          error.message.includes('rate_limit') ||
           errorBody?.code === 'over_email_send_rate_limit' ||
-          (error.message.includes('email') && error.message.includes('exceeded'))
+          error.message.includes('rate limit exceeded') ||
+          error.message.includes('429')
         ) {
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
-            description: "You've made too many requests. Please wait a few minutes before trying to log in or reset your password again.",
+            description: "You've made too many requests. Please wait a few minutes before trying to reset your password again.",
             duration: 8000,
           });
         } else {
           toast({
             variant: "destructive",
             title: "Error",
-            description: error.message || "Unable to send reset password email. Please try again later.",
+            description: errorBody.message || "Unable to send reset password email. Please try again later.",
             duration: 5000,
           });
         }
       } else {
-        console.log("Password reset email sent successfully");
         toast({
           title: "Check Your Email",
           description: "If an account exists with this email, you will receive password reset instructions.",
@@ -87,7 +88,7 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
         duration: 5000,
       });
     } finally {
-      // Set a 10-second cooldown before allowing another attempt
+      // Set a cooldown period before allowing another attempt
       setTimeout(() => {
         setIsSendingReset(false);
       }, 10000);
