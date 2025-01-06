@@ -17,7 +17,6 @@ interface Subcategory {
 }
 
 export const ProductUploader = () => {
-  // Fetch user profile to check role
   const { data: userProfile } = useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
@@ -35,7 +34,6 @@ export const ProductUploader = () => {
     },
   });
 
-  // Fetch categories and subcategories for mapping
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -58,7 +56,6 @@ export const ProductUploader = () => {
     }
   });
 
-  // Check if user is not a superadmin
   if (userProfile?.role !== 'superadmin') {
     return (
       <div className="p-4 border rounded-lg">
@@ -72,15 +69,38 @@ export const ProductUploader = () => {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const text = e.target?.result;
-        if (typeof text !== 'string') return;
+        if (typeof text !== 'string') {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to read file content",
+          });
+          return;
+        }
         
-        const rows = text.split('\n');
+        const rows = text.split('\n').filter(row => row.trim() !== '');
         const products = rows.slice(1).map(row => {
-          const [name, price, type, requires_prescription, description] = row.split(',');
+          const values = row.split(',').map(value => value.trim());
+          
+          // Ensure we have all required values
+          if (values.length < 5) {
+            console.error('Invalid row format:', row);
+            return null;
+          }
 
+          const [name, priceStr, typeStr, requires_prescriptionStr, description] = values;
+
+          // Skip invalid rows
+          if (!name || !priceStr || !typeStr) {
+            console.error('Missing required fields:', row);
+            return null;
+          }
+
+          const type = typeStr.toLowerCase();
+          
           // Find matching category and subcategory based on product type and name
           const category = categories?.find(c => 
-            c.type === type.trim().toLowerCase() && 
+            c.type === type && 
             name.toLowerCase().includes(c.name.toLowerCase())
           );
 
@@ -93,15 +113,24 @@ export const ProductUploader = () => {
           }
 
           return {
-            name: name.trim(),
-            price: parseFloat(price),
-            type: type.trim(),
-            requires_prescription: requires_prescription.trim().toLowerCase() === 'true',
-            description: description?.trim(),
+            name,
+            price: parseFloat(priceStr) || 0,
+            type,
+            requires_prescription: requires_prescriptionStr.toLowerCase() === 'true',
+            description: description || '',
             category_id: category?.id || null,
             subcategory_id: subcategory?.id || null,
           };
-        });
+        }).filter(product => product !== null); // Remove any invalid products
+
+        if (products.length === 0) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No valid products found in the CSV file",
+          });
+          return;
+        }
 
         const { error } = await supabase
           .from('products')
