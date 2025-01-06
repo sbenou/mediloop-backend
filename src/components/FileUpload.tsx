@@ -21,6 +21,9 @@ export default function FileUpload({ onFileSelect }: FileUploadProps) {
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png'],
       'application/pdf': ['.pdf'],
+      'text/csv': ['.csv'],
+      'application/vnd.ms-excel': ['.csv'],
+      'application/csv': ['.csv']
     },
     maxFiles: 1,
   });
@@ -43,7 +46,7 @@ export default function FileUpload({ onFileSelect }: FileUploadProps) {
           {isDragActive ? 'Drop your products file here' : 'Drag & drop your products file'}
         </p>
         <p className="text-sm text-gray-500 mb-4">or click to select a file</p>
-        <p className="text-xs text-gray-400">Supported formats: PDF, JPG, PNG</p>
+        <p className="text-xs text-gray-400">Supported formats: CSV, PDF, JPG, PNG</p>
       </div>
 
       {file && (
