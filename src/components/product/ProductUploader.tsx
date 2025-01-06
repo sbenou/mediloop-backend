@@ -65,7 +65,6 @@ export const ProductUploader = () => {
   }
 
   const handleFileUpload = async (file: File) => {
-    // Show loading toast
     toast({
       title: "Processing file",
       description: "Please wait while we process your products file...",
@@ -88,7 +87,6 @@ export const ProductUploader = () => {
         const products = rows.slice(1).map(row => {
           const values = row.split(',').map(value => value.trim());
           
-          // Ensure we have all required values
           if (values.length < 5) {
             console.error('Invalid row format:', row);
             return null;
@@ -96,7 +94,6 @@ export const ProductUploader = () => {
 
           const [name, priceStr, typeStr, requires_prescriptionStr, description] = values;
 
-          // Skip invalid rows
           if (!name || !priceStr || !typeStr) {
             console.error('Missing required fields:', row);
             return null;
@@ -104,7 +101,6 @@ export const ProductUploader = () => {
 
           const type = typeStr.toLowerCase();
           
-          // Find matching category and subcategory based on product type and name
           const category = categories?.find(c => 
             c.type === type && 
             name.toLowerCase().includes(c.name.toLowerCase())
@@ -127,7 +123,7 @@ export const ProductUploader = () => {
             category_id: category?.id || null,
             subcategory_id: subcategory?.id || null,
           };
-        }).filter(product => product !== null); // Remove any invalid products
+        }).filter(product => product !== null);
 
         if (products.length === 0) {
           toast({
@@ -138,30 +134,48 @@ export const ProductUploader = () => {
           return;
         }
 
+        let newProducts = [];
+        let skippedCount = 0;
+
+        // Process each product one by one
+        for (const product of products) {
+          const { data: existingProduct } = await supabase
+            .from('products')
+            .select('name')
+            .eq('name', product.name)
+            .maybeSingle();
+
+          if (!existingProduct) {
+            newProducts.push(product);
+          } else {
+            skippedCount++;
+          }
+        }
+
+        if (newProducts.length === 0) {
+          toast({
+            variant: "destructive",
+            title: "No new products",
+            description: `All ${skippedCount} products already exist in the database.`,
+          });
+          return;
+        }
+
         const { error } = await supabase
           .from('products')
-          .insert(products);
+          .insert(newProducts);
 
         if (error) {
           console.error('Upload error:', error);
-          // Check if it's a unique constraint violation
-          if (error.code === '23505') {
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "One or more products already exist in the database. Product names must be unique.",
-            });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Failed to upload products: " + error.message,
-            });
-          }
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to upload products: " + error.message,
+          });
         } else {
           toast({
             title: "Success",
-            description: `${products.length} products uploaded successfully`,
+            description: `${newProducts.length} new products uploaded successfully. ${skippedCount} products were skipped as they already existed.`,
           });
         }
       };
