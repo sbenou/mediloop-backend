@@ -87,14 +87,14 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       if (error) throw error;
 
       toast({
-        title: "Password Reset Email Sent",
-        description: "Check your email for the password reset link. Don't forget to check your spam folder.",
+        title: "Password Reset Instructions Sent",
+        description: "If an account exists with this email address, you will receive password reset instructions. Please check both your inbox and spam folder.",
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send password reset email",
+        description: "Unable to process your request at this time. Please try again later.",
       });
     } finally {
       setIsLoading(false);
