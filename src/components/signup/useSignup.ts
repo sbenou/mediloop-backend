@@ -97,16 +97,19 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
+      // Wait a short moment to ensure auth user is fully created
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Create the profile after successful auth
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .insert([{
           id: authData.user.id,
           email,
           full_name: name,
           role_id: roleData.id,
           license_number: licenseNumber || null,
-        });
+        }]);
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
