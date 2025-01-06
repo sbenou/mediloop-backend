@@ -1,41 +1,39 @@
-import { Toaster } from "@/components/ui/toaster";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
-import Layout from "@/components/Layout";
-import Home from "@/pages/Home";
 import Products from "@/pages/Products";
+import Index from "@/pages/Index";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import Cart from "@/pages/Cart";
-import Orders from "@/pages/Orders";
-import Admin from "@/pages/Admin";
-import ProductDetails from "@/pages/ProductDetails";
+import Signup from "@/pages/Signup";
+import MyOrders from "@/pages/MyOrders";
+import MyPrescriptions from "@/pages/MyPrescriptions";
+import CreatePrescription from "@/pages/CreatePrescription";
+import FindDoctor from "@/pages/FindDoctor";
+import DoctorConnections from "@/pages/DoctorConnections";
+import AdminSettings from "@/pages/AdminSettings";
 
+// Create a client
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <Router>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/:id" element={<ProductDetails />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/admin" element={<Admin />} />
-            </Routes>
-          </Layout>
-          <Toaster />
-        </Router>
-      </ThemeProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/products/:pharmacyId" element={<Products />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/my-orders" element={<MyOrders />} />
+          <Route path="/my-prescriptions" element={<MyPrescriptions />} />
+          <Route path="/create-prescription" element={<CreatePrescription />} />
+          <Route path="/find-doctor" element={<FindDoctor />} />
+          <Route path="/doctor-connections" element={<DoctorConnections />} />
+          <Route path="/admin-settings" element={<AdminSettings />} />
+        </Routes>
+      </Router>
     </QueryClientProvider>
   );
 }
