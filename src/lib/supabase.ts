@@ -8,9 +8,15 @@ const getBaseUrl = () => {
   const url = window.location.href;
   const projectsIndex = url.indexOf('/projects/');
   if (projectsIndex !== -1) {
-    return url.substring(0, url.indexOf('/', projectsIndex + 10));
+    // Get the complete URL including the project path
+    const projectPath = url.substring(projectsIndex);
+    const baseUrl = `${window.location.origin}${projectPath}`;
+    // Remove any trailing slashes and additional paths
+    const cleanUrl = baseUrl.split('/').slice(0, 5).join('/');
+    // Append the reset-password path
+    return `${cleanUrl}/reset-password`;
   }
-  return window.location.origin;
+  return `${window.location.origin}/reset-password`;
 };
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -20,7 +26,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     storage: window.localStorage,
-    storageKey: 'supabase.auth.token'
+    storageKey: 'supabase.auth.token',
+    redirectTo: getBaseUrl()
   },
   global: {
     headers: {
@@ -50,6 +57,6 @@ supabase.auth.onAuthStateChange((event, session) => {
     // Get the base URL for redirection
     const baseUrl = getBaseUrl();
     // Redirect to reset-password within the project path
-    window.location.href = `${baseUrl}/reset-password`;
+    window.location.href = baseUrl;
   }
 });
