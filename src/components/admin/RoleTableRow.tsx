@@ -36,30 +36,22 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
     const [showPermissions, setShowPermissions] = useState(false);
 
     // Fetch role permissions
-    const { data: rolePermissions, isLoading } = useQuery({
+    const { data: rolePermissions = [], isLoading } = useQuery({
       queryKey: ['rolePermissions', role.id],
       queryFn: async () => {
-        console.log('Fetching permissions for role:', role.id);
         const { data, error } = await supabase
           .from('role_permissions')
           .select('permission_id')
           .eq('role_id', role.id);
         
-        if (error) {
-          console.error('Error fetching role permissions:', error);
-          throw error;
-        }
-        
-        const permissions = data.map(rp => rp.permission_id);
-        console.log('Fetched permissions for role:', role.id, permissions);
-        return permissions;
+        if (error) throw error;
+        return data.map(rp => rp.permission_id);
       },
-      enabled: showPermissions, // Only fetch when modal is opened
+      enabled: showPermissions,
     });
 
     const handlePermissionsSave = async (permissions: string[]) => {
       try {
-        console.log('Saving permissions for role:', role.id, permissions);
         // First, delete existing permissions
         const { error: deleteError } = await supabase
           .from('role_permissions')
@@ -153,7 +145,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
 
         <Dialog open={showPermissions} onOpenChange={setShowPermissions}>
           <DialogContent>
-            {!isLoading && rolePermissions && (
+            {!isLoading && (
               <RolePermissions
                 roleId={role.id}
                 roleName={role.name}
