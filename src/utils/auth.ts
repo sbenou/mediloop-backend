@@ -9,15 +9,16 @@ const getBaseUrl = () => {
     const projectPath = url.substring(projectsIndex);
     const baseUrl = `${window.location.origin}${projectPath}`;
     // Remove any trailing slashes and additional paths
-    return baseUrl.split('/').slice(0, 5).join('/');
+    const cleanUrl = baseUrl.split('/').slice(0, 5).join('/');
+    // Append the reset-password path
+    return `${cleanUrl}/reset-password`;
   }
-  return window.location.origin;
+  return `${window.location.origin}/reset-password`;
 };
 
 export const sendPasswordResetEmail = async (email: string) => {
   console.log("Sending password reset email...");
-  const baseUrl = getBaseUrl();
-  const redirectTo = `${baseUrl}/reset-password`;
+  const redirectTo = getBaseUrl();
   console.log("Reset password redirect URL:", redirectTo);
   return await supabase.auth.resetPasswordForEmail(email, {
     redirectTo
