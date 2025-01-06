@@ -28,7 +28,7 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       toast({
         variant: "destructive",
         title: "Please Wait",
-        description: "A reset email was recently sent. Please wait before trying again.",
+        description: "Please wait a few seconds before requesting another reset email.",
         duration: 5000,
       });
       return;
@@ -42,7 +42,8 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       if (error) {
         console.error("Password reset error:", error);
         
-        if (error.message.includes('rate_limit') || error.message.includes('429')) {
+        if (error.message.includes('rate_limit') || error.message.includes('429') || 
+            (error.message.includes('email') && error.message.includes('exceeded'))) {
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
@@ -74,9 +75,10 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
         duration: 5000,
       });
     } finally {
+      // Set a 10-second cooldown before allowing another attempt
       setTimeout(() => {
         setIsSendingReset(false);
-      }, 10000); // Wait 10 seconds before allowing another attempt
+      }, 10000);
     }
   };
 
