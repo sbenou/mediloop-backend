@@ -57,29 +57,41 @@ export const ProductUploader = () => {
   }
 
   const handleFileUpload = async (file: File) => {
-    // Show initial processing toast
-    toast({
+    const processingToast = toast({
       title: "Processing file",
       description: "Please wait while we process your products file...",
       duration: 5000,
     });
 
     try {
-      await processProductFile(file, categories, subcategories);
+      const result = await processProductFile(file, categories, subcategories);
       
-      // Show success toast
-      toast({
-        title: "Success",
-        description: "Products have been processed successfully",
-        duration: 3000,
-      });
+      // Dismiss the processing toast
+      processingToast.dismiss();
+      
+      if (result.newProducts.length > 0) {
+        toast({
+          title: "Success",
+          description: `Successfully uploaded ${result.newProducts.length} new products. ${result.skippedCount} existing products were skipped.`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "No new products",
+          description: `All ${result.skippedCount} products already exist in the database.`,
+          duration: 5000,
+        });
+      }
     } catch (error) {
-      // Show error toast
+      // Dismiss the processing toast
+      processingToast.dismiss();
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to process the products file",
-        duration: 3000,
+        description: error instanceof Error ? error.message : "Failed to process the products file",
+        duration: 5000,
       });
     }
   };
