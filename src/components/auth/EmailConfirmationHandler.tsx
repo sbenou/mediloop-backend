@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const EmailConfirmationHandler = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleEmailConfirmation = async () => {
@@ -50,11 +51,12 @@ const EmailConfirmationHandler = () => {
           }
         }
         
+        // Show toast and redirect to reset-password page
         toast({
-          title: "Password Reset",
+          title: "Reset Password",
           description: "You can now reset your password.",
         });
-        navigate('/reset-password');
+        navigate('/reset-password', { replace: true });
         return;
       }
 
@@ -90,7 +92,7 @@ const EmailConfirmationHandler = () => {
     };
 
     handleEmailConfirmation();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   return null;
 };
