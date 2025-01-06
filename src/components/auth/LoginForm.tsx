@@ -17,6 +17,16 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const { toast } = useToast();
 
+  // Get the complete base URL including the project path
+  const getBaseUrl = () => {
+    const url = window.location.href;
+    const projectsIndex = url.indexOf('/projects/');
+    if (projectsIndex !== -1) {
+      return url.substring(0, url.indexOf('/', projectsIndex + 10));
+    }
+    return window.location.origin;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -94,7 +104,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     
     try {
       console.log("Sending password reset email...");
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${getBaseUrl()}/reset-password`,
+      });
 
       if (error) {
         console.error("Password reset error:", error);
