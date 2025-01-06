@@ -65,6 +65,12 @@ export const ProductUploader = () => {
   }
 
   const handleFileUpload = async (file: File) => {
+    // Show loading toast
+    toast({
+      title: "Processing file",
+      description: "Please wait while we process your products file...",
+    });
+
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -138,11 +144,20 @@ export const ProductUploader = () => {
 
         if (error) {
           console.error('Upload error:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to upload products: " + error.message,
-          });
+          // Check if it's a unique constraint violation
+          if (error.code === '23505') {
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "One or more products already exist in the database. Product names must be unique.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Failed to upload products: " + error.message,
+            });
+          }
         } else {
           toast({
             title: "Success",
