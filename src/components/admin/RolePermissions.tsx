@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RoutePermissionSection } from "./RoutePermissionSection";
-import { availableRoutePermissions } from "./types";
+import { availableRoutePermissions, Permission } from "./types";
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface RolePermissionsProps {
