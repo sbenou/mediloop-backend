@@ -5,18 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductUploader } from "@/components/product/ProductUploader";
 import { LayoutDashboard, Users, Shield, Box } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-
-type UserProfile = {
-  id: string;
-  full_name: string;
-  email: string;
-  role: 'user' | 'doctor' | 'pharmacist' | 'superadmin';
-};
+import { DashboardCards } from "@/components/admin/DashboardCards";
+import { UserManagementTable } from "@/components/admin/UserManagementTable";
+import { UserProfile } from "@/types/user";
 
 const AdminSettings = () => {
   const navigate = useNavigate();
@@ -109,131 +102,16 @@ const AdminSettings = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => handleCardClick('users')}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  <span>Users</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Manage user accounts and permissions
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => handleCardClick('roles')}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  <span>Roles</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Create and manage user roles
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => handleCardClick('permissions')}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  <span>Permissions</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Configure system permissions and policies
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => handleCardClick('products')}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Box className="h-5 w-5 text-primary" />
-                  <span>Products</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Manage product uploads and inventory
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+        <TabsContent value="dashboard">
+          <DashboardCards onCardClick={handleCardClick} />
         </TabsContent>
 
         <TabsContent value="users">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Current Role</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users?.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>{user.full_name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.role}</TableCell>
-                        <TableCell>
-                          <Select
-                            value={user.role}
-                            onValueChange={(newRole) => {
-                              updateUserRole(user.id, newRole as UserProfile['role']);
-                            }}
-                          >
-                            <SelectTrigger className="w-[180px]">
-                              <SelectValue placeholder="Select role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">User</SelectItem>
-                              <SelectItem value="doctor">Doctor</SelectItem>
-                              <SelectItem value="pharmacist">Pharmacist</SelectItem>
-                              <SelectItem value="superadmin">Superadmin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <UserManagementTable 
+            users={users}
+            isLoading={isLoading}
+            updateUserRole={updateUserRole}
+          />
         </TabsContent>
 
         <TabsContent value="roles">
