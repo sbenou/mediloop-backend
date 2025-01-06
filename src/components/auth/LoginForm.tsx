@@ -98,6 +98,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         description: "If an account exists with this email address, you will receive password reset instructions. Please check both your inbox and spam folder.",
       });
     } catch (error: any) {
+      console.error("Error sending reset password email:", error);
       toast({
         variant: "destructive",
         title: "Error",
