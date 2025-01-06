@@ -40,12 +40,10 @@ export const useSignup = () => {
     setIsSubmitting(true);
 
     try {
-      console.log("Starting signup process with:", { email, name, userRole, licenseNumber });
-      
       // Map the frontend role to database role
       const databaseRole = roleMapping[userRole];
       
-      // First, get the role ID for the mapped role
+      // First, get the role ID
       const { data: roleData, error: roleError } = await supabase
         .from('roles')
         .select('id')
@@ -60,18 +58,16 @@ export const useSignup = () => {
         throw new Error(`Role '${databaseRole}' not found`);
       }
 
-      // Create auth user with minimal metadata
+      // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name, // Only store name in auth metadata
+            name,
           },
         },
       });
-
-      console.log("Auth signup response:", { authData, authError });
 
       if (authError) {
         if (authError.message.includes('email rate limit') || 
@@ -96,19 +92,16 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Wait a short moment to ensure auth user is fully created
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Create the profile after successful auth
+      // Create the profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([{
+        .insert({
           id: authData.user.id,
           email,
           full_name: name,
           role_id: roleData.id,
           license_number: licenseNumber || null,
-        }]);
+        });
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
@@ -122,7 +115,7 @@ export const useSignup = () => {
       
       navigate('/login');
     } catch (error: any) {
-      console.error("Detailed signup error:", error);
+      console.error("Signup error:", error);
       
       toast({
         variant: "destructive",
