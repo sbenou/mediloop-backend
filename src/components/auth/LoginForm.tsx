@@ -84,7 +84,14 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Unable to process your request at this time. Please try again later.",
+        });
+        return;
+      }
 
       toast({
         title: "Password Reset Instructions Sent",
