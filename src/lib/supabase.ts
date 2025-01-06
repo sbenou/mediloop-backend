@@ -9,6 +9,24 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
-    redirectTo: `${window.location.origin}/reset-password`
-  }
+    storage: window.localStorage,
+    storageKey: 'supabase.auth.token',
+  },
+  global: {
+    headers: {
+      'x-application-name': window.location.hostname,
+    },
+  },
+});
+
+// Configure auth after client creation
+supabase.auth.setSession({
+  access_token: '',
+  refresh_token: '',
+}).then(() => {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      window.location.href = `${window.location.origin}/reset-password`;
+    }
+  });
 });
