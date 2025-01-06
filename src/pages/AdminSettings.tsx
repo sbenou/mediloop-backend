@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { DashboardCards } from "@/components/admin/DashboardCards";
 import { UserManagementTable } from "@/components/admin/UserManagementTable";
+import { RoleManagementTable } from "@/components/admin/RoleManagementTable";
 import { UserProfile } from "@/types/user";
 
 const AdminSettings = () => {
@@ -115,14 +116,7 @@ const AdminSettings = () => {
         </TabsContent>
 
         <TabsContent value="roles">
-          <Card>
-            <CardHeader>
-              <CardTitle>Role Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Role management interface will be implemented here.</p>
-            </CardContent>
-          </Card>
+          <RoleManagementTable />
         </TabsContent>
 
         <TabsContent value="permissions">
