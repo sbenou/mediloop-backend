@@ -13,24 +13,34 @@ interface Permission {
 // This would typically come from your backend
 const availablePermissions: Permission[] = [
   {
-    id: "manage_users",
-    name: "Manage Users",
-    description: "Can create, edit, and delete user accounts"
+    id: "view_dashboard",
+    name: "Dashboard Access",
+    description: "Can access and view the dashboard"
   },
   {
-    id: "manage_roles",
-    name: "Manage Roles",
-    description: "Can create, edit, and delete roles"
+    id: "view_products",
+    name: "Products Access",
+    description: "Can view the products page"
   },
   {
-    id: "manage_products",
-    name: "Manage Products",
-    description: "Can create, edit, and delete products"
+    id: "view_orders",
+    name: "Orders Access",
+    description: "Can view the orders page"
   },
   {
-    id: "view_reports",
-    name: "View Reports",
-    description: "Can view system reports and analytics"
+    id: "view_prescriptions",
+    name: "Prescriptions Access",
+    description: "Can view the prescriptions page"
+  },
+  {
+    id: "view_settings",
+    name: "Settings Access",
+    description: "Can access the settings page"
+  },
+  {
+    id: "view_admin",
+    name: "Admin Access",
+    description: "Can access the admin settings"
   }
 ];
 
@@ -70,7 +80,7 @@ export const RolePermissions = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="h-5 w-5" />
-          Permissions for {roleName}
+          Route Permissions for {roleName}
         </CardTitle>
       </CardHeader>
       <CardContent>
