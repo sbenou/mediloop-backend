@@ -34,32 +34,10 @@ export const useSignup = () => {
     try {
       console.log("Starting signup process with:", { email, name, userRole, licenseNumber });
       
-      // Check for existing user with maybeSingle() instead of single()
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error("Error checking existing user:", checkError);
-        throw new Error("Failed to check for existing user");
-      }
-
-      if (existingUser) {
-        throw new Error('An account with this email already exists');
-      }
-
-      // Create auth user
+      // First create the auth user with minimal metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            full_name: name,
-            role: userRole,
-          },
-        },
       });
 
       console.log("Auth signup response:", { authData, authError });
@@ -87,18 +65,16 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile
+      // Then create the profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([{
+        .insert({
           id: authData.user.id,
           email,
           full_name: name,
           role: userRole,
           license_number: licenseNumber || null,
-        }])
-        .select()
-        .single();
+        });
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
