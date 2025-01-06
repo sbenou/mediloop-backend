@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, FileText, Settings, ShoppingBag, UserCircle } from "lucide-react";
+import { User, LogOut, FileText, Settings, ShoppingBag, UserCircle, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -82,6 +82,15 @@ const UserMenu = () => {
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
+        {userProfile?.role === 'superadmin' && (
+          <DropdownMenuItem
+            onClick={() => navigate('/admin-settings')}
+            className="cursor-pointer"
+          >
+            <Shield className="mr-2 h-4 w-4" />
+            Admin Settings
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleLogout}
