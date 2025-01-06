@@ -8,6 +8,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RolePermissions } from "./RolePermissions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface RoleTableRowProps {
   role: Role;
@@ -132,40 +138,72 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
           </TableCell>
           <TableCell>
             <div className="flex items-center gap-2">
-              {isEditing ? (
-                <Button
-                  onClick={() => onSave(role.id)}
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                >
-                  <Save className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => onEdit(role)}
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              )}
-              <Button
-                onClick={() => onDelete(role.id)}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={() => setShowPermissions(true)}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-              >
-                <Shield className="h-4 w-4" />
-              </Button>
+              <TooltipProvider>
+                {isEditing ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => onSave(role.id)}
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Save changes</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => onEdit(role)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Edit role</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onDelete(role.id)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete role</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => setShowPermissions(true)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Shield className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Manage permissions</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </TableCell>
         </TableRow>
