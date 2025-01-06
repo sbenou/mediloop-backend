@@ -2,7 +2,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Role } from "@/types/role";
@@ -13,6 +13,7 @@ export const RoleManagementTable = () => {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
   
   const { createRoleMutation, updateRoleMutation, deleteRoleMutation } = useRoleMutations();
 
@@ -49,12 +50,18 @@ export const RoleManagementTable = () => {
   };
 
   const handleAdd = async () => {
-    const timestamp = new Date().getTime();
     await createRoleMutation.mutateAsync({
-      name: `custom_role_${timestamp}`,
+      name: "name for the new role",
       description: "Description for new role",
     });
   };
+
+  useEffect(() => {
+    // Focus on name input when editing starts
+    if (isEditing && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [isEditing]);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -95,6 +102,7 @@ export const RoleManagementTable = () => {
                 onDelete={handleDelete}
                 setEditName={setEditName}
                 setEditDescription={setEditDescription}
+                ref={nameInputRef}
               />
             ))}
           </TableBody>

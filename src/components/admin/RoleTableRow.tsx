@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Pencil, Trash2 } from "lucide-react";
+import { forwardRef } from "react";
 
 interface RoleTableRowProps {
   role: Role;
@@ -16,7 +17,7 @@ interface RoleTableRowProps {
   setEditDescription: (description: string) => void;
 }
 
-export const RoleTableRow = ({
+export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
   role,
   isEditing,
   editName,
@@ -26,15 +27,17 @@ export const RoleTableRow = ({
   onDelete,
   setEditName,
   setEditDescription,
-}: RoleTableRowProps) => {
+}, ref) => {
   return (
     <TableRow key={role.id}>
       <TableCell>
         {isEditing ? (
           <Input
+            ref={ref}
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
             className="max-w-[200px]"
+            placeholder="name for the new role"
           />
         ) : (
           role.name
@@ -45,6 +48,7 @@ export const RoleTableRow = ({
           <Input
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
+            placeholder="Description for new role"
           />
         ) : (
           role.description
@@ -80,4 +84,6 @@ export const RoleTableRow = ({
       </TableCell>
     </TableRow>
   );
-};
+});
+
+RoleTableRow.displayName = "RoleTableRow";
