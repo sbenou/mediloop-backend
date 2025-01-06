@@ -81,6 +81,15 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       return;
     }
 
+    if (isSendingReset) {
+      toast({
+        variant: "destructive",
+        title: "Please Wait",
+        description: "A reset email was recently sent. Please wait a few seconds before trying again.",
+      });
+      return;
+    }
+
     setIsSendingReset(true);
     
     try {
@@ -91,11 +100,21 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
       if (error) {
         console.error("Password reset error:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message || "Unable to send reset password email. Please try again later.",
-        });
+        
+        // Handle rate limit error specifically
+        if (error.message.includes('rate_limit')) {
+          toast({
+            variant: "destructive",
+            title: "Too Many Attempts",
+            description: "Please wait a few seconds before requesting another password reset email.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message || "Unable to send reset password email. Please try again later.",
+          });
+        }
       } else {
         console.log("Password reset email sent successfully");
         toast({
@@ -112,7 +131,10 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         description: "Unable to process your request at this time. Please try again later.",
       });
     } finally {
-      setIsSendingReset(false);
+      // Set a timeout to re-enable the reset functionality after 20 seconds
+      setTimeout(() => {
+        setIsSendingReset(false);
+      }, 20000); // 20 seconds to be safe (Supabase requires 19 seconds)
     }
   };
 
@@ -155,13 +177,13 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           variant="link"
           className="text-sm text-muted-foreground hover:text-primary p-0 h-auto"
           onClick={handleForgotPassword}
-          disabled={isLoading || isSendingReset}
+          disabled={isSendingReset}
         >
-          {isSendingReset ? "Sending reset email..." : "Forgot your password?"}
+          {isSendingReset ? "Please wait..." : "Forgot your password?"}
         </Button>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading || isSendingReset}>
+      <Button type="submit" className="w-full" disabled={isLoading}>
         <LogIn className="mr-2 h-4 w-4" />
         {isLoading ? "Logging in..." : "Login"}
       </Button>
