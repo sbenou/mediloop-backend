@@ -102,7 +102,7 @@ export const ProductUploader = () => {
       const { error } = await supabase
         .from('products')
         .delete()
-        .neq('id', 0); // This ensures we delete all rows
+        .not('id', 'is', null); // Delete all rows
       
       if (error) throw error;
       
