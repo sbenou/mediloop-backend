@@ -47,7 +47,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             description: error.message,
           });
         }
-        setIsLoading(false);
         return;
       }
 
@@ -86,7 +85,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     
     try {
       console.log("Sending password reset email...");
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      });
 
       if (error) {
         console.error("Password reset error:", error);
@@ -98,7 +99,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       } else {
         console.log("Password reset email sent successfully");
         toast({
-          variant: "default",
           title: "Check Your Email",
           description: "If an account exists with this email, you will receive password reset instructions.",
           duration: 5000,
