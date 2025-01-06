@@ -1,10 +1,11 @@
 import { supabase } from "@/lib/supabase";
 
-// Get the complete base URL including the project path and reset-password route
+// Get the complete base URL including the project path
 export const getBaseUrl = () => {
   const url = window.location.href;
   const projectsIndex = url.indexOf('/projects/');
   if (projectsIndex !== -1) {
+    // Extract the base URL up to the project ID
     const baseUrl = url.substring(0, url.indexOf('/', projectsIndex + 10));
     return `${baseUrl}/reset-password`;
   }
