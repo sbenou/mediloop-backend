@@ -5,9 +5,11 @@ const getBaseUrl = () => {
   const url = window.location.href;
   const projectsIndex = url.indexOf('/projects/');
   if (projectsIndex !== -1) {
-    // Get the URL up to the project ID
-    const baseUrl = url.substring(0, url.indexOf('/', projectsIndex + 10));
-    return baseUrl;
+    // Get the complete URL including the project path
+    const projectPath = url.substring(projectsIndex);
+    const baseUrl = `${window.location.origin}${projectPath}`;
+    // Remove any trailing slashes and additional paths
+    return baseUrl.split('/').slice(0, 5).join('/');
   }
   return window.location.origin;
 };
