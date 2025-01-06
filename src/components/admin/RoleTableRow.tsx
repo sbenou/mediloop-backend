@@ -65,16 +65,17 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
         console.log('Permissions to save:', permissions);
 
         // First, delete existing permissions
-        const { error: deleteError } = await supabase
+        const { data: deletedData, error: deleteError } = await supabase
           .from('role_permissions')
           .delete()
-          .eq('role_id', role.id);
+          .eq('role_id', role.id)
+          .select();
 
         if (deleteError) {
           console.error('Error deleting existing permissions:', deleteError);
           throw deleteError;
         }
-        console.log('Successfully deleted existing permissions');
+        console.log('Successfully deleted existing permissions:', deletedData);
 
         // Then insert new permissions
         if (permissions.length > 0) {
