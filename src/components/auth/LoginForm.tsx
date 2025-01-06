@@ -14,7 +14,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [resetRequestTime, setResetRequestTime] = useState(0);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,9 +86,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     
     try {
       console.log("Sending password reset email...");
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email);
 
       if (error) {
         console.error("Password reset error:", error);
