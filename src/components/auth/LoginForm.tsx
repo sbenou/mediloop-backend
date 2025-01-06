@@ -40,6 +40,13 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             title: "Invalid Credentials",
             description: "The email or password you entered is incorrect. Please try again.",
           });
+        } else if (error.message.includes('rate_limit') || error.status === 429) {
+          toast({
+            variant: "destructive",
+            title: "Too Many Attempts",
+            description: "You've made too many requests. Please wait a few minutes before trying to log in or reset your password again.",
+            duration: 8000,
+          });
         } else {
           toast({
             variant: "destructive",
