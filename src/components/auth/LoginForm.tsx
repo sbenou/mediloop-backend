@@ -70,7 +70,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     }
   };
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default button behavior
+    
     if (!email) {
       toast({
         variant: "destructive",
