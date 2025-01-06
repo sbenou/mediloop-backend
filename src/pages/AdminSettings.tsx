@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProductUploader } from "@/components/product/ProductUploader";
+import { Separator } from "@/components/ui/separator";
 
 type UserProfile = {
   id: string;
@@ -100,7 +102,8 @@ const AdminSettings = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-4">Admin Settings</h1>
-      <div className="bg-white rounded-lg shadow">
+      
+      <div className="space-y-8">
         <Card>
           <CardHeader>
             <CardTitle>User Management</CardTitle>
@@ -154,6 +157,17 @@ const AdminSettings = () => {
                 </TableBody>
               </Table>
             )}
+          </CardContent>
+        </Card>
+
+        <Separator className="my-8" />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Management</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProductUploader />
           </CardContent>
         </Card>
       </div>
