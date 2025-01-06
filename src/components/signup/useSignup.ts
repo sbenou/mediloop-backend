@@ -34,16 +34,27 @@ export const useSignup = () => {
     try {
       console.log("Starting signup process with:", { email, name, userRole, licenseNumber });
       
-      // Include only essential metadata during signup
+      // First, check if the user already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        throw new Error('An account with this email already exists');
+      }
+
+      // Proceed with signup
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: name,
-            role: userRole
-          }
-        }
+            role: userRole,
+          },
+        },
       });
 
       console.log("Auth signup response:", { authData, authError });
@@ -74,48 +85,22 @@ export const useSignup = () => {
       // Add a small delay to ensure the auth user is created in the database
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      try {
-        // First check if profile exists
-        const { data: existingProfile, error: profileCheckError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', authData.user.id)
-          .maybeSingle(); // Use maybeSingle instead of single to handle no results gracefully
-
-        if (profileCheckError) {
-          console.error("Error checking existing profile:", profileCheckError);
-        }
-
-        // Only create profile if it doesn't exist
-        if (!existingProfile) {
-          const { error: profileError } = await supabase
-            .rpc('create_profile', {
-              user_id: authData.user.id,
-              user_role: userRole,
-              user_full_name: name,
-              user_email: email,
-              user_license_number: licenseNumber || null
-            });
-
-          console.log("Profile creation response:", { profileError });
-
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-            // Don't throw the error since the user was created successfully
-            toast({
-              variant: "destructive",
-              title: "Warning",
-              description: "Account created but profile setup incomplete. Please contact support.",
-            });
+      // Create the profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: authData.user.id,
+            email: email,
+            full_name: name,
+            role: userRole,
+            license_number: licenseNumber || null,
           }
-        }
-      } catch (profileError) {
-        console.error("Profile creation/check error:", profileError);
-        toast({
-          variant: "destructive",
-          title: "Warning",
-          description: "Account created but profile setup incomplete. Please contact support.",
-        });
+        ]);
+
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        throw new Error("Failed to create user profile");
       }
 
       toast({
