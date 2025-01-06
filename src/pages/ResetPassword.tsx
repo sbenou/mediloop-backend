@@ -53,10 +53,10 @@ const ResetPassword = () => {
       } else {
         toast({
           title: "Success",
-          description: "Your password has been reset successfully. Please log in with your new password.",
+          description: "Your password has been reset successfully.",
           duration: 5000,
         });
-        navigate("/login");
+        navigate("/"); // Redirect to home page after successful password reset
       }
     } catch (error: any) {
       toast({
