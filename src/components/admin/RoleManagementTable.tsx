@@ -18,6 +18,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export const RoleManagementTable = () => {
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -25,6 +42,10 @@ export const RoleManagementTable = () => {
   const [editDescription, setEditDescription] = useState("");
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [tempRole, setTempRole] = useState<Role | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleDescription, setNewRoleDescription] = useState("");
+  const [baseRoleId, setBaseRoleId] = useState<string>("");
   const nameInputRef = useRef<HTMLInputElement>(null);
   
   const { createRoleMutation, updateRoleMutation, deleteRoleMutation } = useRoleMutations();
@@ -50,14 +71,12 @@ export const RoleManagementTable = () => {
 
   const handleSave = async (id: string) => {
     if (tempRole && tempRole.id === id) {
-      // This is a new role being saved for the first time
       await createRoleMutation.mutateAsync({
         name: editName,
         description: editDescription,
       });
       setTempRole(null);
     } else {
-      // This is an existing role being updated
       await updateRoleMutation.mutateAsync({
         id,
         name: editName,
@@ -69,7 +88,6 @@ export const RoleManagementTable = () => {
 
   const handleDelete = async (id: string) => {
     if (tempRole && tempRole.id === id) {
-      // If it's the temporary role, just remove it from the UI
       setTempRole(null);
       setIsEditing(null);
     } else {
@@ -85,19 +103,65 @@ export const RoleManagementTable = () => {
   };
 
   const handleAdd = () => {
-    const newTempRole = {
-      id: `temp-${Date.now()}`,
-      name: "name for the new role",
-      description: "Description for new role",
-    };
-    setTempRole(newTempRole);
-    setIsEditing(newTempRole.id);
-    setEditName(newTempRole.name);
-    setEditDescription(newTempRole.description);
+    setShowCreateModal(true);
+  };
+
+  const handleCreateRole = async () => {
+    try {
+      // First create the new role
+      const { data: newRole, error: createError } = await supabase
+        .from('roles')
+        .insert([
+          {
+            name: newRoleName,
+            description: newRoleDescription,
+          }
+        ])
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      // If a base role was selected, copy its permissions
+      if (baseRoleId) {
+        // Get the permissions of the base role
+        const { data: basePermissions, error: permissionsError } = await supabase
+          .from('role_permissions')
+          .select('permission_id')
+          .eq('role_id', baseRoleId);
+
+        if (permissionsError) throw permissionsError;
+
+        // Insert the permissions for the new role
+        if (basePermissions.length > 0) {
+          const newPermissions = basePermissions.map(({ permission_id }) => ({
+            role_id: newRole.id,
+            permission_id
+          }));
+
+          const { error: insertError } = await supabase
+            .from('role_permissions')
+            .insert(newPermissions);
+
+          if (insertError) throw insertError;
+        }
+      }
+
+      // Reset form and close modal
+      setNewRoleName("");
+      setNewRoleDescription("");
+      setBaseRoleId("");
+      setShowCreateModal(false);
+
+      // Refetch roles to update the table
+      await createRoleMutation.invalidate();
+
+    } catch (error) {
+      console.error('Error creating role:', error);
+    }
   };
 
   useEffect(() => {
-    // Focus on name input when editing starts
     if (isEditing && nameInputRef.current) {
       nameInputRef.current.focus();
     }
@@ -117,7 +181,7 @@ export const RoleManagementTable = () => {
           <Button 
             onClick={handleAdd} 
             size="sm"
-            disabled={!!tempRole} // Disable if there's already a temporary role
+            disabled={!!tempRole}
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Role
@@ -169,6 +233,57 @@ export const RoleManagementTable = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="roleName">Role Name</Label>
+              <Input
+                id="roleName"
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+                placeholder="Enter role name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="roleDescription">Description</Label>
+              <Textarea
+                id="roleDescription"
+                value={newRoleDescription}
+                onChange={(e) => setNewRoleDescription(e.target.value)}
+                placeholder="Enter role description"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="baseRole">Based on Role</Label>
+              <Select value={baseRoleId} onValueChange={setBaseRoleId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a base role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateRole}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
