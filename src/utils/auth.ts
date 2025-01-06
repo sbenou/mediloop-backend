@@ -3,8 +3,16 @@ import { supabase } from "@/lib/supabase";
 // Get the base URL for the current project
 export const getBaseUrl = () => {
   const url = window.location.href;
-  // Get the complete URL up to /reset-password
-  return url.split('/login')[0] + '/reset-password';
+  const projectsIndex = url.indexOf('/projects/');
+  if (projectsIndex !== -1) {
+    // Extract the project ID from the URL
+    const projectPath = url.substring(projectsIndex);
+    const projectId = projectPath.split('/')[2];
+    // Construct the correct reset password URL
+    return `${window.location.origin}/projects/${projectId}/reset-password`;
+  }
+  // Fallback for development environment
+  return `${window.location.origin}/reset-password`;
 };
 
 export const sendPasswordResetEmail = async (email: string) => {
