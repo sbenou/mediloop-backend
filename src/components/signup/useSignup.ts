@@ -34,18 +34,23 @@ export const useSignup = () => {
     try {
       console.log("Starting signup process with:", { email, name, userRole, licenseNumber });
       
-      // First, check if the user already exists
-      const { data: existingUser } = await supabase
+      // Check for existing user with maybeSingle() instead of single()
+      const { data: existingUser, error: checkError } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', email)
-        .single();
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking existing user:", checkError);
+        throw new Error("Failed to check for existing user");
+      }
 
       if (existingUser) {
         throw new Error('An account with this email already exists');
       }
 
-      // Proceed with signup
+      // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -82,21 +87,18 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Add a small delay to ensure the auth user is created in the database
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
       // Create the profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            email: email,
-            full_name: name,
-            role: userRole,
-            license_number: licenseNumber || null,
-          }
-        ]);
+        .insert([{
+          id: authData.user.id,
+          email,
+          full_name: name,
+          role: userRole,
+          license_number: licenseNumber || null,
+        }])
+        .select()
+        .single();
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
