@@ -75,20 +75,29 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile
-      const { error: profileError } = await supabase
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .insert([{
-          id: authData.user.id,
-          email,
-          full_name: name,
-          role: roleMapping[userRole],
-          license_number: licenseNumber || null,
-        }]);
+        .select('id')
+        .eq('id', authData.user.id)
+        .single();
 
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        throw new Error("Failed to create user profile");
+      if (!existingProfile) {
+        // Create the profile only if it doesn't exist
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: authData.user.id,
+            email,
+            full_name: name,
+            role: roleMapping[userRole],
+            license_number: licenseNumber || null,
+          }]);
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          throw new Error("Failed to create user profile");
+        }
       }
 
       toast({
