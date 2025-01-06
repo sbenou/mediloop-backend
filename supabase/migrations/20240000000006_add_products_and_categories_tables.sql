@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.subcategories (
 -- Create products table (without pharmacy_id)
 CREATE TABLE IF NOT EXISTS public.products (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
     image_url TEXT,
