@@ -6,6 +6,8 @@ import { forwardRef, useState } from "react";
 import { Role } from "@/types/role";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RolePermissions } from "./RolePermissions";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 interface RoleTableRowProps {
   role: Role;
@@ -33,9 +35,43 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
   }, ref) => {
     const [showPermissions, setShowPermissions] = useState(false);
 
-    const handlePermissionsSave = (permissions: string[]) => {
-      // TODO: Implement saving permissions to the backend
-      console.log("Saving permissions for role:", role.id, permissions);
+    // Fetch role permissions
+    const { data: rolePermissions = [] } = useQuery({
+      queryKey: ['rolePermissions', role.id],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from('role_permissions')
+          .select('permission_id')
+          .eq('role_id', role.id);
+        
+        if (error) throw error;
+        return data.map(rp => rp.permission_id);
+      },
+      enabled: showPermissions, // Only fetch when modal is opened
+    });
+
+    const handlePermissionsSave = async (permissions: string[]) => {
+      try {
+        // First, delete existing permissions
+        await supabase
+          .from('role_permissions')
+          .delete()
+          .eq('role_id', role.id);
+
+        // Then insert new permissions
+        const permissionsToInsert = permissions.map(permissionId => ({
+          role_id: role.id,
+          permission_id: permissionId
+        }));
+
+        const { error } = await supabase
+          .from('role_permissions')
+          .insert(permissionsToInsert);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error saving permissions:', error);
+      }
     };
 
     return (
@@ -108,7 +144,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
             <RolePermissions
               roleId={role.id}
               roleName={role.name}
-              initialPermissions={[]} // TODO: Get initial permissions from backend
+              initialPermissions={rolePermissions}
               onSave={handlePermissionsSave}
               onClose={() => setShowPermissions(false)}
             />
