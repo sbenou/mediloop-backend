@@ -28,6 +28,8 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       });
 
       if (error) {
+        console.error("Login error:", error);
+        
         if (error.message.includes('Email not confirmed')) {
           toast({
             variant: "destructive",
@@ -40,7 +42,8 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             title: "Invalid Credentials",
             description: "The email or password you entered is incorrect. Please try again.",
           });
-        } else if (error.message.includes('rate_limit') || error.status === 429) {
+        } else if (error.message.includes('rate_limit') || error.status === 429 || 
+                  (error.message.includes('email') && error.message.includes('exceeded'))) {
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
