@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import CitySearch from '@/components/CitySearch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,17 @@ import EmailConfirmationHandler from '@/components/auth/EmailConfirmationHandler
 const Index = () => {
   const navigate = useNavigate();
   const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
-  const [searchRadius, setSearchRadius] = useState(2000); // Start with 2km radius
+  const [searchRadius, setSearchRadius] = useState(2000);
   const [defaultPharmacyId, setDefaultPharmacyId] = useState<string | null>(null);
+
+  // Check if user is logged in
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    },
+  });
 
   // Fetch user's address
   const { data: userAddress } = useQuery({
@@ -129,7 +138,16 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <UserMenu />
+              {session ? (
+                <UserMenu />
+              ) : (
+                <Link 
+                  to="/login" 
+                  className="text-primary hover:text-primary/80 transition-colors"
+                >
+                  Connection
+                </Link>
+              )}
             </div>
           </div>
         </div>
