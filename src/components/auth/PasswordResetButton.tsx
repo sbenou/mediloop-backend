@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { sendPasswordResetEmail } from "@/utils/auth";
+import { AuthError } from "@supabase/supabase-js";
 
 interface PasswordResetButtonProps {
   email: string;
@@ -42,16 +43,10 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       if (error) {
         console.error("Password reset error:", error);
         
-        // Parse both the error message and body
+        // Parse the error message
         let errorBody;
         try {
-          // First try to parse the body property if it exists
-          errorBody = error.body ? JSON.parse(error.body) : null;
-          
-          // If no body or parsing fails, try the message property
-          if (!errorBody && error.message) {
-            errorBody = JSON.parse(error.message);
-          }
+          errorBody = JSON.parse(error.message);
         } catch {
           errorBody = null;
         }
