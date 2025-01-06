@@ -49,8 +49,9 @@ export const RoleManagementTable = () => {
   };
 
   const handleAdd = async () => {
+    const timestamp = new Date().getTime();
     await createRoleMutation.mutateAsync({
-      name: "New Role",
+      name: `New Role ${timestamp}`,
       description: "Description for new role",
     });
   };

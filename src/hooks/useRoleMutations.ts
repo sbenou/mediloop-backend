@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Role } from "@/types/role";
 import { useToast } from "@/hooks/use-toast";
+import { PostgrestError } from "@supabase/supabase-js";
 
 export const useRoleMutations = () => {
   const { toast } = useToast();
@@ -16,7 +17,9 @@ export const useRoleMutations = () => {
         .single();
       
       if (error) {
-        console.error('Supabase error:', error);
+        if ((error as PostgrestError).code === '23505') {
+          throw new Error('A role with this name already exists.');
+        }
         throw new Error(error.message);
       }
       
@@ -34,7 +37,7 @@ export const useRoleMutations = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create role. Please try again.",
+        description: error.message || "Failed to create role. Please try again.",
       });
     }
   });
@@ -49,7 +52,9 @@ export const useRoleMutations = () => {
         .single();
       
       if (error) {
-        console.error('Supabase error:', error);
+        if ((error as PostgrestError).code === '23505') {
+          throw new Error('A role with this name already exists.');
+        }
         throw new Error(error.message);
       }
       
@@ -67,7 +72,7 @@ export const useRoleMutations = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update role. Please try again.",
+        description: error.message || "Failed to update role. Please try again.",
       });
     }
   });
@@ -80,7 +85,6 @@ export const useRoleMutations = () => {
         .eq('id', id);
       
       if (error) {
-        console.error('Supabase error:', error);
         throw new Error(error.message);
       }
     },
@@ -97,7 +101,7 @@ export const useRoleMutations = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete role. Please try again.",
+        description: error.message || "Failed to delete role. Please try again.",
       });
     }
   });
