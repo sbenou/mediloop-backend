@@ -6,7 +6,7 @@ import { UserPlus, Mail, Key, User } from "lucide-react";
 import { RoleSelector } from "./RoleSelector";
 import { useSignup } from "./useSignup";
 
-export type UserRole = "patient" | "doctor" | "pharmacist" | "delivery" | "superadmin";
+export type UserRole = "patient" | "doctor" | "pharmacist" | "delivery";
 
 export const SignupForm = () => {
   const [userRole, setUserRole] = useState<UserRole>("patient");
