@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { sendPasswordResetEmail } from "@/utils/auth";
-import { AuthError } from "@supabase/supabase-js";
 
 interface PasswordResetButtonProps {
   email: string;
@@ -11,6 +10,7 @@ interface PasswordResetButtonProps {
 
 export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProps) => {
   const [isSendingReset, setIsSendingReset] = useState(false);
+  const [cooldownEndTime, setCooldownEndTime] = useState<number | null>(null);
   const { toast } = useToast();
 
   const handleForgotPassword = async (e: React.MouseEvent) => {
@@ -25,13 +25,19 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       return;
     }
 
-    if (isSendingReset) {
+    // Check if we're in a cooldown period
+    if (cooldownEndTime && Date.now() < cooldownEndTime) {
+      const remainingSeconds = Math.ceil((cooldownEndTime - Date.now()) / 1000);
       toast({
         variant: "destructive",
         title: "Please Wait",
-        description: "Please wait a few seconds before requesting another reset email.",
+        description: `Please wait ${remainingSeconds} seconds before requesting another reset email.`,
         duration: 5000,
       });
+      return;
+    }
+
+    if (isSendingReset) {
       return;
     }
 
@@ -43,32 +49,25 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       if (error) {
         console.error("Password reset error:", error);
         
-        // Check for rate limit errors
-        if (error.status === 429) {
+        // Handle rate limit errors
+        if (error.status === 429 || error.message?.includes('rate limit')) {
+          const cooldownDuration = 60 * 1000; // 60 seconds cooldown
+          const endTime = Date.now() + cooldownDuration;
+          setCooldownEndTime(endTime);
+          
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
-            description: "You've made too many requests. Please wait a few minutes before trying to reset your password again.",
+            description: "You've made too many requests. Please wait 60 seconds before trying to reset your password again.",
             duration: 8000,
           });
           return;
         }
 
-        // Try to parse the error message for additional context
-        let errorMessage = error.message;
-        try {
-          const parsedError = JSON.parse(error.message);
-          if (parsedError.message) {
-            errorMessage = parsedError.message;
-          }
-        } catch {
-          // If parsing fails, use the original error message
-        }
-
         toast({
           variant: "destructive",
           title: "Error",
-          description: errorMessage || "Unable to send reset password email. Please try again later.",
+          description: "Unable to send reset password email. Please try again later.",
           duration: 5000,
         });
       } else {
@@ -77,6 +76,11 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
           description: "If an account exists with this email, you will receive password reset instructions.",
           duration: 5000,
         });
+        
+        // Set a cooldown period after successful attempt
+        const cooldownDuration = 30 * 1000; // 30 seconds cooldown
+        const endTime = Date.now() + cooldownDuration;
+        setCooldownEndTime(endTime);
       }
     } catch (error: any) {
       console.error("Error sending reset password email:", error);
@@ -87,12 +91,12 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
         duration: 5000,
       });
     } finally {
-      // Set a cooldown period before allowing another attempt
-      setTimeout(() => {
-        setIsSendingReset(false);
-      }, 10000);
+      setIsSendingReset(false);
     }
   };
+
+  const isInCooldown = cooldownEndTime && Date.now() < cooldownEndTime;
+  const remainingTime = isInCooldown ? Math.ceil((cooldownEndTime - Date.now()) / 1000) : 0;
 
   return (
     <Button
@@ -100,9 +104,13 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       variant="link"
       className="text-sm text-muted-foreground hover:text-primary p-0 h-auto"
       onClick={handleForgotPassword}
-      disabled={disabled || isSendingReset}
+      disabled={disabled || isSendingReset || isInCooldown}
     >
-      {isSendingReset ? "Please wait..." : "Forgot your password?"}
+      {isInCooldown 
+        ? `Wait ${remainingTime}s...` 
+        : isSendingReset 
+          ? "Sending..." 
+          : "Forgot your password?"}
     </Button>
   );
 };
