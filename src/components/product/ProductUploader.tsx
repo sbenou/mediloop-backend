@@ -66,9 +66,10 @@ export const ProductUploader = () => {
 
   const handleFileUpload = async (file: File) => {
     // Show initial processing toast
-    toast({
+    const processingToast = toast({
       title: "Processing file",
       description: "Please wait while we process your products file...",
+      duration: 5000,
     });
 
     try {
@@ -80,6 +81,7 @@ export const ProductUploader = () => {
             variant: "destructive",
             title: "Error",
             description: "Failed to read file content",
+            duration: 3000,
           });
           return;
         }
@@ -131,6 +133,7 @@ export const ProductUploader = () => {
             variant: "destructive",
             title: "Error",
             description: "No valid products found in the CSV file",
+            duration: 3000,
           });
           return;
         }
@@ -153,17 +156,15 @@ export const ProductUploader = () => {
           }
         }
 
-        // Show completion toast
-        toast({
-          title: "Processing complete",
-          description: "File processing has finished.",
-        });
+        // Dismiss the processing toast
+        processingToast.dismiss();
 
         if (newProducts.length === 0) {
           toast({
             variant: "destructive",
             title: "No new products",
             description: `All ${skippedCount} products already exist in the database.`,
+            duration: 3000,
           });
           return;
         }
@@ -178,11 +179,13 @@ export const ProductUploader = () => {
             variant: "destructive",
             title: "Error",
             description: "Failed to upload products: " + error.message,
+            duration: 3000,
           });
         } else {
           toast({
             title: "Success",
             description: `${newProducts.length} new products uploaded successfully. ${skippedCount} products were skipped as they already existed.`,
+            duration: 3000,
           });
         }
       };
@@ -193,6 +196,7 @@ export const ProductUploader = () => {
         variant: "destructive",
         title: "Error",
         description: "Failed to process file",
+        duration: 3000,
       });
     }
   };
