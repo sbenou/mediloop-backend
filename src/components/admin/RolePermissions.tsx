@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Permission {
   id: string;
@@ -183,51 +184,53 @@ export const RolePermissions = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          {availableRoutePermissions.map((routePermission) => (
-            <div key={routePermission.route} className="space-y-4">
-              <div className="flex items-start space-x-3 p-2 rounded bg-accent/30">
-                <Checkbox
-                  id={`route-${routePermission.route}`}
-                  checked={isRouteFullySelected(routePermission.permissions)}
-                  onCheckedChange={(checked) => 
-                    handleRoutePermissionsChange(routePermission.permissions, checked as boolean)
-                  }
-                />
-                <Label
-                  htmlFor={`route-${routePermission.route}`}
-                  className="text-base font-semibold"
-                >
-                  {routePermission.route}
-                </Label>
-              </div>
-              <div className="ml-6 space-y-3">
-                {routePermission.permissions.map((permission) => (
-                  <div key={permission.id} className="flex items-start space-x-3 p-2 rounded hover:bg-accent/50">
-                    <Checkbox
-                      id={`permission-${permission.id}`}
-                      checked={selectedPermissions.includes(permission.id)}
-                      onCheckedChange={(checked) => 
-                        handlePermissionChange(permission.id, checked as boolean)
-                      }
-                    />
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor={`permission-${permission.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {permission.name}
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        {permission.description}
-                      </p>
+        <ScrollArea className="h-[60vh] pr-4">
+          <div className="space-y-6">
+            {availableRoutePermissions.map((routePermission) => (
+              <div key={routePermission.route} className="space-y-4">
+                <div className="flex items-start space-x-3 p-2 rounded bg-accent/30">
+                  <Checkbox
+                    id={`route-${routePermission.route}`}
+                    checked={isRouteFullySelected(routePermission.permissions)}
+                    onCheckedChange={(checked) => 
+                      handleRoutePermissionsChange(routePermission.permissions, checked as boolean)
+                    }
+                  />
+                  <Label
+                    htmlFor={`route-${routePermission.route}`}
+                    className="text-base font-semibold"
+                  >
+                    {routePermission.route}
+                  </Label>
+                </div>
+                <div className="ml-6 space-y-3">
+                  {routePermission.permissions.map((permission) => (
+                    <div key={permission.id} className="flex items-start space-x-3 p-2 rounded hover:bg-accent/50">
+                      <Checkbox
+                        id={`permission-${permission.id}`}
+                        checked={selectedPermissions.includes(permission.id)}
+                        onCheckedChange={(checked) => 
+                          handlePermissionChange(permission.id, checked as boolean)
+                        }
+                      />
+                      <div className="space-y-1">
+                        <Label
+                          htmlFor={`permission-${permission.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {permission.name}
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          {permission.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
         <div className="flex justify-end space-x-2 mt-6">
           <button
             onClick={onClose}
