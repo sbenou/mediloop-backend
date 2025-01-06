@@ -9,9 +9,9 @@ export const getBaseUrl = () => {
     const projectPath = url.substring(projectsIndex);
     const projectId = projectPath.split('/')[2];
     // Construct the correct reset password URL with the reset-password path
-    const baseUrl = `${window.location.origin}/projects/${projectId}`;
-    console.log('Reset password redirect URL:', `${baseUrl}/reset-password`);
-    return `${baseUrl}/reset-password`;
+    const redirectUrl = `${window.location.origin}/projects/${projectId}/reset-password`;
+    console.log('Reset password redirect URL:', redirectUrl);
+    return redirectUrl;
   }
   // Fallback for development environment
   return `${window.location.origin}/reset-password`;
