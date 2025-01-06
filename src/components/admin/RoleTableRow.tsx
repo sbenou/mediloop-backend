@@ -6,7 +6,7 @@ import { forwardRef, useState } from "react";
 import { Role } from "@/types/role";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RolePermissions } from "./RolePermissions";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 interface RoleTableRowProps {
@@ -34,6 +34,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
     setEditDescription,
   }, ref) => {
     const [showPermissions, setShowPermissions] = useState(false);
+    const queryClient = useQueryClient();
 
     // Fetch role permissions
     const { data: rolePermissions = [], isLoading } = useQuery({
@@ -60,14 +61,20 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
 
     const handlePermissionsSave = async (permissions: string[]) => {
       try {
-        console.log('Saving permissions for role:', role.id, permissions);
+        console.log('Starting to save permissions for role:', role.id);
+        console.log('Permissions to save:', permissions);
+
         // First, delete existing permissions
         const { error: deleteError } = await supabase
           .from('role_permissions')
           .delete()
           .eq('role_id', role.id);
 
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error('Error deleting existing permissions:', deleteError);
+          throw deleteError;
+        }
+        console.log('Successfully deleted existing permissions');
 
         // Then insert new permissions
         if (permissions.length > 0) {
@@ -76,12 +83,22 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
             permission_id: permissionId
           }));
 
-          const { error: insertError } = await supabase
+          console.log('Inserting new permissions:', permissionsToInsert);
+          const { data: insertedData, error: insertError } = await supabase
             .from('role_permissions')
-            .insert(permissionsToInsert);
+            .insert(permissionsToInsert)
+            .select();
 
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error('Error inserting new permissions:', insertError);
+            throw insertError;
+          }
+          console.log('Successfully inserted new permissions:', insertedData);
         }
+
+        // Invalidate the query to refetch permissions
+        await queryClient.invalidateQueries({ queryKey: ['rolePermissions', role.id] });
+        console.log('Permissions saved successfully');
       } catch (error) {
         console.error('Error saving permissions:', error);
       }
