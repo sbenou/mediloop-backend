@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
 // Get the base URL for the current project
-const getBaseUrl = () => {
+export const getBaseUrl = () => {
   const url = window.location.href;
   const projectsIndex = url.indexOf('/projects/');
   if (projectsIndex !== -1) {
