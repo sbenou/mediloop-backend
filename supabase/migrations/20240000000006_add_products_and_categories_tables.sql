@@ -34,6 +34,16 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subcategories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "Categories are viewable by all authenticated users" ON public.categories';
+    EXECUTE 'DROP POLICY IF EXISTS "Subcategories are viewable by all authenticated users" ON public.subcategories';
+    EXECUTE 'DROP POLICY IF EXISTS "Products are viewable by all authenticated users" ON public.products';
+EXCEPTION WHEN OTHERS THEN
+    NULL;
+END $$;
+
 -- Categories policies
 CREATE POLICY "Categories are viewable by all authenticated users"
     ON public.categories FOR SELECT
@@ -103,7 +113,7 @@ BEGIN
     VALUES ('Face Care', skincare_id)
     RETURNING id INTO face_care_id;
     
-    -- Insert sample products (removed pharmacy_id from inserts)
+    -- Insert sample products
     INSERT INTO public.products (
         name,
         description,
