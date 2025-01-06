@@ -14,6 +14,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,11 +82,11 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       return;
     }
 
-    setIsLoading(true);
+    setIsSendingReset(true);
     
     try {
       console.log("Sending password reset email...");
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
 
       if (error) {
         console.error("Password reset error:", error);
@@ -111,7 +112,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         description: "Unable to process your request at this time. Please try again later.",
       });
     } finally {
-      setIsLoading(false);
+      setIsSendingReset(false);
     }
   };
 
@@ -129,7 +130,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || isSendingReset}
           />
         </div>
       </div>
@@ -146,7 +147,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || isSendingReset}
           />
         </div>
         <Button
@@ -154,13 +155,13 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           variant="link"
           className="text-sm text-muted-foreground hover:text-primary p-0 h-auto"
           onClick={handleForgotPassword}
-          disabled={isLoading}
+          disabled={isLoading || isSendingReset}
         >
-          Forgot your password?
+          {isSendingReset ? "Sending reset email..." : "Forgot your password?"}
         </Button>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button type="submit" className="w-full" disabled={isLoading || isSendingReset}>
         <LogIn className="mr-2 h-4 w-4" />
         {isLoading ? "Logging in..." : "Login"}
       </Button>

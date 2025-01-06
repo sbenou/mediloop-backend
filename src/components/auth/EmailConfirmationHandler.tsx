@@ -15,6 +15,8 @@ const EmailConfirmationHandler = () => {
       const refresh_token = params.get('refresh_token');
       const type = params.get('type');
 
+      console.log('Email confirmation params:', { error, error_description, type });
+
       // Clear URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
 
@@ -36,6 +38,7 @@ const EmailConfirmationHandler = () => {
 
       // Handle password reset flow
       if (type === 'recovery') {
+        console.log('Handling password recovery flow');
         navigate('/reset-password');
         return;
       }
