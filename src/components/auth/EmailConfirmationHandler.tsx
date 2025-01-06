@@ -34,6 +34,12 @@ const EmailConfirmationHandler = () => {
         return;
       }
 
+      // Handle password reset flow
+      if (type === 'recovery') {
+        navigate('/reset-password');
+        return;
+      }
+
       if (type === 'signup' && access_token && refresh_token) {
         console.log('Setting session with tokens:', { access_token, refresh_token });
         const { error: sessionError } = await supabase.auth.setSession({
