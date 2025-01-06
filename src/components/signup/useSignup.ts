@@ -34,14 +34,29 @@ export const useSignup = () => {
     try {
       console.log("Starting signup process with:", { email, name, userRole, licenseNumber });
       
-      // Create auth user with minimal metadata first
+      // First, get the role ID for the user's role
+      const { data: roleData, error: roleError } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', userRole)
+        .single();
+
+      if (roleError) {
+        throw new Error(`Failed to fetch role ID: ${roleError.message}`);
+      }
+
+      if (!roleData?.id) {
+        throw new Error(`Role '${userRole}' not found`);
+      }
+
+      // Create auth user with minimal metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name: name, // Changed from full_name to name
-            role: userRole,
+            name,
+            role_id: roleData.id,
           },
         },
       });
@@ -78,7 +93,7 @@ export const useSignup = () => {
           id: authData.user.id,
           email,
           full_name: name,
-          role: userRole,
+          role_id: roleData.id,
           license_number: licenseNumber || null,
         });
 
