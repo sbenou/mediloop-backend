@@ -42,21 +42,26 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       if (error) {
         console.error("Password reset error:", error);
         
-        // Try to parse the error body if it exists
+        // Parse both the error message and body
         let errorBody;
         try {
-          errorBody = JSON.parse(error.message);
+          // First try to parse the body property if it exists
+          errorBody = error.body ? JSON.parse(error.body) : null;
+          
+          // If no body or parsing fails, try the message property
+          if (!errorBody && error.message) {
+            errorBody = JSON.parse(error.message);
+          }
         } catch {
-          // If parsing fails, just use the raw message
-          errorBody = { message: error.message };
+          errorBody = null;
         }
 
-        // Check for rate limit errors
+        // Check for rate limit errors in multiple places
         if (
-          error.status === 429 || 
+          error.status === 429 ||
           errorBody?.code === 'over_email_send_rate_limit' ||
-          error.message.includes('rate limit exceeded') ||
-          error.message.includes('429')
+          (errorBody?.message && errorBody.message.includes('rate limit exceeded')) ||
+          (error.message && error.message.includes('rate limit exceeded'))
         ) {
           toast({
             variant: "destructive",
@@ -68,7 +73,7 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
           toast({
             variant: "destructive",
             title: "Error",
-            description: errorBody.message || "Unable to send reset password email. Please try again later.",
+            description: errorBody?.message || error.message || "Unable to send reset password email. Please try again later.",
             duration: 5000,
           });
         }
