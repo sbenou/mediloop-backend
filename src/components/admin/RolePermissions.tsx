@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RoutePermissionSection } from "./RoutePermissionSection";
@@ -20,9 +20,15 @@ export const RolePermissions = ({
   onSave,
   onClose
 }: RolePermissionsProps) => {
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(initialPermissions);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+
+  useEffect(() => {
+    console.log('RolePermissions - Initial permissions received:', initialPermissions);
+    setSelectedPermissions(initialPermissions);
+  }, [initialPermissions]);
 
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
+    console.log('Permission change:', permissionId, checked);
     setSelectedPermissions(prev => {
       if (checked) {
         return [...prev, permissionId];
@@ -32,6 +38,7 @@ export const RolePermissions = ({
   };
 
   const handleRoutePermissionsChange = (routePermissions: Permission[], checked: boolean) => {
+    console.log('Route permissions change:', routePermissions, checked);
     const permissionIds = routePermissions.map(p => p.id);
     setSelectedPermissions(prev => {
       if (checked) {
@@ -45,6 +52,7 @@ export const RolePermissions = ({
   };
 
   const handleSave = () => {
+    console.log('Saving permissions:', selectedPermissions);
     onSave(selectedPermissions);
     onClose();
   };
