@@ -12,6 +12,7 @@ import FindDoctor from "@/pages/FindDoctor";
 import DoctorConnections from "@/pages/DoctorConnections";
 import AdminSettings from "@/pages/AdminSettings";
 import ResetPassword from "@/pages/ResetPassword";
+import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
+        <EmailConfirmationHandler />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/products" element={<Products />} />

@@ -19,14 +19,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Configure auth after client creation
-supabase.auth.setSession({
-  access_token: '',
-  refresh_token: '',
-}).then(() => {
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'PASSWORD_RECOVERY') {
-      window.location.href = `${window.location.origin}/reset-password`;
-    }
-  });
+// Configure auth state change listener
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    window.location.href = `${window.location.origin}/reset-password`;
+  }
 });
