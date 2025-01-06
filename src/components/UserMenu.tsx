@@ -32,7 +32,17 @@ const UserMenu = () => {
     },
   });
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+      });
+      return;
+    }
+    
     navigate('/login');
     toast({
       title: "Logged out",

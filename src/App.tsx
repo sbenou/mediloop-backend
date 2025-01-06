@@ -10,6 +10,7 @@ import MyPrescriptions from "@/pages/MyPrescriptions";
 import CreatePrescription from "@/pages/CreatePrescription";
 import FindDoctor from "@/pages/FindDoctor";
 import DoctorConnections from "@/pages/DoctorConnections";
+import AdminSettings from "@/pages/AdminSettings";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ function App() {
           <Route path="/create-prescription" element={<CreatePrescription />} />
           <Route path="/find-doctor" element={<FindDoctor />} />
           <Route path="/doctor-connections" element={<DoctorConnections />} />
+          <Route path="/admin-settings" element={<AdminSettings />} />
         </Routes>
       </Router>
     </QueryClientProvider>
