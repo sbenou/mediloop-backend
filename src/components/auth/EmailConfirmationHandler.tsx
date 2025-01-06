@@ -9,12 +9,16 @@ const EmailConfirmationHandler = () => {
 
   useEffect(() => {
     const handleEmailConfirmation = async () => {
+      // Check for hash parameters (Supabase sends tokens in URL hash for security)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const access_token = hashParams.get('access_token');
+      const refresh_token = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
+
+      // Check for error parameters in the regular search params
       const params = new URLSearchParams(window.location.search);
       const error = params.get('error');
       const error_description = params.get('error_description');
-      const access_token = params.get('access_token');
-      const refresh_token = params.get('refresh_token');
-      const type = params.get('type');
 
       console.log('Email confirmation params:', { error, error_description, type, access_token });
 
@@ -30,34 +34,36 @@ const EmailConfirmationHandler = () => {
       }
 
       // Handle password reset flow
-      if (type === 'recovery') {
+      if (type === 'recovery' && access_token && refresh_token) {
         console.log('Handling password recovery flow');
-        // Set session if tokens are present
-        if (access_token && refresh_token) {
+        try {
           const { error: sessionError } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
 
-          if (sessionError) {
-            console.error('Session error:', sessionError);
-            toast({
-              variant: "destructive",
-              title: "Authentication Error",
-              description: "Failed to set authentication session",
-            });
-            navigate('/login');
-            return;
-          }
+          if (sessionError) throw sessionError;
+
+          // Show toast and redirect to reset-password page
+          toast({
+            title: "Reset Password",
+            description: "You can now reset your password.",
+          });
+          navigate('/reset-password', { replace: true });
+          
+          // Clear the URL hash after processing
+          window.location.hash = '';
+          return;
+        } catch (error: any) {
+          console.error('Session error:', error);
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Failed to set authentication session",
+          });
+          navigate('/login');
+          return;
         }
-        
-        // Show toast and redirect to reset-password page
-        toast({
-          title: "Reset Password",
-          description: "You can now reset your password.",
-        });
-        navigate('/reset-password', { replace: true });
-        return;
       }
 
       // Handle signup confirmation flow

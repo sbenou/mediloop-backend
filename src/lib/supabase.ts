@@ -21,7 +21,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Configure auth state change listener
 supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Auth state changed:', event, session);
+  
   if (event === 'PASSWORD_RECOVERY') {
+    // Handle the hash fragment in the URL
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const access_token = hashParams.get('access_token');
+    const refresh_token = hashParams.get('refresh_token');
+    
+    if (access_token && refresh_token) {
+      // Store the tokens in the session
+      supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+    }
+    
     // Get the full current path (including project ID)
     const currentPath = window.location.pathname;
     // Extract the project path (everything up to the last segment)
