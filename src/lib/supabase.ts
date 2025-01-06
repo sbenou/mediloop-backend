@@ -22,6 +22,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Configure auth state change listener
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'PASSWORD_RECOVERY') {
-    window.location.href = `${window.location.origin}/reset-password`;
+    // Get the full current path (including project ID)
+    const currentPath = window.location.pathname;
+    // Extract the project path (everything up to the last segment)
+    const projectPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+    // Redirect to reset-password within the project path
+    window.location.href = `${window.location.origin}${projectPath}/reset-password`;
   }
 });
