@@ -15,7 +15,11 @@ export const useRoleMutations = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
+      }
+      
       return data;
     },
     onSuccess: () => {
@@ -25,7 +29,7 @@ export const useRoleMutations = () => {
         description: "A new role has been added successfully.",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error creating role:', error);
       toast({
         variant: "destructive",
@@ -44,7 +48,11 @@ export const useRoleMutations = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
+      }
+      
       return data;
     },
     onSuccess: () => {
@@ -54,7 +62,7 @@ export const useRoleMutations = () => {
         description: "The role has been successfully updated.",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error updating role:', error);
       toast({
         variant: "destructive",
@@ -71,7 +79,10 @@ export const useRoleMutations = () => {
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
@@ -81,7 +92,7 @@ export const useRoleMutations = () => {
         variant: "destructive",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error deleting role:', error);
       toast({
         variant: "destructive",
