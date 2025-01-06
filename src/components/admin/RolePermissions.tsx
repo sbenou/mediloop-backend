@@ -20,18 +20,20 @@ export const RolePermissions = ({
   onSave,
   onClose
 }: RolePermissionsProps) => {
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(initialPermissions);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   // Update selected permissions when initialPermissions changes
   useEffect(() => {
     console.log('Initial permissions received in RolePermissions:', initialPermissions);
-    setSelectedPermissions(initialPermissions);
+    if (initialPermissions && initialPermissions.length > 0) {
+      setSelectedPermissions(initialPermissions);
+    }
   }, [initialPermissions]);
 
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
     console.log('Permission change:', permissionId, checked);
     setSelectedPermissions(prev => {
-      if (checked) {
+      if (checked && !prev.includes(permissionId)) {
         return [...prev, permissionId];
       }
       return prev.filter(id => id !== permissionId);

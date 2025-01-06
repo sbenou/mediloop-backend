@@ -36,7 +36,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
     const [showPermissions, setShowPermissions] = useState(false);
 
     // Fetch role permissions
-    const { data: rolePermissions = [], isLoading } = useQuery({
+    const { data: rolePermissions, isLoading } = useQuery({
       queryKey: ['rolePermissions', role.id],
       queryFn: async () => {
         console.log('Fetching permissions for role:', role.id);
@@ -153,7 +153,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
 
         <Dialog open={showPermissions} onOpenChange={setShowPermissions}>
           <DialogContent>
-            {!isLoading && (
+            {!isLoading && rolePermissions && (
               <RolePermissions
                 roleId={role.id}
                 roleName={role.name}
