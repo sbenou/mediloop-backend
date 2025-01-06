@@ -47,6 +47,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             description: error.message,
           });
         }
+        setIsLoading(false);
         return;
       }
 
@@ -93,12 +94,14 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     }
 
     setIsLoading(true);
+    
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {
+        console.error("Password reset error:", error);
         if (error.message.includes('rate_limit')) {
           toast({
             variant: "destructive",
@@ -112,16 +115,14 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             description: "Unable to process your request at this time. Please try again later.",
           });
         }
-        return;
+      } else {
+        // Update the last request time only on successful request
+        setResetRequestTime(now);
+        toast({
+          title: "Password Reset Instructions Sent",
+          description: "If an account exists with this email address, you will receive password reset instructions. Please check both your inbox and spam folder.",
+        });
       }
-
-      // Update the last request time
-      setResetRequestTime(now);
-
-      toast({
-        title: "Password Reset Instructions Sent",
-        description: "If an account exists with this email address, you will receive password reset instructions. Please check both your inbox and spam folder.",
-      });
     } catch (error: any) {
       console.error("Error sending reset password email:", error);
       toast({
