@@ -71,7 +71,8 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   };
 
   const handleForgotPassword = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default button behavior
+    e.preventDefault();
+    console.log("Handling forgot password for email:", email);
     
     if (!email) {
       toast({
@@ -82,47 +83,26 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       return;
     }
 
-    // Check if enough time has passed since the last request
-    const now = Date.now();
-    const timeSinceLastRequest = now - resetRequestTime;
-    if (timeSinceLastRequest < 11000) { // 11 seconds in milliseconds
-      const remainingSeconds = Math.ceil((11000 - timeSinceLastRequest) / 1000);
-      toast({
-        variant: "destructive",
-        title: "Please Wait",
-        description: `For security purposes, you can only request this after ${remainingSeconds} seconds.`,
-      });
-      return;
-    }
-
     setIsLoading(true);
     
     try {
+      console.log("Sending password reset email...");
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {
         console.error("Password reset error:", error);
-        if (error.message.includes('rate_limit')) {
-          toast({
-            variant: "destructive",
-            title: "Too Many Requests",
-            description: "Please wait a few seconds before trying again.",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Unable to process your request at this time. Please try again later.",
-          });
-        }
-      } else {
-        // Update the last request time only on successful request
-        setResetRequestTime(now);
         toast({
-          title: "Password Reset Instructions Sent",
-          description: "If an account exists with this email address, you will receive password reset instructions. Please check both your inbox and spam folder.",
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Unable to send reset password email. Please try again later.",
+        });
+      } else {
+        console.log("Password reset email sent successfully");
+        toast({
+          title: "Check Your Email",
+          description: "If an account exists with this email, you will receive password reset instructions.",
         });
       }
     } catch (error: any) {
