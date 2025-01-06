@@ -36,7 +36,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
     const [showPermissions, setShowPermissions] = useState(false);
 
     // Fetch role permissions
-    const { data: rolePermissions = [] } = useQuery({
+    const { data: rolePermissions = [], isLoading } = useQuery({
       queryKey: ['rolePermissions', role.id],
       queryFn: async () => {
         console.log('Fetching permissions for role:', role.id);
@@ -51,7 +51,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
         }
         
         const permissions = data.map(rp => rp.permission_id);
-        console.log('Fetched permissions:', permissions);
+        console.log('Fetched permissions for role:', role.id, permissions);
         return permissions;
       },
       enabled: showPermissions, // Only fetch when modal is opened
@@ -59,7 +59,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
 
     const handlePermissionsSave = async (permissions: string[]) => {
       try {
-        console.log('Saving permissions:', permissions);
+        console.log('Saving permissions for role:', role.id, permissions);
         // First, delete existing permissions
         const { error: deleteError } = await supabase
           .from('role_permissions')
@@ -153,13 +153,15 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
 
         <Dialog open={showPermissions} onOpenChange={setShowPermissions}>
           <DialogContent>
-            <RolePermissions
-              roleId={role.id}
-              roleName={role.name}
-              initialPermissions={rolePermissions}
-              onSave={handlePermissionsSave}
-              onClose={() => setShowPermissions(false)}
-            />
+            {!isLoading && (
+              <RolePermissions
+                roleId={role.id}
+                roleName={role.name}
+                initialPermissions={rolePermissions}
+                onSave={handlePermissionsSave}
+                onClose={() => setShowPermissions(false)}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </>

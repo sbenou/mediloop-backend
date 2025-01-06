@@ -24,7 +24,7 @@ export const RolePermissions = ({
 
   // Update selected permissions when initialPermissions changes
   useEffect(() => {
-    console.log('Initial permissions received:', initialPermissions);
+    console.log('Initial permissions received in RolePermissions:', initialPermissions);
     setSelectedPermissions(initialPermissions);
   }, [initialPermissions]);
 
