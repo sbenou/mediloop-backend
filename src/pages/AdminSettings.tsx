@@ -4,14 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductUploader } from "@/components/product/ProductUploader";
 import { LayoutDashboard, Users, Shield, Box } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { Separator } from "@/components/ui/separator";
 
 type UserProfile = {
   id: string;
@@ -22,7 +20,10 @@ type UserProfile = {
 
 const AdminSettings = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
   const { toast } = useToast();
+
   const { data: userProfile } = useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
@@ -72,15 +73,19 @@ const AdminSettings = () => {
     );
   }
 
+  const handleTabChange = (value: string) => {
+    navigate(`/admin-settings?tab=${value}`);
+  };
+
   const handleCardClick = (tab: string) => {
-    navigate(`/admin-settings?tab=${tab}`);
+    handleTabChange(tab);
   };
 
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Admin Settings</h1>
       
-      <Tabs defaultValue="dashboard" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList>
           <TabsTrigger value="dashboard">
             <LayoutDashboard className="h-4 w-4 mr-2" />
