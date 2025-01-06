@@ -39,12 +39,18 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
     const { data: rolePermissions = [] } = useQuery({
       queryKey: ['rolePermissions', role.id],
       queryFn: async () => {
+        console.log('Fetching permissions for role:', role.id);
         const { data, error } = await supabase
           .from('role_permissions')
           .select('permission_id')
           .eq('role_id', role.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching role permissions:', error);
+          throw error;
+        }
+        
+        console.log('Fetched permissions:', data);
         return data.map(rp => rp.permission_id);
       },
       enabled: showPermissions, // Only fetch when modal is opened
@@ -52,11 +58,14 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
 
     const handlePermissionsSave = async (permissions: string[]) => {
       try {
+        console.log('Saving permissions:', permissions);
         // First, delete existing permissions
-        await supabase
+        const { error: deleteError } = await supabase
           .from('role_permissions')
           .delete()
           .eq('role_id', role.id);
+
+        if (deleteError) throw deleteError;
 
         // Then insert new permissions
         if (permissions.length > 0) {
@@ -65,11 +74,11 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
             permission_id: permissionId
           }));
 
-          const { error } = await supabase
+          const { error: insertError } = await supabase
             .from('role_permissions')
             .insert(permissionsToInsert);
 
-          if (error) throw error;
+          if (insertError) throw insertError;
         }
       } catch (error) {
         console.error('Error saving permissions:', error);
