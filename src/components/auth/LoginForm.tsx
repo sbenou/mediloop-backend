@@ -94,9 +94,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     
     try {
       console.log("Sending password reset email...");
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=/reset-password`,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
 
       if (error) {
         console.error("Password reset error:", error);

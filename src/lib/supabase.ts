@@ -3,6 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
+// Get the base URL for the current project
+const getBaseUrl = () => {
+  const url = window.location.href;
+  const projectsIndex = url.indexOf('/projects/');
+  if (projectsIndex !== -1) {
+    return url.substring(0, url.indexOf('/', projectsIndex + 10));
+  }
+  return window.location.origin;
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -11,6 +21,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     flowType: 'pkce',
     storage: window.localStorage,
     storageKey: 'supabase.auth.token',
+    redirectTo: `${getBaseUrl()}/auth/callback?redirect=/reset-password`,
   },
   global: {
     headers: {
@@ -37,11 +48,9 @@ supabase.auth.onAuthStateChange((event, session) => {
       });
     }
     
-    // Get the full current path (including project ID)
-    const currentPath = window.location.pathname;
-    // Extract the project path (everything up to the last segment)
-    const projectPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+    // Get the base URL for redirection
+    const baseUrl = getBaseUrl();
     // Redirect to reset-password within the project path
-    window.location.href = `${window.location.origin}${projectPath}/reset-password`;
+    window.location.href = `${baseUrl}/reset-password`;
   }
 });
