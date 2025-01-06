@@ -42,8 +42,20 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       if (error) {
         console.error("Password reset error:", error);
         
-        if (error.message.includes('rate_limit') || error.message.includes('429') || 
-            (error.message.includes('email') && error.message.includes('exceeded'))) {
+        // Parse the error message from the JSON string if it exists
+        let errorBody;
+        try {
+          errorBody = error.message && JSON.parse(error.message);
+        } catch {
+          errorBody = null;
+        }
+        
+        if (
+          error.status === 429 || 
+          error.message.includes('rate_limit') ||
+          errorBody?.code === 'over_email_send_rate_limit' ||
+          (error.message.includes('email') && error.message.includes('exceeded'))
+        ) {
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
