@@ -47,8 +47,8 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
-            description: "Please wait a few seconds before requesting another password reset email.",
-            duration: 5000,
+            description: "You've made too many requests. Please wait a few minutes before trying to log in or reset your password again.",
+            duration: 8000,
           });
         } else {
           toast({
