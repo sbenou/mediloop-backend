@@ -95,13 +95,12 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     try {
       console.log("Sending password reset email...");
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect=/reset-password`,
       });
 
       if (error) {
         console.error("Password reset error:", error);
         
-        // Handle rate limit error specifically
         if (error.message.includes('rate_limit')) {
           toast({
             variant: "destructive",
@@ -131,10 +130,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         description: "Unable to process your request at this time. Please try again later.",
       });
     } finally {
-      // Set a timeout to re-enable the reset functionality after 20 seconds
       setTimeout(() => {
         setIsSendingReset(false);
-      }, 20000); // 20 seconds to be safe (Supabase requires 19 seconds)
+      }, 20000);
     }
   };
 
