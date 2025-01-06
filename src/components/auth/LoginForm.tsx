@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Key, LogIn } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { PasswordResetButton } from "./PasswordResetButton";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -14,26 +15,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSendingReset, setIsSendingReset] = useState(false);
   const { toast } = useToast();
-
-  // Get the complete base URL including the project path and reset-password route
-  const getBaseUrl = () => {
-    // Get the current URL
-    const url = window.location.href;
-    // Find the base lovable.dev URL from the Supabase redirect URLs
-    if (url.includes('lovableproject.com')) {
-      const projectId = url.split('.lovableproject.com')[0].split('//')[1];
-      return `https://lovable.dev/projects/${projectId}/reset-password`;
-    }
-    // For lovable.dev URLs, use the current project path
-    const projectsIndex = url.indexOf('/projects/');
-    if (projectsIndex !== -1) {
-      const baseUrl = url.substring(0, url.indexOf('/', projectsIndex + 10));
-      return `${baseUrl}/reset-password`;
-    }
-    return `${window.location.origin}/reset-password`;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,78 +69,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     }
   };
 
-  const handleForgotPassword = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    if (!email) {
-      toast({
-        variant: "destructive",
-        title: "Email Required",
-        description: "Please enter your email address to reset your password.",
-      });
-      return;
-    }
-
-    if (isSendingReset) {
-      toast({
-        variant: "destructive",
-        title: "Please Wait",
-        description: "A reset email was recently sent. Please wait before trying again.",
-        duration: 5000,
-      });
-      return;
-    }
-
-    setIsSendingReset(true);
-    
-    try {
-      console.log("Sending password reset email...");
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: getBaseUrl(),
-      });
-
-      if (error) {
-        console.error("Password reset error:", error);
-        
-        if (error.message.includes('rate_limit') || error.message.includes('429')) {
-          toast({
-            variant: "destructive",
-            title: "Too Many Attempts",
-            description: "Please wait a few seconds before requesting another password reset email.",
-            duration: 5000,
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: error.message || "Unable to send reset password email. Please try again later.",
-            duration: 5000,
-          });
-        }
-      } else {
-        console.log("Password reset email sent successfully");
-        toast({
-          title: "Check Your Email",
-          description: "If an account exists with this email, you will receive password reset instructions.",
-          duration: 5000,
-        });
-      }
-    } catch (error: any) {
-      console.error("Error sending reset password email:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Unable to process your request at this time. Please try again later.",
-        duration: 5000,
-      });
-    } finally {
-      // Set a shorter timeout before allowing another attempt
-      setTimeout(() => {
-        setIsSendingReset(false);
-      }, 10000); // Wait 10 seconds before allowing another attempt
-    }
-  };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -173,7 +83,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading || isSendingReset}
+            disabled={isLoading}
           />
         </div>
       </div>
@@ -190,18 +100,10 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading || isSendingReset}
+            disabled={isLoading}
           />
         </div>
-        <Button
-          type="button"
-          variant="link"
-          className="text-sm text-muted-foreground hover:text-primary p-0 h-auto"
-          onClick={handleForgotPassword}
-          disabled={isSendingReset}
-        >
-          {isSendingReset ? "Please wait..." : "Forgot your password?"}
-        </Button>
+        <PasswordResetButton email={email} disabled={isLoading} />
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
