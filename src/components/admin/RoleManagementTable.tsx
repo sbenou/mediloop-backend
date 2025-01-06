@@ -8,11 +8,22 @@ import { supabase } from "@/lib/supabase";
 import { Role } from "@/types/role";
 import { RoleTableRow } from "./RoleTableRow";
 import { useRoleMutations } from "@/hooks/useRoleMutations";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const RoleManagementTable = () => {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   
   const { createRoleMutation, updateRoleMutation, deleteRoleMutation } = useRoleMutations();
@@ -46,14 +57,27 @@ export const RoleManagementTable = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await deleteRoleMutation.mutateAsync(id);
+    setRoleToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (roleToDelete) {
+      await deleteRoleMutation.mutateAsync(roleToDelete);
+      setRoleToDelete(null);
+    }
   };
 
   const handleAdd = async () => {
-    await createRoleMutation.mutateAsync({
+    const { data } = await createRoleMutation.mutateAsync({
       name: "name for the new role",
       description: "Description for new role",
     });
+    
+    if (data) {
+      setIsEditing(data.id);
+      setEditName(data.name);
+      setEditDescription(data.description);
+    }
   };
 
   useEffect(() => {
@@ -68,46 +92,65 @@ export const RoleManagementTable = () => {
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Roles</CardTitle>
-        <Button 
-          onClick={handleAdd} 
-          size="sm"
-          disabled={createRoleMutation.isPending}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          {createRoleMutation.isPending ? 'Adding...' : 'Add Role'}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Role Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {roles.map((role) => (
-              <RoleTableRow
-                key={role.id}
-                role={role}
-                isEditing={isEditing === role.id}
-                editName={editName}
-                editDescription={editDescription}
-                onEdit={handleEdit}
-                onSave={handleSave}
-                onDelete={handleDelete}
-                setEditName={setEditName}
-                setEditDescription={setEditDescription}
-                ref={nameInputRef}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Roles</CardTitle>
+          <Button 
+            onClick={handleAdd} 
+            size="sm"
+            disabled={createRoleMutation.isPending}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {createRoleMutation.isPending ? 'Adding...' : 'Add Role'}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Role Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {roles.map((role) => (
+                <RoleTableRow
+                  key={role.id}
+                  role={role}
+                  isEditing={isEditing === role.id}
+                  editName={editName}
+                  editDescription={editDescription}
+                  onEdit={handleEdit}
+                  onSave={handleSave}
+                  onDelete={handleDelete}
+                  setEditName={setEditName}
+                  setEditDescription={setEditDescription}
+                  ref={nameInputRef}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={!!roleToDelete} onOpenChange={() => setRoleToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the role.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
