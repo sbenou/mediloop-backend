@@ -11,6 +11,7 @@ import CreatePrescription from "@/pages/CreatePrescription";
 import FindDoctor from "@/pages/FindDoctor";
 import DoctorConnections from "@/pages/DoctorConnections";
 import AdminSettings from "@/pages/AdminSettings";
+import ResetPassword from "@/pages/ResetPassword";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/my-prescriptions" element={<MyPrescriptions />} />
           <Route path="/create-prescription" element={<CreatePrescription />} />
