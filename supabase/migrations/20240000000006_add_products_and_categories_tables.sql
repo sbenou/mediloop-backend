@@ -40,6 +40,7 @@ BEGIN
     EXECUTE 'DROP POLICY IF EXISTS "Categories are viewable by all authenticated users" ON public.categories';
     EXECUTE 'DROP POLICY IF EXISTS "Subcategories are viewable by all authenticated users" ON public.subcategories';
     EXECUTE 'DROP POLICY IF EXISTS "Products are viewable by all authenticated users" ON public.products';
+    EXECUTE 'DROP POLICY IF EXISTS "Superadmins can insert products" ON public.products';
 EXCEPTION WHEN OTHERS THEN
     NULL;
 END $$;
@@ -61,6 +62,18 @@ CREATE POLICY "Products are viewable by all authenticated users"
     ON public.products FOR SELECT
     TO authenticated
     USING (true);
+
+-- Add new policy for superadmins to insert products
+CREATE POLICY "Superadmins can insert products"
+    ON public.products FOR INSERT
+    TO authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.role = 'superadmin'
+        )
+    );
 
 -- Insert sample data for categories
 DO $$
