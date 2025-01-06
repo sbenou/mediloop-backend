@@ -66,8 +66,7 @@ export const useSignup = () => {
         password,
         options: {
           data: {
-            name,
-            role_id: roleData.id,
+            name, // Only store name in auth metadata
           },
         },
       });
