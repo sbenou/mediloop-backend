@@ -50,8 +50,9 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
           throw error;
         }
         
-        console.log('Fetched permissions:', data);
-        return data.map(rp => rp.permission_id);
+        const permissions = data.map(rp => rp.permission_id);
+        console.log('Fetched permissions:', permissions);
+        return permissions;
       },
       enabled: showPermissions, // Only fetch when modal is opened
     });

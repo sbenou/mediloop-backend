@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RoutePermissionSection } from "./RoutePermissionSection";
@@ -21,14 +20,16 @@ export const RolePermissions = ({
   onSave,
   onClose
 }: RolePermissionsProps) => {
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(initialPermissions);
 
-  // Initialize selected permissions when the component mounts or when initialPermissions changes
+  // Update selected permissions when initialPermissions changes
   useEffect(() => {
+    console.log('Initial permissions received:', initialPermissions);
     setSelectedPermissions(initialPermissions);
   }, [initialPermissions]);
 
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
+    console.log('Permission change:', permissionId, checked);
     setSelectedPermissions(prev => {
       if (checked) {
         return [...prev, permissionId];
@@ -38,17 +39,21 @@ export const RolePermissions = ({
   };
 
   const handleRoutePermissionsChange = (routePermissions: Permission[], checked: boolean) => {
+    console.log('Route permissions change:', routePermissions, checked);
     const permissionIds = routePermissions.map(p => p.id);
     setSelectedPermissions(prev => {
       if (checked) {
+        // Add all permissions that aren't already selected
         const newPermissions = permissionIds.filter(id => !prev.includes(id));
         return [...prev, ...newPermissions];
       }
+      // Remove all permissions for this route
       return prev.filter(id => !permissionIds.includes(id));
     });
   };
 
   const handleSave = () => {
+    console.log('Saving permissions:', selectedPermissions);
     onSave(selectedPermissions);
     onClose();
   };
