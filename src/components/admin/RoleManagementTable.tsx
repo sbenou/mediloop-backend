@@ -24,6 +24,7 @@ export const RoleManagementTable = () => {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
+  const [tempRole, setTempRole] = useState<Role | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   
   const { createRoleMutation, updateRoleMutation, deleteRoleMutation } = useRoleMutations();
@@ -48,16 +49,32 @@ export const RoleManagementTable = () => {
   };
 
   const handleSave = async (id: string) => {
-    await updateRoleMutation.mutateAsync({
-      id,
-      name: editName,
-      description: editDescription,
-    });
+    if (tempRole && tempRole.id === id) {
+      // This is a new role being saved for the first time
+      await createRoleMutation.mutateAsync({
+        name: editName,
+        description: editDescription,
+      });
+      setTempRole(null);
+    } else {
+      // This is an existing role being updated
+      await updateRoleMutation.mutateAsync({
+        id,
+        name: editName,
+        description: editDescription,
+      });
+    }
     setIsEditing(null);
   };
 
   const handleDelete = async (id: string) => {
-    setRoleToDelete(id);
+    if (tempRole && tempRole.id === id) {
+      // If it's the temporary role, just remove it from the UI
+      setTempRole(null);
+      setIsEditing(null);
+    } else {
+      setRoleToDelete(id);
+    }
   };
 
   const confirmDelete = async () => {
@@ -67,17 +84,16 @@ export const RoleManagementTable = () => {
     }
   };
 
-  const handleAdd = async () => {
-    const { data } = await createRoleMutation.mutateAsync({
+  const handleAdd = () => {
+    const newTempRole = {
+      id: `temp-${Date.now()}`,
       name: "name for the new role",
       description: "Description for new role",
-    });
-    
-    if (data) {
-      setIsEditing(data.id);
-      setEditName(data.name);
-      setEditDescription(data.description);
-    }
+    };
+    setTempRole(newTempRole);
+    setIsEditing(newTempRole.id);
+    setEditName(newTempRole.name);
+    setEditDescription(newTempRole.description);
   };
 
   useEffect(() => {
@@ -91,6 +107,8 @@ export const RoleManagementTable = () => {
     return <div>Loading...</div>;
   }
 
+  const allRoles = tempRole ? [...roles, tempRole] : roles;
+
   return (
     <>
       <Card>
@@ -99,10 +117,10 @@ export const RoleManagementTable = () => {
           <Button 
             onClick={handleAdd} 
             size="sm"
-            disabled={createRoleMutation.isPending}
+            disabled={!!tempRole} // Disable if there's already a temporary role
           >
             <Plus className="mr-2 h-4 w-4" />
-            {createRoleMutation.isPending ? 'Adding...' : 'Add Role'}
+            Add Role
           </Button>
         </CardHeader>
         <CardContent>
@@ -115,7 +133,7 @@ export const RoleManagementTable = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {roles.map((role) => (
+              {allRoles.map((role) => (
                 <RoleTableRow
                   key={role.id}
                   role={role}
