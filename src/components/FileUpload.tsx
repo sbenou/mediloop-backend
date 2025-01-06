@@ -40,7 +40,7 @@ export default function FileUpload({ onFileSelect }: FileUploadProps) {
         <input {...getInputProps()} />
         <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
         <p className="text-lg font-medium mb-2">
-          {isDragActive ? 'Drop your prescription here' : 'Drag & drop your prescription'}
+          {isDragActive ? 'Drop your products file here' : 'Drag & drop your products file'}
         </p>
         <p className="text-sm text-gray-500 mb-4">or click to select a file</p>
         <p className="text-xs text-gray-400">Supported formats: PDF, JPG, PNG</p>
