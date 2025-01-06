@@ -20,8 +20,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     storage: window.localStorage,
-    storageKey: 'supabase.auth.token',
-    redirectTo: `${getBaseUrl()}/auth/callback?redirect=/reset-password`,
+    storageKey: 'supabase.auth.token'
   },
   global: {
     headers: {
