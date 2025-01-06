@@ -30,6 +30,10 @@ export const RoleSelector = ({ value, onValueChange }: RoleSelectorProps) => {
         <RadioGroupItem value="delivery" id="signup-delivery" />
         <Label htmlFor="signup-delivery">Delivery Person</Label>
       </div>
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="superadmin" id="signup-superadmin" />
+        <Label htmlFor="signup-superadmin">Super Admin</Label>
+      </div>
     </RadioGroup>
   );
 };

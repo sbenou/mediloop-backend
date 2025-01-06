@@ -17,6 +17,24 @@ interface Subcategory {
 }
 
 export const ProductUploader = () => {
+  // Fetch user profile to check role
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle();
+        
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+  });
+
   // Fetch categories and subcategories for mapping
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -39,6 +57,15 @@ export const ProductUploader = () => {
       return data as Subcategory[];
     }
   });
+
+  // Check if user is not a superadmin
+  if (userProfile?.role !== 'superadmin') {
+    return (
+      <div className="p-4 border rounded-lg">
+        <p className="text-red-500">Only super administrators can upload products.</p>
+      </div>
+    );
+  }
 
   const handleFileUpload = async (file: File) => {
     try {
