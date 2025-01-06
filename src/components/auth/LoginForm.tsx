@@ -19,7 +19,14 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
   // Get the complete base URL including the project path and reset-password route
   const getBaseUrl = () => {
+    // Get the current URL
     const url = window.location.href;
+    // Find the base lovable.dev URL from the Supabase redirect URLs
+    if (url.includes('lovableproject.com')) {
+      const projectId = url.split('.lovableproject.com')[0].split('//')[1];
+      return `https://lovable.dev/projects/${projectId}/reset-password`;
+    }
+    // For lovable.dev URLs, use the current project path
     const projectsIndex = url.indexOf('/projects/');
     if (projectsIndex !== -1) {
       const baseUrl = url.substring(0, url.indexOf('/', projectsIndex + 10));
@@ -96,7 +103,8 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       toast({
         variant: "destructive",
         title: "Please Wait",
-        description: "A reset email was recently sent. Please wait a few seconds before trying again.",
+        description: "A reset email was recently sent. Please wait before trying again.",
+        duration: 5000,
       });
       return;
     }
@@ -112,17 +120,19 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       if (error) {
         console.error("Password reset error:", error);
         
-        if (error.message.includes('rate_limit')) {
+        if (error.message.includes('rate_limit') || error.message.includes('429')) {
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
-            description: "Please wait a few seconds before requesting another password reset email.",
+            description: "Please wait a few minutes before requesting another password reset email.",
+            duration: 5000,
           });
         } else {
           toast({
             variant: "destructive",
             title: "Error",
             description: error.message || "Unable to send reset password email. Please try again later.",
+            duration: 5000,
           });
         }
       } else {
@@ -139,11 +149,13 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         variant: "destructive",
         title: "Error",
         description: "Unable to process your request at this time. Please try again later.",
+        duration: 5000,
       });
     } finally {
+      // Set a longer timeout before allowing another attempt
       setTimeout(() => {
         setIsSendingReset(false);
-      }, 20000);
+      }, 60000); // Wait 1 minute before allowing another attempt
     }
   };
 
