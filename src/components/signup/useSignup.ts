@@ -34,13 +34,13 @@ export const useSignup = () => {
     try {
       console.log("Starting signup process with:", { email, name, userRole, licenseNumber });
       
-      // Create auth user with metadata
+      // Create auth user with minimal metadata first
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: name,
+            name: name, // Changed from full_name to name
             role: userRole,
           },
         },
@@ -71,7 +71,7 @@ export const useSignup = () => {
         throw new Error("User creation failed");
       }
 
-      // Create the profile
+      // Create the profile after successful auth
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
