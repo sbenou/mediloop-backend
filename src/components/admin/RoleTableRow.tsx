@@ -59,16 +59,18 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
           .eq('role_id', role.id);
 
         // Then insert new permissions
-        const permissionsToInsert = permissions.map(permissionId => ({
-          role_id: role.id,
-          permission_id: permissionId
-        }));
+        if (permissions.length > 0) {
+          const permissionsToInsert = permissions.map(permissionId => ({
+            role_id: role.id,
+            permission_id: permissionId
+          }));
 
-        const { error } = await supabase
-          .from('role_permissions')
-          .insert(permissionsToInsert);
+          const { error } = await supabase
+            .from('role_permissions')
+            .insert(permissionsToInsert);
 
-        if (error) throw error;
+          if (error) throw error;
+        }
       } catch (error) {
         console.error('Error saving permissions:', error);
       }
@@ -140,7 +142,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
         </TableRow>
 
         <Dialog open={showPermissions} onOpenChange={setShowPermissions}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent>
             <RolePermissions
               roleId={role.id}
               roleName={role.name}
