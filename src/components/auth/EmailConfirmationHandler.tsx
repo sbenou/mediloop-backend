@@ -37,25 +37,21 @@ const EmailConfirmationHandler = () => {
       if (type === 'recovery') {
         console.log('Handling password recovery flow');
         try {
-          if (!access_token || !refresh_token) {
-            console.error('Missing tokens for password recovery');
-            toast({
-              variant: "destructive",
-              title: "Authentication Error",
-              description: "Invalid password reset link",
-            });
-            navigate('/login');
-            return;
-          }
-
+          // Set the session with the tokens
           const { error: sessionError } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
+            access_token: access_token || '',
+            refresh_token: refresh_token || '',
           });
 
           if (sessionError) {
             console.error('Session error:', sessionError);
-            throw sessionError;
+            toast({
+              variant: "destructive",
+              title: "Authentication Error",
+              description: "Failed to set authentication session",
+            });
+            navigate('/login');
+            return;
           }
 
           console.log('Successfully set session, redirecting to reset-password');
