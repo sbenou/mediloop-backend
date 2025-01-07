@@ -9,30 +9,30 @@ const EmailConfirmationHandler = () => {
 
   useEffect(() => {
     const handleEmailConfirmation = async () => {
-      // Get the full URL hash and log it for debugging
-      const fullHash = window.location.hash;
-      console.log('Full URL hash:', fullHash);
-
-      // Parse hash parameters (remove the leading #)
-      const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
-      
-      // Extract tokens and type
-      const access_token = hashParams.get('access_token');
-      const refresh_token = hashParams.get('refresh_token');
-      const type = hashParams.get('type');
-
-      // Check URL search parameters for errors
+      // Get the URL parameters
       const params = new URLSearchParams(window.location.search);
-      const error = params.get('error');
-      const error_description = params.get('error_description');
+      
+      // Get the hash parameters (Supabase sometimes sends tokens in hash)
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      
+      // Log full URL and hash for debugging
+      console.log('Full URL:', window.location.href);
+      console.log('Hash:', window.location.hash);
+      
+      // Try to get tokens from both search params and hash
+      const access_token = params.get('access_token') || hashParams.get('access_token');
+      const refresh_token = params.get('refresh_token') || hashParams.get('refresh_token');
+      const type = params.get('type') || hashParams.get('type');
+      const error = params.get('error') || hashParams.get('error');
+      const error_description = params.get('error_description') || hashParams.get('error_description');
 
-      console.log('Email confirmation params:', { 
-        error, 
-        error_description, 
-        type, 
-        access_token: !!access_token,
-        refresh_token: !!refresh_token,
-        fullUrl: window.location.href 
+      console.log('Email confirmation params:', {
+        error,
+        error_description,
+        type,
+        hasAccessToken: !!access_token,
+        hasRefreshToken: !!refresh_token,
+        fullUrl: window.location.href
       });
 
       if (error || error_description) {
