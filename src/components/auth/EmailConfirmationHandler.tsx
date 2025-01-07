@@ -34,25 +34,26 @@ const EmailConfirmationHandler = () => {
       }
 
       // Handle password reset flow
-      if (type === 'recovery' && access_token && refresh_token) {
+      if (type === 'recovery') {
         console.log('Handling password recovery flow');
         try {
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
-          });
+          if (access_token && refresh_token) {
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
 
-          if (sessionError) throw sessionError;
+            if (sessionError) throw sessionError;
+          }
 
           // Show toast and redirect to reset-password page
           toast({
             title: "Reset Password",
             description: "You can now reset your password.",
           });
-          navigate('/reset-password', { replace: true });
           
-          // Clear the URL hash after processing
-          window.location.hash = '';
+          // Important: Use navigate instead of window.location.href
+          navigate('/reset-password');
           return;
         } catch (error: any) {
           console.error('Session error:', error);
