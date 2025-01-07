@@ -9,8 +9,14 @@ const EmailConfirmationHandler = () => {
 
   useEffect(() => {
     const handleEmailConfirmation = async () => {
-      // Check URL hash parameters first (Supabase sends tokens in URL hash)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      // Get the full URL hash and log it for debugging
+      const fullHash = window.location.hash;
+      console.log('Full URL hash:', fullHash);
+
+      // Parse hash parameters (remove the leading #)
+      const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+      
+      // Extract tokens and type
       const access_token = hashParams.get('access_token');
       const refresh_token = hashParams.get('refresh_token');
       const type = hashParams.get('type');
@@ -20,7 +26,14 @@ const EmailConfirmationHandler = () => {
       const error = params.get('error');
       const error_description = params.get('error_description');
 
-      console.log('Email confirmation params:', { error, error_description, type, access_token: !!access_token });
+      console.log('Email confirmation params:', { 
+        error, 
+        error_description, 
+        type, 
+        access_token: !!access_token,
+        refresh_token: !!refresh_token,
+        fullUrl: window.location.href 
+      });
 
       if (error || error_description) {
         console.error('Email confirmation error:', { error, error_description });
@@ -29,12 +42,12 @@ const EmailConfirmationHandler = () => {
           title: "Email Confirmation Error",
           description: error_description || "Failed to confirm email address",
         });
-        navigate('/login');
+        navigate('/login', { replace: true });
         return;
       }
 
       // Handle password recovery flow
-      if (type === 'recovery') {
+      if (type === 'recovery' || (access_token && !type)) {
         console.log('Handling password recovery flow');
         try {
           if (!access_token || !refresh_token) {
@@ -44,7 +57,7 @@ const EmailConfirmationHandler = () => {
               title: "Recovery Error",
               description: "Invalid recovery link. Please request a new password reset.",
             });
-            navigate('/login');
+            navigate('/login', { replace: true });
             return;
           }
 
@@ -60,7 +73,7 @@ const EmailConfirmationHandler = () => {
               title: "Authentication Error",
               description: "Failed to set authentication session",
             });
-            navigate('/login');
+            navigate('/login', { replace: true });
             return;
           }
 
@@ -70,7 +83,6 @@ const EmailConfirmationHandler = () => {
             description: "You can now reset your password.",
           });
           
-          // Use replace to prevent back button from returning to the callback URL
           navigate('/reset-password', { replace: true });
           return;
         } catch (error: any) {
@@ -80,7 +92,7 @@ const EmailConfirmationHandler = () => {
             title: "Authentication Error",
             description: "Failed to process password reset request",
           });
-          navigate('/login');
+          navigate('/login', { replace: true });
           return;
         }
       }
@@ -99,7 +111,7 @@ const EmailConfirmationHandler = () => {
             title: "Authentication Error",
             description: "Failed to set authentication session",
           });
-          navigate('/login');
+          navigate('/login', { replace: true });
           return;
         }
 
@@ -107,7 +119,7 @@ const EmailConfirmationHandler = () => {
           title: "Email Confirmed",
           description: "Your email has been successfully confirmed. You can now log in.",
         });
-        navigate('/login');
+        navigate('/login', { replace: true });
       }
 
       // Clear URL parameters after processing

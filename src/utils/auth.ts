@@ -6,6 +6,6 @@ export const sendPasswordResetEmail = async (email: string) => {
   console.log("Reset password redirect URL:", redirectTo);
   
   return await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo
+    redirectTo,
   });
 };
