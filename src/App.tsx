@@ -30,6 +30,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/auth/callback" element={null} />
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/my-prescriptions" element={<MyPrescriptions />} />
           <Route path="/create-prescription" element={<CreatePrescription />} />

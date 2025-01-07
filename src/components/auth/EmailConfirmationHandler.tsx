@@ -37,29 +37,32 @@ const EmailConfirmationHandler = () => {
       if (type === 'recovery') {
         console.log('Handling password recovery flow');
         try {
-          // Set the session with the tokens
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token: access_token || '',
-            refresh_token: refresh_token || '',
-          });
-
-          if (sessionError) {
-            console.error('Session error:', sessionError);
-            toast({
-              variant: "destructive",
-              title: "Authentication Error",
-              description: "Failed to set authentication session",
+          // Only try to set session if we have tokens
+          if (access_token && refresh_token) {
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token,
+              refresh_token,
             });
-            navigate('/login');
-            return;
+
+            if (sessionError) {
+              console.error('Session error:', sessionError);
+              toast({
+                variant: "destructive",
+                title: "Authentication Error",
+                description: "Failed to set authentication session",
+              });
+              navigate('/login');
+              return;
+            }
           }
 
-          console.log('Successfully set session, redirecting to reset-password');
+          console.log('Successfully handled recovery, redirecting to reset-password');
           toast({
             title: "Reset Password",
             description: "You can now reset your password.",
           });
           
+          // Use replace to prevent back button from returning to the callback URL
           navigate('/reset-password', { replace: true });
           return;
         } catch (error: any) {
