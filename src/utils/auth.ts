@@ -2,19 +2,17 @@ import { supabase } from "@/lib/supabase";
 
 // Get the base URL for the current project
 export const getBaseUrl = () => {
-  const url = window.location.href;
-  const projectsIndex = url.indexOf('/projects/');
-  if (projectsIndex !== -1) {
-    // Extract the project ID from the URL
-    const projectPath = url.substring(projectsIndex);
-    const projectId = projectPath.split('/')[2];
-    // Construct the correct reset password URL with the reset-password path
-    const redirectUrl = `${window.location.origin}/projects/${projectId}/reset-password`;
-    console.log('Reset password redirect URL:', redirectUrl);
-    return redirectUrl;
-  }
-  // Fallback for development environment
-  return `${window.location.origin}/reset-password`;
+  // Get the current URL
+  const currentUrl = window.location.href;
+  
+  // Extract the project domain (e.g., "xyz.lovableproject.com")
+  const projectDomain = window.location.hostname;
+  
+  // Construct the base URL with HTTPS
+  const baseUrl = `https://${projectDomain}`;
+  
+  // Always append /reset-password to ensure correct redirection
+  return `${baseUrl}/reset-password`;
 };
 
 export const sendPasswordResetEmail = async (email: string) => {
