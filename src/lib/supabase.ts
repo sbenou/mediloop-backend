@@ -24,20 +24,24 @@ supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session);
   
   if (event === 'PASSWORD_RECOVERY') {
+    console.log('Password recovery event detected');
     // Handle the hash fragment in the URL
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const access_token = hashParams.get('access_token');
     const refresh_token = hashParams.get('refresh_token');
     
     if (access_token && refresh_token) {
+      console.log('Setting session with tokens');
       // Store the tokens in the session
       supabase.auth.setSession({
         access_token,
         refresh_token,
+      }).then(() => {
+        // Only redirect after successfully setting the session
+        window.location.href = `${window.location.origin}/reset-password`;
       });
+    } else {
+      console.log('No tokens found in URL');
     }
-    
-    // Redirect to reset-password within the project path
-    window.location.href = `${window.location.origin}/reset-password`;
   }
 });
