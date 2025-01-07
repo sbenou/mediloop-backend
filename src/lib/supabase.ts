@@ -12,38 +12,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: window.localStorage,
     storageKey: 'supabase.auth.token'
   },
-  global: {
-    headers: {
-      'x-application-name': window.location.hostname,
-    },
-  },
 });
 
 // Configure auth state change listener
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session);
-  
-  if (event === 'PASSWORD_RECOVERY') {
-    console.log('Password recovery event detected');
-    // Handle the hash fragment in the URL
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const access_token = hashParams.get('access_token');
-    const refresh_token = hashParams.get('refresh_token');
-    const currentUrl = window.location.href;
-    const projectPath = currentUrl.split('/projects/')[1].split('/')[0];
-    
-    if (access_token && refresh_token) {
-      console.log('Setting session with tokens');
-      // Store the tokens in the session
-      supabase.auth.setSession({
-        access_token,
-        refresh_token,
-      }).then(() => {
-        // Redirect to reset-password within the project context
-        window.location.href = `${window.location.origin}/projects/${projectPath}/reset-password`;
-      });
-    } else {
-      console.log('No tokens found in URL');
-    }
-  }
 });

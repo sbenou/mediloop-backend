@@ -44,17 +44,16 @@ const EmailConfirmationHandler = () => {
             });
 
             if (sessionError) throw sessionError;
-          }
 
-          // Show toast and redirect to reset-password page
-          toast({
-            title: "Reset Password",
-            description: "You can now reset your password.",
-          });
-          
-          // Important: Use navigate instead of window.location.href
-          navigate('/reset-password');
-          return;
+            // Show toast and redirect to reset-password page
+            toast({
+              title: "Reset Password",
+              description: "You can now reset your password.",
+            });
+            
+            navigate('/reset-password');
+            return;
+          }
         } catch (error: any) {
           console.error('Session error:', error);
           toast({
