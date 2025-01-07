@@ -7,7 +7,7 @@ export const sendPasswordResetEmail = async (email: string) => {
   
   return await supabase.auth.resetPasswordForEmail(email, {
     redirectTo,
-    options: {
+    data: {
       emailTemplate: {
         subject: "Reset Your Password",
         content: `
