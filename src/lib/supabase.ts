@@ -29,6 +29,8 @@ supabase.auth.onAuthStateChange((event, session) => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const access_token = hashParams.get('access_token');
     const refresh_token = hashParams.get('refresh_token');
+    const currentUrl = window.location.href;
+    const projectPath = currentUrl.split('/projects/')[1].split('/')[0];
     
     if (access_token && refresh_token) {
       console.log('Setting session with tokens');
@@ -37,8 +39,8 @@ supabase.auth.onAuthStateChange((event, session) => {
         access_token,
         refresh_token,
       }).then(() => {
-        // Only redirect after successfully setting the session
-        window.location.href = `${window.location.origin}/reset-password`;
+        // Redirect to reset-password within the project context
+        window.location.href = `${window.location.origin}/projects/${projectPath}/reset-password`;
       });
     } else {
       console.log('No tokens found in URL');
