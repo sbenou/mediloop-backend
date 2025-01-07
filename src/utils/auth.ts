@@ -1,12 +1,18 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase';
 
 export const sendPasswordResetEmail = async (email: string) => {
   console.log("Sending password reset email...");
-  // Use window.location.origin to get the current domain
-  const redirectTo = `${window.location.origin}/auth/callback`;
+  
+  // Get the base URL without any query parameters
+  const baseUrl = window.location.origin;
+  const redirectTo = `${baseUrl}/auth/callback`;
+  
   console.log("Reset password redirect URL:", redirectTo);
   
   return await supabase.auth.resetPasswordForEmail(email, {
     redirectTo,
+    options: {
+      emailRedirectTo: redirectTo
+    }
   });
 };
