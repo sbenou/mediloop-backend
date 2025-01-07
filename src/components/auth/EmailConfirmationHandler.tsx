@@ -9,18 +9,18 @@ const EmailConfirmationHandler = () => {
 
   useEffect(() => {
     const handleEmailConfirmation = async () => {
-      // Check for hash parameters (Supabase sends tokens in URL hash for security)
+      // Check URL hash parameters first (Supabase sends tokens in URL hash)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const access_token = hashParams.get('access_token');
       const refresh_token = hashParams.get('refresh_token');
       const type = hashParams.get('type');
 
-      // Check for error parameters in the regular search params
+      // Check URL search parameters for errors
       const params = new URLSearchParams(window.location.search);
       const error = params.get('error');
       const error_description = params.get('error_description');
 
-      console.log('Email confirmation params:', { error, error_description, type, access_token });
+      console.log('Email confirmation params:', { error, error_description, type, access_token: !!access_token });
 
       if (error || error_description) {
         console.error('Email confirmation error:', { error, error_description });
@@ -33,30 +33,38 @@ const EmailConfirmationHandler = () => {
         return;
       }
 
-      // Handle password reset flow
+      // Handle password recovery flow
       if (type === 'recovery') {
         console.log('Handling password recovery flow');
         try {
-          // Only try to set session if we have tokens
-          if (access_token && refresh_token) {
-            const { error: sessionError } = await supabase.auth.setSession({
-              access_token,
-              refresh_token,
+          if (!access_token || !refresh_token) {
+            console.error('Missing tokens for recovery flow');
+            toast({
+              variant: "destructive",
+              title: "Recovery Error",
+              description: "Invalid recovery link. Please request a new password reset.",
             });
-
-            if (sessionError) {
-              console.error('Session error:', sessionError);
-              toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: "Failed to set authentication session",
-              });
-              navigate('/login');
-              return;
-            }
+            navigate('/login');
+            return;
           }
 
-          console.log('Successfully handled recovery, redirecting to reset-password');
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          if (sessionError) {
+            console.error('Session error:', sessionError);
+            toast({
+              variant: "destructive",
+              title: "Authentication Error",
+              description: "Failed to set authentication session",
+            });
+            navigate('/login');
+            return;
+          }
+
+          console.log('Successfully set session, redirecting to reset-password');
           toast({
             title: "Reset Password",
             description: "You can now reset your password.",
@@ -79,7 +87,6 @@ const EmailConfirmationHandler = () => {
 
       // Handle signup confirmation flow
       if (type === 'signup' && access_token && refresh_token) {
-        console.log('Setting session with tokens:', { access_token, refresh_token });
         const { error: sessionError } = await supabase.auth.setSession({
           access_token,
           refresh_token,
@@ -96,7 +103,6 @@ const EmailConfirmationHandler = () => {
           return;
         }
 
-        console.log('Email confirmation successful');
         toast({
           title: "Email Confirmed",
           description: "Your email has been successfully confirmed. You can now log in.",
