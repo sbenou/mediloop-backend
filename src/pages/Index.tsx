@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import CitySearch from '@/components/CitySearch';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import UserMenu from '@/components/UserMenu';
 import { useQuery } from '@tanstack/react-query';
 import { searchPharmacies } from '@/lib/overpass';
-import PharmacyCard from '@/components/PharmacyCard';
 import { supabase } from '@/lib/supabase';
 import EmailConfirmationHandler from '@/components/auth/EmailConfirmationHandler';
+import Header from '@/components/layout/Header';
+import PharmacyListSection from '@/components/pharmacy/PharmacyListSection';
+
+// Luxembourg City coordinates
+const DEFAULT_COORDINATES = { lat: 49.6116, lon: 6.1319 };
 
 const Index = () => {
   const navigate = useNavigate();
-  const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(DEFAULT_COORDINATES);
   const [searchRadius, setSearchRadius] = useState(2000);
   const [defaultPharmacyId, setDefaultPharmacyId] = useState<string | null>(null);
 
-  // Check if user is logged in
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -26,7 +26,6 @@ const Index = () => {
     },
   });
 
-  // Fetch user's address
   const { data: userAddress } = useQuery({
     queryKey: ['userAddress'],
     queryFn: async () => {
@@ -45,7 +44,6 @@ const Index = () => {
     },
   });
 
-  // Auto-search based on user's address
   useEffect(() => {
     if (userAddress?.city) {
       handleSearch(userAddress.city);
@@ -84,7 +82,7 @@ const Index = () => {
           lat: parseFloat(data[0].lat),
           lon: parseFloat(data[0].lon)
         });
-        setSearchRadius(2000); // Reset radius on new search
+        setSearchRadius(2000);
       } else {
         toast({
           variant: "destructive",
@@ -94,20 +92,10 @@ const Index = () => {
       }
     } catch (error: any) {
       console.error('Error searching city:', error);
-      
-      let errorMessage = "Failed to search for location. ";
-      if (error.name === 'AbortError') {
-        errorMessage = "The search request timed out. Please try again.";
-      } else if (!navigator.onLine) {
-        errorMessage += "Please check your internet connection.";
-      } else {
-        errorMessage += "Please try again in a few moments.";
-      }
-
       toast({
         variant: "destructive",
         title: "Search Error",
-        description: errorMessage,
+        description: "Failed to search location. Please try again.",
       });
     }
   };
@@ -134,24 +122,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <EmailConfirmationHandler />
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              {session ? (
-                <UserMenu />
-              ) : (
-                <Link 
-                  to="/login" 
-                  className="text-primary hover:text-primary/80 transition-colors"
-                >
-                  Connection
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header session={session} />
 
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="text-center mb-12 animate-fade-in">
@@ -167,35 +138,14 @@ const Index = () => {
           <CitySearch onSearch={handleSearch} />
         </div>
 
-        {isLoading && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {pharmacies?.map((pharmacy) => (
-            <PharmacyCard
-              key={pharmacy.id}
-              {...pharmacy}
-              onSelect={handlePharmacySelect}
-              onSetDefault={handleSetDefaultPharmacy}
-              isDefault={defaultPharmacyId === pharmacy.id}
-            />
-          ))}
-        </div>
-
-        {pharmacies?.length === 0 && coordinates && !isLoading && (
-          <p className="text-center text-gray-500">No pharmacies found in this area</p>
-        )}
+        <PharmacyListSection 
+          pharmacies={pharmacies || []}
+          isLoading={isLoading}
+          coordinates={coordinates}
+          defaultPharmacyId={defaultPharmacyId}
+          onPharmacySelect={handlePharmacySelect}
+          onSetDefaultPharmacy={handleSetDefaultPharmacy}
+        />
       </div>
     </div>
   );
