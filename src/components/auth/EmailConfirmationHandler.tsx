@@ -37,29 +37,41 @@ const EmailConfirmationHandler = () => {
       if (type === 'recovery') {
         console.log('Handling password recovery flow');
         try {
-          if (access_token && refresh_token) {
-            const { error: sessionError } = await supabase.auth.setSession({
-              access_token,
-              refresh_token,
-            });
-
-            if (sessionError) throw sessionError;
-
-            // Show toast and redirect to reset-password page
+          if (!access_token || !refresh_token) {
+            console.error('Missing tokens for password recovery');
             toast({
-              title: "Reset Password",
-              description: "You can now reset your password.",
+              variant: "destructive",
+              title: "Authentication Error",
+              description: "Invalid password reset link",
             });
-            
-            navigate('/reset-password');
+            navigate('/login');
             return;
           }
+
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          if (sessionError) {
+            console.error('Session error:', sessionError);
+            throw sessionError;
+          }
+
+          console.log('Successfully set session, redirecting to reset-password');
+          toast({
+            title: "Reset Password",
+            description: "You can now reset your password.",
+          });
+          
+          navigate('/reset-password', { replace: true });
+          return;
         } catch (error: any) {
-          console.error('Session error:', error);
+          console.error('Password recovery error:', error);
           toast({
             variant: "destructive",
             title: "Authentication Error",
-            description: "Failed to set authentication session",
+            description: "Failed to process password reset request",
           });
           navigate('/login');
           return;
