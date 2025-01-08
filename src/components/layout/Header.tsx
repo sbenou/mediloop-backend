@@ -40,7 +40,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
             )}
           </div>
           <div className="flex items-center space-x-3">
-            {showUserMenu ? (
+            {showUserMenu && (
               <>
                 {session ? (
                   <>
@@ -71,9 +71,9 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
                   >
                     Connection
                   </Link>
-                )
-              }
-            ) : null}
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
