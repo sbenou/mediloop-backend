@@ -16,6 +16,11 @@ interface Subcategory {
   id: string;
   name: string;
   category_id: string;
+  products: {
+    id: string;
+    name: string;
+    description: string;
+  }[];
 }
 
 export const ProductFilters = ({ 
@@ -39,13 +44,18 @@ export const ProductFilters = ({
           type,
           subcategories (
             id,
-            name
+            name,
+            products (
+              id,
+              name,
+              description
+            )
           )
         `)
         .order('name');
       
       if (error) throw error;
-      console.log('Categories data:', data);
+      console.log('Categories data with products:', data);
       return data as Category[];
     },
   });
@@ -87,6 +97,16 @@ export const ProductFilters = ({
     });
   };
 
+  const getUniqueDescriptions = (subcategory: Subcategory) => {
+    if (!subcategory.products) return [];
+    
+    const descriptions = subcategory.products
+      .filter(product => product && typeof product.description === 'string' && product.description.trim() !== '')
+      .map(product => product.description);
+    
+    return [...new Set(descriptions)];
+  };
+
   return (
     <div className="w-64 flex-shrink-0 border-r pr-4">
       <h3 className="font-semibold mb-4">Filters</h3>
@@ -108,13 +128,24 @@ export const ProductFilters = ({
                   </button>
                   <div className="ml-4 space-y-1 mt-1">
                     {category.subcategories.map((sub) => (
-                      <button
-                        key={sub.id}
-                        onClick={() => onFilterChange({ type: 'medication', category: category.id, subcategory: sub.id })}
-                        className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
-                      >
-                        {sub.name}
-                      </button>
+                      <div key={sub.id} className="space-y-1">
+                        <button
+                          onClick={() => onFilterChange({ type: 'medication', category: category.id, subcategory: sub.id })}
+                          className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
+                        >
+                          {sub.name}
+                        </button>
+                        <div className="pl-4 space-y-1">
+                          {getUniqueDescriptions(sub).map((description, index) => (
+                            <div
+                              key={`${sub.id}-${index}`}
+                              className="text-xs text-muted-foreground"
+                            >
+                              {description}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -137,13 +168,24 @@ export const ProductFilters = ({
                   </button>
                   <div className="ml-4 space-y-1 mt-1">
                     {category.subcategories.map((sub) => (
-                      <button
-                        key={sub.id}
-                        onClick={() => onFilterChange({ type: 'parapharmacy', category: category.id, subcategory: sub.id })}
-                        className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
-                      >
-                        {sub.name}
-                      </button>
+                      <div key={sub.id} className="space-y-1">
+                        <button
+                          onClick={() => onFilterChange({ type: 'parapharmacy', category: category.id, subcategory: sub.id })}
+                          className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
+                        >
+                          {sub.name}
+                        </button>
+                        <div className="pl-4 space-y-1">
+                          {getUniqueDescriptions(sub).map((description, index) => (
+                            <div
+                              key={`${sub.id}-${index}`}
+                              className="text-xs text-muted-foreground"
+                            >
+                              {description}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
