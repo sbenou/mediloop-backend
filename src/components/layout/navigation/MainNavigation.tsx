@@ -10,7 +10,6 @@ import {
   NavigationMenuContent,
 } from "@/components/ui/navigation-menu";
 import { Subcategory } from '@/components/product/types/product';
-import { Info, HelpCircle, Heart, Mail } from 'lucide-react';
 
 export const MainNavigation = () => {
   const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
@@ -90,6 +89,15 @@ export const MainNavigation = () => {
                 Discover our services
               </p>
             </Link>
+            <Link 
+              to="/become-partner"
+              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+            >
+              <div className="text-sm font-medium leading-none">Become a Partner</div>
+              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                Join our network of partners
+              </p>
+            </Link>
           </div>
         </NavigationMenuContent>
       </NavigationMenuItem>
@@ -134,53 +142,6 @@ export const MainNavigation = () => {
                   ))}
                 </div>
               ))}
-            </div>
-          </div>
-        </NavigationMenuContent>
-      </NavigationMenuItem>
-
-      {/* More Menu */}
-      <NavigationMenuItem>
-        <NavigationMenuTrigger>More</NavigationMenuTrigger>
-        <NavigationMenuContent>
-          <div className="w-[200px] p-4">
-            <div className="space-y-2">
-              <Link 
-                to="/about"
-                className="flex items-center gap-2 w-full p-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground"
-              >
-                <Info className="h-4 w-4" />
-                About us
-              </Link>
-              <Link 
-                to="/why-luxmed"
-                className="flex items-center gap-2 w-full p-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground"
-              >
-                <HelpCircle className="h-4 w-4" />
-                Why Luxmed
-              </Link>
-              <Link 
-                to="/how-it-works"
-                className="flex items-center gap-2 w-full p-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground"
-              >
-                <HelpCircle className="h-4 w-4" />
-                How does it work
-              </Link>
-              <Link 
-                to="/why-we-care"
-                className="flex items-center gap-2 w-full p-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground"
-              >
-                <Heart className="h-4 w-4" />
-                Why we care
-              </Link>
-              <div className="my-2 border-t" />
-              <Link 
-                to="/contact"
-                className="flex items-center gap-2 w-full p-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground"
-              >
-                <Mail className="h-4 w-4" />
-                Contact
-              </Link>
             </div>
           </div>
         </NavigationMenuContent>
