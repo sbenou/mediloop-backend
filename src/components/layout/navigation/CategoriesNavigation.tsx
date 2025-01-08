@@ -7,9 +7,11 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { CategorySection } from './CategorySection';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const CategoriesNavigation = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -62,8 +64,8 @@ export const CategoriesNavigation = () => {
     <NavigationMenuItem>
       <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
       <NavigationMenuContent>
-        <div className="grid gap-3 p-4 w-[400px]">
-          <div className="grid grid-cols-2 gap-4">
+        <div className={`grid gap-3 p-4 ${isMobile ? 'w-[300px]' : 'w-[400px]'}`}>
+          <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
             <CategorySection
               title="Pharmacy"
               categories={getUniqueCategories(categories || [], 'medication')}

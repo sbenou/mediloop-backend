@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
-import { ArrowLeft, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Menu } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { CartPreview } from '../CartPreview';
@@ -11,6 +11,7 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { MainNavigation } from './navigation/MainNavigation';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeaderProps {
   session: any;
@@ -21,6 +22,8 @@ interface HeaderProps {
 const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderProps) => {
   const { state: cartState } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -28,7 +31,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-16">
+          <div className="flex items-center gap-4 sm:gap-16">
             {showBackLink ? (
               <Link to="/" className="flex items-center text-primary hover:text-primary/80">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -39,14 +42,40 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
                 <img 
                   src="/lovable-uploads/1d4b50b5-2725-470b-a070-5227c3aa24b6.png" 
                   alt="LuxMed Logo" 
-                  className="h-16"
+                  className="h-12 sm:h-16"
                 />
               </Link>
             )}
 
-            <NavigationMenu className="ml-8">
-              <MainNavigation />
-            </NavigationMenu>
+            {isMobile ? (
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px]">
+                  <SheetHeader>
+                    <SheetTitle>Menu</SheetTitle>
+                  </SheetHeader>
+                  <nav className="mt-6 space-y-4">
+                    <Link to="/products" className="block px-4 py-2 hover:bg-accent rounded-md">
+                      Products
+                    </Link>
+                    <Link to="/services" className="block px-4 py-2 hover:bg-accent rounded-md">
+                      Services
+                    </Link>
+                    <Link to="/become-partner" className="block px-4 py-2 hover:bg-accent rounded-md">
+                      Become a Partner
+                    </Link>
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            ) : (
+              <NavigationMenu className="hidden md:block">
+                <MainNavigation />
+              </NavigationMenu>
+            )}
           </div>
 
           <div className="flex items-center space-x-3">
