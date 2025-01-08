@@ -12,6 +12,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import GetStartedSteps from "@/components/home/GetStartedSteps";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -156,6 +157,9 @@ const Index = () => {
             </div>
           </div>
         </section>
+
+        {/* Get Started Steps */}
+        <GetStartedSteps />
 
         {/* Features Grid */}
         <section className="py-16 md:py-24 px-4">
