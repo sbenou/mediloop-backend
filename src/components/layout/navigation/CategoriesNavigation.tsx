@@ -58,7 +58,8 @@ export const CategoriesNavigation = () => {
     const descriptions = subcategory.products
       .filter((product: any) => product && typeof product.description === 'string' && product.description.trim() !== '')
       .map((product: any) => product.description as string);
-    return [...new Set(descriptions)];
+    const uniqueDescriptionsSet = new Set<string>(descriptions);
+    return Array.from(uniqueDescriptionsSet);
   };
 
   return (
