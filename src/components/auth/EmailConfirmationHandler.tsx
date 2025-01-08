@@ -9,11 +9,10 @@ const EmailConfirmationHandler = () => {
 
   useEffect(() => {
     const handleEmailConfirmation = async () => {
-      // Get both URL parameters and hash parameters
+      // Get URL parameters from both search and hash
       const params = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
       
-      // Log full URL and hash for debugging
       console.log('Full URL:', window.location.href);
       console.log('Hash:', window.location.hash);
       
@@ -37,14 +36,14 @@ const EmailConfirmationHandler = () => {
         console.error('Email confirmation error:', { error, error_description });
         toast({
           variant: "destructive",
-          title: "Email Confirmation Error",
-          description: error_description || "Failed to confirm email address",
+          title: "Error",
+          description: error_description || "Failed to process request",
         });
         navigate('/login', { replace: true });
         return;
       }
 
-      // Handle password recovery flow - note that type might be undefined for some password reset links
+      // If we have tokens, set the session
       if (access_token && refresh_token) {
         console.log('Setting session with tokens');
         try {
@@ -53,55 +52,37 @@ const EmailConfirmationHandler = () => {
             refresh_token,
           });
 
-          if (sessionError) {
-            console.error('Session error:', sessionError);
-            toast({
-              variant: "destructive",
-              title: "Authentication Error",
-              description: "Failed to set authentication session",
-            });
-            navigate('/login', { replace: true });
-            return;
-          }
+          if (sessionError) throw sessionError;
 
-          // If type is recovery or not specified, go to reset password
-          if (type === 'recovery' || !type) {
-            console.log('Redirecting to reset-password');
+          // Handle different types of confirmations
+          if (type === 'recovery' || type === 'passwordReset' || !type) {
             toast({
               title: "Reset Password",
               description: "You can now reset your password.",
             });
             navigate('/reset-password', { replace: true });
-            return;
-          }
-
-          // If type is signup, show confirmation message
-          if (type === 'signup') {
+          } else if (type === 'signup') {
             toast({
               title: "Email Confirmed",
               description: "Your email has been successfully confirmed. You can now log in.",
             });
             navigate('/login', { replace: true });
-            return;
           }
         } catch (error: any) {
           console.error('Authentication error:', error);
           toast({
             variant: "destructive",
             title: "Authentication Error",
-            description: "Failed to process authentication request",
+            description: error.message || "Failed to process authentication request",
           });
           navigate('/login', { replace: true });
         }
-      } else {
+      } else if (window.location.pathname === '/auth/callback') {
         console.log('No tokens found in URL');
-        // If we're on the callback route but have no tokens, redirect to login
-        if (window.location.pathname === '/auth/callback') {
-          navigate('/login', { replace: true });
-        }
+        navigate('/login', { replace: true });
       }
 
-      // Clear URL parameters after processing
+      // Clear URL parameters
       if (window.history.replaceState) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
