@@ -22,6 +22,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     setIsLoading(true);
 
     try {
+      // Sign out first to clear any existing session
+      await supabase.auth.signOut();
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -30,36 +33,24 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       if (error) {
         console.error("Login error:", error);
         
-        // Parse the error message from the JSON string if it exists
-        let errorBody;
-        try {
-          errorBody = error.message && JSON.parse(error.message);
-        } catch {
-          errorBody = null;
-        }
-        
-        if (error.message.includes('Email not confirmed')) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast({
+            variant: "destructive",
+            title: "Login Failed",
+            description: "Please check your email and password and try again. If you recently reset your password, make sure you're using your new password.",
+            duration: 6000,
+          });
+        } else if (error.message.includes('Email not confirmed')) {
           toast({
             variant: "destructive",
             title: "Email Not Confirmed",
             description: "Please check your email and confirm your account before logging in. Don't forget to check your spam folder.",
           });
-        } else if (error.message.includes('Invalid login credentials')) {
-          toast({
-            variant: "destructive",
-            title: "Invalid Credentials",
-            description: "The email or password you entered is incorrect. Please try again.",
-          });
-        } else if (
-          error.status === 429 || 
-          error.message.includes('rate_limit') ||
-          errorBody?.code === 'over_email_send_rate_limit' ||
-          (error.message.includes('email') && error.message.includes('exceeded'))
-        ) {
+        } else if (error.status === 429 || error.message.includes('rate_limit')) {
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
-            description: "You've made too many requests. Please wait a few minutes before trying to log in or reset your password again.",
+            description: "You've made too many requests. Please wait a few minutes before trying again.",
             duration: 8000,
           });
         } else {
@@ -84,7 +75,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred. Please try again.",
       });
     } finally {
       setIsLoading(false);
