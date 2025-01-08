@@ -15,8 +15,10 @@ export const SubcategoryList = ({ subcategories, onCategoryClick, type }: Subcat
   const getUniqueDescriptions = (subcategory: Subcategory) => {
     if (!subcategory.products) return [];
     console.log('Products in subcategory:', subcategory.products); // Debug log
-    const descriptions = subcategory.products.map(product => product.description);
-    const uniqueDescriptions = [...new Set(descriptions)].filter(Boolean);
+    const descriptions = subcategory.products
+      .map(product => product.description)
+      .filter(description => description && description.trim() !== '');
+    const uniqueDescriptions = [...new Set(descriptions)];
     console.log('Unique descriptions:', uniqueDescriptions); // Debug log
     return uniqueDescriptions;
   };
