@@ -30,15 +30,15 @@ export const CategorySection = ({
     console.log('Subcategory clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
     setTimeout(() => {
-      const event = new CustomEvent('filterProducts', { 
+      const filterEvent = new CustomEvent('filterProducts', { 
         detail: { 
           type, 
           category: categoryId, 
           subcategory: subcategoryId 
         }
       });
-      window.dispatchEvent(event);
-      console.log('Filter event dispatched:', event);
+      window.dispatchEvent(filterEvent);
+      console.log('Filter event dispatched:', filterEvent);
     }, 100);
   };
 
@@ -48,15 +48,15 @@ export const CategorySection = ({
     console.log('Description clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
     setTimeout(() => {
-      const event = new CustomEvent('filterProducts', { 
+      const filterEvent = new CustomEvent('filterProducts', { 
         detail: { 
           type, 
           category: categoryId, 
           subcategory: subcategoryId 
         }
       });
-      window.dispatchEvent(event);
-      console.log('Filter event dispatched:', event);
+      window.dispatchEvent(filterEvent);
+      console.log('Filter event dispatched:', filterEvent);
     }, 100);
   };
 
@@ -93,7 +93,7 @@ export const CategorySection = ({
                     <div key={subcategory.id} className="ml-4 space-y-1">
                       <button
                         onClick={(e) => handleSubcategoryClick(selectedType, category.id, subcategory.id, e)}
-                        className="text-sm font-medium hover:text-primary hover:underline cursor-pointer block w-full text-left py-1"
+                        className="text-sm font-medium hover:text-primary hover:underline cursor-pointer w-full text-left py-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2"
                       >
                         {subcategory.name}
                       </button>
@@ -102,7 +102,7 @@ export const CategorySection = ({
                           <button
                             key={`${subcategory.id}-${index}`}
                             onClick={(e) => handleDescriptionClick(selectedType, category.id, subcategory.id, e)}
-                            className="block w-full text-left text-xs text-muted-foreground hover:text-primary hover:underline cursor-pointer py-0.5"
+                            className="block w-full text-left text-xs text-muted-foreground hover:text-primary hover:underline cursor-pointer py-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2"
                           >
                             {description}
                           </button>
