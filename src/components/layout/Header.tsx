@@ -83,7 +83,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
               variant="outline" 
               size="sm" 
               asChild
-              className="hidden md:inline-flex bg-[#D3E4FD] hover:bg-[#B3C4DD] text-[#2C3E50]"
+              className="hidden md:inline-flex bg-[#F2FCE2] hover:bg-[#E2ECE2] text-[#2C3E50]"
             >
               <Link to="/products">Browse Medications</Link>
             </Button>
