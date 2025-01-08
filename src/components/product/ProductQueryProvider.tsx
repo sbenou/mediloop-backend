@@ -54,13 +54,16 @@ export const useProductQuery = ({
     queryKey: ['products', searchTerm, currentPage, filters, sortBy],
     queryFn: async () => {
       console.log('Fetching products with filters:', filters);
+      console.log('User profile:', userProfile);
       
       let query = supabase
         .from('products')
         .select('*', { count: 'exact' });
       
-      // Remove the role-based filtering temporarily to see all products
-      if (filters.type) {
+      // Only show medication products to pharmacists and superadmins
+      if (userProfile?.role !== 'pharmacist' && userProfile?.role !== 'superadmin') {
+        query = query.eq('type', 'parapharmacy');
+      } else if (filters.type) {
         query = query.eq('type', filters.type);
       }
       
@@ -108,6 +111,6 @@ export const useProductQuery = ({
         userProfile
       } as ProductQueryResult;
     },
-    enabled: true, // Remove the dependency on userProfile to allow fetching products
+    enabled: true,
   });
 };
