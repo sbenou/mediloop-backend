@@ -9,6 +9,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { NavigationContent } from './NavigationContent';
+import { Subcategory } from '@/components/product/types/product';
 
 export const MainNavigation = () => {
   const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
@@ -41,12 +42,12 @@ export const MainNavigation = () => {
     },
   });
 
-  const getUniqueDescriptions = (subcategory: any) => {
+  const getUniqueDescriptions = (subcategory: Subcategory): string[] => {
     if (!subcategory.products) return [];
     
     const descriptions = subcategory.products
-      .filter((product: any) => product && typeof product.description === 'string' && product.description.trim() !== '')
-      .map((product: any) => product.description);
+      .filter(product => product && typeof product.description === 'string' && product.description.trim() !== '')
+      .map(product => product.description);
     
     return [...new Set(descriptions)];
   };
@@ -69,6 +70,7 @@ export const MainNavigation = () => {
         <NavigationMenuTrigger>Navigation</NavigationMenuTrigger>
         <NavigationContent 
           selectedType={selectedType}
+          setSelectedType={setSelectedType}
           categories={categories || []}
           getFilteredCategories={getFilteredCategories}
           getUniqueDescriptions={getUniqueDescriptions}
@@ -80,6 +82,7 @@ export const MainNavigation = () => {
         <NavigationMenuTrigger>Test</NavigationMenuTrigger>
         <NavigationContent 
           selectedType={selectedTestType}
+          setSelectedType={setSelectedTestType}
           categories={categories || []}
           getFilteredCategories={getFilteredCategories}
           getUniqueDescriptions={getUniqueDescriptions}

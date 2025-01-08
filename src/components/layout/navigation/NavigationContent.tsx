@@ -4,13 +4,15 @@ import { CategoryContent } from './CategoryContent';
 
 interface NavigationContentProps {
   selectedType: 'medication' | 'parapharmacy' | null;
+  setSelectedType: (type: 'medication' | 'parapharmacy' | null) => void;
   categories: any[];
   getFilteredCategories: (type: 'medication' | 'parapharmacy') => any[];
   getUniqueDescriptions: (subcategory: any) => string[];
 }
 
 export const NavigationContent = ({ 
-  selectedType, 
+  selectedType,
+  setSelectedType,
   categories,
   getFilteredCategories,
   getUniqueDescriptions 
@@ -20,7 +22,8 @@ export const NavigationContent = ({
       <div className="grid grid-cols-2 gap-4 p-4 w-[600px]">
         {/* Left side - Category Types */}
         <CategoryContent 
-          selectedType={selectedType} 
+          selectedType={selectedType}
+          setSelectedType={setSelectedType}
           categories={categories}
           getFilteredCategories={getFilteredCategories}
           getUniqueDescriptions={getUniqueDescriptions}

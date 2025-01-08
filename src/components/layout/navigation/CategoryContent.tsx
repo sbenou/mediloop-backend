@@ -4,13 +4,15 @@ import { ChevronDown } from 'lucide-react';
 
 interface CategoryContentProps {
   selectedType: 'medication' | 'parapharmacy' | null;
+  setSelectedType: (type: 'medication' | 'parapharmacy' | null) => void;
   categories: any[];
   getFilteredCategories: (type: 'medication' | 'parapharmacy') => any[];
   getUniqueDescriptions: (subcategory: any) => string[];
 }
 
 export const CategoryContent = ({ 
-  selectedType, 
+  selectedType,
+  setSelectedType, 
   categories,
   getFilteredCategories,
   getUniqueDescriptions 
