@@ -44,7 +44,9 @@ const EmailConfirmationHandler = () => {
 
       if (type === 'recovery' && code) {
         console.log('Recovery callback detected, storing code');
+        // Store the recovery code in session storage
         sessionStorage.setItem('passwordResetCode', code);
+        // Navigate to reset password page
         navigate('/reset-password');
         return;
       }
@@ -61,6 +63,7 @@ const EmailConfirmationHandler = () => {
             });
             navigate('/');
           } catch (error: any) {
+            console.error('Error exchanging code for session:', error);
             toast({
               variant: "destructive",
               title: "Error",
