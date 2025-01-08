@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import Header from "@/components/layout/Header";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Search, ShoppingBag, Pill, UserPlus, Stethoscope } from "lucide-react";
+import { Search, ShoppingBag, Pill, UserPlus, Stethoscope, Users, Building2, Clipboard, ShoppingCart } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -13,6 +14,31 @@ const Index = () => {
       const { data: { session } } = await supabase.auth.getSession();
       return session;
     },
+  });
+
+  // Fetch statistics
+  const { data: stats } = useQuery({
+    queryKey: ['platform-stats'],
+    queryFn: async () => {
+      const [
+        { count: ordersCount } = { count: 0 },
+        { count: pharmaciesCount } = { count: 0 },
+        { count: doctorsCount } = { count: 0 },
+        { count: prescriptionsCount } = { count: 0 }
+      ] = await Promise.all([
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'pharmacist'),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'doctor'),
+        supabase.from('prescriptions').select('*', { count: 'exact', head: true })
+      ]);
+
+      return {
+        ordersCount,
+        pharmaciesCount,
+        doctorsCount,
+        prescriptionsCount
+      };
+    }
   });
 
   const features = [
@@ -40,6 +66,29 @@ const Index = () => {
       description: "Find and connect with healthcare providers",
       action: () => navigate("/find-doctor"),
     },
+  ];
+
+  const platformStats = [
+    {
+      label: "Total Orders",
+      value: stats?.ordersCount ?? 0,
+      icon: <ShoppingCart className="h-6 w-6 text-primary" />
+    },
+    {
+      label: "Partner Pharmacies",
+      value: stats?.pharmaciesCount ?? 0,
+      icon: <Building2 className="h-6 w-6 text-primary" />
+    },
+    {
+      label: "Healthcare Providers",
+      value: stats?.doctorsCount ?? 0,
+      icon: <Users className="h-6 w-6 text-primary" />
+    },
+    {
+      label: "Prescriptions Managed",
+      value: stats?.prescriptionsCount ?? 0,
+      icon: <Clipboard className="h-6 w-6 text-primary" />
+    }
   ];
 
   return (
@@ -93,6 +142,23 @@ const Index = () => {
                   <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Statistics Section */}
+        <section className="py-16 bg-muted/50">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {platformStats.map((stat, index) => (
+                <Card key={index} className="p-6 text-center hover:shadow-md transition-shadow">
+                  <div className="flex justify-center mb-4">
+                    {stat.icon}
+                  </div>
+                  <div className="text-3xl font-bold mb-2">{stat.value.toLocaleString()}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                </Card>
               ))}
             </div>
           </div>
