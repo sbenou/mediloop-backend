@@ -11,7 +11,6 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { MainNavigation } from './navigation/MainNavigation';
-import { CategoriesNavigation } from './navigation/CategoriesNavigation';
 
 interface HeaderProps {
   session: any;
@@ -47,7 +46,6 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
 
             <NavigationMenu className="ml-8">
               <MainNavigation />
-              <CategoriesNavigation />
             </NavigationMenu>
           </div>
 
