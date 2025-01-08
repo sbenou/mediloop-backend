@@ -53,11 +53,11 @@ export const CategoriesNavigation = () => {
     }) || [];
   };
 
-  const getUniqueDescriptions = (subcategory: any) => {
+  const getUniqueDescriptions = (subcategory: any): string[] => {
     if (!subcategory.products) return [];
     const descriptions = subcategory.products
       .filter((product: any) => product && typeof product.description === 'string' && product.description.trim() !== '')
-      .map((product: any) => product.description);
+      .map((product: any) => product.description as string);
     return [...new Set(descriptions)];
   };
 
