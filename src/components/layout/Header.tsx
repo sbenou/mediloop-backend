@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { useLocation } from 'react-router-dom';
 
 interface HeaderProps {
   session: any;
@@ -30,6 +31,8 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
   
   const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -48,7 +51,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
                 <img 
                   src="/lovable-uploads/1d4b50b5-2725-470b-a070-5227c3aa24b6.png" 
                   alt="LuxMed Logo" 
-                  className="h-12 sm:h-16"
+                  className={`${isHomePage ? 'h-16 sm:h-20' : 'h-12 sm:h-16'} transition-all duration-200`}
                 />
               </Link>
             )}
