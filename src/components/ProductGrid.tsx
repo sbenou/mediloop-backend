@@ -24,7 +24,8 @@ export const ProductGrid = ({ products, isLoading, userRole }: ProductGridProps)
   const { addToCart } = useCart();
 
   const handleAddToCart = (product: Product) => {
-    if (product.requires_prescription && userRole !== 'pharmacist') {
+    // Allow superadmins and pharmacists to add any product to cart
+    if (product.requires_prescription && userRole !== 'pharmacist' && userRole !== 'superadmin') {
       toast({
         variant: "destructive",
         title: "Permission Denied",
@@ -38,6 +39,11 @@ export const ProductGrid = ({ products, isLoading, userRole }: ProductGridProps)
       name: product.name,
       price: product.price,
       image_url: product.image_url,
+    });
+
+    toast({
+      title: "Added to Cart",
+      description: `${product.name} has been added to your cart.`,
     });
   };
 
