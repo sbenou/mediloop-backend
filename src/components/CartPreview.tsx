@@ -2,9 +2,12 @@ import { useCart } from "@/contexts/CartContext";
 import { Button } from "./ui/button";
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
+import { Textarea } from "./ui/textarea";
+import { useState } from "react";
 
-export const CartPreview = () => {
+export const CartPreview = ({ onClose }: { onClose: () => void }) => {
   const { state: cartState, removeFromCart, updateQuantity } = useCart();
+  const [comment, setComment] = useState("");
 
   const total = cartState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -64,14 +67,31 @@ export const CartPreview = () => {
         </div>
       </ScrollArea>
       
-      <div className="border-t pt-4 mt-4">
+      <div className="space-y-4 border-t pt-4 mt-4">
+        <Textarea
+          placeholder="Add a comment to your order..."
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          className="min-h-[100px]"
+        />
+        
         <div className="flex justify-between mb-4">
           <span className="font-medium">Total</span>
           <span className="font-medium">${total.toFixed(2)}</span>
         </div>
-        <Button className="w-full">
-          Proceed to Checkout
-        </Button>
+        
+        <div className="space-y-2">
+          <Button className="w-full">
+            Proceed to Checkout
+          </Button>
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={onClose}
+          >
+            Keep Shopping
+          </Button>
+        </div>
       </div>
     </div>
   );
