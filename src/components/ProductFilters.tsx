@@ -4,23 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
 import { FilterCategory } from "./filters/FilterCategory";
+import { Product, Subcategory } from "./product/types/product";
 
 interface Category {
   id: string;
   name: string;
   type: 'medication' | 'parapharmacy';
   subcategories: Subcategory[];
-}
-
-interface Subcategory {
-  id: string;
-  name: string;
-  category_id: string;
-  products: {
-    id: string;
-    name: string;
-    description: string;
-  }[];
 }
 
 export const ProductFilters = ({ 
@@ -47,7 +37,15 @@ export const ProductFilters = ({
             products (
               id,
               name,
-              description
+              description,
+              price,
+              image_url,
+              type,
+              requires_prescription,
+              category_id,
+              subcategory_id,
+              pharmacy_id,
+              created_at
             )
           )
         `)
