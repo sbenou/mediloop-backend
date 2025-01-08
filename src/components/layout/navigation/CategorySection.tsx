@@ -73,7 +73,7 @@ export const CategorySection = ({
                   selectedType === 'medication' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
-                Medication
+                Pharmacy
               </button>
               <button
                 onClick={() => setSelectedType('parapharmacy')}
