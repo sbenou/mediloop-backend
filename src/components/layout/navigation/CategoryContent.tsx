@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 
 interface CategoryContentProps {
@@ -20,7 +20,8 @@ export const CategoryContent = ({
   const [expandedSubcategories, setExpandedSubcategories] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
 
-  const toggleSubcategory = (subcategoryId: string) => {
+  const toggleSubcategory = (subcategoryId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering parent click handlers
     setExpandedSubcategories(prev => ({
       ...prev,
       [subcategoryId]: !prev[subcategoryId]
@@ -28,28 +29,34 @@ export const CategoryContent = ({
   };
 
   const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string) => {
+    console.log('Subcategory clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('filterProducts', { 
+      const event = new CustomEvent('filterProducts', { 
         detail: { 
           type, 
           category: categoryId, 
           subcategory: subcategoryId 
         }
-      }));
+      });
+      window.dispatchEvent(event);
+      console.log('Filter event dispatched:', event);
     }, 100);
   };
 
   const handleDescriptionClick = (type: string, categoryId: string, subcategoryId: string) => {
+    console.log('Description clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('filterProducts', { 
+      const event = new CustomEvent('filterProducts', { 
         detail: { 
           type, 
           category: categoryId, 
           subcategory: subcategoryId 
         }
-      }));
+      });
+      window.dispatchEvent(event);
+      console.log('Filter event dispatched:', event);
     }, 100);
   };
 
@@ -83,15 +90,15 @@ export const CategoryContent = ({
           <div key={category.id} className="space-y-2">
             {category.subcategories.map((subcategory: any) => (
               <div key={subcategory.id} className="space-y-1">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <button
                     onClick={() => handleSubcategoryClick(selectedType, category.id, subcategory.id)}
-                    className="text-sm font-medium hover:text-primary flex-grow text-left"
+                    className="text-sm font-medium hover:text-primary flex-grow text-left py-1"
                   >
                     {subcategory.name}
                   </button>
                   <button
-                    onClick={() => toggleSubcategory(subcategory.id)}
+                    onClick={(e) => toggleSubcategory(subcategory.id, e)}
                     className="p-1 hover:bg-accent rounded-md"
                   >
                     <ChevronDown 
