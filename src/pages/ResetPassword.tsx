@@ -63,11 +63,27 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password,
+      // Get the recovery code from session storage
+      const recoveryCode = sessionStorage.getItem('recovery_code');
+      
+      if (!recoveryCode) {
+        throw new Error('Recovery code not found');
+      }
+
+      // First verify the recovery code
+      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+        token: recoveryCode,
+        type: 'recovery'
       });
 
-      if (error) throw error;
+      if (verifyError) throw verifyError;
+
+      // Then update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (updateError) throw updateError;
 
       // Clear the recovery code
       sessionStorage.removeItem('recovery_code');
