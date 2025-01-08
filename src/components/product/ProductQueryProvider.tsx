@@ -18,7 +18,6 @@ export interface ProductQueryConfig {
 interface UserProfile {
   id: string;
   role: string;
-  // ... add other profile fields if needed
 }
 
 interface ProductQueryResult {
@@ -44,9 +43,9 @@ export const useProductQuery = ({
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .maybeSingle();
+        .single();
         
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data;
     },
   });
@@ -54,19 +53,21 @@ export const useProductQuery = ({
   return useQuery({
     queryKey: ['products', searchTerm, currentPage, filters, sortBy],
     queryFn: async () => {
+      console.log('Fetching products with filters:', filters);
+      
       let query = supabase
         .from('products')
         .select('*', { count: 'exact' });
       
-      if (userProfile?.role !== 'pharmacist') {
-        query = query.eq('type', 'parapharmacy');
-      } else if (filters.type) {
+      // Remove the role-based filtering temporarily to see all products
+      if (filters.type) {
         query = query.eq('type', filters.type);
       }
       
       if (filters.category) {
         query = query.eq('category_id', filters.category);
       }
+      
       if (filters.subcategory) {
         query = query.eq('subcategory_id', filters.subcategory);
       }
@@ -96,14 +97,17 @@ export const useProductQuery = ({
       query = query.range(from, from + itemsPerPage - 1);
       
       const { data, error, count } = await query;
+      
+      console.log('Query result:', { data, error, count });
+      
       if (error) throw error;
       
       return {
-        products: data,
+        products: data || [],
         total: count || 0,
         userProfile
       } as ProductQueryResult;
     },
-    enabled: !!userProfile,
+    enabled: true, // Remove the dependency on userProfile to allow fetching products
   });
 };

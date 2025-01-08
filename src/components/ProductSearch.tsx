@@ -35,6 +35,9 @@ export const ProductSearch = () => {
 
   const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
+  // Add console.log to debug products data
+  console.log('Products Data:', productsData);
+
   return (
     <div className="flex gap-6">
       <div className="w-64 space-y-6">
