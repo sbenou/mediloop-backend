@@ -11,6 +11,7 @@ export interface OverpassResult {
       'addr:city'?: string;
       'contact:phone'?: string;
       'contact:email'?: string;
+      email?: string;
       opening_hours?: string;
       'healthcare'?: string;
       'healthcare:speciality'?: string;
