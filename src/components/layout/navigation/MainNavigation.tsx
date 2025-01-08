@@ -9,7 +9,7 @@ import {
   NavigationMenuTrigger,
   NavigationMenuContent,
 } from "@/components/ui/navigation-menu";
-import { Info, HelpCircle, Settings, Heart } from 'lucide-react';
+import { Info, HelpCircle, Settings, Heart, Mail } from 'lucide-react';
 import { Subcategory } from '@/components/product/types/product';
 
 export const MainNavigation = () => {
@@ -181,6 +181,24 @@ export const MainNavigation = () => {
               >
                 <Heart className="h-4 w-4" />
                 <span>Why we care</span>
+              </Link>
+            </nav>
+          </div>
+        </NavigationMenuContent>
+      </NavigationMenuItem>
+
+      {/* Contact Menu */}
+      <NavigationMenuItem>
+        <NavigationMenuTrigger>Contact</NavigationMenuTrigger>
+        <NavigationMenuContent>
+          <div className="w-[200px] p-4">
+            <nav className="flex flex-col space-y-2">
+              <Link 
+                to="/contact"
+                className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent hover:text-accent-foreground"
+              >
+                <Mail className="h-4 w-4" />
+                <span>Contact Us</span>
               </Link>
             </nav>
           </div>
