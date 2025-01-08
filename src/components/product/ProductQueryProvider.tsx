@@ -60,11 +60,14 @@ export const useProductQuery = ({
         .from('products')
         .select('*', { count: 'exact' });
       
-      // Only show medication products to pharmacists and superadmins
-      if (userProfile?.role !== 'pharmacist' && userProfile?.role !== 'superadmin') {
+      // Filter by type (medication/parapharmacy)
+      if (filters.type === 'medication') {
+        query = query.eq('type', 'medication').eq('requires_prescription', true);
+      } else if (filters.type === 'parapharmacy') {
+        query = query.eq('type', 'parapharmacy').eq('requires_prescription', false);
+      } else if (userProfile?.role !== 'pharmacist' && userProfile?.role !== 'superadmin') {
+        // If no type filter and user is not pharmacist/superadmin, show only parapharmacy
         query = query.eq('type', 'parapharmacy');
-      } else if (filters.type) {
-        query = query.eq('type', filters.type);
       }
       
       if (filters.category) {

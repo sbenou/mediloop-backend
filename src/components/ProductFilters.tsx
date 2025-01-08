@@ -24,6 +24,9 @@ export const ProductFilters = ({
   userRole: string | null;
   onFilterChange: (filters: { type?: string; category?: string; subcategory?: string }) => void;
 }) => {
+  // Add console.log to debug user role
+  console.log('User Role:', userRole);
+
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -41,16 +44,19 @@ export const ProductFilters = ({
         .order('name');
       
       if (error) throw error;
+      console.log('Categories data:', data); // Debug categories data
       return data as Category[];
     },
   });
+
+  const showPharmacySection = userRole === 'pharmacist' || userRole === 'superadmin';
 
   return (
     <div className="w-64 flex-shrink-0 border-r pr-4">
       <h3 className="font-semibold mb-4">Filters</h3>
       <ScrollArea className="h-[calc(100vh-200px)]">
         <Accordion type="single" collapsible className="w-full">
-          {userRole === 'pharmacist' && (
+          {showPharmacySection && (
             <AccordionItem value="pharmacy">
               <AccordionTrigger>Pharmacy</AccordionTrigger>
               <AccordionContent>
