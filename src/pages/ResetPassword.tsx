@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Key, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
@@ -12,6 +13,7 @@ const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -27,6 +29,15 @@ const ResetPassword = () => {
       navigate('/login');
     }
   }, [navigate, toast]);
+
+  // Check password match whenever either password changes
+  useEffect(() => {
+    if (password && confirmPassword) {
+      setPasswordsMatch(password === confirmPassword);
+    } else {
+      setPasswordsMatch(null);
+    }
+  }, [password, confirmPassword]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,7 +140,23 @@ const ResetPassword = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            {passwordsMatch !== null && (
+              <Alert variant={passwordsMatch ? "default" : "destructive"} className="flex items-center gap-2">
+                {passwordsMatch ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    <AlertDescription>Passwords match</AlertDescription>
+                  </>
+                ) : (
+                  <>
+                    <X className="h-4 w-4" />
+                    <AlertDescription>Passwords do not match</AlertDescription>
+                  </>
+                )}
+              </Alert>
+            )}
+
+            <Button type="submit" className="w-full" disabled={isLoading || !passwordsMatch}>
               {isLoading ? "Resetting Password..." : "Reset Password"}
             </Button>
           </form>
