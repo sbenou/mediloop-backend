@@ -29,7 +29,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-16">
             {showBackLink ? (
               <Link to="/" className="flex items-center text-primary hover:text-primary/80">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -45,7 +45,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
               </Link>
             )}
 
-            <NavigationMenu>
+            <NavigationMenu className="ml-8">
               <MainNavigation />
               <CategoriesNavigation />
             </NavigationMenu>
