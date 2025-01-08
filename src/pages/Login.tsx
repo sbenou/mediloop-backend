@@ -6,9 +6,10 @@ const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const selectedRole = location.state?.selectedRole || 'patient';
+  const returnTo = location.state?.returnTo || '/';
 
   const handleLoginSuccess = () => {
-    navigate('/'); // Navigate to home page after successful login
+    navigate(returnTo); // Navigate to the return URL after successful login
   };
 
   return (

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
 import { useDoctorSearch } from "@/hooks/useDoctorSearch";
@@ -14,6 +15,7 @@ const LUXEMBOURG_COORDINATES = {
 };
 
 const FindDoctor = () => {
+  const navigate = useNavigate();
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
   
   const { data: session } = useQuery({
@@ -70,9 +72,9 @@ const FindDoctor = () => {
     if (!session) {
       toast({
         title: "Login Required",
-        description: "Please login to connect with this doctor.",
-        variant: "destructive",
+        description: "Please login to connect with doctors.",
       });
+      navigate('/login', { state: { returnTo: '/find-doctor' } });
       return;
     }
 
