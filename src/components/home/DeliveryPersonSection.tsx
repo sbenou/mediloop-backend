@@ -15,19 +15,19 @@ export const DeliveryPersonSection = () => {
       icon: Bike,
       title: "Simple Requirements",
       description: "All you need is a bicycle or electric scooter and safety equipment",
-      image: "/delivery-bike.svg"
+      image: "/delivery-person.svg"
     },
     {
       icon: Bell,
       title: "Location-Based Notifications",
       description: "Get notified about nearby deliveries in your area",
-      image: "/location-search.svg"
+      image: "/location-tracking.svg"
     },
     {
       icon: DollarSign,
       title: "Monthly Payments",
       description: "Receive monthly payments for all completed deliveries",
-      image: "/payments.svg"
+      image: "/online-payments.svg"
     }
   ];
 
@@ -53,12 +53,14 @@ export const DeliveryPersonSection = () => {
           </Button>
         </div>
 
-        <div className="space-y-12 mt-16">
+        <div className="space-y-24 mt-16">
           {features.map((feature, index) => (
             <div 
               key={index}
               className={`flex items-center gap-8 ${
-                index % 2 === 0 ? 'ml-0' : 'ml-12'
+                index === 0 ? 'justify-start' : 
+                index === 1 ? 'justify-center' : 
+                'justify-end'
               } ${
                 inView ? 'animate-fade-in opacity-100' : 'opacity-0'
               }`}
@@ -66,7 +68,7 @@ export const DeliveryPersonSection = () => {
                 animationDelay: `${index * 200}ms`
               }}
             >
-              <div className="flex-1">
+              <div className="flex-1 max-w-lg">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
                     <feature.icon className="h-6 w-6 text-primary" />
@@ -79,11 +81,11 @@ export const DeliveryPersonSection = () => {
                   {feature.description}
                 </p>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 max-w-md">
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-auto max-w-md"
+                  className="w-full h-auto"
                 />
               </div>
             </div>
