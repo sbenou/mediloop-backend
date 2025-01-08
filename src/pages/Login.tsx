@@ -54,7 +54,7 @@ const Login = () => {
 
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
-      <Card className="w-full max-w-lg transition-all duration-300 ease-in-out">
+      <Card className="w-full max-w-lg transform transition-all duration-500 ease-in-out hover:shadow-xl animate-fade-in animate-slide-up">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Login</CardTitle>
           <CardDescription>
