@@ -8,8 +8,12 @@ import { useSignup } from "./useSignup";
 
 export type UserRole = "patient" | "doctor" | "pharmacist" | "delivery";
 
-export const SignupForm = () => {
-  const [userRole, setUserRole] = useState<UserRole>("patient");
+interface SignupFormProps {
+  defaultRole?: UserRole;
+}
+
+export const SignupForm = ({ defaultRole = "patient" }: SignupFormProps) => {
+  const [userRole, setUserRole] = useState<UserRole>(defaultRole);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");

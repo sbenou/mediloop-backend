@@ -79,6 +79,14 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
           </div>
 
           <div className="flex items-center space-x-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              asChild
+              className="hidden md:inline-flex"
+            >
+              <Link to="/products">Browse Medications</Link>
+            </Button>
             {showUserMenu && (
               <>
                 <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>

@@ -4,7 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Search, ShoppingBag, Pill, UserPlus, Stethoscope } from "lucide-react";
+import { Stethoscope, Pill } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -23,6 +23,10 @@ const Index = () => {
       return session;
     },
   });
+
+  const handleProfessionalSignup = (role: 'pharmacist' | 'doctor') => {
+    navigate('/signup', { state: { selectedRole: role } });
+  };
 
   // Fetch statistics
   const { data: stats } = useQuery({
@@ -140,19 +144,21 @@ const Index = () => {
                 Find and order medications, manage prescriptions, and connect with healthcare providers - all in one place.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" onClick={() => navigate("/products")}>
-                  Browse Medications
+                <Button 
+                  size="lg" 
+                  onClick={() => handleProfessionalSignup('pharmacist')}
+                >
+                  <Pill className="mr-2 h-4 w-4" />
+                  Pharmacists
                 </Button>
-                {!session && (
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    onClick={() => navigate("/signup")}
-                  >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Create Account
-                  </Button>
-                )}
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={() => handleProfessionalSignup('doctor')}
+                >
+                  <Stethoscope className="mr-2 h-4 w-4" />
+                  Doctors
+                </Button>
               </div>
             </div>
           </div>
