@@ -40,9 +40,9 @@ const Footer = () => {
   return (
     <footer className="border-t">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 max-w-6xl mx-auto">
           {footerSections.map((section) => (
-            <div key={section.title}>
+            <div key={section.title} className="flex flex-col items-center md:items-start">
               <h3 className="font-semibold text-lg mb-4">{section.title}</h3>
               <ul className="space-y-2">
                 {section.links.map((link) => (
@@ -57,7 +57,7 @@ const Footer = () => {
           ))}
         </div>
         <div className="border-t py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 max-w-6xl mx-auto">
             <p className="text-sm text-muted-foreground">
               © 2024 Luxmed. All rights reserved.
             </p>
