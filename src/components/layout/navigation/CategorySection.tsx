@@ -24,8 +24,28 @@ export const CategorySection = ({
   const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
   const navigate = useNavigate();
 
-  const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string) => {
+  const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     console.log('Subcategory clicked:', { type, categoryId, subcategoryId });
+    navigate('/products');
+    setTimeout(() => {
+      const event = new CustomEvent('filterProducts', { 
+        detail: { 
+          type, 
+          category: categoryId, 
+          subcategory: subcategoryId 
+        }
+      });
+      window.dispatchEvent(event);
+      console.log('Filter event dispatched:', event);
+    }, 100);
+  };
+
+  const handleDescriptionClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    console.log('Description clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
     setTimeout(() => {
       const event = new CustomEvent('filterProducts', { 
@@ -72,8 +92,8 @@ export const CategorySection = ({
                   {category.subcategories?.map((subcategory: Subcategory) => (
                     <div key={subcategory.id} className="ml-4 space-y-1">
                       <button
-                        onClick={() => handleSubcategoryClick(selectedType, category.id, subcategory.id)}
-                        className="text-sm font-medium hover:text-primary block w-full text-left"
+                        onClick={(e) => handleSubcategoryClick(selectedType, category.id, subcategory.id, e)}
+                        className="text-sm font-medium hover:text-primary block w-full text-left py-1"
                       >
                         {subcategory.name}
                       </button>
@@ -81,7 +101,7 @@ export const CategorySection = ({
                         {getUniqueDescriptions(subcategory).map((description, index) => (
                           <button
                             key={`${subcategory.id}-${index}`}
-                            onClick={() => handleSubcategoryClick(selectedType, category.id, subcategory.id)}
+                            onClick={(e) => handleDescriptionClick(selectedType, category.id, subcategory.id, e)}
                             className="block w-full text-left text-xs text-muted-foreground hover:text-primary py-0.5"
                           >
                             {description}
