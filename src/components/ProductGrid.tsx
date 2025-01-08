@@ -24,12 +24,11 @@ export const ProductGrid = ({ products, isLoading, userRole }: ProductGridProps)
   const { addToCart } = useCart();
 
   const handleAddToCart = (product: Product) => {
-    // Allow superadmins and pharmacists to add any product to cart
-    if (product.requires_prescription && userRole !== 'pharmacist' && userRole !== 'superadmin') {
+    if (product.requires_prescription) {
       toast({
         variant: "destructive",
         title: "Permission Denied",
-        description: "This product requires a prescription and can only be added by a pharmacist.",
+        description: "This product requires a prescription and cannot be added to cart.",
       });
       return;
     }
