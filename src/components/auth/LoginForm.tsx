@@ -23,6 +23,26 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     console.log("Attempting login with email:", email);
 
     try {
+      // First, check if the user exists in profiles
+      console.log("Checking for user profile...");
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (profileError || !userProfile) {
+        console.log("Profile check result:", { userProfile, profileError });
+        setIsLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Profile Not Found",
+          description: "Your account setup may be incomplete. Please try signing up again.",
+          duration: 6000,
+        });
+        return;
+      }
+
       // Sign out first to clear any existing session
       await supabase.auth.signOut();
       console.log("Signed out existing session");

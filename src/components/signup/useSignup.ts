@@ -38,9 +38,11 @@ export const useSignup = () => {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
+    console.log("Starting signup process for email:", email);
 
     try {
       // Create auth user first
+      console.log("Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -53,6 +55,7 @@ export const useSignup = () => {
       });
 
       if (authError) {
+        console.error("Auth user creation error:", authError);
         if (authError.message.includes('email rate limit') || 
             authError.code === 'over_email_send_rate_limit') {
           const rateLimitDuration = 5 * 60 * 1000;
@@ -71,18 +74,26 @@ export const useSignup = () => {
         throw authError;
       }
 
+      console.log("Auth user created successfully:", authData.user?.id);
+
       if (!authData.user?.id) {
-        throw new Error("User creation failed");
+        throw new Error("User creation failed - no user ID returned");
       }
 
       // First check if profile exists
-      const { data: existingProfile } = await supabase
+      console.log("Checking for existing profile...");
+      const { data: existingProfile, error: profileCheckError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', authData.user.id)
         .single();
 
+      if (profileCheckError) {
+        console.error("Error checking existing profile:", profileCheckError);
+      }
+
       if (!existingProfile) {
+        console.log("No existing profile found, creating new profile...");
         // Create the profile only if it doesn't exist
         const { error: profileError } = await supabase
           .from('profiles')
@@ -96,8 +107,11 @@ export const useSignup = () => {
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
-          throw new Error("Failed to create user profile");
+          throw new Error("Failed to create user profile: " + profileError.message);
         }
+        console.log("Profile created successfully");
+      } else {
+        console.log("Profile already exists:", existingProfile);
       }
 
       toast({
