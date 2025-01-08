@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
-import { NewPermission, addNewPermission } from "./types";
+import { NewPermission, addNewPermission, availableRoutePermissions } from "./types";
 import { useToast } from "@/hooks/use-toast";
 
 export const AddPermissionForm = () => {
@@ -40,6 +41,8 @@ export const AddPermissionForm = () => {
     setDescription("");
   };
 
+  const uniqueRoutes = Array.from(new Set(availableRoutePermissions.map(rp => rp.route)));
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -55,13 +58,18 @@ export const AddPermissionForm = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="route">Route</Label>
-            <Input
-              id="route"
-              value={route}
-              onChange={(e) => setRoute(e.target.value)}
-              placeholder="e.g., Products, Orders, etc."
-              required
-            />
+            <Select value={route} onValueChange={setRoute} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a route" />
+              </SelectTrigger>
+              <SelectContent>
+                {uniqueRoutes.map((route) => (
+                  <SelectItem key={route} value={route}>
+                    {route}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="permissionId">Permission ID</Label>
