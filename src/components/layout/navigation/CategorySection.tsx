@@ -10,7 +10,7 @@ interface CategorySectionProps {
   type: string;
   onCategoryClick: (type: string) => void;
   getFilteredCategories?: (type: 'medication' | 'parapharmacy') => any[];
-  getUniqueDescriptions?: (subcategory: Subcategory) => string[];
+  getUniqueDescriptions?: (subcategory: any) => string[];
 }
 
 export const CategorySection = ({ 
@@ -22,31 +22,22 @@ export const CategorySection = ({
   getUniqueDescriptions 
 }: CategorySectionProps) => {
   const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
-  const [expandedSubcategories, setExpandedSubcategories] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
 
-  const handleSubcategoryClick = (categoryId: string, subcategoryId: string) => {
-    console.log('Subcategory clicked:', { type: selectedType, categoryId, subcategoryId });
+  const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string) => {
+    console.log('Subcategory clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
     setTimeout(() => {
-      const event = new CustomEvent('filterProducts', {
-        detail: {
-          type: selectedType,
-          category: categoryId,
-          subcategory: subcategoryId
+      const event = new CustomEvent('filterProducts', { 
+        detail: { 
+          type, 
+          category: categoryId, 
+          subcategory: subcategoryId 
         }
       });
       window.dispatchEvent(event);
       console.log('Filter event dispatched:', event);
     }, 100);
-  };
-
-  const toggleSubcategory = (subcategoryId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setExpandedSubcategories(prev => ({
-      ...prev,
-      [subcategoryId]: !prev[subcategoryId]
-    }));
   };
 
   if (getFilteredCategories && getUniqueDescriptions) {
@@ -77,39 +68,26 @@ export const CategorySection = ({
             <div className="space-y-4">
               {selectedType && getFilteredCategories(selectedType).map((category) => (
                 <div key={category.id} className="space-y-2">
+                  <h3 className="font-medium">{category.name}</h3>
                   {category.subcategories?.map((subcategory: Subcategory) => (
-                    <div key={subcategory.id} className="space-y-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <button
-                          onClick={() => handleSubcategoryClick(category.id, subcategory.id)}
-                          className="text-sm font-medium hover:text-primary flex-grow text-left py-1"
-                        >
-                          {subcategory.name}
-                        </button>
-                        <button
-                          onClick={(e) => toggleSubcategory(subcategory.id, e)}
-                          className="p-1 hover:bg-accent rounded-md"
-                        >
-                          <ChevronDown 
-                            className={`h-4 w-4 transition-transform ${
-                              expandedSubcategories[subcategory.id] ? 'transform rotate-180' : ''
-                            }`}
-                          />
-                        </button>
+                    <div key={subcategory.id} className="ml-4 space-y-1">
+                      <button
+                        onClick={() => handleSubcategoryClick(selectedType, category.id, subcategory.id)}
+                        className="text-sm font-medium hover:text-primary block w-full text-left"
+                      >
+                        {subcategory.name}
+                      </button>
+                      <div className="ml-4 text-sm text-muted-foreground">
+                        {getUniqueDescriptions(subcategory).map((description, index) => (
+                          <button
+                            key={`${subcategory.id}-${index}`}
+                            onClick={() => handleSubcategoryClick(selectedType, category.id, subcategory.id)}
+                            className="block w-full text-left text-xs text-muted-foreground hover:text-primary py-0.5"
+                          >
+                            {description}
+                          </button>
+                        ))}
                       </div>
-                      {expandedSubcategories[subcategory.id] && (
-                        <div className="pl-4 space-y-1">
-                          {getUniqueDescriptions(subcategory).map((description, index) => (
-                            <button
-                              key={`${subcategory.id}-${index}`}
-                              onClick={() => handleSubcategoryClick(category.id, subcategory.id)}
-                              className="block w-full text-left text-xs text-muted-foreground hover:text-primary py-1"
-                            >
-                              {description}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
