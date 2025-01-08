@@ -62,16 +62,18 @@ export const ProductFilters = ({
     };
   }, [onFilterChange]);
 
-  // Debug log for categories
+  const showPharmacySection = userRole === 'pharmacist' || userRole === 'superadmin';
+
+  // Debug logs
+  console.log('Show pharmacy section condition:', showPharmacySection);
   console.log('Filtered medication categories:', categories?.filter(cat => cat.type === 'medication'));
-  console.log('Show pharmacy section condition:', userRole === 'pharmacist' || userRole === 'superadmin');
 
   return (
     <div className="w-64 flex-shrink-0 border-r pr-4">
       <h3 className="font-semibold mb-4">Filters</h3>
       <ScrollArea className="h-[calc(100vh-200px)]">
-        <Accordion type="single" collapsible className="w-full">
-          {(userRole === 'pharmacist' || userRole === 'superadmin') && (
+        <Accordion type="multiple" className="w-full">
+          {showPharmacySection && (
             <AccordionItem value="pharmacy">
               <AccordionTrigger>Pharmacy</AccordionTrigger>
               <AccordionContent>

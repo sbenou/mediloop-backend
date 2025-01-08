@@ -56,6 +56,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               const target = e.target as HTMLImageElement;
               target.src = '/placeholder.svg';
             }}
+            loading="lazy"
+            crossOrigin="anonymous"
           />
         ) : (
           <img
