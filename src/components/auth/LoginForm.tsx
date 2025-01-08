@@ -39,6 +39,8 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           name: error.name
         });
         
+        setIsLoading(false); // Make sure to set loading to false before showing toast
+        
         if (error.message.includes('Invalid login credentials')) {
           toast({
             variant: "destructive",
@@ -94,6 +96,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       }
     } catch (error: any) {
       console.error("Unexpected error during login:", error);
+      setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Error",
