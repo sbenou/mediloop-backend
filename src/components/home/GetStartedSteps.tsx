@@ -36,13 +36,18 @@ const GetStartedSteps = () => {
         </div>
         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
           <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-            {steps.map((step) => (
-              <Link
-                key={step.title}
-                to={step.link}
-                className="flex flex-col transition-all hover:scale-105"
-              >
-                <div className="flex flex-col">
+            {steps.map((step, index) => (
+              <div key={step.title} className="relative pl-16">
+                <div className="absolute left-0 top-0 flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
+                  <span className="text-xl font-bold text-white">{index + 1}</span>
+                </div>
+                {index < steps.length - 1 && (
+                  <div className="absolute left-6 top-12 h-[calc(100%+4rem)] w-px bg-gray-200 lg:block hidden" />
+                )}
+                <Link
+                  to={step.link}
+                  className="group relative flex flex-col transition-all hover:scale-105"
+                >
                   <dt className="flex items-center gap-x-3 text-xl font-semibold leading-7">
                     <step.icon className="h-8 w-8 text-primary" aria-hidden="true" />
                     {step.title}
@@ -50,8 +55,8 @@ const GetStartedSteps = () => {
                   <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-muted-foreground">
                     <p className="flex-auto">{step.description}</p>
                   </dd>
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
           </dl>
         </div>
