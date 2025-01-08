@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
-import { Shield } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RoutePermissionSection } from "./RoutePermissionSection";
-import { availableRoutePermissions, Permission } from "./types";
-import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { availableRoutePermissions } from "./types";
 import { RolePermissionsActions } from "./role/RolePermissionsActions";
+import { RolePermissionsHeader } from "./role/RolePermissionsHeader";
+import { usePermissionsManagement } from "./role/usePermissionsManagement";
 
 interface RolePermissionsProps {
   roleId: string;
@@ -21,34 +20,11 @@ export const RolePermissions = ({
   onSave,
   onClose
 }: RolePermissionsProps) => {
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-
-  useEffect(() => {
-    console.log('RolePermissions - Initial permissions received:', initialPermissions);
-    setSelectedPermissions(initialPermissions);
-  }, [initialPermissions]);
-
-  const handlePermissionChange = (permissionId: string, checked: boolean) => {
-    console.log('Permission change:', permissionId, checked);
-    setSelectedPermissions(prev => {
-      if (checked) {
-        return [...prev, permissionId];
-      }
-      return prev.filter(id => id !== permissionId);
-    });
-  };
-
-  const handleRoutePermissionsChange = (routePermissions: Permission[], checked: boolean) => {
-    console.log('Route permissions change:', routePermissions, checked);
-    const permissionIds = routePermissions.map(p => p.id);
-    setSelectedPermissions(prev => {
-      if (checked) {
-        const newPermissions = permissionIds.filter(id => !prev.includes(id));
-        return [...prev, ...newPermissions];
-      }
-      return prev.filter(id => !permissionIds.includes(id));
-    });
-  };
+  const {
+    selectedPermissions,
+    handlePermissionChange,
+    handleRoutePermissionsChange
+  } = usePermissionsManagement(initialPermissions);
 
   const handleSave = () => {
     console.log('Saving permissions:', selectedPermissions);
@@ -58,15 +34,7 @@ export const RolePermissions = ({
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5" />
-          Route Permissions for {roleName}
-        </DialogTitle>
-        <DialogDescription>
-          Manage the permissions for this role by selecting or deselecting the checkboxes below.
-        </DialogDescription>
-      </DialogHeader>
+      <RolePermissionsHeader roleName={roleName} />
       <div className="mt-6">
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-6">
