@@ -20,25 +20,33 @@ const Index = () => {
   const { data: stats } = useQuery({
     queryKey: ['platform-stats'],
     queryFn: async () => {
-      const [
-        { count: ordersCount } = { count: 0 },
-        { count: pharmaciesCount } = { count: 0 },
-        { count: doctorsCount } = { count: 0 },
-        { count: prescriptionsCount } = { count: 0 }
-      ] = await Promise.all([
-        supabase.from('orders').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'pharmacist'),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'doctor'),
-        supabase.from('prescriptions').select('*', { count: 'exact', head: true })
-      ]);
+      try {
+        const [
+          { count: ordersCount } = { count: 0 },
+          { count: pharmaciesCount } = { count: 0 },
+          { count: doctorsCount } = { count: 0 },
+        ] = await Promise.all([
+          supabase.from('orders').select('*', { count: 'exact', head: true }),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'pharmacist'),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'doctor'),
+        ]);
 
-      return {
-        ordersCount,
-        pharmaciesCount,
-        doctorsCount,
-        prescriptionsCount
-      };
-    }
+        return {
+          ordersCount: ordersCount || 0,
+          pharmaciesCount: pharmaciesCount || 0,
+          doctorsCount: doctorsCount || 0,
+          prescriptionsCount: 0, // Default to 0 until prescriptions table is created
+        };
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+        return {
+          ordersCount: 0,
+          pharmaciesCount: 0,
+          doctorsCount: 0,
+          prescriptionsCount: 0,
+        };
+      }
+    },
   });
 
   const features = [
