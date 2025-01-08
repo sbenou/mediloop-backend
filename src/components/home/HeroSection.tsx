@@ -48,31 +48,6 @@ export const HeroSection = () => {
               </Button>
             </div>
           </div>
-          <div className="hidden md:block relative">
-            <div className="grid grid-cols-2 gap-4">
-              <img
-                src="https://images.unsplash.com/photo-1622253692010-333f2da6031d"
-                alt="Doctor with Patient"
-                className="rounded-lg shadow-xl w-full object-cover h-[250px] animate-fade-in"
-              />
-              <img
-                src="https://images.unsplash.com/photo-1584516150909-c43483ee7932"
-                alt="Medical Professional"
-                className="rounded-lg shadow-xl w-full object-cover h-[250px] animate-fade-in"
-              />
-              <img
-                src="https://images.unsplash.com/photo-1579684385127-1ef15d508118"
-                alt="Happy Medical Team"
-                className="rounded-lg shadow-xl w-full object-cover h-[250px] animate-fade-in"
-              />
-              <img
-                src="https://images.unsplash.com/photo-1551601651-2a8555f1a136"
-                alt="Smiling Healthcare Worker"
-                className="rounded-lg shadow-xl w-full object-cover h-[250px] animate-fade-in"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent rounded-lg"></div>
-          </div>
         </div>
       </div>
     </section>
