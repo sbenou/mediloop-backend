@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,19 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
+
+  // Check for recovery code on mount
+  useEffect(() => {
+    const recoveryCode = sessionStorage.getItem('recovery_code');
+    if (!recoveryCode) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Access",
+        description: "Please use the reset password link from your email.",
+      });
+      navigate('/login');
+    }
+  }, [navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,29 +52,38 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({ 
-        password: password 
+      const recoveryCode = sessionStorage.getItem('recovery_code');
+      if (!recoveryCode) {
+        throw new Error("Recovery code not found");
+      }
+
+      // Update password using the recovery code
+      const { error } = await supabase.auth.updateUser({
+        password: password,
       });
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Your password has been reset successfully.",
-          duration: 5000,
-        });
-        navigate("/"); // Redirect to home page after successful password reset
-      }
+      if (error) throw error;
+
+      // Clear the recovery code
+      sessionStorage.removeItem('recovery_code');
+
+      toast({
+        title: "Success",
+        description: "Your password has been reset successfully. Please log in with your new password.",
+        duration: 5000,
+      });
+      
+      // Sign out any existing session
+      await supabase.auth.signOut();
+      
+      // Redirect to login
+      navigate("/login");
     } catch (error: any) {
+      console.error('Password reset error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "Failed to reset password. Please try again.",
       });
     } finally {
       setIsLoading(false);

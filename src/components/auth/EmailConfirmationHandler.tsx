@@ -19,8 +19,6 @@ const EmailConfirmationHandler = () => {
       console.log('Path:', location.pathname);
       
       const code = params.get('code');
-      const access_token = params.get('access_token') || hashParams.get('access_token');
-      const refresh_token = params.get('refresh_token') || hashParams.get('refresh_token');
       const type = params.get('type') || hashParams.get('type');
       const error = params.get('error') || hashParams.get('error');
       const error_description = params.get('error_description') || hashParams.get('error_description');
@@ -30,8 +28,6 @@ const EmailConfirmationHandler = () => {
         error_description,
         type,
         code,
-        hasAccessToken: !!access_token,
-        hasRefreshToken: !!refresh_token,
         fullUrl: window.location.href
       });
 
@@ -50,48 +46,39 @@ const EmailConfirmationHandler = () => {
       if (type === 'recovery' && code) {
         console.log('Handling recovery with code');
         try {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
+          // Instead of exchanging code for session, verify the code is valid
+          const { error: verificationError } = await supabase.auth.verifyOtp({
+            token_hash: code,
+            type: 'recovery'
+          });
 
-          if (data.session) {
-            toast({
-              title: "Password Reset",
-              description: "You can now reset your password.",
-            });
-            navigate('/reset-password', { replace: true });
-            return;
-          }
+          if (verificationError) throw verificationError;
+
+          // Store the recovery code in sessionStorage temporarily
+          sessionStorage.setItem('recovery_code', code);
+          
+          // Redirect to reset password page
+          navigate('/reset-password', { replace: true });
+          return;
         } catch (error: any) {
-          console.error('Recovery code exchange error:', error);
+          console.error('Recovery code verification error:', error);
           toast({
             variant: "destructive",
             title: "Error",
-            description: error.message || "Failed to process recovery request",
+            description: "Invalid or expired recovery link. Please request a new password reset.",
           });
           navigate('/login', { replace: true });
           return;
         }
       }
 
-      // If we have tokens directly, set the session
-      if (access_token && refresh_token) {
-        console.log('Setting session with tokens');
+      // Handle signup confirmation
+      if (type === 'signup' && code) {
         try {
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
-          });
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
 
-          if (sessionError) throw sessionError;
-
-          if (type === 'recovery') {
-            toast({
-              title: "Password Reset",
-              description: "You can now reset your password.",
-            });
-            navigate('/reset-password', { replace: true });
-            return;
-          } else if (type === 'signup') {
+          if (data.session) {
             toast({
               title: "Email Confirmed",
               description: "Your email has been successfully confirmed. You can now log in.",
@@ -100,26 +87,21 @@ const EmailConfirmationHandler = () => {
             return;
           }
         } catch (error: any) {
-          console.error('Authentication error:', error);
+          console.error('Signup confirmation error:', error);
           toast({
             variant: "destructive",
-            title: "Authentication Error",
-            description: error.message || "Failed to process authentication request",
+            title: "Error",
+            description: error.message || "Failed to confirm email",
           });
           navigate('/login', { replace: true });
           return;
         }
       }
 
-      // If we're on the callback route but don't have tokens or code
-      if (location.pathname === '/auth/callback' && !code && !access_token) {
-        console.log('No tokens or code found in callback URL, redirecting to login');
+      // If we're on the callback route but don't have a valid code
+      if (location.pathname === '/auth/callback' && !code) {
+        console.log('No code found in callback URL, redirecting to login');
         navigate('/login', { replace: true });
-      }
-
-      // Clear URL parameters
-      if (window.history.replaceState) {
-        window.history.replaceState({}, document.title, window.location.pathname);
       }
     };
 
