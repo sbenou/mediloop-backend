@@ -3,10 +3,10 @@ import {
   NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuTrigger,
-  NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { CategorySection } from './CategorySection';
 
 export const CategoriesNavigation = () => {
   const navigate = useNavigate();
@@ -41,7 +41,6 @@ export const CategoriesNavigation = () => {
     }, 100);
   };
 
-  // Helper function to remove duplicates based on category name
   const getUniqueCategories = (categories: any[], type: string) => {
     const seen = new Set();
     return categories?.filter(cat => {
@@ -59,52 +58,18 @@ export const CategoriesNavigation = () => {
       <NavigationMenuContent>
         <div className="grid gap-3 p-4 w-[400px]">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <button
-                onClick={() => handleCategoryClick('medication')}
-                className="mb-2 text-sm font-medium hover:text-primary"
-              >
-                Pharmacy
-              </button>
-              <div className="space-y-2">
-                {getUniqueCategories(categories || [], 'medication').map((category) => (
-                  <div key={category.id} className="space-y-1">
-                    {category.subcategories?.map((sub) => (
-                      <button
-                        key={sub.id}
-                        onClick={() => handleCategoryClick('medication')}
-                        className="block w-full text-left text-sm text-muted-foreground hover:text-primary pl-2"
-                      >
-                        {sub.name}
-                      </button>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <button
-                onClick={() => handleCategoryClick('parapharmacy')}
-                className="mb-2 text-sm font-medium hover:text-primary"
-              >
-                Parapharmacy
-              </button>
-              <div className="space-y-2">
-                {getUniqueCategories(categories || [], 'parapharmacy').map((category) => (
-                  <div key={category.id} className="space-y-1">
-                    {category.subcategories?.map((sub) => (
-                      <button
-                        key={sub.id}
-                        onClick={() => handleCategoryClick('parapharmacy')}
-                        className="block w-full text-left text-sm text-muted-foreground hover:text-primary pl-2"
-                      >
-                        {sub.name}
-                      </button>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <CategorySection
+              title="Pharmacy"
+              categories={getUniqueCategories(categories || [], 'medication')}
+              type="medication"
+              onCategoryClick={handleCategoryClick}
+            />
+            <CategorySection
+              title="Parapharmacy"
+              categories={getUniqueCategories(categories || [], 'parapharmacy')}
+              type="parapharmacy"
+              onCategoryClick={handleCategoryClick}
+            />
           </div>
         </div>
       </NavigationMenuContent>
