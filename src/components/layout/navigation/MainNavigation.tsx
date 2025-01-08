@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import {
@@ -12,6 +12,8 @@ import { MoreSection } from './MoreSection';
 import { Subcategory } from '@/components/product/types/product';
 
 export const MainNavigation = () => {
+  const navigate = useNavigate();
+  
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -62,13 +64,25 @@ export const MainNavigation = () => {
     });
   };
 
+  const handleCategoryClick = (type: string) => {
+    navigate('/products');
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('filterProducts', { 
+        detail: { type }
+      }));
+    }, 100);
+  };
+
   return (
     <NavigationMenuList>
       <MainNavigationSection />
       <CategorySection 
+        title="Categories"
+        type="medication"
         categories={categories || []}
         getFilteredCategories={getFilteredCategories}
         getUniqueDescriptions={getUniqueDescriptions}
+        onCategoryClick={handleCategoryClick}
       />
       <MoreSection />
       <NavigationMenuItem>
