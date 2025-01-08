@@ -30,7 +30,6 @@ export const ProductFilters = ({
   userRole: string | null;
   onFilterChange: (filters: { type?: string; category?: string; subcategory?: string }) => void;
 }) => {
-  // Debug logs
   console.log('User Role in ProductFilters:', userRole);
 
   const { data: categories } = useQuery({
@@ -76,7 +75,6 @@ export const ProductFilters = ({
     };
   }, [onFilterChange]);
 
-  // Get unique categories for each type
   const getMedicationCategories = () => {
     if (!categories) return [];
     const seen = new Set();
@@ -121,32 +119,45 @@ export const ProductFilters = ({
             <AccordionContent>
               {getMedicationCategories().map((category) => (
                 <div key={category.id} className="py-2">
-                  <button
-                    onClick={() => onFilterChange({ type: 'medication', category: category.id })}
-                    className="text-sm hover:text-primary w-full text-left"
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onFilterChange({ type: 'medication', category: category.id });
+                    }}
+                    className="text-sm hover:text-primary w-full text-left block"
                   >
                     {category.name}
                     <Badge variant="secondary" className="ml-2">
                       {category.subcategories.length}
                     </Badge>
-                  </button>
+                  </a>
                   <div className="ml-4 space-y-1 mt-1">
                     {category.subcategories.map((sub) => (
                       <div key={sub.id} className="space-y-1">
-                        <button
-                          onClick={() => onFilterChange({ type: 'medication', category: category.id, subcategory: sub.id })}
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onFilterChange({ type: 'medication', category: category.id, subcategory: sub.id });
+                          }}
                           className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
                         >
                           {sub.name}
-                        </button>
+                        </a>
                         <div className="pl-4 space-y-1">
                           {getUniqueDescriptions(sub).map((description, index) => (
-                            <div
+                            <a
+                              href="#"
                               key={`${sub.id}-${index}`}
-                              className="text-xs text-muted-foreground"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                onFilterChange({ type: 'medication', category: category.id, subcategory: sub.id });
+                              }}
+                              className="text-xs text-muted-foreground hover:text-primary block"
                             >
                               {description}
-                            </div>
+                            </a>
                           ))}
                         </div>
                       </div>
@@ -161,32 +172,45 @@ export const ProductFilters = ({
             <AccordionContent>
               {getParapharmacyCategories().map((category) => (
                 <div key={category.id} className="py-2">
-                  <button
-                    onClick={() => onFilterChange({ type: 'parapharmacy', category: category.id })}
-                    className="text-sm hover:text-primary w-full text-left"
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onFilterChange({ type: 'parapharmacy', category: category.id });
+                    }}
+                    className="text-sm hover:text-primary w-full text-left block"
                   >
                     {category.name}
                     <Badge variant="secondary" className="ml-2">
                       {category.subcategories.length}
                     </Badge>
-                  </button>
+                  </a>
                   <div className="ml-4 space-y-1 mt-1">
                     {category.subcategories.map((sub) => (
                       <div key={sub.id} className="space-y-1">
-                        <button
-                          onClick={() => onFilterChange({ type: 'parapharmacy', category: category.id, subcategory: sub.id })}
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onFilterChange({ type: 'parapharmacy', category: category.id, subcategory: sub.id });
+                          }}
                           className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
                         >
                           {sub.name}
-                        </button>
+                        </a>
                         <div className="pl-4 space-y-1">
                           {getUniqueDescriptions(sub).map((description, index) => (
-                            <div
+                            <a
+                              href="#"
                               key={`${sub.id}-${index}`}
-                              className="text-xs text-muted-foreground"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                onFilterChange({ type: 'parapharmacy', category: category.id, subcategory: sub.id });
+                              }}
+                              className="text-xs text-muted-foreground hover:text-primary block"
                             >
                               {description}
-                            </div>
+                            </a>
                           ))}
                         </div>
                       </div>

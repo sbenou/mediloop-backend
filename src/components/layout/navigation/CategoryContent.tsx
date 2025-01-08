@@ -21,43 +21,42 @@ export const CategoryContent = ({
   const navigate = useNavigate();
 
   const toggleSubcategory = (subcategoryId: string, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent triggering parent click handlers
+    event.preventDefault();
+    event.stopPropagation();
     setExpandedSubcategories(prev => ({
       ...prev,
       [subcategoryId]: !prev[subcategoryId]
     }));
   };
 
-  const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string) => {
+  const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
+    event.preventDefault();
     console.log('Subcategory clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
-    setTimeout(() => {
-      const event = new CustomEvent('filterProducts', { 
-        detail: { 
-          type, 
-          category: categoryId, 
-          subcategory: subcategoryId 
-        }
-      });
-      window.dispatchEvent(event);
-      console.log('Filter event dispatched:', event);
-    }, 100);
+    const filterEvent = new CustomEvent('filterProducts', { 
+      detail: { 
+        type, 
+        category: categoryId, 
+        subcategory: subcategoryId 
+      }
+    });
+    window.dispatchEvent(filterEvent);
+    console.log('Filter event dispatched:', filterEvent);
   };
 
-  const handleDescriptionClick = (type: string, categoryId: string, subcategoryId: string) => {
+  const handleDescriptionClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
+    event.preventDefault();
     console.log('Description clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
-    setTimeout(() => {
-      const event = new CustomEvent('filterProducts', { 
-        detail: { 
-          type, 
-          category: categoryId, 
-          subcategory: subcategoryId 
-        }
-      });
-      window.dispatchEvent(event);
-      console.log('Filter event dispatched:', event);
-    }, 100);
+    const filterEvent = new CustomEvent('filterProducts', { 
+      detail: { 
+        type, 
+        category: categoryId, 
+        subcategory: subcategoryId 
+      }
+    });
+    window.dispatchEvent(filterEvent);
+    console.log('Filter event dispatched:', filterEvent);
   };
 
   return (
@@ -91,12 +90,13 @@ export const CategoryContent = ({
             {category.subcategories.map((subcategory: any) => (
               <div key={subcategory.id} className="space-y-1">
                 <div className="flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => handleSubcategoryClick(selectedType, category.id, subcategory.id)}
-                    className="text-sm font-medium hover:text-primary flex-grow text-left py-1"
+                  <a
+                    href="#"
+                    onClick={(e) => handleSubcategoryClick(selectedType, category.id, subcategory.id, e)}
+                    className="text-sm font-medium hover:text-primary hover:underline flex-grow text-left py-1"
                   >
                     {subcategory.name}
-                  </button>
+                  </a>
                   <button
                     onClick={(e) => toggleSubcategory(subcategory.id, e)}
                     className="p-1 hover:bg-accent rounded-md"
@@ -111,13 +111,14 @@ export const CategoryContent = ({
                 {expandedSubcategories[subcategory.id] && (
                   <div className="pl-4 space-y-1">
                     {getUniqueDescriptions(subcategory).map((description: string, index: number) => (
-                      <button
+                      <a
+                        href="#"
                         key={`${subcategory.id}-${index}`}
-                        onClick={() => handleDescriptionClick(selectedType, category.id, subcategory.id)}
-                        className="block w-full text-left text-xs text-muted-foreground hover:text-primary py-1"
+                        onClick={(e) => handleDescriptionClick(selectedType, category.id, subcategory.id, e)}
+                        className="block w-full text-left text-xs text-muted-foreground hover:text-primary hover:underline py-1"
                       >
                         {description}
-                      </button>
+                      </a>
                     ))}
                   </div>
                 )}
