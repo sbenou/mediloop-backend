@@ -62,48 +62,44 @@ export const ProductFilters = ({
     };
   }, [onFilterChange]);
 
+  // Show pharmacy section for pharmacist or superadmin roles
   const showPharmacySection = userRole === 'pharmacist' || userRole === 'superadmin';
-
-  // Debug logs
-  console.log('Show pharmacy section condition:', showPharmacySection);
-  console.log('Filtered medication categories:', categories?.filter(cat => cat.type === 'medication'));
 
   return (
     <div className="w-64 flex-shrink-0 border-r pr-4">
       <h3 className="font-semibold mb-4">Filters</h3>
       <ScrollArea className="h-[calc(100vh-200px)]">
         <Accordion type="multiple" className="w-full">
-          {showPharmacySection && (
-            <AccordionItem value="pharmacy">
-              <AccordionTrigger>Pharmacy</AccordionTrigger>
-              <AccordionContent>
-                {categories?.filter(cat => cat.type === 'medication').map((category) => (
-                  <div key={category.id} className="py-2">
-                    <button
-                      onClick={() => onFilterChange({ type: 'medication', category: category.id })}
-                      className="text-sm hover:text-primary w-full text-left"
-                    >
-                      {category.name}
-                      <Badge variant="secondary" className="ml-2">
-                        {category.subcategories.length}
-                      </Badge>
-                    </button>
-                    <div className="ml-4 space-y-1 mt-1">
-                      {category.subcategories.map((sub) => (
-                        <button
-                          key={sub.id}
-                          onClick={() => onFilterChange({ type: 'medication', category: category.id, subcategory: sub.id })}
-                          className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
-                        >
-                          {sub.name}
-                        </button>
-                      ))}
-                    </div>
+          {/* Always show both sections, but filter medication based on role */}
+          <AccordionItem value="pharmacy">
+            <AccordionTrigger>Pharmacy</AccordionTrigger>
+            <AccordionContent>
+              {categories?.filter(cat => cat.type === 'medication').map((category) => (
+                <div key={category.id} className="py-2">
+                  <button
+                    onClick={() => onFilterChange({ type: 'medication', category: category.id })}
+                    className="text-sm hover:text-primary w-full text-left"
+                  >
+                    {category.name}
+                    <Badge variant="secondary" className="ml-2">
+                      {category.subcategories.length}
+                    </Badge>
+                  </button>
+                  <div className="ml-4 space-y-1 mt-1">
+                    {category.subcategories.map((sub) => (
+                      <button
+                        key={sub.id}
+                        onClick={() => onFilterChange({ type: 'medication', category: category.id, subcategory: sub.id })}
+                        className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
+                      >
+                        {sub.name}
+                      </button>
+                    ))}
                   </div>
-                ))}
-              </AccordionContent>
-            </AccordionItem>
-          )}
+                </div>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
           <AccordionItem value="parapharmacy">
             <AccordionTrigger>Parapharmacy</AccordionTrigger>
             <AccordionContent>

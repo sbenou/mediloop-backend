@@ -55,9 +55,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = '/placeholder.svg';
+              console.log('Image failed to load:', product.image_url);
             }}
             loading="lazy"
             crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
           />
         ) : (
           <img
