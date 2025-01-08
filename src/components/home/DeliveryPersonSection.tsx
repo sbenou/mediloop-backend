@@ -60,10 +60,10 @@ export const DeliveryPersonSection = () => {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className={`flex items-center gap-12 ${
-                index === 0 ? 'justify-start ml-0' : 
-                index === 1 ? 'justify-center' : 
-                'justify-end mr-0'
+              className={`flex flex-col md:flex-row items-center gap-12 ${
+                index === 0 ? 'md:justify-start ml-0' : 
+                index === 1 ? 'md:justify-center' : 
+                'md:justify-end mr-0'
               } ${
                 inView ? 'animate-fade-in opacity-100' : 'opacity-0'
               }`}
@@ -93,6 +93,10 @@ export const DeliveryPersonSection = () => {
                   alt={feature.title}
                   className="w-full h-auto"
                   loading="lazy"
+                  onError={(e) => {
+                    console.error(`Error loading image: ${feature.image}`);
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               </div>
             </div>
