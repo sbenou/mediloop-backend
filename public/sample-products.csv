@@ -29,3 +29,85 @@ Digestive Enzymes,23.99,parapharmacy,false,Digestive support supplement,https://
 Aloe Vera Gel,9.99,parapharmacy,false,Soothing skin gel,https://images.unsplash.com/photo-1583947215259-38e31be8751f
 Tea Tree Oil,11.99,parapharmacy,false,Natural antiseptic oil,https://images.unsplash.com/photo-1583947215259-38e31be8751f
 Vitamin B Complex,18.99,parapharmacy,false,Energy support vitamins,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Aspirin 325mg,10.99,medication,true,Pain and fever relief,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Collagen Supplements,32.99,parapharmacy,false,Skin and joint health support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Hydrocortisone Cream,15.99,medication,true,Anti-itch skin treatment,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Melatonin Tablets,19.99,parapharmacy,false,Sleep cycle support,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Glucosamine Complex,28.99,parapharmacy,false,Joint mobility support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Biotin Supplements,17.99,parapharmacy,false,Hair and nail health support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Antifungal Cream,16.99,medication,true,Fungal infection treatment,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Electrolyte Powder,13.99,parapharmacy,false,Hydration support supplement,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Fiber Supplements,20.99,parapharmacy,false,Digestive health fiber,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Burn Relief Gel,11.99,parapharmacy,false,Cooling burn treatment,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Vitamin E Oil,14.99,parapharmacy,false,Skin nourishment oil,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Muscle Relaxant,22.99,medication,true,Muscle tension relief,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Prenatal Vitamins,29.99,parapharmacy,false,Pregnancy nutrition support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Ear Drops,12.99,medication,true,Ear pain relief drops,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Coenzyme Q10,31.99,parapharmacy,false,Heart health supplement,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Hemorrhoid Cream,19.99,medication,true,Hemorrhoid relief treatment,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Protein Powder,39.99,parapharmacy,false,Muscle recovery supplement,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Acne Treatment,18.99,parapharmacy,false,Acne control solution,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Stool Softener,11.99,medication,true,Constipation relief,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Ginger Root Extract,16.99,parapharmacy,false,Digestive health support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Eye Vitamin Complex,24.99,parapharmacy,false,Vision health support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Diaper Rash Cream,9.99,parapharmacy,false,Baby skin protection,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Turmeric Capsules,21.99,parapharmacy,false,Anti-inflammatory support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Motion Sickness Pills,15.99,medication,true,Travel sickness relief,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Lip Balm SPF 15,4.99,parapharmacy,false,Sun protection lip care,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Folic Acid Tablets,12.99,parapharmacy,false,Pregnancy health support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Wart Remover,17.99,medication,true,Topical wart treatment,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Echinacea Capsules,19.99,parapharmacy,false,Immune system boost,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Laxative Tablets,13.99,medication,true,Constipation treatment,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Hydrogen Peroxide,4.99,parapharmacy,false,Antiseptic solution,https://images.unsplash.com/photo-1584483720412-ce931f4aefa8
+Menthol Rub,8.99,parapharmacy,false,Muscle pain relief,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Cranberry Extract,16.99,parapharmacy,false,Urinary tract health,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Antidiarrheal Tablets,14.99,medication,true,Diarrhea relief medicine,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Witch Hazel,7.99,parapharmacy,false,Natural skin toner,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Zinc Oxide Cream,11.99,parapharmacy,false,Skin protection cream,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Migraine Relief,23.99,medication,true,Strong headache treatment,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Garlic Supplements,13.99,parapharmacy,false,Heart health support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Calamine Lotion,8.99,parapharmacy,false,Itchy skin relief,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Decongestant Tablets,16.99,medication,true,Sinus relief medicine,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Evening Primrose Oil,19.99,parapharmacy,false,Women's health supplement,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Athlete's Foot Cream,12.99,medication,true,Antifungal foot treatment,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Milk Thistle Extract,21.99,parapharmacy,false,Liver health support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Hemorrhoid Wipes,9.99,parapharmacy,false,Soothing cleansing wipes,https://images.unsplash.com/photo-1584483720412-ce931f4aefa8
+Saw Palmetto,18.99,parapharmacy,false,Prostate health support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Cortisone Cream 1%,15.99,medication,true,Anti-itch treatment,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+St. John's Wort,20.99,parapharmacy,false,Mood support supplement,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Ear Wax Removal Kit,11.99,parapharmacy,false,Ear cleaning solution,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Valerian Root,17.99,parapharmacy,false,Natural sleep aid,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Chest Rub,8.99,parapharmacy,false,Congestion relief rub,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Fish Oil Omega-3,24.99,parapharmacy,false,Heart health omega-3,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Antacid Liquid,10.99,medication,true,Liquid heartburn relief,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Tea Tree Shampoo,13.99,parapharmacy,false,Scalp care shampoo,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Glucosamine MSM,29.99,parapharmacy,false,Joint health complex,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Eye Infection Drops,19.99,medication,true,Eye infection treatment,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Melatonin Gummies,16.99,parapharmacy,false,Sleep support gummies,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Senna Laxative,12.99,medication,true,Natural laxative tablets,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Arnica Gel,14.99,parapharmacy,false,Bruise healing gel,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Biotin Shampoo,15.99,parapharmacy,false,Hair growth shampoo,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Fiber Gummies,18.99,parapharmacy,false,Digestive health gummies,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Allergy Eye Drops,13.99,medication,true,Allergy eye relief,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Vitamin K2 D3,22.99,parapharmacy,false,Bone health complex,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Muscle Rub Cream,11.99,parapharmacy,false,Muscle pain cream,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Digestive Tablets,16.99,medication,true,Digestion support medicine,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Zinc Lozenges,9.99,parapharmacy,false,Immune support lozenges,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Hemorrhoid Suppository,17.99,medication,true,Internal hemorrhoid relief,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Collagen Powder,34.99,parapharmacy,false,Skin health powder,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Ear Pain Reliever,12.99,medication,true,Ear discomfort drops,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Probiotic Gummies,21.99,parapharmacy,false,Gut health gummies,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Wart Freeze Spray,25.99,medication,true,Wart removal spray,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Apple Cider Vinegar Pills,14.99,parapharmacy,false,Weight management support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Sore Throat Spray,8.99,parapharmacy,false,Throat pain reliever,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Magnesium Cream,19.99,parapharmacy,false,Topical magnesium,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Cold Sore Treatment,15.99,medication,true,Cold sore relief,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
+Vitamin A Capsules,16.99,parapharmacy,false,Vision health support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Nausea Relief Bands,11.99,parapharmacy,false,Motion sickness relief,https://images.unsplash.com/photo-1584483720412-ce931f4aefa8
+Ashwagandha Extract,23.99,parapharmacy,false,Stress support supplement,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Hydration Tablets,12.99,parapharmacy,false,Electrolyte replacement,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Antifungal Powder,13.99,medication,true,Fungal infection powder,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+Quercetin Complex,26.99,parapharmacy,false,Allergy support supplement,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Burn Ointment,10.99,parapharmacy,false,Burn treatment cream,https://images.unsplash.com/photo-1583947215259-38e31be8751f
+L-Theanine Capsules,19.99,parapharmacy,false,Relaxation support,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
+Throat Numbing Spray,11.99,medication,true,Sore throat spray,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
