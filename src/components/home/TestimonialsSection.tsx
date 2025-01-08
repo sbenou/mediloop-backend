@@ -25,6 +25,18 @@ const testimonials = [
     role: "Healthcare Professional",
     image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
     quote: "As a healthcare provider, I appreciate how Luxmed streamlines the prescription process for my patients."
+  },
+  {
+    name: "David Smith",
+    role: "Regular Customer",
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
+    quote: "The customer service is exceptional. They're always ready to help with any questions I have about my medications."
+  },
+  {
+    name: "Lisa Wong",
+    role: "Patient",
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
+    quote: "Being able to manage all my family's prescriptions in one place has been a game-changer. Highly recommended!"
   }
 ];
 
@@ -45,18 +57,19 @@ export const TestimonialsSection = () => {
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           What Our Users Say
         </h2>
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <Carousel
             opts={{
               align: "start",
               loop: true,
+              slidesToScroll: 2
             }}
             className="w-full"
           >
-            <CarouselContent>
+            <CarouselContent className="-ml-4">
               {testimonials.map((testimonial, index) => (
-                <CarouselItem key={index} className="md:basis-1/1 lg:basis-1/1">
-                  <div className="bg-card rounded-lg p-6 shadow-sm">
+                <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                  <div className="bg-card rounded-lg p-6 shadow-sm h-full">
                     <div className="flex items-center gap-4 mb-4">
                       <img
                         src={testimonial.image}
@@ -68,15 +81,15 @@ export const TestimonialsSection = () => {
                         <p className="text-muted-foreground">{testimonial.role}</p>
                       </div>
                     </div>
-                    <blockquote className="text-lg italic text-muted-foreground">
+                    <blockquote className="text-lg italic text-muted-foreground line-clamp-4">
                       "{testimonial.quote}"
                     </blockquote>
                   </div>
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="hidden md:flex" />
-            <CarouselNext className="hidden md:flex" />
+            <CarouselPrevious className="hidden md:flex -left-12" />
+            <CarouselNext className="hidden md:flex -right-12" />
           </Carousel>
         </div>
       </div>
