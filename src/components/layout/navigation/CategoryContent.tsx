@@ -27,29 +27,34 @@ export const CategoryContent = ({
     }));
   };
 
-  const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string) => {
     navigate('/products');
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('filterProducts', { 
-        detail: { type, category: categoryId, subcategory: subcategoryId }
+        detail: { 
+          type, 
+          category: categoryId, 
+          subcategory: subcategoryId 
+        }
       }));
     }, 100);
   };
 
-  const handleDescriptionClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const handleDescriptionClick = (type: string, categoryId: string, subcategoryId: string) => {
     navigate('/products');
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('filterProducts', { 
-        detail: { type, category: categoryId, subcategory: subcategoryId }
+        detail: { 
+          type, 
+          category: categoryId, 
+          subcategory: subcategoryId 
+        }
       }));
     }, 100);
   };
 
   return (
     <>
-      {/* Left side - Category Types */}
       <div className="space-y-2 border-r pr-4">
         <button
           onClick={() => setSelectedType('medication')}
@@ -73,33 +78,36 @@ export const CategoryContent = ({
         </button>
       </div>
 
-      {/* Right side - Subcategories and Descriptions */}
       <div className="space-y-4">
         {selectedType && getFilteredCategories(selectedType).map((category) => (
           <div key={category.id} className="space-y-2">
             {category.subcategories.map((subcategory: any) => (
               <div key={subcategory.id} className="space-y-1">
-                <button
-                  onClick={(e) => {
-                    toggleSubcategory(subcategory.id);
-                    handleSubcategoryClick(selectedType, category.id, subcategory.id, e);
-                  }}
-                  className="flex items-center justify-between w-full text-sm font-medium hover:text-primary"
-                >
-                  <span>{subcategory.name}</span>
-                  <ChevronDown 
-                    className={`h-4 w-4 transition-transform ${
-                      expandedSubcategories[subcategory.id] ? 'transform rotate-180' : ''
-                    }`}
-                  />
-                </button>
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => handleSubcategoryClick(selectedType, category.id, subcategory.id)}
+                    className="text-sm font-medium hover:text-primary flex-grow text-left"
+                  >
+                    {subcategory.name}
+                  </button>
+                  <button
+                    onClick={() => toggleSubcategory(subcategory.id)}
+                    className="p-1 hover:bg-accent rounded-md"
+                  >
+                    <ChevronDown 
+                      className={`h-4 w-4 transition-transform ${
+                        expandedSubcategories[subcategory.id] ? 'transform rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                </div>
                 {expandedSubcategories[subcategory.id] && (
                   <div className="pl-4 space-y-1">
                     {getUniqueDescriptions(subcategory).map((description: string, index: number) => (
                       <button
                         key={`${subcategory.id}-${index}`}
-                        onClick={(e) => handleDescriptionClick(selectedType, category.id, subcategory.id, e)}
-                        className="block w-full text-left text-xs text-muted-foreground hover:text-primary"
+                        onClick={() => handleDescriptionClick(selectedType, category.id, subcategory.id)}
+                        className="block w-full text-left text-xs text-muted-foreground hover:text-primary py-1"
                       >
                         {description}
                       </button>
