@@ -91,21 +91,23 @@ export const CategorySection = ({
                   <h3 className="font-medium">{category.name}</h3>
                   {category.subcategories?.map((subcategory: Subcategory) => (
                     <div key={subcategory.id} className="ml-4 space-y-1">
-                      <button
+                      <a
+                        href="#"
                         onClick={(e) => handleSubcategoryClick(selectedType, category.id, subcategory.id, e)}
-                        className="text-sm font-medium hover:text-primary hover:underline cursor-pointer w-full text-left py-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2"
+                        className="text-sm font-medium hover:text-primary hover:underline cursor-pointer block w-full text-left py-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2"
                       >
                         {subcategory.name}
-                      </button>
+                      </a>
                       <div className="ml-4 text-sm text-muted-foreground">
                         {getUniqueDescriptions(subcategory).map((description, index) => (
-                          <button
+                          <a
+                            href="#"
                             key={`${subcategory.id}-${index}`}
                             onClick={(e) => handleDescriptionClick(selectedType, category.id, subcategory.id, e)}
                             className="block w-full text-left text-xs text-muted-foreground hover:text-primary hover:underline cursor-pointer py-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2"
                           >
                             {description}
-                          </button>
+                          </a>
                         ))}
                       </div>
                     </div>
