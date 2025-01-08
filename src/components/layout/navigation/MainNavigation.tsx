@@ -8,6 +8,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   NavigationMenuContent,
+  NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { Info, HelpCircle, Settings, Heart, Mail } from 'lucide-react';
 import { Subcategory } from '@/components/product/types/product';
@@ -187,22 +188,14 @@ export const MainNavigation = () => {
         </NavigationMenuContent>
       </NavigationMenuItem>
 
-      {/* Contact Menu */}
+      {/* Contact Menu - Direct Link */}
       <NavigationMenuItem>
-        <NavigationMenuTrigger>Contact</NavigationMenuTrigger>
-        <NavigationMenuContent>
-          <div className="w-[200px] p-4">
-            <nav className="flex flex-col space-y-2">
-              <Link 
-                to="/contact"
-                className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent hover:text-accent-foreground"
-              >
-                <Mail className="h-4 w-4" />
-                <span>Contact Us</span>
-              </Link>
-            </nav>
-          </div>
-        </NavigationMenuContent>
+        <Link 
+          to="/contact"
+          className="inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+        >
+          Contact
+        </Link>
       </NavigationMenuItem>
     </NavigationMenuList>
   );
