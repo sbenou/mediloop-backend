@@ -3,6 +3,7 @@ import {
   NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuTrigger,
+  NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -47,16 +48,15 @@ export const CategoriesNavigation = () => {
         <div className="grid gap-3 p-4 w-[400px]">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h4 className="mb-2 text-sm font-medium">Pharmacy</h4>
+              <button
+                onClick={() => handleCategoryClick('medication')}
+                className="mb-2 text-sm font-medium hover:text-primary"
+              >
+                Pharmacy
+              </button>
               <div className="space-y-2">
                 {categories?.filter(cat => cat.type === 'medication').map((category) => (
                   <div key={category.id} className="space-y-1">
-                    <button
-                      onClick={() => handleCategoryClick('medication')}
-                      className="block w-full text-left text-sm text-muted-foreground hover:text-primary"
-                    >
-                      {category.name}
-                    </button>
                     {category.subcategories?.map((sub) => (
                       <button
                         key={sub.id}
@@ -71,16 +71,15 @@ export const CategoriesNavigation = () => {
               </div>
             </div>
             <div>
-              <h4 className="mb-2 text-sm font-medium">Parapharmacy</h4>
+              <button
+                onClick={() => handleCategoryClick('parapharmacy')}
+                className="mb-2 text-sm font-medium hover:text-primary"
+              >
+                Parapharmacy
+              </button>
               <div className="space-y-2">
                 {categories?.filter(cat => cat.type === 'parapharmacy').map((category) => (
                   <div key={category.id} className="space-y-1">
-                    <button
-                      onClick={() => handleCategoryClick('parapharmacy')}
-                      className="block w-full text-left text-sm text-muted-foreground hover:text-primary"
-                    >
-                      {category.name}
-                    </button>
                     {category.subcategories?.map((sub) => (
                       <button
                         key={sub.id}
