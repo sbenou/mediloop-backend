@@ -39,7 +39,7 @@ const Footer = () => {
 
   return (
     <footer className="border-t">
-      <div className="container mx-auto px-4">
+      <div className="px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 max-w-6xl mx-auto">
           {footerSections.map((section) => (
             <div key={section.title} className="flex flex-col items-center md:items-start">
