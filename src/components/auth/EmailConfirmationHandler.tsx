@@ -59,10 +59,11 @@ const EmailConfirmationHandler = () => {
           // Handle different types of confirmations
           if (type === 'recovery' || type === 'passwordReset') {
             toast({
-              title: "Reset Password",
+              title: "Password Reset",
               description: "You can now reset your password.",
             });
             navigate('/reset-password', { replace: true });
+            return; // Add explicit return to ensure we don't continue
           } else if (type === 'signup') {
             toast({
               title: "Email Confirmed",
