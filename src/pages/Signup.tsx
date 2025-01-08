@@ -8,7 +8,7 @@ const Signup = () => {
 
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
-      <Card className="w-full max-w-lg">
+      <Card className="w-full max-w-lg transition-all duration-300 ease-in-out">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
           <CardDescription>
