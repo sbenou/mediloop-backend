@@ -5,7 +5,7 @@ const steps = [
     title: "Find a pharmacy",
     description: "Search and set your default pharmacy for convenient ordering",
     icon: Store,
-    link: "/settings"
+    link: "/products" // Updated link to point to the products page where pharmacy search is available
   },
   {
     title: "Connect with your doctor",
