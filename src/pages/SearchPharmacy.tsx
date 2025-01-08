@@ -39,8 +39,16 @@ const SearchPharmacy = () => {
     enabled: !!session?.user?.id,
   });
 
+  // Convert coordinates to numbers before passing them to usePharmacySearch
+  const searchCoordinates = coordinates 
+    ? { 
+        lat: parseFloat(coordinates.lat), 
+        lon: parseFloat(coordinates.lon) 
+      } 
+    : LUXEMBOURG_COORDINATES;
+
   const { pharmacies, isLoading } = usePharmacySearch(
-    coordinates ? { lat: parseFloat(coordinates.lat), lon: parseFloat(coordinates.lon) } : LUXEMBOURG_COORDINATES,
+    searchCoordinates,
     searchRadius
   );
 
@@ -142,7 +150,7 @@ const SearchPharmacy = () => {
           <PharmacyListSection
             pharmacies={pharmacies}
             isLoading={isLoading || isSearching}
-            coordinates={coordinates || LUXEMBOURG_COORDINATES}
+            coordinates={searchCoordinates}
             defaultPharmacyId={defaultPharmacy}
             onPharmacySelect={handlePharmacySelect}
             onSetDefaultPharmacy={handleSetDefaultPharmacy}
