@@ -61,8 +61,12 @@ export const ProductFilters = ({
   });
 
   useEffect(() => {
-    const handleFilterProducts = (event: CustomEvent<{ type: string }>) => {
-      onFilterChange({ type: event.detail.type });
+    const handleFilterProducts = (event: CustomEvent<{ type: string; category?: string; subcategory?: string }>) => {
+      onFilterChange({
+        type: event.detail.type,
+        category: event.detail.category,
+        subcategory: event.detail.subcategory
+      });
     };
 
     window.addEventListener('filterProducts', handleFilterProducts as EventListener);
