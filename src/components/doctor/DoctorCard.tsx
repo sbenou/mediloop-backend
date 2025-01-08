@@ -13,17 +13,17 @@ interface DoctorCardProps {
 
 const DoctorCard = ({ id, full_name, license_number, city, email, onConnect }: DoctorCardProps) => {
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-lg transition-shadow h-full">
       <CardContent className="p-4">
-        <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <h3 className="font-semibold text-lg">{full_name}</h3>
+        <div className="flex flex-col h-full space-y-4">
+          <div className="space-y-2 flex-grow">
+            <h3 className="font-semibold text-lg break-words">{full_name}</h3>
             <p className="text-sm text-gray-500">License: {license_number}</p>
             <p className="text-sm text-gray-500">{city}</p>
             {email && (
               <p className="text-sm text-gray-500 flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                {email}
+                <span className="break-all">{email}</span>
               </p>
             )}
           </div>
@@ -31,7 +31,7 @@ const DoctorCard = ({ id, full_name, license_number, city, email, onConnect }: D
             variant="outline"
             size="sm"
             onClick={() => onConnect(id)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full justify-center"
           >
             <UserPlus className="h-4 w-4" />
             Connect
