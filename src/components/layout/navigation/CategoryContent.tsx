@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 
 interface CategoryContentProps {
@@ -18,12 +18,33 @@ export const CategoryContent = ({
   getUniqueDescriptions 
 }: CategoryContentProps) => {
   const [expandedSubcategories, setExpandedSubcategories] = useState<Record<string, boolean>>({});
+  const navigate = useNavigate();
 
   const toggleSubcategory = (subcategoryId: string) => {
     setExpandedSubcategories(prev => ({
       ...prev,
       [subcategoryId]: !prev[subcategoryId]
     }));
+  };
+
+  const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    navigate('/products');
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('filterProducts', { 
+        detail: { type, category: categoryId, subcategory: subcategoryId }
+      }));
+    }, 100);
+  };
+
+  const handleDescriptionClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    navigate('/products');
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('filterProducts', { 
+        detail: { type, category: categoryId, subcategory: subcategoryId }
+      }));
+    }, 100);
   };
 
   return (
@@ -59,7 +80,10 @@ export const CategoryContent = ({
             {category.subcategories.map((subcategory: any) => (
               <div key={subcategory.id} className="space-y-1">
                 <button
-                  onClick={() => toggleSubcategory(subcategory.id)}
+                  onClick={(e) => {
+                    toggleSubcategory(subcategory.id);
+                    handleSubcategoryClick(selectedType, category.id, subcategory.id, e);
+                  }}
                   className="flex items-center justify-between w-full text-sm font-medium hover:text-primary"
                 >
                   <span>{subcategory.name}</span>
@@ -72,13 +96,13 @@ export const CategoryContent = ({
                 {expandedSubcategories[subcategory.id] && (
                   <div className="pl-4 space-y-1">
                     {getUniqueDescriptions(subcategory).map((description: string, index: number) => (
-                      <Link
+                      <button
                         key={`${subcategory.id}-${index}`}
-                        to="/products"
-                        className="block text-xs text-muted-foreground hover:text-primary"
+                        onClick={(e) => handleDescriptionClick(selectedType, category.id, subcategory.id, e)}
+                        className="block w-full text-left text-xs text-muted-foreground hover:text-primary"
                       >
                         {description}
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 )}
