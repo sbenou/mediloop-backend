@@ -13,6 +13,7 @@ import {
 
 export const MainNavigation = () => {
   const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
+  const [selectedTestType, setSelectedTestType] = useState<'medication' | 'parapharmacy' | null>(null);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -151,22 +152,61 @@ export const MainNavigation = () => {
         </NavigationMenuContent>
       </NavigationMenuItem>
 
-      {/* New Test Menu Item */}
+      {/* Test Menu Item */}
       <NavigationMenuItem>
         <NavigationMenuTrigger>Test</NavigationMenuTrigger>
         <NavigationMenuContent>
           <div className="grid grid-cols-2 p-4 w-[600px]">
             {/* Left side */}
             <div className="border-r pr-4 space-y-2">
-              <button className="block w-full text-left px-3 py-2 rounded-md transition-colors hover:bg-accent">
+              <button
+                onClick={() => setSelectedTestType('medication')}
+                className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
+                  selectedTestType === 'medication' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-accent'
+                }`}
+              >
                 Pharmacy
               </button>
-              <button className="block w-full text-left px-3 py-2 rounded-md transition-colors hover:bg-accent">
+              <button
+                onClick={() => setSelectedTestType('parapharmacy')}
+                className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
+                  selectedTestType === 'parapharmacy' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-accent'
+                }`}
+              >
                 Parapharmacy
               </button>
             </div>
-            {/* Right side - Currently empty as requested */}
-            <div className="pl-4">
+            {/* Right side */}
+            <div className="pl-4 space-y-4">
+              {selectedTestType && getFilteredCategories(selectedTestType).map((category) => (
+                <div key={category.id} className="space-y-2">
+                  {category.subcategories.map((subcategory: any) => (
+                    <div key={subcategory.id} className="space-y-1">
+                      <h4 className="font-medium text-sm">{subcategory.name}</h4>
+                      <div className="pl-3 space-y-1">
+                        {getUniqueDescriptions(subcategory).map((description: string, index: number) => (
+                          <Link
+                            key={`${subcategory.id}-${index}`}
+                            to="/products"
+                            className="block text-xs text-muted-foreground hover:text-primary"
+                          >
+                            {description}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {!selectedTestType && (
+                <div className="text-sm text-muted-foreground p-2">
+                  Select a category type to view items
+                </div>
+              )}
             </div>
           </div>
         </NavigationMenuContent>
