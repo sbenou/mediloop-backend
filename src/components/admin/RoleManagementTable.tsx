@@ -108,7 +108,7 @@ export const RoleManagementTable = () => {
       <DeleteRoleDialog
         isOpen={!!roleToDelete}
         onClose={() => setRoleToDelete(null)}
-        onConfirm={confirmDelete}
+        onConfirm={() => roleToDelete && confirmDelete(roleToDelete)}
       />
     </>
   );
