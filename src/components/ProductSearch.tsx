@@ -5,6 +5,7 @@ import { ProductGrid } from "./ProductGrid";
 import { ProductSearchBar } from "./ProductSearchBar";
 import { ProductPagination } from "./ProductPagination";
 import { useProductQuery } from "./product/ProductQueryProvider";
+import { ProductUploader } from "./product/ProductUploader";
 
 const ITEMS_PER_PAGE = 12;
 
