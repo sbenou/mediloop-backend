@@ -86,6 +86,7 @@ export const DeliveryPersonSection = () => {
                   src={feature.image} 
                   alt={feature.title}
                   className="w-full h-auto"
+                  loading="lazy"
                 />
               </div>
             </div>
