@@ -10,6 +10,7 @@ interface OverpassResult {
       'addr:postcode'?: string;
       'addr:city'?: string;
       'contact:phone'?: string;
+      'contact:email'?: string;
       opening_hours?: string;
       'healthcare'?: string;
       'healthcare:speciality'?: string;
@@ -53,7 +54,7 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
       const data: OverpassResult = await response.json();
       
       return data.elements.map(element => ({
-        id: element.id,
+        id: element.id.toString(),
         name: element.tags.name || 'Unnamed Pharmacy',
         address: [
           element.tags['addr:housenumber'],
@@ -63,7 +64,8 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
         ].filter(Boolean).join(', '),
         distance: calculateDistance(lat, lon, element.lat, element.lon),
         hours: element.tags.opening_hours || 'Hours not available',
-        phone: element.tags['contact:phone'] || 'Phone not available',
+        phone: element.tags['contact:phone'] || undefined,
+        email: element.tags['contact:email'] || undefined,
         coordinates: {
           lat: element.lat,
           lon: element.lon

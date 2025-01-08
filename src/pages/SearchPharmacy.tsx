@@ -8,6 +8,11 @@ import CitySearch from "@/components/CitySearch";
 import PharmacyListSection from "@/components/pharmacy/PharmacyListSection";
 import { toast } from "@/components/ui/use-toast";
 
+const LUXEMBOURG_COORDINATES = {
+  lat: 49.6116,
+  lon: 6.1319
+};
+
 const SearchPharmacy = () => {
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
   
@@ -35,7 +40,7 @@ const SearchPharmacy = () => {
   });
 
   const { pharmacies, isLoading } = usePharmacySearch(
-    coordinates ? { lat: parseFloat(coordinates.lat), lon: parseFloat(coordinates.lon) } : null,
+    coordinates ? { lat: parseFloat(coordinates.lat), lon: parseFloat(coordinates.lon) } : LUXEMBOURG_COORDINATES,
     searchRadius
   );
 
@@ -55,8 +60,8 @@ const SearchPharmacy = () => {
   });
 
   useEffect(() => {
-    if (!session && coordinates) {
-      // For non-logged in users, show all pharmacies in Luxembourg City
+    if (!session && !coordinates) {
+      // For non-logged in users, show all pharmacies in Luxembourg City by default
       handleCitySearch("Luxembourg City");
     } else if (session && userProfile?.city) {
       // For logged-in users, show nearby pharmacies based on their city
@@ -80,8 +85,6 @@ const SearchPharmacy = () => {
       });
       return;
     }
-    // Handle pharmacy selection logic
-    // You might want to redirect to products page with pharmacy ID
     window.location.href = `/products/${pharmacyId}`;
   };
 
@@ -139,7 +142,7 @@ const SearchPharmacy = () => {
           <PharmacyListSection
             pharmacies={pharmacies}
             isLoading={isLoading || isSearching}
-            coordinates={coordinates ? { lat: parseFloat(coordinates.lat), lon: parseFloat(coordinates.lon) } : null}
+            coordinates={coordinates || LUXEMBOURG_COORDINATES}
             defaultPharmacyId={defaultPharmacy}
             onPharmacySelect={handlePharmacySelect}
             onSetDefaultPharmacy={handleSetDefaultPharmacy}
