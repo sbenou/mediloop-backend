@@ -28,6 +28,7 @@ export const RoleManagementTable = () => {
     setNewRoleName,
     setNewRoleDescription,
     setBaseRoleId,
+    setRoleToDelete,
     handleEdit,
     handleSave,
     handleDelete,
