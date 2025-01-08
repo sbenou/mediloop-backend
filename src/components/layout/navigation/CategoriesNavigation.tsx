@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { CategorySection } from './CategorySection';
+import { CategoryContent } from './CategoryContent';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export const CategoriesNavigation = () => {
@@ -40,15 +40,6 @@ export const CategoriesNavigation = () => {
     },
   });
 
-  const handleCategoryClick = (type: string) => {
-    navigate('/products');
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('filterProducts', { 
-        detail: { type }
-      }));
-    }, 100);
-  };
-
   const getUniqueCategories = (categories: any[], type: string) => {
     const seen = new Set();
     return categories?.filter(cat => {
@@ -62,23 +53,13 @@ export const CategoriesNavigation = () => {
 
   return (
     <NavigationMenuItem>
-      <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
+      <NavigationMenuTrigger>Medications</NavigationMenuTrigger>
       <NavigationMenuContent>
-        <div className={`grid gap-3 p-4 ${isMobile ? 'w-[300px]' : 'w-[400px]'}`}>
-          <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
-            <CategorySection
-              title="Pharmacy"
-              categories={getUniqueCategories(categories || [], 'medication')}
-              type="medication"
-              onCategoryClick={handleCategoryClick}
-            />
-            <CategorySection
-              title="Parapharmacy"
-              categories={getUniqueCategories(categories || [], 'parapharmacy')}
-              type="parapharmacy"
-              onCategoryClick={handleCategoryClick}
-            />
-          </div>
+        <div className={`grid gap-3 p-4 ${isMobile ? 'w-[300px]' : 'w-[600px]'} md:grid-cols-2`}>
+          <CategoryContent 
+            categories={categories || []}
+            getUniqueCategories={getUniqueCategories}
+          />
         </div>
       </NavigationMenuContent>
     </NavigationMenuItem>
