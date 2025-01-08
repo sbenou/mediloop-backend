@@ -23,6 +23,24 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     console.log("Attempting login with email:", email);
 
     try {
+      // First, check if the user exists
+      const { data: userExists } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (!userExists) {
+        setIsLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Account Not Found",
+          description: "No account exists with this email. Please sign up first.",
+          duration: 6000,
+        });
+        return;
+      }
+
       // Sign out first to clear any existing session
       await supabase.auth.signOut();
       console.log("Signed out existing session");
@@ -39,17 +57,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           name: error.name
         });
         
-        setIsLoading(false); // Make sure to set loading to false before showing toast
-        
-        if (error.message.includes('Invalid login credentials')) {
-          toast({
-            variant: "destructive",
-            title: "Login Failed",
-            description: "Please check your email and password and try again. If you recently reset your password, make sure you're using your new password.",
-            duration: 6000,
-          });
-          return;
-        } 
+        setIsLoading(false);
         
         if (error.message.includes('Email not confirmed')) {
           toast({
@@ -59,7 +67,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             duration: 6000,
           });
           return;
-        } 
+        }
         
         if (error.status === 429 || error.message.includes('rate_limit')) {
           toast({
@@ -71,10 +79,11 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           return;
         }
         
+        // Default case - likely incorrect password
         toast({
           variant: "destructive",
-          title: "Error",
-          description: error.message,
+          title: "Incorrect Password",
+          description: "The password you entered is incorrect. If you forgot your password, use the reset password link below.",
           duration: 6000,
         });
         return;
