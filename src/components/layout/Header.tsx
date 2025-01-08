@@ -89,6 +89,16 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
             </Button>
             {showUserMenu && (
               <>
+                {session ? (
+                  <UserMenu />
+                ) : (
+                  <Link 
+                    to="/login" 
+                    className="text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Connection
+                  </Link>
+                )}
                 <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="relative">
@@ -107,16 +117,6 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
                     <CartPreview onClose={() => setIsCartOpen(false)} session={session} />
                   </SheetContent>
                 </Sheet>
-                {session ? (
-                  <UserMenu />
-                ) : (
-                  <Link 
-                    to="/login" 
-                    className="text-primary hover:text-primary/80 transition-colors"
-                  >
-                    Connection
-                  </Link>
-                )}
               </>
             )}
           </div>
