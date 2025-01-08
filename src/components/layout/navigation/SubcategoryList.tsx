@@ -12,17 +12,19 @@ export const SubcategoryList = ({ subcategories, onCategoryClick, type }: Subcat
   const [expandedSubcategories, setExpandedSubcategories] = useState<Record<string, boolean>>({});
 
   const getUniqueDescriptions = (subcategory: Subcategory) => {
-    if (!subcategory.products || !Array.isArray(subcategory.products)) return [];
+    if (!subcategory.products) {
+      console.log('No products found for subcategory:', subcategory.name);
+      return [];
+    }
     
-    console.log('Products in subcategory:', subcategory.products);
+    console.log('Products for subcategory:', subcategory.name, subcategory.products);
     
     const descriptions = subcategory.products
-      .filter(product => product && typeof product.description === 'string')
-      .map(product => product.description)
-      .filter(description => description && description.trim() !== '');
+      .filter(product => product && typeof product.description === 'string' && product.description.trim() !== '')
+      .map(product => product.description);
     
     const uniqueDescriptions = [...new Set(descriptions)];
-    console.log('Unique descriptions:', uniqueDescriptions);
+    console.log('Unique descriptions for subcategory:', subcategory.name, uniqueDescriptions);
     return uniqueDescriptions;
   };
 
