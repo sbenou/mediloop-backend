@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useCart } from "@/contexts/CartContext";
+import { useState } from "react";
 
 interface Product {
   id: string;
@@ -20,6 +21,7 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart } = useCart();
+  const [imageError, setImageError] = useState(false);
 
   const handleAddToCart = () => {
     if (product.requires_prescription) {
@@ -44,30 +46,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     });
   };
 
+  const handleImageError = () => {
+    console.error('Image failed to load:', product.image_url);
+    setImageError(true);
+  };
+
+  const fallbackImageUrl = '/placeholder.svg';
+
   return (
     <Card className="overflow-hidden flex flex-col">
       <div className="aspect-square relative overflow-hidden bg-gray-100">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className="object-cover w-full h-full hover:scale-105 transition-transform duration-200"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = '/placeholder.svg';
-              console.log('Image failed to load:', product.image_url);
-            }}
-            loading="lazy"
-            crossOrigin="anonymous"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <img
-            src="/placeholder.svg"
-            alt="Product placeholder"
-            className="object-cover w-full h-full"
-          />
-        )}
+        <img
+          src={imageError ? fallbackImageUrl : (product.image_url || fallbackImageUrl)}
+          alt={product.name}
+          className="object-cover w-full h-full hover:scale-105 transition-transform duration-200"
+          onError={handleImageError}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
       </div>
       <CardHeader>
         <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
