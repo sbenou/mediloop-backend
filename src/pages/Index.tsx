@@ -156,7 +156,7 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {platformStats.map((stat, index) => (
                 <div key={index} className="text-center">
-                  <div className="text-2xl font-semibold text-muted-foreground mb-2">
+                  <div className="text-3xl font-semibold text-primary mb-2">
                     {stat.label}
                   </div>
                   <div className="text-4xl font-bold">
