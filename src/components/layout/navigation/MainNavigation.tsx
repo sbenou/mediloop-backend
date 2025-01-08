@@ -150,6 +150,27 @@ export const MainNavigation = () => {
           </div>
         </NavigationMenuContent>
       </NavigationMenuItem>
+
+      {/* New Test Menu Item */}
+      <NavigationMenuItem>
+        <NavigationMenuTrigger>Test</NavigationMenuTrigger>
+        <NavigationMenuContent>
+          <div className="grid grid-cols-2 p-4 w-[600px]">
+            {/* Left side */}
+            <div className="border-r pr-4 space-y-2">
+              <button className="block w-full text-left px-3 py-2 rounded-md transition-colors hover:bg-accent">
+                Pharmacy
+              </button>
+              <button className="block w-full text-left px-3 py-2 rounded-md transition-colors hover:bg-accent">
+                Parapharmacy
+              </button>
+            </div>
+            {/* Right side - Currently empty as requested */}
+            <div className="pl-4">
+            </div>
+          </div>
+        </NavigationMenuContent>
+      </NavigationMenuItem>
     </NavigationMenuList>
   );
 };
