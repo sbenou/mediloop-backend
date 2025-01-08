@@ -51,13 +51,25 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     setImageError(true);
   };
 
-  const fallbackImageUrl = '/placeholder.svg';
+  // Array of placeholder images from Unsplash
+  const placeholderImages = [
+    'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae',
+    'https://images.unsplash.com/photo-1587854692152-cbe660dbde88',
+    'https://images.unsplash.com/photo-1577401132921-cb39bb0adcff',
+    'https://images.unsplash.com/photo-1556229162-5c63ed9c4efb'
+  ];
+
+  // Get a consistent placeholder image based on product ID
+  const getPlaceholderImage = () => {
+    const index = product.id.charCodeAt(0) % placeholderImages.length;
+    return `${placeholderImages[index]}?w=400&q=80`;
+  };
 
   return (
     <Card className="overflow-hidden flex flex-col">
       <div className="aspect-square relative overflow-hidden bg-gray-100">
         <img
-          src={imageError ? fallbackImageUrl : (product.image_url || fallbackImageUrl)}
+          src={imageError || !product.image_url ? getPlaceholderImage() : product.image_url}
           alt={product.name}
           className="object-cover w-full h-full hover:scale-105 transition-transform duration-200"
           onError={handleImageError}
