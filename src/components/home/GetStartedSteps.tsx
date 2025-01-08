@@ -42,9 +42,9 @@ const GetStartedSteps = () => {
                   <span className="text-xl font-bold text-white">{index + 1}</span>
                 </div>
                 <div className="w-full max-w-[280px] transition-all hover:scale-105">
-                  <div className="rounded-lg border bg-card p-6 shadow-sm flex flex-col items-center h-full">
+                  <div className="bg-card p-6 shadow-sm flex flex-col items-center h-full">
                     <step.icon className="h-8 w-8 text-primary mb-4" aria-hidden="true" />
-                    <dt className="text-xl font-semibold leading-7 mb-4">
+                    <dt className="text-xl font-semibold leading-7 mb-4 whitespace-nowrap">
                       {step.title}
                     </dt>
                     <dd className="flex-1 text-base leading-7 text-muted-foreground text-center mb-4">
