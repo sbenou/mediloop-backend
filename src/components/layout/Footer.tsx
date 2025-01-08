@@ -40,7 +40,13 @@ const Footer = () => {
   return (
     <footer className="border-t">
       <div className="px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 py-12 max-w-6xl mx-auto">
+          <div className="flex flex-col items-center md:items-start">
+            <h2 className="text-2xl font-bold text-primary">Luxmed</h2>
+            <p className="mt-4 text-muted-foreground text-sm text-center md:text-left">
+              Revolutionizing healthcare access through innovative digital solutions. Making medical services and prescriptions more accessible for everyone.
+            </p>
+          </div>
           {footerSections.map((section) => (
             <div key={section.title} className="flex flex-col items-center md:items-start">
               <h3 className="font-semibold text-lg mb-4">{section.title}</h3>
