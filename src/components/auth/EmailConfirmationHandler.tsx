@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
 const EmailConfirmationHandler = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -15,6 +16,7 @@ const EmailConfirmationHandler = () => {
       
       console.log('Full URL:', window.location.href);
       console.log('Hash:', window.location.hash);
+      console.log('Path:', location.pathname);
       
       // Try to get tokens from both search params and hash
       const access_token = params.get('access_token') || hashParams.get('access_token');
@@ -68,7 +70,6 @@ const EmailConfirmationHandler = () => {
             });
             navigate('/login', { replace: true });
           } else {
-            // Default to login page if type is not specified
             navigate('/login', { replace: true });
           }
         } catch (error: any) {
@@ -80,8 +81,9 @@ const EmailConfirmationHandler = () => {
           });
           navigate('/login', { replace: true });
         }
-      } else if (window.location.pathname === '/auth/callback') {
-        console.log('No tokens found in URL, redirecting to login');
+      } else if (location.pathname === '/auth/callback') {
+        // If we're on the callback route but don't have tokens, redirect to login
+        console.log('No tokens found in callback URL, redirecting to login');
         navigate('/login', { replace: true });
       }
 
@@ -92,7 +94,7 @@ const EmailConfirmationHandler = () => {
     };
 
     handleEmailConfirmation();
-  }, [navigate, toast]);
+  }, [navigate, toast, location]);
 
   return null;
 };
