@@ -43,7 +43,7 @@ const GetStartedSteps = () => {
                 </div>
                 <Link
                   to={step.link}
-                  className="group w-full max-w-sm transition-all hover:scale-105"
+                  className="group w-full max-w-[280px] transition-all hover:scale-105"
                 >
                   <div className="rounded-lg border bg-card p-6 shadow-sm">
                     <dt className="flex items-center gap-x-3 text-xl font-semibold leading-7">
