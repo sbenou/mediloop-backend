@@ -1,3 +1,4 @@
+import { useInView } from "react-intersection-observer";
 import {
   Carousel,
   CarouselContent,
@@ -28,8 +29,18 @@ const testimonials = [
 ];
 
 export const TestimonialsSection = () => {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1
+  });
+
   return (
-    <section className="py-16 bg-white animate-slide-up [animation-delay:800ms] opacity-0 [animation-fill-mode:forwards]">
+    <section 
+      ref={ref}
+      className={`py-16 bg-white transform transition-all duration-700 ${
+        inView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+      }`}
+    >
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           What Our Users Say

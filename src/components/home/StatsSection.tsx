@@ -1,3 +1,5 @@
+import { useInView } from "react-intersection-observer";
+
 interface PlatformStats {
   ordersCount: number;
   pharmaciesCount: number;
@@ -6,6 +8,11 @@ interface PlatformStats {
 }
 
 export const StatsSection = ({ stats }: { stats: PlatformStats }) => {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1
+  });
+
   const platformStats = [
     {
       label: "Total Orders",
@@ -26,7 +33,12 @@ export const StatsSection = ({ stats }: { stats: PlatformStats }) => {
   ];
 
   return (
-    <section className="py-16 bg-muted/50 animate-slide-up [animation-delay:1000ms] opacity-0 [animation-fill-mode:forwards]">
+    <section 
+      ref={ref}
+      className={`py-16 bg-muted/50 transform transition-all duration-700 ${
+        inView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+      }`}
+    >
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {platformStats.map((stat, index) => (

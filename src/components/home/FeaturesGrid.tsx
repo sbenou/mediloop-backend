@@ -1,8 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, Pill, Stethoscope } from "lucide-react";
+import { useInView } from "react-intersection-observer";
 
 export const FeaturesGrid = () => {
   const navigate = useNavigate();
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1
+  });
   
   const features = [
     {
@@ -32,7 +37,12 @@ export const FeaturesGrid = () => {
   ];
 
   return (
-    <section className="py-16 md:py-24 px-4 animate-slide-up [animation-delay:600ms] opacity-0 [animation-fill-mode:forwards]">
+    <section 
+      ref={ref}
+      className={`py-16 md:py-24 px-4 transform transition-all duration-700 ${
+        inView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+      }`}
+    >
       <div className="container mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           Everything You Need

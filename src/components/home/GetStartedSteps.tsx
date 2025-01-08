@@ -1,5 +1,6 @@
 import { Store, UserRound, Pill } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useInView } from "react-intersection-observer";
 
 const steps = [
   {
@@ -23,8 +24,18 @@ const steps = [
 ];
 
 const GetStartedSteps = () => {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1
+  });
+
   return (
-    <div className="py-24 sm:py-32 animate-slide-up [animation-delay:400ms] opacity-0 [animation-fill-mode:forwards]">
+    <div 
+      ref={ref}
+      className={`py-24 sm:py-32 transform transition-all duration-700 ${
+        inView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+      }`}
+    >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
