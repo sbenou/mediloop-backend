@@ -22,12 +22,16 @@ export const CategoriesNavigation = () => {
           type,
           subcategories (
             id,
-            name
+            name,
+            products (
+              description
+            )
           )
         `)
         .order('name');
       
       if (error) throw error;
+      console.log('Categories with products:', data);
       return data;
     },
   });
