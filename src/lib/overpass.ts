@@ -19,7 +19,8 @@ interface OverpassResult {
 }
 
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
+const RETRY_DELAY = 2000; // Increased to 2 seconds
+const BACKUP_API_URL = 'https://overpass.kumi.systems/api/interpreter'; // Backup API endpoint
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -35,24 +36,24 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
   `;
 
   let retries = MAX_RETRIES;
+  let lastError;
   
   while (retries > 0) {
     try {
-      const response = await fetch('https://overpass-api.de/api/interpreter', {
+      // Try primary API first
+      const primaryResponse = await fetch('https://overpass-api.de/api/interpreter', {
         method: 'POST',
         body: query,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        mode: 'cors'
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch pharmacies');
+      if (!primaryResponse.ok) {
+        throw new Error('Primary API failed');
       }
 
-      const data: OverpassResult = await response.json();
-      
+      const data: OverpassResult = await primaryResponse.json();
       return data.elements.map(element => ({
         id: element.id.toString(),
         name: element.tags.name || 'Unnamed Pharmacy',
@@ -71,15 +72,54 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
           lon: element.lon
         }
       }));
-    } catch (error) {
-      console.error(`Error fetching pharmacies (${retries} retries left):`, error);
-      retries--;
-      if (retries === 0) throw error;
-      await delay(RETRY_DELAY);
+    } catch (primaryError) {
+      console.error(`Primary API error (${retries} retries left):`, primaryError);
+      
+      try {
+        // Try backup API
+        const backupResponse = await fetch(BACKUP_API_URL, {
+          method: 'POST',
+          body: query,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }
+        });
+
+        if (!backupResponse.ok) {
+          throw new Error('Backup API failed');
+        }
+
+        const data: OverpassResult = await backupResponse.json();
+        return data.elements.map(element => ({
+          id: element.id.toString(),
+          name: element.tags.name || 'Unnamed Pharmacy',
+          address: [
+            element.tags['addr:housenumber'],
+            element.tags['addr:street'],
+            element.tags['addr:city'],
+            element.tags['addr:postcode']
+          ].filter(Boolean).join(', '),
+          distance: calculateDistance(lat, lon, element.lat, element.lon),
+          hours: element.tags.opening_hours || 'Hours not available',
+          phone: element.tags['contact:phone'] || undefined,
+          email: element.tags['contact:email'] || undefined,
+          coordinates: {
+            lat: element.lat,
+            lon: element.lon
+          }
+        }));
+      } catch (backupError) {
+        lastError = backupError;
+        retries--;
+        if (retries > 0) {
+          await delay(RETRY_DELAY);
+        }
+      }
     }
   }
 
-  throw new Error('Failed to fetch pharmacies after all retries');
+  console.error('All API attempts failed:', lastError);
+  return [];
 };
 
 export const searchDoctors = async (lat: number, lon: number, radius: number = 5000) => {
@@ -95,24 +135,24 @@ export const searchDoctors = async (lat: number, lon: number, radius: number = 5
   `;
 
   let retries = MAX_RETRIES;
+  let lastError;
   
   while (retries > 0) {
     try {
-      const response = await fetch('https://overpass-api.de/api/interpreter', {
+      // Try primary API first
+      const primaryResponse = await fetch('https://overpass-api.de/api/interpreter', {
         method: 'POST',
         body: query,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        mode: 'cors'
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch doctors');
+      if (!primaryResponse.ok) {
+        throw new Error('Primary API failed');
       }
 
-      const data: OverpassResult = await response.json();
-      
+      const data: OverpassResult = await primaryResponse.json();
       return data.elements.map(element => ({
         id: element.id.toString(),
         full_name: element.tags.name || 'Unnamed Doctor',
@@ -130,15 +170,53 @@ export const searchDoctors = async (lat: number, lon: number, radius: number = 5
           lon: element.lon
         }
       }));
-    } catch (error) {
-      console.error(`Error fetching doctors (${retries} retries left):`, error);
-      retries--;
-      if (retries === 0) throw error;
-      await delay(RETRY_DELAY);
+    } catch (primaryError) {
+      console.error(`Primary API error (${retries} retries left):`, primaryError);
+      
+      try {
+        // Try backup API
+        const backupResponse = await fetch(BACKUP_API_URL, {
+          method: 'POST',
+          body: query,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }
+        });
+
+        if (!backupResponse.ok) {
+          throw new Error('Backup API failed');
+        }
+
+        const data: OverpassResult = await backupResponse.json();
+        return data.elements.map(element => ({
+          id: element.id.toString(),
+          full_name: element.tags.name || 'Unnamed Doctor',
+          address: [
+            element.tags['addr:housenumber'],
+            element.tags['addr:street'],
+            element.tags['addr:city'],
+            element.tags['addr:postcode']
+          ].filter(Boolean).join(', '),
+          city: element.tags['addr:city'] || '',
+          license_number: element.tags['healthcare:speciality'] || 'General Practice',
+          email: element.tags['contact:email'] || element.tags['email'] || undefined,
+          coordinates: {
+            lat: element.lat,
+            lon: element.lon
+          }
+        }));
+      } catch (backupError) {
+        lastError = backupError;
+        retries--;
+        if (retries > 0) {
+          await delay(RETRY_DELAY);
+        }
+      }
     }
   }
 
-  throw new Error('Failed to fetch doctors after all retries');
+  console.error('All API attempts failed:', lastError);
+  return [];
 };
 
 // Haversine formula for calculating distance between two points
