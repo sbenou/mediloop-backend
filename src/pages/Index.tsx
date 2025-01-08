@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Search, ShoppingBag, Pill, UserPlus, Stethoscope, Users, Building2, Clipboard, ShoppingCart } from "lucide-react";
+import { Search, ShoppingBag, Pill, UserPlus, Stethoscope } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -240,21 +241,7 @@ const Index = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t py-8 px-4">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2024 Luxmed. All rights reserved.
-            </p>
-            <div className="flex gap-4">
-              <Button variant="link" size="sm">Privacy Policy</Button>
-              <Button variant="link" size="sm">Terms of Service</Button>
-              <Button variant="link" size="sm">Contact</Button>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
