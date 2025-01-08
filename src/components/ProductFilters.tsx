@@ -62,19 +62,40 @@ export const ProductFilters = ({
     };
   }, [onFilterChange]);
 
-  // Show pharmacy section for pharmacist or superadmin roles
-  const showPharmacySection = userRole === 'pharmacist' || userRole === 'superadmin';
+  // Get unique categories for each type
+  const getMedicationCategories = () => {
+    if (!categories) return [];
+    const seen = new Set();
+    return categories.filter(cat => {
+      if (cat.type === 'medication' && !seen.has(cat.name)) {
+        seen.add(cat.name);
+        return true;
+      }
+      return false;
+    });
+  };
+
+  const getParapharmacyCategories = () => {
+    if (!categories) return [];
+    const seen = new Set();
+    return categories.filter(cat => {
+      if (cat.type === 'parapharmacy' && !seen.has(cat.name)) {
+        seen.add(cat.name);
+        return true;
+      }
+      return false;
+    });
+  };
 
   return (
     <div className="w-64 flex-shrink-0 border-r pr-4">
       <h3 className="font-semibold mb-4">Filters</h3>
       <ScrollArea className="h-[calc(100vh-200px)]">
         <Accordion type="multiple" className="w-full">
-          {/* Always show both sections, but filter medication based on role */}
           <AccordionItem value="pharmacy">
             <AccordionTrigger>Pharmacy</AccordionTrigger>
             <AccordionContent>
-              {categories?.filter(cat => cat.type === 'medication').map((category) => (
+              {getMedicationCategories().map((category) => (
                 <div key={category.id} className="py-2">
                   <button
                     onClick={() => onFilterChange({ type: 'medication', category: category.id })}
@@ -103,7 +124,7 @@ export const ProductFilters = ({
           <AccordionItem value="parapharmacy">
             <AccordionTrigger>Parapharmacy</AccordionTrigger>
             <AccordionContent>
-              {categories?.filter(cat => cat.type === 'parapharmacy').map((category) => (
+              {getParapharmacyCategories().map((category) => (
                 <div key={category.id} className="py-2">
                   <button
                     onClick={() => onFilterChange({ type: 'parapharmacy', category: category.id })}
