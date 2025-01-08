@@ -60,11 +60,7 @@ export const DeliveryPersonSection = () => {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className={`flex flex-col md:flex-row items-center gap-12 ${
-                index === 0 ? 'md:justify-start ml-0' : 
-                index === 1 ? 'md:justify-center' : 
-                'md:justify-end mr-0'
-              } ${
+              className={`flex flex-col md:flex-row items-center gap-12 mx-auto max-w-4xl ${
                 inView ? 'animate-fade-in opacity-100' : 'opacity-0'
               }`}
               style={{
