@@ -11,11 +11,11 @@ interface SubcategoryListProps {
 export const SubcategoryList = ({ subcategories, onCategoryClick, type }: SubcategoryListProps) => {
   const [expandedSubcategories, setExpandedSubcategories] = useState<Record<string, boolean>>({});
 
-  // Get unique descriptions for a subcategory
   const getUniqueDescriptions = (subcategory: Subcategory) => {
     if (!subcategory.products) return [];
     console.log('Products in subcategory:', subcategory.products); // Debug log
     const descriptions = subcategory.products
+      .filter(product => product && product.description)
       .map(product => product.description)
       .filter(description => description && description.trim() !== '');
     const uniqueDescriptions = [...new Set(descriptions)];

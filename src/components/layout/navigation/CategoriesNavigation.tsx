@@ -23,7 +23,7 @@ export const CategoriesNavigation = () => {
           subcategories (
             id,
             name,
-            products:products!subcategory_id (
+            products (
               id,
               name,
               description
