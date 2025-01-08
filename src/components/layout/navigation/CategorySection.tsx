@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent } from "@/components/ui/navigation-menu";
 import { Subcategory } from '@/components/product/types/product';
+import { ChevronDown } from 'lucide-react';
 
 interface CategorySectionProps {
   title: string;
@@ -20,6 +22,32 @@ export const CategorySection = ({
   getUniqueDescriptions 
 }: CategorySectionProps) => {
   const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
+  const [expandedSubcategories, setExpandedSubcategories] = useState<Record<string, boolean>>({});
+  const navigate = useNavigate();
+
+  const handleSubcategoryClick = (categoryId: string, subcategoryId: string) => {
+    console.log('Subcategory clicked:', { type: selectedType, categoryId, subcategoryId });
+    navigate('/products');
+    setTimeout(() => {
+      const event = new CustomEvent('filterProducts', {
+        detail: {
+          type: selectedType,
+          category: categoryId,
+          subcategory: subcategoryId
+        }
+      });
+      window.dispatchEvent(event);
+      console.log('Filter event dispatched:', event);
+    }, 100);
+  };
+
+  const toggleSubcategory = (subcategoryId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setExpandedSubcategories(prev => ({
+      ...prev,
+      [subcategoryId]: !prev[subcategoryId]
+    }));
+  };
 
   if (getFilteredCategories && getUniqueDescriptions) {
     return (
@@ -49,19 +77,48 @@ export const CategorySection = ({
             <div className="space-y-4">
               {selectedType && getFilteredCategories(selectedType).map((category) => (
                 <div key={category.id} className="space-y-2">
-                  <h3 className="font-medium">{category.name}</h3>
-                  {category.subcategories?.map((subcategory) => (
-                    <div key={subcategory.id} className="ml-4 space-y-1">
-                      <h4 className="text-sm font-medium">{subcategory.name}</h4>
-                      <div className="ml-4 text-sm text-muted-foreground">
-                        {getUniqueDescriptions(subcategory as Subcategory).map((description, index) => (
-                          <p key={index} className="line-clamp-2">{description}</p>
-                        ))}
+                  {category.subcategories?.map((subcategory: Subcategory) => (
+                    <div key={subcategory.id} className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          onClick={() => handleSubcategoryClick(category.id, subcategory.id)}
+                          className="text-sm font-medium hover:text-primary flex-grow text-left py-1"
+                        >
+                          {subcategory.name}
+                        </button>
+                        <button
+                          onClick={(e) => toggleSubcategory(subcategory.id, e)}
+                          className="p-1 hover:bg-accent rounded-md"
+                        >
+                          <ChevronDown 
+                            className={`h-4 w-4 transition-transform ${
+                              expandedSubcategories[subcategory.id] ? 'transform rotate-180' : ''
+                            }`}
+                          />
+                        </button>
                       </div>
+                      {expandedSubcategories[subcategory.id] && (
+                        <div className="pl-4 space-y-1">
+                          {getUniqueDescriptions(subcategory).map((description, index) => (
+                            <button
+                              key={`${subcategory.id}-${index}`}
+                              onClick={() => handleSubcategoryClick(category.id, subcategory.id)}
+                              className="block w-full text-left text-xs text-muted-foreground hover:text-primary py-1"
+                            >
+                              {description}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               ))}
+              {!selectedType && (
+                <div className="text-sm text-muted-foreground p-2">
+                  Select a category type to view items
+                </div>
+              )}
             </div>
           </div>
         </NavigationMenuContent>
