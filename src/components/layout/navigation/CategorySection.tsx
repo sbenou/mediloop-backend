@@ -63,7 +63,7 @@ export const CategorySection = ({
   if (getFilteredCategories && getUniqueDescriptions) {
     return (
       <NavigationMenuItem>
-        <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
+        <NavigationMenuTrigger>Medications</NavigationMenuTrigger>
         <NavigationMenuContent>
           <div className="grid grid-cols-2 gap-4 p-4 w-[600px]">
             <div className="space-y-4">
