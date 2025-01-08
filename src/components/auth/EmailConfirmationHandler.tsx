@@ -54,8 +54,11 @@ const EmailConfirmationHandler = () => {
 
           if (sessionError) throw sessionError;
 
-          // Always treat it as a password reset when we're on the callback route
-          if (window.location.pathname === '/auth/callback' || type === 'recovery' || type === 'passwordReset' || !type) {
+          // Check if we're on the preview domain
+          const isPreviewDomain = window.location.hostname.includes('lovable.app');
+          
+          // Handle different types of confirmations
+          if (type === 'recovery' || type === 'passwordReset' || (isPreviewDomain && window.location.pathname === '/auth/callback')) {
             toast({
               title: "Reset Password",
               description: "You can now reset your password.",
