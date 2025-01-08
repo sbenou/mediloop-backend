@@ -40,26 +40,35 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             description: "Please check your email and password and try again. If you recently reset your password, make sure you're using your new password.",
             duration: 6000,
           });
-        } else if (error.message.includes('Email not confirmed')) {
+          return;
+        } 
+        
+        if (error.message.includes('Email not confirmed')) {
           toast({
             variant: "destructive",
             title: "Email Not Confirmed",
             description: "Please check your email and confirm your account before logging in. Don't forget to check your spam folder.",
+            duration: 6000,
           });
-        } else if (error.status === 429 || error.message.includes('rate_limit')) {
+          return;
+        } 
+        
+        if (error.status === 429 || error.message.includes('rate_limit')) {
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
             description: "You've made too many requests. Please wait a few minutes before trying again.",
             duration: 8000,
           });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: error.message,
-          });
+          return;
         }
+        
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+          duration: 6000,
+        });
         return;
       }
 
@@ -67,6 +76,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         toast({
           title: "Success",
           description: "Logged in successfully",
+          duration: 4000,
         });
         onSuccess();
       }
@@ -76,6 +86,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         variant: "destructive",
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
+        duration: 6000,
       });
     } finally {
       setIsLoading(false);
