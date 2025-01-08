@@ -4,7 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Stethoscope, Pill } from "lucide-react";
+import { Search, ShoppingBag, Pill, Stethoscope } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
