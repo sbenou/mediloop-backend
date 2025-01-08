@@ -24,6 +24,7 @@ export const ProductSearch = () => {
   }>({});
   const [sortBy, setSortBy] = useState("newest");
   const { state: cartState } = useCart();
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const { data: productsData, isLoading } = useProductQuery({
     searchTerm,
@@ -57,7 +58,7 @@ export const ProductSearch = () => {
             onChange={setSearchTerm}
           />
           <div className="flex items-center gap-4">
-            <Sheet>
+            <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="relative">
                   <ShoppingCart className="h-4 w-4" />
@@ -72,7 +73,7 @@ export const ProductSearch = () => {
                 <SheetHeader>
                   <SheetTitle>Shopping Cart</SheetTitle>
                 </SheetHeader>
-                <CartPreview />
+                <CartPreview onClose={() => setIsCartOpen(false)} />
               </SheetContent>
             </Sheet>
             <ProductSort onSortChange={setSortBy} />
