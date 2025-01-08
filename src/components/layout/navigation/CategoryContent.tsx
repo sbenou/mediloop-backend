@@ -4,13 +4,20 @@ import { useNavigate } from 'react-router-dom';
 interface CategoryContentProps {
   categories: any[];
   getUniqueCategories: (categories: any[], type: string) => any[];
+  selectedType: 'medication' | 'parapharmacy' | null;
+  setSelectedType: (type: 'medication' | 'parapharmacy' | null) => void;
+  getFilteredCategories?: (type: 'medication' | 'parapharmacy') => any[];
+  getUniqueDescriptions?: (subcategory: any) => string[];
 }
 
 export const CategoryContent = ({ 
   categories,
   getUniqueCategories,
+  selectedType,
+  setSelectedType,
+  getFilteredCategories,
+  getUniqueDescriptions
 }: CategoryContentProps) => {
-  const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
   const navigate = useNavigate();
 
   const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
@@ -45,14 +52,6 @@ export const CategoryContent = ({
       window.dispatchEvent(filterEvent);
       console.log('Filter event dispatched:', filterEvent);
     }, 100);
-  };
-
-  const getUniqueDescriptions = (subcategory: any) => {
-    if (!subcategory.products) return [];
-    const descriptions = subcategory.products
-      .filter((product: any) => product && typeof product.description === 'string' && product.description.trim() !== '')
-      .map((product: any) => product.description);
-    return [...new Set(descriptions)];
   };
 
   return (
@@ -95,7 +94,7 @@ export const CategoryContent = ({
                   {subcategory.name}
                 </a>
                 <div className="pl-4 space-y-1">
-                  {getUniqueDescriptions(subcategory).map((description: string, index: number) => (
+                  {getUniqueDescriptions && getUniqueDescriptions(subcategory).map((description: string, index: number) => (
                     <a
                       href="#"
                       key={`${subcategory.id}-${index}`}
