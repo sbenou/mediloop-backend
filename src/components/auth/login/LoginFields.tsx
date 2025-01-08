@@ -1,15 +1,16 @@
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Key } from "lucide-react";
-import { PasswordResetButton } from "../PasswordResetButton";
+import { UserRole } from "@/components/signup/SignupForm";
+import { RoleSelector } from "@/components/signup/RoleSelector";
 
 interface LoginFieldsProps {
   email: string;
   password: string;
-  onEmailChange: (email: string) => void;
-  onPasswordChange: (password: string) => void;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
   isLoading: boolean;
+  selectedRole?: UserRole | null;
 }
 
 export const LoginFields = ({
@@ -18,22 +19,27 @@ export const LoginFields = ({
   onEmailChange,
   onPasswordChange,
   isLoading,
+  selectedRole,
 }: LoginFieldsProps) => {
   return (
-    <>
+    <div className="space-y-4">
+      {selectedRole && (
+        <RoleSelector value={selectedRole} onValueChange={() => {}} disabled />
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <div className="relative">
           <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             id="email"
-            placeholder="Enter your email"
             type="email"
+            placeholder="Enter your email"
             className="pl-8"
-            required
             value={email}
             onChange={(e) => onEmailChange(e.target.value)}
             disabled={isLoading}
+            required
           />
         </div>
       </div>
@@ -47,14 +53,13 @@ export const LoginFields = ({
             type="password"
             placeholder="Enter your password"
             className="pl-8"
-            required
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
             disabled={isLoading}
+            required
           />
         </div>
-        <PasswordResetButton email={email} disabled={isLoading} />
       </div>
-    </>
+    </div>
   );
 };

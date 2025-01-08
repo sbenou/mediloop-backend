@@ -4,11 +4,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { UserRole } from "@/components/signup/SignupForm";
 
 const Login = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const selectedRole = searchParams.get("role") as UserRole | null;
 
   // Handle email confirmation
   useEffect(() => {
@@ -60,12 +62,15 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm onSuccess={() => navigate("/")} />
+          <LoginForm onSuccess={() => navigate("/")} selectedRole={selectedRole} />
         </CardContent>
         <CardFooter>
           <div className="text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-primary hover:underline">
+            <Link 
+              to={selectedRole ? `/signup?role=${selectedRole}` : "/signup"} 
+              className="text-primary hover:underline"
+            >
               Sign up
             </Link>
           </div>

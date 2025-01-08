@@ -5,14 +5,16 @@ import { UserRole } from "./SignupForm";
 interface RoleSelectorProps {
   value: UserRole;
   onValueChange: (value: UserRole) => void;
+  disabled?: boolean;
 }
 
-export const RoleSelector = ({ value, onValueChange }: RoleSelectorProps) => {
+export const RoleSelector = ({ value, onValueChange, disabled = false }: RoleSelectorProps) => {
   return (
     <RadioGroup
       value={value}
       onValueChange={(value) => onValueChange(value as UserRole)}
       className="flex flex-col space-y-1 mb-4"
+      disabled={disabled}
     >
       <div className="flex items-center space-x-2">
         <RadioGroupItem value="patient" id="signup-patient" />
