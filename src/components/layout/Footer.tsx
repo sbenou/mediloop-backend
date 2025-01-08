@@ -47,7 +47,7 @@ const Footer = () => {
               Revolutionizing healthcare access through innovative digital solutions. Making medical services and prescriptions more accessible for everyone.
             </p>
           </div>
-          <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-8 md:pl-20">
+          <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-8 md:pl-40">
             {footerSections.map((section) => (
               <div key={section.title} className="flex flex-col items-center md:items-start space-y-2">
                 <h3 className="font-semibold text-lg">{section.title}</h3>
