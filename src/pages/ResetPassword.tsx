@@ -9,6 +9,8 @@ import { Key, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
+const RECOVERY_CODE_EXPIRY = 60 * 60 * 1000; // 1 hour in milliseconds
+
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -19,12 +21,26 @@ const ResetPassword = () => {
 
   // Check for recovery code on mount
   useEffect(() => {
-    const recoveryCode = sessionStorage.getItem('recovery_code');
-    if (!recoveryCode) {
+    const recoveryDataStr = sessionStorage.getItem('recovery_data');
+    if (!recoveryDataStr) {
       toast({
         variant: "destructive",
         title: "Invalid Access",
         description: "Please use the reset password link from your email.",
+      });
+      navigate('/login');
+      return;
+    }
+
+    const recoveryData = JSON.parse(recoveryDataStr);
+    const isExpired = Date.now() - recoveryData.timestamp > RECOVERY_CODE_EXPIRY;
+    
+    if (isExpired) {
+      sessionStorage.removeItem('recovery_data');
+      toast({
+        variant: "destructive",
+        title: "Link Expired",
+        description: "The password reset link has expired. Please request a new one.",
       });
       navigate('/login');
     }
@@ -63,20 +79,25 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      // Get the recovery code from session storage
-      const recoveryCode = sessionStorage.getItem('recovery_code');
-      
-      if (!recoveryCode) {
+      // Get the recovery data from session storage
+      const recoveryDataStr = sessionStorage.getItem('recovery_data');
+      if (!recoveryDataStr) {
         throw new Error('Recovery code not found');
       }
 
+      const recoveryData = JSON.parse(recoveryDataStr);
+      const { code } = recoveryData;
+
       // First verify the recovery code with the correct type parameters
       const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-        token_hash: recoveryCode,
+        token_hash: code,
         type: 'recovery'
       });
 
-      if (verifyError) throw verifyError;
+      if (verifyError) {
+        console.error('Password reset error:', verifyError);
+        throw verifyError;
+      }
 
       // Then update the password
       const { error: updateError } = await supabase.auth.updateUser({
@@ -85,8 +106,8 @@ const ResetPassword = () => {
 
       if (updateError) throw updateError;
 
-      // Clear the recovery code
-      sessionStorage.removeItem('recovery_code');
+      // Clear the recovery data
+      sessionStorage.removeItem('recovery_data');
 
       toast({
         title: "Success",
@@ -106,6 +127,11 @@ const ResetPassword = () => {
         title: "Error",
         description: error.message || "Failed to reset password. Please try again.",
       });
+      
+      if (error.message.includes('expired')) {
+        sessionStorage.removeItem('recovery_data');
+        navigate('/login');
+      }
     } finally {
       setIsLoading(false);
     }

@@ -29,9 +29,6 @@ const EmailConfirmationHandler = () => {
       
       console.log('Email confirmation params:', params);
 
-      // Clear any existing session first
-      await supabase.auth.signOut();
-
       if (params.error) {
         toast({
           variant: "destructive",
@@ -44,14 +41,20 @@ const EmailConfirmationHandler = () => {
 
       if (type === 'recovery' && code) {
         console.log('Recovery callback detected, storing code');
-        // Store the recovery code in session storage with the correct key
-        sessionStorage.setItem('recovery_code', code);
-        // Navigate to reset password page with the full URL
+        // Store both the recovery code and timestamp
+        const recoveryData = {
+          code,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem('recovery_data', JSON.stringify(recoveryData));
         navigate('/reset-password', { replace: true });
         return;
       }
 
       if (type === 'signup' || type === 'magiclink') {
+        // Clear any existing session first for signup/magiclink
+        await supabase.auth.signOut();
+        
         if (code) {
           try {
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
