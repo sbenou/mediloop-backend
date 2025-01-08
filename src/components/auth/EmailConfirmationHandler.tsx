@@ -44,10 +44,10 @@ const EmailConfirmationHandler = () => {
 
       if (type === 'recovery' && code) {
         console.log('Recovery callback detected, storing code');
-        // Store the recovery code in session storage
-        sessionStorage.setItem('passwordResetCode', code);
-        // Navigate to reset password page
-        navigate('/reset-password');
+        // Store the recovery code in session storage with the correct key
+        sessionStorage.setItem('recovery_code', code);
+        // Navigate to reset password page with the full URL
+        navigate('/reset-password', { replace: true });
         return;
       }
 
