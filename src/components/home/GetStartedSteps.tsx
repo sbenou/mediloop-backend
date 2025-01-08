@@ -41,20 +41,23 @@ const GetStartedSteps = () => {
                 <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
                   <span className="text-xl font-bold text-white">{index + 1}</span>
                 </div>
-                <Link
-                  to={step.link}
-                  className="group w-full max-w-[280px] transition-all hover:scale-105"
-                >
-                  <div className="rounded-lg border bg-card p-6 shadow-sm">
-                    <dt className="flex items-center gap-x-3 text-xl font-semibold leading-7">
-                      <step.icon className="h-8 w-8 text-primary" aria-hidden="true" />
+                <div className="w-full max-w-[280px] transition-all hover:scale-105">
+                  <div className="rounded-lg border bg-card p-6 shadow-sm flex flex-col items-center h-full">
+                    <step.icon className="h-8 w-8 text-primary mb-4" aria-hidden="true" />
+                    <dt className="text-xl font-semibold leading-7 mb-4">
                       {step.title}
                     </dt>
-                    <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-muted-foreground">
-                      <p className="flex-auto">{step.description}</p>
+                    <dd className="flex-1 text-base leading-7 text-muted-foreground text-center mb-4">
+                      <p>{step.description}</p>
                     </dd>
+                    <Link
+                      to={step.link}
+                      className="text-primary hover:text-primary/80 font-semibold"
+                    >
+                      Get Started
+                    </Link>
                   </div>
-                </Link>
+                </div>
                 {index < steps.length - 1 && (
                   <div className="hidden lg:block absolute -right-4 top-24 transform translate-x-1/2">
                     <ArrowRight className="h-8 w-8 text-primary" />
