@@ -6,6 +6,8 @@ interface Doctor {
   full_name: string;
   city: string;
   license_number: string;
+  email?: string;
+  hours?: string;
   source?: 'database' | 'overpass';
 }
 
