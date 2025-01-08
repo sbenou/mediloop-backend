@@ -58,20 +58,20 @@ const EmailConfirmationHandler = () => {
 
           // Handle different types of confirmations
           if (type === 'recovery' || type === 'passwordReset') {
+            console.log('Handling recovery/passwordReset flow');
             toast({
               title: "Password Reset",
               description: "You can now reset your password.",
             });
             navigate('/reset-password', { replace: true });
-            return; // Add explicit return to ensure we don't continue
+            return;
           } else if (type === 'signup') {
             toast({
               title: "Email Confirmed",
               description: "Your email has been successfully confirmed. You can now log in.",
             });
             navigate('/login', { replace: true });
-          } else {
-            navigate('/login', { replace: true });
+            return;
           }
         } catch (error: any) {
           console.error('Authentication error:', error);
@@ -81,9 +81,19 @@ const EmailConfirmationHandler = () => {
             description: error.message || "Failed to process authentication request",
           });
           navigate('/login', { replace: true });
+          return;
         }
-      } else if (location.pathname === '/auth/callback') {
-        // If we're on the callback route but don't have tokens, redirect to login
+      }
+
+      // If we're on the callback route but don't have tokens yet
+      if (location.pathname === '/auth/callback') {
+        const callbackType = params.get('type');
+        if (callbackType === 'recovery') {
+          console.log('Recovery callback detected, waiting for tokens');
+          // Don't redirect yet, wait for tokens
+          return;
+        }
+        // For other cases without tokens, redirect to login
         console.log('No tokens found in callback URL, redirecting to login');
         navigate('/login', { replace: true });
       }
