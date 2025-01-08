@@ -17,7 +17,7 @@ const steps = [
   },
   {
     title: "Order medications",
-    description: "Browse and order medications with or without prescription",
+    description: "Browse and order medications with or without prescription and get delivered",
     icon: Pill,
     link: "/products"
   }
