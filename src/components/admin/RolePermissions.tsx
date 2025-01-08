@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { RoutePermissionSection } from "./RoutePermissionSection";
 import { availableRoutePermissions, Permission } from "./types";
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { RolePermissionsActions } from "./role/RolePermissionsActions";
 
 interface RolePermissionsProps {
   roleId: string;
@@ -42,11 +43,9 @@ export const RolePermissions = ({
     const permissionIds = routePermissions.map(p => p.id);
     setSelectedPermissions(prev => {
       if (checked) {
-        // Add all permissions that aren't already selected
         const newPermissions = permissionIds.filter(id => !prev.includes(id));
         return [...prev, ...newPermissions];
       }
-      // Remove all permissions for this route
       return prev.filter(id => !permissionIds.includes(id));
     });
   };
@@ -83,20 +82,10 @@ export const RolePermissions = ({
             ))}
           </div>
         </ScrollArea>
-        <div className="flex justify-end space-x-2 mt-6">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border rounded-md hover:bg-accent"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-          >
-            Save Permissions
-          </button>
-        </div>
+        <RolePermissionsActions
+          onClose={onClose}
+          onSave={handleSave}
+        />
       </div>
     </>
   );
