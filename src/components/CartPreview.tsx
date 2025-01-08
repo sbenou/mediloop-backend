@@ -4,10 +4,11 @@ import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "./ui/use-toast";
 
 export const CartPreview = ({ onClose, session }: { onClose: () => void, session: any }) => {
+  const navigate = useNavigate();
   const { state: cartState, removeFromCart, updateQuantity } = useCart();
   const [comment, setComment] = useState("");
 
@@ -17,8 +18,9 @@ export const CartPreview = ({ onClose, session }: { onClose: () => void, session
     if (!session) {
       toast({
         title: "Authentication Required",
-        description: "Please create an account or log in to proceed with checkout.",
+        description: "Please create an account to proceed with checkout.",
       });
+      navigate('/signup');
       return;
     }
     // Proceed with checkout logic here
@@ -94,24 +96,9 @@ export const CartPreview = ({ onClose, session }: { onClose: () => void, session
         </div>
         
         <div className="space-y-2 pb-4">
-          {session ? (
-            <Button className="w-full" onClick={handleCheckout}>
-              Proceed to Checkout
-            </Button>
-          ) : (
-            <div className="space-y-2">
-              <Link to="/login">
-                <Button className="w-full">
-                  Login to Checkout
-                </Button>
-              </Link>
-              <Link to="/signup">
-                <Button variant="outline" className="w-full">
-                  Create Account
-                </Button>
-              </Link>
-            </div>
-          )}
+          <Button className="w-full" onClick={handleCheckout}>
+            Proceed to Checkout
+          </Button>
           <Button 
             variant="outline" 
             className="w-full"
