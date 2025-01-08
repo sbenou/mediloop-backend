@@ -24,6 +24,7 @@ export const CategoriesNavigation = () => {
             id,
             name,
             products (
+              id,
               description
             )
           )
@@ -31,7 +32,7 @@ export const CategoriesNavigation = () => {
         .order('name');
       
       if (error) throw error;
-      console.log('Categories with products:', data);
+      console.log('Categories with products:', data); // Debug log
       return data;
     },
   });
