@@ -53,7 +53,7 @@ const EmailConfirmationHandler = () => {
           });
 
           if (sessionError) throw sessionError;
-          
+
           // Handle different types of confirmations
           if (type === 'recovery' || type === 'passwordReset') {
             toast({
@@ -67,6 +67,9 @@ const EmailConfirmationHandler = () => {
               description: "Your email has been successfully confirmed. You can now log in.",
             });
             navigate('/login', { replace: true });
+          } else {
+            // Default to login page if type is not specified
+            navigate('/login', { replace: true });
           }
         } catch (error: any) {
           console.error('Authentication error:', error);
@@ -78,7 +81,7 @@ const EmailConfirmationHandler = () => {
           navigate('/login', { replace: true });
         }
       } else if (window.location.pathname === '/auth/callback') {
-        console.log('No tokens found in URL');
+        console.log('No tokens found in URL, redirecting to login');
         navigate('/login', { replace: true });
       }
 
