@@ -23,24 +23,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     console.log("Attempting login with email:", email);
 
     try {
-      // First, check if the user exists
-      const { data: userExists } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .single();
-
-      if (!userExists) {
-        setIsLoading(false);
-        toast({
-          variant: "destructive",
-          title: "Account Not Found",
-          description: "No account exists with this email. Please sign up first.",
-          duration: 6000,
-        });
-        return;
-      }
-
       // Sign out first to clear any existing session
       await supabase.auth.signOut();
       console.log("Signed out existing session");
@@ -82,8 +64,8 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         // Default case - likely incorrect password
         toast({
           variant: "destructive",
-          title: "Incorrect Password",
-          description: "The password you entered is incorrect. If you forgot your password, use the reset password link below.",
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again or use the reset password link below.",
           duration: 6000,
         });
         return;
