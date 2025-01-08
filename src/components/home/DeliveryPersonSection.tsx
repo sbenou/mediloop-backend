@@ -37,9 +37,9 @@ export const DeliveryPersonSection = () => {
   return (
     <section 
       ref={ref}
-      className="py-16"
+      className="py-16 px-4"
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-3xl font-bold mb-4 text-gray-900">
             Become a Delivery Partner
@@ -56,7 +56,7 @@ export const DeliveryPersonSection = () => {
           </Button>
         </div>
 
-        <div className="max-w-7xl mx-auto space-y-24 mt-16">
+        <div className="max-w-[90rem] mx-auto space-y-24 mt-16">
           {features.map((feature, index) => (
             <div 
               key={index}
