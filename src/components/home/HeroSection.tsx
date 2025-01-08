@@ -12,15 +12,15 @@ export const HeroSection = () => {
   return (
     <section className="relative bg-gradient-to-b from-primary/10 to-background px-4 py-16 md:py-24">
       <div className="container mx-auto">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div className="text-center md:text-left">
+        <div className="flex justify-center">
+          <div className="text-center max-w-2xl">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
               Your Health, Simplified
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8">
               Find and order medications, manage prescriptions, and connect with healthcare providers - all in one place.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
                 onClick={() => handleProfessionalSignup('pharmacist')}
