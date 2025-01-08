@@ -34,7 +34,7 @@ export const DeliveryPersonSection = () => {
   return (
     <section 
       ref={ref}
-      className="py-16 bg-white"
+      className="py-16"
     >
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center mb-12">
@@ -57,10 +57,10 @@ export const DeliveryPersonSection = () => {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className={`flex items-center gap-8 ${
-                index === 0 ? 'justify-start' : 
+              className={`flex items-center gap-12 ${
+                index === 0 ? 'justify-start ml-0' : 
                 index === 1 ? 'justify-center' : 
-                'justify-end'
+                'justify-end mr-0'
               } ${
                 inView ? 'animate-fade-in opacity-100' : 'opacity-0'
               }`}
