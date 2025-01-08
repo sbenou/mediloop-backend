@@ -14,9 +14,10 @@ import FindDoctor from "@/pages/FindDoctor";
 import DoctorConnections from "@/pages/DoctorConnections";
 import AdminSettings from "@/pages/AdminSettings";
 import ResetPassword from "@/pages/ResetPassword";
+import Services from "@/pages/Services";
+import BecomePartner from "@/pages/BecomePartner";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
 
-// Create a client
 const queryClient = new QueryClient();
 
 function App() {
@@ -29,6 +30,8 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:pharmacyId" element={<Products />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/become-partner" element={<BecomePartner />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />

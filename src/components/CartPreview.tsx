@@ -80,7 +80,7 @@ export const CartPreview = ({ onClose }: { onClose: () => void }) => {
           <span className="font-medium">${total.toFixed(2)}</span>
         </div>
         
-        <div className="space-y-2">
+        <div className="space-y-2 pb-4">
           <Button className="w-full">
             Proceed to Checkout
           </Button>

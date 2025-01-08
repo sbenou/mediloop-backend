@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useEffect } from "react";
 
 interface Category {
   id: string;
@@ -48,6 +49,18 @@ export const ProductFilters = ({
       return data as Category[];
     },
   });
+
+  useEffect(() => {
+    const handleFilterProducts = (event: CustomEvent<{ type: string }>) => {
+      onFilterChange({ type: event.detail.type });
+    };
+
+    window.addEventListener('filterProducts', handleFilterProducts as EventListener);
+
+    return () => {
+      window.removeEventListener('filterProducts', handleFilterProducts as EventListener);
+    };
+  }, [onFilterChange]);
 
   // Debug log for categories
   console.log('Filtered medication categories:', categories?.filter(cat => cat.type === 'medication'));
