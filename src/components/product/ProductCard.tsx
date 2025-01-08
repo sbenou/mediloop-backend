@@ -10,7 +10,7 @@ interface Product {
   price: number;
   requires_prescription: boolean;
   type: 'medication' | 'parapharmacy';
-  image_url?: string;
+  image_url?: string | null;
   description?: string;
 }
 
@@ -35,7 +35,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       id: product.id,
       name: product.name,
       price: product.price,
-      image_url: product.image_url,
+      image_url: product.image_url || undefined,
     });
 
     toast({
@@ -45,30 +45,42 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <Card>
-      {product.image_url && (
-        <div className="aspect-square relative overflow-hidden">
+    <Card className="overflow-hidden flex flex-col">
+      <div className="aspect-square relative overflow-hidden bg-gray-100">
+        {product.image_url ? (
           <img
             src={product.image_url}
             alt={product.name}
+            className="object-cover w-full h-full hover:scale-105 transition-transform duration-200"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/placeholder.svg';
+            }}
+          />
+        ) : (
+          <img
+            src="/placeholder.svg"
+            alt="Product placeholder"
             className="object-cover w-full h-full"
           />
-        </div>
-      )}
-      <CardHeader>
-        <CardTitle className="text-lg">{product.name}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {product.description && (
-          <p className="text-sm text-muted-foreground mb-4">{product.description}</p>
         )}
-        <div className="flex justify-between items-center">
-          <span className="font-medium">${product.price}</span>
+      </div>
+      <CardHeader>
+        <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col justify-between">
+        {product.description && (
+          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+            {product.description}
+          </p>
+        )}
+        <div className="flex justify-between items-center mt-auto">
+          <span className="font-medium">${product.price.toFixed(2)}</span>
           <Button
             variant="outline"
             size="sm"
             onClick={handleAddToCart}
-            className="flex items-center space-x-2"
+            className="flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             <span>Add to Cart</span>
