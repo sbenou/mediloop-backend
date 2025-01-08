@@ -1,4 +1,4 @@
-import { Store, UserRound, Pill } from "lucide-react";
+import { Store, UserRound, Pill, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const steps = [
@@ -37,7 +37,7 @@ const GetStartedSteps = () => {
         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
           <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
             {steps.map((step, index) => (
-              <div key={step.title} className="flex flex-col items-center">
+              <div key={step.title} className="flex flex-col items-center relative">
                 <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
                   <span className="text-xl font-bold text-white">{index + 1}</span>
                 </div>
@@ -55,6 +55,11 @@ const GetStartedSteps = () => {
                     </dd>
                   </div>
                 </Link>
+                {index < steps.length - 1 && (
+                  <div className="hidden lg:block absolute -right-4 top-24 transform translate-x-1/2">
+                    <ArrowRight className="h-8 w-8 text-primary" />
+                  </div>
+                )}
               </div>
             ))}
           </dl>
