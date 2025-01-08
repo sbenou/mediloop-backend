@@ -104,7 +104,7 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 Your Health App. All rights reserved.
+              © 2024 Luxmed. All rights reserved.
             </p>
             <div className="flex gap-4">
               <Button variant="link" size="sm">Privacy Policy</Button>
