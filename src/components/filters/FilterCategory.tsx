@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Badge } from "@/components/ui/badge";
 import { FilterSubcategory } from "./FilterSubcategory";
 import { Subcategory } from "@/components/product/types/product";
@@ -17,15 +18,21 @@ export const FilterCategory = ({
   subcategories,
   onFilterChange 
 }: FilterCategoryProps) => {
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('Category clicked:', { type, categoryId: id });
+    onFilterChange({ type, category: id });
+    navigate('/products');
+  };
+
   return (
     <div className="py-2">
       <a
         href="#"
-        onClick={(e) => {
-          e.preventDefault();
-          onFilterChange({ type, category: id });
-        }}
-        className="text-sm hover:text-primary w-full text-left block"
+        onClick={handleCategoryClick}
+        className="text-sm hover:text-primary w-full text-left block cursor-pointer"
       >
         {name}
         <Badge variant="secondary" className="ml-2">

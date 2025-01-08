@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Subcategory } from "@/components/product/types/product";
 import { FilterDescription } from "./FilterDescription";
 
@@ -14,6 +15,15 @@ export const FilterSubcategory = ({
   type,
   onFilterChange 
 }: FilterSubcategoryProps) => {
+  const navigate = useNavigate();
+
+  const handleSubcategoryClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('Subcategory clicked:', { type, categoryId, subcategoryId: subcategory.id });
+    onFilterChange({ type, category: categoryId, subcategory: subcategory.id });
+    navigate('/products');
+  };
+
   const getUniqueDescriptions = () => {
     if (!subcategory.products) return [];
     
@@ -28,11 +38,8 @@ export const FilterSubcategory = ({
     <div className="space-y-1">
       <a
         href="#"
-        onClick={(e) => {
-          e.preventDefault();
-          onFilterChange({ type, category: categoryId, subcategory: subcategory.id });
-        }}
-        className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
+        onClick={handleSubcategoryClick}
+        className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1 cursor-pointer"
       >
         {subcategory.name}
       </a>

@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 interface FilterDescriptionProps {
   description: string;
   categoryId: string;
@@ -13,14 +15,20 @@ export const FilterDescription = ({
   type,
   onFilterChange
 }: FilterDescriptionProps) => {
+  const navigate = useNavigate();
+
+  const handleDescriptionClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('Description clicked:', { type, categoryId, subcategoryId });
+    onFilterChange({ type, category: categoryId, subcategory: subcategoryId });
+    navigate('/products');
+  };
+
   return (
     <a
       href="#"
-      onClick={(e) => {
-        e.preventDefault();
-        onFilterChange({ type, category: categoryId, subcategory: subcategoryId });
-      }}
-      className="text-xs text-muted-foreground hover:text-primary block"
+      onClick={handleDescriptionClick}
+      className="text-xs text-muted-foreground hover:text-primary block cursor-pointer"
     >
       {description}
     </a>
