@@ -1,74 +1,42 @@
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Role } from "@/types/role";
-import { useRoleMutations } from "@/hooks/useRoleMutations";
+import { useRoleState } from "./role/useRoleState";
+import { useRoleQueries } from "./role/useRoleQueries";
+import { useRoleActions } from "./role/useRoleActions";
 
 export const useRoleManagement = () => {
-  const [isEditing, setIsEditing] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
-  const [tempRole, setTempRole] = useState<Role | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newRoleName, setNewRoleName] = useState("");
-  const [newRoleDescription, setNewRoleDescription] = useState("");
-  const [baseRoleId, setBaseRoleId] = useState<string>("");
-  const queryClient = useQueryClient();
-  
-  const { createRoleMutation, updateRoleMutation, deleteRoleMutation } = useRoleMutations();
+  const {
+    isEditing,
+    editName,
+    editDescription,
+    roleToDelete,
+    tempRole,
+    showCreateModal,
+    newRoleName,
+    newRoleDescription,
+    baseRoleId,
+    setIsEditing,
+    setEditName,
+    setEditDescription,
+    setRoleToDelete,
+    setTempRole,
+    setShowCreateModal,
+    setNewRoleName,
+    setNewRoleDescription,
+    setBaseRoleId,
+  } = useRoleState();
 
-  const { data: roles = [], isLoading } = useQuery({
-    queryKey: ['roles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('roles')
-        .select('*')
-        .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      return data as Role[];
-    },
+  const { roles, isLoading, queryClient } = useRoleQueries();
+
+  const { handleEdit, handleSave, handleDelete, confirmDelete } = useRoleActions({
+    setIsEditing,
+    setEditName,
+    setEditDescription,
+    setRoleToDelete,
+    setTempRole,
+    editName,
+    editDescription,
+    tempRole,
   });
-
-  const handleEdit = (role: Role) => {
-    setIsEditing(role.id);
-    setEditName(role.name);
-    setEditDescription(role.description);
-  };
-
-  const handleSave = async (id: string) => {
-    if (tempRole && tempRole.id === id) {
-      await createRoleMutation.mutateAsync({
-        name: editName,
-        description: editDescription,
-      });
-      setTempRole(null);
-    } else {
-      await updateRoleMutation.mutateAsync({
-        id,
-        name: editName,
-        description: editDescription,
-      });
-    }
-    setIsEditing(null);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (tempRole && tempRole.id === id) {
-      setTempRole(null);
-      setIsEditing(null);
-    } else {
-      setRoleToDelete(id);
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (roleToDelete) {
-      await deleteRoleMutation.mutateAsync(roleToDelete);
-      setRoleToDelete(null);
-    }
-  };
 
   const handleCreateRole = async () => {
     try {
