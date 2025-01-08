@@ -15,19 +15,19 @@ export const DeliveryPersonSection = () => {
       icon: Bike,
       title: "Simple Requirements",
       description: "All you need is a bicycle or electric scooter and safety equipment",
-      image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
+      image: "https://cdn.storyset.com/illustration/delivery-boy-delivering-package-by-bicycle-animate.svg"
     },
     {
       icon: Bell,
       title: "Location-Based Notifications",
       description: "Get notified about nearby deliveries in your area",
-      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"
+      image: "https://cdn.storyset.com/illustration/location-tracking-animate.svg"
     },
     {
       icon: DollarSign,
       title: "Monthly Payments",
       description: "Receive monthly payments for all completed deliveries",
-      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6"
+      image: "https://cdn.storyset.com/illustration/online-payments-animate.svg"
     }
   ];
 
@@ -85,7 +85,7 @@ export const DeliveryPersonSection = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-auto rounded-lg shadow-lg"
+                  className="w-full h-auto"
                   loading="lazy"
                 />
               </div>
