@@ -20,10 +20,12 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log("Attempting login with email:", email);
 
     try {
       // Sign out first to clear any existing session
       await supabase.auth.signOut();
+      console.log("Signed out existing session");
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -31,7 +33,11 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       });
 
       if (error) {
-        console.error("Login error:", error);
+        console.error("Login error details:", {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
         
         if (error.message.includes('Invalid login credentials')) {
           toast({
@@ -73,6 +79,12 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       }
 
       if (data.user) {
+        console.log("Login successful, user data:", {
+          id: data.user.id,
+          email: data.user.email,
+          lastSignIn: data.user.last_sign_in_at
+        });
+        
         toast({
           title: "Success",
           description: "Logged in successfully",
