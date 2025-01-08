@@ -9,6 +9,34 @@ export interface RoutePermissions {
   permissions: Permission[];
 }
 
+export interface NewPermission {
+  route: string;
+  id: string;
+  name: string;
+  description: string;
+}
+
+export const addNewPermission = (newPermission: NewPermission) => {
+  const existingRoute = availableRoutePermissions.find(r => r.route === newPermission.route);
+  
+  if (existingRoute) {
+    existingRoute.permissions.push({
+      id: newPermission.id,
+      name: newPermission.name,
+      description: newPermission.description
+    });
+  } else {
+    availableRoutePermissions.push({
+      route: newPermission.route,
+      permissions: [{
+        id: newPermission.id,
+        name: newPermission.name,
+        description: newPermission.description
+      }]
+    });
+  }
+};
+
 export const availableRoutePermissions: RoutePermissions[] = [
   {
     route: "Dashboard",
