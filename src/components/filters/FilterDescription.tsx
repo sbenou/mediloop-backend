@@ -5,7 +5,7 @@ interface FilterDescriptionProps {
   categoryId: string;
   subcategoryId: string;
   type: 'medication' | 'parapharmacy';
-  onFilterChange: (filters: { type?: string; category?: string; subcategory?: string }) => void;
+  onFilterChange: (filters: { type?: string; category?: string; subcategory?: string; description?: string }) => void;
 }
 
 export const FilterDescription = ({
@@ -19,8 +19,8 @@ export const FilterDescription = ({
 
   const handleDescriptionClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('Description clicked:', { type, categoryId, subcategoryId });
-    onFilterChange({ type, category: categoryId, subcategory: subcategoryId });
+    console.log('Description clicked:', { type, categoryId, subcategoryId, description });
+    onFilterChange({ type, category: categoryId, subcategory: subcategoryId, description });
     navigate('/products');
   };
 

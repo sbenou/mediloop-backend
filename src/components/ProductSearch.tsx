@@ -16,6 +16,7 @@ export const ProductSearch = () => {
     type?: string;
     category?: string;
     subcategory?: string;
+    description?: string;
   }>({});
   const [sortBy, setSortBy] = useState("newest");
 
@@ -27,7 +28,7 @@ export const ProductSearch = () => {
     itemsPerPage: ITEMS_PER_PAGE
   });
 
-  const handleFilterChange = (newFilters: { type?: string; category?: string; subcategory?: string }) => {
+  const handleFilterChange = (newFilters: { type?: string; category?: string; subcategory?: string; description?: string }) => {
     console.log('Applying new filters:', newFilters);
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when filters change

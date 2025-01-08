@@ -5,6 +5,7 @@ export interface ProductFiltersState {
   type?: string;
   category?: string;
   subcategory?: string;
+  description?: string;
 }
 
 export interface ProductQueryConfig {
@@ -77,6 +78,11 @@ export const useProductQuery = ({
       
       if (filters.subcategory) {
         query = query.eq('subcategory_id', filters.subcategory);
+      }
+
+      // Add description filter
+      if (filters.description) {
+        query = query.ilike('description', filters.description);
       }
       
       if (searchTerm) {
