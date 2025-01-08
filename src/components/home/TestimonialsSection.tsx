@@ -10,19 +10,19 @@ const testimonials = [
   {
     name: "Sarah Johnson",
     role: "Regular Customer",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
     quote: "Luxmed has made managing my prescriptions so much easier. The delivery service is prompt and reliable!"
   },
   {
     name: "Michael Chen",
     role: "Patient",
-    image: "https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?w=400&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952",
     quote: "The ability to compare medication prices across different pharmacies has saved me both time and money."
   },
   {
     name: "Emily Rodriguez",
     role: "Healthcare Professional",
-    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
     quote: "As a healthcare provider, I appreciate how Luxmed streamlines the prescription process for my patients."
   }
 ];
