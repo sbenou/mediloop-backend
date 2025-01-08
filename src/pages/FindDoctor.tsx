@@ -9,8 +9,8 @@ import DoctorList from "@/components/doctor/DoctorList";
 import { toast } from "@/components/ui/use-toast";
 
 const LUXEMBOURG_COORDINATES = {
-  lat: 49.6116,
-  lon: 6.1319
+  lat: "49.6116",
+  lon: "6.1319"
 };
 
 const FindDoctor = () => {
@@ -39,11 +39,11 @@ const FindDoctor = () => {
     enabled: !!session?.user?.id,
   });
 
-  // Convert coordinates to numbers before passing them to useDoctorSearch
+  // Convert coordinates to string format before passing them
   const searchCoordinates = coordinates 
     ? { 
-        lat: parseFloat(coordinates.lat), 
-        lon: parseFloat(coordinates.lon) 
+        lat: coordinates.lat.toString(), 
+        lon: coordinates.lon.toString() 
       } 
     : LUXEMBOURG_COORDINATES;
 
