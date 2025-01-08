@@ -32,7 +32,7 @@ export const FeaturesGrid = () => {
   ];
 
   return (
-    <section className="py-16 md:py-24 px-4">
+    <section className="py-16 md:py-24 px-4 animate-slide-up [animation-delay:600ms] opacity-0 [animation-fill-mode:forwards]">
       <div className="container mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           Everything You Need

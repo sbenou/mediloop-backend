@@ -24,7 +24,7 @@ const steps = [
 
 const GetStartedSteps = () => {
   return (
-    <div className="py-24 sm:py-32">
+    <div className="py-24 sm:py-32 animate-slide-up [animation-delay:400ms] opacity-0 [animation-fill-mode:forwards]">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">

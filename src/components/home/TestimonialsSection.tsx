@@ -29,7 +29,7 @@ const testimonials = [
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-white animate-slide-up [animation-delay:800ms] opacity-0 [animation-fill-mode:forwards]">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           What Our Users Say

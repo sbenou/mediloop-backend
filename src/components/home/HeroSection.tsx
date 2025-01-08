@@ -10,7 +10,7 @@ export const HeroSection = () => {
   };
 
   return (
-    <section className="relative bg-gradient-to-b from-primary/10 to-background px-4 py-16 md:py-24">
+    <section className="relative bg-gradient-to-b from-primary/10 to-background px-4 py-16 md:py-24 animate-fade-in [animation-delay:200ms] opacity-0 [animation-fill-mode:forwards]">
       <div className="container mx-auto">
         <div className="flex justify-center">
           <div className="text-center max-w-2xl">
