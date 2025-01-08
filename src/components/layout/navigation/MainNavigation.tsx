@@ -26,6 +26,7 @@ export const MainNavigation = () => {
           subcategories (
             id,
             name,
+            category_id,
             products (
               id,
               name,
@@ -133,7 +134,7 @@ export const MainNavigation = () => {
                     <div key={subcategory.id} className="ml-4 space-y-1">
                       <h4 className="text-sm font-medium">{subcategory.name}</h4>
                       <div className="ml-4 text-sm text-muted-foreground">
-                        {getUniqueDescriptions(subcategory).map((description, index) => (
+                        {getUniqueDescriptions(subcategory as Subcategory).map((description, index) => (
                           <p key={index} className="line-clamp-2">{description}</p>
                         ))}
                       </div>
