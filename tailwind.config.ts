@@ -48,6 +48,10 @@ export default {
           DEFAULT: "#FFFFFF",
           foreground: "#1A202C",
         },
+        popover: {
+          DEFAULT: "#FFFFFF",
+          foreground: "#1A202C",
+        },
       },
       borderRadius: {
         lg: "0.75rem",
