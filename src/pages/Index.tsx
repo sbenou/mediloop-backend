@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import Header from "@/components/layout/Header";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -79,23 +78,19 @@ const Index = () => {
   const platformStats = [
     {
       label: "Total Orders",
-      value: stats?.ordersCount ?? 0,
-      icon: <ShoppingCart className="h-6 w-6 text-primary" />
+      value: stats?.ordersCount ?? 0
     },
     {
       label: "Partner Pharmacies",
-      value: stats?.pharmaciesCount ?? 0,
-      icon: <Building2 className="h-6 w-6 text-primary" />
+      value: stats?.pharmaciesCount ?? 0
     },
     {
       label: "Healthcare Providers",
-      value: stats?.doctorsCount ?? 0,
-      icon: <Users className="h-6 w-6 text-primary" />
+      value: stats?.doctorsCount ?? 0
     },
     {
       label: "Prescriptions Managed",
-      value: stats?.prescriptionsCount ?? 0,
-      icon: <Clipboard className="h-6 w-6 text-primary" />
+      value: stats?.prescriptionsCount ?? 0
     }
   ];
 
@@ -160,13 +155,14 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {platformStats.map((stat, index) => (
-                <Card key={index} className="p-6 text-center hover:shadow-md transition-shadow">
-                  <div className="flex justify-center mb-4">
-                    {stat.icon}
+                <div key={index} className="text-center">
+                  <div className="text-2xl font-semibold text-muted-foreground mb-2">
+                    {stat.label}
                   </div>
-                  <div className="text-3xl font-bold mb-2">{stat.value.toLocaleString()}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </Card>
+                  <div className="text-4xl font-bold">
+                    {stat.value.toLocaleString()}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
