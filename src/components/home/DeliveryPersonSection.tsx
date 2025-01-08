@@ -15,19 +15,22 @@ export const DeliveryPersonSection = () => {
       icon: Bike,
       title: "Simple Requirements",
       description: "All you need is a bicycle or electric scooter and safety equipment",
-      image: "/transport.svg"
+      image: "/transport.svg",
+      attribution: "Transport illustrations by Storyset"
     },
     {
       icon: Bell,
       title: "Location-Based Notifications",
       description: "Get notified about nearby deliveries in your area",
-      image: "/location-tracking.svg"
+      image: "/location-tracking.svg",
+      attribution: "Online illustrations by Storyset"
     },
     {
       icon: DollarSign,
       title: "Monthly Payments",
       description: "Receive monthly payments for all completed deliveries",
-      image: "/online-payments.svg"
+      image: "/online-payments.svg",
+      attribution: "Business illustrations by Storyset"
     }
   ];
 
@@ -80,6 +83,9 @@ export const DeliveryPersonSection = () => {
                 <p className="text-gray-600">
                   {feature.description}
                 </p>
+                <small className="text-gray-500 mt-2 block">
+                  {feature.attribution}
+                </small>
               </div>
               <div className="flex-1 max-w-md">
                 <img 
