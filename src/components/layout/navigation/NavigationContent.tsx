@@ -17,16 +17,27 @@ export const NavigationContent = ({
   getFilteredCategories,
   getUniqueDescriptions 
 }: NavigationContentProps) => {
+  const getUniqueCategories = (categories: any[], type: string) => {
+    const seen = new Set();
+    return categories?.filter(cat => {
+      if (cat.type === type && !seen.has(cat.name)) {
+        seen.add(cat.name);
+        return true;
+      }
+      return false;
+    }) || [];
+  };
+
   return (
     <NavigationMenuContent>
       <div className="grid grid-cols-2 gap-4 p-4 w-[600px]">
-        {/* Left side - Category Types */}
         <CategoryContent 
           selectedType={selectedType}
           setSelectedType={setSelectedType}
           categories={categories}
           getFilteredCategories={getFilteredCategories}
           getUniqueDescriptions={getUniqueDescriptions}
+          getUniqueCategories={getUniqueCategories}
         />
 
         {/* Bottom Links */}

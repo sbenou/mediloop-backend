@@ -8,10 +8,12 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { CategoryContent } from './CategoryContent';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useState } from 'react';
 
 export const CategoriesNavigation = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -51,6 +53,14 @@ export const CategoriesNavigation = () => {
     }) || [];
   };
 
+  const getUniqueDescriptions = (subcategory: any) => {
+    if (!subcategory.products) return [];
+    const descriptions = subcategory.products
+      .filter((product: any) => product && typeof product.description === 'string' && product.description.trim() !== '')
+      .map((product: any) => product.description);
+    return [...new Set(descriptions)];
+  };
+
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>Medications</NavigationMenuTrigger>
@@ -59,6 +69,9 @@ export const CategoriesNavigation = () => {
           <CategoryContent 
             categories={categories || []}
             getUniqueCategories={getUniqueCategories}
+            selectedType={selectedType}
+            setSelectedType={setSelectedType}
+            getUniqueDescriptions={getUniqueDescriptions}
           />
         </div>
       </NavigationMenuContent>
