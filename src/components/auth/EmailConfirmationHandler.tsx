@@ -54,8 +54,8 @@ const EmailConfirmationHandler = () => {
 
           if (sessionError) throw sessionError;
 
-          // Handle different types of confirmations
-          if (type === 'recovery' || type === 'passwordReset' || !type) {
+          // Always treat it as a password reset when we're on the callback route
+          if (window.location.pathname === '/auth/callback' || type === 'recovery' || type === 'passwordReset' || !type) {
             toast({
               title: "Reset Password",
               description: "You can now reset your password.",
