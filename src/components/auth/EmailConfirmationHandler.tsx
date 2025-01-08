@@ -18,7 +18,7 @@ const EmailConfirmationHandler = () => {
       console.log('Hash:', window.location.hash);
       console.log('Path:', location.pathname);
       
-      // Try to get tokens from both search params and hash
+      const code = params.get('code');
       const access_token = params.get('access_token') || hashParams.get('access_token');
       const refresh_token = params.get('refresh_token') || hashParams.get('refresh_token');
       const type = params.get('type') || hashParams.get('type');
@@ -29,6 +29,7 @@ const EmailConfirmationHandler = () => {
         error,
         error_description,
         type,
+        code,
         hasAccessToken: !!access_token,
         hasRefreshToken: !!refresh_token,
         fullUrl: window.location.href
@@ -45,7 +46,34 @@ const EmailConfirmationHandler = () => {
         return;
       }
 
-      // If we have tokens, set the session
+      // Handle recovery flow with code
+      if (type === 'recovery' && code) {
+        console.log('Handling recovery with code');
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+
+          if (data.session) {
+            toast({
+              title: "Password Reset",
+              description: "You can now reset your password.",
+            });
+            navigate('/reset-password', { replace: true });
+            return;
+          }
+        } catch (error: any) {
+          console.error('Recovery code exchange error:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message || "Failed to process recovery request",
+          });
+          navigate('/login', { replace: true });
+          return;
+        }
+      }
+
+      // If we have tokens directly, set the session
       if (access_token && refresh_token) {
         console.log('Setting session with tokens');
         try {
@@ -56,9 +84,7 @@ const EmailConfirmationHandler = () => {
 
           if (sessionError) throw sessionError;
 
-          // Handle different types of confirmations
-          if (type === 'recovery' || type === 'passwordReset') {
-            console.log('Handling recovery/passwordReset flow');
+          if (type === 'recovery') {
             toast({
               title: "Password Reset",
               description: "You can now reset your password.",
@@ -85,16 +111,9 @@ const EmailConfirmationHandler = () => {
         }
       }
 
-      // If we're on the callback route but don't have tokens yet
-      if (location.pathname === '/auth/callback') {
-        const callbackType = params.get('type');
-        if (callbackType === 'recovery') {
-          console.log('Recovery callback detected, waiting for tokens');
-          // Don't redirect yet, wait for tokens
-          return;
-        }
-        // For other cases without tokens, redirect to login
-        console.log('No tokens found in callback URL, redirecting to login');
+      // If we're on the callback route but don't have tokens or code
+      if (location.pathname === '/auth/callback' && !code && !access_token) {
+        console.log('No tokens or code found in callback URL, redirecting to login');
         navigate('/login', { replace: true });
       }
 
