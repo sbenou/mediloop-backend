@@ -136,6 +136,7 @@ export const useRoleManagement = () => {
     setNewRoleName,
     setNewRoleDescription,
     setBaseRoleId,
+    setRoleToDelete,
     handleEdit,
     handleSave,
     handleDelete,
