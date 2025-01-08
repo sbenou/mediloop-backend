@@ -70,9 +70,9 @@ const ResetPassword = () => {
         throw new Error('Recovery code not found');
       }
 
-      // First verify the recovery code
+      // First verify the recovery code with the correct type parameters
       const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-        token: recoveryCode,
+        token_hash: recoveryCode,
         type: 'recovery'
       });
 
