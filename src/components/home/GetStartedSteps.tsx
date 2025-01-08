@@ -35,19 +35,19 @@ const GetStartedSteps = () => {
           </p>
         </div>
         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-          <dl className="grid max-w-xl grid-cols-1 gap-x-2 gap-y-16 lg:max-w-none lg:grid-cols-3">
+          <dl className="grid max-w-xl grid-cols-1 gap-x-1 gap-y-16 lg:max-w-none lg:grid-cols-3">
             {steps.map((step, index) => (
               <div key={step.title} className="flex flex-col items-center">
                 <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
                   <span className="text-xl font-bold text-white">{index + 1}</span>
                 </div>
-                <div className="w-full max-w-[260px] transition-all hover:scale-105">
+                <div className="w-full max-w-[300px] transition-all hover:scale-105">
                   <div className="bg-card p-6 flex flex-col items-center h-full">
                     <step.icon className="h-8 w-8 text-primary mb-4" aria-hidden="true" />
                     <dt className="text-xl font-semibold leading-7 mb-4 whitespace-nowrap">
                       {step.title}
                     </dt>
-                    <dd className="flex-1 text-base leading-7 text-muted-foreground text-center mb-4 max-w-[200px]">
+                    <dd className="flex-1 text-base leading-7 text-muted-foreground text-center mb-4 max-w-[220px]">
                       <p>{step.description}</p>
                     </dd>
                     <Link
