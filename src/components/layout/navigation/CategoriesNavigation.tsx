@@ -41,6 +41,18 @@ export const CategoriesNavigation = () => {
     }, 100);
   };
 
+  // Helper function to remove duplicates based on category name
+  const getUniqueCategories = (categories: any[], type: string) => {
+    const seen = new Set();
+    return categories?.filter(cat => {
+      if (cat.type === type && !seen.has(cat.name)) {
+        seen.add(cat.name);
+        return true;
+      }
+      return false;
+    }) || [];
+  };
+
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
@@ -55,7 +67,7 @@ export const CategoriesNavigation = () => {
                 Pharmacy
               </button>
               <div className="space-y-2">
-                {categories?.filter(cat => cat.type === 'medication').map((category) => (
+                {getUniqueCategories(categories || [], 'medication').map((category) => (
                   <div key={category.id} className="space-y-1">
                     {category.subcategories?.map((sub) => (
                       <button
@@ -78,7 +90,7 @@ export const CategoriesNavigation = () => {
                 Parapharmacy
               </button>
               <div className="space-y-2">
-                {categories?.filter(cat => cat.type === 'parapharmacy').map((category) => (
+                {getUniqueCategories(categories || [], 'parapharmacy').map((category) => (
                   <div key={category.id} className="space-y-1">
                     {category.subcategories?.map((sub) => (
                       <button
