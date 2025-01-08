@@ -58,14 +58,15 @@ export const useProductQuery = ({
       
       let query = supabase
         .from('products')
-        .select('*', { count: 'exact' });
+        .select(`
+          *,
+          category:categories(id, name),
+          subcategory:subcategories(id, name)
+        `, { count: 'exact' });
       
       // Apply filters
       if (filters.type) {
         query = query.eq('type', filters.type);
-        if (filters.type === 'medication') {
-          query = query.eq('requires_prescription', true);
-        }
       } else if (userProfile?.role !== 'pharmacist' && userProfile?.role !== 'superadmin') {
         query = query.eq('type', 'parapharmacy');
       }
@@ -79,7 +80,7 @@ export const useProductQuery = ({
       }
       
       if (searchTerm) {
-        query = query.ilike('name', `%${searchTerm}%`);
+        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
       
       // Apply sorting
