@@ -5,6 +5,7 @@ export const sendPasswordResetEmail = async (email: string) => {
   
   // Get the current domain and ensure we stay on the preview domain
   const currentDomain = window.location.origin;
+  // Use the same domain for the redirect
   const redirectTo = `${currentDomain}/auth/callback?type=recovery`;
   
   console.log("Reset password redirect URL:", redirectTo);
