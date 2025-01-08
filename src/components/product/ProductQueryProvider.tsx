@@ -60,13 +60,13 @@ export const useProductQuery = ({
         .from('products')
         .select('*', { count: 'exact' });
       
-      // Filter by type (medication/parapharmacy)
-      if (filters.type === 'medication') {
-        query = query.eq('type', 'medication').eq('requires_prescription', true);
-      } else if (filters.type === 'parapharmacy') {
-        query = query.eq('type', 'parapharmacy').eq('requires_prescription', false);
+      // Apply filters
+      if (filters.type) {
+        query = query.eq('type', filters.type);
+        if (filters.type === 'medication') {
+          query = query.eq('requires_prescription', true);
+        }
       } else if (userProfile?.role !== 'pharmacist' && userProfile?.role !== 'superadmin') {
-        // If no type filter and user is not pharmacist/superadmin, show only parapharmacy
         query = query.eq('type', 'parapharmacy');
       }
       
@@ -82,6 +82,7 @@ export const useProductQuery = ({
         query = query.ilike('name', `%${searchTerm}%`);
       }
       
+      // Apply sorting
       switch (sortBy) {
         case 'name':
           query = query.order('name');
@@ -99,6 +100,7 @@ export const useProductQuery = ({
           query = query.order('created_at', { ascending: false });
       }
       
+      // Apply pagination
       const from = (currentPage - 1) * itemsPerPage;
       query = query.range(from, from + itemsPerPage - 1);
       

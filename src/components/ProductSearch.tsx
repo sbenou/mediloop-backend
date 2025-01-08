@@ -27,15 +27,18 @@ export const ProductSearch = () => {
     itemsPerPage: ITEMS_PER_PAGE
   });
 
-  // Add console.log to debug products data
-  console.log('Products Data:', productsData);
+  const handleFilterChange = (newFilters: { type?: string; category?: string; subcategory?: string }) => {
+    console.log('Applying new filters:', newFilters);
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
+  };
 
   return (
     <div className="flex gap-6">
       <div className="w-64 space-y-6">
         <ProductFilters 
           userRole={productsData?.userProfile?.role || null}
-          onFilterChange={setFilters}
+          onFilterChange={handleFilterChange}
         />
         {productsData?.userProfile?.role === 'pharmacist' && (
           <ProductUploader />
@@ -46,9 +49,15 @@ export const ProductSearch = () => {
         <div className="flex items-center justify-between">
           <ProductSearchBar 
             value={searchTerm}
-            onChange={setSearchTerm}
+            onChange={(value) => {
+              setSearchTerm(value);
+              setCurrentPage(1); // Reset to first page when search changes
+            }}
           />
-          <ProductSort onSortChange={setSortBy} />
+          <ProductSort onSortChange={(value) => {
+            setSortBy(value);
+            setCurrentPage(1); // Reset to first page when sort changes
+          }} />
         </div>
 
         <ProductGrid 
