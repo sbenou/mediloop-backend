@@ -1,9 +1,9 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
+import { FilterCategory } from "./filters/FilterCategory";
 
 interface Category {
   id: string;
@@ -99,16 +99,6 @@ export const ProductFilters = ({
     });
   };
 
-  const getUniqueDescriptions = (subcategory: Subcategory) => {
-    if (!subcategory.products) return [];
-    
-    const descriptions = subcategory.products
-      .filter(product => product && typeof product.description === 'string' && product.description.trim() !== '')
-      .map(product => product.description);
-    
-    return [...new Set(descriptions)];
-  };
-
   return (
     <div className="w-64 flex-shrink-0 border-r pr-4">
       <h3 className="font-semibold mb-4">Filters</h3>
@@ -118,52 +108,14 @@ export const ProductFilters = ({
             <AccordionTrigger>Pharmacy</AccordionTrigger>
             <AccordionContent>
               {getMedicationCategories().map((category) => (
-                <div key={category.id} className="py-2">
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onFilterChange({ type: 'medication', category: category.id });
-                    }}
-                    className="text-sm hover:text-primary w-full text-left block"
-                  >
-                    {category.name}
-                    <Badge variant="secondary" className="ml-2">
-                      {category.subcategories.length}
-                    </Badge>
-                  </a>
-                  <div className="ml-4 space-y-1 mt-1">
-                    {category.subcategories.map((sub) => (
-                      <div key={sub.id} className="space-y-1">
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            onFilterChange({ type: 'medication', category: category.id, subcategory: sub.id });
-                          }}
-                          className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
-                        >
-                          {sub.name}
-                        </a>
-                        <div className="pl-4 space-y-1">
-                          {getUniqueDescriptions(sub).map((description, index) => (
-                            <a
-                              href="#"
-                              key={`${sub.id}-${index}`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                onFilterChange({ type: 'medication', category: category.id, subcategory: sub.id });
-                              }}
-                              className="text-xs text-muted-foreground hover:text-primary block"
-                            >
-                              {description}
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <FilterCategory
+                  key={category.id}
+                  id={category.id}
+                  name={category.name}
+                  type="medication"
+                  subcategories={category.subcategories}
+                  onFilterChange={onFilterChange}
+                />
               ))}
             </AccordionContent>
           </AccordionItem>
@@ -171,52 +123,14 @@ export const ProductFilters = ({
             <AccordionTrigger>Parapharmacy</AccordionTrigger>
             <AccordionContent>
               {getParapharmacyCategories().map((category) => (
-                <div key={category.id} className="py-2">
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onFilterChange({ type: 'parapharmacy', category: category.id });
-                    }}
-                    className="text-sm hover:text-primary w-full text-left block"
-                  >
-                    {category.name}
-                    <Badge variant="secondary" className="ml-2">
-                      {category.subcategories.length}
-                    </Badge>
-                  </a>
-                  <div className="ml-4 space-y-1 mt-1">
-                    {category.subcategories.map((sub) => (
-                      <div key={sub.id} className="space-y-1">
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            onFilterChange({ type: 'parapharmacy', category: category.id, subcategory: sub.id });
-                          }}
-                          className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1"
-                        >
-                          {sub.name}
-                        </a>
-                        <div className="pl-4 space-y-1">
-                          {getUniqueDescriptions(sub).map((description, index) => (
-                            <a
-                              href="#"
-                              key={`${sub.id}-${index}`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                onFilterChange({ type: 'parapharmacy', category: category.id, subcategory: sub.id });
-                              }}
-                              className="text-xs text-muted-foreground hover:text-primary block"
-                            >
-                              {description}
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <FilterCategory
+                  key={category.id}
+                  id={category.id}
+                  name={category.name}
+                  type="parapharmacy"
+                  subcategories={category.subcategories}
+                  onFilterChange={onFilterChange}
+                />
               ))}
             </AccordionContent>
           </AccordionItem>
