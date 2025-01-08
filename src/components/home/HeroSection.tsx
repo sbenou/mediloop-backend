@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Pill, Stethoscope } from "lucide-react";
+import { Pill, Stethoscope, Truck } from "lucide-react";
 
 export const HeroSection = () => {
   const navigate = useNavigate();
   
-  const handleProfessionalSignup = (role: 'pharmacist' | 'doctor') => {
+  const handleProfessionalSignup = (role: 'pharmacist' | 'doctor' | 'delivery') => {
     navigate('/signup', { state: { selectedRole: role } });
   };
 
@@ -23,6 +23,7 @@ export const HeroSection = () => {
             <Button 
               size="lg" 
               onClick={() => handleProfessionalSignup('pharmacist')}
+              className="bg-[#9b87f5] hover:bg-[#8B5CF6]"
             >
               <Pill className="mr-2 h-4 w-4" />
               Pharmacists
@@ -34,6 +35,15 @@ export const HeroSection = () => {
             >
               <Stethoscope className="mr-2 h-4 w-4" />
               Doctors
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline"
+              onClick={() => handleProfessionalSignup('delivery')}
+              className="bg-[#F2FCE2] hover:bg-[#E2ECd2] text-[#2C3E50]"
+            >
+              <Truck className="mr-2 h-4 w-4" />
+              Delivery man
             </Button>
           </div>
         </div>
