@@ -4,12 +4,6 @@ import { ProductSort } from "./ProductSort";
 import { ProductGrid } from "./ProductGrid";
 import { ProductSearchBar } from "./ProductSearchBar";
 import { ProductPagination } from "./ProductPagination";
-import { Button } from "./ui/button";
-import { ShoppingCart } from "lucide-react";
-import { useCart } from "@/contexts/CartContext";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { CartPreview } from "./CartPreview";
-import { ProductUploader } from "./product/ProductUploader";
 import { useProductQuery } from "./product/ProductQueryProvider";
 
 const ITEMS_PER_PAGE = 12;
@@ -23,8 +17,6 @@ export const ProductSearch = () => {
     subcategory?: string;
   }>({});
   const [sortBy, setSortBy] = useState("newest");
-  const { state: cartState } = useCart();
-  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const { data: productsData, isLoading } = useProductQuery({
     searchTerm,
@@ -33,8 +25,6 @@ export const ProductSearch = () => {
     sortBy,
     itemsPerPage: ITEMS_PER_PAGE
   });
-
-  const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
   // Add console.log to debug products data
   console.log('Products Data:', productsData);
@@ -57,27 +47,7 @@ export const ProductSearch = () => {
             value={searchTerm}
             onChange={setSearchTerm}
           />
-          <div className="flex items-center gap-4">
-            <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="relative">
-                  <ShoppingCart className="h-4 w-4" />
-                  {itemCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {itemCount}
-                    </span>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Shopping Cart</SheetTitle>
-                </SheetHeader>
-                <CartPreview onClose={() => setIsCartOpen(false)} />
-              </SheetContent>
-            </Sheet>
-            <ProductSort onSortChange={setSortBy} />
-          </div>
+          <ProductSort onSortChange={setSortBy} />
         </div>
 
         <ProductGrid 
