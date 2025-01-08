@@ -24,7 +24,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
                 <img 
                   src="/lovable-uploads/1d4b50b5-2725-470b-a070-5227c3aa24b6.png" 
                   alt="LuxMed Logo" 
-                  className="h-12"
+                  className="h-16" // Increased from h-12 to h-16
                 />
               </Link>
             )}
