@@ -16,6 +16,7 @@ import AdminSettings from "@/pages/AdminSettings";
 import ResetPassword from "@/pages/ResetPassword";
 import Services from "@/pages/Services";
 import BecomePartner from "@/pages/BecomePartner";
+import SearchPharmacy from "@/pages/SearchPharmacy";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ function App() {
           <EmailConfirmationHandler />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/search-pharmacy" element={<SearchPharmacy />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:pharmacyId" element={<Products />} />
             <Route path="/services" element={<Services />} />
