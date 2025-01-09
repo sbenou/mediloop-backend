@@ -16,6 +16,8 @@ serve(async (req) => {
   try {
     // Get the session or user object
     const authHeader = req.headers.get('Authorization')!
+    console.log('Auth header present:', !!authHeader);
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -24,6 +26,8 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
       authHeader.replace('Bearer ', '')
     )
+
+    console.log('Auth check result:', { user: !!user, error: authError });
 
     if (authError || !user?.email) {
       throw new Error('Unauthorized or no email found')
