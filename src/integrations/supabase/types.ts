@@ -239,9 +239,11 @@ export type Database = {
         Row: {
           city: string | null
           created_at: string | null
+          deleted_at: string | null
           email: string | null
           full_name: string | null
           id: string
+          is_blocked: boolean | null
           license_number: string | null
           role: string
           role_id: string | null
@@ -250,9 +252,11 @@ export type Database = {
         Insert: {
           city?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
+          is_blocked?: boolean | null
           license_number?: string | null
           role: string
           role_id?: string | null
@@ -261,9 +265,11 @@ export type Database = {
         Update: {
           city?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          is_blocked?: boolean | null
           license_number?: string | null
           role?: string
           role_id?: string | null
@@ -401,6 +407,18 @@ export type Database = {
           status: Database["public"]["Enums"]["connection_status"]
         }
         Returns: Json
+      }
+      soft_delete_user: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
+      toggle_user_block: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
       }
       truncate_products: {
         Args: Record<PropertyKey, never>
