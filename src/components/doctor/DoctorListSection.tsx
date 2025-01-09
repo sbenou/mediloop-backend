@@ -46,14 +46,14 @@ interface DoctorListSectionProps {
   doctors: any[];
   isLoading: boolean;
   coordinates: { lat: number; lon: number } | null;
-  onDoctorSelect: (doctorId: string) => void;
+  onConnect: (doctorId: string, source?: 'database' | 'overpass') => void;
 }
 
 const DoctorListSection = ({
   doctors,
   isLoading,
   coordinates,
-  onDoctorSelect,
+  onConnect,
 }: DoctorListSectionProps) => {
   if (!coordinates) {
     return <div>Loading location...</div>;
@@ -80,7 +80,7 @@ const DoctorListSection = ({
           <DoctorCard
             key={doctor.id}
             {...doctor}
-            onSelect={onDoctorSelect}
+            onConnect={() => onConnect(doctor.id, doctor.source)}
           />
         ))}
 
@@ -93,6 +93,8 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
+          center={[coordinates.lat, coordinates.lon]}
+          zoom={13}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -101,8 +103,7 @@ const DoctorListSection = ({
           
           {/* User location marker */}
           <Marker 
-            position={[coordinates.lat, coordinates.lon]}
-            icon={userLocationIcon}
+            position={[coordinates.lat, coordinates.lon] as [number, number]}
           >
             <Popup>Your location</Popup>
           </Marker>
@@ -114,8 +115,7 @@ const DoctorListSection = ({
               position={[
                 doctor.coordinates?.lat || coordinates.lat,
                 doctor.coordinates?.lon || coordinates.lon
-              ]}
-              icon={doctorLocationIcon}
+              ] as [number, number]}
             >
               <Popup>
                 <div className="text-sm">
