@@ -39,36 +39,24 @@ export const useSignupMutation = () => {
   };
 
   const createUserProfile = async (userId: string, email: string, name: string, userRole: UserRole, licenseNumber: string) => {
-    console.log("Checking for existing profile...");
-    const { data: existingProfile, error: profileCheckError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .single();
-
-    if (profileCheckError) {
-      console.error("Error checking existing profile:", profileCheckError);
-    }
-
-    if (!existingProfile) {
-      console.log("No existing profile found, creating new profile...");
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([{
-          id: userId,
-          email,
-          full_name: name,
-          role: roleMapping[userRole],
-          license_number: licenseNumber || null,
-        }]);
+    try {
+      console.log("Creating new profile...");
+      const { error: profileError } = await supabase.rpc('create_profile', {
+        user_id: userId,
+        user_role: roleMapping[userRole],
+        user_full_name: name,
+        user_email: email,
+        user_license_number: licenseNumber || null
+      });
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
         throw new Error("Failed to create user profile: " + profileError.message);
       }
       console.log("Profile created successfully");
-    } else {
-      console.log("Profile already exists:", existingProfile);
+    } catch (error) {
+      console.error("Error in createUserProfile:", error);
+      throw error;
     }
   };
 
