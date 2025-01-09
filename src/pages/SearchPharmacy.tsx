@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
@@ -14,6 +14,7 @@ const LUXEMBOURG_COORDINATES = {
 };
 
 const SearchPharmacy = () => {
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
   
   const { data: session } = useQuery({
@@ -39,13 +40,35 @@ const SearchPharmacy = () => {
     enabled: !!session?.user?.id,
   });
 
-  // Convert coordinates to numbers before passing them to usePharmacySearch
+  useEffect(() => {
+    // Try to get user's current location
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast({
+            title: "Location Access Failed",
+            description: "Using default location. You can search for a specific city.",
+            variant: "destructive",
+          });
+        }
+      );
+    }
+  }, []);
+
+  // Use user's location, searched coordinates, or default Luxembourg coordinates
   const searchCoordinates = coordinates 
     ? { 
         lat: parseFloat(coordinates.lat), 
         lon: parseFloat(coordinates.lon) 
       } 
-    : LUXEMBOURG_COORDINATES;
+    : userLocation || LUXEMBOURG_COORDINATES;
 
   const { pharmacies, isLoading } = usePharmacySearch(
     searchCoordinates,
@@ -141,21 +164,21 @@ const SearchPharmacy = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header session={session} />
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+      <main className="container mx-auto p-4">
+        <div className="mb-8">
           <h1 className="text-4xl font-bold text-center mb-8">Find a Pharmacy Near You</h1>
-          <div className="mb-8">
+          <div className="max-w-xl mx-auto">
             <CitySearch onSearch={handleCitySearch} />
           </div>
-          <PharmacyListSection
-            pharmacies={pharmacies}
-            isLoading={isLoading || isSearching}
-            coordinates={searchCoordinates}
-            defaultPharmacyId={defaultPharmacy}
-            onPharmacySelect={handlePharmacySelect}
-            onSetDefaultPharmacy={handleSetDefaultPharmacy}
-          />
         </div>
+        <PharmacyListSection
+          pharmacies={pharmacies}
+          isLoading={isLoading || isSearching}
+          coordinates={searchCoordinates}
+          defaultPharmacyId={defaultPharmacy}
+          onPharmacySelect={handlePharmacySelect}
+          onSetDefaultPharmacy={handleSetDefaultPharmacy}
+        />
       </main>
     </div>
   );
