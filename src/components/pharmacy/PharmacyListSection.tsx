@@ -79,19 +79,21 @@ const PharmacyListSection = ({
 
       <div className="rounded-lg overflow-hidden border border-gray-200 h-full">
         <MapContainer
-          center={[coordinates.lat, coordinates.lon]}
+          center={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
           zoom={13}
           style={{ height: '100%', width: '100%' }}
+          scrollWheelZoom={false}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maxZoom={19}
           />
           <MapUpdater coordinates={coordinates} />
           
           {/* User location marker */}
           <Marker 
-            position={[coordinates.lat, coordinates.lon]} 
+            position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
             icon={icon}
           >
             <Popup>Your location</Popup>
@@ -101,7 +103,7 @@ const PharmacyListSection = ({
           {pharmacies?.map((pharmacy) => (
             <Marker
               key={pharmacy.id}
-              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
+              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon] as L.LatLngExpression}
               icon={icon}
             >
               <Popup>
