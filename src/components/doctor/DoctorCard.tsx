@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { UserPlus, Mail, Clock } from "lucide-react";
+import { UserPlus, Mail, Clock, Phone } from "lucide-react";
 
 interface DoctorCardProps {
   id: string;
@@ -8,11 +8,21 @@ interface DoctorCardProps {
   license_number: string;
   city: string;
   email?: string | null;
+  phone?: string | null;
   hours?: string;
   onConnect: () => void;
 }
 
-const DoctorCard = ({ id, full_name, license_number, city, email, hours, onConnect }: DoctorCardProps) => {
+const DoctorCard = ({ 
+  id, 
+  full_name, 
+  license_number, 
+  city, 
+  email, 
+  phone,
+  hours, 
+  onConnect 
+}: DoctorCardProps) => {
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
@@ -24,6 +34,12 @@ const DoctorCard = ({ id, full_name, license_number, city, email, hours, onConne
             <p className="text-sm text-gray-500 flex items-center gap-2">
               <Mail className="h-4 w-4" />
               <span className="break-all">{email}</span>
+            </p>
+          )}
+          {phone && (
+            <p className="text-sm text-gray-500 flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              <span>{phone}</span>
             </p>
           )}
           {hours && (

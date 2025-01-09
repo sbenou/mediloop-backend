@@ -7,10 +7,24 @@ import { useEffect } from "react";
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+
+// Create custom marker icons
+const userLocationIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const doctorLocationIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
 });
 
 function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
@@ -29,6 +43,7 @@ interface Doctor {
   city: string;
   license_number: string;
   email?: string;
+  phone?: string;
   hours?: string;
   source?: 'database' | 'overpass';
   coordinates?: {
@@ -97,6 +112,7 @@ const DoctorListSection = ({
           {/* User location marker */}
           <Marker 
             position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
+            icon={userLocationIcon}
           >
             <Popup>Your location</Popup>
           </Marker>
@@ -109,6 +125,7 @@ const DoctorListSection = ({
                 doctor.coordinates?.lat || coordinates.lat,
                 doctor.coordinates?.lon || coordinates.lon
               ] as L.LatLngExpression}
+              icon={doctorLocationIcon}
             >
               <Popup>
                 <div className="text-sm">
@@ -116,6 +133,8 @@ const DoctorListSection = ({
                   <p>{doctor.city}</p>
                   <p>{doctor.license_number}</p>
                   {doctor.hours && <p>{doctor.hours}</p>}
+                  {doctor.email && <p>{doctor.email}</p>}
+                  {doctor.phone && <p>{doctor.phone}</p>}
                 </div>
               </Popup>
             </Marker>
