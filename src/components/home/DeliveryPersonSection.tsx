@@ -56,7 +56,7 @@ export const DeliveryPersonSection = () => {
           </Button>
         </div>
 
-        <div className="w-[90rem] mx-auto space-y-2 mt-16">
+        <div className="w-[70rem] mx-auto space-y-2 mt-16">
           {features.map((feature, index) => (
             <div 
               key={index}
@@ -71,12 +71,12 @@ export const DeliveryPersonSection = () => {
                 animationDelay: `${index * 200}ms`
               }}
             >
-              <div className="flex-1 max-w-sm">
+              <div className="flex-1 max-w-xs">
                 <div className="flex items-start">
                   <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                     <feature.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="max-w-[200px]">
+                  <div className="ml-4 max-w-[160px]">
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">
                       {feature.title}
                     </h3>
@@ -93,7 +93,7 @@ export const DeliveryPersonSection = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-auto max-w-[200px] mx-auto"
+                  className="w-full h-auto max-w-[160px] mx-auto"
                   loading="lazy"
                   onError={(e) => {
                     console.error(`Error loading image: ${feature.image}`);
