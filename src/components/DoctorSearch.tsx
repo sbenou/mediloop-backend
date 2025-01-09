@@ -50,10 +50,18 @@ const DoctorSearch = () => {
 
   const searchCoordinates = coordinates 
     ? { 
-        lat: parseFloat(coordinates.lat), 
-        lon: parseFloat(coordinates.lon) 
+        lat: coordinates.lat.toString(), 
+        lon: coordinates.lon.toString() 
       } 
-    : userLocation || LUXEMBOURG_COORDINATES;
+    : userLocation 
+      ? {
+          lat: userLocation.lat.toString(),
+          lon: userLocation.lon.toString()
+        }
+      : {
+          lat: LUXEMBOURG_COORDINATES.lat.toString(),
+          lon: LUXEMBOURG_COORDINATES.lon.toString()
+        };
 
   const { doctors, isLoading } = useDoctorSearch(
     searchCoordinates,
