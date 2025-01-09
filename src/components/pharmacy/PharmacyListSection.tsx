@@ -79,8 +79,7 @@ const PharmacyListSection = ({
 
       <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
         <MapContainer
-          center={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
-          zoom={13}
+          className="h-full"
           style={{ height: '100%', width: '100%' }}
           scrollWheelZoom={false}
         >
@@ -92,6 +91,7 @@ const PharmacyListSection = ({
           {/* User location marker */}
           <Marker 
             position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
+            icon={icon}
           >
             <Popup>Your location</Popup>
           </Marker>
@@ -101,6 +101,7 @@ const PharmacyListSection = ({
             <Marker
               key={pharmacy.id}
               position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon] as L.LatLngExpression}
+              icon={icon}
             >
               <Popup>
                 <div className="text-sm">
