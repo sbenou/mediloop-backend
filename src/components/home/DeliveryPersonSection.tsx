@@ -67,36 +67,73 @@ export const DeliveryPersonSection = () => {
                 animationDelay: `${index * 200}ms`
               }}
             >
-              <div className="flex-1">
-                <div className="flex items-start">
-                  <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                    <feature.icon className="h-7 w-7 text-primary" />
+              {index === 1 ? (
+                <>
+                  <div className="flex-1">
+                    <img 
+                      src={feature.image} 
+                      alt={feature.title}
+                      className="w-full h-auto max-w-[200px] mx-auto"
+                      loading="lazy"
+                      onError={(e) => {
+                        console.error(`Error loading image: ${feature.image}`);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
                   </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-600">
-                      {feature.description}
-                    </p>
-                    <small className="text-xs text-gray-500 mt-1 block">
-                      {feature.attribution}
-                    </small>
+                  <div className="flex-1">
+                    <div className="flex items-start">
+                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                        <feature.icon className="h-7 w-7 text-primary" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                          {feature.title}
+                        </h3>
+                        <p className="text-gray-600">
+                          {feature.description}
+                        </p>
+                        <small className="text-xs text-gray-500 mt-1 block">
+                          {feature.attribution}
+                        </small>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div className="flex-1">
-                <img 
-                  src={feature.image} 
-                  alt={feature.title}
-                  className="w-full h-auto max-w-[200px] mx-auto"
-                  loading="lazy"
-                  onError={(e) => {
-                    console.error(`Error loading image: ${feature.image}`);
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1">
+                    <div className="flex items-start">
+                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                        <feature.icon className="h-7 w-7 text-primary" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                          {feature.title}
+                        </h3>
+                        <p className="text-gray-600">
+                          {feature.description}
+                        </p>
+                        <small className="text-xs text-gray-500 mt-1 block">
+                          {feature.attribution}
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <img 
+                      src={feature.image} 
+                      alt={feature.title}
+                      className="w-full h-auto max-w-[200px] mx-auto"
+                      loading="lazy"
+                      onError={(e) => {
+                        console.error(`Error loading image: ${feature.image}`);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>
