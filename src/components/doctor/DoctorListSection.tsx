@@ -1,9 +1,9 @@
+import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect } from "react";
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -93,7 +93,7 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon]}
+          center={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
           zoom={13}
         >
           <TileLayer
@@ -103,7 +103,7 @@ const DoctorListSection = ({
           
           {/* User location marker */}
           <Marker 
-            position={[coordinates.lat, coordinates.lon] as [number, number]}
+            position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
           >
             <Popup>Your location</Popup>
           </Marker>
@@ -115,7 +115,7 @@ const DoctorListSection = ({
               position={[
                 doctor.coordinates?.lat || coordinates.lat,
                 doctor.coordinates?.lon || coordinates.lon
-              ] as [number, number]}
+              ] as L.LatLngExpression}
             >
               <Popup>
                 <div className="text-sm">
