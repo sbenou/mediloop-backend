@@ -5,6 +5,7 @@ import Footer from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturesGrid } from "@/components/home/FeaturesGrid";
 import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
+import { PartnerSection } from "@/components/home/PartnerSection";
 import { StatsSection } from "@/components/home/StatsSection";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
@@ -37,7 +38,7 @@ const Index = () => {
           ordersCount: ordersCount || 0,
           pharmaciesCount: pharmaciesCount || 0,
           doctorsCount: doctorsCount || 0,
-          prescriptionsCount: 0, // Default to 0 until prescriptions table is created
+          prescriptionsCount: 0,
         };
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -59,6 +60,7 @@ const Index = () => {
         <HeroSection />
         <GetStartedSteps />
         <FeaturesGrid />
+        <PartnerSection />
         <DeliveryPersonSection />
         <StatsSection stats={stats || { ordersCount: 0, pharmaciesCount: 0, doctorsCount: 0, prescriptionsCount: 0 }} />
         <TestimonialsSection />
