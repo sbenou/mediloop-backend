@@ -4,6 +4,20 @@ import PharmacyCard from "@/components/PharmacyCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap } from 'leaflet';
+import L from 'leaflet';
+
+// Fix default marker icon issue
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 interface MapUpdaterProps {
   coordinates: { lat: number; lon: number };
@@ -76,22 +90,23 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon] as [number, number]}
+          center={[coordinates.lat, coordinates.lon]}
           zoom={13}
+          scrollWheelZoom={false}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapUpdater coordinates={coordinates} />
           
-          <Marker position={[coordinates.lat, coordinates.lon] as [number, number]}>
+          <Marker position={[coordinates.lat, coordinates.lon]}>
             <Popup>Your location</Popup>
           </Marker>
 
           {pharmacies?.map((pharmacy) => (
             <Marker
               key={pharmacy.id}
-              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon] as [number, number]}
+              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
             >
               <Popup>
                 <div className="text-sm">
