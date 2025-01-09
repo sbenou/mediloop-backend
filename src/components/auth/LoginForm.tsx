@@ -10,9 +10,10 @@ interface LoginFormProps {
   selectedRole?: UserRole | null;
 }
 
-export const LoginForm = ({ onSuccess, selectedRole }: LoginFormProps) => {
+export const LoginForm = ({ onSuccess, selectedRole: initialRole }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedRole, setSelectedRole] = useState<UserRole>(initialRole || "patient");
   const { isLoading, handleLogin } = useLogin(onSuccess);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,6 +30,7 @@ export const LoginForm = ({ onSuccess, selectedRole }: LoginFormProps) => {
         onPasswordChange={setPassword}
         isLoading={isLoading}
         selectedRole={selectedRole}
+        onRoleChange={setSelectedRole}
       />
 
       <Button type="submit" className="w-full" disabled={isLoading}>

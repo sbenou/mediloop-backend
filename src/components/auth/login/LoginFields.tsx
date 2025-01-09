@@ -11,6 +11,7 @@ interface LoginFieldsProps {
   onPasswordChange: (value: string) => void;
   isLoading: boolean;
   selectedRole?: UserRole | null;
+  onRoleChange?: (role: UserRole) => void;
 }
 
 export const LoginFields = ({
@@ -20,11 +21,16 @@ export const LoginFields = ({
   onPasswordChange,
   isLoading,
   selectedRole,
+  onRoleChange,
 }: LoginFieldsProps) => {
   return (
     <div className="space-y-4">
-      {selectedRole && (
-        <RoleSelector value={selectedRole} onValueChange={() => {}} disabled />
+      {selectedRole && onRoleChange && (
+        <RoleSelector 
+          value={selectedRole} 
+          onValueChange={onRoleChange} 
+          disabled={isLoading} 
+        />
       )}
       
       <div className="space-y-2">
