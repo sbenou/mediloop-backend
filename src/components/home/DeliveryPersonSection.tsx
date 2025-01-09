@@ -76,7 +76,7 @@ export const DeliveryPersonSection = () => {
                   <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                     <feature.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
+                  <div className="max-w-[200px]">
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">
                       {feature.title}
                     </h3>
