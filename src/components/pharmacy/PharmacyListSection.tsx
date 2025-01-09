@@ -81,7 +81,6 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          scrollWheelZoom={false}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -91,7 +90,6 @@ const PharmacyListSection = ({
           {/* User location marker */}
           <Marker 
             position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
-            icon={icon}
           >
             <Popup>Your location</Popup>
           </Marker>
@@ -101,7 +99,6 @@ const PharmacyListSection = ({
             <Marker
               key={pharmacy.id}
               position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon] as L.LatLngExpression}
-              icon={icon}
             >
               <Popup>
                 <div className="text-sm">
