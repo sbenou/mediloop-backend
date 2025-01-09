@@ -79,13 +79,12 @@ const PharmacyListSection = ({
 
       <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
         <MapContainer
-          defaultCenter={[coordinates.lat, coordinates.lon]}
-          defaultZoom={13}
+          center={[coordinates.lat, coordinates.lon]}
+          zoom={13}
           style={{ height: '100%', width: '100%' }}
           scrollWheelZoom={false}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={19}
           />
