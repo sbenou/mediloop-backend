@@ -56,7 +56,7 @@ export const DeliveryPersonSection = () => {
           </Button>
         </div>
 
-        <div className="max-w-[90rem] mx-auto space-y-12 mt-16">
+        <div className="max-w-[90rem] mx-auto space-y-8 mt-16">
           {features.map((feature, index) => (
             <div 
               key={index}
@@ -91,7 +91,7 @@ export const DeliveryPersonSection = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-auto max-w-[300px] mx-auto"
+                  className="w-full h-auto max-w-[200px] mx-auto"
                   loading="lazy"
                   onError={(e) => {
                     console.error(`Error loading image: ${feature.image}`);
