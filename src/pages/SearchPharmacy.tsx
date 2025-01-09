@@ -50,13 +50,17 @@ const SearchPharmacy = () => {
             lon: position.coords.longitude
           });
         },
-        (error) => {
-          console.error("Error getting location:", error);
+        () => {
+          // If location is denied or fails, immediately use Luxembourg coordinates
+          // and show a non-destructive toast
+          setUserLocation(LUXEMBOURG_COORDINATES);
           toast({
-            title: "Location Access Failed",
-            description: "Using default location. You can search for a specific city.",
-            variant: "destructive",
+            title: "Using Default Location",
+            description: "Showing pharmacies in Luxembourg City. You can search for a specific location.",
           });
+          
+          // Automatically search for Luxembourg City
+          handleCitySearch("Luxembourg City");
         }
       );
     }
@@ -92,7 +96,7 @@ const SearchPharmacy = () => {
 
   useEffect(() => {
     if (!session && !coordinates) {
-      // For non-logged in users, show all pharmacies in Luxembourg City by default
+      // For non-logged in users without coordinates, show all pharmacies in Luxembourg City
       handleCitySearch("Luxembourg City");
     } else if (session && userProfile?.city) {
       // For logged-in users, show nearby pharmacies based on their city
