@@ -15,7 +15,7 @@ const BecomeTransporter = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubscribe = async () => {
+  const handleApply = async () => {
     try {
       setIsProcessing(true);
       
@@ -24,42 +24,48 @@ const BecomeTransporter = () => {
       if (!session) {
         toast({
           title: "Authentication Required",
-          description: "Please create an account to become a transporter.",
+          description: "Please create an account to become a delivery partner.",
         });
         navigate('/signup');
         return;
       }
 
-      // Check if user is a transporter
+      // Check if user is already a transporter
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', session.user.id)
         .single();
 
-      if (profile?.role !== 'transporter') {
+      if (profile?.role === 'transporter') {
         toast({
           variant: "destructive",
-          title: "Access Denied",
-          description: "Only transporters can subscribe to the Transporter Program.",
+          title: "Already Registered",
+          description: "You are already registered as a delivery partner.",
         });
         return;
       }
 
-      // Create checkout session
-      const { data, error } = await supabase.functions.invoke('create-transporter-subscription');
+      // Update user role to transporter
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: 'transporter' })
+        .eq('id', session.user.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      if (data?.url) {
-        window.location.href = data.url;
-      }
+      toast({
+        title: "Application Successful",
+        description: "Your application has been received. We'll review it and get back to you soon.",
+      });
+      
+      navigate('/settings');
     } catch (error) {
-      console.error('Error creating subscription:', error);
+      console.error('Error applying as transporter:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to start subscription process. Please try again.",
+        description: "Failed to submit your application. Please try again.",
       });
     } finally {
       setIsProcessing(false);
@@ -75,12 +81,12 @@ const BecomeTransporter = () => {
     {
       icon: Users,
       title: "Support Network",
-      description: "Join a community of transporters and share tips and experiences."
+      description: "Join a community of delivery partners and share tips and experiences."
     },
     {
       icon: TrendingUp,
-      title: "Earnings Potential",
-      description: "Increase your earnings with every delivery you make."
+      title: "Competitive Pay",
+      description: "Earn money for each successful delivery, paid monthly."
     },
     {
       icon: BadgeCheck,
@@ -97,22 +103,22 @@ const BecomeTransporter = () => {
             Become a Delivery Partner
           </h1>
           <p className="text-xl text-gray-600 text-center mb-6">
-            Join our network of trusted delivery partners and grow your business with our digital platform
+            Join our network of trusted delivery partners and earn money delivering medications to patients
           </p>
           <div className="bg-white p-6 rounded-lg shadow-sm mb-12">
             <h2 className="text-2xl font-semibold mb-4">Program Overview</h2>
             <p className="text-gray-600 mb-4">
-              Our Transporter Program is designed to help delivery partners thrive in the digital age. With flexible hours, 
-              you'll get access to our full suite of tools and features to enhance your delivery operations and customer reach.
+              Our Delivery Partner Program connects you with patients who need their medications delivered. 
+              You'll have the flexibility to choose your delivery hours and areas.
             </p>
             <div className="border-t border-b py-4 my-4">
-              <h3 className="text-xl font-semibold mb-2">Subscription Details</h3>
+              <h3 className="text-xl font-semibold mb-2">How It Works</h3>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
-                <li>Monthly subscription fee: $99/month</li>
-                <li>Flexible hours and work schedule</li>
-                <li>Full access to our delivery network</li>
-                <li>Priority support and training</li>
-                <li>Regular earnings insights and analytics</li>
+                <li>Accept delivery requests through our platform</li>
+                <li>Deliver medications safely and on time</li>
+                <li>Track your completed deliveries</li>
+                <li>Get paid monthly for all completed deliveries</li>
+                <li>Access to training and support resources</li>
               </ul>
             </div>
           </div>
@@ -143,7 +149,7 @@ const BecomeTransporter = () => {
             <Button 
               size="lg" 
               className="bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={handleSubscribe}
+              onClick={handleApply}
               disabled={isProcessing}
             >
               {isProcessing ? "Processing..." : "Apply Now"}
