@@ -56,31 +56,27 @@ export const DeliveryPersonSection = () => {
           </Button>
         </div>
 
-        <div className="w-[70rem] mx-auto space-y-2 mt-16">
+        <div className="max-w-4xl mx-auto space-y-8">
           {features.map((feature, index) => (
             <div 
               key={index}
-              className={`flex flex-col md:flex-row items-center ${
-                index === 0 ? 'md:justify-start' : 
-                index === 1 ? 'md:justify-center' : 
-                'md:justify-end'
-              } ${
+              className={`flex items-center gap-8 ${
                 inView ? 'animate-fade-in opacity-100' : 'opacity-0'
               }`}
               style={{
                 animationDelay: `${index * 200}ms`
               }}
             >
-              <div className="flex-1 max-w-xs">
+              <div className="flex-1">
                 <div className="flex items-start">
                   <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                     <feature.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="ml-4 max-w-[160px]">
+                  <div className="ml-4">
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-gray-600">
                       {feature.description}
                     </p>
                     <small className="text-xs text-gray-500 mt-1 block">
@@ -89,11 +85,11 @@ export const DeliveryPersonSection = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex-1 max-w-xs">
+              <div className="flex-1">
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-auto max-w-[160px] mx-auto"
+                  className="w-full h-auto max-w-xs mx-auto"
                   loading="lazy"
                   onError={(e) => {
                     console.error(`Error loading image: ${feature.image}`);
