@@ -1,115 +1,105 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/use-toast";
+import CitySearch from "@/components/CitySearch";
+import DoctorList from "./doctor/DoctorList";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
 import { useDoctorSearch } from "@/hooks/useDoctorSearch";
-import { usePharmacyState, LUXEMBOURG_COORDINATES } from "@/hooks/usePharmacyState";
-import Header from "@/components/layout/Header";
-import SearchHeader from "@/components/pharmacy/SearchHeader";
-import DoctorListSection from "@/components/doctor/DoctorListSection";
-import { toast } from "@/components/ui/use-toast";
 
 const DoctorSearch = () => {
-  const { data: session } = useQuery({
-    queryKey: ['session'],
+  const [searchCity, setSearchCity] = useState("");
+  const { coordinates, searchRadius, setSearchRadius, handleCitySearch } = useLocationSearch();
+  const { doctors, isLoading: isLoadingDoctors } = useDoctorSearch(coordinates, searchRadius);
+
+  // Fetch user's default address
+  const { data: userAddress } = useQuery({
+    queryKey: ['userAddress'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      return session;
+      if (!session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('is_default', true)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
     },
+    staleTime: Infinity,
+    gcTime: 5 * 60 * 1000,
   });
 
-  const {
-    userLocation,
-    setUserLocation,
-    userProfile,
-  } = usePharmacyState(session);
-
-  const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
-
+  // Auto-search based on user's address
   useEffect(() => {
-    if (!session && !coordinates && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          });
-        },
-        () => {
-          setUserLocation(LUXEMBOURG_COORDINATES);
-          toast({
-            title: "Using Default Location",
-            description: "Showing doctors in Luxembourg City. You can search for a specific location.",
-          });
-          
-          handleCitySearch("Luxembourg City");
-        }
-      );
+    if (userAddress?.city && !searchCity) {
+      handleCitySearch(userAddress.city);
+      setSearchCity(userAddress.city);
+      setSearchRadius(2000); // Start with 2km radius
     }
-  }, [session, coordinates]);
+  }, [userAddress, handleCitySearch, searchCity]);
 
-  const searchCoordinates = coordinates 
-    ? { 
-        lat: parseFloat(coordinates.lat), 
-        lon: parseFloat(coordinates.lon) 
-      } 
-    : userLocation 
-      ? {
-          lat: userLocation.lat,
-          lon: userLocation.lon
-        }
-      : {
-          lat: LUXEMBOURG_COORDINATES.lat,
-          lon: LUXEMBOURG_COORDINATES.lon
-        };
-
-  const { doctors, isLoading } = useDoctorSearch(
-    coordinates ? { lat: coordinates.lat, lon: coordinates.lon } : null,
-    searchRadius
-  );
-
+  // Increase radius when no doctors found
   useEffect(() => {
-    if (!session && !coordinates) {
-      handleCitySearch("Luxembourg City");
-    } else if (session && userProfile?.city) {
-      handleCitySearch(userProfile.city);
+    if (coordinates && doctors?.length === 0 && searchRadius < 10000) {
+      const newRadius = Math.min(searchRadius * 2, 10000);
+      setSearchRadius(newRadius);
+      toast({
+        title: "Expanding Search",
+        description: `No doctors found within ${searchRadius/1000}km. Searching within ${newRadius/1000}km.`,
+      });
     }
-  }, [session, userProfile?.city]);
+  }, [doctors, coordinates, searchRadius, setSearchRadius]);
 
-  useEffect(() => {
-    if (session && doctors?.length === 0 && searchRadius < 10000) {
-      setSearchRadius(prev => Math.min(prev + 2000, 10000));
+  const sendConnectionRequest = async (doctorId: string, source: 'database' | 'overpass') => {
+    try {
+      if (source === 'overpass') {
+        toast({
+          title: "Information",
+          description: "Connection requests are only available for registered doctors.",
+        });
+        return;
+      }
+
+      const { error } = await supabase.rpc("handle_connection_request", {
+        doctor_id: doctorId,
+        status: "pending"
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Connection Request Sent",
+        description: "The doctor will be notified of your request.",
+      });
+    } catch (error) {
+      console.error("Error sending connection request:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to send connection request. Please try again.",
+      });
     }
-  }, [doctors?.length, searchRadius, session]);
+  };
+
+  const handleSearch = async (city: string) => {
+    setSearchCity(city);
+    setSearchRadius(2000); // Reset to 2km when searching new city
+    await handleCitySearch(city);
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header session={session} />
-      <main className="container mx-auto p-4">
-        <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
-        <DoctorListSection
-          doctors={doctors}
-          isLoading={isLoading || isSearching}
-          coordinates={searchCoordinates}
-          onConnect={(doctorId, source) => {
-            if (!session) {
-              toast({
-                title: "Login Required",
-                description: "Please login to connect with doctors.",
-              });
-              return;
-            }
-
-            if (source === 'overpass') {
-              toast({
-                title: "Information",
-                description: "Connection requests are only available for registered doctors.",
-              });
-              return;
-            }
-          }}
-        />
-      </main>
+    <div className="space-y-6">
+      <CitySearch onSearch={handleSearch} />
+      <DoctorList
+        doctors={doctors}
+        isLoading={isLoadingDoctors}
+        onConnect={sendConnectionRequest}
+        searchCity={searchCity}
+      />
     </div>
   );
 };

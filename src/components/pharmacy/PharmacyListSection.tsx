@@ -1,29 +1,19 @@
-import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import PharmacyCard from "@/components/PharmacyCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
+import { useEffect } from "react";
 
-// Fix default marker icon issue
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
+// Fix for default marker icons in Leaflet with Vite
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-L.Marker.prototype.options.icon = DefaultIcon;
-
-interface MapUpdaterProps {
-  coordinates: { lat: number; lon: number };
-}
-
-function MapUpdater({ coordinates }: MapUpdaterProps) {
+function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
   const map = useMap();
   
   useEffect(() => {
@@ -90,23 +80,24 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon]}
-          zoom={13}
-          scrollWheelZoom={false}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapUpdater coordinates={coordinates} />
           
-          <Marker position={[coordinates.lat, coordinates.lon]}>
+          {/* User location marker */}
+          <Marker 
+            position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
+          >
             <Popup>Your location</Popup>
           </Marker>
 
+          {/* Pharmacy markers */}
           {pharmacies?.map((pharmacy) => (
             <Marker
               key={pharmacy.id}
-              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
+              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon] as L.LatLngExpression}
             >
               <Popup>
                 <div className="text-sm">
