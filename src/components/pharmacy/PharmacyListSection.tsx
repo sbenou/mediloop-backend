@@ -45,7 +45,7 @@ const PharmacyListSection = ({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
+    <div className="mt-12 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
       <div className="overflow-y-auto space-y-4 pr-4 relative z-50">
         {isLoading && (
           <>
