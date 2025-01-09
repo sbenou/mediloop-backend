@@ -6,15 +6,17 @@ import { Textarea } from "./ui/textarea";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "./ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export const CartPreview = ({ onClose, session }: { onClose: () => void, session: any }) => {
   const navigate = useNavigate();
   const { state: cartState, removeFromCart, updateQuantity } = useCart();
   const [comment, setComment] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const total = cartState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!session) {
       toast({
         title: "Authentication Required",
@@ -23,7 +25,28 @@ export const CartPreview = ({ onClose, session }: { onClose: () => void, session
       navigate('/signup');
       return;
     }
-    // Proceed with checkout logic here
+
+    try {
+      setIsProcessing(true);
+      const { data, error } = await supabase.functions.invoke('create-delivery-payment', {
+        body: { items: cartState.items, comment }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process checkout. Please try again.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (cartState.items.length === 0) {
@@ -96,8 +119,12 @@ export const CartPreview = ({ onClose, session }: { onClose: () => void, session
         </div>
         
         <div className="space-y-2 pb-4">
-          <Button className="w-full" onClick={handleCheckout}>
-            Proceed to Checkout
+          <Button 
+            className="w-full" 
+            onClick={handleCheckout}
+            disabled={isProcessing}
+          >
+            {isProcessing ? "Processing..." : "Proceed to Checkout"}
           </Button>
           <Button 
             variant="outline" 

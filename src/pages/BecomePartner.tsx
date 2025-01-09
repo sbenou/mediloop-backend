@@ -1,12 +1,54 @@
 import { Bike, Shield, MapPin, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInView } from "react-intersection-observer";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const BecomePartner = () => {
   const { ref: sectionRef, inView: sectionInView } = useInView({
     triggerOnce: true,
     threshold: 0.1
   });
+
+  const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubscribe = async () => {
+    try {
+      setIsProcessing(true);
+      
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please create an account to become a partner.",
+        });
+        navigate('/signup');
+        return;
+      }
+
+      // Create checkout session
+      const { data, error } = await supabase.functions.invoke('create-pharmacy-subscription');
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to start subscription process. Please try again.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const steps = [
     {
@@ -65,8 +107,13 @@ const BecomePartner = () => {
           </div>
 
           <div className="text-center mt-12">
-            <Button size="lg" className="bg-primary hover:bg-primary/90">
-              Apply Now
+            <Button 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90"
+              onClick={handleSubscribe}
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Processing..." : "Subscribe Now"}
             </Button>
           </div>
         </div>
