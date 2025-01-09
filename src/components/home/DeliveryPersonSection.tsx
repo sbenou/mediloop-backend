@@ -93,9 +93,6 @@ export const DeliveryPersonSection = () => {
                         <p className="text-gray-600">
                           {feature.description}
                         </p>
-                        <small className="text-xs text-gray-500 mt-1 block">
-                          {feature.attribution}
-                        </small>
                       </div>
                     </div>
                   </div>
@@ -114,9 +111,6 @@ export const DeliveryPersonSection = () => {
                         <p className="text-gray-600">
                           {feature.description}
                         </p>
-                        <small className="text-xs text-gray-500 mt-1 block">
-                          {feature.attribution}
-                        </small>
                       </div>
                     </div>
                   </div>
