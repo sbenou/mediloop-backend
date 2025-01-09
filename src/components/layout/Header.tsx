@@ -19,6 +19,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useLocation } from 'react-router-dom';
+import { CurrencySelector } from '../CurrencySelector';
 
 interface HeaderProps {
   session: any;
@@ -88,6 +89,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
           </div>
 
           <div className="flex items-center space-x-3">
+            <CurrencySelector />
             <Button 
               variant="outline" 
               size="sm" 
