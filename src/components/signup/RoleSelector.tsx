@@ -3,16 +3,16 @@ import { Label } from "@/components/ui/label";
 import { UserRole } from "./SignupForm";
 
 interface RoleSelectorProps {
-  value: UserRole;
-  onValueChange: (value: UserRole) => void;
+  selectedRole: UserRole;
+  onRoleChange: (role: UserRole) => void;
   disabled?: boolean;
 }
 
-export const RoleSelector = ({ value, onValueChange, disabled = false }: RoleSelectorProps) => {
+export const RoleSelector = ({ selectedRole, onRoleChange, disabled = false }: RoleSelectorProps) => {
   return (
     <RadioGroup
-      value={value}
-      onValueChange={(value) => onValueChange(value as UserRole)}
+      value={selectedRole}
+      onValueChange={(value) => onRoleChange(value as UserRole)}
       className="flex flex-col space-y-1 mb-4"
       disabled={disabled}
     >
