@@ -37,15 +37,14 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     })
 
-    // Parse the request body to get cart items
+    // Parse the request body
     const { items, comment } = await req.json()
+    console.log('Processing items:', items);
 
-    console.log('Processing checkout for items:', items)
-
-    // Create line items from cart items
+    // Create line items with explicit currency
     const lineItems = items.map((item: any) => ({
       price_data: {
-        currency: 'usd',
+        currency: 'usd', // Explicitly set currency to USD
         product_data: {
           name: item.name,
           images: item.image_url ? [item.image_url] : undefined,
@@ -55,11 +54,19 @@ serve(async (req) => {
       quantity: item.quantity,
     }))
 
-    // Add delivery fee as a separate line item
-    lineItems.push({
-      price: 'price_1QfDjnA1DaoRGs36IE3jcdpq', // Your Medication Delivery Fee price ID
+    // Add delivery fee as a separate line item with explicit currency
+    const deliveryFee = {
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: 'Delivery Fee',
+        },
+        unit_amount: 500, // $5.00 delivery fee
+      },
       quantity: 1,
-    })
+    }
+
+    lineItems.push(deliveryFee)
 
     console.log('Creating checkout session...')
     const session = await stripe.checkout.sessions.create({
