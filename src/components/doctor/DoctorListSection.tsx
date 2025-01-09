@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import type { MapContainerProps } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -59,6 +60,13 @@ const DoctorListSection = ({
     return <div>Loading location...</div>;
   }
 
+  const mapProps: MapContainerProps = {
+    className: "h-full",
+    style: { height: '100%', width: '100%' },
+    center: [coordinates.lat, coordinates.lon] as L.LatLngExpression,
+    zoom: 13
+  };
+
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
       <div className="overflow-y-auto space-y-4 pr-4 relative z-50">
@@ -90,18 +98,12 @@ const DoctorListSection = ({
       </div>
 
       <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
-        <MapContainer
-          className="h-full"
-          style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
-          zoom={13}
-        >
+        <MapContainer {...mapProps}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapUpdater coordinates={coordinates} />
           
-          {/* User location marker */}
           <Marker 
             position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
             icon={userLocationIcon}
@@ -109,7 +111,6 @@ const DoctorListSection = ({
             <Popup>Your location</Popup>
           </Marker>
 
-          {/* Doctor markers */}
           {doctors?.map((doctor) => (
             <Marker
               key={doctor.id}
