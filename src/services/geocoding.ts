@@ -17,107 +17,85 @@ interface OverpassResponse {
   elements: OverpassElement[];
 }
 
+interface NominatimResult {
+  place_id: number;
+  display_name: string;
+}
+
+export const searchCity = async (query: string) => {
+  try {
+    // Use Nominatim API instead of Overpass for city search
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5`,
+      {
+        headers: {
+          'User-Agent': 'Lovable Health App'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch cities');
+    }
+
+    const data: NominatimResult[] = await response.json();
+    return data.map(result => ({
+      place_id: result.place_id,
+      display_name: result.display_name
+    }));
+  } catch (error) {
+    console.error('Error searching city:', error);
+    return [];
+  }
+};
+
 export const getCoordinates = async (city: string): Promise<{ lat: string; lon: string } | null> => {
   console.log('Searching coordinates for city:', city);
   
   try {
-    const query = `
-      [out:json][timeout:25];
-      (
-        area["name"="${city}"][admin_level~"8|6|4"];
-        node["place"~"city|town|village"]["name"="${city}"];
-      );
-      out body;
-      >;
-      out skel qt;
-    `;
-
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: query,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+    // Use Nominatim API for coordinates
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
+      {
+        headers: {
+          'User-Agent': 'Lovable Health App'
+        }
       }
-    });
+    );
 
     if (!response.ok) {
       throw new Error('Failed to fetch coordinates');
     }
 
-    const data: OverpassResponse = await response.json();
-    console.log('Overpass API response:', data);
-
-    // First try to find a node with coordinates
-    const nodeWithCoords = data.elements.find(
-      element => element.type === 'node' && element.lat && element.lon
-    );
-
-    if (nodeWithCoords && nodeWithCoords.lat && nodeWithCoords.lon) {
+    const data = await response.json();
+    
+    if (data && data.length > 0) {
       const coords = {
-        lat: nodeWithCoords.lat.toString(),
-        lon: nodeWithCoords.lon.toString()
+        lat: data[0].lat.toString(),
+        lon: data[0].lon.toString()
       };
       // Cache the coordinates
       sessionStorage.setItem(`coords-${city}`, JSON.stringify(coords));
       return coords;
     }
 
-    // If no direct coordinates found, try to find an area with a center
-    const areaWithCenter = data.elements.find(
-      element => element.type === 'area' && element.center?.lat && element.center?.lon
-    );
-
-    if (areaWithCenter?.center) {
-      const coords = {
-        lat: areaWithCenter.center.lat.toString(),
-        lon: areaWithCenter.center.lon.toString()
-      };
-      // Cache the coordinates
-      sessionStorage.setItem(`coords-${city}`, JSON.stringify(coords));
-      return coords;
+    // Check cached coordinates if API fails
+    const cachedCoords = sessionStorage.getItem(`coords-${city}`);
+    if (cachedCoords) {
+      return JSON.parse(cachedCoords);
     }
 
     console.log('No coordinates found for city:', city);
     return null;
   } catch (error) {
     console.error('Error getting coordinates:', error);
-    return null;
-  }
-};
-
-export const searchCity = async (query: string) => {
-  try {
-    const overpassQuery = `
-      [out:json][timeout:25];
-      (
-        area[name~"${query}",i][admin_level~"8|6|4"];
-        node[place~"city|town|village"][name~"${query}",i];
-      );
-      out body;
-    `;
-
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: overpassQuery,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch cities');
-    }
-
-    const data: OverpassResponse = await response.json();
     
-    return data.elements
-      .filter(element => element.tags?.name)
-      .map(element => ({
-        place_id: element.id,
-        display_name: element.tags!.name
-      }));
-  } catch (error) {
-    console.error('Error searching city:', error);
-    return [];
+    // Try cached coordinates as fallback
+    const cachedCoords = sessionStorage.getItem(`coords-${city}`);
+    if (cachedCoords) {
+      return JSON.parse(cachedCoords);
+    }
+    
+    return null;
   }
 };
