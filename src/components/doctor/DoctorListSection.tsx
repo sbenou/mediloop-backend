@@ -4,7 +4,7 @@ import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import type { LatLngExpression } from 'leaflet';
+import type { Map as LeafletMap } from 'leaflet';
 
 // Create custom marker icons using divIcon for better customization
 const userLocationIcon = L.divIcon({
@@ -84,7 +84,7 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon] as LatLngExpression}
+          center={[coordinates.lat, coordinates.lon]}
           zoom={13}
         >
           <TileLayer
@@ -93,14 +93,14 @@ const DoctorListSection = ({
           <MapUpdater coordinates={coordinates} />
           
           <Marker 
-            position={[coordinates.lat, coordinates.lon] as LatLngExpression}
+            position={[coordinates.lat, coordinates.lon]}
             icon={userLocationIcon}
           >
             <Popup>Your location</Popup>
           </Marker>
 
           {doctors?.map((doctor) => {
-            const position: LatLngExpression = [
+            const position = [
               doctor.coordinates?.lat || coordinates.lat,
               doctor.coordinates?.lon || coordinates.lon
             ];

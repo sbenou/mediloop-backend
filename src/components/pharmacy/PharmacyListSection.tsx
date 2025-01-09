@@ -4,7 +4,7 @@ import PharmacyCard from "@/components/PharmacyCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import type { LatLngExpression } from 'leaflet';
+import type { Map as LeafletMap } from 'leaflet';
 
 // Create custom marker icons using divIcon for better customization
 const userLocationIcon = L.divIcon({
@@ -90,7 +90,7 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon] as LatLngExpression}
+          center={[coordinates.lat, coordinates.lon]}
           zoom={13}
         >
           <TileLayer
@@ -99,14 +99,14 @@ const PharmacyListSection = ({
           <MapUpdater coordinates={coordinates} />
           
           <Marker 
-            position={[coordinates.lat, coordinates.lon] as LatLngExpression}
+            position={[coordinates.lat, coordinates.lon]}
             icon={userLocationIcon}
           >
             <Popup>Your location</Popup>
           </Marker>
 
           {pharmacies?.map((pharmacy) => {
-            const position: LatLngExpression = [pharmacy.coordinates.lat, pharmacy.coordinates.lon];
+            const position = [pharmacy.coordinates.lat, pharmacy.coordinates.lon];
             return (
               <Marker
                 key={pharmacy.id}
