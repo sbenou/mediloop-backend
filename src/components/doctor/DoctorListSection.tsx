@@ -93,7 +93,7 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon] as [number, number]}
+          defaultCenter={[coordinates.lat, coordinates.lon] as [number, number]}
           zoom={13}
         >
           <TileLayer
@@ -103,7 +103,6 @@ const DoctorListSection = ({
           
           <Marker 
             position={[coordinates.lat, coordinates.lon] as [number, number]}
-            icon={userLocationIcon}
           >
             <Popup>Your location</Popup>
           </Marker>
@@ -115,7 +114,6 @@ const DoctorListSection = ({
                 doctor.coordinates?.lat || coordinates.lat,
                 doctor.coordinates?.lon || coordinates.lon
               ] as [number, number]}
-              icon={doctorLocationIcon}
             >
               <Popup>
                 <div className="text-sm">
