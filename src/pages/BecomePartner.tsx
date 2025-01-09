@@ -110,7 +110,7 @@ const BecomePartner = () => {
             <div className="border-t border-b py-4 my-4">
               <h3 className="text-xl font-semibold mb-2">Subscription Details</h3>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
-                <li>Monthly subscription fee: $199/month</li>
+                <li>Monthly subscription fee: €100/month</li>
                 <li>12-month minimum commitment</li>
                 <li>Full access to our digital platform and delivery network</li>
                 <li>Priority customer support</li>
@@ -148,7 +148,7 @@ const BecomePartner = () => {
               onClick={handleSubscribe}
               disabled={isProcessing}
             >
-              {isProcessing ? "Processing..." : "Subscribe Now - $199/month"}
+              {isProcessing ? "Processing..." : "Subscribe Now - €100/month"}
             </Button>
             <p className="text-sm text-gray-500 mt-2">
               *12-month minimum commitment required
