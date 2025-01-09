@@ -47,7 +47,7 @@ const PharmacyListSection = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
-      <div className="overflow-y-auto space-y-4 pr-4">
+      <div className="overflow-y-auto space-y-4 pr-4 relative z-50">
         {isLoading && (
           <>
             {[1, 2, 3].map((i) => (
@@ -77,10 +77,10 @@ const PharmacyListSection = ({
         )}
       </div>
 
-      <div className="rounded-lg overflow-hidden border border-gray-200 h-full">
+      <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
         <MapContainer
-          center={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
-          zoom={13}
+          defaultCenter={[coordinates.lat, coordinates.lon]}
+          defaultZoom={13}
           style={{ height: '100%', width: '100%' }}
           scrollWheelZoom={false}
         >
@@ -93,7 +93,7 @@ const PharmacyListSection = ({
           
           {/* User location marker */}
           <Marker 
-            position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
+            position={[coordinates.lat, coordinates.lon]}
             icon={icon}
           >
             <Popup>Your location</Popup>
@@ -103,7 +103,7 @@ const PharmacyListSection = ({
           {pharmacies?.map((pharmacy) => (
             <Marker
               key={pharmacy.id}
-              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon] as L.LatLngExpression}
+              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
               icon={icon}
             >
               <Popup>

@@ -41,8 +41,8 @@ const SearchPharmacy = () => {
   });
 
   useEffect(() => {
-    // Try to get user's current location
-    if ("geolocation" in navigator) {
+    // Only try to get user's current location if they're not logged in
+    if (!session && !coordinates && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation({
@@ -60,7 +60,7 @@ const SearchPharmacy = () => {
         }
       );
     }
-  }, []);
+  }, [session, coordinates]);
 
   // Use user's location, searched coordinates, or default Luxembourg coordinates
   const searchCoordinates = coordinates 
