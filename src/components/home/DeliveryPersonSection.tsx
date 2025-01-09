@@ -60,7 +60,7 @@ export const DeliveryPersonSection = () => {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className={`flex flex-col md:flex-row items-center gap-12 ${
+              className={`flex flex-col md:flex-row items-center gap-8 ${
                 index === 0 ? 'md:justify-start' : 
                 index === 1 ? 'md:justify-center' : 
                 'md:justify-end'
@@ -71,7 +71,7 @@ export const DeliveryPersonSection = () => {
                 animationDelay: `${index * 200}ms`
               }}
             >
-              <div className="flex-1 max-w-lg">
+              <div className="flex-1 max-w-sm">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
                     <feature.icon className="h-6 w-6 text-primary" />
@@ -87,7 +87,7 @@ export const DeliveryPersonSection = () => {
                   {feature.attribution}
                 </small>
               </div>
-              <div className="flex-1 max-w-md">
+              <div className="flex-1 max-w-xs">
                 <img 
                   src={feature.image} 
                   alt={feature.title}
