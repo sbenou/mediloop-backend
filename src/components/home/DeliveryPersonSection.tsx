@@ -15,22 +15,22 @@ export const DeliveryPersonSection = () => {
       icon: Bike,
       title: "Simple Requirements",
       description: "All you need is a bicycle or electric scooter and safety equipment",
-      image: "/transport.svg",
-      attribution: "Transport illustrations by Storyset"
+      image: "/lovable-uploads/e1121849-4e5c-496c-b196-929ffe5eff11.png",
+      attribution: "Transport illustrations"
     },
     {
       icon: Bell,
       title: "Location-Based Notifications",
       description: "Get notified about nearby deliveries in your area",
-      image: "/location-tracking.svg",
-      attribution: "Online illustrations by Storyset"
+      image: "/lovable-uploads/5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png",
+      attribution: "Online illustrations"
     },
     {
       icon: DollarSign,
       title: "Monthly Payments",
       description: "Receive monthly payments for all completed deliveries",
-      image: "/online-payments.svg",
-      attribution: "Business illustrations by Storyset"
+      image: "/lovable-uploads/8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png",
+      attribution: "Business illustrations"
     }
   ];
 
