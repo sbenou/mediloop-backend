@@ -87,7 +87,7 @@ export const DeliveryPersonSection = () => {
                         <feature.icon className="h-7 w-7 text-primary" />
                       </div>
                       <div className="ml-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        <h3 className="text-2xl font-semibold text-gray-900 mb-2">
                           {feature.title}
                         </h3>
                         <p className="text-gray-600">
@@ -108,7 +108,7 @@ export const DeliveryPersonSection = () => {
                         <feature.icon className="h-7 w-7 text-primary" />
                       </div>
                       <div className="ml-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        <h3 className="text-2xl font-semibold text-gray-900 mb-2">
                           {feature.title}
                         </h3>
                         <p className="text-gray-600">
