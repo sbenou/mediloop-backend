@@ -7,9 +7,14 @@ import { useEffect } from "react";
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 // Create custom marker icons
-const userLocationIcon = new L.Icon({
+const userLocationIcon = L.icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -18,7 +23,7 @@ const userLocationIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-const doctorLocationIcon = new L.Icon({
+const doctorLocationIcon = L.icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -111,8 +116,7 @@ const DoctorListSection = ({
           
           {/* User location marker */}
           <Marker 
-            position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
-            icon={userLocationIcon}
+            position={[coordinates.lat, coordinates.lon]}
           >
             <Popup>Your location</Popup>
           </Marker>
@@ -124,8 +128,7 @@ const DoctorListSection = ({
               position={[
                 doctor.coordinates?.lat || coordinates.lat,
                 doctor.coordinates?.lon || coordinates.lon
-              ] as L.LatLngExpression}
-              icon={doctorLocationIcon}
+              ]}
             >
               <Popup>
                 <div className="text-sm">
