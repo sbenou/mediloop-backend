@@ -15,6 +15,7 @@ import DoctorConnections from "@/pages/DoctorConnections";
 import AdminSettings from "@/pages/AdminSettings";
 import ResetPassword from "@/pages/ResetPassword";
 import Services from "@/pages/Services";
+import BecomeTransporter from "@/pages/BecomeTransporter";
 import BecomePartner from "@/pages/BecomePartner";
 import SearchPharmacy from "@/pages/SearchPharmacy";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
@@ -33,6 +34,7 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/products/:pharmacyId" element={<Products />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/become-transporter" element={<BecomeTransporter />} />
             <Route path="/become-partner" element={<BecomePartner />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/login" element={<Login />} />
