@@ -99,7 +99,7 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon]}
+          center={[coordinates.lat, coordinates.lon] as [number, number]}
           zoom={13}
         >
           <TileLayer
@@ -108,7 +108,8 @@ const PharmacyListSection = ({
           <MapUpdater coordinates={coordinates} />
           
           <Marker 
-            position={[coordinates.lat, coordinates.lon]}
+            position={[coordinates.lat, coordinates.lon] as [number, number]}
+            icon={userLocationIcon}
           >
             <Popup>Your location</Popup>
           </Marker>
@@ -116,7 +117,8 @@ const PharmacyListSection = ({
           {pharmacies?.map((pharmacy) => (
             <Marker
               key={pharmacy.id}
-              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
+              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon] as [number, number]}
+              icon={pharmacyLocationIcon}
             >
               <Popup>
                 <div className="text-sm">
