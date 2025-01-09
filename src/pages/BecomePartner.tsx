@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 
-const BecomeTransporter = () => {
+const BecomePartner = () => {
   const { ref: sectionRef, inView: sectionInView } = useInView({
     triggerOnce: true,
     threshold: 0.1
@@ -24,30 +24,32 @@ const BecomeTransporter = () => {
       if (!session) {
         toast({
           title: "Authentication Required",
-          description: "Please create an account to become a transporter.",
+          description: "Please create an account to become a partner.",
         });
         navigate('/signup');
         return;
       }
 
-      // Check if user is a transporter
+      // Check if user is a pharmacist
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', session.user.id)
         .single();
 
-      if (profile?.role !== 'transporter') {
+      if (profile?.role !== 'pharmacist') {
         toast({
           variant: "destructive",
           title: "Access Denied",
-          description: "Only transporters can subscribe to the Transporter Program.",
+          description: "Only pharmacists can subscribe to the Partner Program.",
         });
         return;
       }
 
       // Create checkout session
-      const { data, error } = await supabase.functions.invoke('create-transporter-subscription');
+      const { data, error } = await supabase.functions.invoke('create-pharmacy-subscription', {
+        body: { priceId: 'price_1QfDc2A1DaoRGs36hsqAfkEG' }
+      });
 
       if (error) throw error;
 
@@ -69,23 +71,23 @@ const BecomeTransporter = () => {
   const benefits = [
     {
       icon: Building2,
-      title: "Flexible Hours",
-      description: "Choose your own hours and work when it suits you best."
+      title: "Digital Presence",
+      description: "Get a dedicated digital storefront to showcase your pharmacy and products to our growing user base."
     },
     {
       icon: Users,
-      title: "Support Network",
-      description: "Join a community of transporters and share tips and experiences."
+      title: "Customer Retention",
+      description: "Our platform helps you build lasting relationships with customers through convenient medication delivery and refill reminders."
     },
     {
       icon: TrendingUp,
-      title: "Earnings Potential",
-      description: "Increase your earnings with every delivery you make."
+      title: "Business Growth",
+      description: "Access detailed analytics and insights to optimize your inventory and increase sales through our platform."
     },
     {
       icon: BadgeCheck,
-      title: "Safety First",
-      description: "We prioritize your safety with our comprehensive training and support."
+      title: "Quality Assurance",
+      description: "Join our network of verified pharmacies and build trust with customers through our quality guarantee program."
     }
   ];
 
@@ -94,25 +96,25 @@ const BecomeTransporter = () => {
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-center mb-6">
-            Become a Delivery Partner
+            Pharmacy Partner Program
           </h1>
           <p className="text-xl text-gray-600 text-center mb-6">
-            Join our network of trusted delivery partners and grow your business with our digital platform
+            Join our network of trusted pharmacies and grow your business with our digital platform
           </p>
           <div className="bg-white p-6 rounded-lg shadow-sm mb-12">
             <h2 className="text-2xl font-semibold mb-4">Program Overview</h2>
             <p className="text-gray-600 mb-4">
-              Our Transporter Program is designed to help delivery partners thrive in the digital age. With flexible hours, 
-              you'll get access to our full suite of tools and features to enhance your delivery operations and customer reach.
+              Our Partner Program is designed to help pharmacies thrive in the digital age. With a 12-month commitment, 
+              you'll get access to our full suite of tools and features to enhance your business operations and customer reach.
             </p>
             <div className="border-t border-b py-4 my-4">
               <h3 className="text-xl font-semibold mb-2">Subscription Details</h3>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
-                <li>Monthly subscription fee: $99/month</li>
-                <li>Flexible hours and work schedule</li>
-                <li>Full access to our delivery network</li>
-                <li>Priority support and training</li>
-                <li>Regular earnings insights and analytics</li>
+                <li>Monthly subscription fee: $199/month</li>
+                <li>12-month minimum commitment</li>
+                <li>Full access to our digital platform and delivery network</li>
+                <li>Priority customer support</li>
+                <li>Regular business insights and analytics</li>
               </ul>
             </div>
           </div>
@@ -146,10 +148,10 @@ const BecomeTransporter = () => {
               onClick={handleSubscribe}
               disabled={isProcessing}
             >
-              {isProcessing ? "Processing..." : "Apply Now"}
+              {isProcessing ? "Processing..." : "Subscribe Now - $199/month"}
             </Button>
             <p className="text-sm text-gray-500 mt-2">
-              *Background check required
+              *12-month minimum commitment required
             </p>
           </div>
         </div>
@@ -158,4 +160,4 @@ const BecomeTransporter = () => {
   );
 };
 
-export default BecomeTransporter;
+export default BecomePartner;
