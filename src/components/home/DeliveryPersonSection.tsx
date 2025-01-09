@@ -69,8 +69,8 @@ export const DeliveryPersonSection = () => {
             >
               <div className="flex-1">
                 <div className="flex items-start">
-                  <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                    <feature.icon className="h-5 w-5 text-primary" />
+                  <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                    <feature.icon className="h-7 w-7 text-primary" />
                   </div>
                   <div className="ml-4">
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">
@@ -89,7 +89,7 @@ export const DeliveryPersonSection = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-auto max-w-[200px] mx-auto" // Reduced from max-w-xs to max-w-[200px]
+                  className="w-full h-auto max-w-[200px] mx-auto"
                   loading="lazy"
                   onError={(e) => {
                     console.error(`Error loading image: ${feature.image}`);
