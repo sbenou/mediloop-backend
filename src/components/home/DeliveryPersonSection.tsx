@@ -15,22 +15,19 @@ export const DeliveryPersonSection = () => {
       icon: Bike,
       title: "Simple Requirements",
       description: "All you need is a bicycle or electric scooter and safety equipment",
-      image: "/lovable-uploads/e1121849-4e5c-496c-b196-929ffe5eff11.png",
-      attribution: "Transport illustrations"
+      image: "/lovable-uploads/e1121849-4e5c-496c-b196-929ffe5eff11.png"
     },
     {
       icon: Bell,
       title: "Location-Based Notifications",
       description: "Get notified about nearby deliveries in your area",
-      image: "/lovable-uploads/5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png",
-      attribution: "Online illustrations"
+      image: "/lovable-uploads/5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png"
     },
     {
       icon: DollarSign,
       title: "Monthly Payments",
       description: "Receive monthly payments for all completed deliveries",
-      image: "/lovable-uploads/8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png",
-      attribution: "Business illustrations"
+      image: "/lovable-uploads/8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png"
     }
   ];
 
@@ -39,7 +36,7 @@ export const DeliveryPersonSection = () => {
       ref={ref}
       className="py-16 px-4"
     >
-      <div className="container mx-auto">
+      <div className="container mx-auto max-w-6xl">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-3xl font-bold mb-4 text-gray-900">
             Become a Delivery Partner
