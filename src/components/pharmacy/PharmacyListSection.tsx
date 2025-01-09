@@ -14,7 +14,7 @@ L.Icon.Default.mergeOptions({
 });
 
 // Create custom marker icons
-const userLocationIcon = L.icon({
+const userLocationIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -23,7 +23,7 @@ const userLocationIcon = L.icon({
   shadowSize: [41, 41]
 });
 
-const pharmacyLocationIcon = L.icon({
+const pharmacyLocationIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -108,6 +108,7 @@ const PharmacyListSection = ({
           {/* User location marker */}
           <Marker 
             position={[coordinates.lat, coordinates.lon]}
+            icon={userLocationIcon}
           >
             <Popup>Your location</Popup>
           </Marker>
@@ -117,6 +118,7 @@ const PharmacyListSection = ({
             <Marker
               key={pharmacy.id}
               position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
+              icon={pharmacyLocationIcon}
             >
               <Popup>
                 <div className="text-sm">

@@ -14,7 +14,7 @@ L.Icon.Default.mergeOptions({
 });
 
 // Create custom marker icons
-const userLocationIcon = L.icon({
+const userLocationIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -23,7 +23,7 @@ const userLocationIcon = L.icon({
   shadowSize: [41, 41]
 });
 
-const doctorLocationIcon = L.icon({
+const doctorLocationIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -42,33 +42,18 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
   return null;
 }
 
-interface Doctor {
-  id: string;
-  full_name: string;
-  city: string;
-  license_number: string;
-  email?: string;
-  phone?: string;
-  hours?: string;
-  source?: 'database' | 'overpass';
-  coordinates?: {
-    lat: number;
-    lon: number;
-  };
-}
-
 interface DoctorListSectionProps {
-  doctors: Doctor[] | undefined;
+  doctors: any[];
   isLoading: boolean;
-  coordinates: { lat: number; lon: number };
-  onConnect: (doctorId: string, source: 'database' | 'overpass') => void;
+  coordinates: { lat: number; lon: number } | null;
+  onDoctorSelect: (doctorId: string) => void;
 }
 
 const DoctorListSection = ({
   doctors,
   isLoading,
   coordinates,
-  onConnect
+  onDoctorSelect,
 }: DoctorListSectionProps) => {
   if (!coordinates) {
     return <div>Loading location...</div>;
@@ -95,7 +80,7 @@ const DoctorListSection = ({
           <DoctorCard
             key={doctor.id}
             {...doctor}
-            onConnect={() => onConnect(doctor.id, doctor.source || 'database')}
+            onSelect={onDoctorSelect}
           />
         ))}
 
@@ -117,27 +102,26 @@ const DoctorListSection = ({
           {/* User location marker */}
           <Marker 
             position={[coordinates.lat, coordinates.lon]}
+            icon={userLocationIcon}
           >
             <Popup>Your location</Popup>
           </Marker>
 
           {/* Doctor markers */}
-          {doctors?.filter(doctor => doctor.coordinates).map((doctor) => (
+          {doctors?.map((doctor) => (
             <Marker
               key={doctor.id}
               position={[
                 doctor.coordinates?.lat || coordinates.lat,
                 doctor.coordinates?.lon || coordinates.lon
               ]}
+              icon={doctorLocationIcon}
             >
               <Popup>
                 <div className="text-sm">
                   <p className="font-semibold">{doctor.full_name}</p>
-                  <p>{doctor.city}</p>
-                  <p>{doctor.license_number}</p>
+                  <p>{doctor.address}</p>
                   {doctor.hours && <p>{doctor.hours}</p>}
-                  {doctor.email && <p>{doctor.email}</p>}
-                  {doctor.phone && <p>{doctor.phone}</p>}
                 </div>
               </Popup>
             </Marker>
