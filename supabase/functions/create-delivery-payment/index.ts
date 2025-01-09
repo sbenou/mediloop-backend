@@ -44,7 +44,7 @@ serve(async (req) => {
     // Create line items with explicit currency
     const lineItems = items.map((item: any) => ({
       price_data: {
-        currency: 'usd', // Explicitly set currency to USD
+        currency: 'eur', // Set currency to EUR
         product_data: {
           name: item.name,
           images: item.image_url ? [item.image_url] : undefined,
@@ -57,11 +57,11 @@ serve(async (req) => {
     // Add delivery fee as a separate line item with explicit currency
     const deliveryFee = {
       price_data: {
-        currency: 'usd',
+        currency: 'eur', // Set currency to EUR
         product_data: {
           name: 'Delivery Fee',
         },
-        unit_amount: 500, // $5.00 delivery fee
+        unit_amount: 500, // 5.00€ delivery fee
       },
       quantity: 1,
     }
