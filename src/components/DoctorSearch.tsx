@@ -50,21 +50,21 @@ const DoctorSearch = () => {
 
   const searchCoordinates = coordinates 
     ? { 
-        lat: coordinates.lat.toString(), 
-        lon: coordinates.lon.toString() 
+        lat: parseFloat(coordinates.lat), 
+        lon: parseFloat(coordinates.lon) 
       } 
     : userLocation 
       ? {
-          lat: userLocation.lat.toString(),
-          lon: userLocation.lon.toString()
+          lat: userLocation.lat,
+          lon: userLocation.lon
         }
       : {
-          lat: LUXEMBOURG_COORDINATES.lat.toString(),
-          lon: LUXEMBOURG_COORDINATES.lon.toString()
+          lat: LUXEMBOURG_COORDINATES.lat,
+          lon: LUXEMBOURG_COORDINATES.lon
         };
 
   const { doctors, isLoading } = useDoctorSearch(
-    searchCoordinates,
+    coordinates ? { lat: coordinates.lat, lon: coordinates.lon } : null,
     searchRadius
   );
 
@@ -86,7 +86,7 @@ const DoctorSearch = () => {
     <div className="min-h-screen bg-background">
       <Header session={session} />
       <main className="container mx-auto p-4">
-        <SearchHeader onSearch={handleCitySearch} />
+        <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <DoctorListSection
           doctors={doctors}
           isLoading={isLoading || isSearching}
