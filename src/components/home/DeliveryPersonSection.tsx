@@ -56,7 +56,7 @@ export const DeliveryPersonSection = () => {
           </Button>
         </div>
 
-        <div className="max-w-[90rem] mx-auto space-y-24 mt-16">
+        <div className="max-w-[90rem] mx-auto space-y-12 mt-16">
           {features.map((feature, index) => (
             <div 
               key={index}
