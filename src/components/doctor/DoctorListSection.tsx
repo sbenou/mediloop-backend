@@ -4,6 +4,7 @@ import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import type { LatLngExpression } from 'leaflet';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -36,7 +37,8 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
   const map = useMap();
   
   useEffect(() => {
-    map.setView([coordinates.lat, coordinates.lon], 13);
+    const center: LatLngExpression = [coordinates.lat, coordinates.lon];
+    map.setView(center, 13);
   }, [coordinates, map]);
   
   return null;
@@ -58,6 +60,8 @@ const DoctorListSection = ({
   if (!coordinates) {
     return <div>Loading location...</div>;
   }
+
+  const center: LatLngExpression = [coordinates.lat, coordinates.lon];
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
@@ -93,7 +97,7 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon] as [number, number]}
+          center={center}
           zoom={13}
         >
           <TileLayer
@@ -102,30 +106,33 @@ const DoctorListSection = ({
           <MapUpdater coordinates={coordinates} />
           
           <Marker 
-            position={[coordinates.lat, coordinates.lon] as [number, number]}
+            position={center}
             icon={userLocationIcon}
           >
             <Popup>Your location</Popup>
           </Marker>
 
-          {doctors?.map((doctor) => (
-            <Marker
-              key={doctor.id}
-              position={[
-                doctor.coordinates?.lat || coordinates.lat,
-                doctor.coordinates?.lon || coordinates.lon
-              ] as [number, number]}
-              icon={doctorLocationIcon}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <p className="font-semibold">{doctor.full_name}</p>
-                  <p>{doctor.address}</p>
-                  {doctor.hours && <p>{doctor.hours}</p>}
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          {doctors?.map((doctor) => {
+            const position: LatLngExpression = [
+              doctor.coordinates?.lat || coordinates.lat,
+              doctor.coordinates?.lon || coordinates.lon
+            ];
+            return (
+              <Marker
+                key={doctor.id}
+                position={position}
+                icon={doctorLocationIcon}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <p className="font-semibold">{doctor.full_name}</p>
+                    <p>{doctor.address}</p>
+                    {doctor.hours && <p>{doctor.hours}</p>}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       </div>
     </div>
