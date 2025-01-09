@@ -60,7 +60,7 @@ export const DeliveryPersonSection = () => {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className={`flex flex-col md:flex-row items-center gap-8 ${
+              className={`flex flex-col md:flex-row items-center gap-4 ${
                 index === 0 ? 'md:justify-start' : 
                 index === 1 ? 'md:justify-center' : 
                 'md:justify-end'
@@ -72,18 +72,18 @@ export const DeliveryPersonSection = () => {
               }}
             >
               <div className="flex-1 max-w-sm">
-                <div className="flex items-center gap-4 mb-2">
-                  <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <feature.icon className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+                    <feature.icon className="h-4 w-4 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-base font-semibold text-gray-900">
                     {feature.title}
                   </h3>
                 </div>
-                <p className="text-sm text-gray-600 ml-14">
+                <p className="text-xs text-gray-600 ml-11 leading-tight">
                   {feature.description}
                 </p>
-                <small className="text-xs text-gray-500 mt-1 block ml-14">
+                <small className="text-[10px] text-gray-500 mt-0.5 block ml-11">
                   {feature.attribution}
                 </small>
               </div>
