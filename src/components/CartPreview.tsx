@@ -17,28 +17,51 @@ export const CartPreview = ({ onClose, session }: { onClose: () => void, session
   const total = cartState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handleCheckout = async () => {
-    if (!session) {
+    if (!session?.user) {
       toast({
         title: "Authentication Required",
-        description: "Please create an account to proceed with checkout.",
+        description: "Please log in to proceed with checkout.",
       });
-      navigate('/signup');
+      onClose(); // Close the cart preview
+      navigate('/login');
       return;
     }
 
     try {
       setIsProcessing(true);
+      
+      // Add better error handling and logging
+      console.log('Starting checkout process...');
+      console.log('Cart items:', cartState.items);
+      
       const { data, error } = await supabase.functions.invoke('create-delivery-payment', {
-        body: { items: cartState.items, comment }
+        body: { 
+          items: cartState.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image_url: item.image_url
+          })),
+          comment 
+        }
       });
 
-      if (error) throw error;
+      console.log('Checkout response:', { data, error });
 
-      if (data?.url) {
-        window.location.href = data.url;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
       }
+
+      if (!data?.url) {
+        console.error('No checkout URL received');
+        throw new Error('No checkout URL received from payment service');
+      }
+
+      window.location.href = data.url;
     } catch (error) {
-      console.error('Error creating checkout session:', error);
+      console.error('Detailed checkout error:', error);
       toast({
         variant: "destructive",
         title: "Error",
