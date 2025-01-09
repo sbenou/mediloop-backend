@@ -27,7 +27,7 @@ export const SignupForm = ({ defaultRole = "patient" }: SignupFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <RoleSelector value={userRole} onValueChange={setUserRole} />
+      <RoleSelector selectedRole={userRole} onRoleChange={setUserRole} />
 
       <div className="space-y-2">
         <Label htmlFor="name">Full Name</Label>
