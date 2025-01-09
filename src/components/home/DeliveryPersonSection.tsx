@@ -56,7 +56,7 @@ export const DeliveryPersonSection = () => {
           </Button>
         </div>
 
-        <div className="max-w-[90rem] mx-auto space-y-8 mt-16">
+        <div className="max-w-[90rem] mx-auto space-y-2 mt-16">
           {features.map((feature, index) => (
             <div 
               key={index}
@@ -72,7 +72,7 @@ export const DeliveryPersonSection = () => {
               }}
             >
               <div className="flex-1 max-w-sm">
-                <div className="flex items-start gap-4">
+                <div className="flex items-start">
                   <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                     <feature.icon className="h-5 w-5 text-primary" />
                   </div>
