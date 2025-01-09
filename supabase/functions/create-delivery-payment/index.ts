@@ -44,22 +44,42 @@ serve(async (req) => {
       customer_id = customers.data[0].id
     }
 
-    console.log('Creating delivery payment session...')
+    // Parse the request body to get cart items
+    const { items, comment } = await req.json()
+
+    // Create line items from cart items
+    const lineItems = items.map((item: any) => ({
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: item.name,
+          images: item.image_url ? [item.image_url] : undefined,
+        },
+        unit_amount: Math.round(item.price * 100), // Convert to cents
+      },
+      quantity: item.quantity,
+    }))
+
+    // Add delivery fee as a separate line item
+    lineItems.push({
+      price: 'price_1QfDjnA1DaoRGs36IE3jcdpq', // Your Medication Delivery Fee price ID
+      quantity: 1,
+    })
+
+    console.log('Creating checkout session...')
     const session = await stripe.checkout.sessions.create({
       customer: customer_id,
       customer_email: customer_id ? undefined : email,
-      line_items: [
-        {
-          price: 'price_1QfDjnA1DaoRGs36IE3jcdpq', // Delivery Fee
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       mode: 'payment',
+      metadata: {
+        comment: comment || '',
+      },
       success_url: `${req.headers.get('origin')}/my-orders?payment=success`,
       cancel_url: `${req.headers.get('origin')}/my-orders?payment=cancelled`,
     })
 
-    console.log('Payment session created:', session.id)
+    console.log('Checkout session created:', session.id)
     return new Response(
       JSON.stringify({ url: session.url }),
       { 
@@ -68,7 +88,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error creating payment session:', error)
+    console.error('Error creating checkout session:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
