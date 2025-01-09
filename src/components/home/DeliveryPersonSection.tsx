@@ -91,7 +91,7 @@ export const DeliveryPersonSection = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-auto"
+                  className="w-full h-auto max-w-[300px] mx-auto"
                   loading="lazy"
                   onError={(e) => {
                     console.error(`Error loading image: ${feature.image}`);
