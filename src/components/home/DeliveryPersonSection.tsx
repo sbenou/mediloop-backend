@@ -72,18 +72,18 @@ export const DeliveryPersonSection = () => {
               }}
             >
               <div className="flex-1 max-w-sm">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+                    <feature.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-gray-900">
                     {feature.title}
                   </h3>
                 </div>
-                <p className="text-gray-600">
+                <p className="text-sm text-gray-600 ml-14">
                   {feature.description}
                 </p>
-                <small className="text-gray-500 mt-2 block">
+                <small className="text-xs text-gray-500 mt-1 block ml-14">
                   {feature.attribution}
                 </small>
               </div>
