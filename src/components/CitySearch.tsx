@@ -31,6 +31,7 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
     try {
       const results = await searchCity(term);
       setSuggestions(results);
+      setOpen(true); // Ensure popover is open when we have results
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       toast({
@@ -45,7 +46,9 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
   }, 500); // 500ms debounce
 
   useEffect(() => {
-    debouncedFetchSuggestions(searchTerm);
+    if (searchTerm) {
+      debouncedFetchSuggestions(searchTerm);
+    }
     return () => {
       debouncedFetchSuggestions.cancel();
     };
@@ -54,6 +57,7 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
   const handleSearch = () => {
     if (value) {
       onSearch(value);
+      setOpen(false);
     }
   };
 
@@ -61,6 +65,7 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
     setValue('');
     setSearchTerm('');
     setSuggestions([]);
+    setOpen(false);
   };
 
   const handleSelect = (cityName: string) => {
@@ -79,9 +84,9 @@ const CitySearch = ({ onSearch }: CitySearchProps) => {
               placeholder="Enter your city..."
               value={value}
               onChange={(e) => {
-                setValue(e.target.value);
-                setSearchTerm(e.target.value);
-                setOpen(true);
+                const newValue = e.target.value;
+                setValue(newValue);
+                setSearchTerm(newValue);
               }}
               className="pl-10 pr-24 h-12 text-lg rounded-xl border-gray-200 focus:border-primary focus:ring-primary transition-all duration-200"
             />
