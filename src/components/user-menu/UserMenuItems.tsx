@@ -44,7 +44,7 @@ const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
         className="cursor-pointer"
       >
         <UserCircle className="mr-2 h-4 w-4" />
-        My Personal Details
+        Profile
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => navigate('/my-orders')}
