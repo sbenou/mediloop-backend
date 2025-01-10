@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, Pill, Stethoscope } from "lucide-react";
 import { useInView } from "react-intersection-observer";
+import { useTranslation } from "react-i18next";
 
 export const FeaturesGrid = () => {
   const navigate = useNavigate();
@@ -8,30 +9,31 @@ export const FeaturesGrid = () => {
     triggerOnce: true,
     threshold: 0.1
   });
+  const { t } = useTranslation();
   
   const features = [
     {
       icon: <Search className="h-12 w-12 text-primary" />,
-      title: "Find Medications",
-      description: "Search and compare medications from local pharmacies",
+      title: t('home.features.findMedications.title'),
+      description: t('home.features.findMedications.description'),
       action: () => navigate("/products"),
     },
     {
       icon: <ShoppingBag className="h-12 w-12 text-primary" />,
-      title: "Easy Ordering",
-      description: "Order medications for delivery or pickup",
+      title: t('home.features.easyOrdering.title'),
+      description: t('home.features.easyOrdering.description'),
       action: () => navigate("/products"),
     },
     {
       icon: <Pill className="h-12 w-12 text-primary" />,
-      title: "Manage Prescriptions",
-      description: "Upload and manage your prescriptions digitally",
+      title: t('home.features.managePrescriptions.title'),
+      description: t('home.features.managePrescriptions.description'),
       action: () => navigate("/my-prescriptions"),
     },
     {
       icon: <Stethoscope className="h-12 w-12 text-primary" />,
-      title: "Connect with Doctors",
-      description: "Find and connect with healthcare providers",
+      title: t('home.features.connectDoctors.title'),
+      description: t('home.features.connectDoctors.description'),
       action: () => navigate("/find-doctor"),
     },
   ];
@@ -45,7 +47,7 @@ export const FeaturesGrid = () => {
     >
       <div className="container mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          Everything You Need
+          {t('home.features.title')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => (

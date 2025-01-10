@@ -2,6 +2,7 @@ import { Building, Users, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useInView } from "react-intersection-observer";
+import { useTranslation } from "react-i18next";
 
 export const PartnerSection = () => {
   const navigate = useNavigate();
@@ -9,22 +10,23 @@ export const PartnerSection = () => {
     triggerOnce: true,
     threshold: 0.1
   });
+  const { t } = useTranslation();
 
   const features = [
     {
       icon: Building,
-      title: "Expand Your Reach",
-      description: "Connect with more customers and grow your pharmacy business"
+      title: t('home.partner.features.reach.title'),
+      description: t('home.partner.features.reach.description')
     },
     {
       icon: Users,
-      title: "Dedicated Support",
-      description: "Get access to our customer support team and business tools"
+      title: t('home.partner.features.support.title'),
+      description: t('home.partner.features.support.description')
     },
     {
       icon: CreditCard,
-      title: "Simple Pricing",
-      description: "Transparent monthly subscription with no hidden fees"
+      title: t('home.partner.features.pricing.title'),
+      description: t('home.partner.features.pricing.description')
     }
   ];
 
@@ -36,17 +38,17 @@ export const PartnerSection = () => {
       <div className="container mx-auto max-w-6xl">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-3xl font-bold mb-4 text-gray-900">
-            Become a Partner
+            {t('home.partner.title')}
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            Join our network of pharmacy partners and reach more customers
+            {t('home.partner.subtitle')}
           </p>
           <Button 
             onClick={() => navigate("/become-partner")}
             size="lg"
             className="bg-primary hover:bg-primary/90"
           >
-            Find Out More
+            {t('home.partner.button')}
           </Button>
         </div>
 
