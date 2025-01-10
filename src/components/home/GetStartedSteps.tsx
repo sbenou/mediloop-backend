@@ -1,33 +1,35 @@
 import { Store, UserRound, Pill } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInView } from "react-intersection-observer";
-
-const steps = [
-  {
-    title: "Find a pharmacy",
-    description: "Search and set your default pharmacy for convenient ordering",
-    icon: Store,
-    link: "/search-pharmacy"
-  },
-  {
-    title: "Connect with your doctor",
-    description: "Link your account with your healthcare provider",
-    icon: UserRound,
-    link: "/find-doctor"
-  },
-  {
-    title: "Order medications",
-    description: "Browse and order medications with or without prescription and get delivered",
-    icon: Pill,
-    link: "/products"
-  }
-];
+import { useTranslation } from "react-i18next";
 
 const GetStartedSteps = () => {
+  const { t } = useTranslation();
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.1
   });
+
+  const steps = [
+    {
+      icon: Store,
+      title: t('home.getStarted.steps.findPharmacy.title'),
+      description: t('home.getStarted.steps.findPharmacy.description'),
+      link: "/search-pharmacy"
+    },
+    {
+      icon: UserRound,
+      title: t('home.getStarted.steps.connectDoctor.title'),
+      description: t('home.getStarted.steps.connectDoctor.description'),
+      link: "/find-doctor"
+    },
+    {
+      icon: Pill,
+      title: t('home.getStarted.steps.orderMedications.title'),
+      description: t('home.getStarted.steps.orderMedications.description'),
+      link: "/products"
+    }
+  ];
 
   return (
     <div 
@@ -39,10 +41,10 @@ const GetStartedSteps = () => {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Get Started in 3 Easy Steps
+            {t('home.getStarted.title')}
           </h2>
           <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Follow these simple steps to start ordering your medications online
+            {t('home.getStarted.subtitle')}
           </p>
         </div>
         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">

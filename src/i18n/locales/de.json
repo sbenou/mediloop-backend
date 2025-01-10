@@ -14,5 +14,70 @@
       "fr": "Französisch",
       "de": "Deutsch"
     }
+  },
+  "home": {
+    "hero": {
+      "title": "Ihre Gesundheit, vereinfacht",
+      "subtitle": "Finden und bestellen Sie Medikamente, verwalten Sie Rezepte und verbinden Sie sich mit Gesundheitsdienstleistern - alles an einem Ort.",
+      "pharmacistsButton": "Apotheker",
+      "doctorsButton": "Ärzte",
+      "deliveryButton": "Lieferant"
+    },
+    "getStarted": {
+      "title": "Starten Sie in 3 einfachen Schritten",
+      "subtitle": "Folgen Sie diesen einfachen Schritten, um Ihre Medikamente online zu bestellen",
+      "steps": {
+        "findPharmacy": {
+          "title": "Apotheke finden",
+          "description": "Suchen und wählen Sie Ihre Standard-Apotheke für bequemes Bestellen"
+        },
+        "connectDoctor": {
+          "title": "Mit Ihrem Arzt verbinden",
+          "description": "Verknüpfen Sie Ihr Konto mit Ihrem Gesundheitsdienstleister"
+        },
+        "orderMedications": {
+          "title": "Medikamente bestellen",
+          "description": "Durchsuchen und bestellen Sie Medikamente mit oder ohne Rezept und lassen Sie sich beliefern"
+        }
+      }
+    },
+    "features": {
+      "title": "Alles was Sie brauchen",
+      "findMedications": {
+        "title": "Medikamente finden",
+        "description": "Suchen und vergleichen Sie Medikamente von lokalen Apotheken"
+      },
+      "easyOrdering": {
+        "title": "Einfaches Bestellen",
+        "description": "Bestellen Sie Medikamente zur Lieferung oder Abholung"
+      },
+      "managePrescriptions": {
+        "title": "Rezepte verwalten",
+        "description": "Laden Sie Ihre Rezepte hoch und verwalten Sie sie digital"
+      },
+      "connectDoctors": {
+        "title": "Mit Ärzten verbinden",
+        "description": "Finden und verbinden Sie sich mit Gesundheitsdienstleistern"
+      }
+    },
+    "partner": {
+      "title": "Partner werden",
+      "subtitle": "Treten Sie unserem Netzwerk von Apotheken-Partnern bei und erreichen Sie mehr Kunden",
+      "button": "Mehr erfahren",
+      "features": {
+        "reach": {
+          "title": "Erweitern Sie Ihre Reichweite",
+          "description": "Verbinden Sie sich mit mehr Kunden und lassen Sie Ihre Apotheke wachsen"
+        },
+        "support": {
+          "title": "Dedizierter Support",
+          "description": "Erhalten Sie Zugang zu unserem Kundenservice-Team und Business-Tools"
+        },
+        "pricing": {
+          "title": "Einfache Preisgestaltung",
+          "description": "Transparentes monatliches Abonnement ohne versteckte Gebühren"
+        }
+      }
+    }
   }
 }

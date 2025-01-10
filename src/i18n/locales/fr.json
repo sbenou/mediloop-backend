@@ -14,5 +14,70 @@
       "fr": "Français",
       "de": "Allemand"
     }
+  },
+  "home": {
+    "hero": {
+      "title": "Votre Santé, Simplifiée",
+      "subtitle": "Trouvez et commandez des médicaments, gérez vos ordonnances et connectez-vous avec des professionnels de santé - le tout au même endroit.",
+      "pharmacistsButton": "Pharmaciens",
+      "doctorsButton": "Médecins",
+      "deliveryButton": "Livreur"
+    },
+    "getStarted": {
+      "title": "Commencez en 3 Étapes Simples",
+      "subtitle": "Suivez ces étapes simples pour commencer à commander vos médicaments en ligne",
+      "steps": {
+        "findPharmacy": {
+          "title": "Trouvez une pharmacie",
+          "description": "Recherchez et définissez votre pharmacie par défaut pour des commandes pratiques"
+        },
+        "connectDoctor": {
+          "title": "Connectez-vous avec votre médecin",
+          "description": "Liez votre compte avec votre professionnel de santé"
+        },
+        "orderMedications": {
+          "title": "Commandez des médicaments",
+          "description": "Parcourez et commandez des médicaments avec ou sans ordonnance et faites-vous livrer"
+        }
+      }
+    },
+    "features": {
+      "title": "Tout ce dont vous avez besoin",
+      "findMedications": {
+        "title": "Trouvez des Médicaments",
+        "description": "Recherchez et comparez les médicaments des pharmacies locales"
+      },
+      "easyOrdering": {
+        "title": "Commande Facile",
+        "description": "Commandez des médicaments en livraison ou en retrait"
+      },
+      "managePrescriptions": {
+        "title": "Gérez vos Ordonnances",
+        "description": "Téléchargez et gérez vos ordonnances numériquement"
+      },
+      "connectDoctors": {
+        "title": "Connectez-vous avec des Médecins",
+        "description": "Trouvez et connectez-vous avec des professionnels de santé"
+      }
+    },
+    "partner": {
+      "title": "Devenez Partenaire",
+      "subtitle": "Rejoignez notre réseau de pharmacies partenaires et atteignez plus de clients",
+      "button": "En Savoir Plus",
+      "features": {
+        "reach": {
+          "title": "Étendez votre Portée",
+          "description": "Connectez-vous avec plus de clients et développez votre pharmacie"
+        },
+        "support": {
+          "title": "Support Dédié",
+          "description": "Accédez à notre équipe de support client et à nos outils professionnels"
+        },
+        "pricing": {
+          "title": "Prix Simple",
+          "description": "Abonnement mensuel transparent sans frais cachés"
+        }
+      }
+    }
   }
 }

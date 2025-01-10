@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Pill, Stethoscope, Truck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const HeroSection = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const handleProfessionalSignup = (role: 'pharmacist' | 'doctor' | 'delivery') => {
     navigate('/signup', { state: { selectedRole: role } });
@@ -15,10 +17,10 @@ export const HeroSection = () => {
         <div className="flex justify-center">
           <div className="text-center max-w-2xl">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
-              Your Health, Simplified
+              {t('home.hero.title')}
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8">
-              Find and order medications, manage prescriptions, and connect with healthcare providers - all in one place.
+              {t('home.hero.subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -27,7 +29,7 @@ export const HeroSection = () => {
                 className="bg-[#9b87f5] hover:bg-[#8B5CF6]"
               >
                 <Pill className="mr-2 h-4 w-4" />
-                Pharmacists
+                {t('home.hero.pharmacistsButton')}
               </Button>
               <Button 
                 size="lg" 
@@ -35,7 +37,7 @@ export const HeroSection = () => {
                 onClick={() => handleProfessionalSignup('doctor')}
               >
                 <Stethoscope className="mr-2 h-4 w-4" />
-                Doctors
+                {t('home.hero.doctorsButton')}
               </Button>
               <Button 
                 size="lg" 
@@ -44,7 +46,7 @@ export const HeroSection = () => {
                 className="bg-[#F2FCE2] hover:bg-[#E2ECd2] text-[#2C3E50]"
               >
                 <Truck className="mr-2 h-4 w-4" />
-                Delivery man
+                {t('home.hero.deliveryButton')}
               </Button>
             </div>
           </div>
