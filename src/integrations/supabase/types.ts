@@ -242,7 +242,7 @@ export type Database = {
           cns_card_front: string | null
           cns_number: string | null
           created_at: string | null
-          date_of_birth: string | null
+          date_of_birth: string
           deleted_at: string | null
           email: string | null
           full_name: string | null
@@ -259,7 +259,7 @@ export type Database = {
           cns_card_front?: string | null
           cns_number?: string | null
           created_at?: string | null
-          date_of_birth?: string | null
+          date_of_birth?: string
           deleted_at?: string | null
           email?: string | null
           full_name?: string | null
@@ -276,7 +276,7 @@ export type Database = {
           cns_card_front?: string | null
           cns_number?: string | null
           created_at?: string | null
-          date_of_birth?: string | null
+          date_of_birth?: string
           deleted_at?: string | null
           email?: string | null
           full_name?: string | null

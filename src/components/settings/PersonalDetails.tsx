@@ -1,20 +1,28 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import CNSCardScanner from "./CNSCardScanner";
 import CNSCardDisplay from "./CNSCardDisplay";
 import { format } from "date-fns";
+import { toast } from "@/components/ui/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const PersonalDetails = () => {
+  const queryClient = useQueryClient();
+  const [showScanner, setShowScanner] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   const { data: profile } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
       
-      // First get the profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -23,7 +31,6 @@ const PersonalDetails = () => {
         
       if (profileError) throw profileError;
 
-      // Then get the default address separately
       const { data: addressData, error: addressError } = await supabase
         .from('addresses')
         .select('*')
@@ -40,7 +47,27 @@ const PersonalDetails = () => {
     }
   });
 
-  const [showScanner, setShowScanner] = useState(false);
+  const updateDateOfBirthMutation = useMutation({
+    mutationFn: async (date: Date) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ date_of_birth: format(date, 'yyyy-MM-dd') })
+        .eq('id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      toast({
+        title: "Date of Birth Updated",
+        description: "Your date of birth has been updated successfully.",
+      });
+      setShowDatePicker(false);
+    },
+  });
 
   if (!profile) return null;
 
@@ -59,11 +86,40 @@ const PersonalDetails = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-              <p className="mt-1 text-lg">
-                {profile.date_of_birth 
-                  ? format(new Date(profile.date_of_birth), 'PPP')
-                  : 'Not provided'}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="mt-1 text-lg">
+                  {format(new Date(profile.date_of_birth), 'PPP')}
+                </p>
+                <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[240px] pl-3 text-left font-normal",
+                        !profile.date_of_birth && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Change date
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={new Date(profile.date_of_birth)}
+                      onSelect={(date) => {
+                        if (date) {
+                          updateDateOfBirthMutation.mutate(date);
+                        }
+                      }}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Email</label>
@@ -84,7 +140,7 @@ const PersonalDetails = () => {
               <p className="text-lg">{profile.address.country}</p>
             </div>
           ) : (
-            <p className="text-gray-500">No default address set</p>
+            <p className="text-red-500">Please add at least one address in the Addresses section</p>
           )}
         </Card>
 
