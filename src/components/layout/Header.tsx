@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLocation } from 'react-router-dom';
 import { CurrencySelector } from '../CurrencySelector';
+import LanguageSelector from '../LanguageSelector';
+import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
   session: any;
@@ -34,6 +36,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
   const isMobile = useIsMobile();
   const location = useLocation();
   const isHomePage = location.pathname === '/';
+  const { t } = useTranslation();
   
   const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -70,13 +73,13 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
                   </SheetHeader>
                   <nav className="mt-6 space-y-4">
                     <Link to="/products" className="block px-4 py-2 hover:bg-accent rounded-md">
-                      Products
+                      {t('common.products')}
                     </Link>
                     <Link to="/services" className="block px-4 py-2 hover:bg-accent rounded-md">
-                      Services
+                      {t('common.services')}
                     </Link>
                     <Link to="/become-partner" className="block px-4 py-2 hover:bg-accent rounded-md">
-                      Become a Partner
+                      {t('common.becomePartner')}
                     </Link>
                   </nav>
                 </SheetContent>
@@ -89,6 +92,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
           </div>
 
           <div className="flex items-center space-x-3">
+            <LanguageSelector />
             <CurrencySelector />
             <Button 
               variant="outline" 
@@ -96,7 +100,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
               asChild
               className="hidden md:inline-flex bg-[#4FD1C5] hover:bg-[#4FD1C5]/90 text-white"
             >
-              <Link to="/products">Browse Medications</Link>
+              <Link to="/products">{t('common.products')}</Link>
             </Button>
             {showUserMenu && (
               <>

@@ -1,0 +1,18 @@
+{
+  "common": {
+    "products": "Produits",
+    "services": "Services",
+    "becomePartner": "Devenir Partenaire",
+    "settings": "Paramètres",
+    "login": "Connexion",
+    "signup": "S'inscrire",
+    "myOrders": "Mes Commandes",
+    "myPrescriptions": "Mes Ordonnances",
+    "findDoctor": "Trouver un Médecin",
+    "languages": {
+      "en": "Anglais",
+      "fr": "Français",
+      "de": "Allemand"
+    }
+  }
+}
