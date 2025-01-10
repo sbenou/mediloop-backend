@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface CategoryContentProps {
   categories: any[];
@@ -19,6 +20,7 @@ export const CategoryContent = ({
   getUniqueDescriptions
 }: CategoryContentProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubcategoryClick = (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => {
     event.preventDefault();
@@ -66,7 +68,7 @@ export const CategoryContent = ({
               : 'hover:bg-accent'
           }`}
         >
-          Pharmacy
+          {t('common.navigation.pharmacy')}
         </button>
         <button
           onClick={() => setSelectedType('parapharmacy')}
@@ -76,7 +78,7 @@ export const CategoryContent = ({
               : 'hover:bg-accent'
           }`}
         >
-          Parapharmacy
+          {t('common.navigation.parapharmacy')}
         </button>
       </div>
 
@@ -91,7 +93,7 @@ export const CategoryContent = ({
                   onClick={(e) => handleSubcategoryClick(selectedType, category.id, subcategory.id, e)}
                   className="text-sm font-medium hover:text-primary hover:underline block w-full text-left py-1"
                 >
-                  {subcategory.name}
+                  {t(`categories.${selectedType}.${subcategory.name}`)}
                 </a>
                 <div className="pl-4 space-y-1">
                   {getUniqueDescriptions && getUniqueDescriptions(subcategory).map((description: string, index: number) => (
@@ -101,7 +103,7 @@ export const CategoryContent = ({
                       onClick={(e) => handleDescriptionClick(selectedType, category.id, subcategory.id, e)}
                       className="block w-full text-left text-xs text-muted-foreground hover:text-primary hover:underline py-1"
                     >
-                      {description}
+                      {t(`descriptions.${selectedType}.${description}`)}
                     </a>
                   ))}
                 </div>
@@ -111,7 +113,7 @@ export const CategoryContent = ({
         ))}
         {!selectedType && (
           <div className="text-sm text-muted-foreground p-2">
-            Select a category type to view items
+            {t('common.navigation.selectCategory')}
           </div>
         )}
       </div>
