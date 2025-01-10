@@ -24,157 +24,31 @@
       "whyWeCare": "Pourquoi nous nous soucions"
     }
   },
-  "home": {
-    "hero": {
-      "title": "Votre Santé, Simplifiée",
-      "subtitle": "Trouvez et commandez des médicaments, gérez vos ordonnances et connectez-vous avec des professionnels de santé - le tout au même endroit.",
-      "pharmacistsButton": "Pharmaciens",
-      "doctorsButton": "Médecins",
-      "deliveryButton": "Livreur"
+  "navigation": {
+    "main": {
+      "menu": "Navigation",
+      "products": "Produits",
+      "services": "Services",
+      "becomePartner": "Devenir Partenaire",
+      "browseProducts": "Parcourez notre large sélection de médicaments et produits de santé",
+      "discoverServices": "Découvrez nos services et solutions de santé",
+      "joinNetwork": "Rejoignez notre réseau de pharmacies partenaires"
     },
-    "getStarted": {
-      "title": "Commencez en 3 Étapes Simples",
-      "subtitle": "Suivez ces étapes simples pour commencer à commander vos médicaments en ligne",
-      "steps": {
-        "findPharmacy": {
-          "title": "Trouvez une pharmacie",
-          "description": "Recherchez et définissez votre pharmacie par défaut pour des commandes pratiques"
-        },
-        "connectDoctor": {
-          "title": "Connectez-vous avec votre médecin",
-          "description": "Liez votre compte avec votre professionnel de santé"
-        },
-        "orderMedications": {
-          "title": "Commandez des médicaments",
-          "description": "Parcourez et commandez des médicaments avec ou sans ordonnance et faites-vous livrer"
-        }
-      }
+    "more": {
+      "menu": "Plus",
+      "aboutUs": "À Propos",
+      "whyLuxmed": "Pourquoi Luxmed",
+      "howItWorks": "Comment ça Marche",
+      "whyWeCare": "Pourquoi Nous Nous Soucions"
     },
-    "features": {
-      "title": "Tout ce dont vous avez besoin",
-      "findMedications": {
-        "title": "Trouvez des Médicaments",
-        "description": "Recherchez et comparez les médicaments des pharmacies locales"
-      },
-      "easyOrdering": {
-        "title": "Commande Facile",
-        "description": "Commandez des médicaments en livraison ou en retrait"
-      },
-      "managePrescriptions": {
-        "title": "Gérez vos Ordonnances",
-        "description": "Téléchargez et gérez vos ordonnances numériquement"
-      },
-      "connectDoctors": {
-        "title": "Connectez-vous avec des Médecins",
-        "description": "Trouvez et connectez-vous avec des professionnels de santé"
-      }
-    },
-    "partner": {
-      "title": "Devenez Partenaire",
-      "subtitle": "Rejoignez notre réseau de pharmacies partenaires et atteignez plus de clients",
-      "button": "En Savoir Plus",
-      "features": {
-        "reach": {
-          "title": "Étendez votre Portée",
-          "description": "Connectez-vous avec plus de clients et développez votre pharmacie"
-        },
-        "support": {
-          "title": "Support Dédié",
-          "description": "Accédez à notre équipe de support client et à nos outils professionnels"
-        },
-        "pricing": {
-          "title": "Prix Simple",
-          "description": "Abonnement mensuel transparent sans frais cachés"
-        }
-      }
-    },
-    "deliveryPartner": {
-      "title": "Devenez Partenaire de Livraison",
-      "subtitle": "Rejoignez notre réseau de partenaires de livraison et gagnez de l'argent selon votre emploi du temps",
-      "findOutMore": "En Savoir Plus",
-      "features": {
-        "requirements": {
-          "title": "Exigences Simples",
-          "description": "Tout ce dont vous avez besoin est un vélo ou un scooter électrique et un équipement de sécurité"
-        },
-        "notifications": {
-          "title": "Notifications Géolocalisées",
-          "description": "Recevez des notifications sur les livraisons à proximité dans votre zone"
-        },
-        "payments": {
-          "title": "Paiements Mensuels",
-          "description": "Recevez des paiements mensuels pour toutes les livraisons effectuées"
-        }
-      }
-    },
-    "stats": {
-      "orders": "Total des Commandes",
-      "pharmacies": "Pharmacies Partenaires",
-      "providers": "Prestataires de Santé",
-      "prescriptions": "Ordonnances Gérées"
-    },
-    "testimonials": {
-      "title": "Ce que Disent Nos Utilisateurs",
-      "reviews": {
-        "sarah": {
-          "name": "Sarah Johnson",
-          "role": "Cliente Régulière",
-          "quote": "Luxmed a rendu la gestion de mes ordonnances beaucoup plus facile. Le service de livraison est rapide et fiable !"
-        },
-        "michael": {
-          "name": "Michael Chen",
-          "role": "Patient",
-          "quote": "La possibilité de comparer les prix des médicaments entre différentes pharmacies m'a fait gagner du temps et de l'argent."
-        },
-        "emily": {
-          "name": "Emily Rodriguez",
-          "role": "Professionnelle de Santé",
-          "quote": "En tant que prestataire de santé, j'apprécie la façon dont Luxmed simplifie le processus d'ordonnance pour mes patients."
-        },
-        "david": {
-          "name": "David Smith",
-          "role": "Client Régulier",
-          "quote": "Le service client est exceptionnel. Ils sont toujours prêts à répondre à mes questions sur mes médicaments."
-        },
-        "lisa": {
-          "name": "Lisa Wong",
-          "role": "Patiente",
-          "quote": "Pouvoir gérer toutes les ordonnances de ma famille au même endroit a tout changé. Hautement recommandé !"
-        }
-      }
-    }
-  },
-  "footer": {
-    "company": {
-      "title": "Entreprise",
-      "about": "À Propos",
-      "careers": "Carrières",
-      "press": "Presse",
-      "blog": "Blog"
-    },
-    "support": {
-      "title": "Support",
-      "help": "Centre d'Aide",
-      "safety": "Centre de Sécurité",
-      "guidelines": "Règles de la Communauté"
-    },
-    "legal": {
-      "title": "Légal",
-      "cookies": "Politique de Cookies",
-      "privacy": "Politique de Confidentialité",
-      "terms": "Conditions d'Utilisation",
-      "law": "Forces de l'Ordre"
-    },
-    "install": {
-      "title": "Installer l'App",
-      "appStore": "App Store",
-      "googlePlay": "Google Play"
-    },
-    "copyright": "© 2024 Luxmed. Tous droits réservés.",
-    "links": {
-      "privacy": "Politique de Confidentialité",
-      "terms": "Conditions d'Utilisation",
-      "contact": "Contact"
+    "mobile": {
+      "menu": "Menu",
+      "products": "Produits",
+      "services": "Services",
+      "becomePartner": "Devenir Partenaire",
+      "aboutUs": "À Propos",
+      "whyLuxmed": "Pourquoi Luxmed",
+      "howItWorks": "Comment ça Marche"
     }
   }
 }

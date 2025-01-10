@@ -27,17 +27,26 @@ const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
       </SheetTrigger>
       <SheetContent side="left" className="w-[300px]">
         <SheetHeader>
-          <SheetTitle>Menu</SheetTitle>
+          <SheetTitle>{t('navigation.mobile.menu')}</SheetTitle>
         </SheetHeader>
         <nav className="mt-6 space-y-4">
           <Link to="/products" className="block px-4 py-2 hover:bg-accent rounded-md">
-            {t('common.products')}
+            {t('navigation.mobile.products')}
           </Link>
           <Link to="/services" className="block px-4 py-2 hover:bg-accent rounded-md">
-            {t('common.services')}
+            {t('navigation.mobile.services')}
           </Link>
           <Link to="/become-partner" className="block px-4 py-2 hover:bg-accent rounded-md">
-            {t('common.becomePartner')}
+            {t('navigation.mobile.becomePartner')}
+          </Link>
+          <Link to="/about-us" className="block px-4 py-2 hover:bg-accent rounded-md">
+            {t('navigation.mobile.aboutUs')}
+          </Link>
+          <Link to="/why-luxmed" className="block px-4 py-2 hover:bg-accent rounded-md">
+            {t('navigation.mobile.whyLuxmed')}
+          </Link>
+          <Link to="/how-it-works" className="block px-4 py-2 hover:bg-accent rounded-md">
+            {t('navigation.mobile.howItWorks')}
           </Link>
         </nav>
       </SheetContent>

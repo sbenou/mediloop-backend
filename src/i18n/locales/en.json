@@ -24,157 +24,31 @@
       "whyWeCare": "Why we care"
     }
   },
-  "home": {
-    "hero": {
-      "title": "Your Health, Simplified",
-      "subtitle": "Find and order medications, manage prescriptions, and connect with healthcare providers - all in one place.",
-      "pharmacistsButton": "Pharmacists",
-      "doctorsButton": "Doctors",
-      "deliveryButton": "Delivery man"
+  "navigation": {
+    "main": {
+      "menu": "Navigation",
+      "products": "Products",
+      "services": "Services",
+      "becomePartner": "Become a Partner",
+      "browseProducts": "Browse our wide selection of medications and health products",
+      "discoverServices": "Discover our healthcare services and solutions",
+      "joinNetwork": "Join our network of pharmacy partners"
     },
-    "getStarted": {
-      "title": "Get Started in 3 Easy Steps",
-      "subtitle": "Follow these simple steps to start ordering your medications online",
-      "steps": {
-        "findPharmacy": {
-          "title": "Find a pharmacy",
-          "description": "Search and set your default pharmacy for convenient ordering"
-        },
-        "connectDoctor": {
-          "title": "Connect with your doctor",
-          "description": "Link your account with your healthcare provider"
-        },
-        "orderMedications": {
-          "title": "Order medications",
-          "description": "Browse and order medications with or without prescription and get delivered"
-        }
-      }
+    "more": {
+      "menu": "More",
+      "aboutUs": "About Us",
+      "whyLuxmed": "Why Luxmed",
+      "howItWorks": "How It Works",
+      "whyWeCare": "Why We Care"
     },
-    "features": {
-      "title": "Everything You Need",
-      "findMedications": {
-        "title": "Find Medications",
-        "description": "Search and compare medications from local pharmacies"
-      },
-      "easyOrdering": {
-        "title": "Easy Ordering",
-        "description": "Order medications for delivery or pickup"
-      },
-      "managePrescriptions": {
-        "title": "Manage Prescriptions",
-        "description": "Upload and manage your prescriptions digitally"
-      },
-      "connectDoctors": {
-        "title": "Connect with Doctors",
-        "description": "Find and connect with healthcare providers"
-      }
-    },
-    "partner": {
-      "title": "Become a Partner",
-      "subtitle": "Join our network of pharmacy partners and reach more customers",
-      "button": "Find Out More",
-      "features": {
-        "reach": {
-          "title": "Expand Your Reach",
-          "description": "Connect with more customers and grow your pharmacy business"
-        },
-        "support": {
-          "title": "Dedicated Support",
-          "description": "Get access to our customer support team and business tools"
-        },
-        "pricing": {
-          "title": "Simple Pricing",
-          "description": "Transparent monthly subscription with no hidden fees"
-        }
-      }
-    },
-    "deliveryPartner": {
-      "title": "Become a Delivery Partner",
-      "subtitle": "Join our network of delivery partners and earn money on your own schedule",
-      "findOutMore": "Find Out More",
-      "features": {
-        "requirements": {
-          "title": "Simple Requirements",
-          "description": "All you need is a bicycle or electric scooter and safety equipment"
-        },
-        "notifications": {
-          "title": "Location-Based Notifications",
-          "description": "Get notified about nearby deliveries in your area"
-        },
-        "payments": {
-          "title": "Monthly Payments",
-          "description": "Receive monthly payments for all completed deliveries"
-        }
-      }
-    },
-    "stats": {
-      "orders": "Total Orders",
-      "pharmacies": "Partner Pharmacies",
-      "providers": "Healthcare Providers",
-      "prescriptions": "Prescriptions Managed"
-    },
-    "testimonials": {
-      "title": "What Our Users Say",
-      "reviews": {
-        "sarah": {
-          "name": "Sarah Johnson",
-          "role": "Regular Customer",
-          "quote": "Luxmed has made managing my prescriptions so much easier. The delivery service is prompt and reliable!"
-        },
-        "michael": {
-          "name": "Michael Chen",
-          "role": "Patient",
-          "quote": "The ability to compare medication prices across different pharmacies has saved me both time and money."
-        },
-        "emily": {
-          "name": "Emily Rodriguez",
-          "role": "Healthcare Professional",
-          "quote": "As a healthcare provider, I appreciate how Luxmed streamlines the prescription process for my patients."
-        },
-        "david": {
-          "name": "David Smith",
-          "role": "Regular Customer",
-          "quote": "The customer service is exceptional. They're always ready to help with any questions I have about my medications."
-        },
-        "lisa": {
-          "name": "Lisa Wong",
-          "role": "Patient",
-          "quote": "Being able to manage all my family's prescriptions in one place has been a game-changer. Highly recommended!"
-        }
-      }
-    }
-  },
-  "footer": {
-    "company": {
-      "title": "Company",
-      "about": "About Us",
-      "careers": "Careers",
-      "press": "Press",
-      "blog": "Blog"
-    },
-    "support": {
-      "title": "Support",
-      "help": "Help Center",
-      "safety": "Safety Center",
-      "guidelines": "Community Guidelines"
-    },
-    "legal": {
-      "title": "Legal",
-      "cookies": "Cookies Policy",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "law": "Law Enforcement"
-    },
-    "install": {
-      "title": "Install App",
-      "appStore": "App Store",
-      "googlePlay": "Google Play"
-    },
-    "copyright": "© 2024 Luxmed. All rights reserved.",
-    "links": {
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "contact": "Contact"
+    "mobile": {
+      "menu": "Menu",
+      "products": "Products",
+      "services": "Services",
+      "becomePartner": "Become a Partner",
+      "aboutUs": "About Us",
+      "whyLuxmed": "Why Luxmed",
+      "howItWorks": "How It Works"
     }
   }
 }

@@ -24,157 +24,31 @@
       "whyWeCare": "Warum wir uns kümmern"
     }
   },
-  "home": {
-    "hero": {
-      "title": "Ihre Gesundheit, vereinfacht",
-      "subtitle": "Finden und bestellen Sie Medikamente, verwalten Sie Rezepte und verbinden Sie sich mit Gesundheitsdienstleistern - alles an einem Ort.",
-      "pharmacistsButton": "Apotheker",
-      "doctorsButton": "Ärzte",
-      "deliveryButton": "Lieferant"
+  "navigation": {
+    "main": {
+      "menu": "Navigation",
+      "products": "Produkte",
+      "services": "Dienstleistungen",
+      "becomePartner": "Partner werden",
+      "browseProducts": "Durchsuchen Sie unsere große Auswahl an Medikamenten und Gesundheitsprodukten",
+      "discoverServices": "Entdecken Sie unsere Gesundheitsdienste und Lösungen",
+      "joinNetwork": "Werden Sie Teil unseres Apotheken-Partnernetzwerks"
     },
-    "getStarted": {
-      "title": "Starten Sie in 3 einfachen Schritten",
-      "subtitle": "Folgen Sie diesen einfachen Schritten, um Ihre Medikamente online zu bestellen",
-      "steps": {
-        "findPharmacy": {
-          "title": "Apotheke finden",
-          "description": "Suchen und wählen Sie Ihre Standard-Apotheke für bequemes Bestellen"
-        },
-        "connectDoctor": {
-          "title": "Mit Ihrem Arzt verbinden",
-          "description": "Verknüpfen Sie Ihr Konto mit Ihrem Gesundheitsdienstleister"
-        },
-        "orderMedications": {
-          "title": "Medikamente bestellen",
-          "description": "Durchsuchen und bestellen Sie Medikamente mit oder ohne Rezept und lassen Sie sich beliefern"
-        }
-      }
+    "more": {
+      "menu": "Mehr",
+      "aboutUs": "Über Uns",
+      "whyLuxmed": "Warum Luxmed",
+      "howItWorks": "Wie es Funktioniert",
+      "whyWeCare": "Warum wir uns Kümmern"
     },
-    "features": {
-      "title": "Alles was Sie brauchen",
-      "findMedications": {
-        "title": "Medikamente finden",
-        "description": "Suchen und vergleichen Sie Medikamente von lokalen Apotheken"
-      },
-      "easyOrdering": {
-        "title": "Einfaches Bestellen",
-        "description": "Bestellen Sie Medikamente zur Lieferung oder Abholung"
-      },
-      "managePrescriptions": {
-        "title": "Rezepte verwalten",
-        "description": "Laden Sie Ihre Rezepte hoch und verwalten Sie sie digital"
-      },
-      "connectDoctors": {
-        "title": "Mit Ärzten verbinden",
-        "description": "Finden und verbinden Sie sich mit Gesundheitsdienstleistern"
-      }
-    },
-    "partner": {
-      "title": "Partner werden",
-      "subtitle": "Treten Sie unserem Netzwerk von Apotheken-Partnern bei und erreichen Sie mehr Kunden",
-      "button": "Mehr erfahren",
-      "features": {
-        "reach": {
-          "title": "Erweitern Sie Ihre Reichweite",
-          "description": "Verbinden Sie sich mit mehr Kunden und lassen Sie Ihre Apotheke wachsen"
-        },
-        "support": {
-          "title": "Dedizierter Support",
-          "description": "Erhalten Sie Zugang zu unserem Kundenservice-Team und Business-Tools"
-        },
-        "pricing": {
-          "title": "Einfache Preisgestaltung",
-          "description": "Transparentes monatliches Abonnement ohne versteckte Gebühren"
-        }
-      }
-    },
-    "deliveryPartner": {
-      "title": "Werden Sie Lieferpartner",
-      "subtitle": "Treten Sie unserem Netzwerk von Lieferpartnern bei und verdienen Sie Geld nach Ihrem eigenen Zeitplan",
-      "findOutMore": "Mehr erfahren",
-      "features": {
-        "requirements": {
-          "title": "Einfache Anforderungen",
-          "description": "Alles, was Sie brauchen, ist ein Fahrrad oder E-Scooter und Sicherheitsausrüstung"
-        },
-        "notifications": {
-          "title": "Standortbasierte Benachrichtigungen",
-          "description": "Erhalten Sie Benachrichtigungen über Lieferungen in Ihrer Nähe"
-        },
-        "payments": {
-          "title": "Monatliche Zahlungen",
-          "description": "Erhalten Sie monatliche Zahlungen für alle abgeschlossenen Lieferungen"
-        }
-      }
-    },
-    "stats": {
-      "orders": "Gesamtbestellungen",
-      "pharmacies": "Partnerapotheken",
-      "providers": "Gesundheitsdienstleister",
-      "prescriptions": "Verwaltete Rezepte"
-    },
-    "testimonials": {
-      "title": "Was unsere Nutzer sagen",
-      "reviews": {
-        "sarah": {
-          "name": "Sarah Johnson",
-          "role": "Stammkundin",
-          "quote": "Luxmed hat die Verwaltung meiner Rezepte viel einfacher gemacht. Der Lieferservice ist pünktlich und zuverlässig!"
-        },
-        "michael": {
-          "name": "Michael Chen",
-          "role": "Patient",
-          "quote": "Die Möglichkeit, Medikamentenpreise verschiedener Apotheken zu vergleichen, hat mir Zeit und Geld gespart."
-        },
-        "emily": {
-          "name": "Emily Rodriguez",
-          "role": "Gesundheitsdienstleisterin",
-          "quote": "Als Gesundheitsdienstleisterin schätze ich, wie Luxmed den Rezeptprozess für meine Patienten vereinfacht."
-        },
-        "david": {
-          "name": "David Smith",
-          "role": "Stammkunde",
-          "quote": "Der Kundenservice ist außergewöhnlich. Sie sind immer bereit, Fragen zu meinen Medikamenten zu beantworten."
-        },
-        "lisa": {
-          "name": "Lisa Wong",
-          "role": "Patientin",
-          "quote": "Die Möglichkeit, alle Rezepte meiner Familie an einem Ort zu verwalten, ist ein Wendepunkt. Sehr empfehlenswert!"
-        }
-      }
-    }
-  },
-  "footer": {
-    "company": {
-      "title": "Unternehmen",
-      "about": "Über uns",
-      "careers": "Karriere",
-      "press": "Presse",
-      "blog": "Blog"
-    },
-    "support": {
-      "title": "Support",
-      "help": "Hilfecenter",
-      "safety": "Sicherheitscenter",
-      "guidelines": "Community-Richtlinien"
-    },
-    "legal": {
-      "title": "Rechtliches",
-      "cookies": "Cookie-Richtlinie",
-      "privacy": "Datenschutzrichtlinie",
-      "terms": "Nutzungsbedingungen",
-      "law": "Strafverfolgung"
-    },
-    "install": {
-      "title": "App installieren",
-      "appStore": "App Store",
-      "googlePlay": "Google Play"
-    },
-    "copyright": "© 2024 Luxmed. Alle Rechte vorbehalten.",
-    "links": {
-      "privacy": "Datenschutzrichtlinie",
-      "terms": "Nutzungsbedingungen",
-      "contact": "Kontakt"
+    "mobile": {
+      "menu": "Menü",
+      "products": "Produkte",
+      "services": "Dienstleistungen",
+      "becomePartner": "Partner werden",
+      "aboutUs": "Über Uns",
+      "whyLuxmed": "Warum Luxmed",
+      "howItWorks": "Wie es Funktioniert"
     }
   }
 }
