@@ -50,5 +50,159 @@
       "whyLuxmed": "Pourquoi Luxmed",
       "howItWorks": "Comment ça Marche"
     }
+  },
+  "home": {
+    "hero": {
+      "title": "Votre Santé, Livrée",
+      "subtitle": "Connectez-vous avec des professionnels de santé et recevez vos médicaments à domicile",
+      "pharmacistsButton": "Pour les Pharmaciens",
+      "doctorsButton": "Pour les Médecins",
+      "deliveryButton": "Partenaires de Livraison"
+    },
+    "features": {
+      "title": "Tout ce dont vous avez besoin en un seul endroit",
+      "findMedications": {
+        "title": "Trouver des Médicaments",
+        "description": "Recherchez et parcourez une large gamme de médicaments"
+      },
+      "easyOrdering": {
+        "title": "Commande Facile",
+        "description": "Commandez des médicaments en quelques clics"
+      },
+      "managePrescriptions": {
+        "title": "Gérer les Ordonnances",
+        "description": "Suivez toutes vos ordonnances en un seul endroit"
+      },
+      "connectDoctors": {
+        "title": "Connexion avec les Médecins",
+        "description": "Connectez-vous facilement avec des professionnels de santé"
+      }
+    },
+    "getStarted": {
+      "title": "Commencez en Trois Étapes Simples",
+      "subtitle": "Suivez ces étapes simples pour commencer à utiliser nos services",
+      "steps": {
+        "findPharmacy": {
+          "title": "Trouver une Pharmacie",
+          "description": "Localisez une pharmacie près de chez vous"
+        },
+        "connectDoctor": {
+          "title": "Connectez-vous avec un Médecin",
+          "description": "Choisissez votre professionnel de santé préféré"
+        },
+        "orderMedications": {
+          "title": "Commander des Médicaments",
+          "description": "Faites-vous livrer vos médicaments"
+        }
+      }
+    },
+    "partner": {
+      "title": "Rejoignez Notre Réseau",
+      "subtitle": "Devenez partenaire et développez votre activité",
+      "button": "En Savoir Plus",
+      "features": {
+        "reach": {
+          "title": "Élargissez Votre Portée",
+          "description": "Connectez-vous avec plus de patients et développez votre pratique"
+        },
+        "support": {
+          "title": "Support 24/7",
+          "description": "Bénéficiez d'un support dédié quand vous en avez besoin"
+        },
+        "pricing": {
+          "title": "Prix Compétitifs",
+          "description": "Des plans tarifaires flexibles adaptés à vos besoins"
+        }
+      }
+    },
+    "deliveryPartner": {
+      "title": "Devenez Partenaire de Livraison",
+      "subtitle": "Rejoignez notre réseau de partenaires de livraison et gagnez un revenu supplémentaire",
+      "findOutMore": "En Savoir Plus",
+      "features": {
+        "requirements": {
+          "title": "Exigences Simples",
+          "description": "Tout ce dont vous avez besoin est un véhicule et un smartphone"
+        },
+        "notifications": {
+          "title": "Notifications en Temps Réel",
+          "description": "Recevez des alertes instantanées pour les nouvelles demandes de livraison"
+        },
+        "payments": {
+          "title": "Paiements Hebdomadaires",
+          "description": "Recevez vos gains chaque semaine"
+        }
+      }
+    },
+    "stats": {
+      "orders": "Commandes Livrées",
+      "pharmacies": "Pharmacies Partenaires",
+      "providers": "Professionnels de Santé",
+      "prescriptions": "Ordonnances Gérées"
+    },
+    "testimonials": {
+      "title": "Ce que les Gens Disent de Nous",
+      "reviews": {
+        "sarah": {
+          "name": "Sarah Johnson",
+          "role": "Patiente",
+          "quote": "Le service a rendu la gestion de mes médicaments beaucoup plus facile. Fortement recommandé !"
+        },
+        "michael": {
+          "name": "Dr. Michael Chen",
+          "role": "Professionnel de Santé",
+          "quote": "Une excellente plateforme qui m'aide à rester connecté avec mes patients."
+        },
+        "emily": {
+          "name": "Emily Rodriguez",
+          "role": "Pharmacienne",
+          "quote": "La plateforme nous a aidés à atteindre plus de clients et à rationaliser nos opérations."
+        },
+        "david": {
+          "name": "David Wilson",
+          "role": "Partenaire de Livraison",
+          "quote": "Horaires flexibles et excellent potentiel de gains. Parfait pour mon emploi du temps !"
+        },
+        "lisa": {
+          "name": "Lisa Thompson",
+          "role": "Patiente",
+          "quote": "Se faire livrer mes ordonnances n'a jamais été aussi facile !"
+        }
+      }
+    }
+  },
+  "footer": {
+    "description": "Votre plateforme de livraison de soins de santé de confiance",
+    "copyright": "© 2024 Luxmed. Tous droits réservés.",
+    "company": {
+      "title": "Entreprise",
+      "about": "À Propos",
+      "careers": "Carrières",
+      "press": "Presse",
+      "blog": "Blog"
+    },
+    "support": {
+      "title": "Support",
+      "help": "Centre d'Aide",
+      "safety": "Sécurité",
+      "guidelines": "Directives"
+    },
+    "legal": {
+      "title": "Légal",
+      "cookies": "Politique de Cookies",
+      "privacy": "Politique de Confidentialité",
+      "terms": "Conditions d'Utilisation",
+      "law": "Mentions Légales"
+    },
+    "install": {
+      "title": "Installer l'App",
+      "appStore": "App Store",
+      "googlePlay": "Google Play"
+    },
+    "links": {
+      "privacy": "Confidentialité",
+      "terms": "Conditions",
+      "contact": "Contact"
+    }
   }
 }

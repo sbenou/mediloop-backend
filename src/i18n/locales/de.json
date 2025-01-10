@@ -32,14 +32,14 @@
       "becomePartner": "Partner werden",
       "browseProducts": "Durchsuchen Sie unsere große Auswahl an Medikamenten und Gesundheitsprodukten",
       "discoverServices": "Entdecken Sie unsere Gesundheitsdienste und Lösungen",
-      "joinNetwork": "Werden Sie Teil unseres Apotheken-Partnernetzwerks"
+      "joinNetwork": "Treten Sie unserem Netzwerk von Apotheken-Partnern bei"
     },
     "more": {
       "menu": "Mehr",
       "aboutUs": "Über Uns",
       "whyLuxmed": "Warum Luxmed",
       "howItWorks": "Wie es Funktioniert",
-      "whyWeCare": "Warum wir uns Kümmern"
+      "whyWeCare": "Warum Wir Uns Kümmern"
     },
     "mobile": {
       "menu": "Menü",
@@ -49,6 +49,160 @@
       "aboutUs": "Über Uns",
       "whyLuxmed": "Warum Luxmed",
       "howItWorks": "Wie es Funktioniert"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Ihre Gesundheit, Geliefert",
+      "subtitle": "Verbinden Sie sich mit Gesundheitsdienstleistern und lassen Sie sich Ihre Medikamente nach Hause liefern",
+      "pharmacistsButton": "Für Apotheker",
+      "doctorsButton": "Für Ärzte",
+      "deliveryButton": "Lieferpartner"
+    },
+    "features": {
+      "title": "Alles was Sie brauchen an einem Ort",
+      "findMedications": {
+        "title": "Medikamente Finden",
+        "description": "Suchen und durchstöbern Sie eine große Auswahl an Medikamenten"
+      },
+      "easyOrdering": {
+        "title": "Einfache Bestellung",
+        "description": "Bestellen Sie Medikamente mit wenigen Klicks"
+      },
+      "managePrescriptions": {
+        "title": "Rezepte Verwalten",
+        "description": "Behalten Sie alle Ihre Rezepte an einem Ort im Überblick"
+      },
+      "connectDoctors": {
+        "title": "Mit Ärzten Verbinden",
+        "description": "Verbinden Sie sich einfach mit Gesundheitsdienstleistern"
+      }
+    },
+    "getStarted": {
+      "title": "Starten Sie in drei einfachen Schritten",
+      "subtitle": "Folgen Sie diesen einfachen Schritten, um unsere Dienste zu nutzen",
+      "steps": {
+        "findPharmacy": {
+          "title": "Apotheke Finden",
+          "description": "Finden Sie eine Apotheke in Ihrer Nähe"
+        },
+        "connectDoctor": {
+          "title": "Mit Arzt Verbinden",
+          "description": "Wählen Sie Ihren bevorzugten Gesundheitsdienstleister"
+        },
+        "orderMedications": {
+          "title": "Medikamente Bestellen",
+          "description": "Lassen Sie sich Ihre Medikamente liefern"
+        }
+      }
+    },
+    "partner": {
+      "title": "Unserem Netzwerk Beitreten",
+      "subtitle": "Werden Sie Partner und lassen Sie Ihr Geschäft wachsen",
+      "button": "Mehr Erfahren",
+      "features": {
+        "reach": {
+          "title": "Reichweite Erweitern",
+          "description": "Verbinden Sie sich mit mehr Patienten und erweitern Sie Ihre Praxis"
+        },
+        "support": {
+          "title": "24/7 Support",
+          "description": "Erhalten Sie jederzeit dedizierten Support"
+        },
+        "pricing": {
+          "title": "Wettbewerbsfähige Preise",
+          "description": "Flexible Preispläne für Ihre Bedürfnisse"
+        }
+      }
+    },
+    "deliveryPartner": {
+      "title": "Werden Sie Lieferpartner",
+      "subtitle": "Treten Sie unserem Netzwerk von Lieferpartnern bei und verdienen Sie zusätzliches Einkommen",
+      "findOutMore": "Mehr Erfahren",
+      "features": {
+        "requirements": {
+          "title": "Einfache Anforderungen",
+          "description": "Alles was Sie brauchen ist ein Fahrzeug und ein Smartphone"
+        },
+        "notifications": {
+          "title": "Echtzeit-Benachrichtigungen",
+          "description": "Erhalten Sie sofortige Benachrichtigungen für neue Lieferanfragen"
+        },
+        "payments": {
+          "title": "Wöchentliche Zahlungen",
+          "description": "Erhalten Sie Ihre Einnahmen jede Woche"
+        }
+      }
+    },
+    "stats": {
+      "orders": "Gelieferte Bestellungen",
+      "pharmacies": "Partner-Apotheken",
+      "providers": "Gesundheitsdienstleister",
+      "prescriptions": "Verwaltete Rezepte"
+    },
+    "testimonials": {
+      "title": "Was Menschen Über Uns Sagen",
+      "reviews": {
+        "sarah": {
+          "name": "Sarah Johnson",
+          "role": "Patientin",
+          "quote": "Der Service hat die Verwaltung meiner Medikamente viel einfacher gemacht. Sehr empfehlenswert!"
+        },
+        "michael": {
+          "name": "Dr. Michael Chen",
+          "role": "Gesundheitsdienstleister",
+          "quote": "Eine ausgezeichnete Plattform, die mir hilft, mit meinen Patienten in Verbindung zu bleiben."
+        },
+        "emily": {
+          "name": "Emily Rodriguez",
+          "role": "Apothekerin",
+          "quote": "Die Plattform hat uns geholfen, mehr Kunden zu erreichen und unsere Abläufe zu optimieren."
+        },
+        "david": {
+          "name": "David Wilson",
+          "role": "Lieferpartner",
+          "quote": "Flexible Arbeitszeiten und großes Verdienstpotential. Perfekt für meinen Zeitplan!"
+        },
+        "lisa": {
+          "name": "Lisa Thompson",
+          "role": "Patientin",
+          "quote": "Meine Rezepte geliefert zu bekommen war noch nie so einfach!"
+        }
+      }
+    }
+  },
+  "footer": {
+    "description": "Ihre vertrauenswürdige Plattform für Gesundheitslieferungen",
+    "copyright": "© 2024 Luxmed. Alle Rechte vorbehalten.",
+    "company": {
+      "title": "Unternehmen",
+      "about": "Über Uns",
+      "careers": "Karriere",
+      "press": "Presse",
+      "blog": "Blog"
+    },
+    "support": {
+      "title": "Support",
+      "help": "Hilfecenter",
+      "safety": "Sicherheit",
+      "guidelines": "Richtlinien"
+    },
+    "legal": {
+      "title": "Rechtliches",
+      "cookies": "Cookie-Richtlinie",
+      "privacy": "Datenschutz",
+      "terms": "Nutzungsbedingungen",
+      "law": "Rechtliche Hinweise"
+    },
+    "install": {
+      "title": "App Installieren",
+      "appStore": "App Store",
+      "googlePlay": "Google Play"
+    },
+    "links": {
+      "privacy": "Datenschutz",
+      "terms": "Bedingungen",
+      "contact": "Kontakt"
     }
   }
 }

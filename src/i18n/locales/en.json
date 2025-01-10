@@ -50,5 +50,159 @@
       "whyLuxmed": "Why Luxmed",
       "howItWorks": "How It Works"
     }
+  },
+  "home": {
+    "hero": {
+      "title": "Your Health, Delivered",
+      "subtitle": "Connect with healthcare providers and get your medications delivered to your doorstep",
+      "pharmacistsButton": "For Pharmacists",
+      "doctorsButton": "For Doctors",
+      "deliveryButton": "Delivery Partners"
+    },
+    "features": {
+      "title": "Everything You Need in One Place",
+      "findMedications": {
+        "title": "Find Medications",
+        "description": "Search and browse through a wide range of medications"
+      },
+      "easyOrdering": {
+        "title": "Easy Ordering",
+        "description": "Order medications with just a few clicks"
+      },
+      "managePrescriptions": {
+        "title": "Manage Prescriptions",
+        "description": "Keep track of all your prescriptions in one place"
+      },
+      "connectDoctors": {
+        "title": "Connect with Doctors",
+        "description": "Easily connect with healthcare providers"
+      }
+    },
+    "getStarted": {
+      "title": "Get Started in Three Easy Steps",
+      "subtitle": "Follow these simple steps to start using our services",
+      "steps": {
+        "findPharmacy": {
+          "title": "Find a Pharmacy",
+          "description": "Locate a pharmacy near you"
+        },
+        "connectDoctor": {
+          "title": "Connect with Doctor",
+          "description": "Choose your preferred healthcare provider"
+        },
+        "orderMedications": {
+          "title": "Order Medications",
+          "description": "Get your medications delivered"
+        }
+      }
+    },
+    "partner": {
+      "title": "Join Our Network",
+      "subtitle": "Become a partner and grow your business",
+      "button": "Learn More",
+      "features": {
+        "reach": {
+          "title": "Expand Your Reach",
+          "description": "Connect with more patients and grow your practice"
+        },
+        "support": {
+          "title": "24/7 Support",
+          "description": "Get dedicated support whenever you need it"
+        },
+        "pricing": {
+          "title": "Competitive Pricing",
+          "description": "Flexible pricing plans to suit your needs"
+        }
+      }
+    },
+    "deliveryPartner": {
+      "title": "Become a Delivery Partner",
+      "subtitle": "Join our network of delivery partners and earn extra income",
+      "findOutMore": "Find Out More",
+      "features": {
+        "requirements": {
+          "title": "Simple Requirements",
+          "description": "All you need is a vehicle and a smartphone"
+        },
+        "notifications": {
+          "title": "Real-time Notifications",
+          "description": "Get instant alerts for new delivery requests"
+        },
+        "payments": {
+          "title": "Weekly Payments",
+          "description": "Receive your earnings every week"
+        }
+      }
+    },
+    "stats": {
+      "orders": "Orders Delivered",
+      "pharmacies": "Partner Pharmacies",
+      "providers": "Healthcare Providers",
+      "prescriptions": "Prescriptions Managed"
+    },
+    "testimonials": {
+      "title": "What People Say About Us",
+      "reviews": {
+        "sarah": {
+          "name": "Sarah Johnson",
+          "role": "Patient",
+          "quote": "The service has made managing my medications so much easier. Highly recommended!"
+        },
+        "michael": {
+          "name": "Dr. Michael Chen",
+          "role": "Healthcare Provider",
+          "quote": "An excellent platform that helps me stay connected with my patients."
+        },
+        "emily": {
+          "name": "Emily Rodriguez",
+          "role": "Pharmacist",
+          "quote": "The platform has helped us reach more customers and streamline our operations."
+        },
+        "david": {
+          "name": "David Wilson",
+          "role": "Delivery Partner",
+          "quote": "Flexible hours and great earning potential. Perfect for my schedule!"
+        },
+        "lisa": {
+          "name": "Lisa Thompson",
+          "role": "Patient",
+          "quote": "Getting my prescriptions delivered has never been easier!"
+        }
+      }
+    }
+  },
+  "footer": {
+    "description": "Your trusted healthcare delivery platform",
+    "copyright": "© 2024 Luxmed. All rights reserved.",
+    "company": {
+      "title": "Company",
+      "about": "About Us",
+      "careers": "Careers",
+      "press": "Press",
+      "blog": "Blog"
+    },
+    "support": {
+      "title": "Support",
+      "help": "Help Center",
+      "safety": "Safety",
+      "guidelines": "Guidelines"
+    },
+    "legal": {
+      "title": "Legal",
+      "cookies": "Cookie Policy",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "law": "Legal Notices"
+    },
+    "install": {
+      "title": "Install App",
+      "appStore": "App Store",
+      "googlePlay": "Google Play"
+    },
+    "links": {
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "contact": "Contact"
+    }
   }
 }
