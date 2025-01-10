@@ -238,7 +238,11 @@ export type Database = {
       profiles: {
         Row: {
           city: string | null
+          cns_card_back: string | null
+          cns_card_front: string | null
+          cns_number: string | null
           created_at: string | null
+          date_of_birth: string | null
           deleted_at: string | null
           email: string | null
           full_name: string | null
@@ -251,7 +255,11 @@ export type Database = {
         }
         Insert: {
           city?: string | null
+          cns_card_back?: string | null
+          cns_card_front?: string | null
+          cns_number?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           deleted_at?: string | null
           email?: string | null
           full_name?: string | null
@@ -264,7 +272,11 @@ export type Database = {
         }
         Update: {
           city?: string | null
+          cns_card_back?: string | null
+          cns_card_front?: string | null
+          cns_number?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           deleted_at?: string | null
           email?: string | null
           full_name?: string | null
