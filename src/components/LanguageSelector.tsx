@@ -9,12 +9,12 @@ import { Globe } from "lucide-react";
 import { Button } from "./ui/button";
 
 const LanguageSelector = () => {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
 
   const languages = [
-    { code: 'en', name: t('common.languages.en') },
-    { code: 'fr', name: t('common.languages.fr') },
-    { code: 'de', name: t('common.languages.de') },
+    { code: 'en', name: 'English' },
+    { code: 'fr', name: 'Français' },
+    { code: 'de', name: 'Deutsch' },
   ];
 
   return (
