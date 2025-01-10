@@ -9,11 +9,13 @@ import { supabase } from '@/lib/supabase';
 import { CategoryContent } from './CategoryContent';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const CategoriesNavigation = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
+  const { t } = useTranslation();
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -64,7 +66,7 @@ export const CategoriesNavigation = () => {
 
   return (
     <NavigationMenuItem>
-      <NavigationMenuTrigger>Medications</NavigationMenuTrigger>
+      <NavigationMenuTrigger>{t('common.navigation.medications')}</NavigationMenuTrigger>
       <NavigationMenuContent>
         <div className={`grid gap-3 p-4 ${isMobile ? 'w-[300px]' : 'w-[600px]'} md:grid-cols-2`}>
           <CategoryContent 

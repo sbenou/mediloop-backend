@@ -7,14 +7,14 @@ export const MainNavigationSection = () => {
   
   return (
     <NavigationMenuItem>
-      <NavigationMenuTrigger>{t('navigation.main.menu')}</NavigationMenuTrigger>
+      <NavigationMenuTrigger>Navigation</NavigationMenuTrigger>
       <NavigationMenuContent>
         <div className="grid w-[400px] gap-3 p-4">
           <Link 
             to="/products"
             className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
           >
-            <div className="text-sm font-medium leading-none">{t('navigation.main.products')}</div>
+            <div className="text-sm font-medium leading-none">{t('common.products')}</div>
             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
               {t('navigation.main.browseProducts')}
             </p>
@@ -23,7 +23,7 @@ export const MainNavigationSection = () => {
             to="/services"
             className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
           >
-            <div className="text-sm font-medium leading-none">{t('navigation.main.services')}</div>
+            <div className="text-sm font-medium leading-none">{t('common.services')}</div>
             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
               {t('navigation.main.discoverServices')}
             </p>
@@ -32,7 +32,7 @@ export const MainNavigationSection = () => {
             to="/become-partner"
             className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
           >
-            <div className="text-sm font-medium leading-none">{t('navigation.main.becomePartner')}</div>
+            <div className="text-sm font-medium leading-none">{t('common.becomePartner')}</div>
             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
               {t('navigation.main.joinNetwork')}
             </p>

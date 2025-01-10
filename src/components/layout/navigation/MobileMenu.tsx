@@ -27,26 +27,26 @@ const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
       </SheetTrigger>
       <SheetContent side="left" className="w-[300px]">
         <SheetHeader>
-          <SheetTitle>{t('navigation.mobile.menu')}</SheetTitle>
+          <SheetTitle>{t('common.navigation.menu')}</SheetTitle>
         </SheetHeader>
         <nav className="mt-6 space-y-4">
           <Link to="/products" className="block px-4 py-2 hover:bg-accent rounded-md">
-            {t('navigation.mobile.products')}
+            {t('common.products')}
           </Link>
           <Link to="/services" className="block px-4 py-2 hover:bg-accent rounded-md">
-            {t('navigation.mobile.services')}
+            {t('common.services')}
           </Link>
           <Link to="/become-partner" className="block px-4 py-2 hover:bg-accent rounded-md">
-            {t('navigation.mobile.becomePartner')}
+            {t('common.becomePartner')}
           </Link>
           <Link to="/about-us" className="block px-4 py-2 hover:bg-accent rounded-md">
-            {t('navigation.mobile.aboutUs')}
+            {t('common.navigation.aboutUs')}
           </Link>
           <Link to="/why-luxmed" className="block px-4 py-2 hover:bg-accent rounded-md">
-            {t('navigation.mobile.whyLuxmed')}
+            {t('common.navigation.whyLuxmed')}
           </Link>
           <Link to="/how-it-works" className="block px-4 py-2 hover:bg-accent rounded-md">
-            {t('navigation.mobile.howItWorks')}
+            {t('common.navigation.howItWorks')}
           </Link>
         </nav>
       </SheetContent>
