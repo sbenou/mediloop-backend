@@ -93,7 +93,7 @@ export const CategoryContent = ({
                   onClick={(e) => handleSubcategoryClick(selectedType, category.id, subcategory.id, e)}
                   className="text-sm font-medium hover:text-primary hover:underline block w-full text-left py-1"
                 >
-                  {t(`categories.${selectedType}.${subcategory.name}`)}
+                  {subcategory.name}
                 </a>
                 <div className="pl-4 space-y-1">
                   {getUniqueDescriptions && getUniqueDescriptions(subcategory).map((description: string, index: number) => (
@@ -103,7 +103,7 @@ export const CategoryContent = ({
                       onClick={(e) => handleDescriptionClick(selectedType, category.id, subcategory.id, e)}
                       className="block w-full text-left text-xs text-muted-foreground hover:text-primary hover:underline py-1"
                     >
-                      {t(`descriptions.${selectedType}.${description}`)}
+                      {description}
                     </a>
                   ))}
                 </div>
