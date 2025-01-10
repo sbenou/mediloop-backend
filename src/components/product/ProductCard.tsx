@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useCart } from "@/contexts/CartContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { useState } from "react";
 
 interface Product {
@@ -21,6 +22,7 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart } = useCart();
+  const { currency, convertPrice } = useCurrency();
   const [imageError, setImageError] = useState(false);
 
   const handleAddToCart = () => {
@@ -51,7 +53,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     setImageError(true);
   };
 
-  // Array of placeholder images from Unsplash
   const placeholderImages = [
     'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae',
     'https://images.unsplash.com/photo-1587854692152-cbe660dbde88',
@@ -59,11 +60,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     'https://images.unsplash.com/photo-1556229162-5c63ed9c4efb'
   ];
 
-  // Get a consistent placeholder image based on product ID
   const getPlaceholderImage = () => {
     const index = product.id.charCodeAt(0) % placeholderImages.length;
     return `${placeholderImages[index]}?w=400&q=80`;
   };
+
+  const displayPrice = `${currency.symbol}${convertPrice(product.price).toFixed(2)}`;
 
   return (
     <Card className="overflow-hidden flex flex-col">
@@ -87,7 +89,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </p>
         )}
         <div className="flex justify-between items-center mt-auto">
-          <span className="font-medium">${product.price.toFixed(2)}</span>
+          <span className="font-medium">{displayPrice}</span>
           <Button
             variant="outline"
             size="sm"
@@ -101,4 +103,4 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </CardContent>
     </Card>
   );
-};
+}
