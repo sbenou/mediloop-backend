@@ -19,9 +19,10 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [currencies, setCurrencies] = useState<Currency[]>([
-    { code: 'usd', name: 'US Dollar', symbol: '$', rate: 1 },
+    { code: 'eur', name: 'Euro', symbol: '€', rate: 1 },
+    { code: 'usd', name: 'US Dollar', symbol: '$', rate: 1.1 }, // Approximate rate until API data loads
   ]);
-  const [currency, setCurrency] = useState<Currency>(currencies[0]);
+  const [currency, setCurrency] = useState<Currency>(currencies[0]); // EUR is now the default
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
