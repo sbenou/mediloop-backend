@@ -20,13 +20,13 @@ export const SubcategoryItem = ({
   const { t } = useTranslation();
 
   return (
-    <div key={subcategory.id} className="space-y-1">
+    <div className="space-y-1">
       <a
         href="#"
         onClick={(e) => handleSubcategoryClick(selectedType!, categoryId, subcategory.id, e)}
         className="text-sm font-medium hover:text-primary hover:underline block w-full text-left py-1"
       >
-        {t(`categories.${selectedType}.${subcategory.name.toLowerCase().replace(/ /g, '_')}`)}
+        {subcategory.name}
       </a>
       <div className="pl-4 space-y-1">
         {getUniqueDescriptions && getUniqueDescriptions(subcategory).map((description: string, index: number) => (
@@ -36,7 +36,7 @@ export const SubcategoryItem = ({
             onClick={(e) => handleDescriptionClick(selectedType!, categoryId, subcategory.id, e)}
             className="block w-full text-left text-xs text-muted-foreground hover:text-primary hover:underline py-1"
           >
-            {t(`descriptions.${selectedType}.${description.toLowerCase().replace(/ /g, '_')}`)}
+            {description}
           </a>
         ))}
       </div>
