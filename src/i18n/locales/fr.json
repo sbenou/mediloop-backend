@@ -9,11 +9,6 @@
     "myOrders": "Mes Commandes",
     "myPrescriptions": "Mes Ordonnances",
     "findDoctor": "Trouver un Médecin",
-    "languages": {
-      "en": "Anglais",
-      "fr": "Français",
-      "de": "Allemand"
-    },
     "navigation": {
       "medications": "Médicaments",
       "navigation": "Navigation",
@@ -21,7 +16,66 @@
       "aboutUs": "À propos de nous",
       "whyLuxmed": "Pourquoi Luxmed",
       "howItWorks": "Comment ça marche",
-      "whyWeCare": "Pourquoi nous nous soucions"
+      "whyWeCare": "Pourquoi nous nous soucions",
+      "pharmacy": "Pharmacie",
+      "parapharmacy": "Parapharmacie",
+      "selectCategory": "Sélectionnez un type de catégorie pour voir les articles"
+    }
+  },
+  "categories": {
+    "medication": {
+      "pain_relief": "Antidouleurs",
+      "cold_and_flu": "Rhume & Grippe",
+      "allergy": "Allergie",
+      "digestive_health": "Santé Digestive",
+      "first_aid": "Premiers Secours",
+      "vitamins": "Vitamines & Compléments"
+    },
+    "parapharmacy": {
+      "skin_care": "Soin de la Peau",
+      "hair_care": "Soin des Cheveux",
+      "oral_care": "Hygiène Bucco-dentaire",
+      "baby_care": "Soin Bébé",
+      "personal_care": "Soin Personnel",
+      "nutrition": "Nutrition"
+    }
+  },
+  "descriptions": {
+    "medication": {
+      "headache": "Maux de Tête & Migraine",
+      "muscle_pain": "Douleurs Musculaires & Articulaires",
+      "fever": "Antipyrétiques",
+      "cough": "Toux & Rhume",
+      "congestion": "Congestion Nasale",
+      "seasonal": "Allergies Saisonnières",
+      "food": "Allergies Alimentaires",
+      "heartburn": "Brûlures & Reflux Acide",
+      "nausea": "Nausée & Vomissements",
+      "bandages": "Pansements & Bandages",
+      "antiseptics": "Antiseptiques & Soins des Plaies",
+      "multivitamins": "Multivitamines",
+      "minerals": "Minéraux",
+      "supplements": "Compléments Alimentaires"
+    },
+    "parapharmacy": {
+      "face": "Soin du Visage",
+      "body": "Soin du Corps",
+      "sun": "Protection Solaire",
+      "shampoo": "Shampooing & Après-shampooing",
+      "treatment": "Traitement Capillaire",
+      "styling": "Coiffage",
+      "toothpaste": "Dentifrice",
+      "mouthwash": "Bain de Bouche",
+      "floss": "Fil Dentaire",
+      "diapers": "Couches & Lingettes",
+      "bath": "Bain & Soin de la Peau Bébé",
+      "feeding": "Alimentation Bébé",
+      "soap": "Savon & Gel Douche",
+      "deodorant": "Déodorant",
+      "feminine": "Hygiène Féminine",
+      "protein": "Protéines & Compléments",
+      "vitamins": "Vitamines",
+      "herbs": "Compléments à Base de Plantes"
     }
   },
   "navigation": {

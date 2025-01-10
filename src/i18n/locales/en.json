@@ -21,7 +21,66 @@
       "aboutUs": "About us",
       "whyLuxmed": "Why Luxmed",
       "howItWorks": "How does it work",
-      "whyWeCare": "Why we care"
+      "whyWeCare": "Why we care",
+      "pharmacy": "Pharmacy",
+      "parapharmacy": "Parapharmacy",
+      "selectCategory": "Select a category type to view items"
+    }
+  },
+  "categories": {
+    "medication": {
+      "pain_relief": "Pain Relief",
+      "cold_and_flu": "Cold & Flu",
+      "allergy": "Allergy",
+      "digestive_health": "Digestive Health",
+      "first_aid": "First Aid",
+      "vitamins": "Vitamins & Supplements"
+    },
+    "parapharmacy": {
+      "skin_care": "Skin Care",
+      "hair_care": "Hair Care",
+      "oral_care": "Oral Care",
+      "baby_care": "Baby Care",
+      "personal_care": "Personal Care",
+      "nutrition": "Nutrition"
+    }
+  },
+  "descriptions": {
+    "medication": {
+      "headache": "Headache & Migraine",
+      "muscle_pain": "Muscle & Joint Pain",
+      "fever": "Fever Reducers",
+      "cough": "Cough & Cold",
+      "congestion": "Nasal Congestion",
+      "seasonal": "Seasonal Allergies",
+      "food": "Food Allergies",
+      "heartburn": "Heartburn & Acid Reflux",
+      "nausea": "Nausea & Vomiting",
+      "bandages": "Bandages & Dressings",
+      "antiseptics": "Antiseptics & Wound Care",
+      "multivitamins": "Multivitamins",
+      "minerals": "Minerals",
+      "supplements": "Dietary Supplements"
+    },
+    "parapharmacy": {
+      "face": "Face Care",
+      "body": "Body Care",
+      "sun": "Sun Protection",
+      "shampoo": "Shampoo & Conditioner",
+      "treatment": "Hair Treatment",
+      "styling": "Hair Styling",
+      "toothpaste": "Toothpaste",
+      "mouthwash": "Mouthwash",
+      "floss": "Dental Floss",
+      "diapers": "Diapers & Wipes",
+      "bath": "Baby Bath & Skin Care",
+      "feeding": "Baby Feeding",
+      "soap": "Soap & Body Wash",
+      "deodorant": "Deodorant",
+      "feminine": "Feminine Care",
+      "protein": "Protein & Supplements",
+      "vitamins": "Vitamins",
+      "herbs": "Herbal Supplements"
     }
   },
   "navigation": {
