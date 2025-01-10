@@ -46,7 +46,7 @@ const PersonalDetails = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h2 className="text-2xl font-bold mb-8">Personal Details</h2>
+      <h2 className="text-2xl font-bold mb-8">Profile</h2>
       
       <div className="grid gap-8 md:grid-cols-2">
         {/* Personal Information Card */}
