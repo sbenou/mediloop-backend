@@ -5,7 +5,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from 'react-i18next';
-import { Globe } from "lucide-react";
+import { Globe, Flag } from "lucide-react";
 import { Button } from "./ui/button";
 
 const LanguageSelector = () => {
@@ -29,8 +29,9 @@ const LanguageSelector = () => {
           <DropdownMenuItem
             key={lang.code}
             onClick={() => i18n.changeLanguage(lang.code)}
-            className="cursor-pointer"
+            className="cursor-pointer flex items-center gap-2"
           >
+            <Flag className="h-4 w-4" />
             {lang.name}
           </DropdownMenuItem>
         ))}
