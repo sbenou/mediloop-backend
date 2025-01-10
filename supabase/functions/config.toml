@@ -1,0 +1,4 @@
+project_id = "hrrlefgnhkbzuwyklejj"
+
+[functions.get-currencies]
+verify_jwt = false
