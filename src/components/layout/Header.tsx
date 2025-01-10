@@ -1,10 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
-import { ArrowLeft, ShoppingCart, Menu } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
-import { CartPreview } from '../CartPreview';
-import { useCart } from '@/contexts/CartContext';
 import { useState } from 'react';
 import {
   NavigationMenu,
@@ -12,16 +9,11 @@ import {
 } from "@/components/ui/navigation-menu";
 import { MainNavigation } from './navigation/MainNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { useLocation } from 'react-router-dom';
-import { CurrencySelector } from '../CurrencySelector';
-import LanguageSelector from '../LanguageSelector';
 import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../LanguageSelector';
+import MobileMenu from './navigation/MobileMenu';
+import ConnectionMenu from './navigation/ConnectionMenu';
+import CartButton from './navigation/CartButton';
 
 interface HeaderProps {
   session: any;
@@ -30,15 +22,12 @@ interface HeaderProps {
 }
 
 const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderProps) => {
-  const { state: cartState } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const { t } = useTranslation();
-  
-  const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
     <header className="bg-white shadow-sm">
@@ -61,29 +50,10 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
             )}
 
             {isMobile ? (
-              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px]">
-                  <SheetHeader>
-                    <SheetTitle>Menu</SheetTitle>
-                  </SheetHeader>
-                  <nav className="mt-6 space-y-4">
-                    <Link to="/products" className="block px-4 py-2 hover:bg-accent rounded-md">
-                      {t('common.products')}
-                    </Link>
-                    <Link to="/services" className="block px-4 py-2 hover:bg-accent rounded-md">
-                      {t('common.services')}
-                    </Link>
-                    <Link to="/become-partner" className="block px-4 py-2 hover:bg-accent rounded-md">
-                      {t('common.becomePartner')}
-                    </Link>
-                  </nav>
-                </SheetContent>
-              </Sheet>
+              <MobileMenu 
+                isOpen={isMobileMenuOpen}
+                onOpenChange={setIsMobileMenuOpen}
+              />
             ) : (
               <NavigationMenu className="hidden md:block">
                 <MainNavigation />
@@ -93,7 +63,8 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
 
           <div className="flex items-center space-x-3">
             <LanguageSelector />
-            <CurrencySelector />
+            {/* Currency selector hidden for now */}
+            {/* <CurrencySelector /> */}
             <Button 
               variant="outline" 
               size="sm" 
@@ -107,52 +78,13 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
                 {session ? (
                   <UserMenu />
                 ) : (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="text-primary hover:text-primary/80 transition-colors">
-                      Connection
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem asChild>
-                        <Link to="/login?role=patient" className="w-full">
-                          I am a patient
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/login?role=pharmacist" className="w-full">
-                          I am a pharmacist
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/login?role=doctor" className="w-full">
-                          I am a doctor
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/login?role=delivery" className="w-full">
-                          I am a delivery man
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <ConnectionMenu />
                 )}
-                <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="relative">
-                      <ShoppingCart className="h-4 w-4" />
-                      {itemCount > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                          {itemCount}
-                        </span>
-                      )}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Shopping Cart</SheetTitle>
-                    </SheetHeader>
-                    <CartPreview onClose={() => setIsCartOpen(false)} session={session} />
-                  </SheetContent>
-                </Sheet>
+                <CartButton 
+                  session={session}
+                  isOpen={isCartOpen}
+                  onOpenChange={setIsCartOpen}
+                />
               </>
             )}
           </div>
