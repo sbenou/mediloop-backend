@@ -57,12 +57,14 @@ const PersonalDetails = () => {
               <label className="text-sm font-medium text-gray-500">Full Name</label>
               <p className="mt-1 text-lg">{profile.full_name || 'Not provided'}</p>
             </div>
-            {profile.date_of_birth && (
-              <div>
-                <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-                <p className="mt-1 text-lg">{format(new Date(profile.date_of_birth), 'PP')}</p>
-              </div>
-            )}
+            <div>
+              <label className="text-sm font-medium text-gray-500">Date of Birth</label>
+              <p className="mt-1 text-lg">
+                {profile.date_of_birth 
+                  ? format(new Date(profile.date_of_birth), 'PPP')
+                  : 'Not provided'}
+              </p>
+            </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Email</label>
               <p className="mt-1 text-lg">{profile.email || 'Not provided'}</p>
