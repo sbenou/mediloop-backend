@@ -1,0 +1,50 @@
+import { useTranslation } from 'react-i18next';
+import { SubcategoryItem } from './SubcategoryItem';
+
+interface CategoryListProps {
+  selectedType: 'medication' | 'parapharmacy' | null;
+  categories: any[];
+  getUniqueCategories: (categories: any[], type: string) => any[];
+  handleSubcategoryClick: (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => void;
+  handleDescriptionClick: (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => void;
+  getUniqueDescriptions?: (subcategory: any) => string[];
+}
+
+export const CategoryList = ({
+  selectedType,
+  categories,
+  getUniqueCategories,
+  handleSubcategoryClick,
+  handleDescriptionClick,
+  getUniqueDescriptions
+}: CategoryListProps) => {
+  const { t } = useTranslation();
+
+  if (!selectedType) {
+    return (
+      <div className="text-sm text-muted-foreground p-2">
+        {t('common.navigation.selectCategory')}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {getUniqueCategories(categories, selectedType).map((category) => (
+        <div key={category.id} className="space-y-2">
+          {category.subcategories?.map((subcategory: any) => (
+            <SubcategoryItem
+              key={subcategory.id}
+              subcategory={subcategory}
+              selectedType={selectedType}
+              categoryId={category.id}
+              handleSubcategoryClick={handleSubcategoryClick}
+              handleDescriptionClick={handleDescriptionClick}
+              getUniqueDescriptions={getUniqueDescriptions}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
