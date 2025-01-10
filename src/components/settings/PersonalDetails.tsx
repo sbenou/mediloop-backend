@@ -14,15 +14,29 @@ const PersonalDetails = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
       
-      const { data, error } = await supabase
+      // First get the profile
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*, addresses!inner(*)')
+        .select('*')
         .eq('id', user.id)
-        .eq('addresses.is_default', true)
         .single();
         
-      if (error) throw error;
-      return data;
+      if (profileError) throw profileError;
+
+      // Then get the default address separately
+      const { data: addressData, error: addressError } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_default', true)
+        .maybeSingle();
+
+      if (addressError) throw addressError;
+      
+      return {
+        ...profileData,
+        address: addressData
+      };
     }
   });
 
@@ -51,11 +65,11 @@ const PersonalDetails = () => {
 
         <div>
           <h3 className="text-lg font-medium">Default Address</h3>
-          {profile.addresses && (
+          {profile.address && (
             <div className="mt-4 p-4 border rounded-lg">
-              <p>{profile.addresses.street}</p>
-              <p>{profile.addresses.city}, {profile.addresses.postal_code}</p>
-              <p>{profile.addresses.country}</p>
+              <p>{profile.address.street}</p>
+              <p>{profile.address.city}, {profile.address.postal_code}</p>
+              <p>{profile.address.country}</p>
             </div>
           )}
         </div>
