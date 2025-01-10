@@ -5,7 +5,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from 'react-i18next';
-import { Globe } from "lucide-react";
 import { Button } from "./ui/button";
 import ReactCountryFlag from "react-country-flag";
 
@@ -18,11 +17,29 @@ const LanguageSelector = () => {
     { code: 'de', name: 'Deutsch', countryCode: 'DE' },
   ];
 
+  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9">
-          <Globe className="h-4 w-4" />
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="flex items-center gap-2 h-9 px-3"
+        >
+          <span className="flex items-center justify-center w-4 h-4">
+            <ReactCountryFlag 
+              countryCode={currentLanguage.countryCode}
+              svg
+              style={{
+                width: '16px',
+                height: '16px',
+              }}
+            />
+          </span>
+          <span className="hidden sm:inline-block">
+            {currentLanguage.name}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
