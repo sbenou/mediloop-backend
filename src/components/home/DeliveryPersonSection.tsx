@@ -2,9 +2,11 @@ import { Bike, Bell, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useInView } from "react-intersection-observer";
+import { useTranslation } from "react-i18next";
 
 export const DeliveryPersonSection = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.1
@@ -13,20 +15,20 @@ export const DeliveryPersonSection = () => {
   const features = [
     {
       icon: Bike,
-      title: "Simple Requirements",
-      description: "All you need is a bicycle or electric scooter and safety equipment",
+      title: t('home.deliveryPartner.features.requirements.title'),
+      description: t('home.deliveryPartner.features.requirements.description'),
       image: "/lovable-uploads/e1121849-4e5c-496c-b196-929ffe5eff11.png"
     },
     {
       icon: Bell,
-      title: "Location-Based Notifications",
-      description: "Get notified about nearby deliveries in your area",
+      title: t('home.deliveryPartner.features.notifications.title'),
+      description: t('home.deliveryPartner.features.notifications.description'),
       image: "/lovable-uploads/5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png"
     },
     {
       icon: DollarSign,
-      title: "Monthly Payments",
-      description: "Receive monthly payments for all completed deliveries",
+      title: t('home.deliveryPartner.features.payments.title'),
+      description: t('home.deliveryPartner.features.payments.description'),
       image: "/lovable-uploads/8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png"
     }
   ];
@@ -39,17 +41,17 @@ export const DeliveryPersonSection = () => {
       <div className="container mx-auto max-w-6xl">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-3xl font-bold mb-4 text-gray-900">
-            Become a Delivery Partner
+            {t('home.deliveryPartner.title')}
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            Join our network of delivery partners and earn money on your own schedule
+            {t('home.deliveryPartner.subtitle')}
           </p>
           <Button 
             onClick={() => navigate("/become-partner")}
             size="lg"
             className="bg-primary hover:bg-primary/90"
           >
-            Find Out More
+            {t('home.deliveryPartner.findOutMore')}
           </Button>
         </div>
 
@@ -72,10 +74,6 @@ export const DeliveryPersonSection = () => {
                       alt={feature.title}
                       className="w-full h-auto max-w-[200px] mx-auto"
                       loading="lazy"
-                      onError={(e) => {
-                        console.error(`Error loading image: ${feature.image}`);
-                        e.currentTarget.style.display = 'none';
-                      }}
                     />
                   </div>
                   <div className="flex-1">
@@ -117,10 +115,6 @@ export const DeliveryPersonSection = () => {
                       alt={feature.title}
                       className="w-full h-auto max-w-[200px] mx-auto"
                       loading="lazy"
-                      onError={(e) => {
-                        console.error(`Error loading image: ${feature.image}`);
-                        e.currentTarget.style.display = 'none';
-                      }}
                     />
                   </div>
                 </>

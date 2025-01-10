@@ -13,6 +13,15 @@
       "en": "Anglais",
       "fr": "Français",
       "de": "Allemand"
+    },
+    "navigation": {
+      "medications": "Médicaments",
+      "navigation": "Navigation",
+      "more": "Plus",
+      "aboutUs": "À propos de nous",
+      "whyLuxmed": "Pourquoi Luxmed",
+      "howItWorks": "Comment ça marche",
+      "whyWeCare": "Pourquoi nous nous soucions"
     }
   },
   "home": {
@@ -78,6 +87,94 @@
           "description": "Abonnement mensuel transparent sans frais cachés"
         }
       }
+    },
+    "deliveryPartner": {
+      "title": "Devenez Partenaire de Livraison",
+      "subtitle": "Rejoignez notre réseau de partenaires de livraison et gagnez de l'argent selon votre emploi du temps",
+      "findOutMore": "En Savoir Plus",
+      "features": {
+        "requirements": {
+          "title": "Exigences Simples",
+          "description": "Tout ce dont vous avez besoin est un vélo ou un scooter électrique et un équipement de sécurité"
+        },
+        "notifications": {
+          "title": "Notifications Géolocalisées",
+          "description": "Recevez des notifications sur les livraisons à proximité dans votre zone"
+        },
+        "payments": {
+          "title": "Paiements Mensuels",
+          "description": "Recevez des paiements mensuels pour toutes les livraisons effectuées"
+        }
+      }
+    },
+    "stats": {
+      "orders": "Total des Commandes",
+      "pharmacies": "Pharmacies Partenaires",
+      "providers": "Prestataires de Santé",
+      "prescriptions": "Ordonnances Gérées"
+    },
+    "testimonials": {
+      "title": "Ce que Disent Nos Utilisateurs",
+      "reviews": {
+        "sarah": {
+          "name": "Sarah Johnson",
+          "role": "Cliente Régulière",
+          "quote": "Luxmed a rendu la gestion de mes ordonnances beaucoup plus facile. Le service de livraison est rapide et fiable !"
+        },
+        "michael": {
+          "name": "Michael Chen",
+          "role": "Patient",
+          "quote": "La possibilité de comparer les prix des médicaments entre différentes pharmacies m'a fait gagner du temps et de l'argent."
+        },
+        "emily": {
+          "name": "Emily Rodriguez",
+          "role": "Professionnelle de Santé",
+          "quote": "En tant que prestataire de santé, j'apprécie la façon dont Luxmed simplifie le processus d'ordonnance pour mes patients."
+        },
+        "david": {
+          "name": "David Smith",
+          "role": "Client Régulier",
+          "quote": "Le service client est exceptionnel. Ils sont toujours prêts à répondre à mes questions sur mes médicaments."
+        },
+        "lisa": {
+          "name": "Lisa Wong",
+          "role": "Patiente",
+          "quote": "Pouvoir gérer toutes les ordonnances de ma famille au même endroit a tout changé. Hautement recommandé !"
+        }
+      }
+    }
+  },
+  "footer": {
+    "company": {
+      "title": "Entreprise",
+      "about": "À Propos",
+      "careers": "Carrières",
+      "press": "Presse",
+      "blog": "Blog"
+    },
+    "support": {
+      "title": "Support",
+      "help": "Centre d'Aide",
+      "safety": "Centre de Sécurité",
+      "guidelines": "Règles de la Communauté"
+    },
+    "legal": {
+      "title": "Légal",
+      "cookies": "Politique de Cookies",
+      "privacy": "Politique de Confidentialité",
+      "terms": "Conditions d'Utilisation",
+      "law": "Forces de l'Ordre"
+    },
+    "install": {
+      "title": "Installer l'App",
+      "appStore": "App Store",
+      "googlePlay": "Google Play"
+    },
+    "copyright": "© 2024 Luxmed. Tous droits réservés.",
+    "links": {
+      "privacy": "Politique de Confidentialité",
+      "terms": "Conditions d'Utilisation",
+      "contact": "Contact"
     }
   }
 }

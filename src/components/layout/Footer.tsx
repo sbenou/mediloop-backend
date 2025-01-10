@@ -1,38 +1,41 @@
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 const Footer = () => {
+  const { t } = useTranslation();
+
   const footerSections = [
     {
-      title: "Company",
+      title: t('footer.company.title'),
       links: [
-        { label: "About Us", href: "#" },
-        { label: "Careers", href: "#" },
-        { label: "Press", href: "#" },
-        { label: "Blog", href: "#" },
+        { label: t('footer.company.about'), href: "#" },
+        { label: t('footer.company.careers'), href: "#" },
+        { label: t('footer.company.press'), href: "#" },
+        { label: t('footer.company.blog'), href: "#" },
       ],
     },
     {
-      title: "Support",
+      title: t('footer.support.title'),
       links: [
-        { label: "Help Center", href: "#" },
-        { label: "Safety Center", href: "#" },
-        { label: "Community Guidelines", href: "#" },
+        { label: t('footer.support.help'), href: "#" },
+        { label: t('footer.support.safety'), href: "#" },
+        { label: t('footer.support.guidelines'), href: "#" },
       ],
     },
     {
-      title: "Legal",
+      title: t('footer.legal.title'),
       links: [
-        { label: "Cookies Policy", href: "#" },
-        { label: "Privacy Policy", href: "#" },
-        { label: "Terms of Service", href: "#" },
-        { label: "Law Enforcement", href: "#" },
+        { label: t('footer.legal.cookies'), href: "#" },
+        { label: t('footer.legal.privacy'), href: "#" },
+        { label: t('footer.legal.terms'), href: "#" },
+        { label: t('footer.legal.law'), href: "#" },
       ],
     },
     {
-      title: "Install App",
+      title: t('footer.install.title'),
       links: [
-        { label: "App Store", href: "#" },
-        { label: "Google Play", href: "#" },
+        { label: t('footer.install.appStore'), href: "#" },
+        { label: t('footer.install.googlePlay'), href: "#" },
       ],
     },
   ];
@@ -44,7 +47,7 @@ const Footer = () => {
           <div className="flex flex-col items-center md:items-start space-y-2 md:col-span-1">
             <h2 className="text-2xl font-bold text-primary">Luxmed</h2>
             <p className="text-muted-foreground text-sm text-center md:text-left">
-              Revolutionizing healthcare access through innovative digital solutions. Making medical services and prescriptions more accessible for everyone.
+              {t('footer.description')}
             </p>
           </div>
           <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-8 md:pl-40">
@@ -67,12 +70,12 @@ const Footer = () => {
         <div className="border-t py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 max-w-6xl mx-auto">
             <p className="text-sm text-muted-foreground">
-              © 2024 Luxmed. All rights reserved.
+              {t('footer.copyright')}
             </p>
             <div className="flex gap-4">
-              <Button variant="link" size="sm">Privacy Policy</Button>
-              <Button variant="link" size="sm">Terms of Service</Button>
-              <Button variant="link" size="sm">Contact</Button>
+              <Button variant="link" size="sm">{t('footer.links.privacy')}</Button>
+              <Button variant="link" size="sm">{t('footer.links.terms')}</Button>
+              <Button variant="link" size="sm">{t('footer.links.contact')}</Button>
             </div>
           </div>
         </div>

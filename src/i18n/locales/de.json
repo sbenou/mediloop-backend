@@ -13,6 +13,15 @@
       "en": "Englisch",
       "fr": "Französisch",
       "de": "Deutsch"
+    },
+    "navigation": {
+      "medications": "Medikamente",
+      "navigation": "Navigation",
+      "more": "Mehr",
+      "aboutUs": "Über uns",
+      "whyLuxmed": "Warum Luxmed",
+      "howItWorks": "Wie es funktioniert",
+      "whyWeCare": "Warum wir uns kümmern"
     }
   },
   "home": {
@@ -78,6 +87,94 @@
           "description": "Transparentes monatliches Abonnement ohne versteckte Gebühren"
         }
       }
+    },
+    "deliveryPartner": {
+      "title": "Werden Sie Lieferpartner",
+      "subtitle": "Treten Sie unserem Netzwerk von Lieferpartnern bei und verdienen Sie Geld nach Ihrem eigenen Zeitplan",
+      "findOutMore": "Mehr erfahren",
+      "features": {
+        "requirements": {
+          "title": "Einfache Anforderungen",
+          "description": "Alles, was Sie brauchen, ist ein Fahrrad oder E-Scooter und Sicherheitsausrüstung"
+        },
+        "notifications": {
+          "title": "Standortbasierte Benachrichtigungen",
+          "description": "Erhalten Sie Benachrichtigungen über Lieferungen in Ihrer Nähe"
+        },
+        "payments": {
+          "title": "Monatliche Zahlungen",
+          "description": "Erhalten Sie monatliche Zahlungen für alle abgeschlossenen Lieferungen"
+        }
+      }
+    },
+    "stats": {
+      "orders": "Gesamtbestellungen",
+      "pharmacies": "Partnerapotheken",
+      "providers": "Gesundheitsdienstleister",
+      "prescriptions": "Verwaltete Rezepte"
+    },
+    "testimonials": {
+      "title": "Was unsere Nutzer sagen",
+      "reviews": {
+        "sarah": {
+          "name": "Sarah Johnson",
+          "role": "Stammkundin",
+          "quote": "Luxmed hat die Verwaltung meiner Rezepte viel einfacher gemacht. Der Lieferservice ist pünktlich und zuverlässig!"
+        },
+        "michael": {
+          "name": "Michael Chen",
+          "role": "Patient",
+          "quote": "Die Möglichkeit, Medikamentenpreise verschiedener Apotheken zu vergleichen, hat mir Zeit und Geld gespart."
+        },
+        "emily": {
+          "name": "Emily Rodriguez",
+          "role": "Gesundheitsdienstleisterin",
+          "quote": "Als Gesundheitsdienstleisterin schätze ich, wie Luxmed den Rezeptprozess für meine Patienten vereinfacht."
+        },
+        "david": {
+          "name": "David Smith",
+          "role": "Stammkunde",
+          "quote": "Der Kundenservice ist außergewöhnlich. Sie sind immer bereit, Fragen zu meinen Medikamenten zu beantworten."
+        },
+        "lisa": {
+          "name": "Lisa Wong",
+          "role": "Patientin",
+          "quote": "Die Möglichkeit, alle Rezepte meiner Familie an einem Ort zu verwalten, ist ein Wendepunkt. Sehr empfehlenswert!"
+        }
+      }
+    }
+  },
+  "footer": {
+    "company": {
+      "title": "Unternehmen",
+      "about": "Über uns",
+      "careers": "Karriere",
+      "press": "Presse",
+      "blog": "Blog"
+    },
+    "support": {
+      "title": "Support",
+      "help": "Hilfecenter",
+      "safety": "Sicherheitscenter",
+      "guidelines": "Community-Richtlinien"
+    },
+    "legal": {
+      "title": "Rechtliches",
+      "cookies": "Cookie-Richtlinie",
+      "privacy": "Datenschutzrichtlinie",
+      "terms": "Nutzungsbedingungen",
+      "law": "Strafverfolgung"
+    },
+    "install": {
+      "title": "App installieren",
+      "appStore": "App Store",
+      "googlePlay": "Google Play"
+    },
+    "copyright": "© 2024 Luxmed. Alle Rechte vorbehalten.",
+    "links": {
+      "privacy": "Datenschutzrichtlinie",
+      "terms": "Nutzungsbedingungen",
+      "contact": "Kontakt"
     }
   }
 }

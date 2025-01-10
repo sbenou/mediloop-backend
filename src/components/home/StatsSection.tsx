@@ -1,4 +1,5 @@
 import { useInView } from "react-intersection-observer";
+import { useTranslation } from "react-i18next";
 
 interface PlatformStats {
   ordersCount: number;
@@ -12,22 +13,23 @@ export const StatsSection = ({ stats }: { stats: PlatformStats }) => {
     triggerOnce: true,
     threshold: 0.1
   });
+  const { t } = useTranslation();
 
   const platformStats = [
     {
-      label: "Total Orders",
+      label: t('home.stats.orders'),
       value: stats.ordersCount
     },
     {
-      label: "Partner Pharmacies",
+      label: t('home.stats.pharmacies'),
       value: stats.pharmaciesCount
     },
     {
-      label: "Healthcare Providers",
+      label: t('home.stats.providers'),
       value: stats.doctorsCount
     },
     {
-      label: "Prescriptions Managed",
+      label: t('home.stats.prescriptions'),
       value: stats.prescriptionsCount
     }
   ];

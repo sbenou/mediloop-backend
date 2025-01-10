@@ -13,6 +13,15 @@
       "en": "English",
       "fr": "French",
       "de": "German"
+    },
+    "navigation": {
+      "medications": "Medications",
+      "navigation": "Navigation",
+      "more": "More",
+      "aboutUs": "About us",
+      "whyLuxmed": "Why Luxmed",
+      "howItWorks": "How does it work",
+      "whyWeCare": "Why we care"
     }
   },
   "home": {
@@ -78,6 +87,94 @@
           "description": "Transparent monthly subscription with no hidden fees"
         }
       }
+    },
+    "deliveryPartner": {
+      "title": "Become a Delivery Partner",
+      "subtitle": "Join our network of delivery partners and earn money on your own schedule",
+      "findOutMore": "Find Out More",
+      "features": {
+        "requirements": {
+          "title": "Simple Requirements",
+          "description": "All you need is a bicycle or electric scooter and safety equipment"
+        },
+        "notifications": {
+          "title": "Location-Based Notifications",
+          "description": "Get notified about nearby deliveries in your area"
+        },
+        "payments": {
+          "title": "Monthly Payments",
+          "description": "Receive monthly payments for all completed deliveries"
+        }
+      }
+    },
+    "stats": {
+      "orders": "Total Orders",
+      "pharmacies": "Partner Pharmacies",
+      "providers": "Healthcare Providers",
+      "prescriptions": "Prescriptions Managed"
+    },
+    "testimonials": {
+      "title": "What Our Users Say",
+      "reviews": {
+        "sarah": {
+          "name": "Sarah Johnson",
+          "role": "Regular Customer",
+          "quote": "Luxmed has made managing my prescriptions so much easier. The delivery service is prompt and reliable!"
+        },
+        "michael": {
+          "name": "Michael Chen",
+          "role": "Patient",
+          "quote": "The ability to compare medication prices across different pharmacies has saved me both time and money."
+        },
+        "emily": {
+          "name": "Emily Rodriguez",
+          "role": "Healthcare Professional",
+          "quote": "As a healthcare provider, I appreciate how Luxmed streamlines the prescription process for my patients."
+        },
+        "david": {
+          "name": "David Smith",
+          "role": "Regular Customer",
+          "quote": "The customer service is exceptional. They're always ready to help with any questions I have about my medications."
+        },
+        "lisa": {
+          "name": "Lisa Wong",
+          "role": "Patient",
+          "quote": "Being able to manage all my family's prescriptions in one place has been a game-changer. Highly recommended!"
+        }
+      }
+    }
+  },
+  "footer": {
+    "company": {
+      "title": "Company",
+      "about": "About Us",
+      "careers": "Careers",
+      "press": "Press",
+      "blog": "Blog"
+    },
+    "support": {
+      "title": "Support",
+      "help": "Help Center",
+      "safety": "Safety Center",
+      "guidelines": "Community Guidelines"
+    },
+    "legal": {
+      "title": "Legal",
+      "cookies": "Cookies Policy",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "law": "Law Enforcement"
+    },
+    "install": {
+      "title": "Install App",
+      "appStore": "App Store",
+      "googlePlay": "Google Play"
+    },
+    "copyright": "© 2024 Luxmed. All rights reserved.",
+    "links": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "contact": "Contact"
     }
   }
 }

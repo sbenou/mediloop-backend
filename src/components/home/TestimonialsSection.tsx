@@ -1,4 +1,5 @@
 import { useInView } from "react-intersection-observer";
+import { useTranslation } from "react-i18next";
 import {
   Carousel,
   CarouselContent,
@@ -7,44 +8,45 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-const testimonials = [
-  {
-    name: "Sarah Johnson",
-    role: "Regular Customer",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
-    quote: "Luxmed has made managing my prescriptions so much easier. The delivery service is prompt and reliable!"
-  },
-  {
-    name: "Michael Chen",
-    role: "Patient",
-    image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952",
-    quote: "The ability to compare medication prices across different pharmacies has saved me both time and money."
-  },
-  {
-    name: "Emily Rodriguez",
-    role: "Healthcare Professional",
-    image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-    quote: "As a healthcare provider, I appreciate how Luxmed streamlines the prescription process for my patients."
-  },
-  {
-    name: "David Smith",
-    role: "Regular Customer",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
-    quote: "The customer service is exceptional. They're always ready to help with any questions I have about my medications."
-  },
-  {
-    name: "Lisa Wong",
-    role: "Patient",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
-    quote: "Being able to manage all my family's prescriptions in one place has been a game-changer. Highly recommended!"
-  }
-];
-
 export const TestimonialsSection = () => {
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.1
   });
+  const { t } = useTranslation();
+
+  const testimonials = [
+    {
+      name: t('home.testimonials.reviews.sarah.name'),
+      role: t('home.testimonials.reviews.sarah.role'),
+      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
+      quote: t('home.testimonials.reviews.sarah.quote')
+    },
+    {
+      name: t('home.testimonials.reviews.michael.name'),
+      role: t('home.testimonials.reviews.michael.role'),
+      image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952",
+      quote: t('home.testimonials.reviews.michael.quote')
+    },
+    {
+      name: t('home.testimonials.reviews.emily.name'),
+      role: t('home.testimonials.reviews.emily.role'),
+      image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
+      quote: t('home.testimonials.reviews.emily.quote')
+    },
+    {
+      name: t('home.testimonials.reviews.david.name'),
+      role: t('home.testimonials.reviews.david.role'),
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
+      quote: t('home.testimonials.reviews.david.quote')
+    },
+    {
+      name: t('home.testimonials.reviews.lisa.name'),
+      role: t('home.testimonials.reviews.lisa.role'),
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
+      quote: t('home.testimonials.reviews.lisa.quote')
+    }
+  ];
 
   return (
     <section 
@@ -55,7 +57,7 @@ export const TestimonialsSection = () => {
     >
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          What Our Users Say
+          {t('home.testimonials.title')}
         </h2>
         <div className="max-w-6xl mx-auto">
           <Carousel
