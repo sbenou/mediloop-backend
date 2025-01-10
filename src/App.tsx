@@ -21,6 +21,7 @@ import BecomeTransporter from "@/pages/BecomeTransporter";
 import BecomePartner from "@/pages/BecomePartner";
 import SearchPharmacy from "@/pages/SearchPharmacy";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
+import PersonalDetails from "@/components/settings/PersonalDetails";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ function App() {
               <Route path="/become-transporter" element={<BecomeTransporter />} />
               <Route path="/become-partner" element={<BecomePartner />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/my-details" element={<PersonalDetails />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/reset-password" element={<ResetPassword />} />
