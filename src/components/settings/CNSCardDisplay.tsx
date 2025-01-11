@@ -13,7 +13,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
   return (
     <div className="relative w-full aspect-[1.586] cursor-pointer" style={{ perspective: "1000px" }}>
       <div
-        className="w-full h-full transition-transform duration-500 relative"
+        className="absolute w-full h-full transition-transform duration-500"
         style={{ 
           transformStyle: "preserve-3d",
           transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)"
@@ -22,14 +22,14 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
       >
         {/* Front of card */}
         <Card 
-          className="absolute w-full h-full backface-hidden"
+          className="absolute w-full h-full"
           style={{ 
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden"
           }}
         >
           <img
-            src="/lovable-uploads/a58aacba-6abd-441d-9672-d13a1af4ecad.png"
+            src="/lovable-uploads/d2a0e334-8828-4c2a-8be5-a2eb901ab46d.png"
             alt="CNS Card Front"
             className="w-full h-full object-contain rounded-lg"
           />
@@ -37,7 +37,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
 
         {/* Back of card */}
         <Card 
-          className="absolute w-full h-full backface-hidden"
+          className="absolute w-full h-full"
           style={{ 
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
@@ -45,7 +45,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
           }}
         >
           <img
-            src="/lovable-uploads/89c7246f-95c7-47ac-b1bd-56e5838289fc.png"
+            src="/lovable-uploads/c13d24b0-a830-4efe-ae19-fbd705f33eaa.png"
             alt="CNS Card Back"
             className="w-full h-full object-contain rounded-lg"
           />
