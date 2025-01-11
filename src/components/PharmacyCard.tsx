@@ -36,7 +36,9 @@ const PharmacyCard = ({
             id={`default-${id}`}
             checked={isDefault}
             onCheckedChange={(checked) => {
-              onSetDefault(id, checked as boolean);
+              if (typeof checked === 'boolean') {
+                onSetDefault(id, checked);
+              }
             }}
           />
           <Label htmlFor={`default-${id}`}>Set as default pharmacy</Label>
