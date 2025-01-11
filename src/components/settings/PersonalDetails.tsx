@@ -41,22 +41,13 @@ const PersonalDetails = () => {
       return;
     }
 
-    // Get the bucket URL
-    const { data: { publicUrl: frontUrl } } = supabase.storage
-      .from('lovable-uploads')
-      .getPublicUrl('CNS front.png');
-
-    const { data: { publicUrl: backUrl } } = supabase.storage
-      .from('lovable-uploads')
-      .getPublicUrl('CNS back.png');
-
-    console.log('Updating CNS card info with URLs:', { frontUrl, backUrl, cardNumber });
+    console.log('Updating CNS card info with URLs:', { frontImage, backImage, cardNumber });
 
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
-        cns_card_front: frontUrl,
-        cns_card_back: backUrl,
+        cns_card_front: frontImage,
+        cns_card_back: backImage,
         cns_number: cardNumber,
       })
       .eq('id', user.id);

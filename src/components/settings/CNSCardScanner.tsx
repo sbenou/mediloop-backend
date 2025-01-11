@@ -1,6 +1,5 @@
-import { useCallback, useRef, useState } from "react";
-import Webcam from "react-webcam";
-import { BarcodeFormat, DecodeHintType, BrowserMultiFormatReader } from "@zxing/library";
+import { useCallback, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
@@ -15,9 +14,15 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
   const [frontImage, setFrontImage] = useState<string>('');
   const [scanning, setScanning] = useState(false);
 
-  // For demonstration purposes, using sample images
-  const sampleFrontImage = "/lovable-uploads/8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png";
-  const sampleBackImage = "/lovable-uploads/5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png";
+  // Get the Supabase storage URLs for the sample images
+  const { data: { publicUrl: sampleFrontImage } } = supabase.storage
+    .from('lovable-uploads')
+    .getPublicUrl('CNS front.png');
+
+  const { data: { publicUrl: sampleBackImage } } = supabase.storage
+    .from('lovable-uploads')
+    .getPublicUrl('CNS back.png');
+
   const sampleCardNumber = "12345678901";
 
   const handleCapture = useCallback(() => {
@@ -32,7 +37,7 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
       });
       setScanning(false);
     } else {
-      // Simulate successful scan
+      // Simulate successful scan with the full Supabase URLs
       setTimeout(() => {
         onScanComplete(sampleFrontImage, sampleBackImage, sampleCardNumber);
         toast({
@@ -42,7 +47,7 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
         setScanning(false);
       }, 1000);
     }
-  }, [step, onScanComplete]);
+  }, [step, onScanComplete, sampleFrontImage, sampleBackImage]);
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -57,7 +62,7 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
             <img
               src={step === 'front' ? sampleFrontImage : sampleBackImage}
               alt={`Sample CNS card ${step} side`}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
             />
           </div>
           <div className="mt-4 flex justify-end gap-2">
