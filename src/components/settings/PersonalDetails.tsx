@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import CNSCardScanner from "./CNSCardScanner";
-import CNSCardDisplay from "./CNSCardDisplay";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { Calendar } from "@/components/ui/calendar";
@@ -16,7 +14,6 @@ import { cn } from "@/lib/utils";
 
 const PersonalDetails = () => {
   const queryClient = useQueryClient();
-  const [showScanner, setShowScanner] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
@@ -47,7 +44,6 @@ const PersonalDetails = () => {
 
       if (addressError) throw addressError;
       
-      // Initialize form data when profile is loaded
       if (!isEditing) {
         setFormData({
           full_name: profileData.full_name || "",
@@ -216,54 +212,6 @@ const PersonalDetails = () => {
           <p className="text-red-500">Please add at least one address in the Addresses tab</p>
         )}
       </Card>
-
-      {/* CNS Card Section */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">CNS Card</h3>
-        {profile.cns_card_front && profile.cns_card_back ? (
-          <div className="max-w-md mx-auto">
-            <CNSCardDisplay 
-              frontImage={profile.cns_card_front}
-              backImage={profile.cns_card_back}
-              cardNumber={profile.cns_number}
-            />
-            <p className="text-sm text-gray-500 text-center mt-4">
-              Click on the card to flip it
-            </p>
-          </div>
-        ) : (
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">
-              No CNS card registered. Please scan both sides of your card.
-            </p>
-            <Button onClick={() => setShowScanner(true)}>
-              Scan CNS Card
-            </Button>
-          </div>
-        )}
-      </Card>
-
-      {showScanner && (
-        <CNSCardScanner 
-          onClose={() => setShowScanner(false)}
-          onScanComplete={async (frontImage, backImage, cardNumber) => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            await supabase
-              .from('profiles')
-              .update({
-                cns_card_front: frontImage,
-                cns_card_back: backImage,
-                cns_number: cardNumber
-              })
-              .eq('id', user.id);
-
-            setShowScanner(false);
-            queryClient.invalidateQueries({ queryKey: ['profile'] });
-          }}
-        />
-      )}
     </div>
   );
 };
