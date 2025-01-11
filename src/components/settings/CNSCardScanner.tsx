@@ -17,11 +17,11 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
   // Get the Supabase storage URLs for the sample images
   const { data: { publicUrl: sampleFrontImage } } = supabase.storage
     .from('lovable-uploads')
-    .getPublicUrl('CNS front.png');
+    .getPublicUrl('8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png');
 
   const { data: { publicUrl: sampleBackImage } } = supabase.storage
     .from('lovable-uploads')
-    .getPublicUrl('CNS back.png');
+    .getPublicUrl('5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png');
 
   const sampleCardNumber = "12345678901";
 
