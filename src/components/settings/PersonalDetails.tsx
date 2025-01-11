@@ -41,13 +41,17 @@ const PersonalDetails = () => {
       return;
     }
 
-    console.log('Updating CNS card info:', { frontImage, backImage, cardNumber }); // Added for debugging
+    // Force the correct image paths
+    const frontImagePath = "/lovable-uploads/CNS front.png";
+    const backImagePath = "/lovable-uploads/CNS back.png";
+
+    console.log('Updating CNS card info:', { frontImagePath, backImagePath, cardNumber }); // Added for debugging
 
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
-        cns_card_front: frontImage,
-        cns_card_back: backImage,
+        cns_card_front: frontImagePath,
+        cns_card_back: backImagePath,
         cns_number: cardNumber,
       })
       .eq('id', user.id);

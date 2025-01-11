@@ -10,7 +10,11 @@ interface CNSCardDisplayProps {
 const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   
-  console.log('CNS Card Images:', { frontImage, backImage }); // Debug log
+  // Force the correct image paths
+  const frontImagePath = "/lovable-uploads/CNS front.png";
+  const backImagePath = "/lovable-uploads/CNS back.png";
+  
+  console.log('CNS Card Images:', { frontImagePath, backImagePath }); // Debug log
 
   return (
     <div className="relative w-[300px] aspect-[1.586] cursor-pointer" style={{ perspective: "1000px" }}>
@@ -31,7 +35,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
           }}
         >
           <img
-            src={frontImage}
+            src={frontImagePath}
             alt="CNS Card Front"
             className="w-full h-full object-contain rounded-lg"
           />
@@ -47,7 +51,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
           }}
         >
           <img
-            src={backImage}
+            src={backImagePath}
             alt="CNS Card Back"
             className="w-full h-full object-contain rounded-lg"
           />
