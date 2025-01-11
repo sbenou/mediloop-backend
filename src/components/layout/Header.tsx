@@ -56,7 +56,9 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
               />
             ) : (
               <NavigationMenu className="hidden md:block">
-                <MainNavigation />
+                <NavigationMenuList>
+                  <MainNavigation />
+                </NavigationMenuList>
               </NavigationMenu>
             )}
           </div>

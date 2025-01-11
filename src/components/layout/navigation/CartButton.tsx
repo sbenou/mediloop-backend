@@ -9,15 +9,16 @@ import {
 } from "@/components/ui/sheet";
 import { CartPreview } from "@/components/CartPreview";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface CartButtonProps {
-  session: any;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const CartButton = ({ session, isOpen, onOpenChange }: CartButtonProps) => {
+const CartButton = ({ isOpen, onOpenChange }: CartButtonProps) => {
   const { state: cartState } = useCart();
+  const { isAuthenticated } = useAuth();
   const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
@@ -36,7 +37,7 @@ const CartButton = ({ session, isOpen, onOpenChange }: CartButtonProps) => {
         <SheetHeader>
           <SheetTitle>Shopping Cart</SheetTitle>
         </SheetHeader>
-        <CartPreview onClose={() => onOpenChange(false)} session={session} />
+        <CartPreview onClose={() => onOpenChange(false)} />
       </SheetContent>
     </Sheet>
   );
