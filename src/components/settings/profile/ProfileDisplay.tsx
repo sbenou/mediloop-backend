@@ -13,7 +13,11 @@ interface ProfileDisplayProps {
 export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayProps) {
   if (!profile) return null;
 
-  console.log('Profile data:', profile); // Debug log
+  console.log('Profile Display - CNS card data:', {
+    front: profile.cns_card_front,
+    back: profile.cns_card_back,
+    number: profile.cns_number
+  }); // Debug log
 
   return (
     <Card>
@@ -63,8 +67,8 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayPro
             <div>
               <span className="font-medium block mb-2">CNS Card:</span>
               <CNSCardDisplay
-                frontImage={profile.cns_card_front}
-                backImage={profile.cns_card_back || ''}
+                frontImage={`/lovable-uploads/${profile.cns_card_front}`}
+                backImage={`/lovable-uploads/${profile.cns_card_back || ''}`}
                 cardNumber={profile.cns_number || ''}
               />
             </div>
