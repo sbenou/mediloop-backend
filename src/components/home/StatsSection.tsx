@@ -6,6 +6,7 @@ interface PlatformStats {
   pharmaciesCount: number;
   doctorsCount: number;
   prescriptionsCount: number;
+  connectionsCount: number;
 }
 
 export const StatsSection = ({ stats }: { stats: PlatformStats }) => {
@@ -31,6 +32,10 @@ export const StatsSection = ({ stats }: { stats: PlatformStats }) => {
     {
       label: t('home.stats.prescriptions'),
       value: stats.prescriptionsCount
+    },
+    {
+      label: "Active Connections",
+      value: stats.connectionsCount
     }
   ];
 
@@ -42,9 +47,9 @@ export const StatsSection = ({ stats }: { stats: PlatformStats }) => {
       }`}
     >
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {platformStats.map((stat, index) => (
-            <div key={index} className="text-center">
+            <div key={index} className="text-center transform hover:scale-105 transition-transform">
               <div className="text-2xl font-semibold text-primary mb-2">
                 {stat.label}
               </div>

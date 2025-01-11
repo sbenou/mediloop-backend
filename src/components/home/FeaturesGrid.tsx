@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, Pill, Stethoscope } from "lucide-react";
+import { Search, ShoppingBag, Pill, Stethoscope, FileText, Users } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { useTranslation } from "react-i18next";
 
@@ -23,6 +23,18 @@ export const FeaturesGrid = () => {
       title: t('home.features.easyOrdering.title'),
       description: t('home.features.easyOrdering.description'),
       action: () => navigate("/products"),
+    },
+    {
+      icon: <FileText className="h-12 w-12 text-primary" />,
+      title: "Digital Prescriptions",
+      description: "Manage your prescriptions digitally and access them anytime, anywhere",
+      action: () => navigate("/my-prescriptions"),
+    },
+    {
+      icon: <Users className="h-12 w-12 text-primary" />,
+      title: "Doctor Connections",
+      description: "Connect with healthcare providers and manage your prescriptions seamlessly",
+      action: () => navigate("/find-doctor"),
     },
     {
       icon: <Pill className="h-12 w-12 text-primary" />,
@@ -49,14 +61,16 @@ export const FeaturesGrid = () => {
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           {t('home.features.title')}
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group relative bg-card rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              className="group relative bg-card rounded-lg p-6 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105"
               onClick={feature.action}
             >
-              <div className="mb-4">{feature.icon}</div>
+              <div className="mb-4 transform transition-transform group-hover:scale-110">
+                {feature.icon}
+              </div>
               <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
               <p className="text-muted-foreground">{feature.description}</p>
             </div>
