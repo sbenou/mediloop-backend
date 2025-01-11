@@ -43,28 +43,28 @@ const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
         onClick={() => navigate('/my-details')}
         className="cursor-pointer"
       >
-        <UserCircle className="mr-2 h-4 w-4" />
+        <UserCircle className="mr-2 h-4 w-4 text-[#7E69AB]" />
         Profile
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => navigate('/my-orders')}
         className="cursor-pointer"
       >
-        <ShoppingBag className="mr-2 h-4 w-4" />
+        <ShoppingBag className="mr-2 h-4 w-4 text-[#7E69AB]" />
         My Orders
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => navigate('/my-prescriptions')}
         className="cursor-pointer"
       >
-        <FileText className="mr-2 h-4 w-4" />
+        <FileText className="mr-2 h-4 w-4 text-[#7E69AB]" />
         My Prescriptions
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => navigate('/settings')}
         className="cursor-pointer"
       >
-        <Settings className="mr-2 h-4 w-4" />
+        <Settings className="mr-2 h-4 w-4 text-[#7E69AB]" />
         Settings
       </DropdownMenuItem>
       {userRole === 'superadmin' && (
@@ -72,7 +72,7 @@ const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
           onClick={() => navigate('/admin-settings')}
           className="cursor-pointer"
         >
-          <Shield className="mr-2 h-4 w-4" />
+          <Shield className="mr-2 h-4 w-4 text-[#7E69AB]" />
           Admin Settings
         </DropdownMenuItem>
       )}
@@ -81,7 +81,7 @@ const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
         onClick={handleLogout}
         className="cursor-pointer text-destructive focus:text-destructive"
       >
-        <LogOut className="mr-2 h-4 w-4" />
+        <LogOut className="mr-2 h-4 w-4 text-destructive" />
         Logout
       </DropdownMenuItem>
     </>
