@@ -28,14 +28,14 @@ export const HeroSection = () => {
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
               {t('home.hero.title')}
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8">
+            <p className="text-lg md:text-xl text-white font-medium mb-8">
               {t('home.hero.subtitle')}
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button 
                 size="lg" 
                 onClick={() => navigate('/signup')}
-                className="bg-[#9b87f5] hover:bg-[#8B5CF6]"
+                className="bg-[#7E69AB] hover:bg-[#6E59A5]"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 Sign up for free
