@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import Header from "@/components/layout/Header";
 import PasswordChange from "@/components/settings/PasswordChange";
+import AccountDeletion from "@/components/settings/AccountDeletion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Settings = () => {
@@ -27,6 +28,15 @@ const Settings = () => {
             </CardHeader>
             <CardContent>
               <PasswordChange />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Danger Zone</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AccountDeletion />
             </CardContent>
           </Card>
         </div>
