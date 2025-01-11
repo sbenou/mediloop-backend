@@ -14,40 +14,61 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
   const [frontImage, setFrontImage] = useState<string>('');
   const [scanning, setScanning] = useState(false);
 
-  // Get the Supabase storage URLs for the sample images
-  const { data: { publicUrl: sampleFrontImage } } = supabase.storage
-    .from('lovable-uploads')
-    .getPublicUrl('8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png');
-
-  const { data: { publicUrl: sampleBackImage } } = supabase.storage
-    .from('lovable-uploads')
-    .getPublicUrl('5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png');
-
-  const sampleCardNumber = "12345678901";
-
-  const handleCapture = useCallback(() => {
+  const handleCapture = useCallback(async () => {
     setScanning(true);
     
-    if (step === 'front') {
-      setFrontImage(sampleFrontImage);
-      setStep('back');
+    try {
+      if (step === 'front') {
+        const { data: frontData } = await supabase.storage
+          .from('lovable-uploads')
+          .upload('8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png', await fetch('/sample-front.png').then(r => r.blob()));
+        
+        if (frontData) {
+          const { data: { publicUrl: frontUrl } } = supabase.storage
+            .from('lovable-uploads')
+            .getPublicUrl('8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png');
+          
+          setFrontImage(frontUrl);
+          setStep('back');
+          toast({
+            title: "Front side captured",
+            description: "Please scan the back side of your CNS card",
+          });
+        }
+      } else {
+        const { data: backData } = await supabase.storage
+          .from('lovable-uploads')
+          .upload('5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png', await fetch('/sample-back.png').then(r => r.blob()));
+        
+        if (backData) {
+          const { data: { publicUrl: backUrl } } = supabase.storage
+            .from('lovable-uploads')
+            .getPublicUrl('5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png');
+          
+          const sampleCardNumber = "12345678901";
+          onScanComplete(frontImage, backUrl, sampleCardNumber);
+          
+          toast({
+            title: "Success",
+            description: "CNS card successfully scanned",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
       toast({
-        title: "Front side captured",
-        description: "Please scan the back side of your CNS card",
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to upload image",
       });
+    } finally {
       setScanning(false);
-    } else {
-      // Simulate successful scan with the full Supabase URLs
-      setTimeout(() => {
-        onScanComplete(sampleFrontImage, sampleBackImage, sampleCardNumber);
-        toast({
-          title: "Success",
-          description: "CNS card successfully scanned",
-        });
-        setScanning(false);
-      }, 1000);
     }
-  }, [step, onScanComplete, sampleFrontImage, sampleBackImage]);
+  }, [step, onScanComplete, frontImage]);
+
+  const { data: { publicUrl: currentImage } } = supabase.storage
+    .from('lovable-uploads')
+    .getPublicUrl(step === 'front' ? '8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png' : '5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png');
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -60,9 +81,13 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
         <div className="mt-4">
           <div className="relative aspect-[1.586] w-full overflow-hidden rounded-lg border bg-muted">
             <img
-              src={step === 'front' ? sampleFrontImage : sampleBackImage}
+              src={currentImage}
               alt={`Sample CNS card ${step} side`}
               className="h-full w-full object-contain"
+              onError={(e) => {
+                console.error('Error loading image:', currentImage);
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
           <div className="mt-4 flex justify-end gap-2">
