@@ -6,6 +6,7 @@ import { User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import Webcam from 'react-webcam';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AvatarUploadProps {
   currentAvatarUrl: string | null;
@@ -17,12 +18,12 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) =
   const [showCamera, setShowCamera] = useState(false);
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   const uploadAvatar = async (file: File) => {
     try {
       setIsUploading(true);
       
-      // Optimize image before upload
       const optimizedFile = await optimizeImage(file);
       
       const userId = (await supabase.auth.getUser()).data.user?.id;
@@ -30,7 +31,6 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) =
 
       const filePath = `${userId}/${crypto.randomUUID()}`;
       
-      // Upload to storage
       const { error: uploadError, data } = await supabase.storage
         .from('avatars')
         .upload(filePath, optimizedFile, {
@@ -40,12 +40,10 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) =
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
@@ -53,7 +51,12 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) =
 
       if (updateError) throw updateError;
 
+      // Update the UI immediately
       onAvatarUpdate(publicUrl);
+      
+      // Invalidate the profile query to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+
       toast({
         title: "Success",
         description: "Avatar updated successfully",
@@ -122,7 +125,6 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) =
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
-        // Convert base64 to blob
         const response = await fetch(imageSrc);
         const blob = await response.blob();
         const file = new File([blob], 'webcam-photo.jpg', { type: 'image/jpeg' });
