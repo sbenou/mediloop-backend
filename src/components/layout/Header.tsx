@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '../ui/button';
 import { useState } from 'react';
 import {
   NavigationMenu,
@@ -63,16 +62,6 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
 
           <div className="flex items-center space-x-3">
             <LanguageSelector />
-            {/* Currency selector hidden for now */}
-            {/* <CurrencySelector /> */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              asChild
-              className="hidden md:inline-flex bg-[#4FD1C5] hover:bg-[#4FD1C5]/90 text-white"
-            >
-              <Link to="/products">{t('common.products')}</Link>
-            </Button>
             {showUserMenu && (
               <>
                 {session ? (

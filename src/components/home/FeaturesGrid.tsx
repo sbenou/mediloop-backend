@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, Pill, Stethoscope, FileText, Users } from "lucide-react";
+import { Search, ShoppingBag, Pill, FileText, Users } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { useTranslation } from "react-i18next";
 
@@ -32,8 +32,8 @@ export const FeaturesGrid = () => {
     },
     {
       icon: <Users className="h-12 w-12 text-primary" />,
-      title: "Doctor Connections",
-      description: "Connect with healthcare providers and manage your prescriptions seamlessly",
+      title: "Connect with Healthcare Providers",
+      description: "Connect with doctors and manage your prescriptions seamlessly",
       action: () => navigate("/find-doctor"),
     },
     {
@@ -41,13 +41,7 @@ export const FeaturesGrid = () => {
       title: t('home.features.managePrescriptions.title'),
       description: t('home.features.managePrescriptions.description'),
       action: () => navigate("/my-prescriptions"),
-    },
-    {
-      icon: <Stethoscope className="h-12 w-12 text-primary" />,
-      title: t('home.features.connectDoctors.title'),
-      description: t('home.features.connectDoctors.description'),
-      action: () => navigate("/find-doctor"),
-    },
+    }
   ];
 
   return (
