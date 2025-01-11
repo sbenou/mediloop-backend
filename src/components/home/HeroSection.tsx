@@ -44,7 +44,7 @@ export const HeroSection = () => {
                 onClick={() => navigate('/signup')}
                 className="bg-[#7E69AB] hover:bg-[#6E59A5]"
               >
-                <UserPlus className="mr-2 h-4 w-4" />
+                <UserPlus className="mr-2 h-4 w-4 text-white" />
                 Sign up for free
               </Button>
               <Button 
@@ -52,7 +52,7 @@ export const HeroSection = () => {
                 variant="outline"
                 onClick={() => navigate('/products')}
               >
-                <ShoppingBag className="mr-2 h-4 w-4" />
+                <ShoppingBag className="mr-2 h-4 w-4 text-[#7E69AB]" />
                 Browse Products
               </Button>
             </div>
