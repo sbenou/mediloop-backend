@@ -17,15 +17,17 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayPro
     <Card>
       <CardContent className="pt-6">
         <div className="flex flex-col space-y-6">
-          <div className="flex items-start space-x-6">
-            <AvatarUpload
-              currentAvatarUrl={profile.avatar_url}
-              onAvatarUpdate={(url) => {
-                // Profile will be automatically updated through React Query invalidation
-              }}
-            />
+          <div className="flex flex-col space-y-6">
+            <div>
+              <AvatarUpload
+                currentAvatarUrl={profile.avatar_url}
+                onAvatarUpdate={(url) => {
+                  // Profile will be automatically updated through React Query invalidation
+                }}
+              />
+            </div>
             
-            <div className="flex-1 space-y-4">
+            <div className="space-y-4">
               <div className="space-y-1">
                 <h2 className="text-2xl font-bold">{profile.full_name}</h2>
                 <p className="text-muted-foreground">{profile.email}</p>
