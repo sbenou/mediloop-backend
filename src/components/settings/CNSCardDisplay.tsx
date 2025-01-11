@@ -15,12 +15,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
     backImage,
     absoluteFrontPath: frontImage.startsWith('/') ? frontImage : `/${frontImage}`,
     absoluteBackPath: backImage.startsWith('/') ? backImage : `/${backImage}`
-  }); // Enhanced debug log
-
-  const getFinalPath = (path: string) => {
-    if (!path) return '';
-    return path.startsWith('/') ? path : `/${path}`;
-  };
+  }); // Debug log
 
   return (
     <div className="relative w-[300px] aspect-[1.586] cursor-pointer" style={{ perspective: "1000px" }}>
@@ -40,11 +35,17 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
             WebkitBackfaceVisibility: "hidden"
           }}
         >
-          <img
-            src={getFinalPath(frontImage)}
-            alt="CNS Card Front"
-            className="w-full h-full object-cover rounded-lg"
-          />
+          <div className="w-full h-full">
+            <img
+              src={frontImage}
+              alt="CNS Card Front"
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                console.error('Error loading front image:', frontImage);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
         </Card>
 
         {/* Back of card */}
@@ -56,11 +57,17 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
             transform: "rotateY(180deg)"
           }}
         >
-          <img
-            src={getFinalPath(backImage)}
-            alt="CNS Card Back"
-            className="w-full h-full object-cover rounded-lg"
-          />
+          <div className="w-full h-full">
+            <img
+              src={backImage}
+              alt="CNS Card Back"
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                console.error('Error loading back image:', backImage);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
         </Card>
       </div>
     </div>
