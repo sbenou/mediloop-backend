@@ -1,8 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Address } from "../types";
+import { Card, CardContent } from "@/components/ui/card";
+import { MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const DefaultAddress = () => {
+  const navigate = useNavigate();
   const { data: defaultAddress, isLoading } = useQuery({
     queryKey: ['default-address'],
     queryFn: async () => {
@@ -22,28 +27,56 @@ export const DefaultAddress = () => {
   });
 
   if (isLoading) {
-    return <div className="text-sm text-gray-500">Loading address...</div>;
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center space-x-2">
+            <MapPin className="h-5 w-5 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Loading address...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-lg font-semibold">Default Address</h3>
-      {defaultAddress ? (
-        <>
-          <p className="text-base">{defaultAddress.street}</p>
-          <p className="text-base">
-            {defaultAddress.city}, {defaultAddress.postal_code}
-          </p>
-          <p className="text-base">{defaultAddress.country}</p>
-          <p className="text-sm text-gray-500 mt-2">
-            To update your address, please use the Addresses tab.
-          </p>
-        </>
-      ) : (
-        <div className="text-sm text-gray-500">
-          No default address set. Please add an address in the Addresses tab.
+    <Card>
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center space-x-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">Default Address</h3>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/profile?tab=addresses')}
+            >
+              Manage Addresses
+            </Button>
+          </div>
+
+          {defaultAddress ? (
+            <div className="space-y-2 pl-7">
+              <p className="text-base">{defaultAddress.street}</p>
+              <p className="text-base">
+                {defaultAddress.city}, {defaultAddress.postal_code}
+              </p>
+              <p className="text-base">{defaultAddress.country}</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                To update your address, please use the Addresses tab.
+              </p>
+            </div>
+          ) : (
+            <div className="pl-7 py-4">
+              <p className="text-sm text-muted-foreground">
+                No default address set. Please add an address in the Addresses tab.
+              </p>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
