@@ -11,7 +11,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
-    <div className="relative w-full aspect-[1.586] cursor-pointer" style={{ perspective: "1000px" }}>
+    <div className="relative w-[300px] aspect-[1.586] cursor-pointer mx-auto" style={{ perspective: "1000px" }}>
       <div
         className="absolute w-full h-full transition-transform duration-500"
         style={{ 
