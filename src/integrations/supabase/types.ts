@@ -439,6 +439,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      upsert_pharmacy: {
+        Args: {
+          p_name: string
+          p_address: string
+          p_city: string
+          p_postal_code: string
+          p_phone: string
+          p_hours: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       connection_status: "pending" | "accepted" | "rejected"
