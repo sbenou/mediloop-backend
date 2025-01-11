@@ -28,7 +28,7 @@ export const HeroSection = () => {
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
               {t('home.hero.title')}
             </h1>
-            <p className="text-lg md:text-xl text-white font-medium mb-8">
+            <p className="text-lg md:text-xl text-[#1A1F2C] font-medium mb-8">
               {t('home.hero.subtitle')}
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
