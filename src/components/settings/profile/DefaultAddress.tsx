@@ -4,10 +4,12 @@ import { Address } from "../types";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 export const DefaultAddress = () => {
   const navigate = useNavigate();
+  const [, setSearchParams] = useSearchParams();
+  
   const { data: defaultAddress, isLoading } = useQuery({
     queryKey: ['default-address'],
     queryFn: async () => {
@@ -25,6 +27,10 @@ export const DefaultAddress = () => {
       return data as Address;
     },
   });
+
+  const handleManageAddresses = () => {
+    setSearchParams({ tab: 'addresses' });
+  };
 
   if (isLoading) {
     return (
@@ -51,7 +57,7 @@ export const DefaultAddress = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => navigate('/profile?tab=addresses')}
+              onClick={handleManageAddresses}
             >
               Manage Addresses
             </Button>
