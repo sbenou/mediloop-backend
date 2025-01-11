@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Clock, MapPin, Mail, Phone } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 interface PharmacyCardProps {
   id: string;
@@ -28,6 +29,25 @@ const PharmacyCard = ({
   onSelect,
   onSetDefault,
 }: PharmacyCardProps) => {
+  const handleDefaultChange = async (checked: boolean) => {
+    try {
+      await onSetDefault(id, checked);
+      toast({
+        title: checked ? "Default pharmacy set" : "Default pharmacy removed",
+        description: checked 
+          ? `${name} has been set as your default pharmacy.`
+          : `${name} is no longer your default pharmacy.`,
+      });
+    } catch (error) {
+      console.error('Error setting default pharmacy:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update default pharmacy. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card className="overflow-hidden">
       <div className="p-6">
@@ -35,11 +55,7 @@ const PharmacyCard = ({
           <Checkbox
             id={`default-${id}`}
             checked={isDefault}
-            onCheckedChange={(checked) => {
-              if (typeof checked === 'boolean') {
-                onSetDefault(id, checked);
-              }
-            }}
+            onCheckedChange={handleDefaultChange}
           />
           <Label htmlFor={`default-${id}`}>Set as default pharmacy</Label>
         </div>
