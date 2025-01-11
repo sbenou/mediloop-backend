@@ -28,27 +28,12 @@ const PharmacySelection = () => {
     },
   });
 
-  const { data: pharmacies } = useQuery({
-    queryKey: ['pharmacies'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('pharmacies')
-        .select('*');
-      
-      if (error) {
-        console.error('Error fetching pharmacies:', error);
-        return [];
-      }
-      
-      return data || [];
-    },
-  });
-
-  const { data: defaultPharmacy } = useQuery({
-    queryKey: ['defaultPharmacy'],
+  const { data: defaultPharmacy, isLoading } = useQuery({
+    queryKey: ['defaultPharmacy', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
+      // First get the default pharmacy ID
       const { data: userPharmacy, error: userPharmacyError } = await supabase
         .from('user_pharmacies')
         .select('pharmacy_id')
@@ -60,8 +45,9 @@ const PharmacySelection = () => {
         return null;
       }
       
-      if (!userPharmacy) return null;
+      if (!userPharmacy?.pharmacy_id) return null;
       
+      // Then get the pharmacy details
       const { data: pharmacy, error: pharmacyError } = await supabase
         .from('pharmacies')
         .select('*')
@@ -131,7 +117,9 @@ const PharmacySelection = () => {
         <CardTitle>Default Pharmacy</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {defaultPharmacy ? (
+        {isLoading ? (
+          <div>Loading...</div>
+        ) : defaultPharmacy ? (
           <div className="space-y-4">
             <PharmacyCard
               {...defaultPharmacy}
