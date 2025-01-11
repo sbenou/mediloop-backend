@@ -11,65 +11,38 @@ interface CNSCardScannerProps {
 }
 
 const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
-  const webcamRef = useRef<Webcam>(null);
   const [step, setStep] = useState<'front' | 'back'>('front');
   const [frontImage, setFrontImage] = useState<string>('');
   const [scanning, setScanning] = useState(false);
 
-  const hints = new Map();
-  hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.CODE_128]);
-  const reader = new BrowserMultiFormatReader(hints);
+  // For demonstration purposes, using sample images
+  const sampleFrontImage = "/lovable-uploads/8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png";
+  const sampleBackImage = "/lovable-uploads/5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png";
+  const sampleCardNumber = "12345678901";
 
-  const captureImage = useCallback(async () => {
-    if (!webcamRef.current) return;
-
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) return;
-
+  const handleCapture = useCallback(() => {
+    setScanning(true);
+    
     if (step === 'front') {
-      setFrontImage(imageSrc);
+      setFrontImage(sampleFrontImage);
       setStep('back');
       toast({
         title: "Front side captured",
         description: "Please scan the back side of your CNS card",
       });
+      setScanning(false);
     } else {
-      try {
-        setScanning(true);
-        // Attempt to read barcode from the back image
-        const imageElement = document.createElement('img');
-        imageElement.src = imageSrc;
-        await new Promise(resolve => imageElement.onload = resolve);
-        
-        const result = await reader.decodeFromImage(imageElement);
-        const cardNumber = result?.getText();
-
-        if (!cardNumber) {
-          toast({
-            title: "Error",
-            description: "Could not read card number. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        onScanComplete(frontImage, imageSrc, cardNumber);
+      // Simulate successful scan
+      setTimeout(() => {
+        onScanComplete(sampleFrontImage, sampleBackImage, sampleCardNumber);
         toast({
           title: "Success",
           description: "CNS card successfully scanned",
         });
-      } catch (error) {
-        console.error('Error scanning barcode:', error);
-        toast({
-          title: "Error",
-          description: "Failed to read card number. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
         setScanning(false);
-      }
+      }, 1000);
     }
-  }, [step, frontImage, onScanComplete, reader]);
+  }, [step, onScanComplete]);
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -80,16 +53,18 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
           </DialogTitle>
         </DialogHeader>
         <div className="mt-4">
-          <Webcam
-            ref={webcamRef}
-            screenshotFormat="image/jpeg"
-            className="w-full rounded-lg"
-          />
+          <div className="relative aspect-[1.586] w-full overflow-hidden rounded-lg border bg-muted">
+            <img
+              src={step === 'front' ? sampleFrontImage : sampleBackImage}
+              alt={`Sample CNS card ${step} side`}
+              className="h-full w-full object-cover"
+            />
+          </div>
           <div className="mt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={captureImage} disabled={scanning}>
+            <Button onClick={handleCapture} disabled={scanning}>
               {scanning ? "Processing..." : "Capture"}
             </Button>
           </div>
