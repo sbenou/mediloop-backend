@@ -1,60 +1,32 @@
-import { useInView } from "react-intersection-observer";
-import { useTranslation } from "react-i18next";
+import { Card, CardContent } from "@/components/ui/card";
 
-interface PlatformStats {
-  ordersCount: number;
-  pharmaciesCount: number;
-  doctorsCount: number;
-  prescriptionsCount: number;
-}
-
-export const StatsSection = ({ stats }: { stats: PlatformStats }) => {
-  const { ref, inView } = useInView({
-    triggerOnce: true,
-    threshold: 0.1
-  });
-  const { t } = useTranslation();
-
-  const platformStats = [
-    {
-      label: t('home.stats.orders'),
-      value: stats.ordersCount
-    },
-    {
-      label: t('home.stats.pharmacies'),
-      value: stats.pharmaciesCount
-    },
-    {
-      label: t('home.stats.providers'),
-      value: stats.doctorsCount
-    },
-    {
-      label: t('home.stats.prescriptions'),
-      value: stats.prescriptionsCount
-    }
-  ];
-
+const StatsSection = () => {
   return (
-    <section 
-      ref={ref}
-      className={`py-16 bg-muted/50 transform transition-all duration-700 ${
-        inView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
-      }`}
-    >
+    <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {platformStats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className="text-2xl font-semibold text-primary mb-2">
-                {stat.label}
-              </div>
-              <div className="text-4xl font-bold">
-                {stat.value.toLocaleString()}
-              </div>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-4xl font-bold text-primary mb-2">500+</div>
+              <div className="text-muted-foreground">Pharmacies</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-4xl font-bold text-primary mb-2">50k+</div>
+              <div className="text-muted-foreground">Products</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-4xl font-bold text-primary mb-2">100k+</div>
+              <div className="text-muted-foreground">Happy Customers</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>
   );
 };
+
+export default StatsSection;
