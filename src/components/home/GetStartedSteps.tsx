@@ -9,20 +9,20 @@ const GetStartedSteps = () => {
   const steps = [
     {
       icon: <Search className="h-12 w-12 text-[#9b87f5]" />,
-      title: t('home.getStarted.search.title'),
-      description: t('home.getStarted.search.description'),
+      title: t('home.getStarted.steps.findPharmacy.title'),
+      description: t('home.getStarted.steps.findPharmacy.description'),
       action: () => navigate("/products")
     },
     {
       icon: <ShoppingBag className="h-12 w-12 text-[#7E69AB]" />,
-      title: t('home.getStarted.order.title'),
-      description: t('home.getStarted.order.description'),
+      title: t('home.getStarted.steps.connectDoctor.title'),
+      description: t('home.getStarted.steps.connectDoctor.description'),
       action: () => navigate("/products")
     },
     {
       icon: <FileText className="h-12 w-12 text-[#6E59A5]" />,
-      title: t('home.getStarted.prescriptions.title'),
-      description: t('home.getStarted.prescriptions.description'),
+      title: t('home.getStarted.steps.orderMedications.title'),
+      description: t('home.getStarted.steps.orderMedications.description'),
       action: () => navigate("/my-prescriptions")
     }
   ];
