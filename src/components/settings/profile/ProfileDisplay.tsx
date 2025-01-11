@@ -67,8 +67,8 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayPro
             <div>
               <span className="font-medium block mb-2">CNS Card:</span>
               <CNSCardDisplay
-                frontImage={`/lovable-uploads/${profile.cns_card_front}`}
-                backImage={`/lovable-uploads/${profile.cns_card_back || ''}`}
+                frontImage={profile.cns_card_front}
+                backImage={profile.cns_card_back || ''}
                 cardNumber={profile.cns_number || ''}
               />
             </div>
