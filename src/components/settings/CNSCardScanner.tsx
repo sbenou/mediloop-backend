@@ -13,15 +13,19 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
   const [step, setStep] = useState<'front' | 'back'>('front');
   const [frontImage, setFrontImage] = useState<string>('');
   const [scanning, setScanning] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleCapture = useCallback(async () => {
     setScanning(true);
+    setImageError(false);
     
     try {
       if (step === 'front') {
-        const { data: frontData } = await supabase.storage
+        const { data: frontData, error: frontError } = await supabase.storage
           .from('lovable-uploads')
           .upload('8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png', await fetch('/sample-front.png').then(r => r.blob()));
+        
+        if (frontError) throw frontError;
         
         if (frontData) {
           const { data: { publicUrl: frontUrl } } = supabase.storage
@@ -36,9 +40,11 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
           });
         }
       } else {
-        const { data: backData } = await supabase.storage
+        const { data: backData, error: backError } = await supabase.storage
           .from('lovable-uploads')
           .upload('5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png', await fetch('/sample-back.png').then(r => r.blob()));
+        
+        if (backError) throw backError;
         
         if (backData) {
           const { data: { publicUrl: backUrl } } = supabase.storage
@@ -56,10 +62,11 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
       }
     } catch (error) {
       console.error('Error uploading image:', error);
+      setImageError(true);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to upload image",
+        description: "Failed to upload image. Please try again.",
       });
     } finally {
       setScanning(false);
@@ -80,15 +87,21 @@ const CNSCardScanner = ({ onClose, onScanComplete }: CNSCardScannerProps) => {
         </DialogHeader>
         <div className="mt-4">
           <div className="relative aspect-[1.586] w-full overflow-hidden rounded-lg border bg-muted">
-            <img
-              src={currentImage}
-              alt={`Sample CNS card ${step} side`}
-              className="h-full w-full object-contain"
-              onError={(e) => {
-                console.error('Error loading image:', currentImage);
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            {imageError ? (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                Error loading image. Please try again.
+              </div>
+            ) : (
+              <img
+                src={currentImage}
+                alt={`Sample CNS card ${step} side`}
+                className="h-full w-full object-contain"
+                onError={() => {
+                  console.error('Error loading image:', currentImage);
+                  setImageError(true);
+                }}
+              />
+            )}
           </div>
           <div className="mt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>
