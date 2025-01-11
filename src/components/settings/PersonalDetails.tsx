@@ -62,6 +62,7 @@ const PersonalDetails = () => {
       return;
     }
 
+    // Immediately invalidate and refetch the profile data
     await queryClient.invalidateQueries({ queryKey: ['profile'] });
 
     toast({
