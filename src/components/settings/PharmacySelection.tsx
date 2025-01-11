@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import PharmacyCard from "@/components/PharmacyCard";
 
 interface Pharmacy {
@@ -134,7 +136,7 @@ const PharmacySelection = () => {
             <PharmacyCard
               {...defaultPharmacy}
               onSelect={() => {}}
-              onSetDefault={(isDefault) => {
+              onSetDefault={(id, isDefault) => {
                 if (!isDefault) {
                   setDefaultPharmacyMutation.mutate(null);
                 }
@@ -143,7 +145,12 @@ const PharmacySelection = () => {
             />
           </div>
         ) : (
-          <p className="text-muted-foreground">No default pharmacy selected</p>
+          <div className="space-y-4">
+            <p className="text-muted-foreground">No default pharmacy selected</p>
+            <Button asChild>
+              <Link to="/search-pharmacy">Add a default pharmacy</Link>
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
