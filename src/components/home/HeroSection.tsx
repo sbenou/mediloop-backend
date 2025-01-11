@@ -8,8 +8,21 @@ export const HeroSection = () => {
   const { t } = useTranslation();
   
   return (
-    <section className="relative bg-gradient-to-b from-primary/10 to-background px-4 py-16 md:py-24 animate-fade-in">
-      <div className="container mx-auto">
+    <section className="relative min-h-[600px] flex items-center bg-gradient-to-b from-primary/10 to-background px-4 py-16 md:py-24 animate-fade-in">
+      {/* Background image with overlay */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: "url('/lovable-uploads/e1121849-4e5c-496c-b196-929ffe5eff11.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.15
+        }}
+      />
+      
+      {/* Content overlay */}
+      <div className="container mx-auto relative z-10">
         <div className="flex flex-col items-center">
           <div className="text-center max-w-3xl mb-12">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
