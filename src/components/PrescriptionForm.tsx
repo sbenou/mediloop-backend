@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import MedicationFields from "./MedicationFields";
 import ViewPrescription from "./ViewPrescription";
 import { Plus } from "lucide-react";
@@ -30,13 +32,34 @@ interface PrescriptionFormData {
 }
 
 const PrescriptionForm = () => {
-  const [submittedData, setSubmittedData] = useState<PrescriptionFormData & { createdAt: string } | null>(null);
+  const [submittedData, setSubmittedData] = useState<PrescriptionFormData & { 
+    createdAt: string;
+    doctorStampUrl?: string;
+    doctorSignatureUrl?: string;
+  } | null>(null);
+
+  const { data: doctorProfile } = useQuery({
+    queryKey: ['doctorProfile'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const form = useForm<PrescriptionFormData>({
     defaultValues: {
       patientName: "",
       patientAddress: "",
-      doctorName: "",
+      doctorName: doctorProfile?.full_name || "",
       doctorAddress: "",
       medications: [
         {
@@ -49,10 +72,18 @@ const PrescriptionForm = () => {
     },
   });
 
+  useEffect(() => {
+    if (doctorProfile?.full_name) {
+      form.setValue('doctorName', doctorProfile.full_name);
+    }
+  }, [doctorProfile?.full_name, form]);
+
   const onSubmit = (data: PrescriptionFormData) => {
     const prescriptionWithDate = {
       ...data,
       createdAt: new Date().toLocaleString(),
+      doctorStampUrl: doctorProfile?.doctor_stamp_url,
+      doctorSignatureUrl: doctorProfile?.doctor_signature_url,
     };
     setSubmittedData(prescriptionWithDate);
     toast({
@@ -76,6 +107,27 @@ const PrescriptionForm = () => {
 
   if (submittedData) {
     return <ViewPrescription data={submittedData} />;
+  }
+
+  if (!doctorProfile?.doctor_stamp_url || !doctorProfile?.doctor_signature_url) {
+    return (
+      <Card className="w-full shadow-lg">
+        <CardContent className="p-6">
+          <div className="text-center py-8">
+            <h2 className="text-xl font-semibold text-red-600 mb-4">Missing Required Information</h2>
+            <p className="text-gray-600 mb-4">
+              You need to upload both your official stamp and signature before creating prescriptions.
+            </p>
+            <Button
+              onClick={() => window.location.href = '/my-details'}
+              variant="outline"
+            >
+              Go to Profile Settings
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -129,7 +181,7 @@ const PrescriptionForm = () => {
                       <FormItem>
                         <FormLabel>Doctor/Practice Name</FormLabel>
                         <FormControl>
-                          <Input {...field} className="bg-accent/5" />
+                          <Input {...field} className="bg-accent/5" readOnly />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

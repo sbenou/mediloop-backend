@@ -6,6 +6,7 @@ import { ProfileDisplay } from "./profile/ProfileDisplay";
 import { DefaultAddress } from "./profile/DefaultAddress";
 import { toast } from "@/components/ui/use-toast";
 import CNSCardScanner from "./CNSCardScanner";
+import { DoctorStampSignature } from "./profile/DoctorStampSignature";
 
 const PersonalDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -62,7 +63,6 @@ const PersonalDetails = () => {
       return;
     }
 
-    // Immediately invalidate and refetch the profile data
     await queryClient.invalidateQueries({ queryKey: ['profile'] });
 
     toast({
@@ -112,6 +112,12 @@ const PersonalDetails = () => {
             onScanCNS={() => setIsScanning(true)}
           />
           <DefaultAddress />
+          {profile?.role === 'doctor' && (
+            <DoctorStampSignature
+              stampUrl={profile.doctor_stamp_url}
+              signatureUrl={profile.doctor_signature_url}
+            />
+          )}
         </>
       )}
 

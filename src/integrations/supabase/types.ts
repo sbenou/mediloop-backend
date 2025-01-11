@@ -245,6 +245,8 @@ export type Database = {
           created_at: string | null
           date_of_birth: string | null
           deleted_at: string | null
+          doctor_signature_url: string | null
+          doctor_stamp_url: string | null
           email: string | null
           full_name: string | null
           id: string
@@ -263,6 +265,8 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           deleted_at?: string | null
+          doctor_signature_url?: string | null
+          doctor_stamp_url?: string | null
           email?: string | null
           full_name?: string | null
           id: string
@@ -281,6 +285,8 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           deleted_at?: string | null
+          doctor_signature_url?: string | null
+          doctor_stamp_url?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
