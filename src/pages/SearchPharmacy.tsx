@@ -79,7 +79,7 @@ const SearchPharmacy = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header session={session} />
+      <Header />
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} />
         <PharmacyListSection

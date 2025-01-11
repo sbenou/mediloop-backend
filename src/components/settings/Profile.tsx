@@ -1,26 +1,14 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import AddressManagement from "@/components/settings/AddressManagement";
 import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import PersonalDetails from "@/components/settings/PersonalDetails";
 import Header from "@/components/layout/Header";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 
 const Profile = () => {
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      return session;
-    },
-  });
-
   return (
     <div>
-      <Header session={session} />
+      <Header />
       <div className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-8">Profile</h1>
         
