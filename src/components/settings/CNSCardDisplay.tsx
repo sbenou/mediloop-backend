@@ -11,29 +11,41 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
-    <div className="relative perspective-1000">
+    <div className="relative w-full aspect-[1.586]">
       <div
-        className={`relative transition-transform duration-500 transform-style-preserve-3d cursor-pointer ${
+        className={`w-full h-full transition-transform duration-700 relative preserve-3d cursor-pointer ${
           isFlipped ? "rotate-y-180" : ""
         }`}
         onClick={() => setIsFlipped(!isFlipped)}
+        style={{ transformStyle: "preserve-3d" }}
       >
-        <Card className="w-full aspect-[1.586] relative">
-          <img
-            src={frontImage}
-            alt="CNS Card Front"
-            className={`absolute w-full h-full object-cover rounded-lg shadow-lg transition-opacity duration-500 ${
-              isFlipped ? "opacity-0" : "opacity-100"
-            }`}
-          />
-          <img
-            src={backImage}
-            alt="CNS Card Back"
-            className={`absolute w-full h-full object-cover rounded-lg shadow-lg rotate-y-180 transition-opacity duration-500 ${
-              isFlipped ? "opacity-100" : "opacity-0"
-            }`}
-          />
-        </Card>
+        {/* Front of card */}
+        <div
+          className="absolute w-full h-full backface-hidden"
+          style={{ backfaceVisibility: "hidden" }}
+        >
+          <Card className="w-full h-full">
+            <img
+              src={frontImage}
+              alt="CNS Card Front"
+              className="w-full h-full object-cover rounded-lg"
+            />
+          </Card>
+        </div>
+
+        {/* Back of card */}
+        <div
+          className="absolute w-full h-full backface-hidden rotate-y-180"
+          style={{ backfaceVisibility: "hidden" }}
+        >
+          <Card className="w-full h-full">
+            <img
+              src={backImage}
+              alt="CNS Card Back"
+              className="w-full h-full object-cover rounded-lg"
+            />
+          </Card>
+        </div>
       </div>
     </div>
   );
