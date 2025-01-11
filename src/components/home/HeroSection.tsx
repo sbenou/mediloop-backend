@@ -1,29 +1,57 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Pill, Stethoscope, Truck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-const HeroSection = () => {
+export const HeroSection = () => {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  
+  const handleProfessionalSignup = (role: 'pharmacist' | 'doctor' | 'delivery') => {
+    navigate('/signup', { state: { selectedRole: role } });
+  };
+
   return (
-    <section className="relative py-20 bg-gradient-to-b from-primary/5 to-background">
-      <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Your Health, Delivered
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8">
-            Get your prescriptions and healthcare products delivered straight to your door
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg">
-              <Link to="/products">Browse Products</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link to="/search-pharmacy">Find a Pharmacy</Link>
-            </Button>
+    <section className="relative bg-gradient-to-b from-primary/10 to-background px-4 py-16 md:py-24 animate-fade-in">
+      <div className="container mx-auto">
+        <div className="flex justify-center">
+          <div className="text-center max-w-2xl">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
+              {t('home.hero.title')}
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground mb-8">
+              {t('home.hero.subtitle')}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                onClick={() => handleProfessionalSignup('pharmacist')}
+                className="bg-[#9b87f5] hover:bg-[#8B5CF6]"
+              >
+                <Pill className="mr-2 h-4 w-4" />
+                {t('home.hero.pharmacistsButton')}
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => handleProfessionalSignup('doctor')}
+              >
+                <Stethoscope className="mr-2 h-4 w-4" />
+                {t('home.hero.doctorsButton')}
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => handleProfessionalSignup('delivery')}
+                className="bg-[#F2FCE2] hover:bg-[#E2ECd2] text-[#2C3E50]"
+              >
+                <Truck className="mr-2 h-4 w-4" />
+                {t('home.hero.deliveryButton')}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
     </section>
   );
 };
-
-export default HeroSection;
