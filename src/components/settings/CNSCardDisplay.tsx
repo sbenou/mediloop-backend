@@ -22,7 +22,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
       >
         {/* Front of card */}
         <Card 
-          className="absolute w-full h-full cursor-pointer"
+          className="absolute inset-0 w-full h-full cursor-pointer"
           style={{ backfaceVisibility: "hidden" }}
         >
           <img
@@ -34,7 +34,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
 
         {/* Back of card */}
         <Card 
-          className="absolute w-full h-full cursor-pointer"
+          className="absolute inset-0 w-full h-full cursor-pointer"
           style={{ 
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)"
