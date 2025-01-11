@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { ProfileForm } from "./profile/ProfileForm";
 import { ProfileDisplay } from "./profile/ProfileDisplay";
 import { DefaultAddress } from "./profile/DefaultAddress";
+import { toast } from "@/components/ui/use-toast";
 
 const PersonalDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -14,7 +15,7 @@ const PersonalDetails = () => {
     date_of_birth: null as Date | null,
   });
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -22,7 +23,7 @@ const PersonalDetails = () => {
       
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*, addresses(*)')
+        .select('*')
         .eq('id', user.id)
         .single();
         
@@ -51,6 +52,15 @@ const PersonalDetails = () => {
       };
     }
   });
+
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "Failed to load profile data",
+    });
+    return null;
+  }
 
   if (isLoading) {
     return (
