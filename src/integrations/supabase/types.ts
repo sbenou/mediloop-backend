@@ -237,6 +237,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           city: string | null
           cns_card_back: string | null
           cns_card_front: string | null
@@ -254,6 +255,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
           city?: string | null
           cns_card_back?: string | null
           cns_card_front?: string | null
@@ -271,6 +273,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
           city?: string | null
           cns_card_back?: string | null
           cns_card_front?: string | null

@@ -22,7 +22,7 @@ const PersonalDetails = () => {
       
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, addresses!inner(*)')
         .eq('id', user.id)
         .single();
         
