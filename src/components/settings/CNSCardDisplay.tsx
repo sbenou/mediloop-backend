@@ -11,9 +11,9 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
-    <div className="relative w-full aspect-[1.586] cursor-pointer" style={{ perspective: "1000px" }}>
+    <div className="relative w-full aspect-[1.586]" style={{ perspective: "1000px" }}>
       <div
-        className="w-full h-full absolute transition-transform duration-700"
+        className="relative w-full h-full transition-transform duration-500"
         style={{ 
           transformStyle: "preserve-3d",
           transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)"
@@ -22,7 +22,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
       >
         {/* Front of card */}
         <Card 
-          className="w-full h-full absolute backface-hidden"
+          className="absolute w-full h-full cursor-pointer"
           style={{ backfaceVisibility: "hidden" }}
         >
           <img
@@ -34,7 +34,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
 
         {/* Back of card */}
         <Card 
-          className="w-full h-full absolute backface-hidden"
+          className="absolute w-full h-full cursor-pointer"
           style={{ 
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)"
