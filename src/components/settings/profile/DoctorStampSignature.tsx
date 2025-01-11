@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Pencil } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { fabric } from "fabric";
+import { Canvas } from "fabric";
 
 interface DoctorStampSignatureProps {
   stampUrl: string | null;
