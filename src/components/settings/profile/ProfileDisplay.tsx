@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
 import AvatarUpload from "./AvatarUpload";
-import { MapPin } from "lucide-react";
+import CNSCardDisplay from "../CNSCardDisplay";
 
 interface ProfileDisplayProps {
   profile: Tables<"profiles"> | null;
@@ -59,21 +59,12 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayPro
 
           {profile.cns_card_front && (
             <div>
-              <span className="font-medium block mb-2">CNS Card Images:</span>
-              <div className="flex gap-4">
-                <img
-                  src={profile.cns_card_front}
-                  alt="CNS Card Front"
-                  className="w-48 h-auto rounded border"
-                />
-                {profile.cns_card_back && (
-                  <img
-                    src={profile.cns_card_back}
-                    alt="CNS Card Back"
-                    className="w-48 h-auto rounded border"
-                  />
-                )}
-              </div>
+              <span className="font-medium block mb-2">CNS Card:</span>
+              <CNSCardDisplay
+                frontImage={profile.cns_card_front}
+                backImage={profile.cns_card_back || ''}
+                cardNumber={profile.cns_number || ''}
+              />
             </div>
           )}
         </div>

@@ -29,7 +29,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
           }}
         >
           <img
-            src="/lovable-uploads/d2a0e334-8828-4c2a-8be5-a2eb901ab46d.png"
+            src={frontImage}
             alt="CNS Card Front"
             className="w-full h-full object-contain rounded-lg"
           />
@@ -45,7 +45,7 @@ const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayPro
           }}
         >
           <img
-            src="/lovable-uploads/c13d24b0-a830-4efe-ae19-fbd705f33eaa.png"
+            src={backImage}
             alt="CNS Card Back"
             className="w-full h-full object-contain rounded-lg"
           />
