@@ -14,7 +14,7 @@ export const DeliveryPersonSection = () => {
           <div className="order-2 md:order-1">
             <img
               src="/delivery-person.svg"
-              alt="Become a delivery person"
+              alt={t('home.deliveryPartner.imageAlt')}
               className="w-full h-auto"
             />
           </div>
@@ -23,7 +23,7 @@ export const DeliveryPersonSection = () => {
               {t('home.deliveryPartner.title')}
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              {t('home.deliveryPartner.subtitle')}
+              {t('home.deliveryPartner.description')}
             </p>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
@@ -45,7 +45,7 @@ export const DeliveryPersonSection = () => {
               className="mt-8"
               onClick={() => navigate("/become-transporter")}
             >
-              {t('home.deliveryPartner.findOutMore')}
+              {t('home.deliveryPartner.cta')}
             </Button>
           </div>
         </div>

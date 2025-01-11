@@ -16,7 +16,7 @@ export const PartnerSection = () => {
               {t('home.partner.title')}
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              {t('home.partner.subtitle')}
+              {t('home.partner.description')}
             </p>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
@@ -38,13 +38,13 @@ export const PartnerSection = () => {
               className="mt-8"
               onClick={() => navigate("/become-partner")}
             >
-              {t('home.partner.button')}
+              {t('home.partner.cta')}
             </Button>
           </div>
           <div className="relative">
             <img
               src="/transport.svg"
-              alt="Partner with us"
+              alt={t('home.partner.imageAlt')}
               className="w-full h-auto"
             />
           </div>
