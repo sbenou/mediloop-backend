@@ -46,7 +46,7 @@ const AdminSettings = () => {
 
   return (
     <div>
-      <Header session={null} showUserMenu={false} showBackLink={true} />
+      <Header showUserMenu={false} showBackLink={true} />
       <div className="container mx-auto py-4 px-4">
         <Breadcrumb>
           <BreadcrumbList>

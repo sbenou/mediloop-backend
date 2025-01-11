@@ -8,8 +8,10 @@ import Header from "@/components/layout/Header";
 import SearchHeader from "@/components/pharmacy/SearchHeader";
 import DoctorListSection from "@/components/doctor/DoctorListSection";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 const DoctorSearch = () => {
+  const { isAuthenticated } = useAuth();
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -84,7 +86,7 @@ const DoctorSearch = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header session={session} />
+      <Header />
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <DoctorListSection
@@ -92,7 +94,7 @@ const DoctorSearch = () => {
           isLoading={isLoading || isSearching}
           coordinates={searchCoordinates}
           onConnect={(doctorId, source) => {
-            if (!session) {
+            if (!isAuthenticated) {
               toast({
                 title: "Login Required",
                 description: "Please login to connect with doctors.",

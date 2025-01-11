@@ -6,18 +6,9 @@ import AccountDeletion from "@/components/settings/AccountDeletion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Settings = () => {
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      return session;
-    },
-  });
-
   return (
     <div>
-      <Header session={session} />
+      <Header />
       <div className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
         
