@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Card } from "@/components/ui/card";
 import { ProfileForm } from "./profile/ProfileForm";
 import { ProfileDisplay } from "./profile/ProfileDisplay";
 import { DefaultAddress } from "./profile/DefaultAddress";
 import { toast } from "@/components/ui/use-toast";
+import CNSCardScanner from "./CNSCardScanner";
 
 const PersonalDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -28,17 +29,8 @@ const PersonalDetails = () => {
         .single();
         
       if (profileError) throw profileError;
-
-      const { data: addressData, error: addressError } = await supabase
-        .from('addresses')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_default', true)
-        .maybeSingle();
-
-      if (addressError) throw addressError;
       
-      if (!isEditing) {
+      if (profileData) {
         setFormData({
           full_name: profileData.full_name || "",
           email: profileData.email || "",
@@ -46,12 +38,45 @@ const PersonalDetails = () => {
         });
       }
       
-      return {
-        ...profileData,
-        address: addressData
-      };
+      return profileData;
     }
   });
+
+  const handleScanComplete = async (frontImage: string, backImage: string, cardNumber: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No user found",
+      });
+      return;
+    }
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        cns_card_front: frontImage,
+        cns_card_back: backImage,
+        cns_number: cardNumber,
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update CNS card information",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "CNS card information updated successfully",
+    });
+    setIsScanning(false);
+  };
 
   if (error) {
     toast({
@@ -64,37 +89,38 @@ const PersonalDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Card className="p-6">
-          <div className="h-40 animate-pulse bg-gray-200 rounded"></div>
-        </Card>
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  if (!profile) return null;
-
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-        {isEditing ? (
-          <ProfileForm
-            initialData={formData}
-            onCancel={() => setIsEditing(false)}
-          />
-        ) : (
+    <div className="space-y-8">
+      {isEditing ? (
+        <ProfileForm
+          formData={formData}
+          setFormData={setFormData}
+          onCancel={() => setIsEditing(false)}
+          profile={profile}
+        />
+      ) : (
+        <>
           <ProfileDisplay
             profile={profile}
             onEdit={() => setIsEditing(true)}
+            onScanCNS={() => setIsScanning(true)}
           />
-        )}
-      </Card>
+          <DefaultAddress />
+        </>
+      )}
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Default Address</h3>
-        <DefaultAddress address={profile.address} />
-      </Card>
+      {isScanning && (
+        <CNSCardScanner
+          onClose={() => setIsScanning(false)}
+          onScanComplete={handleScanComplete}
+        />
+      )}
     </div>
   );
 };
