@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { ProfileForm } from "./profile/ProfileForm";
 import { ProfileDisplay } from "./profile/ProfileDisplay";
@@ -10,6 +10,7 @@ import CNSCardScanner from "./CNSCardScanner";
 const PersonalDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile'],
@@ -24,6 +25,7 @@ const PersonalDetails = () => {
         .single();
         
       if (profileError) throw profileError;
+      console.log('Profile data:', profileData); // Added for debugging
       return profileData;
     }
   });
@@ -39,6 +41,8 @@ const PersonalDetails = () => {
       return;
     }
 
+    console.log('Updating CNS card info:', { frontImage, backImage, cardNumber }); // Added for debugging
+
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
@@ -49,6 +53,7 @@ const PersonalDetails = () => {
       .eq('id', user.id);
 
     if (updateError) {
+      console.error('Update error:', updateError); // Added for debugging
       toast({
         variant: "destructive",
         title: "Error",
@@ -56,6 +61,9 @@ const PersonalDetails = () => {
       });
       return;
     }
+
+    // Invalidate and refetch profile data
+    await queryClient.invalidateQueries({ queryKey: ['profile'] });
 
     toast({
       title: "Success",
@@ -65,6 +73,7 @@ const PersonalDetails = () => {
   };
 
   if (error) {
+    console.error('Profile error:', error); // Added for debugging
     toast({
       variant: "destructive",
       title: "Error",
