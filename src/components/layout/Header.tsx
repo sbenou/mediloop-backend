@@ -30,7 +30,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
 
   return (
     <header className="bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 py-1 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4 sm:gap-16">
             {showBackLink ? (
@@ -43,7 +43,7 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
                 <img 
                   src="/lovable-uploads/1d4b50b5-2725-470b-a070-5227c3aa24b6.png" 
                   alt="LuxMed Logo" 
-                  className={`${isHomePage ? 'h-16 sm:h-20' : 'h-12 sm:h-16'} transition-all duration-200`}
+                  className={`${isHomePage ? 'h-8 sm:h-10' : 'h-6 sm:h-8'} transition-all duration-200`}
                 />
               </Link>
             )}
