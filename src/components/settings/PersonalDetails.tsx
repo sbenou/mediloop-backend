@@ -14,7 +14,7 @@ const PersonalDetails = () => {
     date_of_birth: null as Date | null,
   });
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -22,7 +22,7 @@ const PersonalDetails = () => {
       
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*, addresses!inner(*)')
+        .select('*, addresses(*)')
         .eq('id', user.id)
         .single();
         
@@ -51,6 +51,16 @@ const PersonalDetails = () => {
       };
     }
   });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="h-40 animate-pulse bg-gray-200 rounded"></div>
+        </Card>
+      </div>
+    );
+  }
 
   if (!profile) return null;
 
