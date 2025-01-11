@@ -171,6 +171,63 @@ export type Database = {
         }
         Relationships: []
       }
+      prescriptions: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          dosage: string
+          duration: string
+          frequency: string
+          id: string
+          medication_name: string
+          notes: string | null
+          patient_id: string
+          status: Database["public"]["Enums"]["prescription_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          dosage: string
+          duration: string
+          frequency: string
+          id?: string
+          medication_name: string
+          notes?: string | null
+          patient_id: string
+          status?: Database["public"]["Enums"]["prescription_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          dosage?: string
+          duration?: string
+          frequency?: string
+          id?: string
+          medication_name?: string
+          notes?: string | null
+          patient_id?: string
+          status?: Database["public"]["Enums"]["prescription_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescriptions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category_id: string | null
@@ -465,6 +522,7 @@ export type Database = {
         | "shipped"
         | "delivered"
         | "cancelled"
+      prescription_status: "draft" | "active" | "completed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
