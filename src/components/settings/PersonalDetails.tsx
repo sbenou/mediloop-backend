@@ -25,7 +25,7 @@ const PersonalDetails = () => {
         .single();
         
       if (profileError) throw profileError;
-      console.log('Profile data:', profileData); // Added for debugging
+      console.log('Profile data:', profileData);
       return profileData;
     }
   });
@@ -41,23 +41,28 @@ const PersonalDetails = () => {
       return;
     }
 
-    // Force the correct image paths
-    const frontImagePath = "/lovable-uploads/CNS front.png";
-    const backImagePath = "/lovable-uploads/CNS back.png";
+    // Get the bucket URL
+    const { data: { publicUrl: frontUrl } } = supabase.storage
+      .from('lovable-uploads')
+      .getPublicUrl('CNS front.png');
 
-    console.log('Updating CNS card info:', { frontImagePath, backImagePath, cardNumber }); // Added for debugging
+    const { data: { publicUrl: backUrl } } = supabase.storage
+      .from('lovable-uploads')
+      .getPublicUrl('CNS back.png');
+
+    console.log('Updating CNS card info with URLs:', { frontUrl, backUrl, cardNumber });
 
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
-        cns_card_front: frontImagePath,
-        cns_card_back: backImagePath,
+        cns_card_front: frontUrl,
+        cns_card_back: backUrl,
         cns_number: cardNumber,
       })
       .eq('id', user.id);
 
     if (updateError) {
-      console.error('Update error:', updateError); // Added for debugging
+      console.error('Update error:', updateError);
       toast({
         variant: "destructive",
         title: "Error",
@@ -66,7 +71,6 @@ const PersonalDetails = () => {
       return;
     }
 
-    // Invalidate and refetch profile data
     await queryClient.invalidateQueries({ queryKey: ['profile'] });
 
     toast({
@@ -77,7 +81,7 @@ const PersonalDetails = () => {
   };
 
   if (error) {
-    console.error('Profile error:', error); // Added for debugging
+    console.error('Profile error:', error);
     toast({
       variant: "destructive",
       title: "Error",
