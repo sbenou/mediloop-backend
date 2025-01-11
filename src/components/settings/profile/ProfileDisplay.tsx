@@ -13,6 +13,8 @@ interface ProfileDisplayProps {
 export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayProps) {
   if (!profile) return null;
 
+  console.log('Profile data:', profile); // Debug log
+
   return (
     <Card>
       <CardContent className="pt-6">

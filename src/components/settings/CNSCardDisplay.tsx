@@ -9,9 +9,11 @@ interface CNSCardDisplayProps {
 
 const CNSCardDisplay = ({ frontImage, backImage, cardNumber }: CNSCardDisplayProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  
+  console.log('CNS Card Images:', { frontImage, backImage }); // Debug log
 
   return (
-    <div className="relative w-[300px] aspect-[1.586] cursor-pointer mx-auto" style={{ perspective: "1000px" }}>
+    <div className="relative w-[300px] aspect-[1.586] cursor-pointer" style={{ perspective: "1000px" }}>
       <div
         className="absolute w-full h-full transition-transform duration-500"
         style={{ 
