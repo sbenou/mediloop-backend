@@ -35,7 +35,7 @@ const Index = () => {
           supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'pharmacist'),
           supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'doctor'),
           supabase.from('prescriptions').select('*', { count: 'exact', head: true }),
-          supabase.from('doctor_patient_connections').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+          supabase.from('doctor_patient_connections').select('*', { count: 'exact', head: true }).eq('status', 'accepted'),
         ]);
 
         return {
