@@ -19,7 +19,9 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayPro
           <div className="flex-shrink-0">
             <AvatarUpload
               currentAvatarUrl={profile.avatar_url}
-              userId={profile.id}
+              onAvatarUpdate={(url) => {
+                // Profile will be automatically updated through React Query invalidation
+              }}
             />
           </div>
           <div className="flex-grow space-y-4">

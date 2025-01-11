@@ -10,6 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tables } from "@/integrations/supabase/types";
 
 interface ProfileFormProps {
   initialData: {
@@ -18,9 +19,10 @@ interface ProfileFormProps {
     date_of_birth: Date | null;
   };
   onCancel: () => void;
+  profile: Tables<"profiles"> | null;
 }
 
-export const ProfileForm = ({ initialData, onCancel }: ProfileFormProps) => {
+export const ProfileForm = ({ initialData, onCancel, profile }: ProfileFormProps) => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState(initialData);
 

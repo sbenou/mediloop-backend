@@ -10,11 +10,6 @@ import CNSCardScanner from "./CNSCardScanner";
 const PersonalDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  const [formData, setFormData] = useState({
-    full_name: "",
-    email: "",
-    date_of_birth: null as Date | null,
-  });
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile'],
@@ -29,15 +24,6 @@ const PersonalDetails = () => {
         .single();
         
       if (profileError) throw profileError;
-      
-      if (profileData) {
-        setFormData({
-          full_name: profileData.full_name || "",
-          email: profileData.email || "",
-          date_of_birth: profileData.date_of_birth ? new Date(profileData.date_of_birth) : null,
-        });
-      }
-      
       return profileData;
     }
   });
@@ -95,12 +81,17 @@ const PersonalDetails = () => {
     );
   }
 
+  const initialFormData = {
+    full_name: profile?.full_name || "",
+    email: profile?.email || "",
+    date_of_birth: profile?.date_of_birth ? new Date(profile.date_of_birth) : null,
+  };
+
   return (
     <div className="space-y-8">
       {isEditing ? (
         <ProfileForm
-          formData={formData}
-          setFormData={setFormData}
+          initialData={initialFormData}
           onCancel={() => setIsEditing(false)}
           profile={profile}
         />
