@@ -13,31 +13,31 @@ export const FeaturesGrid = () => {
   
   const features = [
     {
-      icon: <Search className="h-12 w-12 text-primary" />,
+      icon: <Search className="h-12 w-12 text-[#9b87f5]" />,
       title: t('home.features.findMedications.title'),
       description: t('home.features.findMedications.description'),
       action: () => navigate("/products"),
     },
     {
-      icon: <ShoppingBag className="h-12 w-12 text-primary" />,
+      icon: <ShoppingBag className="h-12 w-12 text-[#7E69AB]" />,
       title: t('home.features.easyOrdering.title'),
       description: t('home.features.easyOrdering.description'),
       action: () => navigate("/products"),
     },
     {
-      icon: <FileText className="h-12 w-12 text-primary" />,
+      icon: <FileText className="h-12 w-12 text-[#6E59A5]" />,
       title: "Digital Prescriptions",
       description: "Manage your prescriptions digitally and access them anytime, anywhere",
       action: () => navigate("/my-prescriptions"),
     },
     {
-      icon: <Users className="h-12 w-12 text-primary" />,
+      icon: <Users className="h-12 w-12 text-[#D6BCFA]" />,
       title: "Connect with Healthcare Providers",
       description: "Connect with doctors and manage your prescriptions seamlessly",
       action: () => navigate("/find-doctor"),
     },
     {
-      icon: <Pill className="h-12 w-12 text-primary" />,
+      icon: <Pill className="h-12 w-12 text-[#8B5CF6]" />,
       title: t('home.features.managePrescriptions.title'),
       description: t('home.features.managePrescriptions.description'),
       action: () => navigate("/my-prescriptions"),
