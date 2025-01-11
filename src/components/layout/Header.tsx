@@ -13,20 +13,21 @@ import LanguageSelector from '../LanguageSelector';
 import MobileMenu from './navigation/MobileMenu';
 import ConnectionMenu from './navigation/ConnectionMenu';
 import CartButton from './navigation/CartButton';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface HeaderProps {
-  session: any;
   showUserMenu?: boolean;
   showBackLink?: boolean;
 }
 
-const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderProps) => {
+const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
 
   return (
     <header className="bg-white shadow-sm">
@@ -64,13 +65,12 @@ const Header = ({ session, showUserMenu = true, showBackLink = false }: HeaderPr
             <LanguageSelector />
             {showUserMenu && (
               <>
-                {session ? (
+                {isAuthenticated ? (
                   <UserMenu />
                 ) : (
                   <ConnectionMenu />
                 )}
                 <CartButton 
-                  session={session}
                   isOpen={isCartOpen}
                   onOpenChange={setIsCartOpen}
                 />

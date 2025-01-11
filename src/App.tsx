@@ -1,8 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RecoilRoot } from 'recoil';
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { AuthProvider } from "@/providers/AuthProvider";
 import "@/i18n/config";
 import Products from "@/pages/Products";
 import Index from "@/pages/Index";
@@ -27,12 +29,14 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <CurrencyProvider>
-        <CartProvider>
-          <Router>
-            <EmailConfirmationHandler />
-            <Routes>
+    <RecoilRoot>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <CurrencyProvider>
+            <CartProvider>
+              <Router>
+                <EmailConfirmationHandler />
+                <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/search-pharmacy" element={<SearchPharmacy />} />
               <Route path="/products" element={<Products />} />
@@ -52,12 +56,14 @@ function App() {
               <Route path="/find-doctor" element={<FindDoctor />} />
               <Route path="/doctor-connections" element={<DoctorConnections />} />
               <Route path="/admin-settings" element={<AdminSettings />} />
-            </Routes>
-            <Toaster />
-          </Router>
-        </CartProvider>
-      </CurrencyProvider>
-    </QueryClientProvider>
+                </Routes>
+                <Toaster />
+              </Router>
+            </CartProvider>
+          </CurrencyProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </RecoilRoot>
   );
 }
 
