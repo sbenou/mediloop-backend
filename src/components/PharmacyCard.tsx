@@ -24,7 +24,7 @@ const PharmacyCard = ({
   distance,
   email,
   phone,
-  isDefault,
+  isDefault = false,
   onSelect,
   onSetDefault,
 }: PharmacyCardProps) => {
@@ -35,7 +35,9 @@ const PharmacyCard = ({
           <Checkbox
             id={`default-${id}`}
             checked={isDefault}
-            onCheckedChange={(checked) => onSetDefault(id, checked as boolean)}
+            onCheckedChange={(checked) => {
+              onSetDefault(id, checked as boolean);
+            }}
           />
           <Label htmlFor={`default-${id}`}>Set as default pharmacy</Label>
         </div>
