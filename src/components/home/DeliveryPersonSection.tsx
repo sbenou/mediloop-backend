@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ShoppingBag, FileText } from "lucide-react";
+import { Bike, Bell, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
@@ -14,30 +14,37 @@ export const DeliveryPersonSection = () => {
           <div className="order-2 md:order-1">
             <img
               src="/delivery-person.svg"
-              alt={t('home.deliveryPartner.imageAlt')}
+              alt="Become a delivery person"
               className="w-full h-auto"
             />
           </div>
           <div className="order-1 md:order-2">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              {t('home.deliveryPartner.title')}
+              Become a Delivery Partner
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              {t('home.deliveryPartner.description')}
+              Join our network of delivery partners and earn extra income
             </p>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
-                <ShoppingBag className="h-8 w-8 text-[#7E69AB]" />
+                <Bike className="h-8 w-8 text-[#D6BCFA]" />
                 <div>
-                  <h3 className="font-semibold">{t('home.deliveryPartner.features.requirements.title')}</h3>
-                  <p className="text-muted-foreground">{t('home.deliveryPartner.features.requirements.description')}</p>
+                  <h3 className="font-semibold">Simple Requirements</h3>
+                  <p className="text-muted-foreground">All you need is a vehicle and a smartphone</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <FileText className="h-8 w-8 text-[#6E59A5]" />
+                <Bell className="h-8 w-8 text-[#8B5CF6]" />
                 <div>
-                  <h3 className="font-semibold">{t('home.deliveryPartner.features.notifications.title')}</h3>
-                  <p className="text-muted-foreground">{t('home.deliveryPartner.features.notifications.description')}</p>
+                  <h3 className="font-semibold">Real-time Notifications</h3>
+                  <p className="text-muted-foreground">Get instant alerts for new delivery requests</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <Wallet className="h-8 w-8 text-[#D6BCFA]" />
+                <div>
+                  <h3 className="font-semibold">Weekly Payments</h3>
+                  <p className="text-muted-foreground">Receive your earnings every week</p>
                 </div>
               </div>
             </div>
@@ -45,7 +52,7 @@ export const DeliveryPersonSection = () => {
               className="mt-8"
               onClick={() => navigate("/become-transporter")}
             >
-              {t('home.deliveryPartner.cta')}
+              Find Out More
             </Button>
           </div>
         </div>
