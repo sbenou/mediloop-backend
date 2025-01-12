@@ -13,7 +13,7 @@ export const HeroSection = () => {
       <div 
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?q=80&w=2940')",
+          backgroundImage: "url('https://images.unsplash.com/photo-1587829741301-dc798b83add3?q=80&w=2865')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
