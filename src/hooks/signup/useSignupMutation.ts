@@ -42,6 +42,25 @@ export const useSignupMutation = () => {
   const createUserProfile = async (userId: string, email: string, name: string, userRole: UserRole, licenseNumber: string) => {
     try {
       console.log("Creating new profile for user:", userId);
+      
+      // First check if profile exists
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      if (checkError && !checkError.message.includes('No rows found')) {
+        console.error("Error checking existing profile:", checkError);
+        throw checkError;
+      }
+
+      if (existingProfile) {
+        console.log("Profile already exists:", existingProfile);
+        return existingProfile;
+      }
+
+      // Create new profile if it doesn't exist
       const { data, error } = await supabase
         .from('profiles')
         .insert([{
