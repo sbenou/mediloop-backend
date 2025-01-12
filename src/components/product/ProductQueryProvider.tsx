@@ -55,14 +55,21 @@ export const useProductQuery = ({
     queryKey: ['products', searchTerm, currentPage, filters, sortBy],
     queryFn: async () => {
       console.log('Fetching products with filters:', filters);
+      console.log('User profile:', userProfile);
       
       let query = supabase
         .from('products')
-        .select('*', { count: 'exact' });
+        .select(`
+          *,
+          category:categories(id, name),
+          subcategory:subcategories(id, name)
+        `, { count: 'exact' });
       
       // Apply filters
       if (filters.type) {
         query = query.eq('type', filters.type);
+      } else if (userProfile?.role !== 'pharmacist' && userProfile?.role !== 'superadmin') {
+        query = query.eq('type', 'parapharmacy');
       }
       
       if (filters.category) {
@@ -75,7 +82,7 @@ export const useProductQuery = ({
 
       // Add description filter
       if (filters.description) {
-        query = query.ilike('description', `%${filters.description}%`);
+        query = query.ilike('description', filters.description);
       }
       
       if (searchTerm) {
@@ -94,7 +101,7 @@ export const useProductQuery = ({
           query = query.order('price', { ascending: false });
           break;
         case 'popular':
-          query = query.order('created_at', { ascending: false });
+          query = query.order('popularity', { ascending: false });
           break;
         default:
           query = query.order('created_at', { ascending: false });
@@ -116,5 +123,6 @@ export const useProductQuery = ({
         userProfile
       } as ProductQueryResult;
     },
+    enabled: true,
   });
 };

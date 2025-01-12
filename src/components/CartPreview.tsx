@@ -1,3 +1,4 @@
+import { useCart } from "@/contexts/CartContext";
 import { ScrollArea } from "./ui/scroll-area";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -7,16 +8,15 @@ import { CartItem } from "./cart/CartItem";
 import { CartEmpty } from "./cart/CartEmpty";
 import { CartFooter } from "./cart/CartFooter";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useCartOperations } from "@/hooks/useCartOperations";
 
 export const CartPreview = ({ onClose }: { onClose: () => void }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { cart, removeFromCart, updateQuantity } = useCartOperations();
+  const { state: cartState, removeFromCart, updateQuantity } = useCart();
   const [comment, setComment] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const total = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = cartState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handleCheckout = async () => {
     if (!isAuthenticated) {
@@ -24,7 +24,7 @@ export const CartPreview = ({ onClose }: { onClose: () => void }) => {
         title: "Authentication Required",
         description: "Please log in to proceed with checkout.",
       });
-      onClose();
+      onClose(); // Close the cart preview
       navigate('/login');
       return;
     }
@@ -32,12 +32,13 @@ export const CartPreview = ({ onClose }: { onClose: () => void }) => {
     try {
       setIsProcessing(true);
       
+      // Add better error handling and logging
       console.log('Starting checkout process...');
-      console.log('Cart items:', cart.items);
+      console.log('Cart items:', cartState.items);
       
       const { data, error } = await supabase.functions.invoke('create-delivery-payment', {
         body: { 
-          items: cart.items.map(item => ({
+          items: cartState.items.map(item => ({
             id: item.id,
             name: item.name,
             price: item.price,
@@ -73,7 +74,7 @@ export const CartPreview = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  if (cart.items.length === 0) {
+  if (cartState.items.length === 0) {
     return <CartEmpty />;
   }
 
@@ -81,7 +82,7 @@ export const CartPreview = ({ onClose }: { onClose: () => void }) => {
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-1 -mx-6 px-6">
         <div className="space-y-4">
-          {cart.items.map((item) => (
+          {cartState.items.map((item) => (
             <CartItem
               key={item.id}
               {...item}
