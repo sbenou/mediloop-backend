@@ -1,11 +1,10 @@
 import { Bike, Bell, DollarSign } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { useInView } from "react-intersection-observer";
 import { useTranslation } from "react-i18next";
+import { DeliveryFeature } from "./delivery/DeliveryFeature";
+import { DeliveryHeader } from "./delivery/DeliveryHeader";
 
 export const DeliveryPersonSection = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -39,87 +38,17 @@ export const DeliveryPersonSection = () => {
       className="py-16 px-4"
     >
       <div className="container mx-auto max-w-6xl">
-        <div className="max-w-3xl mx-auto text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-gray-900">
-            {t('home.deliveryPartner.title')}
-          </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            {t('home.deliveryPartner.subtitle')}
-          </p>
-          <Button 
-            onClick={() => navigate("/become-partner")}
-            size="lg"
-            className="bg-[#7E69AB] hover:bg-[#7E69AB]/90"
-          >
-            {t('home.deliveryPartner.findOutMore')}
-          </Button>
-        </div>
-
+        <DeliveryHeader />
+        
         <div className="max-w-4xl mx-auto space-y-8">
           {features.map((feature, index) => (
-            <div 
+            <DeliveryFeature
               key={index}
-              className={`flex items-center gap-8 ${
-                inView ? 'animate-fade-in opacity-100' : 'opacity-0'
-              }`}
-              style={{
-                animationDelay: `${index * 200}ms`
-              }}
-            >
-              {index === 1 ? (
-                <>
-                  <div className="flex-1">
-                    <img 
-                      src={feature.image} 
-                      alt={feature.title}
-                      className="w-full h-auto max-w-[200px] mx-auto"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start">
-                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                        <feature.icon className="h-7 w-7 text-[#7E69AB]" />
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                          {feature.title}
-                        </h3>
-                        <p className="text-gray-600">
-                          {feature.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex-1">
-                    <div className="flex items-start">
-                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                        <feature.icon className="h-7 w-7 text-[#7E69AB]" />
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                          {feature.title}
-                        </h3>
-                        <p className="text-gray-600">
-                          {feature.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <img 
-                      src={feature.image} 
-                      alt={feature.title}
-                      className="w-full h-auto max-w-[200px] mx-auto"
-                      loading="lazy"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+              {...feature}
+              isReversed={index === 1}
+              animationDelay={index * 200}
+              inView={inView}
+            />
           ))}
         </div>
       </div>
