@@ -39,11 +39,6 @@ export const useSignup = () => {
 
     try {
       const user = await createAuthUser(email, password, name, userRole);
-      
-      if (!user || !user.id) {
-        throw new Error("Failed to create user account");
-      }
-
       await createUserProfile(user.id, email, name, userRole, licenseNumber);
 
       toast({
@@ -51,11 +46,7 @@ export const useSignup = () => {
         description: "Please check your email to verify your account.",
       });
       
-      // Add a small delay before navigation to ensure toast is visible
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
-      
+      navigate('/login');
     } catch (error: any) {
       console.error("Signup error:", error);
       
@@ -65,6 +56,7 @@ export const useSignup = () => {
         const expiresAt = Date.now() + rateLimitDuration;
         
         setRateLimitExpiresAt(expiresAt);
+        setIsSubmitting(false);
 
         toast({
           variant: "destructive",

@@ -31,7 +31,10 @@ export const useLogin = (onSuccess: () => void) => {
         return;
       }
 
-      // Sign in with Supabase auth
+      // Sign out first to clear any existing session
+      await supabase.auth.signOut();
+      console.log("Signed out existing session");
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -39,7 +42,6 @@ export const useLogin = (onSuccess: () => void) => {
 
       if (error) {
         handleLoginError(error);
-        setIsLoading(false);
         return;
       }
 
@@ -55,7 +57,6 @@ export const useLogin = (onSuccess: () => void) => {
           description: "Logged in successfully",
           duration: 4000,
         });
-
         onSuccess();
       }
     } catch (error: any) {
@@ -98,6 +99,7 @@ export const useLogin = (onSuccess: () => void) => {
       return;
     }
     
+    // Default case - likely incorrect password
     toast({
       variant: "destructive",
       title: "Login Failed",
