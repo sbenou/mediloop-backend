@@ -18,6 +18,7 @@ import SearchPharmacy from "@/pages/SearchPharmacy";
 import Services from "@/pages/Services";
 
 const Routes = () => {
+  console.log('Routes component rendered');
   return (
     <RouterRoutes>
       <Route path="/" element={<Index />} />
