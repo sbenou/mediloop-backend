@@ -35,25 +35,32 @@ export const useSignupMutation = () => {
       throw new Error("User creation failed - no user ID returned");
     }
 
+    console.log("Auth user created successfully with ID:", authData.user.id);
     return authData.user;
   };
 
   const createUserProfile = async (userId: string, email: string, name: string, userRole: UserRole, licenseNumber: string) => {
     try {
-      console.log("Creating new profile...");
-      const { error: profileError } = await supabase.rpc('create_profile', {
-        user_id: userId,
-        user_role: roleMapping[userRole],
-        user_full_name: name,
-        user_email: email,
-        user_license_number: licenseNumber || null
-      });
+      console.log("Creating new profile for user:", userId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert([{
+          id: userId,
+          email,
+          full_name: name,
+          role: roleMapping[userRole],
+          license_number: licenseNumber || null,
+        }])
+        .select()
+        .single();
 
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        throw new Error("Failed to create user profile: " + profileError.message);
+      if (error) {
+        console.error("Profile creation error:", error);
+        throw new Error("Failed to create user profile: " + error.message);
       }
-      console.log("Profile created successfully");
+
+      console.log("Profile created successfully:", data);
+      return data;
     } catch (error) {
       console.error("Error in createUserProfile:", error);
       throw error;
