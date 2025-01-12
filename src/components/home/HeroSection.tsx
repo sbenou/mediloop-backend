@@ -13,7 +13,7 @@ export const HeroSection = () => {
       <div 
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: "url('https://img.freepik.com/free-photo/courier-uniform-protective-mask-gloves-delivering-parcel-box-medicine-door-during-pandemic_637285-7773.jpg')",
+          backgroundImage: "url('https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?q=80&w=2091')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -24,7 +24,7 @@ export const HeroSection = () => {
       <div 
         className="absolute inset-0 z-0"
         style={{
-          background: 'linear-gradient(to right, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%)',
+          background: 'linear-gradient(to right, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%)',
         }}
       />
       
