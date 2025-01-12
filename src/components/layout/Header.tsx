@@ -44,7 +44,7 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
                 <img 
                   src="/lovable-uploads/1d4b50b5-2725-470b-a070-5227c3aa24b6.png" 
                   alt="LuxMed Logo" 
-                  className={`${isHomePage ? 'h-12 sm:h-14' : 'h-10 sm:h-12'} transition-all duration-200`}
+                  className={`${isHomePage ? 'h-14 sm:h-16' : 'h-12 sm:h-14'} transition-all duration-200`}
                 />
               </Link>
             )}
