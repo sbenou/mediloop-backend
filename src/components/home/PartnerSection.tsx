@@ -64,7 +64,7 @@ export const PartnerSection = () => {
               }}
             >
               <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <feature.icon className="h-6 w-6 text-primary" />
+                <feature.icon className="h-6 w-6 text-[#9b87f5]" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 {feature.title}

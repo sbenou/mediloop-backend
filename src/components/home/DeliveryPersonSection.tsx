@@ -79,7 +79,7 @@ export const DeliveryPersonSection = () => {
                   <div className="flex-1">
                     <div className="flex items-start">
                       <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                        <feature.icon className="h-7 w-7 text-primary" />
+                        <feature.icon className="h-7 w-7 text-[#7E69AB]" />
                       </div>
                       <div className="ml-4">
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -97,7 +97,7 @@ export const DeliveryPersonSection = () => {
                   <div className="flex-1">
                     <div className="flex items-start">
                       <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                        <feature.icon className="h-7 w-7 text-primary" />
+                        <feature.icon className="h-7 w-7 text-[#7E69AB]" />
                       </div>
                       <div className="ml-4">
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">
