@@ -53,7 +53,7 @@ export const StatsSection = ({ stats }: { stats: PlatformStats }) => {
               <div className="text-2xl font-semibold text-primary mb-2">
                 {stat.label}
               </div>
-              <div className="text-4xl font-bold">
+              <div className="text-4xl font-bold text-[#7E69AB]">
                 {stat.value.toLocaleString()}
               </div>
             </div>
