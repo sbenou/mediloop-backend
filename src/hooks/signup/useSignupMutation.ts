@@ -15,6 +15,10 @@ export const useSignupMutation = () => {
 
   const createAuthUser = async (email: string, password: string, name: string, userRole: UserRole) => {
     console.log("Creating auth user...");
+    
+    // Sign out any existing session first
+    await supabase.auth.signOut();
+    
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -23,6 +27,7 @@ export const useSignupMutation = () => {
           full_name: name,
           role: roleMapping[userRole],
         },
+        emailRedirectTo: `${window.location.origin}/auth/callback`
       },
     });
 

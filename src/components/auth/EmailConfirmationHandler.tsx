@@ -9,72 +9,69 @@ const EmailConfirmationHandler = () => {
 
   useEffect(() => {
     const handleEmailConfirmation = async () => {
-      const currentUrl = window.location.href;
-      const url = new URL(currentUrl);
-      const code = url.searchParams.get('code');
-      const type = url.searchParams.get('type');
-      
-      console.log('Full URL:', currentUrl);
-      console.log('Hash:', window.location.hash);
-      console.log('Path:', window.location.pathname);
+      try {
+        const currentUrl = window.location.href;
+        const url = new URL(currentUrl);
+        const code = url.searchParams.get('code');
+        const type = url.searchParams.get('type');
+        
+        console.log('Email confirmation params:', {
+          type,
+          code: !!code,
+          fullUrl: currentUrl
+        });
 
-      const params = {
-        error: url.searchParams.get('error'),
-        error_description: url.searchParams.get('error_description'),
-        type,
-        hasAccessToken: !!url.searchParams.get('access_token'),
-        hasRefreshToken: !!url.searchParams.get('refresh_token'),
-        fullUrl: currentUrl,
-      };
-      
-      console.log('Email confirmation params:', params);
+        if (type === 'recovery' && code) {
+          console.log('Recovery callback detected, storing code');
+          const recoveryData = {
+            code,
+            timestamp: Date.now()
+          };
+          sessionStorage.setItem('recovery_data', JSON.stringify(recoveryData));
+          navigate('/reset-password', { replace: true });
+          return;
+        }
 
-      if (params.error) {
+        if (type === 'signup' || type === 'magiclink') {
+          // Clear any existing session first
+          await supabase.auth.signOut();
+          
+          if (code) {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            
+            if (error) {
+              console.error('Error exchanging code for session:', error);
+              toast({
+                variant: "destructive",
+                title: "Error",
+                description: error.message || "Failed to verify email.",
+              });
+              navigate('/login');
+              return;
+            }
+
+            if (data.session) {
+              toast({
+                title: "Success",
+                description: "Your email has been confirmed. You can now log in.",
+              });
+              navigate('/login');
+            }
+          }
+        }
+
+        // If no specific type or code, redirect to login
+        if (!type || !code) {
+          navigate('/login');
+        }
+      } catch (error: any) {
+        console.error('Error in email confirmation:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: params.error_description || "An error occurred during email confirmation.",
+          description: "An error occurred during email confirmation. Please try again.",
         });
         navigate('/login');
-        return;
-      }
-
-      if (type === 'recovery' && code) {
-        console.log('Recovery callback detected, storing code');
-        // Store both the recovery code and timestamp
-        const recoveryData = {
-          code,
-          timestamp: Date.now()
-        };
-        sessionStorage.setItem('recovery_data', JSON.stringify(recoveryData));
-        navigate('/reset-password', { replace: true });
-        return;
-      }
-
-      if (type === 'signup' || type === 'magiclink') {
-        // Clear any existing session first for signup/magiclink
-        await supabase.auth.signOut();
-        
-        if (code) {
-          try {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) throw error;
-            
-            toast({
-              title: "Success",
-              description: "Your email has been confirmed.",
-            });
-            navigate('/');
-          } catch (error: any) {
-            console.error('Error exchanging code for session:', error);
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: error.message || "Failed to verify email.",
-            });
-            navigate('/login');
-          }
-        }
       }
     };
 
