@@ -46,7 +46,7 @@ export const PartnerSection = () => {
           <Button 
             onClick={() => navigate("/become-partner")}
             size="lg"
-            className="bg-primary hover:bg-primary/90"
+            className="bg-[#7E69AB] hover:bg-[#7E69AB]/90"
           >
             {t('home.partner.button')}
           </Button>
