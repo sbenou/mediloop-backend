@@ -39,6 +39,7 @@ export const useLogin = (onSuccess: () => void) => {
 
       if (error) {
         handleLoginError(error);
+        setIsLoading(false);
         return;
       }
 
@@ -55,10 +56,7 @@ export const useLogin = (onSuccess: () => void) => {
           duration: 4000,
         });
 
-        // Make sure we're calling onSuccess after everything is confirmed
-        setTimeout(() => {
-          onSuccess();
-        }, 100);
+        onSuccess();
       }
     } catch (error: any) {
       console.error("Unexpected error during login:", error);
