@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { useCart } from "@/contexts/CartContext";
+import { useCartOperations } from "@/hooks/useCartOperations";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useState } from "react";
 
@@ -21,7 +21,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const { addToCart } = useCart();
+  const { addToCart } = useCartOperations();
   const { currency, convertPrice } = useCurrency();
   const [imageError, setImageError] = useState(false);
 
