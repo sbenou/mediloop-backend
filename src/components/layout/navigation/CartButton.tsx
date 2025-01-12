@@ -10,7 +10,6 @@ import {
 import { CartPreview } from "@/components/CartPreview";
 import { useCartOperations } from "@/hooks/useCartOperations";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface CartButtonProps {
   isOpen: boolean;
@@ -19,12 +18,10 @@ interface CartButtonProps {
 
 const CartButton = ({ isOpen, onOpenChange }: CartButtonProps) => {
   const { cart } = useCartOperations();
-  const { currency, convertPrice } = useCurrency();
   const { isAuthenticated } = useAuth();
   
   const itemCount = cart.items.reduce((acc, item) => acc + item.quantity, 0);
   const total = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const convertedTotal = convertPrice(total);
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -39,7 +36,7 @@ const CartButton = ({ isOpen, onOpenChange }: CartButtonProps) => {
             )}
             {total > 0 && (
               <span className="text-xs font-medium whitespace-nowrap">
-                {currency.symbol}{convertedTotal.toFixed(2)}
+                ${total.toFixed(2)}
               </span>
             )}
           </div>
