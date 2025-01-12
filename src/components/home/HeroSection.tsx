@@ -13,7 +13,7 @@ export const HeroSection = () => {
       <div 
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: "url('https://img.freepik.com/free-photo/delivery-man-wearing-face-mask-delivering-parcel-door_23-2148766011.jpg')",
+          backgroundImage: "url('https://img.freepik.com/free-photo/courier-uniform-protective-mask-gloves-delivering-parcel-box-medicine-door-during-pandemic_637285-7773.jpg')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
