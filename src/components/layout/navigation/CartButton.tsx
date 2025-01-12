@@ -8,7 +8,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { CartPreview } from "@/components/CartPreview";
-import { useCart } from "@/contexts/CartContext";
+import { useCartOperations } from "@/hooks/useCartOperations";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
@@ -18,12 +18,12 @@ interface CartButtonProps {
 }
 
 const CartButton = ({ isOpen, onOpenChange }: CartButtonProps) => {
-  const { state: cartState } = useCart();
+  const { cart } = useCartOperations();
   const { currency, convertPrice } = useCurrency();
   const { isAuthenticated } = useAuth();
   
-  const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
-  const total = cartState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const itemCount = cart.items.reduce((acc, item) => acc + item.quantity, 0);
+  const total = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const convertedTotal = convertPrice(total);
 
   return (
