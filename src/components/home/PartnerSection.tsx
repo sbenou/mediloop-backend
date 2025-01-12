@@ -20,14 +20,14 @@ export const PartnerSection = () => {
             </p>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
-                <Users className="h-8 w-8 text-[#D6BCFA]" />
+                <Users className="h-8 w-8 text-[#9b87f5]" />
                 <div>
                   <h3 className="font-semibold">Expand Your Reach</h3>
                   <p className="text-muted-foreground">Connect with more patients and grow your practice</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <FileText className="h-8 w-8 text-[#8B5CF6]" />
+                <FileText className="h-8 w-8 text-[#7E69AB]" />
                 <div>
                   <h3 className="font-semibold">24/7 Support</h3>
                   <p className="text-muted-foreground">Get dedicated support whenever you need it</p>

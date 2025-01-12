@@ -27,21 +27,21 @@ export const DeliveryPersonSection = () => {
             </p>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
-                <Bike className="h-8 w-8 text-[#D6BCFA]" />
+                <Bike className="h-8 w-8 text-[#9b87f5]" />
                 <div>
                   <h3 className="font-semibold">Simple Requirements</h3>
                   <p className="text-muted-foreground">All you need is a vehicle and a smartphone</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <Bell className="h-8 w-8 text-[#8B5CF6]" />
+                <Bell className="h-8 w-8 text-[#7E69AB]" />
                 <div>
                   <h3 className="font-semibold">Real-time Notifications</h3>
                   <p className="text-muted-foreground">Get instant alerts for new delivery requests</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <Wallet className="h-8 w-8 text-[#D6BCFA]" />
+                <Wallet className="h-8 w-8 text-[#9b87f5]" />
                 <div>
                   <h3 className="font-semibold">Weekly Payments</h3>
                   <p className="text-muted-foreground">Receive your earnings every week</p>
