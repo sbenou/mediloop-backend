@@ -41,7 +41,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-[#F2FCE2] border-t">
+    <footer className="bg-[#1A1F2C] text-white border-t border-muted/20">
       <div className="px-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8 py-12 max-w-6xl mx-auto">
           <div className="flex flex-col items-center md:items-start space-y-2 md:col-span-1">
@@ -50,19 +50,19 @@ const Footer = () => {
               alt="LuxMed Logo" 
               className="h-12 mb-4"
             />
-            <h2 className="text-2xl font-bold text-primary">Luxmed</h2>
-            <p className="text-muted-foreground text-sm text-center md:text-left">
+            <h2 className="text-2xl font-bold text-white">Luxmed</h2>
+            <p className="text-gray-300 text-sm text-center md:text-left">
               {t('footer.description')}
             </p>
           </div>
           <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-8 md:pl-40">
             {footerSections.map((section) => (
               <div key={section.title} className="flex flex-col items-center md:items-start space-y-2">
-                <h3 className="font-semibold text-lg">{section.title}</h3>
+                <h3 className="font-semibold text-lg text-white">{section.title}</h3>
                 <ul className="space-y-2">
                   {section.links.map((link) => (
                     <li key={link.label}>
-                      <Button variant="link" className="h-auto p-0 text-muted-foreground hover:text-primary">
+                      <Button variant="link" className="h-auto p-0 text-gray-300 hover:text-white">
                         {link.label}
                       </Button>
                     </li>
@@ -74,13 +74,13 @@ const Footer = () => {
         </div>
         <div className="border-t border-muted/20 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 max-w-6xl mx-auto">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-300">
               {t('footer.copyright')}
             </p>
             <div className="flex gap-4">
-              <Button variant="link" size="sm">{t('footer.links.privacy')}</Button>
-              <Button variant="link" size="sm">{t('footer.links.terms')}</Button>
-              <Button variant="link" size="sm">{t('footer.links.contact')}</Button>
+              <Button variant="link" size="sm" className="text-gray-300 hover:text-white">{t('footer.links.privacy')}</Button>
+              <Button variant="link" size="sm" className="text-gray-300 hover:text-white">{t('footer.links.terms')}</Button>
+              <Button variant="link" size="sm" className="text-gray-300 hover:text-white">{t('footer.links.contact')}</Button>
             </div>
           </div>
         </div>
