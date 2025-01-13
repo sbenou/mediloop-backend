@@ -69,7 +69,7 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
 
           <div className="flex items-center space-x-3">
             <LanguageSelector />
-            {showUserMenu && (isPublicRoute || isAuthenticated) && (
+            {showUserMenu && (
               <>
                 {isAuthenticated ? (
                   <UserMenu />
