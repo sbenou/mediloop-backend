@@ -30,7 +30,7 @@ const SearchPharmacy = () => {
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
   useEffect(() => {
-    if (!session && !coordinates && "geolocation" in navigator) {
+    if (!coordinates && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation({
@@ -49,7 +49,7 @@ const SearchPharmacy = () => {
         }
       );
     }
-  }, [session, coordinates]);
+  }, [coordinates]);
 
   const searchCoordinates = coordinates 
     ? { 
@@ -64,7 +64,7 @@ const SearchPharmacy = () => {
   );
 
   useEffect(() => {
-    if (!session && !coordinates) {
+    if (!coordinates) {
       handleCitySearch("Luxembourg City");
     } else if (session && userProfile?.city) {
       handleCitySearch(userProfile.city);
