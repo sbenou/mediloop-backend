@@ -34,15 +34,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   console.log('ProtectedRoute - Auth State:', { isAuthenticated, isLoading });
 
-  // Only redirect after loading is complete and user is not authenticated
-  if (!isLoading && !isAuthenticated) {
-    console.log('ProtectedRoute - Redirecting to login');
-    return <Navigate to="/login" replace />;
+  // Show loading state
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
-  // Show nothing while loading
-  if (isLoading) {
-    return null;
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    console.log('ProtectedRoute - Redirecting to login');
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;
