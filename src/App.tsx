@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RecoilRoot } from 'recoil';
 import { Toaster } from "@/components/ui/toaster";
@@ -24,8 +24,24 @@ import BecomePartner from "@/pages/BecomePartner";
 import SearchPharmacy from "@/pages/SearchPharmacy";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
 import Profile from "@/components/settings/Profile";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 const queryClient = new QueryClient();
+
+// Protected Route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null; // or a loading spinner
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  return <>{children}</>;
+};
 
 function App() {
   return (
@@ -37,25 +53,28 @@ function App() {
               <Router>
                 <EmailConfirmationHandler />
                 <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/search-pharmacy" element={<SearchPharmacy />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/:pharmacyId" element={<Products />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/become-transporter" element={<BecomeTransporter />} />
-              <Route path="/become-partner" element={<BecomePartner />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/my-details" element={<Profile />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/auth/callback" element={null} />
-              <Route path="/my-orders" element={<MyOrders />} />
-              <Route path="/my-prescriptions" element={<MyPrescriptions />} />
-              <Route path="/create-prescription" element={<CreatePrescription />} />
-              <Route path="/find-doctor" element={<FindDoctor />} />
-              <Route path="/doctor-connections" element={<DoctorConnections />} />
-              <Route path="/admin-settings" element={<AdminSettings />} />
+                  {/* Public Routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/search-pharmacy" element={<SearchPharmacy />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/products/:pharmacyId" element={<Products />} />
+                  <Route path="/services" element={<Services />} />
+                  <Route path="/become-transporter" element={<BecomeTransporter />} />
+                  <Route path="/become-partner" element={<BecomePartner />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/auth/callback" element={null} />
+
+                  {/* Protected Routes */}
+                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                  <Route path="/my-details" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
+                  <Route path="/my-prescriptions" element={<ProtectedRoute><MyPrescriptions /></ProtectedRoute>} />
+                  <Route path="/create-prescription" element={<ProtectedRoute><CreatePrescription /></ProtectedRoute>} />
+                  <Route path="/find-doctor" element={<ProtectedRoute><FindDoctor /></ProtectedRoute>} />
+                  <Route path="/doctor-connections" element={<ProtectedRoute><DoctorConnections /></ProtectedRoute>} />
+                  <Route path="/admin-settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
                 </Routes>
                 <Toaster />
               </Router>
