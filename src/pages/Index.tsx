@@ -11,6 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 const Index = () => {
+  console.log('Index page - Rendering');
+  
   // Fetch statistics including new connection count
   const { data: stats } = useQuery({
     queryKey: ['platform-stats'],

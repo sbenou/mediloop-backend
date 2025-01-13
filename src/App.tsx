@@ -31,12 +31,15 @@ const queryClient = new QueryClient();
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  
+  console.log('ProtectedRoute - Auth State:', { isAuthenticated, isLoading });
 
   if (isLoading) {
     return null; // or a loading spinner
   }
 
   if (!isAuthenticated) {
+    console.log('ProtectedRoute - Redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
