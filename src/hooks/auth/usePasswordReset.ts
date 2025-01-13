@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { sendPasswordResetEmail } from "@/utils/auth";
+import { supabase } from "@/lib/supabase";
 
 export const usePasswordReset = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
@@ -36,7 +36,16 @@ export const usePasswordReset = () => {
     setIsSendingReset(true);
     
     try {
-      const { error } = await sendPasswordResetEmail(email);
+      // Get the current domain and ensure we stay on the preview domain
+      const currentDomain = window.location.origin;
+      // Use the same domain for the redirect
+      const redirectTo = `${currentDomain}/auth/callback?type=recovery`;
+      
+      console.log("Reset password redirect URL:", redirectTo);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
 
       if (error) {
         console.error("Password reset error:", error);
@@ -59,7 +68,7 @@ export const usePasswordReset = () => {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Unable to send reset password email. Please try again later.",
+          description: error.message || "Unable to send reset password email. Please try again later.",
           duration: 5000,
         });
       } else {
