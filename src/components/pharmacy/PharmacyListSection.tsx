@@ -2,8 +2,10 @@ import { Card } from "@/components/ui/card";
 import PharmacyCard from "@/components/PharmacyCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import { useEffect } from "react";
+import 'leaflet-draw';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -18,6 +20,43 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
   
   useEffect(() => {
     map.setView([coordinates.lat, coordinates.lon], 13);
+
+    // Initialize draw controls
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    const drawControl = new L.Control.Draw({
+      draw: {
+        marker: false,
+        polyline: false,
+        circlemarker: false,
+        rectangle: true,
+        circle: true,
+        polygon: true,
+      },
+      edit: {
+        featureGroup: drawnItems,
+      }
+    });
+    map.addControl(drawControl);
+
+    // Handle draw events
+    map.on(L.Draw.Event.CREATED, (e: any) => {
+      const layer = e.layer;
+      drawnItems.addLayer(layer);
+      
+      // Log the drawn shape's coordinates
+      if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+        console.log('Drawn area coordinates:', layer.getLatLngs());
+      } else if (layer instanceof L.Circle) {
+        console.log('Circle center:', layer.getLatLng(), 'radius:', layer.getRadius());
+      }
+    });
+
+    return () => {
+      map.removeControl(drawControl);
+      map.removeLayer(drawnItems);
+    };
   }, [coordinates, map]);
   
   return null;
