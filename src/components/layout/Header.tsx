@@ -29,6 +29,10 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
 
+  // List of public routes that don't require authentication
+  const publicRoutes = ['/', '/products', '/services', '/search-pharmacy', '/become-transporter', '/become-partner', '/login', '/signup', '/reset-password'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+
   return (
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-1.5 sm:px-6 lg:px-8">
@@ -65,7 +69,7 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
 
           <div className="flex items-center space-x-3">
             <LanguageSelector />
-            {showUserMenu && (
+            {showUserMenu && (isPublicRoute || isAuthenticated) && (
               <>
                 {isAuthenticated ? (
                   <UserMenu />
