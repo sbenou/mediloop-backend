@@ -34,20 +34,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   console.log('ProtectedRoute - Auth State:', { isAuthenticated, isLoading });
 
-  if (isLoading) {
-    return null; // or a loading spinner
-  }
-
-  if (!isAuthenticated) {
+  // Only redirect after loading is complete and user is not authenticated
+  if (!isLoading && !isAuthenticated) {
     console.log('ProtectedRoute - Redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
-};
+  // Show nothing while loading
+  if (isLoading) {
+    return null;
+  }
 
-// Public Route component to ensure no redirection for public pages
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
@@ -61,17 +58,17 @@ function App() {
               <Router>
                 <EmailConfirmationHandler />
                 <Routes>
-                  {/* Public Routes - wrapped in PublicRoute to ensure no redirection */}
-                  <Route path="/" element={<PublicRoute><Index /></PublicRoute>} />
-                  <Route path="/search-pharmacy" element={<PublicRoute><SearchPharmacy /></PublicRoute>} />
-                  <Route path="/products" element={<PublicRoute><Products /></PublicRoute>} />
-                  <Route path="/products/:pharmacyId" element={<PublicRoute><Products /></PublicRoute>} />
-                  <Route path="/services" element={<PublicRoute><Services /></PublicRoute>} />
-                  <Route path="/become-transporter" element={<PublicRoute><BecomeTransporter /></PublicRoute>} />
-                  <Route path="/become-partner" element={<PublicRoute><BecomePartner /></PublicRoute>} />
-                  <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-                  <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
-                  <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+                  {/* Public Routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/search-pharmacy" element={<SearchPharmacy />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/products/:pharmacyId" element={<Products />} />
+                  <Route path="/services" element={<Services />} />
+                  <Route path="/become-transporter" element={<BecomeTransporter />} />
+                  <Route path="/become-partner" element={<BecomePartner />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/auth/callback" element={null} />
 
                   {/* Protected Routes */}
