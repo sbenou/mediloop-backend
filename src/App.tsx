@@ -67,14 +67,70 @@ function App() {
                   <Route path="/auth/callback" element={null} />
 
                   {/* Protected Routes */}
-                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                  <Route path="/my-details" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                  <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
-                  <Route path="/my-prescriptions" element={<ProtectedRoute><MyPrescriptions /></ProtectedRoute>} />
-                  <Route path="/create-prescription" element={<ProtectedRoute><CreatePrescription /></ProtectedRoute>} />
-                  <Route path="/find-doctor" element={<ProtectedRoute><FindDoctor /></ProtectedRoute>} />
-                  <Route path="/doctor-connections" element={<ProtectedRoute><DoctorConnections /></ProtectedRoute>} />
-                  <Route path="/admin-settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+                  <Route 
+                    path="/settings" 
+                    element={
+                      <ProtectedRoute>
+                        <Settings />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/my-details" 
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/my-orders" 
+                    element={
+                      <ProtectedRoute>
+                        <MyOrders />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/my-prescriptions" 
+                    element={
+                      <ProtectedRoute>
+                        <MyPrescriptions />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/create-prescription" 
+                    element={
+                      <ProtectedRoute>
+                        <CreatePrescription />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/find-doctor" 
+                    element={
+                      <ProtectedRoute>
+                        <FindDoctor />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/doctor-connections" 
+                    element={
+                      <ProtectedRoute>
+                        <DoctorConnections />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin-settings" 
+                    element={
+                      <ProtectedRoute>
+                        <AdminSettings />
+                      </ProtectedRoute>
+                    } 
+                  />
                 </Routes>
                 <Toaster />
               </Router>
