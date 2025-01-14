@@ -1,15 +1,12 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 const Login = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const selectedRole = location.state?.selectedRole || 'patient';
-  const returnTo = location.state?.returnTo || '/';
 
   const handleLoginSuccess = () => {
-    navigate(returnTo); // Navigate to the return URL after successful login
+    navigate('/'); // Navigate to home after successful login
   };
 
   return (
@@ -22,7 +19,7 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm onSuccess={handleLoginSuccess} selectedRole={selectedRole} />
+          <LoginForm onSuccess={handleLoginSuccess} />
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-muted-foreground">

@@ -3,17 +3,14 @@ import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
 import { LoginFields } from "./login/LoginFields";
 import { useLogin } from "@/hooks/auth/useLogin";
-import { UserRole } from "../signup/SignupForm";
 
 interface LoginFormProps {
   onSuccess: () => void;
-  selectedRole?: UserRole | null;
 }
 
-export const LoginForm = ({ onSuccess, selectedRole: initialRole }: LoginFormProps) => {
+export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedRole, setSelectedRole] = useState<UserRole>(initialRole || "patient");
   const { isLoading, handleLogin } = useLogin(onSuccess);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,8 +26,6 @@ export const LoginForm = ({ onSuccess, selectedRole: initialRole }: LoginFormPro
         onEmailChange={setEmail}
         onPasswordChange={setPassword}
         isLoading={isLoading}
-        selectedRole={selectedRole}
-        onRoleChange={setSelectedRole}
       />
 
       <Button type="submit" className="w-full" disabled={isLoading}>

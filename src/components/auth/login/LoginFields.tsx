@@ -1,7 +1,5 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RoleSelector } from "@/components/signup/RoleSelector";
-import { UserRole } from "@/components/signup/SignupForm";
 import { PasswordResetButton } from "../PasswordResetButton";
 
 interface LoginFieldsProps {
@@ -10,8 +8,6 @@ interface LoginFieldsProps {
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   isLoading: boolean;
-  selectedRole: UserRole;
-  onRoleChange: (role: UserRole) => void;
 }
 
 export const LoginFields = ({
@@ -20,8 +16,6 @@ export const LoginFields = ({
   onEmailChange,
   onPasswordChange,
   isLoading,
-  selectedRole,
-  onRoleChange,
 }: LoginFieldsProps) => {
   return (
     <div className="space-y-4">
@@ -52,11 +46,6 @@ export const LoginFields = ({
           <PasswordResetButton email={email} disabled={isLoading} />
         </div>
       </div>
-      <RoleSelector
-        selectedRole={selectedRole}
-        onRoleChange={onRoleChange}
-        disabled={isLoading}
-      />
     </div>
   );
 };
