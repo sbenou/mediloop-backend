@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, Check, X } from "lucide-react";
+import { Key, Check, X, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -14,16 +14,26 @@ type PasswordInputProps = {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   disabled: boolean;
+  showPassword: boolean;
+  onTogglePassword: () => void;
 };
 
-const PasswordInput = ({ id, label, value, onChange, disabled }: PasswordInputProps) => (
+const PasswordInput = ({ 
+  id, 
+  label, 
+  value, 
+  onChange, 
+  disabled,
+  showPassword,
+  onTogglePassword 
+}: PasswordInputProps) => (
   <div className="space-y-2">
     <Label htmlFor={id}>{label}</Label>
     <div className="relative">
       <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       <Input
         id={id}
-        type="password"
+        type={showPassword ? "text" : "password"}
         placeholder={`Enter ${label.toLowerCase()}`}
         className="pl-8"
         required
@@ -31,6 +41,18 @@ const PasswordInput = ({ id, label, value, onChange, disabled }: PasswordInputPr
         onChange={onChange}
         disabled={disabled}
       />
+      <button
+        type="button"
+        onClick={onTogglePassword}
+        className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
+        disabled={disabled}
+      >
+        {showPassword ? (
+          <EyeOff className="h-4 w-4" />
+        ) : (
+          <Eye className="h-4 w-4" />
+        )}
+      </button>
     </div>
   </div>
 );
@@ -64,6 +86,8 @@ const ResetPasswordButton = ({ isLoading, passwordsMatch }: { isLoading: boolean
 export const ResetPasswordForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -74,6 +98,7 @@ export const ResetPasswordForm = () => {
     if (password !== confirmPassword) return;
 
     setIsLoading(true);
+    console.log("Attempting to reset password...");
 
     try {
       const { error } = await supabase.auth.updateUser({
@@ -84,12 +109,15 @@ export const ResetPasswordForm = () => {
         throw error;
       }
 
+      console.log("Password reset successful");
       toast({
         title: "Success",
         description: "Your password has been reset successfully. Please log in with your new password.",
       });
 
+      // Sign out and redirect after successful password reset
       await supabase.auth.signOut();
+      setIsLoading(false);
       
       setTimeout(() => {
         navigate("/login");
@@ -97,14 +125,12 @@ export const ResetPasswordForm = () => {
 
     } catch (error: any) {
       console.error('Password reset error:', error);
+      setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to reset password. Please try again.",
       });
-      navigate("/login");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -116,6 +142,8 @@ export const ResetPasswordForm = () => {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         disabled={isLoading}
+        showPassword={showPassword}
+        onTogglePassword={() => setShowPassword(!showPassword)}
       />
 
       <PasswordInput
@@ -124,6 +152,8 @@ export const ResetPasswordForm = () => {
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
         disabled={isLoading}
+        showPassword={showConfirmPassword}
+        onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
       />
 
       <PasswordMatchAlert passwordsMatch={passwordsMatch} />

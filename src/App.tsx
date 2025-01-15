@@ -28,20 +28,14 @@ import { useAuth } from "@/hooks/auth/useAuth";
 
 const queryClient = new QueryClient();
 
-// Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   
-  console.log('ProtectedRoute - Auth State:', { isAuthenticated, isLoading });
-
-  // Show loading state
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    console.log('ProtectedRoute - Redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
@@ -69,7 +63,15 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/auth/callback" element={null} />
+                  <Route 
+                    path="/auth/callback" 
+                    element={
+                      <Navigate 
+                        to="/reset-password" 
+                        replace 
+                      />
+                    } 
+                  />
 
                   {/* Protected Routes */}
                   <Route 
