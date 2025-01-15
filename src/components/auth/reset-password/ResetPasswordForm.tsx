@@ -9,6 +9,57 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
+const PasswordInput = ({ 
+  id, 
+  label, 
+  value, 
+  onChange, 
+  disabled 
+}: { 
+  id: string;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  disabled: boolean;
+}) => (
+  <div className="space-y-2">
+    <Label htmlFor={id}>{label}</Label>
+    <div className="relative">
+      <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Input
+        id={id}
+        type="password"
+        placeholder={`Enter ${label.toLowerCase()}`}
+        className="pl-8"
+        required
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+      />
+    </div>
+  </div>
+);
+
+const PasswordMatchAlert = ({ passwordsMatch }: { passwordsMatch: boolean | null }) => {
+  if (passwordsMatch === null) return null;
+
+  return (
+    <Alert variant={passwordsMatch ? "default" : "destructive"} className="flex items-center gap-2">
+      {passwordsMatch ? (
+        <>
+          <Check className="h-4 w-4" />
+          <AlertDescription>Passwords match</AlertDescription>
+        </>
+      ) : (
+        <>
+          <X className="h-4 w-4" />
+          <AlertDescription>Passwords do not match</AlertDescription>
+        </>
+      )}
+    </Alert>
+  );
+};
+
 export const ResetPasswordForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -76,55 +127,23 @@ export const ResetPasswordForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="password">New Password</Label>
-        <div className="relative">
-          <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="password"
-            type="password"
-            placeholder="Enter your new password"
-            className="pl-8"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-      </div>
+      <PasswordInput
+        id="password"
+        label="New Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        disabled={isLoading}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <div className="relative">
-          <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="Confirm your new password"
-            className="pl-8"
-            required
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-      </div>
+      <PasswordInput
+        id="confirmPassword"
+        label="Confirm Password"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        disabled={isLoading}
+      />
 
-      {passwordsMatch !== null && (
-        <Alert variant={passwordsMatch ? "default" : "destructive"} className="flex items-center gap-2">
-          {passwordsMatch ? (
-            <>
-              <Check className="h-4 w-4" />
-              <AlertDescription>Passwords match</AlertDescription>
-            </>
-          ) : (
-            <>
-              <X className="h-4 w-4" />
-              <AlertDescription>Passwords do not match</AlertDescription>
-            </>
-          )}
-        </Alert>
-      )}
+      <PasswordMatchAlert passwordsMatch={passwordsMatch} />
 
       <Button type="submit" className="w-full" disabled={isLoading || !passwordsMatch}>
         {isLoading ? "Resetting Password..." : "Reset Password"}
