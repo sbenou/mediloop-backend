@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,7 @@ import { Key, Check, X, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 type PasswordInputProps = {
   id: string;
@@ -91,7 +91,21 @@ export const ResetPasswordForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const passwordsMatch = password && confirmPassword ? password === confirmPassword : null;
+
+  useEffect(() => {
+    // Check if we're in a recovery flow
+    const recoveryFlow = location.state?.recovery;
+    if (!recoveryFlow) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Access",
+        description: "Please use the reset password link from your email.",
+      });
+      navigate('/login');
+    }
+  }, [location, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +135,7 @@ export const ResetPasswordForm = () => {
       
       // Set a small delay before navigation to ensure toast is visible
       setTimeout(() => {
-        navigate("/login");
+        navigate("/login", { replace: true });
       }, 2000);
 
     } catch (error: any) {
