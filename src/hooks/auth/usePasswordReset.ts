@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
@@ -6,6 +6,22 @@ export const usePasswordReset = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [cooldownEndTime, setCooldownEndTime] = useState<number | null>(null);
   const { toast } = useToast();
+
+  // Add effect to clear cooldown when time expires
+  useEffect(() => {
+    if (cooldownEndTime && Date.now() >= cooldownEndTime) {
+      setCooldownEndTime(null);
+    }
+
+    // Set up interval to check and clear cooldown
+    const interval = setInterval(() => {
+      if (cooldownEndTime && Date.now() >= cooldownEndTime) {
+        setCooldownEndTime(null);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [cooldownEndTime]);
 
   const handlePasswordReset = async (email: string) => {
     if (!email) {
@@ -48,9 +64,9 @@ export const usePasswordReset = () => {
       if (error) {
         console.error("Password reset error:", error);
         
-        // Handle rate limit errors with shorter cooldown
+        // Handle rate limit errors
         if (error.status === 429 || error.message?.includes('rate limit')) {
-          const cooldownDuration = 15 * 1000; // Reduced to 15 seconds from 60
+          const cooldownDuration = 15 * 1000; // 15 seconds
           const endTime = Date.now() + cooldownDuration;
           setCooldownEndTime(endTime);
           
@@ -77,7 +93,7 @@ export const usePasswordReset = () => {
         });
         
         // Set a shorter cooldown period after successful attempt
-        const cooldownDuration = 10 * 1000; // Reduced to 10 seconds from 30
+        const cooldownDuration = 10 * 1000; // 10 seconds
         const endTime = Date.now() + cooldownDuration;
         setCooldownEndTime(endTime);
       }
