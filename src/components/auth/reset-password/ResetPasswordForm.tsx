@@ -55,7 +55,12 @@ export const ResetPasswordForm = () => {
 
       // Sign out the user to ensure a clean state
       await supabase.auth.signOut();
-      navigate("/login");
+      
+      // Use setTimeout to ensure the toast is visible before navigation
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast({
