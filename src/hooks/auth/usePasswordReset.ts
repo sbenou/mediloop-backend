@@ -48,16 +48,16 @@ export const usePasswordReset = () => {
       if (error) {
         console.error("Password reset error:", error);
         
-        // Handle rate limit errors
+        // Handle rate limit errors with shorter cooldown
         if (error.status === 429 || error.message?.includes('rate limit')) {
-          const cooldownDuration = 60 * 1000; // 60 seconds cooldown
+          const cooldownDuration = 15 * 1000; // Reduced to 15 seconds from 60
           const endTime = Date.now() + cooldownDuration;
           setCooldownEndTime(endTime);
           
           toast({
             variant: "destructive",
             title: "Too Many Attempts",
-            description: "You've made too many requests. Please wait 60 seconds before trying to reset your password again.",
+            description: "You've made too many requests. Please wait 15 seconds before trying to reset your password again.",
             duration: 8000,
           });
           return;
@@ -76,8 +76,8 @@ export const usePasswordReset = () => {
           duration: 5000,
         });
         
-        // Set a cooldown period after successful attempt
-        const cooldownDuration = 30 * 1000; // 30 seconds cooldown
+        // Set a shorter cooldown period after successful attempt
+        const cooldownDuration = 10 * 1000; // Reduced to 10 seconds from 30
         const endTime = Date.now() + cooldownDuration;
         setCooldownEndTime(endTime);
       }
