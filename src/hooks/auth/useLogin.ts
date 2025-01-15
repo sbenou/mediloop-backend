@@ -11,12 +11,37 @@ export const useLogin = (onSuccess: () => void) => {
     console.log("Attempting login with email:", email);
 
     try {
-      // First, check if the user exists in profiles
+      // First attempt to sign in
+      console.log("Attempting sign in...");
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        console.error("Auth error:", authError);
+        handleLoginError(authError);
+        return;
+      }
+
+      if (!authData.user) {
+        console.error("No user data returned");
+        setIsLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: "Unable to complete login. Please try again.",
+          duration: 6000,
+        });
+        return;
+      }
+
+      // After successful auth, check the profile
       console.log("Checking for user profile...");
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
         .select('id, role')
-        .eq('email', email)
+        .eq('id', authData.user.id)
         .single();
 
       if (profileError) {
@@ -24,54 +49,37 @@ export const useLogin = (onSuccess: () => void) => {
         setIsLoading(false);
         toast({
           variant: "destructive",
-          title: "Profile Not Found",
-          description: "Your account setup may be incomplete. Please try signing up again.",
+          title: "Profile Error",
+          description: "There was an error accessing your profile. Please contact support.",
           duration: 6000,
         });
         return;
       }
 
-      console.log("Profile found:", userProfile);
-
-      // Attempt to sign in
-      console.log("Attempting sign in...");
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      console.log("Login successful, user data:", {
+        id: authData.user.id,
+        email: authData.user.email,
+        profile: userProfile
       });
+      
+      setIsLoading(false);
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+        duration: 4000,
+      });
+      
+      onSuccess();
 
-      if (error) {
-        console.error("Login error:", error);
-        handleLoginError(error);
-        return;
-      }
-
-      if (data.user) {
-        console.log("Login successful, user data:", {
-          id: data.user.id,
-          email: data.user.email,
-          lastSignIn: data.user.last_sign_in_at
-        });
-        
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-          duration: 4000,
-        });
-
-        // Ensure we're not setting loading to false before calling onSuccess
-        setIsLoading(false);
-        onSuccess();
-      }
     } catch (error: any) {
       console.error("Unexpected error during login:", error);
+      setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
         duration: 6000,
       });
-      setIsLoading(false);
     }
   };
 
