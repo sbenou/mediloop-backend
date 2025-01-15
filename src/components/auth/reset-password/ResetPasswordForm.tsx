@@ -186,7 +186,7 @@ export const ResetPasswordForm = () => {
       console.log("Password reset successful", data);
       toast({
         title: "Success",
-        description: "Your password has been reset successfully. Please log in with your new password.",
+        description: "Your password has been reset successfully. Redirecting to home page...",
       });
 
       // Clean up stored token
@@ -195,11 +195,9 @@ export const ResetPasswordForm = () => {
       console.log("Signing out user...");
       await supabase.auth.signOut();
       
-      console.log("Setting timeout for navigation...");
-      setTimeout(() => {
-        console.log("Navigating to login page...");
-        navigate("/login", { replace: true });
-      }, 2000);
+      // Redirect to home page after successful password reset
+      console.log("Redirecting to home page...");
+      navigate("/", { replace: true });
 
     } catch (error: any) {
       console.error('Detailed password reset error:', error);
