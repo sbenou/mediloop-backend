@@ -97,6 +97,8 @@ export const ResetPasswordForm = () => {
   useEffect(() => {
     console.log("Location state:", location.state);
     console.log("Current URL:", window.location.href);
+    console.log("Hash:", window.location.hash);
+    console.log("Search params:", window.location.search);
     
     // Check if we're in a recovery flow
     const recoveryFlow = location.state?.recovery;
@@ -127,8 +129,20 @@ export const ResetPasswordForm = () => {
 
     try {
       console.log("Getting current session...");
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log("Current session:", sessionData);
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log("Session response:", { session, error: sessionError });
+
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
+
+      if (!session) {
+        console.log("No active session found, attempting to get access token from URL...");
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        console.log("Access token from URL:", accessToken ? 'Found' : 'Not found');
+      }
 
       console.log("Updating user password...");
       const { data, error } = await supabase.auth.updateUser({
@@ -140,7 +154,8 @@ export const ResetPasswordForm = () => {
         console.log('Error details:', {
           message: error.message,
           status: error.status,
-          name: error.name
+          name: error.name,
+          stack: error.stack
         });
         throw error;
       }
@@ -151,12 +166,10 @@ export const ResetPasswordForm = () => {
         description: "Your password has been reset successfully. Please log in with your new password.",
       });
 
-      // Sign out and redirect after successful password reset
       console.log("Signing out user...");
       await supabase.auth.signOut();
       
       console.log("Setting timeout for navigation...");
-      // Set a small delay before navigation to ensure toast is visible
       setTimeout(() => {
         console.log("Navigating to login page...");
         navigate("/login", { replace: true });
@@ -164,7 +177,13 @@ export const ResetPasswordForm = () => {
 
     } catch (error: any) {
       console.error('Detailed password reset error:', error);
-      console.log('Error stack:', error.stack);
+      console.log('Full error object:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        code: error.code,
+        details: error.details
+      });
       toast({
         variant: "destructive",
         title: "Error",
