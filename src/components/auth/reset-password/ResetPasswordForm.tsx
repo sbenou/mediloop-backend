@@ -35,20 +35,15 @@ export const ResetPasswordForm = () => {
       const recoveryData = JSON.parse(recoveryDataStr);
       const { code } = recoveryData;
 
-      // First verify the recovery code
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        token_hash: code,
-        type: 'recovery'
-      });
-
-      if (verifyError) throw verifyError;
-
-      // Then update the password
-      const { error: updateError } = await supabase.auth.updateUser({
+      // Update the user's password
+      const { data, error } = await supabase.auth.updateUser({
         password: password
       });
 
-      if (updateError) throw updateError;
+      if (error) {
+        console.error('Password update error:', error);
+        throw error;
+      }
 
       // Clear the recovery data
       sessionStorage.removeItem('recovery_data');
@@ -68,6 +63,7 @@ export const ResetPasswordForm = () => {
         title: "Error",
         description: error.message || "Failed to reset password. Please try again.",
       });
+      navigate("/login");
     } finally {
       setIsLoading(false);
     }
