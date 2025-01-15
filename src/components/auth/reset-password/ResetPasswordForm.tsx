@@ -100,14 +100,17 @@ export const ResetPasswordForm = () => {
     console.log("Hash:", window.location.hash);
     console.log("Search params:", window.location.search);
     
-    // Extract access token from URL if present
+    // Extract access token from multiple possible locations
     const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get('access_token');
+    const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+    const accessToken = params.get('access_token') || hashParams.get('access_token');
     
+    console.log("Checking for access token in URL parameters and hash");
     if (accessToken) {
-      console.log("Found access token in URL parameters");
-      // Store it temporarily if needed
+      console.log("Found access token in URL");
       sessionStorage.setItem('reset_access_token', accessToken);
+    } else {
+      console.log("No access token found in URL parameters or hash");
     }
 
     // Check if we're in a recovery flow
@@ -138,16 +141,20 @@ export const ResetPasswordForm = () => {
     console.log("Attempting to reset password...");
 
     try {
-      // Try to get the access token from storage or URL
+      // Try to get the access token from multiple sources
       const storedToken = sessionStorage.getItem('reset_access_token');
       const urlParams = new URLSearchParams(window.location.search);
-      const urlToken = urlParams.get('access_token');
+      const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+      const urlToken = urlParams.get('access_token') || hashParams.get('access_token');
       
-      console.log("Access token available:", !!storedToken || !!urlToken);
+      console.log("Checking access token availability:");
+      console.log("- Stored token:", !!storedToken);
+      console.log("- URL token:", !!urlToken);
 
       // If we have a token, set it in the session
       if (storedToken || urlToken) {
         const token = storedToken || urlToken;
+        console.log("Setting session with access token");
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: token!,
           refresh_token: token!
@@ -157,6 +164,8 @@ export const ResetPasswordForm = () => {
           console.error("Session error:", sessionError);
           throw sessionError;
         }
+      } else {
+        console.log("No access token found in any source");
       }
 
       console.log("Updating user password...");
@@ -169,8 +178,7 @@ export const ResetPasswordForm = () => {
         console.log('Error details:', {
           message: error.message,
           status: error.status,
-          name: error.name,
-          stack: error.stack
+          name: error.name
         });
         throw error;
       }
@@ -198,7 +206,6 @@ export const ResetPasswordForm = () => {
       console.log('Full error object:', {
         message: error.message,
         name: error.name,
-        stack: error.stack,
         code: error.code,
         details: error.details
       });
