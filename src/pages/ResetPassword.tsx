@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { ResetPasswordForm } from "@/components/auth/reset-password/ResetPasswordForm";
 
 const ResetPassword = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,58 +35,6 @@ const ResetPassword = () => {
     }
   }, [navigate, toast]);
 
-  const handlePasswordReset = async (password: string) => {
-    setIsLoading(true);
-
-    try {
-      const recoveryDataStr = sessionStorage.getItem('recovery_data');
-      if (!recoveryDataStr) {
-        throw new Error('Recovery code not found');
-      }
-
-      const recoveryData = JSON.parse(recoveryDataStr);
-      const { code } = recoveryData;
-
-      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-        token_hash: code,
-        type: 'recovery'
-      });
-
-      if (verifyError) throw verifyError;
-
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: password
-      });
-
-      if (updateError) throw updateError;
-
-      sessionStorage.removeItem('recovery_data');
-
-      toast({
-        title: "Success",
-        description: "Your password has been reset successfully. Please log in with your new password.",
-        duration: 5000,
-      });
-      
-      await supabase.auth.signOut();
-      navigate("/login");
-    } catch (error: any) {
-      console.error('Password reset error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to reset password. Please try again.",
-      });
-      
-      if (error.message.includes('expired')) {
-        sessionStorage.removeItem('recovery_data');
-        navigate('/login');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-lg">
@@ -99,7 +45,7 @@ const ResetPassword = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ResetPasswordForm onSubmit={handlePasswordReset} isLoading={isLoading} />
+          <ResetPasswordForm />
         </CardContent>
       </Card>
     </div>
