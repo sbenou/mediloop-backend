@@ -50,9 +50,8 @@ export const usePasswordReset = () => {
         
         // Handle rate limit errors
         if (error.status === 429 || error.message?.includes('rate limit')) {
-          const cooldownDuration = 15 * 1000; // 15 seconds
-          const endTime = Date.now() + cooldownDuration;
-          setCooldownEndTime(endTime);
+          const cooldownDuration = 15 * 1000; // 15 seconds cooldown
+          setCooldownEndTime(Date.now() + cooldownDuration);
           
           toast({
             variant: "destructive",
@@ -76,10 +75,9 @@ export const usePasswordReset = () => {
           duration: 5000,
         });
         
-        // Set a shorter cooldown period after successful attempt
-        const cooldownDuration = 10 * 1000; // 10 seconds
-        const endTime = Date.now() + cooldownDuration;
-        setCooldownEndTime(endTime);
+        // Set cooldown after successful attempt
+        const cooldownDuration = 15 * 1000; // 15 seconds cooldown
+        setCooldownEndTime(Date.now() + cooldownDuration);
       }
     } catch (error: any) {
       console.error("Error sending reset password email:", error);
