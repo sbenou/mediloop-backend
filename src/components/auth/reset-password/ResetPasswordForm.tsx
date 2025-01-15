@@ -96,14 +96,17 @@ export const ResetPasswordForm = () => {
 
   useEffect(() => {
     console.log("Location state:", location.state);
-    console.log("Current URL:", window.location.href);
+    console.log("Full URL:", window.location.href);
+    console.log("URL fragment (hash):", window.location.hash);
+    console.log("Raw fragment value:", window.location.hash.substring(1));
     
     // Extract access token from URL fragment
     const fragment = window.location.hash.substring(1);
     const params = new URLSearchParams(fragment);
     const accessToken = params.get('access_token');
     
-    console.log("Checking for access token in URL fragment");
+    console.log("Parsed URL parameters:", Object.fromEntries(params.entries()));
+    
     if (accessToken) {
       console.log("Found access token in URL fragment");
       sessionStorage.setItem('reset_access_token', accessToken);
