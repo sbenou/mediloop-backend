@@ -69,6 +69,7 @@ function App() {
                       <Navigate 
                         to="/reset-password" 
                         replace 
+                        state={{ recovery: true }}
                       />
                     } 
                   />

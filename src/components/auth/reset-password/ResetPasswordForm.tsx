@@ -106,6 +106,7 @@ export const ResetPasswordForm = () => {
       });
 
       if (error) {
+        console.error('Password reset error:', error);
         throw error;
       }
 
@@ -117,20 +118,21 @@ export const ResetPasswordForm = () => {
 
       // Sign out and redirect after successful password reset
       await supabase.auth.signOut();
-      setIsLoading(false);
       
+      // Set a small delay before navigation to ensure toast is visible
       setTimeout(() => {
         navigate("/login");
-      }, 1500);
+      }, 2000);
 
     } catch (error: any) {
       console.error('Password reset error:', error);
-      setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to reset password. Please try again.",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
