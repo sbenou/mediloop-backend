@@ -4,21 +4,26 @@ import { supabase } from "@/lib/supabase";
 
 export const usePasswordReset = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
-  const [cooldownEndTime, setCooldownEndTime] = useState<number | null>(null);
+  const [cooldownEndTime, setCooldownEndTime] = useState<number | null>(() => {
+    const stored = sessionStorage.getItem('passwordResetCooldown');
+    return stored ? parseInt(stored, 10) : null;
+  });
   const { toast } = useToast();
 
   // Add effect to clear cooldown when time expires
   useEffect(() => {
-    if (cooldownEndTime && Date.now() >= cooldownEndTime) {
-      setCooldownEndTime(null);
-    }
-
-    // Set up interval to check and clear cooldown
-    const interval = setInterval(() => {
+    const checkCooldown = () => {
       if (cooldownEndTime && Date.now() >= cooldownEndTime) {
         setCooldownEndTime(null);
+        sessionStorage.removeItem('passwordResetCooldown');
       }
-    }, 1000);
+    };
+
+    // Check immediately
+    checkCooldown();
+
+    // Set up interval to check and clear cooldown
+    const interval = setInterval(checkCooldown, 1000);
 
     return () => clearInterval(interval);
   }, [cooldownEndTime]);
@@ -69,6 +74,7 @@ export const usePasswordReset = () => {
           const cooldownDuration = 15 * 1000; // 15 seconds
           const endTime = Date.now() + cooldownDuration;
           setCooldownEndTime(endTime);
+          sessionStorage.setItem('passwordResetCooldown', endTime.toString());
           
           toast({
             variant: "destructive",
@@ -96,6 +102,7 @@ export const usePasswordReset = () => {
         const cooldownDuration = 10 * 1000; // 10 seconds
         const endTime = Date.now() + cooldownDuration;
         setCooldownEndTime(endTime);
+        sessionStorage.setItem('passwordResetCooldown', endTime.toString());
       }
     } catch (error: any) {
       console.error("Error sending reset password email:", error);
