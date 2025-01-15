@@ -5,21 +5,71 @@ import { Label } from "@/components/ui/label";
 import { Key } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Check, X } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
-interface ResetPasswordFormProps {
-  onSubmit: (password: string) => Promise<void>;
-  isLoading: boolean;
-}
-
-export const ResetPasswordForm = ({ onSubmit, isLoading }: ResetPasswordFormProps) => {
+export const ResetPasswordForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const passwordsMatch = password && confirmPassword ? password === confirmPassword : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === confirmPassword) {
-      await onSubmit(password);
+    if (password !== confirmPassword) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Get the recovery data from sessionStorage
+      const recoveryDataStr = sessionStorage.getItem('recovery_data');
+      if (!recoveryDataStr) {
+        throw new Error('Recovery session not found');
+      }
+
+      const recoveryData = JSON.parse(recoveryDataStr);
+      const { code } = recoveryData;
+
+      // First verify the recovery code
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: code,
+        type: 'recovery'
+      });
+
+      if (verifyError) throw verifyError;
+
+      // Then update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (updateError) throw updateError;
+
+      // Clear the recovery data
+      sessionStorage.removeItem('recovery_data');
+
+      toast({
+        title: "Success",
+        description: "Your password has been reset successfully. Please log in with your new password.",
+      });
+
+      // Sign out the user to ensure a clean state
+      await supabase.auth.signOut();
+      navigate("/login");
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to reset password. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
