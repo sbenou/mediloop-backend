@@ -15,12 +15,12 @@ export const useLogin = (onSuccess: () => void) => {
       console.log("Checking for user profile...");
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, role')
         .eq('email', email)
         .single();
 
-      if (profileError || !userProfile) {
-        console.log("Profile check result:", { userProfile, profileError });
+      if (profileError) {
+        console.error("Profile check error:", profileError);
         setIsLoading(false);
         toast({
           variant: "destructive",
@@ -31,16 +31,17 @@ export const useLogin = (onSuccess: () => void) => {
         return;
       }
 
-      // Sign out first to clear any existing session
-      await supabase.auth.signOut();
-      console.log("Signed out existing session");
+      console.log("Profile found:", userProfile);
 
+      // Attempt to sign in
+      console.log("Attempting sign in...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Login error:", error);
         handleLoginError(error);
         return;
       }
@@ -57,6 +58,9 @@ export const useLogin = (onSuccess: () => void) => {
           description: "Logged in successfully",
           duration: 4000,
         });
+
+        // Ensure we're not setting loading to false before calling onSuccess
+        setIsLoading(false);
         onSuccess();
       }
     } catch (error: any) {
@@ -67,7 +71,6 @@ export const useLogin = (onSuccess: () => void) => {
         description: "An unexpected error occurred. Please try again.",
         duration: 6000,
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -86,26 +89,22 @@ export const useLogin = (onSuccess: () => void) => {
         description: "Please check your email and confirm your account before logging in. Don't forget to check your spam folder.",
         duration: 6000,
       });
-      return;
-    }
-    
-    if (error.status === 429 || error.message.includes('rate_limit')) {
+    } else if (error.status === 429 || error.message.includes('rate_limit')) {
       toast({
         variant: "destructive",
         title: "Too Many Attempts",
         description: "You've made too many requests. Please wait a few minutes before trying again.",
         duration: 8000,
       });
-      return;
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again or use the reset password link below.",
+        duration: 6000,
+      });
     }
-    
-    // Default case - likely incorrect password
-    toast({
-      variant: "destructive",
-      title: "Login Failed",
-      description: "Invalid email or password. Please try again or use the reset password link below.",
-      duration: 6000,
-    });
+    setIsLoading(false);
   };
 
   return {
