@@ -2,26 +2,21 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key } from "lucide-react";
+import { Key, Check, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Check, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
-const PasswordInput = ({ 
-  id, 
-  label, 
-  value, 
-  onChange, 
-  disabled 
-}: { 
+type PasswordInputProps = {
   id: string;
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   disabled: boolean;
-}) => (
+};
+
+const PasswordInput = ({ id, label, value, onChange, disabled }: PasswordInputProps) => (
   <div className="space-y-2">
     <Label htmlFor={id}>{label}</Label>
     <div className="relative">
@@ -60,6 +55,12 @@ const PasswordMatchAlert = ({ passwordsMatch }: { passwordsMatch: boolean | null
   );
 };
 
+const ResetPasswordButton = ({ isLoading, passwordsMatch }: { isLoading: boolean; passwordsMatch: boolean | null }) => (
+  <Button type="submit" className="w-full" disabled={isLoading || !passwordsMatch}>
+    {isLoading ? "Resetting Password..." : "Reset Password"}
+  </Button>
+);
+
 export const ResetPasswordForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -70,44 +71,26 @@ export const ResetPasswordForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      return;
-    }
+    if (password !== confirmPassword) return;
 
     setIsLoading(true);
 
     try {
-      // Get the recovery data from sessionStorage
-      const recoveryDataStr = sessionStorage.getItem('recovery_data');
-      if (!recoveryDataStr) {
-        throw new Error('Recovery session not found');
-      }
-
-      const recoveryData = JSON.parse(recoveryDataStr);
-      const { code } = recoveryData;
-
-      // Update the user's password
-      const { data, error } = await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         password: password
       });
 
       if (error) {
-        console.error('Password update error:', error);
         throw error;
       }
-
-      // Clear the recovery data
-      sessionStorage.removeItem('recovery_data');
 
       toast({
         title: "Success",
         description: "Your password has been reset successfully. Please log in with your new password.",
       });
 
-      // Sign out the user to ensure a clean state
       await supabase.auth.signOut();
       
-      // Use setTimeout to ensure the toast is visible before navigation
       setTimeout(() => {
         navigate("/login");
       }, 1500);
@@ -144,10 +127,8 @@ export const ResetPasswordForm = () => {
       />
 
       <PasswordMatchAlert passwordsMatch={passwordsMatch} />
-
-      <Button type="submit" className="w-full" disabled={isLoading || !passwordsMatch}>
-        {isLoading ? "Resetting Password..." : "Reset Password"}
-      </Button>
+      
+      <ResetPasswordButton isLoading={isLoading} passwordsMatch={passwordsMatch} />
     </form>
   );
 };
