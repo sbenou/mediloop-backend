@@ -68,6 +68,10 @@ serve(async (req) => {
 
     lineItems.push(deliveryFee)
 
+    // Calculate total including delivery fee
+    const total = items.reduce((sum: number, item: any) => 
+      sum + (item.price * item.quantity), 0) + 5; // Add 5€ delivery fee
+
     console.log('Creating checkout session...')
     const session = await stripe.checkout.sessions.create({
       customer_email: user.email,
@@ -79,6 +83,28 @@ serve(async (req) => {
       success_url: `${req.headers.get('origin')}/my-orders?payment=success`,
       cancel_url: `${req.headers.get('origin')}/my-orders?payment=cancelled`,
     })
+
+    // Send order confirmation email
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-order-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify({
+          type: 'medication',
+          email: user.email,
+          details: {
+            items,
+            total
+          }
+        })
+      });
+    } catch (emailError) {
+      console.error('Error sending order confirmation email:', emailError);
+      // Don't throw here, we still want to return the checkout session
+    }
 
     console.log('Checkout session created:', session.id)
     return new Response(

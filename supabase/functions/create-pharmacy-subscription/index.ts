@@ -81,6 +81,25 @@ serve(async (req) => {
       cancel_url: `${req.headers.get('origin')}/settings?subscription=cancelled`,
     })
 
+    // Send confirmation email
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-order-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify({
+          type: 'subscription',
+          email: email,
+          details: {}
+        })
+      });
+    } catch (emailError) {
+      console.error('Error sending confirmation email:', emailError);
+      // Don't throw here, we still want to return the checkout session
+    }
+
     console.log('Subscription session created:', session.id)
     return new Response(
       JSON.stringify({ url: session.url }),
