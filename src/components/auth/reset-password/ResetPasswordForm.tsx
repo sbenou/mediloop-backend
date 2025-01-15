@@ -95,9 +95,15 @@ export const ResetPasswordForm = () => {
   const passwordsMatch = password && confirmPassword ? password === confirmPassword : null;
 
   useEffect(() => {
+    console.log("Location state:", location.state);
+    console.log("Current URL:", window.location.href);
+    
     // Check if we're in a recovery flow
     const recoveryFlow = location.state?.recovery;
+    console.log("Recovery flow state:", recoveryFlow);
+    
     if (!recoveryFlow) {
+      console.log("No recovery flow detected, redirecting to login");
       toast({
         variant: "destructive",
         title: "Invalid Access",
@@ -109,43 +115,63 @@ export const ResetPasswordForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) return;
+    console.log("Starting password reset submission");
+    
+    if (password !== confirmPassword) {
+      console.log("Password mismatch detected");
+      return;
+    }
 
     setIsLoading(true);
     console.log("Attempting to reset password...");
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      console.log("Getting current session...");
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("Current session:", sessionData);
+
+      console.log("Updating user password...");
+      const { data, error } = await supabase.auth.updateUser({
         password: password
       });
 
       if (error) {
         console.error('Password reset error:', error);
+        console.log('Error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
         throw error;
       }
 
-      console.log("Password reset successful");
+      console.log("Password reset successful", data);
       toast({
         title: "Success",
         description: "Your password has been reset successfully. Please log in with your new password.",
       });
 
       // Sign out and redirect after successful password reset
+      console.log("Signing out user...");
       await supabase.auth.signOut();
       
+      console.log("Setting timeout for navigation...");
       // Set a small delay before navigation to ensure toast is visible
       setTimeout(() => {
+        console.log("Navigating to login page...");
         navigate("/login", { replace: true });
       }, 2000);
 
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      console.error('Detailed password reset error:', error);
+      console.log('Error stack:', error.stack);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to reset password. Please try again.",
       });
     } finally {
+      console.log("Reset password process completed");
       setIsLoading(false);
     }
   };
