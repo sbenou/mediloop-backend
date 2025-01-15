@@ -97,20 +97,18 @@ export const ResetPasswordForm = () => {
   useEffect(() => {
     console.log("Location state:", location.state);
     console.log("Current URL:", window.location.href);
-    console.log("Hash:", window.location.hash);
-    console.log("Search params:", window.location.search);
     
-    // Extract access token from multiple possible locations
-    const params = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
-    const accessToken = params.get('access_token') || hashParams.get('access_token');
+    // Extract access token from URL fragment
+    const fragment = window.location.hash.substring(1);
+    const params = new URLSearchParams(fragment);
+    const accessToken = params.get('access_token');
     
-    console.log("Checking for access token in URL parameters and hash");
+    console.log("Checking for access token in URL fragment");
     if (accessToken) {
-      console.log("Found access token in URL");
+      console.log("Found access token in URL fragment");
       sessionStorage.setItem('reset_access_token', accessToken);
     } else {
-      console.log("No access token found in URL parameters or hash");
+      console.log("No access token found in URL fragment");
     }
 
     // Check if we're in a recovery flow
@@ -141,79 +139,53 @@ export const ResetPasswordForm = () => {
     console.log("Attempting to reset password...");
 
     try {
-      // Try to get the access token from multiple sources
-      const storedToken = sessionStorage.getItem('reset_access_token');
-      const urlParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
-      const urlToken = urlParams.get('access_token') || hashParams.get('access_token');
-      
-      console.log("Checking access token availability:");
-      console.log("- Stored token:", !!storedToken);
-      console.log("- URL token:", !!urlToken);
+      const accessToken = sessionStorage.getItem('reset_access_token');
+      console.log("Access token available:", !!accessToken);
 
-      // If we have a token, set it in the session
-      if (storedToken || urlToken) {
-        const token = storedToken || urlToken;
+      if (accessToken) {
         console.log("Setting session with access token");
         const { error: sessionError } = await supabase.auth.setSession({
-          access_token: token!,
-          refresh_token: token!
+          access_token: accessToken,
+          refresh_token: accessToken
         });
         
         if (sessionError) {
           console.error("Session error:", sessionError);
           throw sessionError;
         }
-      } else {
-        console.log("No access token found in any source");
       }
 
       console.log("Updating user password...");
-      const { data, error } = await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         password: password
       });
 
       if (error) {
         console.error('Password reset error:', error);
-        console.log('Error details:', {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        });
         throw error;
       }
 
-      console.log("Password reset successful", data);
+      console.log("Password reset successful");
       toast({
         title: "Success",
-        description: "Your password has been reset successfully. Redirecting to home page...",
+        description: "Your password has been reset successfully. Redirecting to login page...",
       });
 
       // Clean up stored token
       sessionStorage.removeItem('reset_access_token');
 
-      console.log("Signing out user...");
+      // Sign out and redirect to login
       await supabase.auth.signOut();
-      
-      // Redirect to home page after successful password reset
-      console.log("Redirecting to home page...");
-      navigate("/", { replace: true });
+      navigate("/login", { replace: true });
 
     } catch (error: any) {
-      console.error('Detailed password reset error:', error);
-      console.log('Full error object:', {
-        message: error.message,
-        name: error.name,
-        code: error.code,
-        details: error.details
-      });
+      console.error('Password reset error:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to reset password. Please try again.",
       });
     } finally {
-      console.log("Reset password process completed");
       setIsLoading(false);
     }
   };
