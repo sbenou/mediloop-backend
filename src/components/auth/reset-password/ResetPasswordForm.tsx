@@ -101,24 +101,14 @@ export const ResetPasswordForm = () => {
     const emailLink = location.state?.emailLink;
     console.log("Email reset link:", emailLink);
     
-    if (!emailLink) {
-      console.log("No email reset link found in state");
-      toast({
-        variant: "destructive",
-        title: "Invalid Access",
-        description: "Please use the reset password link from your email.",
-      });
-      navigate('/login');
-      return;
-    }
-
-    // Parse the email link URL
-    try {
-      const linkUrl = new URL(emailLink);
-      console.log("Parsed email link:", linkUrl.toString());
-      console.log("Email link parameters:", Object.fromEntries(linkUrl.searchParams));
-    } catch (error) {
-      console.error("Error parsing email link:", error);
+    if (emailLink) {
+      try {
+        const url = new URL(emailLink);
+        const token = url.searchParams.get('token');
+        console.log("Reset token from email link:", token);
+      } catch (error) {
+        console.error("Error parsing email link:", error);
+      }
     }
 
     // Check current session
@@ -128,7 +118,7 @@ export const ResetPasswordForm = () => {
     };
     
     checkSession();
-  }, [location, navigate, toast]);
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
