@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 export const usePasswordReset = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [cooldownEndTime, setCooldownEndTime] = useState<number | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handlePasswordReset = async (email: string) => {
     if (!email) {
@@ -17,7 +19,6 @@ export const usePasswordReset = () => {
       return;
     }
 
-    // Check if we're in a cooldown period
     if (cooldownEndTime && Date.now() < cooldownEndTime) {
       const remainingSeconds = Math.ceil((cooldownEndTime - Date.now()) / 1000);
       toast({
@@ -29,9 +30,7 @@ export const usePasswordReset = () => {
       return;
     }
 
-    if (isSendingReset) {
-      return;
-    }
+    if (isSendingReset) return;
 
     setIsSendingReset(true);
     
@@ -41,16 +40,15 @@ export const usePasswordReset = () => {
       const redirectTo = `${currentDomain}/auth/callback?type=recovery`;
       console.log("Reset password redirect URL:", redirectTo);
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
       });
 
       if (error) {
         console.error("Password reset error:", error);
         
-        // Handle rate limit errors
         if (error.status === 429 || error.message?.includes('rate limit')) {
-          const cooldownDuration = 60 * 1000; // 60 seconds cooldown
+          const cooldownDuration = 60 * 1000;
           setCooldownEndTime(Date.now() + cooldownDuration);
           
           toast({
@@ -69,14 +67,23 @@ export const usePasswordReset = () => {
           duration: 5000,
         });
       } else {
+        console.log("Reset email response:", data);
+        
+        // Navigate to reset password page with the email link
+        navigate("/reset-password", { 
+          state: { 
+            recovery: true,
+            emailLink: redirectTo 
+          } 
+        });
+        
         toast({
           title: "Check Your Email",
           description: "If an account exists with this email, you will receive password reset instructions.",
           duration: 5000,
         });
         
-        // Set cooldown after successful attempt
-        const cooldownDuration = 60 * 1000; // 60 seconds cooldown
+        const cooldownDuration = 60 * 1000;
         setCooldownEndTime(Date.now() + cooldownDuration);
       }
     } catch (error: any) {

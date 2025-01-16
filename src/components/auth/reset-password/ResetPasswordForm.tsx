@@ -97,31 +97,30 @@ export const ResetPasswordForm = () => {
   useEffect(() => {
     console.log("=== Password Reset Flow Start ===");
     
-    // Log the complete URL and its components
-    const fullUrl = window.location.href;
-    console.log("Complete URL:", fullUrl);
-    
-    // Log the email link if it exists in state
+    // Get the email reset link from state
     const emailLink = location.state?.emailLink;
-    console.log("Email reset link from state:", emailLink);
+    console.log("Email reset link:", emailLink);
     
-    // Try to get the token from different sources
-    const urlParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    
-    const searchToken = urlParams.get('token');
-    const hashToken = hashParams.get('access_token');
-    const stateToken = location.state?.token;
-    
-    console.log("Token from URL search:", searchToken);
-    console.log("Token from URL hash:", hashToken);
-    console.log("Token from state:", stateToken);
-    
-    // Check recovery flow
-    const recoveryFlow = location.state?.recovery;
-    console.log("Is recovery mode?", recoveryFlow);
-    console.log("Full location state:", location.state);
-    
+    if (!emailLink) {
+      console.log("No email reset link found in state");
+      toast({
+        variant: "destructive",
+        title: "Invalid Access",
+        description: "Please use the reset password link from your email.",
+      });
+      navigate('/login');
+      return;
+    }
+
+    // Parse the email link URL
+    try {
+      const linkUrl = new URL(emailLink);
+      console.log("Parsed email link:", linkUrl.toString());
+      console.log("Email link parameters:", Object.fromEntries(linkUrl.searchParams));
+    } catch (error) {
+      console.error("Error parsing email link:", error);
+    }
+
     // Check current session
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -129,16 +128,6 @@ export const ResetPasswordForm = () => {
     };
     
     checkSession();
-
-    if (!recoveryFlow && !searchToken && !hashToken && !stateToken) {
-      console.log("No valid recovery flow or tokens found, redirecting to login");
-      toast({
-        variant: "destructive",
-        title: "Invalid Access",
-        description: "Please use the reset password link from your email.",
-      });
-      navigate('/login');
-    }
   }, [location, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
