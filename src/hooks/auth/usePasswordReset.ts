@@ -37,7 +37,8 @@ export const usePasswordReset = () => {
     try {
       console.log("Sending password reset email...");
       const currentDomain = window.location.origin;
-      const redirectTo = `${currentDomain}/auth/callback?type=recovery`;
+      // Change the redirect URL to point directly to the reset-password page
+      const redirectTo = `${currentDomain}/reset-password`;
       console.log("Reset password redirect URL:", redirectTo);
       
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -68,14 +69,6 @@ export const usePasswordReset = () => {
         });
       } else {
         console.log("Reset email response:", data);
-        
-        // Navigate to reset password page with the email link
-        navigate("/reset-password", { 
-          state: { 
-            recovery: true,
-            emailLink: redirectTo 
-          } 
-        });
         
         toast({
           title: "Check Your Email",
