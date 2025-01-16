@@ -14,22 +14,37 @@ const ResetPassword = () => {
   useEffect(() => {
     const checkResetToken = async () => {
       try {
-        // The URL will contain a hash fragment with the access_token when coming from a reset password email
+        // Get the hash fragment from the URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
+
+        console.log("Hash params:", { type, hasAccessToken: !!accessToken });
         
-        if (type !== 'recovery') {
-          console.log("Not a recovery flow");
+        if (!accessToken || type !== 'recovery') {
+          console.log("Invalid recovery flow");
           throw new Error("Invalid reset password link");
+        }
+
+        // Set the session with the access token
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: '',
+        });
+
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw sessionError;
         }
 
         setIsLoading(false);
       } catch (error) {
-        console.error("Invalid reset token:", error);
+        console.error("Reset token error:", error);
         toast({
           variant: "destructive",
           title: "Invalid Reset Link",
           description: "Please use the reset password link from your email or request a new one.",
+          duration: 5000,
         });
         navigate('/login');
       }
@@ -43,7 +58,7 @@ const ResetPassword = () => {
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">Loading...</CardTitle>
+            <CardTitle className="text-2xl">Verifying reset link...</CardTitle>
           </CardHeader>
         </Card>
       </div>
