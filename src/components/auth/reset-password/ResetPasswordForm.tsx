@@ -95,31 +95,15 @@ export const ResetPasswordForm = () => {
   const passwordsMatch = password && confirmPassword ? password === confirmPassword : null;
 
   useEffect(() => {
-    console.log("Location state:", location.state);
-    console.log("Full URL:", window.location.href);
-    console.log("URL fragment (hash):", window.location.hash);
-    console.log("Raw fragment value:", window.location.hash.substring(1));
+    console.log("=== Password Reset Flow Start ===");
+    console.log("Checking recovery state:", location.state);
     
-    // Extract access token from URL fragment
-    const fragment = window.location.hash.substring(1);
-    const params = new URLSearchParams(fragment);
-    const accessToken = params.get('access_token');
+    // Check if we're in a recovery flow from email link
+    const recoveryFlow = location.state?.recovery;
+    console.log("Is recovery mode from email link?", recoveryFlow);
     
-    console.log("Parsed URL parameters:", Object.fromEntries(params.entries()));
-    
-    if (accessToken) {
-      console.log("Found access token in URL fragment");
-      sessionStorage.setItem('reset_access_token', accessToken);
-    } else {
-      console.log("No access token found in URL fragment");
-    }
-
-    // Check if we're in a recovery flow
-    const recoveryFlow = location.state?.recovery || params.get('type') === 'recovery';
-    console.log("Recovery flow state:", recoveryFlow);
-    
-    if (!recoveryFlow && !accessToken) {
-      console.log("No recovery flow or access token detected, redirecting to login");
+    if (!recoveryFlow) {
+      console.log("No recovery flow detected, redirecting to login");
       toast({
         variant: "destructive",
         title: "Invalid Access",
@@ -131,7 +115,7 @@ export const ResetPasswordForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Starting password reset submission");
+    console.log("=== Password Reset Submission Start ===");
     
     if (password !== confirmPassword) {
       console.log("Password mismatch detected");
@@ -139,26 +123,10 @@ export const ResetPasswordForm = () => {
     }
 
     setIsLoading(true);
-    console.log("Attempting to reset password...");
+    console.log("Starting password reset process...");
 
     try {
-      const accessToken = sessionStorage.getItem('reset_access_token');
-      console.log("Access token available:", !!accessToken);
-
-      if (accessToken) {
-        console.log("Setting session with access token");
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: accessToken
-        });
-        
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          throw sessionError;
-        }
-      }
-
-      console.log("Updating user password...");
+      console.log("Attempting to update password...");
       const { error } = await supabase.auth.updateUser({
         password: password
       });
@@ -171,13 +139,11 @@ export const ResetPasswordForm = () => {
       console.log("Password reset successful");
       toast({
         title: "Success",
-        description: "Your password has been reset successfully. Redirecting to login page...",
+        description: "Your password has been reset successfully. Please log in with your new password.",
       });
 
-      // Clean up stored token
-      sessionStorage.removeItem('reset_access_token');
-
       // Sign out and redirect to login
+      console.log("Signing out and redirecting to login...");
       await supabase.auth.signOut();
       navigate("/login", { replace: true });
 
