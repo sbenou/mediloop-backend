@@ -95,15 +95,31 @@ export const ResetPasswordForm = () => {
   const passwordsMatch = password && confirmPassword ? password === confirmPassword : null;
 
   useEffect(() => {
-    console.log("=== Password Reset Flow Start ===");
-    console.log("Checking recovery state:", location.state);
+    console.log("Location state:", location.state);
+    console.log("Full URL:", window.location.href);
+    console.log("URL fragment (hash):", window.location.hash);
+    console.log("Raw fragment value:", window.location.hash.substring(1));
     
-    // Check if we're in recovery mode from email link
-    const isRecoveryMode = location.state?.recovery;
-    console.log("Is recovery mode from email link?", isRecoveryMode);
+    // Extract access token from URL fragment
+    const fragment = window.location.hash.substring(1);
+    const params = new URLSearchParams(fragment);
+    const accessToken = params.get('access_token');
+    
+    console.log("Parsed URL parameters:", Object.fromEntries(params.entries()));
+    
+    if (accessToken) {
+      console.log("Found access token in URL fragment");
+      sessionStorage.setItem('reset_access_token', accessToken);
+    } else {
+      console.log("No access token found in URL fragment");
+    }
 
-    if (!isRecoveryMode) {
-      console.log("No recovery flow detected, redirecting to login");
+    // Check if we're in a recovery flow
+    const recoveryFlow = location.state?.recovery || params.get('type') === 'recovery';
+    console.log("Recovery flow state:", recoveryFlow);
+    
+    if (!recoveryFlow && !accessToken) {
+      console.log("No recovery flow or access token detected, redirecting to login");
       toast({
         variant: "destructive",
         title: "Invalid Access",
@@ -115,7 +131,7 @@ export const ResetPasswordForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("=== Password Reset Submission Start ===");
+    console.log("Starting password reset submission");
     
     if (password !== confirmPassword) {
       console.log("Password mismatch detected");
@@ -123,28 +139,46 @@ export const ResetPasswordForm = () => {
     }
 
     setIsLoading(true);
-    console.log("Starting password reset process...");
+    console.log("Attempting to reset password...");
 
     try {
-      console.log("Attempting to update password with Supabase auth...");
-      const { data, error } = await supabase.auth.updateUser({ password });
+      const accessToken = sessionStorage.getItem('reset_access_token');
+      console.log("Access token available:", !!accessToken);
+
+      if (accessToken) {
+        console.log("Setting session with access token");
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: accessToken
+        });
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw sessionError;
+        }
+      }
+
+      console.log("Updating user password...");
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
 
       if (error) {
-        console.error("Password update error:", error);
+        console.error('Password reset error:', error);
         throw error;
       }
 
-      console.log("Password updated successfully:", data);
-      
+      console.log("Password reset successful");
       toast({
         title: "Success",
-        description: "Your password has been reset successfully.",
+        description: "Your password has been reset successfully. Redirecting to login page...",
       });
 
-      console.log("Initiating sign out process...");
+      // Clean up stored token
+      sessionStorage.removeItem('reset_access_token');
+
+      // Sign out and redirect to login
       await supabase.auth.signOut();
-      
-      console.log("Redirecting to login page...");
       navigate("/login", { replace: true });
 
     } catch (error: any) {
@@ -155,7 +189,6 @@ export const ResetPasswordForm = () => {
         description: error.message || "Failed to reset password. Please try again.",
       });
     } finally {
-      console.log("=== Password Reset Process Complete ===");
       setIsLoading(false);
     }
   };
