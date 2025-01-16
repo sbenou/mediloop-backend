@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { useNavigate } from "react-router-dom";
 
 export const usePasswordReset = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [cooldownEndTime, setCooldownEndTime] = useState<number | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const handlePasswordReset = async (email: string) => {
     if (!email) {
@@ -37,7 +35,6 @@ export const usePasswordReset = () => {
     try {
       console.log("Sending password reset email...");
       const currentDomain = window.location.origin;
-      // Point directly to the reset-password page
       const redirectTo = `${currentDomain}/reset-password`;
       console.log("Reset password redirect URL:", redirectTo);
       
