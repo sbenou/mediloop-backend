@@ -37,7 +37,7 @@ export const usePasswordReset = () => {
     try {
       console.log("Sending password reset email...");
       const currentDomain = window.location.origin;
-      // Change the redirect URL to point directly to the reset-password page
+      // Point directly to the reset-password page
       const redirectTo = `${currentDomain}/reset-password`;
       console.log("Reset password redirect URL:", redirectTo);
       
