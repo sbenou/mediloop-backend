@@ -149,10 +149,10 @@ export const ResetPasswordForm = () => {
         description: "Your password has been reset successfully. Please log in with your new password.",
       });
 
-      // Sign out and redirect to home
-      console.log("Signing out and redirecting to home...");
+      // Sign out and redirect to login page instead of home
+      console.log("Signing out and redirecting to login...");
       await supabase.auth.signOut();
-      navigate("/", { replace: true });
+      navigate("/login", { replace: true });
 
     } catch (error: any) {
       console.error('Password reset error:', error);
