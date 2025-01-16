@@ -96,14 +96,20 @@ export const ResetPasswordForm = () => {
 
   useEffect(() => {
     console.log("=== Password Reset Flow Start ===");
-    console.log("Checking recovery state:", location.state);
+    console.log("Current URL:", window.location.href);
+    console.log("Location state:", location.state);
+    console.log("Query parameters:", new URLSearchParams(window.location.search).toString());
+    
+    // Get the token from the URL (Supabase adds this automatically)
+    const token = new URLSearchParams(window.location.search).get('token');
+    console.log("Reset token present:", !!token);
     
     // Check if we're in a recovery flow from email link
     const recoveryFlow = location.state?.recovery;
     console.log("Is recovery mode from email link?", recoveryFlow);
     
-    if (!recoveryFlow) {
-      console.log("No recovery flow detected, redirecting to login");
+    if (!recoveryFlow && !token) {
+      console.log("No recovery flow or token detected, redirecting to login");
       toast({
         variant: "destructive",
         title: "Invalid Access",
@@ -111,6 +117,14 @@ export const ResetPasswordForm = () => {
       });
       navigate('/login');
     }
+
+    // Check the session status
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Current session status:", !!session);
+    };
+
+    checkSession();
   }, [location, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,7 +141,7 @@ export const ResetPasswordForm = () => {
 
     try {
       console.log("Attempting to update password...");
-      const { error } = await supabase.auth.updateUser({
+      const { data, error } = await supabase.auth.updateUser({
         password: password
       });
 
@@ -136,16 +150,16 @@ export const ResetPasswordForm = () => {
         throw error;
       }
 
-      console.log("Password reset successful");
+      console.log("Password reset successful, user data:", data);
       toast({
         title: "Success",
         description: "Your password has been reset successfully. Please log in with your new password.",
       });
 
-      // Sign out and redirect to login
-      console.log("Signing out and redirecting to login...");
+      // Sign out and redirect to home
+      console.log("Signing out and redirecting to home...");
       await supabase.auth.signOut();
-      navigate("/login", { replace: true });
+      navigate("/", { replace: true });
 
     } catch (error: any) {
       console.error('Password reset error:', error);
