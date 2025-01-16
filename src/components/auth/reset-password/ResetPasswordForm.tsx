@@ -96,35 +96,47 @@ export const ResetPasswordForm = () => {
 
   useEffect(() => {
     const handlePasswordReset = async () => {
+      console.log("=== Password Reset Flow Start ===");
+      console.log("Current URL:", window.location.href);
+      
       // Get the hash fragment from the URL
       const hash = window.location.hash;
+      console.log("URL hash:", hash);
       
       // Check if we have a hash with the access token
       if (hash) {
-        console.log("Found URL hash:", hash);
+        console.log("Processing URL hash parameters...");
         const params = new URLSearchParams(hash.substring(1));
         const accessToken = params.get('access_token');
         const refreshToken = params.get('refresh_token');
         const type = params.get('type');
         
-        console.log("URL parameters:", {
-          accessToken: !!accessToken,
-          refreshToken: !!refreshToken,
-          type
+        console.log("URL parameters found:", {
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          type: type
         });
 
         if (accessToken && type === 'recovery') {
-          // Store tokens in session
+          console.log("Valid recovery tokens found, storing in session");
           sessionStorage.setItem('reset_access_token', accessToken);
           if (refreshToken) {
             sessionStorage.setItem('reset_refresh_token', refreshToken);
           }
         }
+      } else {
+        console.log("No URL hash found");
       }
 
       // Check if we're in recovery mode
       const isRecoveryMode = location.state?.recovery || 
                             new URLSearchParams(hash.substring(1)).get('type') === 'recovery';
+      
+      console.log("Recovery mode check:", {
+        fromState: !!location.state?.recovery,
+        fromURL: new URLSearchParams(hash.substring(1)).get('type') === 'recovery',
+        isRecoveryMode: isRecoveryMode
+      });
 
       if (!isRecoveryMode && !sessionStorage.getItem('reset_access_token')) {
         console.log("No recovery flow detected, redirecting to login");
@@ -142,43 +154,60 @@ export const ResetPasswordForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("=== Password Reset Submission Start ===");
     
     if (password !== confirmPassword) {
+      console.log("Password mismatch detected");
       return;
     }
 
     setIsLoading(true);
-    console.log("Starting password reset...");
+    console.log("Starting password reset process...");
 
     try {
       const accessToken = sessionStorage.getItem('reset_access_token');
       const refreshToken = sessionStorage.getItem('reset_refresh_token');
 
+      console.log("Retrieved tokens from session:", {
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken
+      });
+
       if (accessToken) {
-        console.log("Setting session with tokens");
+        console.log("Setting session with tokens...");
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken || accessToken
         });
         
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw sessionError;
+        }
+        console.log("Session set successfully");
       }
 
       console.log("Updating password...");
       const { error } = await supabase.auth.updateUser({ password });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Password update error:", error);
+        throw error;
+      }
 
+      console.log("Password updated successfully");
       toast({
         title: "Success",
         description: "Your password has been reset successfully.",
       });
 
       // Clean up stored tokens
+      console.log("Cleaning up session storage...");
       sessionStorage.removeItem('reset_access_token');
       sessionStorage.removeItem('reset_refresh_token');
 
       // Sign out and redirect to login
+      console.log("Signing out and redirecting...");
       await supabase.auth.signOut();
       navigate("/login", { replace: true });
 
@@ -190,6 +219,7 @@ export const ResetPasswordForm = () => {
         description: error.message || "Failed to reset password. Please try again.",
       });
     } finally {
+      console.log("=== Password Reset Process Complete ===");
       setIsLoading(false);
     }
   };
