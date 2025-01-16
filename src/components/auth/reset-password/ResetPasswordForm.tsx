@@ -96,27 +96,42 @@ export const ResetPasswordForm = () => {
 
   useEffect(() => {
     console.log("=== Password Reset Flow Start ===");
-    console.log("Current URL:", window.location.href);
-    console.log("Location state:", location.state);
-    console.log("Hash fragment:", window.location.hash);
-    console.log("Search params:", window.location.search);
     
-    // Log the access token from the URL hash
+    // Log the complete URL and its components
+    const fullUrl = window.location.href;
+    console.log("Complete URL:", fullUrl);
+    
+    // Log the email link if it exists in state
+    const emailLink = location.state?.emailLink;
+    console.log("Email reset link from state:", emailLink);
+    
+    // Try to get the token from different sources
+    const urlParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    console.log("Access token from hash:", accessToken);
     
-    // Get the token from the URL (Supabase adds this automatically)
-    const token = new URLSearchParams(window.location.search).get('token');
-    console.log("Reset token from URL:", token);
+    const searchToken = urlParams.get('token');
+    const hashToken = hashParams.get('access_token');
+    const stateToken = location.state?.token;
     
-    // Check if we're in a recovery flow from email link
+    console.log("Token from URL search:", searchToken);
+    console.log("Token from URL hash:", hashToken);
+    console.log("Token from state:", stateToken);
+    
+    // Check recovery flow
     const recoveryFlow = location.state?.recovery;
-    console.log("Is recovery mode from email link?", recoveryFlow);
-    console.log("Full location object:", location);
+    console.log("Is recovery mode?", recoveryFlow);
+    console.log("Full location state:", location.state);
     
-    if (!recoveryFlow && !token && !accessToken) {
-      console.log("No recovery flow or tokens detected, redirecting to login");
+    // Check current session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Current session:", session);
+    };
+    
+    checkSession();
+
+    if (!recoveryFlow && !searchToken && !hashToken && !stateToken) {
+      console.log("No valid recovery flow or tokens found, redirecting to login");
       toast({
         variant: "destructive",
         title: "Invalid Access",
@@ -124,17 +139,6 @@ export const ResetPasswordForm = () => {
       });
       navigate('/login');
     }
-
-    // Check the session status
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Current session status:", !!session);
-      if (session) {
-        console.log("Session details:", session);
-      }
-    };
-
-    checkSession();
   }, [location, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
