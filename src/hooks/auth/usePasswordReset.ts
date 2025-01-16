@@ -38,7 +38,7 @@ export const usePasswordReset = () => {
       const redirectTo = `${currentDomain}/reset-password`;
       console.log("Reset password redirect URL:", redirectTo);
       
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
       });
 
@@ -46,7 +46,7 @@ export const usePasswordReset = () => {
         console.error("Password reset error:", error);
         
         if (error.status === 429 || error.message?.includes('rate limit')) {
-          const cooldownDuration = 60 * 1000;
+          const cooldownDuration = 60 * 1000; // 60 seconds
           setCooldownEndTime(Date.now() + cooldownDuration);
           
           toast({
@@ -65,7 +65,7 @@ export const usePasswordReset = () => {
           duration: 5000,
         });
       } else {
-        console.log("Reset email response:", data);
+        console.log("Reset email sent successfully");
         
         toast({
           title: "Check Your Email",
@@ -73,7 +73,7 @@ export const usePasswordReset = () => {
           duration: 5000,
         });
         
-        const cooldownDuration = 60 * 1000;
+        const cooldownDuration = 60 * 1000; // 60 seconds
         setCooldownEndTime(Date.now() + cooldownDuration);
       }
     } catch (error: any) {

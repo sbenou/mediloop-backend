@@ -9,60 +9,52 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [isValidReset, setIsValidReset] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const handlePasswordReset = async () => {
-      // Get the hash fragment from the URL
-      const hash = location.hash;
-      
-      if (!hash) {
-        console.log("No hash fragment found in URL");
-        toast({
-          variant: "destructive",
-          title: "Invalid Access",
-          description: "Please use the reset password link from your email.",
-        });
-        navigate('/login');
-        return;
-      }
-
+    const checkResetToken = async () => {
       try {
-        // Verify the recovery token
-        const { data, error } = await supabase.auth.getSession();
+        // The URL will contain a hash fragment with the access_token when coming from a reset password email
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const type = hashParams.get('type');
         
-        if (error) {
-          console.error("Session error:", error);
-          throw error;
+        if (type !== 'recovery') {
+          console.log("Not a recovery flow");
+          throw new Error("Invalid reset password link");
         }
 
-        if (data.session) {
-          console.log("Valid reset token found");
-          setIsValidReset(true);
-        }
-      } catch (error: any) {
-        console.error("Error verifying reset token:", error);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Invalid reset token:", error);
         toast({
           variant: "destructive",
-          title: "Invalid or Expired Link",
-          description: "The password reset link is invalid or has expired. Please request a new one.",
+          title: "Invalid Reset Link",
+          description: "Please use the reset password link from your email or request a new one.",
         });
         navigate('/login');
       }
     };
 
-    handlePasswordReset();
-  }, [navigate, location, toast]);
+    checkResetToken();
+  }, [navigate, toast]);
 
-  if (!isValidReset) {
-    return null; // Don't render anything while validating
+  if (isLoading) {
+    return (
+      <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl">Loading...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
+          <CardTitle className="text-2xl">Reset Password</CardTitle>
           <CardDescription>
             Enter your new password below
           </CardDescription>
