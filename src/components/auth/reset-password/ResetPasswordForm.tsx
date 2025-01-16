@@ -98,18 +98,25 @@ export const ResetPasswordForm = () => {
     console.log("=== Password Reset Flow Start ===");
     console.log("Current URL:", window.location.href);
     console.log("Location state:", location.state);
-    console.log("Query parameters:", new URLSearchParams(window.location.search).toString());
+    console.log("Hash fragment:", window.location.hash);
+    console.log("Search params:", window.location.search);
+    
+    // Log the access token from the URL hash
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    console.log("Access token from hash:", accessToken);
     
     // Get the token from the URL (Supabase adds this automatically)
     const token = new URLSearchParams(window.location.search).get('token');
-    console.log("Reset token present:", !!token);
+    console.log("Reset token from URL:", token);
     
     // Check if we're in a recovery flow from email link
     const recoveryFlow = location.state?.recovery;
     console.log("Is recovery mode from email link?", recoveryFlow);
+    console.log("Full location object:", location);
     
-    if (!recoveryFlow && !token) {
-      console.log("No recovery flow or token detected, redirecting to login");
+    if (!recoveryFlow && !token && !accessToken) {
+      console.log("No recovery flow or tokens detected, redirecting to login");
       toast({
         variant: "destructive",
         title: "Invalid Access",
@@ -122,6 +129,9 @@ export const ResetPasswordForm = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       console.log("Current session status:", !!session);
+      if (session) {
+        console.log("Session details:", session);
+      }
     };
 
     checkSession();
