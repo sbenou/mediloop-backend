@@ -126,22 +126,25 @@ export const ResetPasswordForm = () => {
     console.log("Starting password reset process...");
 
     try {
-      console.log("Attempting to update password...");
-      const { error } = await supabase.auth.updateUser({ password });
+      console.log("Attempting to update password with Supabase auth...");
+      const { data, error } = await supabase.auth.updateUser({ password });
 
       if (error) {
         console.error("Password update error:", error);
         throw error;
       }
 
-      console.log("Password updated successfully");
+      console.log("Password updated successfully:", data);
+      
       toast({
         title: "Success",
         description: "Your password has been reset successfully.",
       });
 
-      console.log("Signing out and redirecting...");
+      console.log("Initiating sign out process...");
       await supabase.auth.signOut();
+      
+      console.log("Redirecting to login page...");
       navigate("/login", { replace: true });
 
     } catch (error: any) {
