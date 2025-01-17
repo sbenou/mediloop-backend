@@ -17,14 +17,59 @@ const ResetPassword = () => {
 
   const verifyRecoveryFlow = async () => {
     console.log("=== Reset Password Verification Start ===");
+    console.log("Current URL:", window.location.href);
+    console.log("Search params:", window.location.search);
+    console.log("Hash:", window.location.hash);
+
     try {
-      // Check if we have an active session first
+      // Extract and validate URL parameters
+      const queryParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const code = queryParams.get("code");
+      const type = hashParams.get("type");
+
+      console.log("Extracted parameters:", {
+        code: code ? "present" : "missing",
+        type,
+        fullHash: window.location.hash,
+        parsedHash: Object.fromEntries(hashParams.entries())
+      });
+
+      // First verify the OTP
+      if (code) {
+        console.log("Attempting to verify OTP...");
+        try {
+          const { error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash: code,
+            type: "recovery"
+          });
+
+          if (verifyError) {
+            console.error("OTP verification failed:", verifyError);
+            throw verifyError;
+          }
+          console.log("OTP verification successful");
+        } catch (verifyError) {
+          console.error("OTP verification error:", verifyError);
+          toast({
+            variant: "destructive",
+            title: "Invalid Reset Link",
+            description: "The password reset link is invalid or has expired. Please request a new one.",
+          });
+          setIsValidToken(false);
+          setTimeout(() => navigate("/login"), 5000);
+          return;
+        }
+      }
+
+      // Then check for an active session
+      console.log("Checking for active session...");
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      console.log("Session check result:", { 
+      console.log("Session check result:", {
         hasSession: !!session,
         sessionError: sessionError?.message,
-        sessionData: session 
+        sessionData: session
       });
 
       if (sessionError) {
@@ -35,18 +80,9 @@ const ResetPassword = () => {
           description: "Failed to verify session. Please try again.",
         });
         setIsValidToken(false);
+        setTimeout(() => navigate("/login"), 5000);
         return;
       }
-
-      // Verify we're on a recovery flow
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const type = hashParams.get("type");
-
-      console.log("Recovery flow check:", {
-        type,
-        currentUrl: window.location.href,
-        hash: window.location.hash
-      });
 
       if (!session) {
         console.warn("No active session found");
