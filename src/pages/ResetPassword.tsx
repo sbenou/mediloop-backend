@@ -12,58 +12,87 @@ const ResetPassword = () => {
   const [isValidToken, setIsValidToken] = useState(false);
 
   useEffect(() => {
-    const verifyRecoveryFlow = async () => {
-      console.log("=== Reset Password Verification Start ===");
-      try {
-        // Check if we have an active session first
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        console.log("Session check result:", { session, error: sessionError });
+    verifyRecoveryFlow();
+  }, []);
 
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to verify session. Please try again.",
-          });
-          setIsValidToken(false);
-          return;
-        }
+  const verifyRecoveryFlow = async () => {
+    console.log("=== Reset Password Verification Start ===");
+    try {
+      // Check if we have an active session first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log("Session check result:", { 
+        hasSession: !!session,
+        sessionError: sessionError?.message,
+        sessionData: session 
+      });
 
-        // Verify we're on a recovery flow
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const type = hashParams.get("type");
-
-        if (!session || type !== "recovery") {
-          console.warn("Invalid recovery flow: No session or wrong type");
-          toast({
-            variant: "destructive",
-            title: "Invalid Reset Link",
-            description: "The password reset link is invalid or has expired. Please request a new one.",
-          });
-          setIsValidToken(false);
-          return;
-        }
-
-        console.log("Valid recovery flow detected");
-        setIsValidToken(true);
-      } catch (error) {
-        console.error("Unexpected error during recovery flow verification:", error);
+      if (sessionError) {
+        console.error("Session error:", sessionError);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "An error occurred while verifying your reset link. Please try again.",
+          description: "Failed to verify session. Please try again.",
         });
         setIsValidToken(false);
-      } finally {
-        setIsLoading(false);
-        console.log("=== Reset Password Verification End ===");
+        return;
       }
-    };
 
-    verifyRecoveryFlow();
-  }, [navigate, toast]);
+      // Verify we're on a recovery flow
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const type = hashParams.get("type");
+
+      console.log("Recovery flow check:", {
+        type,
+        currentUrl: window.location.href,
+        hash: window.location.hash
+      });
+
+      if (!session) {
+        console.warn("No active session found");
+        toast({
+          variant: "destructive",
+          title: "Session Expired",
+          description: "Your session has expired. Please request a new reset link.",
+        });
+        setIsValidToken(false);
+        setTimeout(() => navigate("/login"), 5000);
+        return;
+      }
+
+      if (type !== "recovery") {
+        console.warn("Invalid recovery type:", type);
+        toast({
+          variant: "destructive",
+          title: "Invalid Reset Link",
+          description: "This link is not valid for password reset. Please request a new one.",
+        });
+        setIsValidToken(false);
+        setTimeout(() => navigate("/login"), 5000);
+        return;
+      }
+
+      console.log("Valid recovery flow detected:", {
+        userId: session.user?.id,
+        email: session.user?.email,
+        type
+      });
+      
+      setIsValidToken(true);
+    } catch (error) {
+      console.error("Unexpected error during recovery flow verification:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An error occurred while verifying your reset link. Please try again.",
+      });
+      setIsValidToken(false);
+      setTimeout(() => navigate("/login"), 5000);
+    } finally {
+      setIsLoading(false);
+      console.log("=== Reset Password Verification End ===");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -85,6 +114,7 @@ const ResetPassword = () => {
             <CardTitle className="text-2xl">Invalid Reset Link</CardTitle>
             <CardDescription>
               This password reset link is invalid or has expired. Please request a new one from the login page.
+              Redirecting you to the login page in 5 seconds...
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
