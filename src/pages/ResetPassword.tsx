@@ -12,7 +12,7 @@ const ResetPassword = () => {
   const [isValidToken, setIsValidToken] = useState(false);
 
   useEffect(() => {
-    const verifyRecoveryToken = async () => {
+    const verifyRecoveryFlow = async () => {
       console.log("=== Reset Password Verification Start ===");
       try {
         // Log the full URL for debugging
@@ -22,18 +22,30 @@ const ResetPassword = () => {
         const queryParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         
-        // Get the recovery code from query string and type from fragment
-        const code = queryParams.get("code");
+        // Get the type from fragment
         const type = hashParams.get("type");
         
-        console.log("Parsed Query Params:", { code: code ? "[REDACTED]" : null });
         console.log("Parsed Hash Params:", { type });
 
-        if (!code || type !== "recovery") {
-          console.warn("Invalid recovery flow: Missing code or wrong type");
+        if (type !== "recovery") {
+          console.warn("Invalid recovery flow: Wrong type");
           console.log("Type received:", type);
-          console.log("Code present:", !!code);
           
+          toast({
+            variant: "destructive",
+            title: "Invalid Reset Link",
+            description: "The password reset link is invalid. Please request a new one.",
+          });
+          setIsValidToken(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if we have an active session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.warn("No active session found");
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
@@ -44,35 +56,12 @@ const ResetPassword = () => {
           return;
         }
 
-        // Verify the code using Supabase
-        console.log("Verifying recovery code with Supabase...");
-        const { data, error } = await supabase.auth.verifyOtp({
-          type: "recovery",
-          token_hash: code
-        });
-
-        if (error) {
-          console.error("Token verification error:", error.message);
-          console.log("Error details:", {
-            status: error.status,
-            message: error.message
-          });
-          
-          toast({
-            variant: "destructive",
-            title: "Invalid Reset Link",
-            description: "The password reset link is invalid or has expired. Please request a new one.",
-          });
-          setIsValidToken(false);
-          setIsLoading(false);
-          return;
-        }
-
-        console.log("Recovery code verification successful:", data);
+        console.log("Valid recovery flow detected");
         setIsValidToken(true);
         setIsLoading(false);
+
       } catch (error) {
-        console.error("Unexpected error during token verification:", error);
+        console.error("Unexpected error during recovery flow verification:", error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -85,7 +74,7 @@ const ResetPassword = () => {
       }
     };
 
-    verifyRecoveryToken();
+    verifyRecoveryFlow();
   }, [navigate, toast]);
 
   if (isLoading) {
