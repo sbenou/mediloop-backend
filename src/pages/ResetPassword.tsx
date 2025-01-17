@@ -13,16 +13,16 @@ const ResetPassword = () => {
   const [isValidToken, setIsValidToken] = useState(false);
 
   useEffect(() => {
-    const verifyRecoveryCode = async () => {
+    const verifyRecoveryToken = async () => {
       try {
-        // Get the recovery code from URL
-        const searchParams = new URLSearchParams(window.location.search);
-        const recoveryCode = searchParams.get('code');
-
-        console.log("Reset password flow - Recovery code:", recoveryCode);
+        // Get the token_hash from URL
+        const fragment = new URLSearchParams(window.location.hash.substring(1));
+        const tokenHash = fragment.get('token_hash');
         
-        if (!recoveryCode) {
-          console.log("Invalid recovery flow - Missing recovery code");
+        console.log("Reset password flow - Token hash:", tokenHash);
+        
+        if (!tokenHash) {
+          console.log("Invalid recovery flow - Missing token hash");
           setIsValidToken(false);
           setIsLoading(false);
           return;
@@ -30,28 +30,28 @@ const ResetPassword = () => {
 
         // Verify the recovery token using the token hash method
         const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: recoveryCode,
+          token_hash: tokenHash,
           type: 'recovery'
         });
 
         if (error) {
-          console.error("Recovery code verification error:", error);
+          console.error("Recovery token verification error:", error);
           setIsValidToken(false);
           setIsLoading(false);
           return;
         }
 
-        console.log("Recovery code verified successfully:", data);
+        console.log("Recovery token verified successfully:", data);
         setIsValidToken(true);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error during recovery code verification:", error);
+        console.error("Error during recovery token verification:", error);
         setIsValidToken(false);
         setIsLoading(false);
       }
     };
 
-    verifyRecoveryCode();
+    verifyRecoveryToken();
   }, [navigate, toast]);
 
   if (isLoading) {
