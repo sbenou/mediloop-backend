@@ -13,55 +13,45 @@ const ResetPassword = () => {
   const [isValidToken, setIsValidToken] = useState(false);
 
   useEffect(() => {
-    const checkResetToken = async () => {
+    const verifyRecoveryCode = async () => {
       try {
-        // Check URL query parameters first
+        // Get the recovery code from URL
         const searchParams = new URLSearchParams(window.location.search);
-        let accessToken = searchParams.get('access_token');
-        let type = searchParams.get('type');
+        const recoveryCode = searchParams.get('code');
 
-        // If not in query params, check hash
-        if (!accessToken) {
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          accessToken = hashParams.get('access_token');
-          type = hashParams.get('type');
-        }
-
-        console.log("Reset password flow - URL params:", { type, hasAccessToken: !!accessToken });
+        console.log("Reset password flow - Recovery code:", recoveryCode);
         
-        if (!accessToken) {
-          console.log("Invalid recovery flow - Missing token");
+        if (!recoveryCode) {
+          console.log("Invalid recovery flow - Missing recovery code");
           setIsValidToken(false);
           setIsLoading(false);
           return;
         }
 
-        const { data: { user }, error: sessionError } = await supabase.auth.getUser(accessToken);
-
-        if (sessionError || !user) {
-          console.error("Session error or no user:", sessionError);
-          setIsValidToken(false);
-          setIsLoading(false);
-          return;
-        }
-
-        // Set the session with the access token
-        await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: '',
+        // Verify the recovery code by attempting to get a new session
+        const { data, error } = await supabase.auth.verifyOtp({
+          token: recoveryCode,
+          type: 'recovery'
         });
 
-        console.log("Reset password flow - Valid token, user found:", user.email);
+        if (error) {
+          console.error("Recovery code verification error:", error);
+          setIsValidToken(false);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("Recovery code verified successfully:", data);
         setIsValidToken(true);
         setIsLoading(false);
       } catch (error) {
-        console.error("Reset token verification error:", error);
+        console.error("Error during recovery code verification:", error);
         setIsValidToken(false);
         setIsLoading(false);
       }
     };
 
-    checkResetToken();
+    verifyRecoveryCode();
   }, [navigate, toast]);
 
   if (isLoading) {

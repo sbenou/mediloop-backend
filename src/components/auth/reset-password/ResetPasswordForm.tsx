@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,7 @@ import { Key, Check, X, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 type PasswordInputProps = {
   id: string;
@@ -91,34 +91,7 @@ export const ResetPasswordForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
   const passwordsMatch = password && confirmPassword ? password === confirmPassword : null;
-
-  useEffect(() => {
-    console.log("=== Password Reset Flow Start ===");
-    
-    // Get the email reset link from state
-    const emailLink = location.state?.emailLink;
-    console.log("Email reset link:", emailLink);
-    
-    if (emailLink) {
-      try {
-        const url = new URL(emailLink);
-        const token = url.searchParams.get('token');
-        console.log("Reset token from email link:", token);
-      } catch (error) {
-        console.error("Error parsing email link:", error);
-      }
-    }
-
-    // Check current session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Current session:", session);
-    };
-    
-    checkSession();
-  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,7 +122,7 @@ export const ResetPasswordForm = () => {
         description: "Your password has been reset successfully. Please log in with your new password.",
       });
 
-      // Sign out and redirect to login page instead of home
+      // Sign out and redirect to login page
       console.log("Signing out and redirecting to login...");
       await supabase.auth.signOut();
       navigate("/login", { replace: true });
