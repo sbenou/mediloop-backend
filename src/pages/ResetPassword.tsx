@@ -15,14 +15,22 @@ const ResetPassword = () => {
   useEffect(() => {
     const checkResetToken = async () => {
       try {
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const type = hashParams.get('type');
+        // Check URL query parameters first
+        const searchParams = new URLSearchParams(window.location.search);
+        let accessToken = searchParams.get('access_token');
+        let type = searchParams.get('type');
 
-        console.log("Reset password flow - Hash params:", { type, hasAccessToken: !!accessToken });
+        // If not in query params, check hash
+        if (!accessToken) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          accessToken = hashParams.get('access_token');
+          type = hashParams.get('type');
+        }
+
+        console.log("Reset password flow - URL params:", { type, hasAccessToken: !!accessToken });
         
-        if (!accessToken || type !== 'recovery') {
-          console.log("Invalid recovery flow - Missing token or wrong type");
+        if (!accessToken) {
+          console.log("Invalid recovery flow - Missing token");
           setIsValidToken(false);
           setIsLoading(false);
           return;
