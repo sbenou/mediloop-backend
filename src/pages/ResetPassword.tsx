@@ -14,15 +14,21 @@ const ResetPassword = () => {
   useEffect(() => {
     const verifyRecoveryToken = async () => {
       try {
-        // Log the full URL hash for debugging
-        console.log("Full URL Hash:", window.location.hash);
+        console.log("=== Password Reset Token Verification Start ===");
+        
+        // Log the complete URL and hash for debugging
+        console.log("Current URL:", window.location.href);
+        console.log("URL Hash:", window.location.hash);
 
         // Extract hash parameters from the URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const token_hash = hashParams.get('token_hash');
         const type = hashParams.get('type');
 
-        console.log("Reset password flow - Hash params:", { token_hash: token_hash ? '[REDACTED]' : null, type });
+        console.log("Extracted parameters:", {
+          token_hash: token_hash ? '[REDACTED]' : null,
+          type
+        });
         
         if (!token_hash || type !== 'recovery') {
           console.log("Invalid recovery flow - Missing token_hash or wrong type");
@@ -31,7 +37,8 @@ const ResetPassword = () => {
           return;
         }
 
-        // Verify the token using Supabase with token_hash
+        // Verify the token using Supabase
+        console.log("Attempting to verify token with Supabase...");
         const { data, error } = await supabase.auth.verifyOtp({
           token_hash,
           type: 'recovery'
@@ -61,6 +68,8 @@ const ResetPassword = () => {
         });
         setIsValidToken(false);
         setIsLoading(false);
+      } finally {
+        console.log("=== Password Reset Token Verification End ===");
       }
     };
 

@@ -33,9 +33,10 @@ export const usePasswordReset = () => {
     setIsSendingReset(true);
     
     try {
-      console.log("Sending password reset email...");
+      console.log("=== Password Reset Email Request Start ===");
       const currentDomain = window.location.origin;
-      const redirectTo = `${currentDomain}/reset-password`;
+      // Explicitly add the recovery type to the redirect URL
+      const redirectTo = `${currentDomain}/reset-password#type=recovery`;
       console.log("Reset password redirect URL:", redirectTo);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -43,7 +44,7 @@ export const usePasswordReset = () => {
       });
 
       if (error) {
-        console.error("Password reset error:", error);
+        console.error("Password reset email error:", error);
         
         if (error.status === 429 || error.message?.includes('rate limit')) {
           const cooldownDuration = 60 * 1000; // 60 seconds
@@ -65,7 +66,7 @@ export const usePasswordReset = () => {
           duration: 5000,
         });
       } else {
-        console.log("Reset email sent successfully");
+        console.log("Reset email request successful");
         
         toast({
           title: "Check Your Email",
@@ -85,6 +86,7 @@ export const usePasswordReset = () => {
         duration: 5000,
       });
     } finally {
+      console.log("=== Password Reset Email Request End ===");
       setIsSendingReset(false);
     }
   };
