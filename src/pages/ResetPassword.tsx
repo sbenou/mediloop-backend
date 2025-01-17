@@ -28,9 +28,9 @@ const ResetPassword = () => {
           return;
         }
 
-        // Verify the recovery token by attempting to get a session
-        const { data: { session }, error } = await supabase.auth.verifyOtp({
-          token: recoveryCode,
+        // Verify the recovery token using the token hash method
+        const { data, error } = await supabase.auth.verifyOtp({
+          token_hash: recoveryCode,
           type: 'recovery'
         });
 
@@ -41,7 +41,7 @@ const ResetPassword = () => {
           return;
         }
 
-        console.log("Recovery code verified successfully:", session);
+        console.log("Recovery code verified successfully:", data);
         setIsValidToken(true);
         setIsLoading(false);
       } catch (error) {
