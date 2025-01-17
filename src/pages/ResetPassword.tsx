@@ -16,18 +16,27 @@ const ResetPassword = () => {
       console.log("=== Reset Password Verification Start ===");
 
       try {
-        // Log the full URL hash for debugging
+        // Log the full URL and hash for debugging
+        console.log("Current URL:", window.location.href);
         console.log("Full URL Fragment:", window.location.hash);
 
         // Extract hash parameters from the URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const token_hash = hashParams.get("token_hash");
         const type = hashParams.get("type");
+        const timestamp = hashParams.get("t"); // Get the timestamp parameter
 
-        console.log("Parsed Hash Params:", { token_hash: token_hash ? "[REDACTED]" : null, type });
+        console.log("Parsed Hash Params:", { 
+          token_hash: token_hash ? "[REDACTED]" : null, 
+          type,
+          timestamp 
+        });
 
         if (!token_hash || type !== "recovery") {
           console.warn("Invalid recovery flow: Missing token_hash or wrong type");
+          console.log("Type received:", type);
+          console.log("Token hash present:", !!token_hash);
+          
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
@@ -38,7 +47,7 @@ const ResetPassword = () => {
           return;
         }
 
-        // Verify the token using Supabase with token_hash
+        // Verify the token using Supabase
         console.log("Verifying token_hash with Supabase...");
         const { data, error } = await supabase.auth.verifyOtp({
           token_hash,
@@ -47,6 +56,11 @@ const ResetPassword = () => {
 
         if (error) {
           console.error("Token verification error:", error.message);
+          console.log("Error details:", {
+            status: error.status,
+            message: error.message
+          });
+          
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",

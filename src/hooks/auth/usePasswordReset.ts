@@ -37,12 +37,20 @@ export const usePasswordReset = () => {
       console.log("Initiating password reset for email:", email);
       
       const currentDomain = window.location.origin;
-      // Explicitly add the recovery type to the redirect URL
-      const redirectTo = `${currentDomain}/reset-password#type=recovery`;
+      // Explicitly add both the recovery type and a timestamp to prevent caching
+      const timestamp = Date.now();
+      const redirectTo = `${currentDomain}/reset-password#type=recovery&t=${timestamp}`;
       console.log("Reset password redirect URL:", redirectTo);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
+        options: {
+          // Set email template data to ensure proper token handling
+          data: {
+            token_type: 'recovery',
+            redirect_path: '/reset-password'
+          }
+        }
       });
 
       if (error) {
