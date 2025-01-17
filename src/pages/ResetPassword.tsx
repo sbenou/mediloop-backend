@@ -19,21 +19,21 @@ const ResetPassword = () => {
 
         // Extract hash parameters from the URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const token = hashParams.get('access_token');
+        const token_hash = hashParams.get('token_hash');
         const type = hashParams.get('type');
 
-        console.log("Reset password flow - Hash params:", { token: token ? '[REDACTED]' : null, type });
+        console.log("Reset password flow - Hash params:", { token_hash: token_hash ? '[REDACTED]' : null, type });
         
-        if (!token || type !== 'recovery') {
-          console.log("Invalid recovery flow - Missing token or wrong type");
+        if (!token_hash || type !== 'recovery') {
+          console.log("Invalid recovery flow - Missing token_hash or wrong type");
           setIsValidToken(false);
           setIsLoading(false);
           return;
         }
 
-        // Verify the token using Supabase
+        // Verify the token using Supabase with token_hash
         const { data, error } = await supabase.auth.verifyOtp({
-          token,
+          token_hash,
           type: 'recovery'
         });
 
