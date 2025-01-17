@@ -13,44 +13,40 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const verifyRecoveryToken = async () => {
+      console.log("=== Reset Password Verification Start ===");
+
       try {
-        console.log("=== Password Reset Token Verification Start ===");
-        
-        // Log the complete URL and hash for debugging
-        console.log("Current URL:", window.location.href);
-        console.log("URL Hash:", window.location.hash);
+        // Log the full URL hash for debugging
+        console.log("Full URL Fragment:", window.location.hash);
 
         // Extract hash parameters from the URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const token_hash = hashParams.get('token_hash');
-        const type = hashParams.get('type');
+        const token_hash = hashParams.get("token_hash");
+        const type = hashParams.get("type");
 
-        console.log("Extracted parameters:", {
-          token_hash: token_hash ? '[REDACTED]' : null,
-          type
-        });
-        
-        if (!token_hash || type !== 'recovery') {
-          console.log("Invalid recovery flow - Missing token_hash or wrong type");
-          setIsValidToken(false);
-          setIsLoading(false);
+        console.log("Parsed Hash Params:", { token_hash: token_hash ? "[REDACTED]" : null, type });
+
+        if (!token_hash || type !== "recovery") {
+          console.warn("Invalid recovery flow: Missing token_hash or wrong type");
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
             description: "The password reset link is invalid or has expired. Please request a new one.",
           });
+          setIsValidToken(false);
+          setIsLoading(false);
           return;
         }
 
-        // Verify the token using Supabase
-        console.log("Attempting to verify token with Supabase...");
+        // Verify the token using Supabase with token_hash
+        console.log("Verifying token_hash with Supabase...");
         const { data, error } = await supabase.auth.verifyOtp({
           token_hash,
-          type: 'recovery'
+          type: "recovery",
         });
 
         if (error) {
-          console.error("Recovery token verification error:", error);
+          console.error("Token verification error:", error.message);
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
@@ -61,11 +57,11 @@ const ResetPassword = () => {
           return;
         }
 
-        console.log("Recovery token verified successfully:", data);
+        console.log("Token verification successful:", data);
         setIsValidToken(true);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error during recovery token verification:", error);
+        console.error("Unexpected error during token verification:", error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -74,7 +70,7 @@ const ResetPassword = () => {
         setIsValidToken(false);
         setIsLoading(false);
       } finally {
-        console.log("=== Password Reset Token Verification End ===");
+        console.log("=== Reset Password Verification End ===");
       }
     };
 
@@ -105,7 +101,7 @@ const ResetPassword = () => {
           </CardHeader>
           <CardContent className="flex justify-center">
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate("/login")}
               className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
             >
               Return to Login
@@ -121,9 +117,7 @@ const ResetPassword = () => {
       <Card className="w-full max-w-lg">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">Reset Password</CardTitle>
-          <CardDescription>
-            Enter your new password below
-          </CardDescription>
+          <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent>
           <ResetPasswordForm />
