@@ -42,15 +42,9 @@ export const usePasswordReset = () => {
       const redirectTo = `${currentDomain}/reset-password#type=recovery&t=${timestamp}`;
       console.log("Reset password redirect URL:", redirectTo);
       
+      // Remove the options object and pass only the redirectTo parameter
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
-        options: {
-          // Set email template data to ensure proper token handling
-          data: {
-            token_type: 'recovery',
-            redirect_path: '/reset-password'
-          }
-        }
       });
 
       if (error) {
