@@ -12,78 +12,68 @@ export const useVerifyRecoveryFlow = () => {
   useEffect(() => {
     const verifyRecoveryFlow = async () => {
       console.log("=== Reset Password Verification Start ===");
-      console.log("Current URL:", window.location.href);
-      console.log("Search params:", window.location.search);
-      console.log("Hash:", window.location.hash);
-
       try {
-        // Check for active session first
-        console.log("Checking for active session...");
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        console.log("Session check result:", {
-          hasSession: !!session,
-          sessionError: sessionError?.message,
-          sessionData: session
-        });
-
-        if (session) {
-          console.log("Session is already valid, skipping OTP verification");
-          setIsValidToken(true);
-          setIsLoading(false);
-          return;
-        }
-
         // Extract and validate URL parameters
         const queryParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const code = queryParams.get("code");
         const type = hashParams.get("type");
 
+        console.log("Current URL:", window.location.href);
+        console.log("Search params:", window.location.search);
+        console.log("Hash:", window.location.hash);
         console.log("Extracted parameters:", {
           code: code ? "present" : "missing",
           type,
-          fullHash: window.location.hash,
-          parsedHash: Object.fromEntries(hashParams.entries())
         });
 
         if (!code || type !== "recovery") {
-          console.warn("Invalid recovery flow: Missing code or wrong type");
+          console.warn("Invalid recovery flow parameters");
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
             description: "The password reset link is invalid or has expired. Please request a new one.",
           });
           setIsValidToken(false);
-          setTimeout(() => navigate("/login"), 3000);
+          navigate("/login");
           return;
         }
 
-        // Verify OTP if no valid session exists
+        // Verify OTP
         console.log("Attempting to verify OTP...");
-        try {
-          const { error: verifyError } = await supabase.auth.verifyOtp({
-            token_hash: code,
-            type: "recovery"
-          });
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: code,
+          type: "recovery"
+        });
 
-          if (verifyError) {
-            console.error("OTP verification failed:", verifyError);
-            throw verifyError;
-          }
-          console.log("OTP verification successful");
-          setIsValidToken(true);
-        } catch (verifyError) {
-          console.error("OTP verification error:", verifyError);
+        if (verifyError) {
+          console.error("OTP verification failed:", verifyError);
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
             description: "The password reset link is invalid or has expired. Please request a new one.",
           });
           setIsValidToken(false);
-          setTimeout(() => navigate("/login"), 3000);
+          navigate("/login");
           return;
         }
+
+        // Check session after OTP verification
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.error("No session after OTP verification");
+          toast({
+            variant: "destructive",
+            title: "Session Error",
+            description: "Failed to establish session. Please try again.",
+          });
+          setIsValidToken(false);
+          navigate("/login");
+          return;
+        }
+
+        console.log("OTP verification successful, session established");
+        setIsValidToken(true);
       } catch (error) {
         console.error("Unexpected error during recovery flow verification:", error);
         toast({
@@ -92,10 +82,10 @@ export const useVerifyRecoveryFlow = () => {
           description: "An error occurred while verifying your reset link. Please try again.",
         });
         setIsValidToken(false);
-        setTimeout(() => navigate("/login"), 3000);
+        navigate("/login");
       } finally {
-        console.log("=== Reset Password Verification End ===");
         setIsLoading(false);
+        console.log("=== Reset Password Verification End ===");
       }
     };
 
