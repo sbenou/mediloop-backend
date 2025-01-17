@@ -14,28 +14,25 @@ const ResetPassword = () => {
   useEffect(() => {
     const verifyRecoveryToken = async () => {
       console.log("=== Reset Password Verification Start ===");
-
       try {
-        // Log the full URL and hash for debugging
+        // Log the full URL for debugging
         console.log("Current URL:", window.location.href);
-        console.log("Full URL Fragment:", window.location.hash);
-
-        // Extract hash parameters from the URL
+        
+        // Extract query parameters and hash fragments
+        const queryParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const token_hash = hashParams.get("token_hash");
+        
+        // Get the recovery code from query string and type from fragment
+        const code = queryParams.get("code");
         const type = hashParams.get("type");
-        const timestamp = hashParams.get("t"); // Get the timestamp parameter
+        
+        console.log("Parsed Query Params:", { code: code ? "[REDACTED]" : null });
+        console.log("Parsed Hash Params:", { type });
 
-        console.log("Parsed Hash Params:", { 
-          token_hash: token_hash ? "[REDACTED]" : null, 
-          type,
-          timestamp 
-        });
-
-        if (!token_hash || type !== "recovery") {
-          console.warn("Invalid recovery flow: Missing token_hash or wrong type");
+        if (!code || type !== "recovery") {
+          console.warn("Invalid recovery flow: Missing code or wrong type");
           console.log("Type received:", type);
-          console.log("Token hash present:", !!token_hash);
+          console.log("Code present:", !!code);
           
           toast({
             variant: "destructive",
@@ -47,11 +44,11 @@ const ResetPassword = () => {
           return;
         }
 
-        // Verify the token using Supabase
-        console.log("Verifying token_hash with Supabase...");
+        // Verify the code using Supabase
+        console.log("Verifying recovery code with Supabase...");
         const { data, error } = await supabase.auth.verifyOtp({
-          token_hash,
-          type: "recovery",
+          token: code,
+          type: "recovery"
         });
 
         if (error) {
@@ -71,7 +68,7 @@ const ResetPassword = () => {
           return;
         }
 
-        console.log("Token verification successful:", data);
+        console.log("Recovery code verification successful:", data);
         setIsValidToken(true);
         setIsLoading(false);
       } catch (error) {
