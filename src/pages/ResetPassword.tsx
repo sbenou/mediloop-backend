@@ -1,11 +1,86 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { ResetPasswordForm } from "@/components/auth/reset-password/ResetPasswordForm";
-import { useVerifyRecoveryFlow } from "@/hooks/auth/useVerifyRecoveryFlow";
+import { supabase } from "@/lib/supabase";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const { isLoading, isValidToken } = useVerifyRecoveryFlow();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isValidToken, setIsValidToken] = useState(false);
+
+  useEffect(() => {
+    const verifyRecoveryFlow = async () => {
+      console.log("=== Reset Password Verification Start ===");
+      try {
+        // Extract and validate URL parameters
+        const queryParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const type = hashParams.get("type");
+
+        console.log("Current URL:", window.location.href);
+        console.log("Search params:", window.location.search);
+        console.log("Hash:", window.location.hash);
+
+        if (type !== "recovery") {
+          console.warn("Invalid recovery flow: Missing or incorrect type");
+          toast({
+            variant: "destructive",
+            title: "Invalid Reset Link",
+            description: "The password reset link is invalid. Please request a new one.",
+          });
+          setIsValidToken(false);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("Checking for active session...");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to verify session. Please try again.",
+          });
+          setIsValidToken(false);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!session) {
+          console.warn("No active session found");
+          toast({
+            variant: "destructive",
+            title: "Session Expired",
+            description: "Your session has expired. Please request a new reset link.",
+          });
+          setIsValidToken(false);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("Valid session found. Proceeding to reset password...");
+        setIsValidToken(true); // Mark the token as valid since the session is active
+      } catch (error) {
+        console.error("Unexpected error during recovery flow verification:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An error occurred while verifying your reset link. Please try again.",
+        });
+        setIsValidToken(false);
+      } finally {
+        setIsLoading(false);
+        console.log("=== Reset Password Verification End ===");
+      }
+    };
+
+    verifyRecoveryFlow();
+  }, [toast, navigate]);
 
   if (isLoading) {
     return (
@@ -27,7 +102,6 @@ const ResetPassword = () => {
             <CardTitle className="text-2xl">Invalid Reset Link</CardTitle>
             <CardDescription>
               This password reset link is invalid or has expired. Please request a new one from the login page.
-              Redirecting you to the login page in 3 seconds...
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
