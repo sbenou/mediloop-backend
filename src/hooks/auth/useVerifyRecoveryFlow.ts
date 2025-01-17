@@ -13,6 +13,10 @@ export const useVerifyRecoveryFlow = () => {
     const verifyRecoveryFlow = async () => {
       console.log("=== Reset Password Verification Start ===");
       try {
+        // Get current session first
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Current session:", currentSession);
+
         // Extract and validate URL parameters
         const queryParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -39,9 +43,16 @@ export const useVerifyRecoveryFlow = () => {
           return;
         }
 
-        // Verify OTP
+        // If we already have a valid session, skip OTP verification
+        if (currentSession?.user) {
+          console.log("Valid session found, proceeding with reset");
+          setIsValidToken(true);
+          return;
+        }
+
+        // Verify OTP only if we don't have a valid session
         console.log("Attempting to verify OTP...");
-        const { error: verifyError } = await supabase.auth.verifyOtp({
+        const { data, error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: code,
           type: "recovery"
         });
@@ -58,9 +69,8 @@ export const useVerifyRecoveryFlow = () => {
           return;
         }
 
-        // Check session after OTP verification
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        // Check if we got a session after OTP verification
+        if (!data.session) {
           console.error("No session after OTP verification");
           toast({
             variant: "destructive",

@@ -37,7 +37,7 @@ export const usePasswordReset = () => {
       console.log("Initiating password reset for email:", email);
       
       const currentDomain = window.location.origin;
-      const redirectTo = `${currentDomain}/reset-password#type=recovery`;
+      const redirectTo = `${currentDomain}/reset-password`;
       console.log("Reset password redirect URL:", redirectTo);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
