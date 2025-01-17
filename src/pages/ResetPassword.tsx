@@ -15,22 +15,18 @@ const ResetPassword = () => {
     const verifyRecoveryFlow = async () => {
       console.log("=== Reset Password Verification Start ===");
       try {
-        // Log the full URL for debugging
-        console.log("Current URL:", window.location.href);
-        
         // Extract query parameters and hash fragments
         const queryParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        
-        // Get the type from fragment
+        const code = queryParams.get("code");
         const type = hashParams.get("type");
         
+        console.log("Current URL:", window.location.href);
+        console.log("Recovery code present:", !!code);
         console.log("Parsed Hash Params:", { type });
 
-        if (type !== "recovery") {
-          console.warn("Invalid recovery flow: Wrong type");
-          console.log("Type received:", type);
-          
+        if (!code || type !== "recovery") {
+          console.warn("Invalid recovery flow: Missing code or wrong type");
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
@@ -41,15 +37,33 @@ const ResetPassword = () => {
           return;
         }
 
-        // Check if we have an active session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          console.warn("No active session found");
+        // Attempt to verify the recovery code
+        const { data, error } = await supabase.auth.verifyOtp({
+          token: code,
+          type: "recovery"
+        });
+
+        if (error) {
+          console.error("Recovery verification error:", error);
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
             description: "The password reset link is invalid or has expired. Please request a new one.",
+          });
+          setIsValidToken(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if we have an active session after verification
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.warn("No active session found after verification");
+          toast({
+            variant: "destructive",
+            title: "Verification Failed",
+            description: "Unable to verify your reset link. Please request a new one.",
           });
           setIsValidToken(false);
           setIsLoading(false);
@@ -71,6 +85,7 @@ const ResetPassword = () => {
         setIsLoading(false);
       } finally {
         console.log("=== Reset Password Verification End ===");
+        setIsLoading(false); // Ensure loading state is always cleared
       }
     };
 
