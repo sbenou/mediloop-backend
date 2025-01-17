@@ -4,6 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { ResetPasswordForm } from "@/components/auth/reset-password/ResetPasswordForm";
 import { supabase } from "@/lib/supabase";
+import { User } from '@supabase/supabase-js';
+
+// Extend the User type to include recovery-specific properties
+interface RecoveryUser extends User {
+  aal?: string;
+  amr?: Array<{ method: string }>;
+}
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -35,11 +42,18 @@ const ResetPassword = () => {
           return;
         }
 
-        // Verify this is a recovery session
-        const recoveryFlow = session.user?.aal?.includes('recovery') || 
-                           session.user?.amr?.some(method => method.method === 'recovery');
+        // Cast the user to our extended type
+        const user = session.user as RecoveryUser;
 
-        console.log("Recovery flow check:", { recoveryFlow, aal: session.user?.aal, amr: session.user?.amr });
+        // Verify this is a recovery session
+        const recoveryFlow = user?.aal?.includes('recovery') || 
+                           user?.amr?.some(method => method.method === 'recovery');
+
+        console.log("Recovery flow check:", { 
+          recoveryFlow, 
+          aal: user?.aal, 
+          amr: user?.amr 
+        });
 
         if (!recoveryFlow) {
           console.warn("Not a recovery session");
