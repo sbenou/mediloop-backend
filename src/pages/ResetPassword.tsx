@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ResetPasswordForm } from "@/components/auth/reset-password/ResetPasswordForm";
@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabase";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isValidToken, setIsValidToken] = useState(false);
@@ -15,27 +14,36 @@ const ResetPassword = () => {
   useEffect(() => {
     const verifyRecoveryToken = async () => {
       try {
-        // Get the token_hash from URL
-        const fragment = new URLSearchParams(window.location.hash.substring(1));
-        const tokenHash = fragment.get('token_hash');
+        // Log the full URL hash for debugging
+        console.log("Full URL Hash:", window.location.hash);
+
+        // Extract hash parameters from the URL
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const token = hashParams.get('access_token');
+        const type = hashParams.get('type');
+
+        console.log("Reset password flow - Hash params:", { token: token ? '[REDACTED]' : null, type });
         
-        console.log("Reset password flow - Token hash:", tokenHash);
-        
-        if (!tokenHash) {
-          console.log("Invalid recovery flow - Missing token hash");
+        if (!token || type !== 'recovery') {
+          console.log("Invalid recovery flow - Missing token or wrong type");
           setIsValidToken(false);
           setIsLoading(false);
           return;
         }
 
-        // Verify the recovery token using the token hash method
+        // Verify the token using Supabase
         const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
+          token,
           type: 'recovery'
         });
 
         if (error) {
           console.error("Recovery token verification error:", error);
+          toast({
+            variant: "destructive",
+            title: "Invalid Reset Link",
+            description: "The password reset link is invalid or has expired. Please request a new one.",
+          });
           setIsValidToken(false);
           setIsLoading(false);
           return;
@@ -46,6 +54,11 @@ const ResetPassword = () => {
         setIsLoading(false);
       } catch (error) {
         console.error("Error during recovery token verification:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An error occurred while verifying your reset link. Please try again.",
+        });
         setIsValidToken(false);
         setIsLoading(false);
       }
