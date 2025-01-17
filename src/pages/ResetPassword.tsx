@@ -37,9 +37,9 @@ const ResetPassword = () => {
           return;
         }
 
-        // Attempt to verify the recovery code
+        // Attempt to verify the recovery code using token_hash instead of token
         const { data, error } = await supabase.auth.verifyOtp({
-          token: code,
+          token_hash: code,
           type: "recovery"
         });
 
@@ -73,7 +73,6 @@ const ResetPassword = () => {
         console.log("Valid recovery flow detected");
         setIsValidToken(true);
         setIsLoading(false);
-
       } catch (error) {
         console.error("Unexpected error during recovery flow verification:", error);
         toast({
