@@ -47,8 +47,8 @@ const ResetPassword = () => {
         // Verify the code using Supabase
         console.log("Verifying recovery code with Supabase...");
         const { data, error } = await supabase.auth.verifyOtp({
-          token: code,
-          type: "recovery"
+          type: "recovery",
+          token_hash: code
         });
 
         if (error) {
