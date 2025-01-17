@@ -18,13 +18,15 @@ const ResetPassword = () => {
         // Extract query parameters and hash fragments
         const queryParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const code = queryParams.get("code");
         const type = hashParams.get("type");
         
         console.log("Current URL:", window.location.href);
-        console.log("Parsed Hash Params:", { type });
+        console.log("Recovery code:", code);
+        console.log("Recovery type:", type);
 
-        if (type !== "recovery") {
-          console.warn("Invalid recovery flow: Wrong type");
+        if (!code || type !== "recovery") {
+          console.warn("Invalid recovery flow: Missing code or wrong type");
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
@@ -35,11 +37,45 @@ const ResetPassword = () => {
           return;
         }
 
-        // Check if we have an active session
-        const { data: { session } } = await supabase.auth.getSession();
+        // First verify the OTP
+        console.log("Attempting to verify OTP...");
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: code,
+          type: "recovery"
+        });
+
+        if (verifyError) {
+          console.error("OTP verification error:", verifyError);
+          toast({
+            variant: "destructive",
+            title: "Invalid Reset Link",
+            description: "The password reset link is invalid or has expired. Please request a new one.",
+          });
+          setIsValidToken(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Then check for an active session
+        console.log("Checking for active session...");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
+        console.log("Session check result:", { session, error: sessionError });
+
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to verify session. Please try again.",
+          });
+          setIsValidToken(false);
+          setIsLoading(false);
+          return;
+        }
+
         if (!session) {
-          console.warn("No active session found after recovery link");
+          console.warn("No active session found");
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
@@ -52,7 +88,6 @@ const ResetPassword = () => {
 
         console.log("Valid recovery flow detected");
         setIsValidToken(true);
-        setIsLoading(false);
       } catch (error) {
         console.error("Unexpected error during recovery flow verification:", error);
         toast({
@@ -61,9 +96,9 @@ const ResetPassword = () => {
           description: "An error occurred while verifying your reset link. Please try again.",
         });
         setIsValidToken(false);
-        setIsLoading(false);
       } finally {
         console.log("=== Reset Password Verification End ===");
+        setIsLoading(false);
       }
     };
 
