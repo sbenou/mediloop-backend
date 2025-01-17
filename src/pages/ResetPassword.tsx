@@ -16,28 +16,66 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [isValidSession, setIsValidSession] = useState(false);
+  const [isValidToken, setIsValidToken] = useState(false);
 
   useEffect(() => {
-    const checkSession = async () => {
-      console.log("=== Reset Password Session Check Start ===");
+    const verifyRecoveryFlow = async () => {
+      console.log("=== Reset Password Verification Start ===");
       try {
-        // Check for active session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        console.log("Session check result:", {
-          hasSession: !!session,
-          error: error?.message || null
+        // Extract and validate URL parameters
+        const queryParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const code = queryParams.get("code");
+        const type = hashParams.get("type");
+
+        console.log("Current URL:", window.location.href);
+        console.log("Search params:", window.location.search);
+        console.log("Hash:", window.location.hash);
+        console.log("Extracted parameters:", {
+          code: code ? "present" : "missing",
+          type,
         });
 
-        if (error || !session) {
-          console.warn("No active session found:", error?.message);
+        if (!code || type !== "recovery") {
+          console.warn("Invalid recovery flow parameters");
+          toast({
+            variant: "destructive",
+            title: "Invalid Reset Link",
+            description: "The password reset link is invalid or has expired. Please request a new one.",
+          });
+          setIsValidToken(false);
+          navigate("/login");
+          return;
+        }
+
+        // Verify OTP
+        console.log("Attempting to verify OTP...");
+        const { data: { session }, error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: code,
+          type: "recovery"
+        });
+
+        if (verifyError) {
+          console.error("OTP verification failed:", verifyError);
+          toast({
+            variant: "destructive",
+            title: "Invalid Reset Link",
+            description: "The password reset link is invalid or has expired. Please request a new one.",
+          });
+          setIsValidToken(false);
+          navigate("/login");
+          return;
+        }
+
+        // Check session after OTP verification
+        if (!session) {
+          console.error("No session after OTP verification");
           toast({
             variant: "destructive",
             title: "Session Error",
-            description: "Please use the reset link from your email to access this page.",
+            description: "Failed to establish session. Please try again.",
           });
-          setIsValidSession(false);
+          setIsValidToken(false);
           navigate("/login");
           return;
         }
@@ -62,30 +100,29 @@ const ResetPassword = () => {
             title: "Invalid Access",
             description: "This page can only be accessed through a password reset link.",
           });
-          setIsValidSession(false);
+          setIsValidToken(false);
           navigate("/login");
           return;
         }
 
-        console.log("Valid recovery session found");
-        setIsValidSession(true);
-
+        console.log("OTP verification successful, session established");
+        setIsValidToken(true);
       } catch (error) {
-        console.error("Unexpected error during session check:", error);
+        console.error("Unexpected error during recovery flow verification:", error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "An error occurred while verifying your session. Please try again.",
+          description: "An error occurred while verifying your reset link. Please try again.",
         });
-        setIsValidSession(false);
+        setIsValidToken(false);
         navigate("/login");
       } finally {
         setIsLoading(false);
-        console.log("=== Reset Password Session Check End ===");
+        console.log("=== Reset Password Verification End ===");
       }
     };
 
-    checkSession();
+    verifyRecoveryFlow();
   }, [navigate, toast]);
 
   if (isLoading) {
@@ -93,21 +130,22 @@ const ResetPassword = () => {
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">Verifying session...</CardTitle>
+            <CardTitle className="text-2xl">Verifying reset link...</CardTitle>
+            <CardDescription>Please wait while we verify your reset link.</CardDescription>
           </CardHeader>
         </Card>
       </div>
     );
   }
 
-  if (!isValidSession) {
+  if (!isValidToken) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">Invalid Access</CardTitle>
+            <CardTitle className="text-2xl">Invalid Reset Link</CardTitle>
             <CardDescription>
-              Please use the reset link from your email to access this page.
+              This password reset link is invalid or has expired. Please request a new one from the login page.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
