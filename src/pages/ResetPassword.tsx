@@ -28,10 +28,11 @@ const ResetPassword = () => {
           return;
         }
 
-        // Verify the recovery code by attempting to get a new session
-        const { data, error } = await supabase.auth.verifyOtp({
-          token: recoveryCode,
-          type: 'recovery'
+        // Use updateUser to verify the recovery token
+        const { data, error } = await supabase.auth.updateUser({
+          password: 'TEMPORARY_PASSWORD_12345'
+        }, {
+          hash: recoveryCode
         });
 
         if (error) {
