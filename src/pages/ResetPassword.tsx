@@ -34,6 +34,11 @@ const ResetPassword = () => {
           console.log("Invalid recovery flow - Missing token_hash or wrong type");
           setIsValidToken(false);
           setIsLoading(false);
+          toast({
+            variant: "destructive",
+            title: "Invalid Reset Link",
+            description: "The password reset link is invalid or has expired. Please request a new one.",
+          });
           return;
         }
 

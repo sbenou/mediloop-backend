@@ -34,6 +34,8 @@ export const usePasswordReset = () => {
     
     try {
       console.log("=== Password Reset Email Request Start ===");
+      console.log("Initiating password reset for email:", email);
+      
       const currentDomain = window.location.origin;
       // Explicitly add the recovery type to the redirect URL
       const redirectTo = `${currentDomain}/reset-password#type=recovery`;
@@ -45,6 +47,10 @@ export const usePasswordReset = () => {
 
       if (error) {
         console.error("Password reset email error:", error);
+        console.log("Error details:", {
+          status: error.status,
+          message: error.message
+        });
         
         if (error.status === 429 || error.message?.includes('rate limit')) {
           const cooldownDuration = 60 * 1000; // 60 seconds
@@ -67,6 +73,7 @@ export const usePasswordReset = () => {
         });
       } else {
         console.log("Reset email request successful");
+        console.log("Reset email sent to:", email);
         
         toast({
           title: "Check Your Email",
@@ -78,7 +85,7 @@ export const usePasswordReset = () => {
         setCooldownEndTime(Date.now() + cooldownDuration);
       }
     } catch (error: any) {
-      console.error("Error sending reset password email:", error);
+      console.error("Unexpected error during reset password email:", error);
       toast({
         variant: "destructive",
         title: "Error",
