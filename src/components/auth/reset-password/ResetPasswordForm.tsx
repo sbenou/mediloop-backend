@@ -107,6 +107,9 @@ export const ResetPasswordForm = () => {
     console.log("Starting password reset process...");
 
     try {
+      console.log("Verifying OTP and updating password...");
+      
+      // First verify the OTP
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
@@ -129,7 +132,10 @@ export const ResetPasswordForm = () => {
         duration: 5000,
       });
 
-      navigate("/login", { replace: true });
+      // Add a small delay before redirecting to ensure the toast is visible
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 2000);
 
     } catch (error: any) {
       console.error('Password reset error:', error);
