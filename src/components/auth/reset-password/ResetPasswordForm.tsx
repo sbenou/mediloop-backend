@@ -58,32 +58,6 @@ const PasswordInput = ({
   </div>
 );
 
-const PasswordMatchAlert = ({ passwordsMatch }: { passwordsMatch: boolean | null }) => {
-  if (passwordsMatch === null) return null;
-
-  return (
-    <Alert variant={passwordsMatch ? "default" : "destructive"} className="flex items-center gap-2">
-      {passwordsMatch ? (
-        <>
-          <Check className="h-4 w-4" />
-          <AlertDescription>Passwords match</AlertDescription>
-        </>
-      ) : (
-        <>
-          <X className="h-4 w-4" />
-          <AlertDescription>Passwords do not match</AlertDescription>
-        </>
-      )}
-    </Alert>
-  );
-};
-
-const ResetPasswordButton = ({ isLoading, passwordsMatch }: { isLoading: boolean; passwordsMatch: boolean | null }) => (
-  <Button type="submit" className="w-full" disabled={isLoading || !passwordsMatch}>
-    {isLoading ? "Resetting Password..." : "Reset Password"}
-  </Button>
-);
-
 export const ResetPasswordForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -95,6 +69,7 @@ export const ResetPasswordForm = () => {
   const email = searchParams.get("email");
   const { toast } = useToast();
   const navigate = useNavigate();
+
   const passwordsMatch = password && confirmPassword ? password === confirmPassword : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,7 +86,11 @@ export const ResetPasswordForm = () => {
     }
 
     if (password !== confirmPassword) {
-      console.log("Password mismatch detected");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Passwords do not match.",
+      });
       return;
     }
 
@@ -129,13 +108,15 @@ export const ResetPasswordForm = () => {
 
     try {
       console.log("Verifying OTP and updating password...");
-      const { data, error } = await supabase.auth.verifyOtp({
+      const { error: verifyError } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: 'recovery',
+        type: 'recovery'
       });
 
-      if (error) throw error;
+      if (verifyError) {
+        throw verifyError;
+      }
 
       // After OTP verification, update the password
       const { error: updateError } = await supabase.auth.updateUser({
@@ -148,6 +129,7 @@ export const ResetPasswordForm = () => {
       toast({
         title: "Success",
         description: "Your password has been reset successfully. Please log in with your new password.",
+        duration: 5000,
       });
 
       // Sign out and redirect to login page
@@ -161,21 +143,12 @@ export const ResetPasswordForm = () => {
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to reset password. Please try again.",
+        duration: 5000,
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  if (!email) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>
-          Invalid reset password link. Please request a new password reset from the login page.
-        </AlertDescription>
-      </Alert>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -188,7 +161,7 @@ export const ResetPasswordForm = () => {
           render={({ slots }) => (
             <InputOTPGroup className="gap-2">
               {slots.map((slot, index) => (
-                <InputOTPSlot key={index} {...slot} index={index} />
+                <InputOTPSlot key={index} {...slot} />
               ))}
             </InputOTPGroup>
           )}
@@ -215,9 +188,29 @@ export const ResetPasswordForm = () => {
         onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
       />
 
-      <PasswordMatchAlert passwordsMatch={passwordsMatch} />
+      {passwordsMatch !== null && (
+        <Alert variant={passwordsMatch ? "default" : "destructive"} className="flex items-center gap-2">
+          {passwordsMatch ? (
+            <>
+              <Check className="h-4 w-4" />
+              <AlertDescription>Passwords match</AlertDescription>
+            </>
+          ) : (
+            <>
+              <X className="h-4 w-4" />
+              <AlertDescription>Passwords do not match</AlertDescription>
+            </>
+          )}
+        </Alert>
+      )}
       
-      <ResetPasswordButton isLoading={isLoading} passwordsMatch={passwordsMatch} />
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={isLoading || !passwordsMatch}
+      >
+        {isLoading ? "Resetting Password..." : "Reset Password"}
+      </Button>
     </form>
   );
 };
