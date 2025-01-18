@@ -10,7 +10,7 @@ import { passwordResetState } from '@/store/auth/password-reset';
 import { toast } from "@/hooks/use-toast";
 import { AuthResponse } from "@supabase/supabase-js";
 
-const OTP_TIMEOUT = 10000; // 10 seconds
+const OTP_TIMEOUT = 20000; // 20 seconds
 const OTP_LENGTH = 6;
 
 export const OTPVerificationForm = ({ email }: { email: string }) => {
@@ -33,6 +33,15 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         variant: "destructive",
         title: "Error",
         description: `The verification code must be ${OTP_LENGTH} digits long.`,
+      });
+      return false;
+    }
+
+    if (!/^\d{6}$/.test(otp)) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "The verification code must contain only numbers.",
       });
       return false;
     }
