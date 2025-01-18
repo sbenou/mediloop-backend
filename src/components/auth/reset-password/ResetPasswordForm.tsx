@@ -161,7 +161,7 @@ export const ResetPasswordForm = () => {
         >
           <InputOTPGroup>
             {Array.from({ length: 6 }).map((_, i) => (
-              <InputOTPSlot key={i} />
+              <InputOTPSlot key={i} index={i} />
             ))}
           </InputOTPGroup>
         </InputOTP>
