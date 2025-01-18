@@ -36,25 +36,23 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       console.log("OTP verification successful", data);
       
-      // First set success state
+      setIsLoading(false); // Reset loading before setting success
       setIsSuccess(true);
-      setIsLoading(false);
       
-      // Then navigate after a delay
+      // Navigate after showing success state
       setTimeout(() => {
         navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { replace: true });
-      }, 2000);
+      }, 1500);
 
     } catch (error: any) {
       console.error('OTP verification error:', error);
+      setIsLoading(false); // Reset loading before setting error
       setIsError(true);
-      setIsSuccess(false);
-      setIsLoading(false);
       
-      // Reset error state after 2 seconds
+      // Reset error state after delay
       setTimeout(() => {
         setIsError(false);
-      }, 2000);
+      }, 1500);
     }
   };
 
@@ -84,12 +82,12 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         {isLoading ? (
           "Verifying..."
         ) : isSuccess ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2 w-full">
             <Check className="h-4 w-4" />
             <span>OTP Verified</span>
           </div>
         ) : isError ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2 w-full">
             <X className="h-4 w-4" />
             <span>Invalid OTP</span>
           </div>

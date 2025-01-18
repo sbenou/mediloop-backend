@@ -36,7 +36,7 @@ export const usePasswordReset = () => {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          shouldCreateUser: false, // Don't create new users through password reset
+          shouldCreateUser: false,
         }
       });
 
@@ -45,7 +45,7 @@ export const usePasswordReset = () => {
       toast({
         title: "Reset Password Request",
         description: "If an account exists with this email address, we've sent you a verification code. Please check your inbox and spam folder.",
-        duration: 5000, // 5 seconds duration
+        duration: 3000, // Reduced from 5000 to 3000ms
       });
       
       startCooldown();
@@ -56,6 +56,7 @@ export const usePasswordReset = () => {
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to send reset email",
+        duration: 3000, // Consistent duration
       });
       return false;
     } finally {
