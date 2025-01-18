@@ -5,12 +5,12 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { Check, X } from "lucide-react";
+import { useRecoilState } from 'recoil';
+import { passwordResetState } from '@/store/auth/password-reset';
 
 export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isError, setIsError] = useState(false);
+  const [passwordReset, setPasswordReset] = useRecoilState(passwordResetState);
   const navigate = useNavigate();
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -21,9 +21,13 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       return;
     }
 
-    setIsLoading(true);
-    setIsError(false);
-    setIsSuccess(false);
+    setPasswordReset(prev => ({
+      ...prev,
+      isLoading: true,
+      isError: false,
+      isSuccess: false,
+      email,
+    }));
 
     try {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -36,8 +40,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       console.log("OTP verification successful", data);
       
-      setIsSuccess(true);
-      setIsLoading(false);
+      setPasswordReset(prev => ({
+        ...prev,
+        isSuccess: true,
+        isLoading: false,
+      }));
       
       // Navigate after a brief delay to show success state
       setTimeout(() => {
@@ -46,12 +53,18 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
     } catch (error: any) {
       console.error('OTP verification error:', error);
-      setIsError(true);
-      setIsLoading(false);
+      setPasswordReset(prev => ({
+        ...prev,
+        isError: true,
+        isLoading: false,
+      }));
       
       // Reset error state after delay
       setTimeout(() => {
-        setIsError(false);
+        setPasswordReset(prev => ({
+          ...prev,
+          isError: false,
+        }));
       }, 1000);
     }
   };
@@ -64,7 +77,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           maxLength={6}
           value={otp}
           onChange={setOtp}
-          disabled={isLoading || isSuccess}
+          disabled={passwordReset.isLoading || passwordReset.isSuccess}
         >
           <InputOTPGroup>
             {Array.from({ length: 6 }).map((_, i) => (
@@ -76,17 +89,17 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       
       <Button 
         type="submit" 
-        className={`w-full ${isSuccess ? 'bg-green-500 hover:bg-green-600' : ''} ${isError ? 'bg-red-500 hover:bg-red-600' : ''}`}
-        disabled={isLoading || !otp || isSuccess || isError}
+        className={`w-full ${passwordReset.isSuccess ? 'bg-green-500 hover:bg-green-600' : ''} ${passwordReset.isError ? 'bg-red-500 hover:bg-red-600' : ''}`}
+        disabled={passwordReset.isLoading || !otp || passwordReset.isSuccess || passwordReset.isError}
       >
-        {isLoading ? (
+        {passwordReset.isLoading ? (
           "Verifying..."
-        ) : isSuccess ? (
+        ) : passwordReset.isSuccess ? (
           <div className="flex items-center justify-center gap-2 w-full">
             <Check className="h-4 w-4" />
             <span>OTP Verified</span>
           </div>
-        ) : isError ? (
+        ) : passwordReset.isError ? (
           <div className="flex items-center justify-center gap-2 w-full">
             <X className="h-4 w-4" />
             <span>Invalid OTP</span>
