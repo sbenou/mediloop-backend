@@ -4,19 +4,55 @@ import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
-import { Check, X } from "lucide-react";
+import { Check, X, RotateCw } from "lucide-react";
 import { useRecoilState } from 'recoil';
 import { passwordResetState } from '@/store/auth/password-reset';
 import { toast } from "@/hooks/use-toast";
 import { AuthResponse } from "@supabase/supabase-js";
 
-const OTP_TIMEOUT = 20000; // 20 seconds
 const OTP_LENGTH = 6;
+const RESEND_COOLDOWN = 60; // 60 seconds cooldown for resend
 
 export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
   const [passwordReset, setPasswordReset] = useRecoilState(passwordResetState);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const navigate = useNavigate();
+
+  const startResendCooldown = () => {
+    setResendCooldown(RESEND_COOLDOWN);
+    const timer = setInterval(() => {
+      setResendCooldown((current) => {
+        if (current <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+      
+      toast({ 
+        title: "Code Resent", 
+        description: "A new verification code has been sent to your email address." 
+      });
+      
+      startResendCooldown();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to resend the verification code.",
+      });
+    }
+  };
 
   const validateOTP = (otp: string): boolean => {
     if (!otp) {
@@ -49,51 +85,6 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     return true;
   };
 
-  const handleVerificationError = (error: any) => {
-    console.error('OTP verification error:', error);
-    
-    setPasswordReset(prev => ({
-      ...prev,
-      isError: true,
-      isLoading: false,
-    }));
-
-    // Enhanced error messaging based on error type
-    if (error.message?.includes('timeout')) {
-      toast({
-        variant: "destructive",
-        title: "Verification Timeout",
-        description: "The verification request timed out. Please try again.",
-      });
-    } else if (error?.status === 400) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Code",
-        description: "The verification code is incorrect. Please try again.",
-      });
-    } else if (error?.status === 429) {
-      toast({
-        variant: "destructive",
-        title: "Too Many Attempts",
-        description: "Please wait a few minutes before trying again.",
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Verification Failed",
-        description: error.message || "Invalid verification code. Please try again.",
-      });
-    }
-
-    // Reset error state after delay
-    setTimeout(() => {
-      setPasswordReset(prev => ({
-        ...prev,
-        isError: false,
-      }));
-    }, 1000);
-  };
-
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Starting OTP verification process...");
@@ -110,30 +101,20 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       email,
     }));
 
-    // Create a timeout promise
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Verification request timed out")), OTP_TIMEOUT)
-    );
-
     try {
       console.log("Verifying OTP for email:", email);
       
-      // Race between the verification request and timeout
-      const result = await Promise.race([
-        supabase.auth.verifyOtp({
-          email,
-          token: otp,
-          type: 'recovery'
-        }),
-        timeout
-      ]) as AuthResponse;
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'recovery'
+      });
 
-      if (result.error) {
-        console.error("OTP verification error:", result.error);
-        throw result.error;
+      if (error) {
+        throw error;
       }
 
-      console.log("OTP verification successful, data:", result.data);
+      console.log("OTP verification successful, data:", data);
       
       setPasswordReset(prev => ({
         ...prev,
@@ -141,8 +122,6 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         isLoading: false,
       }));
 
-      console.log("Preparing to navigate to new password page...");
-      
       toast({
         title: "Verification Successful",
         description: "You can now set your new password.",
@@ -153,7 +132,26 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       });
 
     } catch (error: any) {
-      handleVerificationError(error);
+      console.error('OTP verification error:', error);
+      
+      setPasswordReset(prev => ({
+        ...prev,
+        isError: true,
+        isLoading: false,
+      }));
+
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: error.message || "Invalid verification code. Please try again.",
+      });
+
+      setTimeout(() => {
+        setPasswordReset(prev => ({
+          ...prev,
+          isError: false,
+        }));
+      }, 1000);
     }
   };
 
@@ -175,27 +173,46 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         </InputOTP>
       </div>
       
-      <Button 
-        type="submit" 
-        className={`w-full ${passwordReset.isSuccess ? 'bg-green-500 hover:bg-green-600' : ''} ${passwordReset.isError ? 'bg-red-500 hover:bg-red-600' : ''}`}
-        disabled={passwordReset.isLoading || !otp || passwordReset.isSuccess || passwordReset.isError}
-      >
-        {passwordReset.isLoading ? (
-          "Verifying..."
-        ) : passwordReset.isSuccess ? (
-          <div className="flex items-center justify-center gap-2 w-full">
-            <Check className="h-4 w-4" />
-            <span>OTP Verified</span>
-          </div>
-        ) : passwordReset.isError ? (
-          <div className="flex items-center justify-center gap-2 w-full">
-            <X className="h-4 w-4" />
-            <span>Invalid OTP</span>
-          </div>
-        ) : (
-          "Verify Code"
-        )}
-      </Button>
+      <div className="space-y-2">
+        <Button 
+          type="submit" 
+          className={`w-full ${passwordReset.isSuccess ? 'bg-green-500 hover:bg-green-600' : ''} ${passwordReset.isError ? 'bg-red-500 hover:bg-red-600' : ''}`}
+          disabled={passwordReset.isLoading || !otp || passwordReset.isSuccess || passwordReset.isError}
+        >
+          {passwordReset.isLoading ? (
+            "Verifying..."
+          ) : passwordReset.isSuccess ? (
+            <div className="flex items-center justify-center gap-2 w-full">
+              <Check className="h-4 w-4" />
+              <span>Verified</span>
+            </div>
+          ) : passwordReset.isError ? (
+            <div className="flex items-center justify-center gap-2 w-full">
+              <X className="h-4 w-4" />
+              <span>Invalid Code</span>
+            </div>
+          ) : (
+            "Verify Code"
+          )}
+        </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full mt-2"
+          onClick={handleResendOtp}
+          disabled={resendCooldown > 0 || passwordReset.isLoading || passwordReset.isSuccess}
+        >
+          {resendCooldown > 0 ? (
+            `Resend Code (${resendCooldown}s)`
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              <RotateCw className="h-4 w-4" />
+              <span>Resend Code</span>
+            </div>
+          )}
+        </Button>
+      </div>
     </form>
   );
 };
