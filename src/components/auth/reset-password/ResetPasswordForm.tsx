@@ -6,7 +6,8 @@ import { Key, Check, X, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 type PasswordInputProps = {
   id: string;
@@ -89,6 +90,9 @@ export const ResetPasswordForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [searchParams] = useSearchParams();
+  const email = searchParams.get("email");
   const { toast } = useToast();
   const navigate = useNavigate();
   const passwordsMatch = password && confirmPassword ? password === confirmPassword : null;
@@ -97,8 +101,26 @@ export const ResetPasswordForm = () => {
     e.preventDefault();
     console.log("=== Password Reset Submission Start ===");
     
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Email address is missing. Please try the reset password process again.",
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       console.log("Password mismatch detected");
+      return;
+    }
+
+    if (!otp) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter the verification code sent to your email.",
+      });
       return;
     }
 
@@ -106,17 +128,23 @@ export const ResetPasswordForm = () => {
     console.log("Starting password reset process...");
 
     try {
-      console.log("Attempting to update password...");
-      const { data, error } = await supabase.auth.updateUser({
+      console.log("Verifying OTP and updating password...");
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'recovery',
+      });
+
+      if (error) throw error;
+
+      // After OTP verification, update the password
+      const { error: updateError } = await supabase.auth.updateUser({
         password: password
       });
 
-      if (error) {
-        console.error('Password reset error:', error);
-        throw error;
-      }
+      if (updateError) throw updateError;
 
-      console.log("Password reset successful, user data:", data);
+      console.log("Password reset successful");
       toast({
         title: "Success",
         description: "Your password has been reset successfully. Please log in with your new password.",
@@ -139,8 +167,34 @@ export const ResetPasswordForm = () => {
     }
   };
 
+  if (!email) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          Invalid reset password link. Please request a new password reset from the login page.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label>Verification Code</Label>
+        <InputOTP
+          value={otp}
+          onChange={setOtp}
+          maxLength={6}
+          render={({ slots }) => (
+            <InputOTPGroup className="gap-2">
+              {slots.map((slot, index) => (
+                <InputOTPSlot key={index} {...slot} />
+              ))}
+            </InputOTPGroup>
+          )}
+        />
+      </div>
+
       <PasswordInput
         id="password"
         label="New Password"

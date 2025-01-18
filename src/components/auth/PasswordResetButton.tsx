@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { usePasswordReset } from "@/hooks/auth/usePasswordReset";
+import { useNavigate } from "react-router-dom";
 
 interface PasswordResetButtonProps {
   email: string;
@@ -8,10 +9,14 @@ interface PasswordResetButtonProps {
 
 export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProps) => {
   const { isSendingReset, isInCooldown, remainingTime, handlePasswordReset } = usePasswordReset();
+  const navigate = useNavigate();
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
-    await handlePasswordReset(email);
+    const success = await handlePasswordReset(email);
+    if (success) {
+      navigate(`/reset-password?email=${encodeURIComponent(email)}`);
+    }
   };
 
   return (
