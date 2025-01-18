@@ -1,13 +1,21 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OTPVerificationForm } from "@/components/auth/reset-password/OTPVerificationForm";
 import { NewPasswordForm } from "@/components/auth/reset-password/NewPasswordForm";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate, useEffect } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const email = searchParams.get("email");
   const isNewPasswordStep = window.location.pathname === "/reset-password/new";
+
+  useEffect(() => {
+    if (!email) {
+      navigate("/login", { replace: true });
+    }
+  }, [email, navigate]);
 
   if (!email) {
     return (
@@ -19,6 +27,14 @@ const ResetPassword = () => {
               This password reset link is invalid. Please request a new password reset from the login page.
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                No email address found in the reset link. Please start the password reset process again.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
         </Card>
       </div>
     );

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
-const COOLDOWN_DURATION = 60; // seconds
+const DEFAULT_COOLDOWN = 60; // fallback value in seconds
 
 export const usePasswordReset = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
@@ -10,20 +10,25 @@ export const usePasswordReset = () => {
   const [remainingTime, setRemainingTime] = useState(0);
   const { toast } = useToast();
 
-  const startCooldown = () => {
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isInCooldown && remainingTime > 0) {
+      timer = setInterval(() => {
+        setRemainingTime((prev) => {
+          if (prev <= 1) {
+            setIsInCooldown(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isInCooldown, remainingTime]);
+
+  const startCooldown = (duration: number = DEFAULT_COOLDOWN) => {
     setIsInCooldown(true);
-    setRemainingTime(COOLDOWN_DURATION);
-    
-    const interval = setInterval(() => {
-      setRemainingTime((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setIsInCooldown(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    setRemainingTime(duration);
   };
 
   const handlePasswordReset = async (email: string): Promise<boolean> => {
@@ -45,7 +50,7 @@ export const usePasswordReset = () => {
       toast({
         title: "Reset Password Request",
         description: "If an account exists with this email address, we've sent you a verification code. Please check your inbox and spam folder.",
-        duration: 3000, // Reduced from 5000 to 3000ms
+        duration: 3000,
       });
       
       startCooldown();
@@ -56,7 +61,7 @@ export const usePasswordReset = () => {
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to send reset email",
-        duration: 3000, // Consistent duration
+        duration: 3000,
       });
       return false;
     } finally {
