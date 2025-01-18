@@ -108,15 +108,13 @@ export const ResetPasswordForm = () => {
 
     try {
       console.log("Verifying OTP and updating password...");
-      const { data: { session }, error: verifyError } = await supabase.auth.verifyOtp({
+      const { error: verifyError } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: 'recovery'
       });
 
-      if (verifyError) {
-        throw verifyError;
-      }
+      if (verifyError) throw verifyError;
 
       // After OTP verification, update the password
       const { error: updateError } = await supabase.auth.updateUser({
@@ -133,7 +131,6 @@ export const ResetPasswordForm = () => {
       });
 
       // Sign out and redirect to login page
-      console.log("Signing out and redirecting to login...");
       await supabase.auth.signOut();
       navigate("/login", { replace: true });
 
