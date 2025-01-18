@@ -4,12 +4,13 @@ import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isError, setIsError] = useState(false);
   const navigate = useNavigate();
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -21,6 +22,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }
 
     setIsLoading(true);
+    setIsError(false);
 
     try {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -42,6 +44,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
     } catch (error: any) {
       console.error('OTP verification error:', error);
+      setIsError(true);
+      // Reset error state after 2 seconds
+      setTimeout(() => {
+        setIsError(false);
+      }, 2000);
     } finally {
       setIsLoading(false);
     }
@@ -66,8 +73,8 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       
       <Button 
         type="submit" 
-        className={`w-full ${isSuccess ? 'bg-green-500 hover:bg-green-600' : ''}`}
-        disabled={isLoading || !otp || isSuccess}
+        className={`w-full ${isSuccess ? 'bg-green-500 hover:bg-green-600' : ''} ${isError ? 'bg-red-500 hover:bg-red-600' : ''}`}
+        disabled={isLoading || !otp || isSuccess || isError}
       >
         {isLoading ? (
           "Verifying..."
@@ -75,6 +82,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           <>
             <Check className="h-4 w-4" />
             OTP Verified
+          </>
+        ) : isError ? (
+          <>
+            <X className="h-4 w-4" />
+            Invalid OTP
           </>
         ) : (
           "Verify Code"
