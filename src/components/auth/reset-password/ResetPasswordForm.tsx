@@ -107,21 +107,15 @@ export const ResetPasswordForm = () => {
     console.log("Starting password reset process...");
 
     try {
-      console.log("Verifying OTP and updating password...");
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'recovery'
+      // Use updateUser with type: 'recovery' to handle both OTP verification and password update in one step
+      const { error } = await supabase.auth.updateUser({
+        password: password,
+      }, {
+        type: 'recovery',
+        token: otp
       });
 
-      if (verifyError) throw verifyError;
-
-      // After OTP verification, update the password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: password
-      });
-
-      if (updateError) throw updateError;
+      if (error) throw error;
 
       console.log("Password reset successful");
       toast({
@@ -130,8 +124,6 @@ export const ResetPasswordForm = () => {
         duration: 5000,
       });
 
-      // Sign out only from current session and redirect to login page
-      await supabase.auth.signOut({ scope: 'local' });
       navigate("/login", { replace: true });
 
     } catch (error: any) {
