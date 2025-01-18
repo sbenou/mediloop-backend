@@ -37,15 +37,16 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       if (error) throw error;
 
       console.log("OTP verification successful", data);
+      
+      // Add a small delay to ensure the toast is visible
+      setTimeout(() => {
+        navigate(`/reset-password/new?email=${encodeURIComponent(email)}`);
+      }, 1000);
+
       toast({
         title: "Success",
         description: "Email verified successfully. You can now reset your password.",
       });
-
-      // Add a small delay before redirecting
-      setTimeout(() => {
-        navigate(`/reset-password/new?email=${email}`);
-      }, 1500);
 
     } catch (error: any) {
       console.error('OTP verification error:', error);
