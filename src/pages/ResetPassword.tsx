@@ -4,13 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { ResetPasswordForm } from "@/components/auth/reset-password/ResetPasswordForm";
 import { supabase } from "@/lib/supabase";
-import { User } from '@supabase/supabase-js';
-
-// Extend the User type to include recovery-specific properties
-interface RecoveryUser extends User {
-  aal?: string;
-  amr?: Array<{ method: string }>;
-}
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -22,41 +15,49 @@ const ResetPassword = () => {
     const verifyRecoveryFlow = async () => {
       console.log("=== Reset Password Verification Start ===");
       try {
-        // Extract and validate URL parameters
-        const queryParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const code = queryParams.get("code");
-        const type = hashParams.get("type");
+        // Get current session first
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Current session state:", currentSession ? "Session exists" : "No session");
 
+        // Log the full URL for debugging
         console.log("Current URL:", window.location.href);
         console.log("Search params:", window.location.search);
         console.log("Hash:", window.location.hash);
-        console.log("Extracted parameters:", {
-          code: code ? "present" : "missing",
-          type,
-        });
+        
+        // Extract and validate the recovery code
+        const queryParams = new URLSearchParams(window.location.search);
+        const code = queryParams.get("code");
 
-        if (!code || type !== "recovery") {
-          console.warn("Invalid recovery flow parameters");
+        console.log("Recovery code:", code ? "present" : "missing");
+
+        if (!code) {
+          console.error("No recovery code found in URL");
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
-            description: "The password reset link is invalid or has expired. Please request a new one.",
+            description: "The password reset link is missing required parameters. Please request a new one.",
           });
           setIsValidToken(false);
           navigate("/login");
           return;
         }
 
-        // Verify OTP
-        console.log("Attempting to verify OTP...");
-        const { data: { session }, error: verifyError } = await supabase.auth.verifyOtp({
+        // If we already have a valid session, we can proceed
+        if (currentSession?.user) {
+          console.log("Valid session found, proceeding with reset");
+          setIsValidToken(true);
+          return;
+        }
+
+        // Verify the recovery token
+        console.log("Attempting to verify recovery token...");
+        const { data, error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: code,
           type: "recovery"
         });
 
         if (verifyError) {
-          console.error("OTP verification failed:", verifyError);
+          console.error("Token verification failed:", verifyError);
           toast({
             variant: "destructive",
             title: "Invalid Reset Link",
@@ -67,9 +68,8 @@ const ResetPassword = () => {
           return;
         }
 
-        // Check session after OTP verification
-        if (!session) {
-          console.error("No session after OTP verification");
+        if (!data.session) {
+          console.error("No session after verification");
           toast({
             variant: "destructive",
             title: "Session Error",
@@ -80,32 +80,7 @@ const ResetPassword = () => {
           return;
         }
 
-        // Cast the user to our extended type
-        const user = session.user as RecoveryUser;
-
-        // Verify this is a recovery session
-        const recoveryFlow = user?.aal?.includes('recovery') || 
-                           user?.amr?.some(method => method.method === 'recovery');
-
-        console.log("Recovery flow check:", { 
-          recoveryFlow, 
-          aal: user?.aal, 
-          amr: user?.amr 
-        });
-
-        if (!recoveryFlow) {
-          console.warn("Not a recovery session");
-          toast({
-            variant: "destructive",
-            title: "Invalid Access",
-            description: "This page can only be accessed through a password reset link.",
-          });
-          setIsValidToken(false);
-          navigate("/login");
-          return;
-        }
-
-        console.log("OTP verification successful, session established");
+        console.log("Token verification successful");
         setIsValidToken(true);
       } catch (error) {
         console.error("Unexpected error during recovery flow verification:", error);
