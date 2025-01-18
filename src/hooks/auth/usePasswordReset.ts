@@ -26,8 +26,8 @@ export const usePasswordReset = () => {
     }, 1000);
   };
 
-  const handlePasswordReset = async (email: string) => {
-    if (isInCooldown || isSendingReset) return;
+  const handlePasswordReset = async (email: string): Promise<boolean> => {
+    if (isInCooldown || isSendingReset) return false;
 
     setIsSendingReset(true);
     console.log("Initiating password reset for:", email);
@@ -48,6 +48,7 @@ export const usePasswordReset = () => {
       });
       
       startCooldown();
+      return true;
     } catch (error: any) {
       console.error("Password reset error:", error);
       toast({
@@ -55,6 +56,7 @@ export const usePasswordReset = () => {
         title: "Error",
         description: error.message || "Failed to send reset email",
       });
+      return false;
     } finally {
       setIsSendingReset(false);
     }
