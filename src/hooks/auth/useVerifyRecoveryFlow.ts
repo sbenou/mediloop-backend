@@ -47,7 +47,7 @@ export const useVerifyRecoveryFlow = () => {
 
         console.log("Attempting OTP verification with code");
         const { data, error: verifyError } = await supabase.auth.verifyOtp({
-          token: code,
+          token_hash: code,
           type: "recovery"
         });
 
