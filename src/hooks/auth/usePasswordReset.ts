@@ -1,109 +1,69 @@
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+
+const COOLDOWN_DURATION = 60; // seconds
 
 export const usePasswordReset = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
-  const [cooldownEndTime, setCooldownEndTime] = useState<number | null>(null);
+  const [isInCooldown, setIsInCooldown] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(0);
   const { toast } = useToast();
 
+  const startCooldown = () => {
+    setIsInCooldown(true);
+    setRemainingTime(COOLDOWN_DURATION);
+    
+    const interval = setInterval(() => {
+      setRemainingTime((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setIsInCooldown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const handlePasswordReset = async (email: string) => {
-    if (!email) {
-      toast({
-        variant: "destructive",
-        title: "Email Required",
-        description: "Please enter your email address to reset your password.",
-      });
-      return;
-    }
-
-    if (cooldownEndTime && Date.now() < cooldownEndTime) {
-      const remainingSeconds = Math.ceil((cooldownEndTime - Date.now()) / 1000);
-      toast({
-        variant: "destructive",
-        title: "Please Wait",
-        description: `Please wait ${remainingSeconds} seconds before requesting another reset email.`,
-        duration: 5000,
-      });
-      return;
-    }
-
-    if (isSendingReset) return;
+    if (isInCooldown || isSendingReset) return;
 
     setIsSendingReset(true);
-    
+    console.log("Initiating password reset for:", email);
+
     try {
-      console.log("=== Password Reset Email Request Start ===");
-      console.log("Initiating password reset for email:", email);
-      
-      const currentDomain = window.location.origin;
-      const redirectTo = `${currentDomain}/reset-password`;
-      console.log("Reset password redirect URL:", redirectTo);
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo,
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false, // Don't create new users through password reset
+        }
       });
 
-      if (error) {
-        console.error("Password reset email error:", error);
-        console.log("Error details:", {
-          status: error.status,
-          message: error.message
-        });
-        
-        if (error.status === 429 || error.message?.includes('rate limit')) {
-          const cooldownDuration = 60 * 1000; // 60 seconds
-          setCooldownEndTime(Date.now() + cooldownDuration);
-          
-          toast({
-            variant: "destructive",
-            title: "Too Many Attempts",
-            description: "You've made too many requests. Please wait 60 seconds before trying to reset your password again.",
-            duration: 8000,
-          });
-          return;
-        }
+      if (error) throw error;
 
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message || "Unable to send reset password email. Please try again later.",
-          duration: 5000,
-        });
-      } else {
-        console.log("Reset email request successful");
-        console.log("Reset email sent to:", email);
-        
-        toast({
-          title: "Check Your Email",
-          description: "If an account exists with this email, you will receive password reset instructions.",
-          duration: 5000,
-        });
-        
-        const cooldownDuration = 60 * 1000; // 60 seconds
-        setCooldownEndTime(Date.now() + cooldownDuration);
-      }
+      toast({
+        title: "Check your email",
+        description: "We've sent you a verification code to reset your password.",
+      });
+      
+      startCooldown();
     } catch (error: any) {
-      console.error("Unexpected error during reset password email:", error);
+      console.error("Password reset error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Unable to process your request at this time. Please try again later.",
-        duration: 5000,
+        description: error.message || "Failed to send reset email",
       });
     } finally {
-      console.log("=== Password Reset Email Request End ===");
       setIsSendingReset(false);
     }
   };
 
-  const isInCooldown = cooldownEndTime && Date.now() < cooldownEndTime;
-  const remainingTime = isInCooldown ? Math.ceil((cooldownEndTime - Date.now()) / 1000) : 0;
-
   return {
+    handlePasswordReset,
     isSendingReset,
     isInCooldown,
     remainingTime,
-    handlePasswordReset
   };
 };
