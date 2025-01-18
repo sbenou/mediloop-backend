@@ -1,11 +1,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ResetPasswordForm } from "@/components/auth/reset-password/ResetPasswordForm";
+import { OTPVerificationForm } from "@/components/auth/reset-password/OTPVerificationForm";
+import { NewPasswordForm } from "@/components/auth/reset-password/NewPasswordForm";
 import { useSearchParams } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email");
+  const isNewPasswordStep = window.location.pathname === "/reset-password/new";
 
   if (!email) {
     return (
@@ -26,13 +28,21 @@ const ResetPassword = () => {
     <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">Reset Password</CardTitle>
+          <CardTitle className="text-2xl">
+            {isNewPasswordStep ? "Reset Password" : "Verify Email"}
+          </CardTitle>
           <CardDescription>
-            Enter your new password below
+            {isNewPasswordStep 
+              ? "Enter your new password below"
+              : "Enter the verification code sent to your email"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ResetPasswordForm />
+          {isNewPasswordStep 
+            ? <NewPasswordForm email={email} />
+            : <OTPVerificationForm email={email} />
+          }
         </CardContent>
       </Card>
     </div>
