@@ -38,11 +38,8 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       console.log("OTP verification successful", data);
       
-      // Add a small delay to ensure the toast is visible
-      setTimeout(() => {
-        navigate(`/reset-password/new?email=${encodeURIComponent(email)}`);
-      }, 1000);
-
+      navigate(`/reset-password/new?email=${encodeURIComponent(email)}`);
+      
       toast({
         title: "Success",
         description: "Email verified successfully. You can now reset your password.",
