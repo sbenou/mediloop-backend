@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Check } from "lucide-react";
 
 export const OTPVerificationForm = ({ email }: { email: string }) => {
@@ -48,17 +47,6 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }
   };
 
-  if (isSuccess) {
-    return (
-      <Alert className="bg-green-50 border-green-200">
-        <Check className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-800">
-          Email verified successfully! Redirecting you to reset your password...
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   return (
     <form onSubmit={handleVerify} className="space-y-4">
       <div className="space-y-2">
@@ -78,10 +66,19 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       
       <Button 
         type="submit" 
-        className="w-full" 
-        disabled={isLoading || !otp}
+        className={`w-full ${isSuccess ? 'bg-green-500 hover:bg-green-600' : ''}`}
+        disabled={isLoading || !otp || isSuccess}
       >
-        {isLoading ? "Verifying..." : "Verify Code"}
+        {isLoading ? (
+          "Verifying..."
+        ) : isSuccess ? (
+          <>
+            <Check className="h-4 w-4" />
+            OTP Verified
+          </>
+        ) : (
+          "Verify Code"
+        )}
       </Button>
     </form>
   );
