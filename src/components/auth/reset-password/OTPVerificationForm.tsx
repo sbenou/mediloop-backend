@@ -28,7 +28,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: 'recovery'
@@ -36,7 +36,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       if (error) throw error;
 
-      console.log("OTP verification successful");
+      console.log("OTP verification successful", data);
       toast({
         title: "Success",
         description: "Email verified successfully. You can now reset your password.",
