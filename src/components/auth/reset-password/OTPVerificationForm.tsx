@@ -36,10 +36,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       console.log("OTP verification successful", data);
       
+      // First set success state
       setIsSuccess(true);
       setIsLoading(false);
       
-      // Add a small delay before navigation
+      // Then navigate after a delay
       setTimeout(() => {
         navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { replace: true });
       }, 2000);
@@ -48,12 +49,12 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       console.error('OTP verification error:', error);
       setIsError(true);
       setIsSuccess(false);
+      setIsLoading(false);
+      
       // Reset error state after 2 seconds
       setTimeout(() => {
         setIsError(false);
       }, 2000);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -83,15 +84,15 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         {isLoading ? (
           "Verifying..."
         ) : isSuccess ? (
-          <>
+          <div className="flex items-center gap-2">
             <Check className="h-4 w-4" />
-            OTP Verified
-          </>
+            <span>OTP Verified</span>
+          </div>
         ) : isError ? (
-          <>
+          <div className="flex items-center gap-2">
             <X className="h-4 w-4" />
-            Invalid OTP
-          </>
+            <span>Invalid OTP</span>
+          </div>
         ) : (
           "Verify Code"
         )}
