@@ -9,21 +9,86 @@ import { useRecoilState } from 'recoil';
 import { passwordResetState } from '@/store/auth/password-reset';
 import { toast } from "@/hooks/use-toast";
 
+const OTP_TIMEOUT = 10000; // 10 seconds
+const OTP_LENGTH = 6;
+
 export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
   const [passwordReset, setPasswordReset] = useRecoilState(passwordResetState);
   const navigate = useNavigate();
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Starting OTP verification process...");
-    
+  const validateOTP = (otp: string): boolean => {
     if (!otp) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Please enter the verification code.",
       });
+      return false;
+    }
+
+    if (otp.length !== OTP_LENGTH) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `The verification code must be ${OTP_LENGTH} digits long.`,
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleVerificationError = (error: any) => {
+    console.error('OTP verification error:', error);
+    
+    setPasswordReset(prev => ({
+      ...prev,
+      isError: true,
+      isLoading: false,
+    }));
+
+    // Enhanced error messaging based on error type
+    if (error.message?.includes('timeout')) {
+      toast({
+        variant: "destructive",
+        title: "Verification Timeout",
+        description: "The verification request timed out. Please try again.",
+      });
+    } else if (error?.status === 400) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Code",
+        description: "The verification code is incorrect. Please try again.",
+      });
+    } else if (error?.status === 429) {
+      toast({
+        variant: "destructive",
+        title: "Too Many Attempts",
+        description: "Please wait a few minutes before trying again.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: error.message || "Invalid verification code. Please try again.",
+      });
+    }
+
+    // Reset error state after delay
+    setTimeout(() => {
+      setPasswordReset(prev => ({
+        ...prev,
+        isError: false,
+      }));
+    }, 1000);
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Starting OTP verification process...");
+    
+    if (!validateOTP(otp)) {
       return;
     }
 
@@ -35,13 +100,23 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       email,
     }));
 
+    // Create a timeout promise
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Verification request timed out")), OTP_TIMEOUT)
+    );
+
     try {
       console.log("Verifying OTP for email:", email);
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'recovery'
-      });
+      
+      // Race between the verification request and timeout
+      const { data, error } = await Promise.race([
+        supabase.auth.verifyOtp({
+          email,
+          token: otp,
+          type: 'recovery'
+        }),
+        timeout
+      ]);
 
       if (error) {
         console.error("OTP verification error:", error);
@@ -58,38 +133,17 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       console.log("Preparing to navigate to new password page...");
       
-      // Show success message before navigation
       toast({
         title: "Verification Successful",
         description: "You can now set your new password.",
       });
       
-      // Navigate immediately but keep the toast visible
       navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { 
         replace: true 
       });
 
     } catch (error: any) {
-      console.error('OTP verification error:', error);
-      setPasswordReset(prev => ({
-        ...prev,
-        isError: true,
-        isLoading: false,
-      }));
-      
-      toast({
-        variant: "destructive",
-        title: "Verification Failed",
-        description: error.message || "Invalid verification code. Please try again.",
-      });
-
-      // Reset error state after delay
-      setTimeout(() => {
-        setPasswordReset(prev => ({
-          ...prev,
-          isError: false,
-        }));
-      }, 1000);
+      handleVerificationError(error);
     }
   };
 
@@ -98,13 +152,13 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       <div className="space-y-2">
         <Label>Verification Code</Label>
         <InputOTP
-          maxLength={6}
+          maxLength={OTP_LENGTH}
           value={otp}
           onChange={setOtp}
           disabled={passwordReset.isLoading || passwordReset.isSuccess}
         >
           <InputOTPGroup>
-            {Array.from({ length: 6 }).map((_, i) => (
+            {Array.from({ length: OTP_LENGTH }).map((_, i) => (
               <InputOTPSlot key={i} index={i} />
             ))}
           </InputOTPGroup>
