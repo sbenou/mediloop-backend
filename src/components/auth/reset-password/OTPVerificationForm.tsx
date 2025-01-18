@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Check, X } from "lucide-react";
 import { useRecoilState } from 'recoil';
 import { passwordResetState } from '@/store/auth/password-reset';
+import { toast } from "@/hooks/use-toast";
 
 export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
@@ -18,6 +19,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     console.log("Starting OTP verification process...");
     
     if (!otp) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter the verification code.",
+      });
       return;
     }
 
@@ -30,26 +36,38 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }));
 
     try {
+      console.log("Verifying OTP for email:", email);
       const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: 'recovery'
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("OTP verification error:", error);
+        throw error;
+      }
 
-      console.log("OTP verification successful", data);
+      console.log("OTP verification successful, data:", data);
       
       setPasswordReset(prev => ({
         ...prev,
         isSuccess: true,
         isLoading: false,
       }));
+
+      console.log("Preparing to navigate to new password page...");
       
-      // Navigate after a brief delay to show success state
-      setTimeout(() => {
-        navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { replace: true });
-      }, 1000);
+      // Show success message before navigation
+      toast({
+        title: "Verification Successful",
+        description: "You can now set your new password.",
+      });
+      
+      // Navigate immediately but keep the toast visible
+      navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { 
+        replace: true 
+      });
 
     } catch (error: any) {
       console.error('OTP verification error:', error);
@@ -59,6 +77,12 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         isLoading: false,
       }));
       
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: error.message || "Invalid verification code. Please try again.",
+      });
+
       // Reset error state after delay
       setTimeout(() => {
         setPasswordReset(prev => ({
