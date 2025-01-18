@@ -110,11 +110,17 @@ export const ResetPasswordForm = () => {
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: 'recovery',
-        password: password
+        type: 'recovery'
       });
 
       if (error) throw error;
+
+      // If OTP verification is successful, update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (updateError) throw updateError;
 
       console.log("Password reset successful");
       toast({
