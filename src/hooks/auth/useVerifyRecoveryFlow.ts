@@ -39,7 +39,7 @@ export const useVerifyRecoveryFlow = () => {
             description: "The password reset link is invalid or has expired. Please request a new one.",
           });
           setIsValidToken(false);
-          navigate("/login");
+          // Removed navigation to login - let user stay on reset password page
           return;
         }
 
@@ -65,7 +65,7 @@ export const useVerifyRecoveryFlow = () => {
             description: "The password reset link is invalid or has expired. Please request a new one.",
           });
           setIsValidToken(false);
-          navigate("/login");
+          // Removed navigation to login - let user stay on reset password page
           return;
         }
 
@@ -78,7 +78,7 @@ export const useVerifyRecoveryFlow = () => {
             description: "Failed to establish session. Please try again.",
           });
           setIsValidToken(false);
-          navigate("/login");
+          // Removed navigation to login - let user stay on reset password page
           return;
         }
 
@@ -92,7 +92,7 @@ export const useVerifyRecoveryFlow = () => {
           description: "An error occurred while verifying your reset link. Please try again.",
         });
         setIsValidToken(false);
-        navigate("/login");
+        // Removed navigation to login - let user stay on reset password page
       } finally {
         setIsLoading(false);
         console.log("=== Reset Password Verification End ===");
