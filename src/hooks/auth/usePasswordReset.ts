@@ -45,7 +45,7 @@ export const usePasswordReset = () => {
       toast({
         title: "Reset Password Request",
         description: "If an account exists with this email address, we've sent you a verification code. Please check your inbox and spam folder.",
-        duration: 6000, // Increased duration to 6 seconds for better readability
+        duration: 5000, // 5 seconds duration
       });
       
       startCooldown();
