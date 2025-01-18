@@ -97,6 +97,9 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
         duration: 5000,
       });
 
+      // Sign out the user before redirecting
+      await supabase.auth.signOut();
+
       setTimeout(() => {
         navigate("/login", { replace: true });
       }, 2000);
