@@ -23,6 +23,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
     setIsLoading(true);
     setIsError(false);
+    setIsSuccess(false);
 
     try {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -36,6 +37,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       console.log("OTP verification successful", data);
       
       setIsSuccess(true);
+      setIsLoading(false);
       
       // Add a small delay before navigation
       setTimeout(() => {
@@ -45,6 +47,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     } catch (error: any) {
       console.error('OTP verification error:', error);
       setIsError(true);
+      setIsSuccess(false);
       // Reset error state after 2 seconds
       setTimeout(() => {
         setIsError(false);
@@ -62,6 +65,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           maxLength={6}
           value={otp}
           onChange={setOtp}
+          disabled={isLoading || isSuccess}
         >
           <InputOTPGroup>
             {Array.from({ length: 6 }).map((_, i) => (
