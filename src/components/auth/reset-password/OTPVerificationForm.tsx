@@ -38,12 +38,16 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       console.log("OTP verification successful", data);
       
-      navigate(`/reset-password/new?email=${encodeURIComponent(email)}`);
-      
       toast({
         title: "Success",
         description: "Email verified successfully. You can now reset your password.",
       });
+
+      // Force a small delay to ensure the toast is shown before navigation
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Use replace to prevent going back to the OTP verification page
+      navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { replace: true });
 
     } catch (error: any) {
       console.error('OTP verification error:', error);
