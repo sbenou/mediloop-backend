@@ -161,7 +161,7 @@ export const ResetPasswordForm = () => {
           render={({ slots }) => (
             <InputOTPGroup className="gap-2">
               {slots.map((slot, index) => (
-                <InputOTPSlot key={slot.key} {...slot} index={index} />
+                <InputOTPSlot key={index} {...slot} index={index} />
               ))}
             </InputOTPGroup>
           )}
