@@ -65,14 +65,13 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           value={otp}
           onChange={setOtp}
           disabled={isLoading || isSuccess}
-          render={({ slots }) => (
-            <InputOTPGroup>
-              {slots.map((slot, index) => (
-                <InputOTPSlot key={index} {...slot} />
-              ))}
-            </InputOTPGroup>
-          )}
-        />
+        >
+          <InputOTPGroup>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <InputOTPSlot key={i} index={i} />
+            ))}
+          </InputOTPGroup>
+        </InputOTP>
       </div>
       
       <Button 
