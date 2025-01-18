@@ -107,12 +107,11 @@ export const ResetPasswordForm = () => {
     console.log("Starting password reset process...");
 
     try {
-      // Use updateUser with type: 'recovery' to handle both OTP verification and password update in one step
-      const { error } = await supabase.auth.updateUser({
-        password: password,
-      }, {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
         type: 'recovery',
-        token: otp
+        password: password
       });
 
       if (error) throw error;
