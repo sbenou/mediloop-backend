@@ -108,7 +108,7 @@ export const ResetPasswordForm = () => {
 
     try {
       console.log("Verifying OTP and updating password...");
-      const { error: verifyError } = await supabase.auth.verifyOtp({
+      const { data: { session }, error: verifyError } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: 'recovery'
