@@ -1,7 +1,8 @@
+import { useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OTPVerificationForm } from "@/components/auth/reset-password/OTPVerificationForm";
 import { NewPasswordForm } from "@/components/auth/reset-password/NewPasswordForm";
-import { useSearchParams, useNavigate, useEffect } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
