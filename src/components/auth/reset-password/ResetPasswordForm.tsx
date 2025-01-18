@@ -155,17 +155,16 @@ export const ResetPasswordForm = () => {
       <div className="space-y-2">
         <Label>Verification Code</Label>
         <InputOTP
+          maxLength={6}
           value={otp}
           onChange={setOtp}
-          maxLength={6}
-          render={({ slots }) => (
-            <InputOTPGroup className="gap-2">
-              {slots.map((slot, index) => (
-                <InputOTPSlot key={index} {...slot} index={index} />
-              ))}
-            </InputOTPGroup>
-          )}
-        />
+        >
+          <InputOTPGroup>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <InputOTPSlot key={i} />
+            ))}
+          </InputOTPGroup>
+        </InputOTP>
       </div>
 
       <PasswordInput
