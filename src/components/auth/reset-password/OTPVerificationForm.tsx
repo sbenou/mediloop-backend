@@ -8,6 +8,7 @@ import { Check, X } from "lucide-react";
 import { useRecoilState } from 'recoil';
 import { passwordResetState } from '@/store/auth/password-reset';
 import { toast } from "@/hooks/use-toast";
+import { AuthResponse } from "@supabase/supabase-js";
 
 const OTP_TIMEOUT = 10000; // 10 seconds
 const OTP_LENGTH = 6;
@@ -109,21 +110,21 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       console.log("Verifying OTP for email:", email);
       
       // Race between the verification request and timeout
-      const { data, error } = await Promise.race([
+      const result = await Promise.race([
         supabase.auth.verifyOtp({
           email,
           token: otp,
           type: 'recovery'
         }),
         timeout
-      ]);
+      ]) as AuthResponse;
 
-      if (error) {
-        console.error("OTP verification error:", error);
-        throw error;
+      if (result.error) {
+        console.error("OTP verification error:", result.error);
+        throw result.error;
       }
 
-      console.log("OTP verification successful, data:", data);
+      console.log("OTP verification successful, data:", result.data);
       
       setPasswordReset(prev => ({
         ...prev,
