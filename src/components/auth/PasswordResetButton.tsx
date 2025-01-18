@@ -15,6 +15,7 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
     e.preventDefault();
     const success = await handlePasswordReset(email);
     if (success) {
+      // Immediately redirect to reset password page with email in URL
       navigate(`/reset-password?email=${encodeURIComponent(email)}`);
     }
   };
