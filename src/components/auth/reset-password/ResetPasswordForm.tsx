@@ -130,8 +130,8 @@ export const ResetPasswordForm = () => {
         duration: 5000,
       });
 
-      // Sign out and redirect to login page
-      await supabase.auth.signOut();
+      // Sign out only from current session and redirect to login page
+      await supabase.auth.signOut({ scope: 'local' });
       navigate("/login", { replace: true });
 
     } catch (error: any) {
