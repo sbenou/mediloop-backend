@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Check } from "lucide-react";
 
 export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -17,11 +18,6 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     console.log("Starting OTP verification process...");
     
     if (!otp) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please enter the verification code sent to your email.",
-      });
       return;
     }
 
@@ -38,28 +34,30 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       console.log("OTP verification successful", data);
       
-      toast({
-        title: "Success",
-        description: "Email verified successfully. You can now reset your password.",
-      });
-
-      // Force a small delay to ensure the toast is shown before navigation
-      await new Promise(resolve => setTimeout(resolve, 500));
+      setIsSuccess(true);
       
-      // Use replace to prevent going back to the OTP verification page
-      navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { replace: true });
+      // Add a small delay before navigation
+      setTimeout(() => {
+        navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { replace: true });
+      }, 2000);
 
     } catch (error: any) {
       console.error('OTP verification error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Invalid verification code. Please try again.",
-      });
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <Alert className="bg-green-50 border-green-200">
+        <Check className="h-4 w-4 text-green-600" />
+        <AlertDescription className="text-green-800">
+          Email verified successfully! Redirecting you to reset your password...
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <form onSubmit={handleVerify} className="space-y-4">
