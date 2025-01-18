@@ -36,23 +36,23 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       console.log("OTP verification successful", data);
       
-      setIsLoading(false); // Reset loading before setting success
       setIsSuccess(true);
+      setIsLoading(false);
       
-      // Navigate after showing success state
+      // Navigate after a brief delay to show success state
       setTimeout(() => {
         navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { replace: true });
-      }, 1500);
+      }, 1000);
 
     } catch (error: any) {
       console.error('OTP verification error:', error);
-      setIsLoading(false); // Reset loading before setting error
       setIsError(true);
+      setIsLoading(false);
       
       // Reset error state after delay
       setTimeout(() => {
         setIsError(false);
-      }, 1500);
+      }, 1000);
     }
   };
 
@@ -65,13 +65,14 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           value={otp}
           onChange={setOtp}
           disabled={isLoading || isSuccess}
-        >
-          <InputOTPGroup>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <InputOTPSlot key={i} index={i} />
-            ))}
-          </InputOTPGroup>
-        </InputOTP>
+          render={({ slots }) => (
+            <InputOTPGroup>
+              {slots.map((slot, index) => (
+                <InputOTPSlot key={index} {...slot} />
+              ))}
+            </InputOTPGroup>
+          )}
+        />
       </div>
       
       <Button 
