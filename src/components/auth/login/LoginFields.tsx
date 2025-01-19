@@ -19,45 +19,28 @@ export const LoginFields = ({
 }: LoginFieldsProps) => {
   const { toast } = useToast();
 
-  const handleOtpLogin = async () => {
+  const handleEmailSubmit = async () => {
     if (!email) {
       toast({
         variant: "destructive",
         title: "Email Required",
-        description: "Please enter your email address to receive the login code.",
+        description: "Please enter your email address to continue.",
       });
       return;
     }
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        }
-      });
-
-      if (error) throw error;
-
-      // Update auth method
-      const { error: updateError } = await supabase.rpc('update_auth_method', {
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        method: 'otp'
-      });
-
-      if (updateError) console.error('Error updating auth method:', updateError);
-
       toast({
-        title: "Code Sent",
-        description: "Check your email for the login code.",
+        title: "Checking email...",
+        description: "Please wait while we verify your email.",
       });
       
-      onEmailSent(); // Show the OTP form after email is sent
+      onEmailSent();
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send login code",
+        description: error.message || "Failed to process email",
       });
     }
   };
@@ -79,10 +62,10 @@ export const LoginFields = ({
       <Button
         type="button"
         className="w-full"
-        onClick={handleOtpLogin}
+        onClick={handleEmailSubmit}
         disabled={isLoading}
       >
-        {isLoading ? "Sending code..." : "Continue with Email"}
+        {isLoading ? "Processing..." : "Continue with Email"}
       </Button>
     </div>
   );
