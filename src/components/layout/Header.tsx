@@ -14,6 +14,7 @@ import MobileMenu from './navigation/MobileMenu';
 import ConnectionMenu from './navigation/ConnectionMenu';
 import CartButton from './navigation/CartButton';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface HeaderProps {
   showUserMenu?: boolean;
@@ -27,7 +28,7 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // List of public routes that don't require authentication
   const publicRoutes = ['/', '/products', '/services', '/search-pharmacy', '/become-transporter', '/become-partner', '/login', '/signup', '/reset-password'];
@@ -71,7 +72,9 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
             <LanguageSelector />
             {showUserMenu && (
               <>
-                {isAuthenticated ? (
+                {isLoading ? (
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                ) : isAuthenticated ? (
                   <UserMenu />
                 ) : (
                   <ConnectionMenu />
