@@ -84,28 +84,22 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
     console.log("Updating password...");
 
     try {
-      // First, get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("No active session found. Please try the password reset process again.");
-      }
-
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) throw error;
 
       console.log("Password updated successfully");
+      
+      // Sign out the user
+      await supabase.auth.signOut();
+      
       toast({
         title: "Success",
         description: "Your password has been reset successfully. Please log in with your new password.",
         duration: 5000,
       });
 
-      // Sign out the user and redirect to login
-      await supabase.auth.signOut();
-      
-      // Add a small delay before redirecting to ensure the toast is visible
+      // Add a small delay to ensure the toast is visible before redirecting
       setTimeout(() => {
         navigate("/login", { replace: true });
       }, 2000);
