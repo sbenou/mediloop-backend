@@ -28,25 +28,25 @@ export const UserManagementTable = ({ users, isLoading, updateUserRole }: UserMa
 
       if (roleError) throw roleError;
 
-      // Use the function via direct SQL query since it's not in the RPC type
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId);
+      const { error: updateError } = await supabase.rpc('update_user_role_and_permissions', {
+        p_user_id: userId,
+        p_new_role: newRole,
+        p_new_permissions: rolePermissions.map(rp => rp.permission_id)
+      });
 
       if (updateError) throw updateError;
       await updateUserRole(userId, newRole);
 
       toast({
         title: "Role Updated",
-        description: "User role has been updated successfully.",
+        description: "User role and permissions have been updated successfully.",
       });
     } catch (error) {
-      console.error('Error updating user role:', error);
+      console.error('Error updating user role and permissions:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update user role. Please try again.",
+        description: "Failed to update user role and permissions. Please try again.",
       });
     }
   };

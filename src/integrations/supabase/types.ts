@@ -351,7 +351,7 @@ export type Database = {
           license_number?: string | null
           role?: string
           role_id?: string | null
-          updated_at?: string | null
+          updated_at?: string | null;
         }
         Relationships: [
           {
@@ -524,12 +524,7 @@ export type Database = {
     }
     Enums: {
       connection_status: "pending" | "accepted" | "rejected"
-      order_status:
-        | "pending"
-        | "processing"
-        | "shipped"
-        | "delivered"
-        | "cancelled"
+      order_status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"
       prescription_status: "draft" | "active" | "completed" | "cancelled"
     }
     CompositeTypes: {
@@ -559,10 +554,10 @@ export type Tables<
         PublicSchema["Views"])
     ? (PublicSchema["Tables"] &
         PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
+      Row: infer R
+    }
+    ? R
+    : never
     : never
 
 export type TablesInsert<
