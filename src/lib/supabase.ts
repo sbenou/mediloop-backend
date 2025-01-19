@@ -11,6 +11,11 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
   },
+  global: {
+    headers: {
+      'X-Client-Info': 'lovable-delivery'
+    }
+  }
 });
 
 // Configure auth state change listener
