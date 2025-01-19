@@ -41,14 +41,25 @@ export const LoginFields = ({
     }
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      // Generate a 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // First, set up the OTP in Supabase
+      const { error: supabaseError } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: window.location.origin,
         },
       });
 
-      if (error) throw error;
+      if (supabaseError) throw supabaseError;
+
+      // Then, send the email using our Edge Function
+      const { error: sendEmailError } = await supabase.functions.invoke('send-login-email', {
+        body: { email, otp },
+      });
+
+      if (sendEmailError) throw sendEmailError;
 
       toast({
         title: "Check your email",
