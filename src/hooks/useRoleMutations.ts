@@ -4,12 +4,22 @@ import { Role } from "@/types/role";
 import { useToast } from "@/hooks/use-toast";
 import { PostgrestError } from "@supabase/supabase-js";
 
+type CreateRoleInput = Pick<Role, 'name' | 'description'>;
+type UpdateRoleInput = Pick<Role, 'id' | 'name' | 'description'>;
+
+const handlePostgrestError = (error: PostgrestError) => {
+  if (error.code === '23505') {
+    throw new Error('A role with this name already exists.');
+  }
+  throw new Error(error.message);
+};
+
 export const useRoleMutations = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const createRoleMutation = useMutation({
-    mutationFn: async (newRole: Pick<Role, 'name' | 'description'>) => {
+    mutationFn: async (newRole: CreateRoleInput) => {
       const { data, error } = await supabase
         .from('roles')
         .insert([newRole])
@@ -17,10 +27,7 @@ export const useRoleMutations = () => {
         .single();
       
       if (error) {
-        if ((error as PostgrestError).code === '23505') {
-          throw new Error('A role with this name already exists.');
-        }
-        throw new Error(error.message);
+        handlePostgrestError(error);
       }
       
       return data;
@@ -43,7 +50,7 @@ export const useRoleMutations = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ id, name, description }: Pick<Role, 'id' | 'name' | 'description'>) => {
+    mutationFn: async ({ id, name, description }: UpdateRoleInput) => {
       const { data, error } = await supabase
         .from('roles')
         .update({ name, description })
@@ -52,10 +59,7 @@ export const useRoleMutations = () => {
         .single();
       
       if (error) {
-        if ((error as PostgrestError).code === '23505') {
-          throw new Error('A role with this name already exists.');
-        }
-        throw new Error(error.message);
+        handlePostgrestError(error);
       }
       
       return data;
