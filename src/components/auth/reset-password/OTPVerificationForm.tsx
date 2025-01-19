@@ -19,12 +19,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // Log Supabase client check and API URL
+  // Log Supabase client initialization status
   useEffect(() => {
     console.log("Supabase client check:", {
       initialized: !!supabase,
       gotAuth: !!supabase.auth,
-      baseUrl: supabase.supabaseUrl, // This will show the base URL
     });
   }, []);
 
@@ -140,8 +139,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         console.log("Attempting OTP verification:", { 
           email, 
           token: otp, 
-          type: "recovery",
-          url: `${supabase.supabaseUrl}/auth/v1/verify` // Log the complete verification URL
+          type: "recovery"
         });
         
         const { data, error } = await supabase.auth.verifyOtp({
