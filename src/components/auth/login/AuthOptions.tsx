@@ -29,19 +29,10 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         body: { email, otp },
       });
 
-      console.log('Edge function response:', { 
-        data: emailData, 
-        error: sendEmailError ? {
-          message: sendEmailError.message,
-          name: sendEmailError.name
-        } : null 
-      });
+      console.log('Edge function response:', emailData);
 
       if (sendEmailError) {
-        console.error('Edge function error details:', {
-          message: sendEmailError.message,
-          name: sendEmailError.name
-        });
+        console.error('Edge function error:', sendEmailError);
         throw sendEmailError;
       }
 
@@ -54,19 +45,10 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         },
       });
 
-      console.log('Supabase OTP setup response:', { 
-        data: otpData, 
-        error: supabaseError ? {
-          message: supabaseError.message,
-          name: supabaseError.name
-        } : null 
-      });
+      console.log('Supabase OTP setup response:', otpData);
 
       if (supabaseError) {
-        console.error('Supabase error details:', {
-          message: supabaseError.message,
-          name: supabaseError.name
-        });
+        console.error('Supabase error:', supabaseError);
         throw supabaseError;
       }
 
@@ -80,11 +62,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       navigate(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       console.error('=== OTP Process Failed ===');
-      console.error('Error details:', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack
-      });
+      console.error('Error details:', error);
       
       toast({
         variant: "destructive",

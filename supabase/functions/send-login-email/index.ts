@@ -13,13 +13,13 @@ interface LoginEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log('=== Starting Email Send Process ===');
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('=== Starting Email Send Process ===');
-  
   try {
     const { email, otp } = await req.json() as LoginEmailRequest;
     console.log('Received request:', { email, otp });
@@ -61,10 +61,6 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!res.ok) {
-      console.error('Resend API Error:', {
-        status: res.status,
-        response: responseText
-      });
       throw new Error(`Failed to send email: ${responseText}`);
     }
 
@@ -75,20 +71,11 @@ const handler = async (req: Request): Promise<Response> => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
-  } catch (error: any) {
-    console.error('Error in send-login-email function:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-      cause: error.cause
-    });
+  } catch (error) {
+    console.error('Error in send-login-email function:', error);
     
     return new Response(JSON.stringify({ 
-      error: error.message,
-      details: {
-        name: error.name,
-        cause: error.cause
-      }
+      error: error.message || 'Internal server error'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
