@@ -40,11 +40,6 @@ export const LoginFields = ({
     }
 
     try {
-      toast({
-        title: "Email Verified",
-        description: "Please choose how you'd like to sign in.",
-      });
-      
       onEmailSent();
     } catch (error: any) {
       console.error('Email verification error:', error);
