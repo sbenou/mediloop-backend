@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { LoginFields } from "./login/LoginFields";
-import { OTPVerificationForm } from "./login/OTPVerificationForm";
+import { PasswordFields } from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
 
 interface LoginFormProps {
@@ -10,50 +10,40 @@ interface LoginFormProps {
 export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showOTPForm, setShowOTPForm] = useState(false);
-  const [showAuthOptions, setShowAuthOptions] = useState(false);
+  const [showPasswordField, setShowPasswordField] = useState(false);
+  const [showResetOptions, setShowResetOptions] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } finally {
-      setIsLoading(false);
-    }
+  const handleEmailSubmit = async () => {
+    setShowPasswordField(true);
   };
 
-  const handleEmailSent = () => {
-    console.log('Email sent, showing auth options');
-    setShowAuthOptions(true);
+  const handleForgotPassword = () => {
+    setShowResetOptions(true);
+    setShowPasswordField(false);
   };
-
-  const handleSelectOTP = () => {
-    console.log('OTP selected, showing OTP form');
-    setShowAuthOptions(false);
-    setShowOTPForm(true);
-  };
-
-  console.log('LoginForm state:', { showAuthOptions, showOTPForm });
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {!showAuthOptions && !showOTPForm ? (
+    <form className="space-y-4">
+      {!showPasswordField && !showResetOptions ? (
         <LoginFields
           email={email}
           onEmailChange={setEmail}
           isLoading={isLoading}
-          onEmailSent={handleEmailSent}
+          onEmailSubmit={handleEmailSubmit}
         />
-      ) : showAuthOptions ? (
-        <AuthOptions 
-          email={email}
-          onSelectOTP={handleSelectOTP}
-        />
-      ) : (
-        <OTPVerificationForm 
+      ) : showPasswordField ? (
+        <PasswordFields
           email={email}
           onSuccess={onSuccess}
+          onForgotPassword={handleForgotPassword}
+        />
+      ) : (
+        <AuthOptions 
+          email={email}
+          onBack={() => {
+            setShowResetOptions(false);
+            setShowPasswordField(true);
+          }}
         />
       )}
     </form>

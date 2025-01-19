@@ -7,14 +7,14 @@ interface LoginFieldsProps {
   email: string;
   onEmailChange: (value: string) => void;
   isLoading: boolean;
-  onEmailSent: () => void;
+  onEmailSubmit: () => void;
 }
 
 export const LoginFields = ({
   email,
   onEmailChange,
   isLoading,
-  onEmailSent,
+  onEmailSubmit,
 }: LoginFieldsProps) => {
   const { toast } = useToast();
 
@@ -39,8 +39,7 @@ export const LoginFields = ({
       return;
     }
 
-    console.log('Valid email entered, showing auth options');
-    onEmailSent();
+    onEmailSubmit();
   };
 
   return (
@@ -63,7 +62,7 @@ export const LoginFields = ({
         onClick={handleEmailSubmit}
         disabled={isLoading}
       >
-        {isLoading ? "Processing..." : "Continue with Email"}
+        {isLoading ? "Processing..." : "Continue"}
       </Button>
     </div>
   );

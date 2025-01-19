@@ -3,13 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft } from "lucide-react";
 
 interface AuthOptionsProps {
   email: string;
-  onSelectOTP: () => void;
+  onBack: () => void;
 }
 
-export const AuthOptions = ({ email, onSelectOTP }: AuthOptionsProps) => {
+export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -42,7 +43,7 @@ export const AuthOptions = ({ email, onSelectOTP }: AuthOptionsProps) => {
         description: "We've sent you a login link with a one-time code.",
       });
       
-      onSelectOTP();
+      navigate(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       console.error('Email verification error:', error);
       toast({
@@ -59,10 +60,21 @@ export const AuthOptions = ({ email, onSelectOTP }: AuthOptionsProps) => {
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Choose an Option</CardTitle>
+      <CardHeader className="space-y-1">
+        <div className="flex items-center space-x-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="h-8 w-8"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <CardTitle>Reset Password</CardTitle>
+        </div>
         <CardDescription>
-          Select how you would like to proceed with {email}
+          Choose how you would like to reset your password
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -71,14 +83,14 @@ export const AuthOptions = ({ email, onSelectOTP }: AuthOptionsProps) => {
           className="w-full"
           variant="default"
         >
-          Sign in with One-Time Code
+          Reset with One-Time Code
         </Button>
         <Button
           onClick={handleResetPassword}
           className="w-full"
           variant="outline"
         >
-          Reset Password
+          Reset with Email Link
         </Button>
       </CardContent>
     </Card>
