@@ -27,9 +27,9 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", { event, session: session?.id });
+      console.log("Auth state changed:", { event, session });
       
-      if (event === 'PASSWORD_RECOVERY') {
+      if (event === 'SIGNED_IN' && session) {
         setPasswordReset(prev => ({
           ...prev,
           isSuccess: true,
@@ -37,13 +37,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         }));
 
         toast({
-          title: "Verification Successful",
-          description: "You can now set your new password.",
+          title: "Login Successful",
+          description: "You have been successfully logged in.",
         });
         
-        navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { 
-          replace: true 
-        });
+        navigate('/', { replace: true });
       }
     });
 
@@ -76,9 +74,12 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     if (resendCooldown > 0 || isSubmitting) return;
 
     try {
-      console.log("Initiating password reset for:", email);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password/new`,
+      console.log("Initiating OTP login for:", email);
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false,
+        }
       });
       
       if (error) throw error;
@@ -160,11 +161,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }));
 
     try {
-      console.log("Starting OTP verification");
+      console.log("Starting OTP verification for login");
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: 'recovery'
+        type: 'email'
       });
 
       if (error) throw error;
