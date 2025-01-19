@@ -2,7 +2,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 
 interface LoginFieldsProps {
   email: string;
@@ -29,25 +28,18 @@ export const LoginFields = ({
       return;
     }
 
-    try {
-      // First check if the email exists
-      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers({
-        filters: {
-          email: email
-        }
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
       });
+      return;
+    }
 
-      if (usersError) throw usersError;
-
-      if (!users || users.length === 0) {
-        toast({
-          variant: "destructive",
-          title: "Account Not Found",
-          description: "No account found with this email. Please sign up first.",
-        });
-        return;
-      }
-
+    try {
       toast({
         title: "Email Verified",
         description: "Please choose how you'd like to sign in.",
