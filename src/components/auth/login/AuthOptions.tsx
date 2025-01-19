@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
 
 interface AuthOptionsProps {
   email: string;
@@ -13,8 +14,12 @@ interface AuthOptionsProps {
 export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleOTPSelection = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
     try {
       console.log('Starting OTP login process for:', email);
       
@@ -42,21 +47,35 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       // Navigate to OTP verification with email in state
       navigate("/login/verify", { 
         state: { email },
-        replace: false // Don't replace the history entry
+        replace: false
       });
       
     } catch (error: any) {
       console.error('OTP Process Failed:', error);
       
+      let description = "Failed to send verification code";
+      if (error.name === 'TypeError') {
+        description = "Please check your internet connection and try again.";
+      } else if (error.message?.includes('rate limit')) {
+        description = "Too many attempts. Please wait a moment before trying again.";
+      } else if (error.message?.includes('not found')) {
+        description = "This email is not associated with an account.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send verification code",
+        description,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleEmailLinkReset = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
     try {
       console.log("Initiating password reset for:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -73,11 +92,21 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       navigate("/login", { replace: true });
     } catch (error: any) {
       console.error('Password reset error:', error);
+      
+      let description = "Failed to send reset email";
+      if (error.name === 'TypeError') {
+        description = "Please check your internet connection and try again.";
+      } else if (error.message?.includes('rate limit')) {
+        description = "Too many attempts. Please wait a moment before trying again.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send reset email",
+        description,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -105,6 +134,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
           onClick={handleOTPSelection}
           className="w-full"
           variant="default"
+          disabled={isLoading}
         >
           Reset with One-Time Code
         </Button>
@@ -112,6 +142,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
           onClick={handleEmailLinkReset}
           className="w-full"
           variant="outline"
+          disabled={isLoading}
         >
           Reset with Email Link
         </Button>
