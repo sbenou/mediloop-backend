@@ -30,17 +30,36 @@ export const LoginFields = ({
     }
 
     try {
+      // First check if the email exists
+      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers({
+        filters: {
+          email: email
+        }
+      });
+
+      if (usersError) throw usersError;
+
+      if (!users || users.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Account Not Found",
+          description: "No account found with this email. Please sign up first.",
+        });
+        return;
+      }
+
       toast({
-        title: "Checking email...",
-        description: "Please wait while we verify your email.",
+        title: "Email Verified",
+        description: "Please choose how you'd like to sign in.",
       });
       
       onEmailSent();
     } catch (error: any) {
+      console.error('Email verification error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to process email",
+        description: error.message || "Failed to verify email",
       });
     }
   };
