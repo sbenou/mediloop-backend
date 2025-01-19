@@ -19,44 +19,23 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // Log Supabase client initialization status
-  useEffect(() => {
-    console.log("Supabase client check:", {
-      initialized: !!supabase,
-      gotAuth: !!supabase.auth,
-    });
-  }, []);
-
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (resendCooldown > 0) {
       timer = setInterval(() => {
-        setResendCooldown((current) => {
-          if (current <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return current - 1;
-        });
+        setResendCooldown((current) => current > 0 ? current - 1 : 0);
       }, 1000);
     }
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  const startResendCooldown = () => {
-    setResendCooldown(RESEND_COOLDOWN);
-  };
-
   const handleResendOtp = async () => {
     if (resendCooldown > 0 || isSubmitting) return;
 
     try {
-      console.log("Initiating password reset for:", email);
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        }
+      console.log("Initiating OTP resend for:", email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery`
       });
       
       if (error) throw error;
@@ -66,24 +45,18 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         description: "A new verification code has been sent to your email address." 
       });
       
-      startResendCooldown();
+      setResendCooldown(RESEND_COOLDOWN);
     } catch (error: any) {
       console.error("Failed to resend OTP:", error);
-      const description = error.name === 'TypeError' 
-        ? "Please check your internet connection and try again."
-        : error.message || "Failed to resend the verification code.";
-      
       toast({
         variant: "destructive",
         title: "Error",
-        description,
+        description: error.message || "Failed to resend verification code.",
       });
     }
   };
 
   const validateOTP = (otp: string): boolean => {
-    console.log("Validating OTP:", { otp, length: otp.length });
-    
     if (!otp) {
       toast({
         variant: "destructive",
@@ -114,65 +87,9 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     return true;
   };
 
-  const handleVerificationError = (error: any) => {
-    console.error('OTP verification error:', error);
-    let description = "Invalid verification code. Please try again.";
-
-    if (error.name === 'TypeError') {
-      description = "Please check your internet connection and try again.";
-    } else if (error.message?.includes('expired')) {
-      description = "The verification code has expired. Please request a new one.";
-    } else if (error.message?.includes('invalid')) {
-      description = "Invalid verification code. Please check and try again.";
-    }
-
-    toast({
-      variant: "destructive",
-      title: "Verification Failed",
-      description,
-    });
-  };
-
-  const verifyOtpWithRetry = async (retries = 3) => {
-    for (let i = 0; i < retries; i++) {
-      try {
-        console.log("Starting OTP verification attempt", i + 1, "of", retries);
-        console.log("Verification parameters:", { 
-          email, 
-          otpLength: otp.length,
-          attempt: i + 1 
-        });
-        
-        const { data, error } = await supabase.auth.verifyOtp({
-          email,
-          token: otp,
-          type: 'recovery'
-        });
-
-        if (error) {
-          console.error("Verification attempt failed:", error);
-          throw error;
-        }
-
-        console.log("OTP verification successful:", data);
-        return data;
-      } catch (error: any) {
-        console.error(`OTP verification attempt ${i + 1} failed:`, error);
-        if (i === retries - 1) throw error;
-        console.log(`Waiting before retry ${i + 2}...`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-  };
-
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("handleVerify triggered with OTP:", otp);
-    console.log("Form submission state:", { 
-      isSubmitting, 
-      passwordResetState: passwordReset,
-      otpLength: otp.length 
-    });
+    console.log("Starting OTP verification process...");
     
     if (isSubmitting || !validateOTP(otp)) {
       console.log("Validation failed or submission in progress");
@@ -189,8 +106,17 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }));
 
     try {
-      const data = await verifyOtpWithRetry();
-      
+      console.log("Attempting to verify OTP with Supabase...");
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'recovery'
+      });
+
+      console.log("OTP verification response:", { data, error });
+
+      if (error) throw error;
+
       setPasswordReset(prev => ({
         ...prev,
         isSuccess: true,
@@ -207,13 +133,19 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       });
 
     } catch (error: any) {
-      handleVerificationError(error);
+      console.error("OTP verification failed:", error);
       
       setPasswordReset(prev => ({
         ...prev,
         isError: true,
         isLoading: false,
       }));
+
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: error.message || "Invalid verification code. Please try again.",
+      });
 
       setTimeout(() => {
         setPasswordReset(prev => ({
