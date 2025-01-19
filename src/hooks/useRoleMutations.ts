@@ -9,7 +9,7 @@ export const useRoleMutations = () => {
   const queryClient = useQueryClient();
 
   const createRoleMutation = useMutation({
-    mutationFn: async (newRole: Omit<Role, 'id'>) => {
+    mutationFn: async (newRole: Pick<Role, 'name' | 'description'>) => {
       const { data, error } = await supabase
         .from('roles')
         .insert([newRole])
@@ -43,10 +43,10 @@ export const useRoleMutations = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ id, ...role }: Role) => {
+    mutationFn: async ({ id, name, description }: Pick<Role, 'id' | 'name' | 'description'>) => {
       const { data, error } = await supabase
         .from('roles')
-        .update(role)
+        .update({ name, description })
         .eq('id', id)
         .select()
         .single();
