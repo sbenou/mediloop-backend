@@ -4,22 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 interface OTPVerificationFormProps {
   email: string;
-  onSuccess: () => void;
 }
 
-export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormProps) => {
+export const OTPVerificationForm = ({ email }: OTPVerificationFormProps) => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      console.log('Verifying OTP for login:', { email, otp });
+      
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
@@ -28,13 +31,17 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
 
       if (error) throw error;
 
+      console.log('OTP verification successful');
+      
       toast({
         title: "Success",
         description: "Successfully logged in!",
       });
 
-      onSuccess();
+      navigate('/', { replace: true });
     } catch (error: any) {
+      console.error('OTP verification failed:', error);
+      
       toast({
         variant: "destructive",
         title: "Error",
@@ -46,7 +53,7 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
   };
 
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleVerify} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="otp">Enter verification code</Label>
         <Input
@@ -62,11 +69,10 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
       <Button
         type="submit"
         className="w-full"
-        onClick={handleVerify}
         disabled={isLoading}
       >
         {isLoading ? "Verifying..." : "Verify Code"}
       </Button>
-    </div>
+    </form>
   );
 };

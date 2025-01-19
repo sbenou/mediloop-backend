@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { OTPVerificationForm } from '../reset-password/OTPVerificationForm';
+import { OTPVerificationForm } from './OTPVerificationForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,9 +42,6 @@ export const OTPVerificationPage = () => {
       <CardContent>
         <OTPVerificationForm 
           email={email}
-          onSuccess={() => {
-            navigate('/', { replace: true });
-          }}
         />
       </CardContent>
     </Card>
