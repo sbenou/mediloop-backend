@@ -46,145 +46,77 @@ export type Database = {
           created_at?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "addresses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
       }
-      categories: {
+      profiles: {
         Row: {
           id: string
-          name: string
-          type: string
-          created_at: string
+          role: string
+          full_name: string | null
+          email: string | null
+          license_number: string | null
+          created_at: string | null
+          updated_at: string | null
+          city: string | null
+          role_id: string | null
+          is_blocked: boolean | null
+          deleted_at: string | null
+          cns_card_front: string | null
+          cns_card_back: string | null
+          cns_number: string | null
+          date_of_birth: string | null
+          avatar_url: string | null
+          doctor_stamp_url: string | null
+          doctor_signature_url: string | null
         }
         Insert: {
-          id?: string
-          name: string
-          type: string
-          created_at?: string
+          id: string
+          role: string
+          full_name?: string | null
+          email?: string | null
+          license_number?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          city?: string | null
+          role_id?: string | null
+          is_blocked?: boolean | null
+          deleted_at?: string | null
+          cns_card_front?: string | null
+          cns_card_back?: string | null
+          cns_number?: string | null
+          date_of_birth?: string | null
+          avatar_url?: string | null
+          doctor_stamp_url?: string | null
+          doctor_signature_url?: string | null
         }
         Update: {
           id?: string
-          name?: string
-          type?: string
-          created_at?: string
+          role?: string
+          full_name?: string | null
+          email?: string | null
+          license_number?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          city?: string | null
+          role_id?: string | null
+          is_blocked?: boolean | null
+          deleted_at?: string | null
+          cns_card_front?: string | null
+          cns_card_back?: string | null
+          cns_number?: string | null
+          date_of_birth?: string | null
+          avatar_url?: string | null
+          doctor_stamp_url?: string | null
+          doctor_signature_url?: string | null
         }
-        Relationships: []
-      }
-      doctor_patient_connections: {
-        Row: {
-          id: string
-          doctor_id: string
-          patient_id: string
-          status: Database["public"]["Enums"]["connection_status"]
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          doctor_id: string
-          patient_id: string
-          status?: Database["public"]["Enums"]["connection_status"]
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          doctor_id?: string
-          patient_id?: string
-          status?: Database["public"]["Enums"]["connection_status"]
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "doctor_patient_connections_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "doctor_patient_connections_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      can_truncate_products: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      create_profile: {
-        Args: {
-          user_id: string
-          user_role: string
-          user_full_name: string
-          user_email: string
-          user_license_number: string
-        }
-        Returns: undefined
-      }
-      handle_connection_request: {
-        Args: {
-          doctor_id: string
-          status: Database["public"]["Enums"]["connection_status"]
-        }
-        Returns: Json
-      }
-      soft_delete_user: {
-        Args: {
-          user_id: string
-        }
-        Returns: undefined
-      }
-      toggle_user_block: {
-        Args: {
-          user_id: string
-        }
-        Returns: undefined
-      }
-      truncate_products: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      update_user_role_and_permissions: {
-        Args: {
-          p_user_id: string
-          p_new_role: string
-          p_new_permissions: string[]
-        }
-        Returns: undefined
-      }
-      upsert_pharmacy: {
-        Args: {
-          p_name: string
-          p_address: string
-          p_city: string
-          p_postal_code: string
-          p_phone: string
-          p_hours: string
-        }
-        Returns: undefined
       }
     }
     Enums: {
       connection_status: "pending" | "accepted" | "rejected"
-      order_status: "pending" | "processing" | "shipped" | "delivered" | "cancelled" | "completed"
+      order_status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"
       prescription_status: "draft" | "active" | "completed" | "cancelled"
     }
   }
 }
+
+export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
+export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
