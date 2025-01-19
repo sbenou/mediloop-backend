@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
 import { toast } from '@/components/ui/use-toast';
+import { UserRole } from '@/types/user';
 
 export const useAuth = () => {
   const isAuthenticated = useRecoilValue(isAuthenticatedSelector);
@@ -32,7 +33,10 @@ export const useAuth = () => {
 
         setAuth({
           user: session.user,
-          profile,
+          profile: profile ? {
+            ...profile,
+            role: profile.role as UserRole // Type cast the role
+          } : null,
           permissions: [],
           isLoading: false,
         });
@@ -61,7 +65,10 @@ export const useAuth = () => {
 
         setAuth({
           user: session.user,
-          profile,
+          profile: profile ? {
+            ...profile,
+            role: profile.role as UserRole // Type cast the role
+          } : null,
           permissions: [],
           isLoading: false,
         });
