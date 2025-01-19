@@ -86,7 +86,7 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
 
     try {
       console.log("Updating user password...");
-      const { error: updateError } = await supabase.auth.updateUser({ 
+      const { data, error: updateError } = await supabase.auth.updateUser({ 
         password 
       });
 
@@ -95,9 +95,13 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
         throw updateError;
       }
 
-      console.log("Password updated successfully");
+      // Verify the update was successful by checking the response
+      if (!data.user) {
+        throw new Error('No confirmation received from password update');
+      }
+
+      console.log("Password update confirmed. User data:", data.user.id);
       
-      // Show success message
       toast({
         title: "Success",
         description: "Your password has been reset successfully. Please log in with your new password.",
@@ -106,27 +110,17 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
 
       console.log("Initiating sign out process...");
       
-      try {
-        console.log("Signing out from all sessions...");
-        const { error: signOutError } = await supabase.auth.signOut({
-          scope: 'global'
-        });
-        
-        if (signOutError) {
-          console.error('Sign out error:', signOutError);
-          throw signOutError;
-        }
-        
-        console.log("Sign out successful");
-        
-        // Navigate immediately after successful sign out
-        navigate("/login", { replace: true });
-        
-      } catch (signOutError) {
-        console.error('Sign out failed:', signOutError);
-        // If sign out fails, still redirect to login
-        navigate("/login", { replace: true });
+      // Immediately sign out and redirect
+      const { error: signOutError } = await supabase.auth.signOut({
+        scope: 'global'
+      });
+      
+      if (signOutError) {
+        console.error('Sign out error:', signOutError);
       }
+      
+      console.log("Redirecting to login page...");
+      navigate("/login", { replace: true });
 
     } catch (error: any) {
       console.error('Password reset process failed:', error);
