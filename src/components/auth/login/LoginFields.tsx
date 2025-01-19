@@ -8,12 +8,14 @@ interface LoginFieldsProps {
   email: string;
   onEmailChange: (value: string) => void;
   isLoading: boolean;
+  onEmailSent: () => void;
 }
 
 export const LoginFields = ({
   email,
   onEmailChange,
   isLoading,
+  onEmailSent,
 }: LoginFieldsProps) => {
   const { toast } = useToast();
 
@@ -49,6 +51,8 @@ export const LoginFields = ({
         title: "Code Sent",
         description: "Check your email for the login code.",
       });
+      
+      onEmailSent(); // Show the OTP form after email is sent
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -73,7 +77,7 @@ export const LoginFields = ({
         />
       </div>
       <Button
-        type="submit"
+        type="button"
         className="w-full"
         onClick={handleOtpLogin}
         disabled={isLoading}
