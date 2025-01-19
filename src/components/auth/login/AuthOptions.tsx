@@ -19,42 +19,26 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       console.log('=== Starting OTP Process ===');
       console.log('Email:', email);
       
-      // Generate a 6-digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      console.log('Generated OTP:', otp);
-      
-      // First send the email using our Edge Function
-      const { data: emailData, error: sendEmailError } = await supabase.functions.invoke('send-login-email', {
-        body: { email, otp },
-      });
-
-      console.log('Edge function response:', emailData);
-
-      if (sendEmailError) {
-        console.error('Edge function error:', sendEmailError);
-        throw sendEmailError;
-      }
-
-      // Then set up the OTP in Supabase
-      const { data: otpData, error: supabaseError } = await supabase.auth.signInWithOtp({
+      // Step 1: Send the OTP email using Supabase's built-in functionality
+      const { data, error: signInError } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`,
-        },
+          shouldCreateUser: false,
+        }
       });
 
-      console.log('Supabase OTP setup response:', otpData);
+      console.log('Supabase OTP setup response:', data);
 
-      if (supabaseError) {
-        console.error('Supabase error:', supabaseError);
-        throw supabaseError;
+      if (signInError) {
+        console.error('Supabase error:', signInError);
+        throw signInError;
       }
 
       console.log('OTP process completed successfully');
       
       toast({
         title: "Check your email",
-        description: "We've sent you a login link with a one-time code.",
+        description: "We've sent you a verification code.",
       });
       
       // Navigate to the OTP verification page
@@ -66,7 +50,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send verification email",
+        description: error.message || "Failed to send verification code",
       });
     }
   };
