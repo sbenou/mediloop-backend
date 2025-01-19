@@ -136,10 +136,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   const verifyOtpWithRetry = async (retries = 3) => {
     for (let i = 0; i < retries; i++) {
       try {
-        console.log("Attempting OTP verification:", { 
+        console.log("Starting OTP verification attempt", i + 1, "of", retries);
+        console.log("Verification parameters:", { 
           email, 
-          token: otp, 
-          type: "recovery"
+          otpLength: otp.length,
+          attempt: i + 1 
         });
         
         const { data, error } = await supabase.auth.verifyOtp({
@@ -148,12 +149,17 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           type: 'recovery'
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Verification attempt failed:", error);
+          throw error;
+        }
+
         console.log("OTP verification successful:", data);
         return data;
       } catch (error: any) {
         console.error(`OTP verification attempt ${i + 1} failed:`, error);
         if (i === retries - 1) throw error;
+        console.log(`Waiting before retry ${i + 2}...`);
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
