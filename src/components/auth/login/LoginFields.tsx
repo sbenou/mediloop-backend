@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface LoginFieldsProps {
   email: string;
@@ -40,13 +41,27 @@ export const LoginFields = ({
     }
 
     try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Check your email",
+        description: "We've sent you a login link with a one-time code.",
+      });
+      
       onEmailSent();
     } catch (error: any) {
       console.error('Email verification error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to verify email",
+        description: error.message || "Failed to send verification email",
       });
     }
   };
