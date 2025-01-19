@@ -24,7 +24,6 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       console.log('Generated OTP:', otp);
       
       // First send the email using our Edge Function
-      console.log('Calling send-login-email edge function...');
       const { data: emailData, error: sendEmailError } = await supabase.functions.invoke('send-login-email', {
         body: { email, otp },
       });
@@ -37,7 +36,6 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       }
 
       // Then set up the OTP in Supabase
-      console.log('Setting up Supabase OTP...');
       const { data: otpData, error: supabaseError } = await supabase.auth.signInWithOtp({
         email,
         options: {
