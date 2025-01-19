@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Check, X, RotateCw } from "lucide-react";
 import { useRecoilState } from 'recoil';
 import { passwordResetState } from '@/store/auth/password-reset';
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60;
@@ -20,17 +20,21 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasswordChoice, setShowPasswordChoice] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
+    console.log("=== OTP Verification Component Mounted ===");
     console.log("Supabase client check:", {
       initialized: !!supabase,
       gotAuth: !!supabase.auth,
     });
+    console.log("Initial email state:", email);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", { event, session: session?.user?.id });
       
       if (event === 'SIGNED_IN') {
+        console.log("User signed in successfully");
         setPasswordReset(prev => ({
           ...prev,
           isSuccess: true,
@@ -38,8 +42,8 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         }));
 
         toast({
-          title: "Login Successful",
-          description: "You are now logged in.",
+          title: "Verification Successful",
+          description: "Your email has been verified.",
         });
         
         setShowPasswordChoice(true);
@@ -47,9 +51,10 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     });
 
     return () => {
+      console.log("=== OTP Verification Component Unmounting ===");
       subscription.unsubscribe();
     };
-  }, [email, navigate, setPasswordReset]);
+  }, [email, setPasswordReset, toast]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -75,7 +80,9 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     if (resendCooldown > 0 || isSubmitting) return;
 
     try {
-      console.log("Initiating OTP login for:", email);
+      console.log("=== Starting OTP Resend Process ===");
+      console.log("Email:", email);
+      
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -85,9 +92,10 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       
       if (error) throw error;
       
+      console.log("OTP resend successful");
       toast({ 
         title: "Code Resent", 
-        description: "A new verification code has been sent to your email address." 
+        description: "A new verification code has been sent to your email." 
       });
       
       startResendCooldown();
@@ -140,7 +148,8 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("handleVerify triggered with OTP:", otp);
+    console.log("=== Starting OTP Verification Process ===");
+    console.log("OTP:", otp);
     
     if (isSubmitting || !validateOTP(otp)) {
       return;
@@ -156,19 +165,21 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }));
 
     try {
-      console.log("Starting OTP verification");
+      console.log("Verifying OTP with Supabase");
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: 'email'  // Changed from 'magiclink' to 'email'
+        type: 'email'
       });
 
       if (error) throw error;
 
+      console.log("OTP verification successful");
       // Success is handled by the onAuthStateChange listener
       
     } catch (error: any) {
-      console.error("OTP verification error:", error);
+      console.error("=== OTP Verification Failed ===");
+      console.error("Error details:", error);
       
       let description = "Invalid verification code. Please try again.";
       if (error.name === 'TypeError') {
@@ -191,20 +202,21 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         isLoading: false,
       }));
 
+      // Reset error state after a delay
       setTimeout(() => {
         setPasswordReset(prev => ({
           ...prev,
           isError: false,
         }));
-      }, 1000);
+      }, 2000);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleContinueWithOTP = async () => {
-    // Update auth method to OTP
     try {
+      console.log("Updating auth method to OTP");
       const { error: updateError } = await supabase.rpc('update_auth_method', {
         user_id: (await supabase.auth.getUser()).data.user?.id,
         method: 'otp'
@@ -212,6 +224,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
       if (updateError) throw updateError;
 
+      console.log("Auth method updated successfully");
       navigate('/', { replace: true });
     } catch (error: any) {
       console.error('Error updating auth method:', error);
