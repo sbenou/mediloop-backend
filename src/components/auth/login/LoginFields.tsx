@@ -2,7 +2,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 
 interface LoginFieldsProps {
   email: string;
@@ -40,44 +39,8 @@ export const LoginFields = ({
       return;
     }
 
-    try {
-      // Generate a 6-digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      console.log('Sending login email with OTP:', { email, otp });
-      
-      // First send the email using our Edge Function
-      const { error: sendEmailError } = await supabase.functions.invoke('send-login-email', {
-        body: { email, otp },
-      });
-
-      if (sendEmailError) throw sendEmailError;
-
-      // Then set up the OTP in Supabase
-      const { error: supabaseError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
-      });
-
-      if (supabaseError) throw supabaseError;
-
-      toast({
-        title: "Check your email",
-        description: "We've sent you a login link with a one-time code.",
-      });
-      
-      console.log('Email sent successfully, calling onEmailSent');
-      onEmailSent();
-    } catch (error: any) {
-      console.error('Email verification error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to send verification email",
-      });
-    }
+    console.log('Valid email entered, showing auth options');
+    onEmailSent();
   };
 
   return (
