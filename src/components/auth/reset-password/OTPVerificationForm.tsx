@@ -160,7 +160,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: 'magiclink'
+        type: 'email'  // Changed from 'magiclink' to 'email'
       });
 
       if (error) throw error;
