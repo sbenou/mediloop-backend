@@ -57,7 +57,7 @@ const PasswordInput = ({
   </div>
 );
 
-export const NewPasswordForm = ({ email }: { email: string }) => {
+export const NewPasswordForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -70,7 +70,7 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("=== Password Reset Submission Start ===");
+    console.log("=== Password Update Start ===");
     
     if (password !== confirmPassword) {
       toast({
@@ -82,7 +82,6 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
     }
 
     setIsLoading(true);
-    console.log("Starting password update process...");
 
     try {
       console.log("Updating user password...");
@@ -95,35 +94,31 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
         throw updateError;
       }
 
-      // Verify the update was successful by checking the response
       if (!data.user) {
-        throw new Error('No confirmation received from password update');
+        throw new Error('Password update failed - no user data returned');
       }
 
-      console.log("Password update confirmed. User data:", data.user.id);
+      console.log("Password update successful for user:", data.user.id);
       
       toast({
         title: "Success",
-        description: "Your password has been reset successfully. Please log in with your new password.",
+        description: "Your password has been updated successfully. Please log in with your new password.",
         duration: 5000,
       });
 
-      console.log("Initiating sign out process...");
-      
-      // Immediately sign out and redirect
+      // Sign out from all sessions
       const { error: signOutError } = await supabase.auth.signOut({
         scope: 'global'
       });
-      
+
       if (signOutError) {
         console.error('Sign out error:', signOutError);
       }
-      
-      console.log("Redirecting to login page...");
+
       navigate("/login", { replace: true });
 
     } catch (error: any) {
-      console.error('Password reset process failed:', error);
+      console.error('Password update failed:', error);
       toast({
         variant: "destructive",
         title: "Error",

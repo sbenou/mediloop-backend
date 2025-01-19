@@ -46,15 +46,35 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       return;
     }
 
-    const success = await handlePasswordReset(email);
-    if (success) {
+    try {
+      console.log("Initiating password reset for:", email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password/new`,
+      });
+
+      if (error) throw error;
+
       setPasswordReset({
         isLoading: false,
-        isSuccess: false,
+        isSuccess: true,
         isError: false,
         email,
       });
-      navigate(`/reset-password?email=${encodeURIComponent(email)}`);
+
+      toast({
+        title: "Reset Link Sent",
+        description: "Check your email for the password reset link.",
+        duration: 5000,
+      });
+
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to send reset email",
+        duration: 5000,
+      });
     }
   };
 
