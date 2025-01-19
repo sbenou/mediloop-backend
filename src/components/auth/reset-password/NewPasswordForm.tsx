@@ -102,10 +102,23 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
 
       // Sign out and redirect with a delay
       try {
-        await supabase.auth.signOut();
+        // Sign out from all sessions (global scope)
+        const { error: signOutError } = await supabase.auth.signOut({
+          scope: 'global'
+        });
+        
+        if (signOutError) {
+          console.error('Sign out error:', signOutError);
+          // If sign out fails, still redirect to login
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        // Add a small delay to ensure the toast is visible
         setTimeout(() => {
           navigate("/login", { replace: true });
         }, 2000);
+
       } catch (signOutError) {
         console.error('Sign out error:', signOutError);
         // Still redirect even if sign out fails
