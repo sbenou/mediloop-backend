@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, Check, X, Eye, EyeOff } from "lucide-react";
+import { Key, Check, X, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -100,10 +100,16 @@ export const NewPasswordForm = () => {
 
       console.log("Password update successful for user:", data.user.id);
       
+      // Show success toast with icon
       toast({
         title: "Success",
-        description: "Your password has been updated successfully. Please log in with your new password.",
-        duration: 5000,
+        description: (
+          <div className="flex items-center gap-2">
+            <Check className="h-4 w-4 text-green-500" />
+            <span>Password updated successfully. Please log in with your new password.</span>
+          </div>
+        ),
+        duration: 3000,
       });
 
       // Sign out from all sessions
@@ -115,14 +121,23 @@ export const NewPasswordForm = () => {
         console.error('Sign out error:', signOutError);
       }
 
-      navigate("/login", { replace: true });
+      // Delay navigation slightly to show the success message
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 2000);
 
     } catch (error: any) {
       console.error('Password update failed:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to update password. Please try again.",
+        description: (
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+            <span>{error.message || "Failed to update password. Please try again."}</span>
+          </div>
+        ),
+        duration: 5000,
       });
     } finally {
       setIsLoading(false);

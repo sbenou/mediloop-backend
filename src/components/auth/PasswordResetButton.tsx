@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useSetRecoilState } from 'recoil';
 import { passwordResetState } from '@/store/auth/password-reset';
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { Check, AlertCircle } from "lucide-react";
+import { useState } from "react";
 
 interface PasswordResetButtonProps {
   email: string;
@@ -16,6 +19,7 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
   const { isSendingReset, isInCooldown, remainingTime, handlePasswordReset } = usePasswordReset();
   const navigate = useNavigate();
   const setPasswordReset = useSetRecoilState(passwordResetState);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const validateEmail = (email: string): boolean => {
     if (!email) {
@@ -61,11 +65,19 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
         email,
       });
 
+      // Show success state
+      setShowSuccess(true);
+      
       toast({
         title: "Reset Link Sent",
         description: "Check your email for the password reset link.",
         duration: 5000,
       });
+
+      // Delay navigation to show success state
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 2000);
 
     } catch (error: any) {
       console.error("Password reset error:", error);
@@ -84,13 +96,23 @@ export const PasswordResetButton = ({ email, disabled }: PasswordResetButtonProp
       variant="link"
       className="text-sm text-muted-foreground hover:text-primary p-0 h-auto"
       onClick={handleClick}
-      disabled={disabled || isSendingReset || isInCooldown}
+      disabled={disabled || isSendingReset || isInCooldown || showSuccess}
     >
-      {isInCooldown 
-        ? `Wait ${remainingTime}s...` 
-        : isSendingReset 
-          ? "Sending..." 
-          : "Forgot your password?"}
+      {showSuccess ? (
+        <>
+          <Check className="w-4 h-4 mr-2 text-green-500" />
+          Reset link sent
+        </>
+      ) : isInCooldown ? (
+        <>
+          <AlertCircle className="w-4 h-4 mr-2 text-yellow-500" />
+          Wait {remainingTime}s...
+        </>
+      ) : isSendingReset ? (
+        "Sending..."
+      ) : (
+        "Forgot your password?"
+      )}
     </Button>
   );
 };
