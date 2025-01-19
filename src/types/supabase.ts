@@ -1,21 +1,24 @@
 import { Database } from './database.types'
 
+// Basic table and enum type exports
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
 export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
-export type Functions<T extends keyof Database['public']['Functions']> = Database['public']['Functions'][T]
 
-// Specific type exports
+// Specific enum type exports
 export type ConnectionStatus = Enums<'connection_status'>
 export type OrderStatus = Enums<'order_status'>
 export type PrescriptionStatus = Enums<'prescription_status'>
 
-// Table types
+// Specific table type exports
 export type Address = Tables<'addresses'>
+export type Profile = Tables<'profiles'>
 export type Category = Tables<'categories'>
 export type DoctorPatientConnection = Tables<'doctor_patient_connections'>
-
-// Function argument types
-export type CreateProfileArgs = Functions<'create_profile'>['Args']
-export type HandleConnectionRequestArgs = Functions<'handle_connection_request'>['Args']
-export type UpdateUserRoleAndPermissionsArgs = Functions<'update_user_role_and_permissions'>['Args']
-export type UpsertPharmacyArgs = Functions<'upsert_pharmacy'>['Args']
+export type Order = Tables<'orders'>
+export type Pharmacy = Tables<'pharmacies'>
+export type Prescription = Tables<'prescriptions'>
+export type Product = Tables<'products'>
+export type Role = Tables<'roles'>
+export type RolePermission = Tables<'role_permissions'>
+export type Subcategory = Tables<'subcategories'>
+export type UserPharmacy = Tables<'user_pharmacies'>
