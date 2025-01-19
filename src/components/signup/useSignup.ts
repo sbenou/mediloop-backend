@@ -4,14 +4,6 @@ import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { UserRole } from "./SignupForm";
 
-// Map frontend roles to database roles
-const roleMapping: Record<UserRole, string> = {
-  patient: "user",
-  doctor: "doctor",
-  pharmacist: "pharmacist",
-  delivery: "user" // Delivery persons get basic user role for now
-};
-
 export const useSignup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rateLimitExpiresAt, setRateLimitExpiresAt] = useState<number | null>(null);
@@ -22,7 +14,7 @@ export const useSignup = () => {
     email: string,
     password: string,
     name: string,
-    userRole: UserRole,
+    userRole: string,
     licenseNumber: string
   ) => {
     if (rateLimitExpiresAt && Date.now() < rateLimitExpiresAt) {
@@ -49,7 +41,7 @@ export const useSignup = () => {
         options: {
           data: {
             full_name: name,
-            role: roleMapping[userRole], // Store role in auth metadata
+            role: userRole, // Use the role directly from the database
           },
         },
       });
@@ -101,7 +93,7 @@ export const useSignup = () => {
             id: authData.user.id,
             email,
             full_name: name,
-            role: roleMapping[userRole],
+            role: userRole,
             license_number: licenseNumber || null,
           }]);
 

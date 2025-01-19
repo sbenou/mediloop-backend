@@ -1,14 +1,13 @@
 import { Profile } from './supabase';
 
-export type UserRole = 'patient' | 'doctor' | 'pharmacist' | 'delivery' | 'superadmin';
-
+// Role is now a string type since it can be any valid role from the database
 export interface UserProfile extends Omit<Profile, 'role'> {
-  role: UserRole;
+  role: string;
 }
 
 export interface AuthUser {
   id: string;
   email?: string;
-  role?: UserRole;
+  role?: string;
   profile?: UserProfile;
 }
