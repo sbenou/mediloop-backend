@@ -8,6 +8,7 @@ import { Check, X, RotateCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRecoilState } from 'recoil';
 import { loginState } from '@/store/auth/login-state';
+import { AuthService } from "@/services/auth";
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60;
@@ -76,19 +77,6 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  const requestOtp = async (email: string): Promise<void> => {
-    debug("Requesting new OTP for:", email);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false,
-      }
-    });
-    
-    if (error) throw error;
-    debug("OTP request successful");
-  };
-
   const handleResendOtp = async () => {
     if (resendCooldown > 0 || login.isLoading) {
       debug("Resend blocked:", { resendCooldown, isLoading: login.isLoading });
@@ -96,7 +84,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }
 
     try {
-      await requestOtp(email);
+      await AuthService.requestOtp(email);
       
       toast({ 
         title: "Code Resent", 
@@ -173,13 +161,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
     try {
       debug("Starting OTP verification");
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'email'
-      });
-
-      if (error) throw error;
+      await AuthService.verifyOtp(email, otp);
       debug("OTP verification successful");
       // Success case handled by onAuthStateChange listener
       

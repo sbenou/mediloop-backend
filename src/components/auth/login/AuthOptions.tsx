@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { AuthService } from "@/services/auth";
 
 interface AuthOptionsProps {
   email: string;
@@ -21,33 +22,19 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
     setIsLoading(true);
     try {
-      console.log('Starting OTP login process for:', email);
-      
-      const { data, error: signInError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        }
-      });
-
-      console.log('Supabase OTP setup response:', data);
-
-      if (signInError) {
-        console.error('Supabase OTP error:', signInError);
-        throw signInError;
-      }
-
-      console.log('OTP email sent successfully');
+      await AuthService.requestOtp(email);
       
       toast({
         title: "Check your email",
         description: "We've sent you a verification code.",
       });
 
-      // Navigate to OTP verification with email in state
+      // Store email in localStorage for persistence
+      localStorage.setItem('otp_email', email);
+
+      // Navigate to OTP verification without replace to preserve history
       navigate("/login/verify", { 
-        state: { email },
-        replace: false
+        state: { email }
       });
       
     } catch (error: any) {
@@ -77,7 +64,6 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
     setIsLoading(true);
     try {
-      console.log("Initiating password reset for:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password/new`,
       });
@@ -91,8 +77,6 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
       navigate("/login", { replace: true });
     } catch (error: any) {
-      console.error('Password reset error:', error);
-      
       let description = "Failed to send reset email";
       if (error.name === 'TypeError') {
         description = "Please check your internet connection and try again.";
