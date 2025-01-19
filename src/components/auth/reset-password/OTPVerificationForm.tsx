@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -16,27 +16,41 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
   const [passwordReset, setPasswordReset] = useRecoilState(passwordResetState);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((current) => {
+          if (current <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return current - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const startResendCooldown = () => {
     setResendCooldown(RESEND_COOLDOWN);
-    const timer = setInterval(() => {
-      setResendCooldown((current) => {
-        if (current <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return current - 1;
-      });
-    }, 1000);
   };
 
   const handleResendOtp = async () => {
-    if (resendCooldown > 0) return;
+    if (resendCooldown > 0 || isSubmitting) return;
 
     try {
       console.log("Initiating password reset for:", email);
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false,
+        }
+      });
+      
       if (error) throw error;
       
       toast({ 
@@ -47,10 +61,14 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       startResendCooldown();
     } catch (error: any) {
       console.error("Failed to resend OTP:", error);
+      const description = error.name === 'TypeError' 
+        ? "Please check your internet connection and try again."
+        : error.message || "Failed to resend the verification code.";
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to resend the verification code.",
+        description,
       });
     }
   };
@@ -86,6 +104,25 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     return true;
   };
 
+  const handleVerificationError = (error: any) => {
+    console.error('OTP verification error:', error);
+    let description = "Invalid verification code. Please try again.";
+
+    if (error.name === 'TypeError') {
+      description = "Please check your internet connection and try again.";
+    } else if (error.message?.includes('expired')) {
+      description = "The verification code has expired. Please request a new one.";
+    } else if (error.message?.includes('invalid')) {
+      description = "Invalid verification code. Please check and try again.";
+    }
+
+    toast({
+      variant: "destructive",
+      title: "Verification Failed",
+      description,
+    });
+  };
+
   const verifyOtpWithRetry = async (retries = 3) => {
     for (let i = 0; i < retries; i++) {
       try {
@@ -102,19 +139,19 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       } catch (error: any) {
         console.error(`OTP verification attempt ${i + 1} failed:`, error);
         if (i === retries - 1) throw error;
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
   };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Starting OTP verification process...");
     
-    if (!validateOTP(otp)) {
+    if (isSubmitting || !validateOTP(otp)) {
       return;
     }
 
+    setIsSubmitting(true);
     setPasswordReset(prev => ({
       ...prev,
       isLoading: true,
@@ -142,7 +179,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       });
 
     } catch (error: any) {
-      console.error('OTP verification error:', error);
+      handleVerificationError(error);
       
       setPasswordReset(prev => ({
         ...prev,
@@ -150,18 +187,14 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         isLoading: false,
       }));
 
-      toast({
-        variant: "destructive",
-        title: "Verification Failed",
-        description: error.message || "Invalid verification code. Please try again.",
-      });
-
       setTimeout(() => {
         setPasswordReset(prev => ({
           ...prev,
           isError: false,
         }));
       }, 1000);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
