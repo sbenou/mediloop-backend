@@ -6,7 +6,6 @@ import { toast } from '@/components/ui/use-toast';
 
 export const OTPVerificationPage = () => {
   const navigate = useNavigate();
-  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -18,50 +17,24 @@ export const OTPVerificationPage = () => {
     checkSession();
   }, [navigate]);
 
-  const handleVerification = async (otp: string) => {
-    try {
-      setIsVerifying(true);
-      const params = new URLSearchParams(window.location.search);
-      const email = params.get('email');
+  // Get email from URL parameters
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get('email');
 
-      if (!email) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Email not found in URL parameters",
-        });
-        return;
-      }
-
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'email'
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Email verified successfully. Redirecting...",
-      });
-
-      // Add a small delay before redirecting to ensure the auth state is updated
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 1000);
-
-    } catch (error: any) {
-      console.error('OTP verification error:', error);
-      toast({
-        variant: "destructive",
-        title: "Verification Failed",
-        description: error.message,
-      });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
+  if (!email) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Error
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            No email address found. Please try logging in again.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -73,10 +46,7 @@ export const OTPVerificationPage = () => {
           Enter the verification code sent to your email
         </p>
       </div>
-      <OTPVerificationForm 
-        onSubmit={handleVerification}
-        isLoading={isVerifying}
-      />
+      <OTPVerificationForm email={email} />
     </div>
   );
 };

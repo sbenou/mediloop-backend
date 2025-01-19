@@ -113,7 +113,7 @@ export const useAuth = () => {
             title: "Welcome back!",
             description: "You have successfully signed in.",
           });
-        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        } else if (event === 'SIGNED_OUT') {
           setAuth({
             user: null,
             profile: null,
