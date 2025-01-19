@@ -23,7 +23,6 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         email,
         options: {
           shouldCreateUser: false,
-          emailRedirectTo: `${window.location.origin}/reset-password/verify`
         }
       });
 
@@ -41,7 +40,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description: "We've sent you a verification code.",
       });
       
-      navigate(`/reset-password/verify?email=${encodeURIComponent(email)}`, { 
+      navigate(`/reset-password/verify`, { 
         replace: true,
         state: { email }
       });
