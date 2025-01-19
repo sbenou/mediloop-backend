@@ -70,8 +70,30 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
     }
   };
 
-  const handleResetPassword = () => {
-    navigate(`/reset-password?email=${encodeURIComponent(email)}`);
+  const handleEmailLinkReset = async () => {
+    try {
+      console.log("Initiating password reset for:", email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password/new`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Reset Link Sent",
+        description: "Check your email for the password reset link.",
+      });
+
+      // Navigate back to login page after sending reset email
+      navigate("/login", { replace: true });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to send reset email",
+      });
+    }
   };
 
   return (
@@ -102,7 +124,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
           Reset with One-Time Code
         </Button>
         <Button
-          onClick={handleResetPassword}
+          onClick={handleEmailLinkReset}
           className="w-full"
           variant="outline"
         >
