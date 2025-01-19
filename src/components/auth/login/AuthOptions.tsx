@@ -33,13 +33,15 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         data: emailData, 
         error: sendEmailError ? {
           message: sendEmailError.message,
-          name: sendEmailError.name,
-          cause: sendEmailError.cause
+          name: sendEmailError.name
         } : null 
       });
 
       if (sendEmailError) {
-        console.error('Edge function error details:', sendEmailError);
+        console.error('Edge function error details:', {
+          message: sendEmailError.message,
+          name: sendEmailError.name
+        });
         throw sendEmailError;
       }
 
@@ -56,13 +58,15 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         data: otpData, 
         error: supabaseError ? {
           message: supabaseError.message,
-          name: supabaseError.name,
-          cause: supabaseError.cause
+          name: supabaseError.name
         } : null 
       });
 
       if (supabaseError) {
-        console.error('Supabase error details:', supabaseError);
+        console.error('Supabase error details:', {
+          message: supabaseError.message,
+          name: supabaseError.name
+        });
         throw supabaseError;
       }
 
@@ -79,8 +83,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       console.error('Error details:', {
         message: error.message,
         name: error.name,
-        stack: error.stack,
-        cause: error.cause
+        stack: error.stack
       });
       
       toast({
