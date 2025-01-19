@@ -16,12 +16,14 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
   const handleOTPSelection = async () => {
     try {
+      // Generate a 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      console.log('Sending login email with OTP:', { email, otp });
+      
       // First send the email using our Edge Function
       const { error: sendEmailError } = await supabase.functions.invoke('send-login-email', {
-        body: { 
-          email,
-          type: 'otp',
-        },
+        body: { email, otp },
       });
 
       if (sendEmailError) throw sendEmailError;
