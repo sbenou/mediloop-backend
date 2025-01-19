@@ -12,6 +12,12 @@ import { loginState } from '@/store/auth/login-state';
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60;
 
+const debug = (message: string, data?: any) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[OTP Debug] ${message}`, data || '');
+  }
+};
+
 export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
   const [login, setLogin] = useRecoilState(loginState);
@@ -20,15 +26,22 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("Supabase client check:", {
+    // Store email in localStorage for persistence across refreshes
+    if (email) {
+      localStorage.setItem('otp_email', email);
+    }
+
+    debug("Initializing OTP form with email:", email);
+    debug("Supabase client check:", {
       initialized: !!supabase,
       gotAuth: !!supabase.auth,
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", { event, session });
+      debug("Auth state changed:", { event, session });
       
       if (event === 'SIGNED_IN' && session) {
+        debug("User successfully signed in");
         setLogin(prev => ({
           ...prev,
           isSuccess: true,
@@ -40,12 +53,16 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           description: "You have been successfully logged in.",
         });
         
-        navigate('/', { replace: true });
+        // Add a small delay before navigation to ensure toast is visible
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, 1500);
       }
     });
 
     return () => {
       subscription.unsubscribe();
+      localStorage.removeItem('otp_email'); // Cleanup on unmount
     };
   }, [email, navigate, toast, setLogin]);
 
@@ -53,47 +70,49 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     let timer: NodeJS.Timeout;
     if (resendCooldown > 0) {
       timer = setInterval(() => {
-        setResendCooldown((current) => {
-          if (current <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return current - 1;
-        });
+        setResendCooldown((current) => Math.max(0, current - 1));
       }, 1000);
     }
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  const startResendCooldown = () => {
-    setResendCooldown(RESEND_COOLDOWN);
+  const requestOtp = async (email: string): Promise<void> => {
+    debug("Requesting new OTP for:", email);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+      }
+    });
+    
+    if (error) throw error;
+    debug("OTP request successful");
   };
 
   const handleResendOtp = async () => {
-    if (resendCooldown > 0 || login.isLoading) return;
+    if (resendCooldown > 0 || login.isLoading) {
+      debug("Resend blocked:", { resendCooldown, isLoading: login.isLoading });
+      return;
+    }
 
     try {
-      console.log("Initiating OTP login for:", email);
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        }
-      });
-      
-      if (error) throw error;
+      await requestOtp(email);
       
       toast({ 
         title: "Code Resent", 
         description: "A new verification code has been sent to your email address." 
       });
       
-      startResendCooldown();
+      setResendCooldown(RESEND_COOLDOWN);
     } catch (error: any) {
-      console.error("Failed to resend OTP:", error);
-      const description = error.name === 'TypeError' 
-        ? "Please check your internet connection and try again."
-        : error.message || "Failed to resend the verification code.";
+      debug("Failed to resend OTP:", error);
+      let description = "Failed to resend verification code";
+      
+      if (error.name === 'TypeError') {
+        description = "Please check your internet connection and try again.";
+      } else if (error.message?.includes('rate limit')) {
+        description = "Too many attempts. Please wait a moment before trying again.";
+      }
       
       toast({
         variant: "destructive",
@@ -104,7 +123,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   };
 
   const validateOTP = (otp: string): boolean => {
-    console.log("Validating OTP:", { otp, length: otp.length });
+    debug("Validating OTP:", { otp, length: otp.length });
     
     if (!otp) {
       toast({
@@ -138,15 +157,10 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("handleVerify triggered with OTP:", otp);
-    console.log("Form submission state:", { 
-      isLoading: login.isLoading, 
-      isSuccess: login.isSuccess,
-      otpLength: otp.length 
-    });
+    debug("Handling verification:", { otp, isLoading: login.isLoading });
     
     if (login.isLoading || !validateOTP(otp)) {
-      console.log("Validation failed or submission in progress");
+      debug("Validation failed or submission in progress");
       return;
     }
 
@@ -158,7 +172,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }));
 
     try {
-      console.log("Starting OTP verification for login");
+      debug("Starting OTP verification");
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
@@ -166,11 +180,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       });
 
       if (error) throw error;
-
-      // The success case is handled by the onAuthStateChange listener
+      debug("OTP verification successful");
+      // Success case handled by onAuthStateChange listener
       
     } catch (error: any) {
-      console.error("OTP verification error:", error);
+      debug("OTP verification error:", error);
       
       let description = "Invalid verification code. Please try again.";
       if (error.name === 'TypeError') {
@@ -206,18 +220,21 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     <form onSubmit={handleVerify} className="space-y-4">
       <div className="space-y-2">
         <Label>Verification Code</Label>
-        <InputOTP
-          maxLength={OTP_LENGTH}
-          value={otp}
-          onChange={setOtp}
-          disabled={login.isLoading || login.isSuccess}
-        >
-          <InputOTPGroup>
-            {Array.from({ length: OTP_LENGTH }).map((_, i) => (
-              <InputOTPSlot key={i} index={i} />
-            ))}
-          </InputOTPGroup>
-        </InputOTP>
+        <div role="alert" aria-live="polite">
+          <InputOTP
+            maxLength={OTP_LENGTH}
+            value={otp}
+            onChange={setOtp}
+            disabled={login.isLoading || login.isSuccess}
+            aria-label="Enter verification code"
+          >
+            <InputOTPGroup>
+              {Array.from({ length: OTP_LENGTH }).map((_, i) => (
+                <InputOTPSlot key={i} index={i} />
+              ))}
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
       </div>
       
       <div className="space-y-2">
@@ -225,6 +242,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           type="submit" 
           className={`w-full ${login.isSuccess ? 'bg-green-500 hover:bg-green-600' : ''} ${login.isError ? 'bg-red-500 hover:bg-red-600' : ''}`}
           disabled={login.isLoading || !otp || login.isSuccess || login.isError}
+          aria-live="polite"
         >
           {login.isLoading ? (
             "Verifying..."
@@ -249,6 +267,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           className="w-full mt-2"
           onClick={handleResendOtp}
           disabled={resendCooldown > 0 || login.isLoading || login.isSuccess}
+          aria-live="polite"
         >
           {resendCooldown > 0 ? (
             `Resend Code (${resendCooldown}s)`
