@@ -5,20 +5,20 @@ export type Tables<T extends keyof Database['public']['Tables']> = Database['pub
 export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
 
 // Specific enum type exports
-export type ConnectionStatus = Enums<'connection_status'>
-export type OrderStatus = Enums<'order_status'>
-export type PrescriptionStatus = Enums<'prescription_status'>
+export type ConnectionStatus = Database['public']['Enums']['connection_status']
+export type OrderStatus = Database['public']['Enums']['order_status']
+export type PrescriptionStatus = Database['public']['Enums']['prescription_status']
 
 // Specific table type exports
-export type Address = Tables<'addresses'>
-export type Profile = Tables<'profiles'>
-export type Category = Tables<'categories'>
-export type DoctorPatientConnection = Tables<'doctor_patient_connections'>
-export type Order = Tables<'orders'>
-export type Pharmacy = Tables<'pharmacies'>
-export type Prescription = Tables<'prescriptions'>
-export type Product = Tables<'products'>
-export type Role = Tables<'roles'>
-export type RolePermission = Tables<'role_permissions'>
-export type Subcategory = Tables<'subcategories'>
-export type UserPharmacy = Tables<'user_pharmacies'>
+export type Address = Database['public']['Tables']['addresses']['Row']
+export type Profile = Database['public']['Tables']['profiles']['Row']
+export type Category = Database['public']['Tables']['categories']['Row']
+export type DoctorPatientConnection = Database['public']['Tables']['doctor_patient_connections']['Row']
+export type Order = Database['public']['Tables']['orders']['Row']
+export type Pharmacy = Database['public']['Tables']['pharmacies']['Row']
+export type Prescription = Database['public']['Tables']['prescriptions']['Row']
+export type Product = Database['public']['Tables']['products']['Row']
+export type Role = Database['public']['Tables']['roles']['Row']
+export type RolePermission = Database['public']['Tables']['role_permissions']['Row']
+export type Subcategory = Database['public']['Tables']['subcategories']['Row']
+export type UserPharmacy = Database['public']['Tables']['user_pharmacies']['Row']
