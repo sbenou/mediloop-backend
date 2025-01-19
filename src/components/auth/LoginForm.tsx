@@ -17,20 +17,24 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Give time for the toast to show
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleEmailSent = () => {
+    console.log('Email sent, showing auth options');
     setShowAuthOptions(true);
   };
 
   const handleSelectOTP = () => {
+    console.log('OTP selected, showing OTP form');
     setShowAuthOptions(false);
     setShowOTPForm(true);
   };
+
+  console.log('LoginForm state:', { showAuthOptions, showOTPForm });
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

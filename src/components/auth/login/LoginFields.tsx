@@ -68,7 +68,7 @@ export const LoginFields = ({
         description: "We've sent you a login link with a one-time code.",
       });
       
-      // Show auth options after everything is successful
+      console.log('Email sent successfully, calling onEmailSent');
       onEmailSent();
     } catch (error: any) {
       console.error('Email verification error:', error);
