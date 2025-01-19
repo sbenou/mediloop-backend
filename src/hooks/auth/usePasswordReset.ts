@@ -38,18 +38,15 @@ export const usePasswordReset = () => {
     console.log("Initiating password reset for:", email);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        }
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password/new`,
       });
 
       if (error) throw error;
 
       toast({
         title: "Reset Password Request",
-        description: "If an account exists with this email address, we've sent you a verification code. Please check your inbox and spam folder.",
+        description: "If an account exists with this email address, you'll receive a password reset link. Please check your inbox and spam folder.",
         duration: 3000,
       });
       
