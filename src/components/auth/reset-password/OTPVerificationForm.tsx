@@ -19,6 +19,14 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  // Log Supabase client initialization
+  useEffect(() => {
+    console.log("Supabase client check:", {
+      url: supabase.config.url,
+      initialized: !!supabase,
+    });
+  }, []);
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (resendCooldown > 0) {
@@ -74,6 +82,8 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   };
 
   const validateOTP = (otp: string): boolean => {
+    console.log("Validating OTP:", { otp, length: otp.length });
+    
     if (!otp) {
       toast({
         variant: "destructive",
@@ -146,8 +156,15 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("handleVerify triggered with OTP:", otp);
+    console.log("Form submission state:", { 
+      isSubmitting, 
+      passwordResetState: passwordReset,
+      otpLength: otp.length 
+    });
     
     if (isSubmitting || !validateOTP(otp)) {
+      console.log("Validation failed or submission in progress");
       return;
     }
 
