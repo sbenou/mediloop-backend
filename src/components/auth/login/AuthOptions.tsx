@@ -23,6 +23,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         email,
         options: {
           shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/reset-password/verify`
         }
       });
 
@@ -40,7 +41,10 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description: "We've sent you a verification code.",
       });
       
-      navigate(`/reset-password/verify?email=${encodeURIComponent(email)}`, { replace: true });
+      navigate(`/reset-password/verify?email=${encodeURIComponent(email)}`, { 
+        replace: true,
+        state: { email }
+      });
     } catch (error: any) {
       console.error('=== OTP Process Failed ===');
       console.error('Error details:', error);
