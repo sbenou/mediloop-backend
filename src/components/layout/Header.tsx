@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, User } from 'lucide-react';
 import { useState } from 'react';
 import {
   NavigationMenu,
@@ -33,6 +33,16 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
   // List of public routes that don't require authentication
   const publicRoutes = ['/', '/products', '/services', '/search-pharmacy', '/become-transporter', '/become-partner', '/login', '/signup', '/reset-password'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
+
+  const LoadingSkeleton = () => (
+    <div className="flex items-center space-x-2">
+      <Skeleton className="h-10 w-10 rounded-full">
+        <div className="h-full w-full flex items-center justify-center">
+          <User className="h-5 w-5 text-muted-foreground/50" />
+        </div>
+      </Skeleton>
+    </div>
+  );
 
   return (
     <header className="bg-white shadow-sm">
@@ -73,7 +83,7 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
             {showUserMenu && (
               <>
                 {isLoading ? (
-                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <LoadingSkeleton />
                 ) : isAuthenticated ? (
                   <UserMenu />
                 ) : (

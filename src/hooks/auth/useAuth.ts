@@ -19,13 +19,44 @@ export const useAuth = () => {
   const setAuth = useSetRecoilState(authState);
 
   useEffect(() => {
-    // Check session on mount
+    const fetchUserData = async (userId: string) => {
+      try {
+        const [profileResponse, permissionsResponse] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single(),
+          supabase
+            .from('role_permissions')
+            .select('permission_id')
+            .eq('role_id', userId)
+        ]);
+
+        if (profileResponse.error) {
+          console.error('Profile fetch error:', profileResponse.error);
+          throw profileResponse.error;
+        }
+
+        if (permissionsResponse.error) {
+          console.error('Permissions fetch error:', permissionsResponse.error);
+          throw permissionsResponse.error;
+        }
+
+        return {
+          profile: profileResponse.data as UserProfile,
+          permissions: permissionsResponse.data?.map(p => p.permission_id) || []
+        };
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        throw error;
+      }
+    };
+
     const checkSession = async () => {
       try {
         setAuth(state => ({ ...state, isLoading: true }));
-        
         const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('useAuth - Session check:', session);
         
         if (error) {
           console.error('Session check error:', error);
@@ -33,31 +64,11 @@ export const useAuth = () => {
         }
         
         if (session?.user) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError) {
-            console.error('Profile fetch error:', profileError);
-            throw profileError;
-          }
-
-          const { data: permissions, error: permissionsError } = await supabase
-            .from('role_permissions')
-            .select('permission_id')
-            .eq('role_id', profile?.role_id);
-
-          if (permissionsError) {
-            console.error('Permissions fetch error:', permissionsError);
-            throw permissionsError;
-          }
-
+          const userData = await fetchUserData(session.user.id);
           setAuth({
             user: session.user,
-            profile: profile as UserProfile,
-            permissions: permissions?.map(p => p.permission_id) || [],
+            profile: userData.profile,
+            permissions: userData.permissions,
             isLoading: false,
           });
         } else {
@@ -81,31 +92,16 @@ export const useAuth = () => {
     
     checkSession();
 
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('useAuth - Auth state changed:', event, session);
+      console.log('Auth state changed:', { event, session: session?.user?.id });
       
       try {
         if (event === 'SIGNED_IN' && session?.user) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError) throw profileError;
-
-          const { data: permissions, error: permissionsError } = await supabase
-            .from('role_permissions')
-            .select('permission_id')
-            .eq('role_id', profile?.role_id);
-
-          if (permissionsError) throw permissionsError;
-
+          const userData = await fetchUserData(session.user.id);
           setAuth({
             user: session.user,
-            profile: profile as UserProfile,
-            permissions: permissions?.map(p => p.permission_id) || [],
+            profile: userData.profile,
+            permissions: userData.permissions,
             isLoading: false,
           });
 
@@ -122,7 +118,7 @@ export const useAuth = () => {
           });
         }
       } catch (error) {
-        console.error('Auth state change error:', error);
+        console.error('Error handling auth state change:', error);
         setAuth({
           user: null,
           profile: null,
@@ -136,13 +132,6 @@ export const useAuth = () => {
       subscription.unsubscribe();
     };
   }, [setAuth]);
-
-  console.log('useAuth hook - State:', { 
-    isAuthenticated, 
-    userRole, 
-    permissions, 
-    isLoading 
-  });
 
   return {
     isAuthenticated,
