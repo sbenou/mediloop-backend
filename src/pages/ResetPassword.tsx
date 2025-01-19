@@ -13,12 +13,12 @@ const ResetPassword = () => {
   const isNewPasswordStep = window.location.pathname === "/reset-password/new";
 
   useEffect(() => {
-    if (!email) {
+    if (!email && !isNewPasswordStep) {
       navigate("/login", { replace: true });
     }
-  }, [email, navigate]);
+  }, [email, navigate, isNewPasswordStep]);
 
-  if (!email) {
+  if (!email && !isNewPasswordStep) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
@@ -57,8 +57,8 @@ const ResetPassword = () => {
         </CardHeader>
         <CardContent>
           {isNewPasswordStep 
-            ? <NewPasswordForm email={email} />
-            : <OTPVerificationForm email={email} />
+            ? <NewPasswordForm email={email || ''} />
+            : <OTPVerificationForm email={email || ''} />
           }
         </CardContent>
       </Card>

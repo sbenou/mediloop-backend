@@ -57,6 +57,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description: "We've sent you a login link with a one-time code.",
       });
       
+      // Navigate to the OTP verification page instead of login
       navigate(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       console.error('=== OTP Process Failed ===');
