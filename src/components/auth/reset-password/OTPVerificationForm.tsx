@@ -8,10 +8,9 @@ import { Check, X, RotateCw } from "lucide-react";
 import { useRecoilState } from 'recoil';
 import { passwordResetState } from '@/store/auth/password-reset';
 import { toast } from "@/hooks/use-toast";
-import { AuthResponse } from "@supabase/supabase-js";
 
 const OTP_LENGTH = 6;
-const RESEND_COOLDOWN = 60; // 60 seconds cooldown for resend
+const RESEND_COOLDOWN = 60;
 
 export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
@@ -36,6 +35,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     if (resendCooldown > 0) return;
 
     try {
+      console.log("Initiating password reset for:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) throw error;
       
@@ -46,6 +46,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       
       startResendCooldown();
     } catch (error: any) {
+      console.error("Failed to resend OTP:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -85,6 +86,27 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     return true;
   };
 
+  const verifyOtpWithRetry = async (retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        console.log("Attempting OTP verification:", { email, token: otp, type: "recovery" });
+        const { data, error } = await supabase.auth.verifyOtp({
+          email,
+          token: otp,
+          type: 'recovery'
+        });
+
+        if (error) throw error;
+        console.log("OTP verification successful:", data);
+        return data;
+      } catch (error: any) {
+        console.error(`OTP verification attempt ${i + 1} failed:`, error);
+        if (i === retries - 1) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+      }
+    }
+  };
+
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Starting OTP verification process...");
@@ -102,19 +124,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }));
 
     try {
-      console.log("Verifying OTP for email:", email);
-      
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'recovery'
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      console.log("OTP verification successful, data:", data);
+      const data = await verifyOtpWithRetry();
       
       setPasswordReset(prev => ({
         ...prev,
