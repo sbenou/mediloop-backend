@@ -19,7 +19,6 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       console.log('=== Starting OTP Process ===');
       console.log('Email:', email);
       
-      // Step 1: Send the OTP email using Supabase's built-in functionality
       const { data, error: signInError } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -41,8 +40,8 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description: "We've sent you a verification code.",
       });
       
-      // Navigate to the OTP verification page
-      navigate(`/reset-password?email=${encodeURIComponent(email)}`);
+      // Navigate to the OTP verification page with email parameter
+      navigate(`/reset-password/verify?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       console.error('=== OTP Process Failed ===');
       console.error('Error details:', error);
@@ -69,7 +68,6 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description: "Check your email for the password reset link.",
       });
 
-      // Navigate back to login page after sending reset email
       navigate("/login", { replace: true });
     } catch (error: any) {
       console.error('Password reset error:', error);
