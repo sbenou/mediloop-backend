@@ -26,7 +26,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", { event, session: session?.id });
+      console.log("Auth state changed:", { event, session: session?.user?.id });
       
       if (event === 'PASSWORD_RECOVERY') {
         setPasswordReset(prev => ({
