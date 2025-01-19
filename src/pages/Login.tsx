@@ -15,7 +15,7 @@ const Login = () => {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Login</CardTitle>
           <CardDescription>
-            Enter your email and password to login
+            Enter your email to get started
           </CardDescription>
         </CardHeader>
         <CardContent>
