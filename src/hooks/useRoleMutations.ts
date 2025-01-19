@@ -5,7 +5,6 @@ import { PostgrestError } from "@supabase/supabase-js";
 import { Role } from "@/types/role";
 
 // Type definitions
-type ToastFunction = typeof useToast extends () => infer R ? R : never;
 type CreateRoleInput = Pick<Role, 'name' | 'description'>;
 type UpdateRoleInput = Pick<Role, 'id' | 'name' | 'description'>;
 
@@ -62,14 +61,14 @@ const handlePostgrestError = (error: PostgrestError) => {
 
 // Toast utilities
 const toastMessages = {
-  success: (toast: ToastFunction, message: string) => {
-    toast({
+  success: (toast: ReturnType<typeof useToast>, message: string) => {
+    toast.toast({
       title: message,
       description: "The operation was completed successfully.",
     });
   },
-  error: (toast: ToastFunction, error: Error) => {
-    toast({
+  error: (toast: ReturnType<typeof useToast>, error: Error) => {
+    toast.toast({
       variant: "destructive",
       title: "Error",
       description: error.message || "An unexpected error occurred.",
@@ -79,7 +78,7 @@ const toastMessages = {
 
 // Main hook
 export const useRoleMutations = () => {
-  const { toast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
 
   const createRoleMutation = useMutation({
