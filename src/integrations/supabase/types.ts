@@ -294,6 +294,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_method: string | null
           avatar_url: string | null
           city: string | null
           cns_card_back: string | null
@@ -314,6 +315,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          auth_method?: string | null
           avatar_url?: string | null
           city?: string | null
           cns_card_back?: string | null
@@ -334,6 +336,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          auth_method?: string | null
           avatar_url?: string | null
           city?: string | null
           cns_card_back?: string | null
@@ -500,6 +503,13 @@ export type Database = {
       }
       truncate_products: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      update_auth_method: {
+        Args: {
+          user_id: string
+          method: string
+        }
         Returns: undefined
       }
       update_user_role_and_permissions: {

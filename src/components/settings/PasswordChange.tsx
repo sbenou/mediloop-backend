@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
 const PasswordChange = () => {
@@ -11,6 +12,24 @@ const PasswordChange = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isOtpUser, setIsOtpUser] = useState(false);
+
+  useEffect(() => {
+    const checkAuthMethod = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('auth_method')
+        .eq('id', user.id)
+        .single();
+
+      setIsOtpUser(profile?.auth_method === 'otp');
+    };
+
+    checkAuthMethod();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +52,14 @@ const PasswordChange = () => {
 
       if (error) throw error;
 
+      // Update auth method to password
+      const { error: updateError } = await supabase.rpc('update_auth_method', {
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        method: 'password'
+      });
+
+      if (updateError) console.error('Error updating auth method:', updateError);
+
       toast({
         title: "Password updated",
         description: "Your password has been changed successfully.",
@@ -54,16 +81,26 @@ const PasswordChange = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="current-password">Current Password</Label>
-        <Input
-          id="current-password"
-          type="password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          required
-        />
-      </div>
+      {isOtpUser && (
+        <Alert>
+          <AlertDescription>
+            You're currently using one-time codes to log in. Set a password below to enable password-based login.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isOtpUser && (
+        <div className="space-y-2">
+          <Label htmlFor="current-password">Current Password</Label>
+          <Input
+            id="current-password"
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            required={!isOtpUser}
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="new-password">New Password</Label>
@@ -88,7 +125,7 @@ const PasswordChange = () => {
       </div>
 
       <Button type="submit" disabled={isLoading}>
-        {isLoading ? "Updating..." : "Update Password"}
+        {isLoading ? "Updating..." : isOtpUser ? "Set Password" : "Update Password"}
       </Button>
     </form>
   );
