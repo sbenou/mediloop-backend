@@ -70,6 +70,7 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("=== Password Reset Submission Start ===");
     
     if (password !== confirmPassword) {
       toast({
@@ -81,14 +82,17 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
     }
 
     setIsLoading(true);
-    console.log("Updating password...");
+    console.log("Starting password update process...");
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      console.log("Updating user password...");
+      const { error: updateError } = await supabase.auth.updateUser({ 
+        password 
+      });
 
-      if (error) {
-        console.error('Password update error:', error);
-        throw error;
+      if (updateError) {
+        console.error('Password update error:', updateError);
+        throw updateError;
       }
 
       console.log("Password updated successfully");
@@ -100,33 +104,32 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
         duration: 5000,
       });
 
-      // Sign out and redirect with a delay
+      console.log("Initiating sign out process...");
+      
       try {
-        // Sign out from all sessions (global scope)
+        console.log("Signing out from all sessions...");
         const { error: signOutError } = await supabase.auth.signOut({
           scope: 'global'
         });
         
         if (signOutError) {
           console.error('Sign out error:', signOutError);
-          // If sign out fails, still redirect to login
-          navigate("/login", { replace: true });
-          return;
+          throw signOutError;
         }
-
-        // Add a small delay to ensure the toast is visible
-        setTimeout(() => {
-          navigate("/login", { replace: true });
-        }, 2000);
-
+        
+        console.log("Sign out successful");
+        
+        // Navigate immediately after successful sign out
+        navigate("/login", { replace: true });
+        
       } catch (signOutError) {
-        console.error('Sign out error:', signOutError);
-        // Still redirect even if sign out fails
+        console.error('Sign out failed:', signOutError);
+        // If sign out fails, still redirect to login
         navigate("/login", { replace: true });
       }
 
     } catch (error: any) {
-      console.error('Password update error:', error);
+      console.error('Password reset process failed:', error);
       toast({
         variant: "destructive",
         title: "Error",
