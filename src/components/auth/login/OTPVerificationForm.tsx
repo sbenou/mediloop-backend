@@ -6,15 +6,15 @@ import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { Check, X, RotateCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRecoilState } from 'recoil';
+import { loginState } from '@/store/auth/login-state';
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60;
 
 export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [otp, setOtp] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isError, setIsError] = useState(false);
+  const [login, setLogin] = useRecoilState(loginState);
   const [resendCooldown, setResendCooldown] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,8 +29,11 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       console.log("Auth state changed:", { event, session });
       
       if (event === 'SIGNED_IN' && session) {
-        setIsSuccess(true);
-        setIsSubmitting(false);
+        setLogin(prev => ({
+          ...prev,
+          isSuccess: true,
+          isLoading: false,
+        }));
 
         toast({
           title: "Login Successful",
@@ -44,7 +47,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [email, navigate, toast]);
+  }, [email, navigate, toast, setLogin]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -67,7 +70,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   };
 
   const handleResendOtp = async () => {
-    if (resendCooldown > 0 || isSubmitting) return;
+    if (resendCooldown > 0 || login.isLoading) return;
 
     try {
       console.log("Initiating OTP login for:", email);
@@ -137,19 +140,22 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     e.preventDefault();
     console.log("handleVerify triggered with OTP:", otp);
     console.log("Form submission state:", { 
-      isSubmitting, 
-      isSuccess,
+      isLoading: login.isLoading, 
+      isSuccess: login.isSuccess,
       otpLength: otp.length 
     });
     
-    if (isSubmitting || !validateOTP(otp)) {
+    if (login.isLoading || !validateOTP(otp)) {
       console.log("Validation failed or submission in progress");
       return;
     }
 
-    setIsSubmitting(true);
-    setIsError(false);
-    setIsSuccess(false);
+    setLogin(prev => ({
+      ...prev,
+      isLoading: true,
+      isError: false,
+      isSuccess: false,
+    }));
 
     try {
       console.log("Starting OTP verification for login");
@@ -181,11 +187,17 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
         description,
       });
       
-      setIsError(true);
-      setIsSubmitting(false);
+      setLogin(prev => ({
+        ...prev,
+        isError: true,
+        isLoading: false,
+      }));
 
       setTimeout(() => {
-        setIsError(false);
+        setLogin(prev => ({
+          ...prev,
+          isError: false,
+        }));
       }, 1000);
     }
   };
@@ -198,7 +210,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           maxLength={OTP_LENGTH}
           value={otp}
           onChange={setOtp}
-          disabled={isSubmitting || isSuccess}
+          disabled={login.isLoading || login.isSuccess}
         >
           <InputOTPGroup>
             {Array.from({ length: OTP_LENGTH }).map((_, i) => (
@@ -211,17 +223,17 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
       <div className="space-y-2">
         <Button 
           type="submit" 
-          className={`w-full ${isSuccess ? 'bg-green-500 hover:bg-green-600' : ''} ${isError ? 'bg-red-500 hover:bg-red-600' : ''}`}
-          disabled={isSubmitting || !otp || isSuccess || isError}
+          className={`w-full ${login.isSuccess ? 'bg-green-500 hover:bg-green-600' : ''} ${login.isError ? 'bg-red-500 hover:bg-red-600' : ''}`}
+          disabled={login.isLoading || !otp || login.isSuccess || login.isError}
         >
-          {isSubmitting ? (
+          {login.isLoading ? (
             "Verifying..."
-          ) : isSuccess ? (
+          ) : login.isSuccess ? (
             <div className="flex items-center justify-center gap-2 w-full">
               <Check className="h-4 w-4" />
               <span>Verified</span>
             </div>
-          ) : isError ? (
+          ) : login.isError ? (
             <div className="flex items-center justify-center gap-2 w-full">
               <X className="h-4 w-4" />
               <span>Invalid Code</span>
@@ -236,7 +248,7 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
           variant="outline"
           className="w-full mt-2"
           onClick={handleResendOtp}
-          disabled={resendCooldown > 0 || isSubmitting || isSuccess}
+          disabled={resendCooldown > 0 || login.isLoading || login.isSuccess}
         >
           {resendCooldown > 0 ? (
             `Resend Code (${resendCooldown}s)`
