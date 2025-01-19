@@ -3,6 +3,7 @@ import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
 import { useQuery } from '@tanstack/react-query';
+import { UserProfile, UserRole } from '@/types/user';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
@@ -29,7 +30,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('role_id', profile?.role_id);
 
       return {
-        profile,
+        profile: profile ? {
+          ...profile,
+          role: profile.role as UserRole
+        } as UserProfile : null,
         permissions: permissions?.map(p => p.permission_id) || [],
       };
     };
@@ -56,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     updateAuthState();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
+      console.log('Auth state changed:', { event, session: session?.user?.id });
       if (session?.user) {
         const { profile, permissions } = await fetchUserProfile(session.user.id);
         setAuth({

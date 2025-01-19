@@ -10,6 +10,7 @@ interface Doctor {
   full_name: string;
   license_number: string;
   city: string;
+  doctor_id: string;
 }
 
 const DoctorManagement = () => {
@@ -33,7 +34,7 @@ const DoctorManagement = () => {
         .from('doctor_patient_connections')
         .select(`
           *,
-          doctor:profiles!doctor_id(full_name, license_number, city)
+          doctor:profiles!doctor_id(id, full_name, license_number, city)
         `)
         .eq('patient_id', session.user.id)
         .eq('status', 'accepted');
@@ -105,7 +106,7 @@ const DoctorManagement = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => removeDoctorMutation.mutate(connection.doctor_id)}
+                  onClick={() => removeDoctorMutation.mutate(connection.doctor.id)}
                   disabled={removeDoctorMutation.isPending}
                 >
                   <UserMinus className="mr-2 h-4 w-4" />

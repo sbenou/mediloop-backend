@@ -15,8 +15,9 @@ export interface Product {
 export interface Category {
   id: string;
   name: string;
-  type: 'medication' | 'parapharmacy';
-  subcategories: Subcategory[];
+  type: string;
+  created_at: string;
+  subcategories?: Subcategory[];
 }
 
 export interface Subcategory {
