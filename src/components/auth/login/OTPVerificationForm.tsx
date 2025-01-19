@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { PasswordResetButton } from "../PasswordResetButton";
 
 interface OTPVerificationFormProps {
   email: string;
@@ -67,6 +68,9 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
       >
         {isLoading ? "Verifying..." : "Verify Code"}
       </Button>
+      <div className="text-center">
+        <PasswordResetButton email={email} disabled={isLoading} />
+      </div>
     </div>
   );
 };

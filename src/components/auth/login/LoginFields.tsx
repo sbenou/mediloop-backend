@@ -3,7 +3,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { PasswordResetButton } from "../PasswordResetButton";
 
 interface LoginFieldsProps {
   email: string;
@@ -77,19 +76,14 @@ export const LoginFields = ({
           required
         />
       </div>
-      <div className="flex flex-col space-y-4">
-        <Button
-          type="button"
-          className="w-full"
-          onClick={handleOtpLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? "Sending code..." : "Continue with Email"}
-        </Button>
-        <div className="text-center">
-          <PasswordResetButton email={email} disabled={isLoading} />
-        </div>
-      </div>
+      <Button
+        type="button"
+        className="w-full"
+        onClick={handleOtpLogin}
+        disabled={isLoading}
+      >
+        {isLoading ? "Sending code..." : "Continue with Email"}
+      </Button>
     </div>
   );
 };
