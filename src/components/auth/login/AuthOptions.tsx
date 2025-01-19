@@ -23,7 +23,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       
       // First send the email using our Edge Function
       const { error: sendEmailError } = await supabase.functions.invoke('send-login-email', {
-        body: { email, otp, type: 'otp' },
+        body: { email, otp },
       });
 
       if (sendEmailError) throw sendEmailError;

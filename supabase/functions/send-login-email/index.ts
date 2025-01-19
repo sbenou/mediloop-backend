@@ -10,8 +10,7 @@ const corsHeaders = {
 
 interface LoginEmailRequest {
   email: string;
-  otp?: string;
-  type: 'otp' | 'reset';
+  otp: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -21,8 +20,8 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, otp, type } = await req.json() as LoginEmailRequest;
-    console.log('Processing login email request:', { email, type });
+    const { email, otp } = await req.json() as LoginEmailRequest;
+    console.log('Processing login email request:', { email });
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -33,19 +32,13 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: 'Pharmacy App <login@resend.dev>',
         to: [email],
-        subject: type === 'otp' ? 'Your Login Code' : 'Reset Your Password',
-        html: type === 'otp' 
-          ? `
-            <h1>Your Login Code</h1>
-            <p>Here is your one-time login code: <strong>${otp}</strong></p>
-            <p>This code will expire in 5 minutes.</p>
-            <p>If you didn't request this code, please ignore this email.</p>
-          `
-          : `
-            <h1>Reset Your Password</h1>
-            <p>Click the link provided by Supabase in your email to reset your password.</p>
-            <p>If you didn't request this password reset, please ignore this email.</p>
-          `,
+        subject: 'Your Login Code',
+        html: `
+          <h1>Your Login Code</h1>
+          <p>Here is your one-time login code: <strong>${otp}</strong></p>
+          <p>This code will expire in 5 minutes.</p>
+          <p>If you didn't request this code, please ignore this email.</p>
+        `,
       }),
     });
 
