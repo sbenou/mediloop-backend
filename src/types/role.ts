@@ -1,5 +1,5 @@
-export interface Role {
-  id: string;
-  name: string;
-  description: string;
+import { Role as SupabaseRole } from './supabase';
+
+export interface Role extends SupabaseRole {
+  permissions?: string[];
 }

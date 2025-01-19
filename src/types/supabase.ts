@@ -1,15 +1,12 @@
-import { Database } from './database.types'
+import { Database } from './database.types';
+import { Tables } from './database.types';
 
-// Basic table and enum type exports
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
-export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
+// Re-export enum types
+export type ConnectionStatus = Database['public']['Enums']['connection_status'];
+export type OrderStatus = Database['public']['Enums']['order_status'];
+export type PrescriptionStatus = Database['public']['Enums']['prescription_status'];
 
-// Specific enum type exports
-export type ConnectionStatus = Database['public']['Enums']['connection_status']
-export type OrderStatus = Database['public']['Enums']['order_status']
-export type PrescriptionStatus = Database['public']['Enums']['prescription_status']
-
-// Specific table type exports
+// Specific table type exports using the Tables helper type
 export type Address = Tables<'addresses'>
 export type Profile = Tables<'profiles'>
 export type Category = Tables<'categories'>
