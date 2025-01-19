@@ -1,8 +1,5 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { LogIn } from "lucide-react";
 import { LoginFields } from "./login/LoginFields";
-import { useLogin } from "@/hooks/auth/useLogin";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -10,28 +7,22 @@ interface LoginFormProps {
 
 export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const { isLoading, handleLogin } = useLogin(onSuccess);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleLogin(email, password);
+    setIsLoading(true);
+    // The actual login logic is now handled in LoginFields
+    setIsLoading(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <LoginFields
         email={email}
-        password={password}
         onEmailChange={setEmail}
-        onPasswordChange={setPassword}
         isLoading={isLoading}
       />
-
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        <LogIn className="mr-2 h-4 w-4" />
-        {isLoading ? "Logging in..." : "Login"}
-      </Button>
     </form>
   );
 };
