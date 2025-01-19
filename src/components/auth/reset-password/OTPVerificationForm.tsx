@@ -19,13 +19,37 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // Log Supabase client initialization status
   useEffect(() => {
     console.log("Supabase client check:", {
       initialized: !!supabase,
       gotAuth: !!supabase.auth,
     });
-  }, []);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", { event, session: session?.id });
+      
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordReset(prev => ({
+          ...prev,
+          isSuccess: true,
+          isLoading: false,
+        }));
+
+        toast({
+          title: "Verification Successful",
+          description: "You can now set your new password.",
+        });
+        
+        navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { 
+          replace: true 
+        });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [email, navigate, setPasswordReset]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -114,57 +138,6 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     return true;
   };
 
-  const handleVerificationError = (error: any) => {
-    console.error('OTP verification error:', error);
-    let description = "Invalid verification code. Please try again.";
-
-    if (error.name === 'TypeError') {
-      description = "Please check your internet connection and try again.";
-    } else if (error.message?.includes('expired')) {
-      description = "The verification code has expired. Please request a new one.";
-    } else if (error.message?.includes('invalid')) {
-      description = "Invalid verification code. Please check and try again.";
-    }
-
-    toast({
-      variant: "destructive",
-      title: "Verification Failed",
-      description,
-    });
-  };
-
-  const verifyOtpWithRetry = async (retries = 3) => {
-    for (let i = 0; i < retries; i++) {
-      try {
-        console.log("Starting OTP verification attempt", i + 1, "of", retries);
-        console.log("Verification parameters:", { 
-          email, 
-          otpLength: otp.length,
-          attempt: i + 1 
-        });
-        
-        const { data, error } = await supabase.auth.verifyOtp({
-          email,
-          token: otp,
-          type: 'recovery'
-        });
-
-        if (error) {
-          console.error("Verification attempt failed:", error);
-          throw error;
-        }
-
-        console.log("OTP verification successful:", data);
-        return data;
-      } catch (error: any) {
-        console.error(`OTP verification attempt ${i + 1} failed:`, error);
-        if (i === retries - 1) throw error;
-        console.log(`Waiting before retry ${i + 2}...`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-  };
-
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("handleVerify triggered with OTP:", otp);
@@ -189,25 +162,34 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
     }));
 
     try {
-      const data = await verifyOtpWithRetry();
+      console.log("Starting OTP verification");
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'recovery'
+      });
+
+      if (error) throw error;
+
+      // The success case is handled by the onAuthStateChange listener
       
-      setPasswordReset(prev => ({
-        ...prev,
-        isSuccess: true,
-        isLoading: false,
-      }));
+    } catch (error: any) {
+      console.error("OTP verification error:", error);
+      
+      let description = "Invalid verification code. Please try again.";
+      if (error.name === 'TypeError') {
+        description = "Please check your internet connection and try again.";
+      } else if (error.message?.includes('expired')) {
+        description = "The verification code has expired. Please request a new one.";
+      } else if (error.message?.includes('invalid')) {
+        description = "Invalid verification code. Please check and try again.";
+      }
 
       toast({
-        title: "Verification Successful",
-        description: "You can now set your new password.",
+        variant: "destructive",
+        title: "Verification Failed",
+        description,
       });
-      
-      navigate(`/reset-password/new?email=${encodeURIComponent(email)}`, { 
-        replace: true 
-      });
-
-    } catch (error: any) {
-      handleVerificationError(error);
       
       setPasswordReset(prev => ({
         ...prev,
