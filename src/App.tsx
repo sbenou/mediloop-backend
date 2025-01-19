@@ -26,6 +26,7 @@ import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler
 import Profile from "@/components/settings/Profile";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { OTPVerificationForm } from "@/components/auth/reset-password/OTPVerificationForm";
+import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage";
 
 const queryClient = new QueryClient();
 
@@ -62,13 +63,16 @@ function App() {
                   <Route path="/become-transporter" element={<BecomeTransporter />} />
                   <Route path="/become-partner" element={<BecomePartner />} />
                   <Route path="/login" element={<Login />} />
-                  <Route path="/login/verify" element={
-                    <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
-                      <div className="w-full max-w-lg">
-                        <OTPVerificationForm />
+                  <Route 
+                    path="/login/verify" 
+                    element={
+                      <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
+                        <div className="w-full max-w-lg">
+                          <OTPVerificationPage />
+                        </div>
                       </div>
-                    </div>
-                  } />
+                    } 
+                  />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/reset-password/verify" element={<ResetPassword />} />
