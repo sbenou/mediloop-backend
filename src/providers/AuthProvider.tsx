@@ -3,7 +3,7 @@ import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
 import { useQuery } from '@tanstack/react-query';
-import { UserProfile, UserRole } from '@/types/user';
+import { UserProfile } from '@/types/user';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
@@ -30,10 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('role_id', profile?.role_id);
 
       return {
-        profile: profile ? {
-          ...profile,
-          role: profile.role as UserRole
-        } as UserProfile : null,
+        profile: profile as UserProfile | null,
         permissions: permissions?.map(p => p.permission_id) || [],
       };
     };
