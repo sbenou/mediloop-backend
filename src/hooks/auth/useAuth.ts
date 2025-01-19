@@ -21,26 +21,55 @@ export const useAuth = () => {
   useEffect(() => {
     // Check session on mount
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('useAuth - Session check:', session);
-      
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+      try {
+        setAuth(state => ({ ...state, isLoading: true }));
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('useAuth - Session check:', session);
+        
+        if (error) {
+          console.error('Session check error:', error);
+          throw error;
+        }
+        
+        if (session?.user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        setAuth({
-          user: session.user,
-          profile: profile ? {
-            ...profile,
-            role: profile.role // No need for type casting anymore
-          } : null,
-          permissions: [],
-          isLoading: false,
-        });
-      } else {
+          if (profileError) {
+            console.error('Profile fetch error:', profileError);
+            throw profileError;
+          }
+
+          const { data: permissions, error: permissionsError } = await supabase
+            .from('role_permissions')
+            .select('permission_id')
+            .eq('role_id', profile?.role_id);
+
+          if (permissionsError) {
+            console.error('Permissions fetch error:', permissionsError);
+            throw permissionsError;
+          }
+
+          setAuth({
+            user: session.user,
+            profile: profile as UserProfile,
+            permissions: permissions?.map(p => p.permission_id) || [],
+            isLoading: false,
+          });
+        } else {
+          setAuth({
+            user: null,
+            profile: null,
+            permissions: [],
+            isLoading: false,
+          });
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
         setAuth({
           user: null,
           profile: null,
@@ -56,30 +85,44 @@ export const useAuth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('useAuth - Auth state changed:', event, session);
       
-      if (event === 'SIGNED_IN' && session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+      try {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        setAuth({
-          user: session.user,
-          profile: profile ? {
-            ...profile,
-            role: profile.role // No need for type casting anymore
-          } : null,
-          permissions: [],
-          isLoading: false,
-        });
+          if (profileError) throw profileError;
 
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
-        });
-      }
-      
-      if (event === 'SIGNED_OUT') {
+          const { data: permissions, error: permissionsError } = await supabase
+            .from('role_permissions')
+            .select('permission_id')
+            .eq('role_id', profile?.role_id);
+
+          if (permissionsError) throw permissionsError;
+
+          setAuth({
+            user: session.user,
+            profile: profile as UserProfile,
+            permissions: permissions?.map(p => p.permission_id) || [],
+            isLoading: false,
+          });
+
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully signed in.",
+          });
+        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+          setAuth({
+            user: null,
+            profile: null,
+            permissions: [],
+            isLoading: false,
+          });
+        }
+      } catch (error) {
+        console.error('Auth state change error:', error);
         setAuth({
           user: null,
           profile: null,
