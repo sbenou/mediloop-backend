@@ -16,21 +16,35 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
   const handleOTPSelection = async () => {
     try {
+      console.log('=== Starting OTP Process ===');
+      console.log('Email:', email);
+      
       // Generate a 6-digit OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      console.log('Starting OTP email process for:', { email, otp });
+      console.log('Generated OTP:', otp);
       
       // First send the email using our Edge Function
+      console.log('Calling send-login-email edge function...');
       const { data: emailData, error: sendEmailError } = await supabase.functions.invoke('send-login-email', {
         body: { email, otp },
       });
 
-      console.log('Edge function response:', { emailData, error: sendEmailError });
+      console.log('Edge function response:', { 
+        data: emailData, 
+        error: sendEmailError ? {
+          message: sendEmailError.message,
+          name: sendEmailError.name,
+          cause: sendEmailError.cause
+        } : null 
+      });
 
-      if (sendEmailError) throw sendEmailError;
+      if (sendEmailError) {
+        console.error('Edge function error details:', sendEmailError);
+        throw sendEmailError;
+      }
 
       // Then set up the OTP in Supabase
+      console.log('Setting up Supabase OTP...');
       const { data: otpData, error: supabaseError } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -38,10 +52,22 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         },
       });
 
-      console.log('Supabase OTP setup response:', { otpData, error: supabaseError });
+      console.log('Supabase OTP setup response:', { 
+        data: otpData, 
+        error: supabaseError ? {
+          message: supabaseError.message,
+          name: supabaseError.name,
+          cause: supabaseError.cause
+        } : null 
+      });
 
-      if (supabaseError) throw supabaseError;
+      if (supabaseError) {
+        console.error('Supabase error details:', supabaseError);
+        throw supabaseError;
+      }
 
+      console.log('OTP process completed successfully');
+      
       toast({
         title: "Check your email",
         description: "We've sent you a login link with a one-time code.",
@@ -49,7 +75,14 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       
       navigate(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
-      console.error('Email verification error:', error);
+      console.error('=== OTP Process Failed ===');
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        cause: error.cause
+      });
+      
       toast({
         variant: "destructive",
         title: "Error",
