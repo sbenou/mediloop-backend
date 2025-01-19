@@ -22,8 +22,8 @@ export const OTPVerificationForm = ({ email }: { email: string }) => {
   // Log Supabase client initialization
   useEffect(() => {
     console.log("Supabase client check:", {
-      url: supabase.config.url,
       initialized: !!supabase,
+      gotAuth: !!supabase.auth,
     });
   }, []);
 
