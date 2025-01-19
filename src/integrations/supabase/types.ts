@@ -502,6 +502,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      update_user_role_and_permissions: {
+        Args: {
+          p_user_id: string
+          p_new_role: string
+          p_new_permissions: string[]
+        }
+        Returns: undefined
+      }
       upsert_pharmacy: {
         Args: {
           p_name: string
