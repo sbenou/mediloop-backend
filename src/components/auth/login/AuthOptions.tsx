@@ -16,8 +16,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
   const handleOTPSelection = async () => {
     try {
-      console.log('=== Starting OTP Process ===');
-      console.log('Email:', email);
+      console.log('Starting OTP login process for:', email);
       
       const { data, error: signInError } = await supabase.auth.signInWithOtp({
         email,
@@ -29,24 +28,24 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       console.log('Supabase OTP setup response:', data);
 
       if (signInError) {
-        console.error('Supabase error:', signInError);
+        console.error('Supabase OTP error:', signInError);
         throw signInError;
       }
 
-      console.log('OTP process completed successfully');
+      console.log('OTP email sent successfully');
       
       toast({
         title: "Check your email",
         description: "We've sent you a verification code.",
       });
-      
-      navigate(`/reset-password/verify`, { 
-        replace: true,
+
+      // Navigate to OTP verification with email in state
+      navigate("/login/verify", { 
         state: { email }
       });
+      
     } catch (error: any) {
-      console.error('=== OTP Process Failed ===');
-      console.error('Error details:', error);
+      console.error('OTP Process Failed:', error);
       
       toast({
         variant: "destructive",
