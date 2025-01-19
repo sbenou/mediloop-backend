@@ -86,23 +86,31 @@ export const NewPasswordForm = ({ email }: { email: string }) => {
     try {
       const { error } = await supabase.auth.updateUser({ password });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Password update error:', error);
+        throw error;
+      }
 
       console.log("Password updated successfully");
       
-      // Sign out the user
-      await supabase.auth.signOut();
-      
+      // Show success message
       toast({
         title: "Success",
         description: "Your password has been reset successfully. Please log in with your new password.",
         duration: 5000,
       });
 
-      // Add a small delay to ensure the toast is visible before redirecting
-      setTimeout(() => {
+      // Sign out and redirect with a delay
+      try {
+        await supabase.auth.signOut();
+        setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 2000);
+      } catch (signOutError) {
+        console.error('Sign out error:', signOutError);
+        // Still redirect even if sign out fails
         navigate("/login", { replace: true });
-      }, 2000);
+      }
 
     } catch (error: any) {
       console.error('Password update error:', error);
