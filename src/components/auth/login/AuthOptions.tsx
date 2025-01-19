@@ -19,22 +19,26 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       // Generate a 6-digit OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       
-      console.log('Sending login email with OTP:', { email, otp });
+      console.log('Starting OTP email process for:', { email, otp });
       
       // First send the email using our Edge Function
-      const { error: sendEmailError } = await supabase.functions.invoke('send-login-email', {
+      const { data: emailData, error: sendEmailError } = await supabase.functions.invoke('send-login-email', {
         body: { email, otp },
       });
+
+      console.log('Edge function response:', { emailData, error: sendEmailError });
 
       if (sendEmailError) throw sendEmailError;
 
       // Then set up the OTP in Supabase
-      const { error: supabaseError } = await supabase.auth.signInWithOtp({
+      const { data: otpData, error: supabaseError } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: window.location.origin,
         },
       });
+
+      console.log('Supabase OTP setup response:', { otpData, error: supabaseError });
 
       if (supabaseError) throw supabaseError;
 

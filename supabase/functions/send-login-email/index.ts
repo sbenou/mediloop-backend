@@ -20,8 +20,14 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { email, otp } = await req.json() as LoginEmailRequest;
-    console.log('Processing login email request:', { email });
+    console.log('Processing login email request:', { email, otp });
 
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set');
+      throw new Error('Email service configuration error');
+    }
+
+    console.log('Sending email via Resend API');
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -41,13 +47,15 @@ const handler = async (req: Request): Promise<Response> => {
       }),
     });
 
+    const responseData = await res.text();
+    console.log('Resend API response:', { status: res.status, data: responseData });
+
     if (!res.ok) {
-      const error = await res.text();
-      console.error('Resend API error:', error);
-      throw new Error(`Failed to send email: ${error}`);
+      console.error('Resend API error:', responseData);
+      throw new Error(`Failed to send email: ${responseData}`);
     }
 
-    const data = await res.json();
+    const data = JSON.parse(responseData);
     console.log('Email sent successfully:', data);
 
     return new Response(JSON.stringify(data), {
