@@ -12,8 +12,12 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // The actual login logic is now handled in LoginFields
-    setIsLoading(false);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Give time for the toast to show
+      onSuccess(); // Call the success callback to trigger navigation
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
