@@ -41,7 +41,8 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
       // Navigate to OTP verification with email in state
       navigate("/login/verify", { 
-        state: { email }
+        state: { email },
+        replace: false // Don't replace the history entry
       });
       
     } catch (error: any) {

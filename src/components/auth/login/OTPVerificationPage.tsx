@@ -3,11 +3,22 @@ import { OTPVerificationForm } from './OTPVerificationForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect } from 'react';
 
 export const OTPVerificationPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const email = location.state?.email;
+
+  useEffect(() => {
+    console.log('OTPVerificationPage mounted with state:', location.state);
+    
+    // If no email in state, redirect to login
+    if (!email) {
+      console.log('No email found in state, redirecting to login');
+      navigate('/login');
+    }
+  }, [email, navigate, location.state]);
 
   if (!email) {
     return (
