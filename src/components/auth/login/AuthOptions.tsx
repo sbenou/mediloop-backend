@@ -40,8 +40,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description: "We've sent you a verification code.",
       });
       
-      // Navigate to the OTP verification page with email parameter
-      navigate(`/reset-password/verify?email=${encodeURIComponent(email)}`);
+      navigate(`/reset-password/verify?email=${encodeURIComponent(email)}`, { replace: true });
     } catch (error: any) {
       console.error('=== OTP Process Failed ===');
       console.error('Error details:', error);
