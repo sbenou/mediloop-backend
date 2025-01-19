@@ -39,7 +39,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       const { data: otpData, error: supabaseError } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`,
         },
       });
 
