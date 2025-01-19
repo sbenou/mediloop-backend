@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Role } from "@/types/role";
 import { useToast } from "@/hooks/use-toast";
 import { PostgrestError } from "@supabase/supabase-js";
+import { Role } from "@/types/role";
 
+// Type definitions for mutation inputs
 type CreateRoleInput = Pick<Role, 'name' | 'description'>;
 type UpdateRoleInput = Pick<Role, 'id' | 'name' | 'description'>;
 
+// Error handling utilities
 const handlePostgrestError = (error: PostgrestError) => {
   if (error.code === '23505') {
     throw new Error('A role with this name already exists.');
@@ -14,10 +16,27 @@ const handlePostgrestError = (error: PostgrestError) => {
   throw new Error(error.message);
 };
 
+// Toast message utilities
+const showSuccessToast = (toast: any, message: string) => {
+  toast({
+    title: message,
+    description: "The operation was completed successfully.",
+  });
+};
+
+const showErrorToast = (toast: any, error: Error) => {
+  toast({
+    variant: "destructive",
+    title: "Error",
+    description: error.message || "An unexpected error occurred.",
+  });
+};
+
 export const useRoleMutations = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Create role mutation
   const createRoleMutation = useMutation({
     mutationFn: async (newRole: CreateRoleInput) => {
       const { data, error } = await supabase
@@ -34,21 +53,15 @@ export const useRoleMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast({
-        title: "Role added",
-        description: "A new role has been added successfully.",
-      });
+      showSuccessToast(toast, "Role added");
     },
     onError: (error: Error) => {
       console.error('Error creating role:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to create role. Please try again.",
-      });
+      showErrorToast(toast, error);
     }
   });
 
+  // Update role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ id, name, description }: UpdateRoleInput) => {
       const { data, error } = await supabase
@@ -66,21 +79,15 @@ export const useRoleMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast({
-        title: "Role updated",
-        description: "The role has been successfully updated.",
-      });
+      showSuccessToast(toast, "Role updated");
     },
     onError: (error: Error) => {
       console.error('Error updating role:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to update role. Please try again.",
-      });
+      showErrorToast(toast, error);
     }
   });
 
+  // Delete role mutation
   const deleteRoleMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -94,19 +101,11 @@ export const useRoleMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast({
-        title: "Role deleted",
-        description: "The role has been successfully deleted.",
-        variant: "destructive",
-      });
+      showSuccessToast(toast, "Role deleted");
     },
     onError: (error: Error) => {
       console.error('Error deleting role:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to delete role. Please try again.",
-      });
+      showErrorToast(toast, error);
     }
   });
 
