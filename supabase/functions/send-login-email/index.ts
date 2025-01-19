@@ -29,7 +29,6 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Email service configuration error');
     }
 
-    // Replace the token placeholder in the HTML template
     const emailContent = `
     <!DOCTYPE html>
     <html>
