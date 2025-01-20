@@ -6,6 +6,26 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { getOTPEmail } from '@/utils/auth';
+import { ErrorBoundary } from 'react-error-boundary';
+
+const ErrorFallback = () => (
+  <div className="space-y-6">
+    <div className="space-y-4 text-center">
+      <h1 className="text-2xl font-semibold tracking-tight">
+        Something went wrong
+      </h1>
+      <p className="text-sm text-muted-foreground">
+        An error occurred while loading the verification page.
+      </p>
+      <Link to="/login">
+        <Button variant="outline" className="mt-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Login
+        </Button>
+      </Link>
+    </div>
+  </div>
+);
 
 export const OTPVerificationPage = () => {
   const navigate = useNavigate();
@@ -53,7 +73,7 @@ export const OTPVerificationPage = () => {
             No Email Found
           </h1>
           <p className="text-sm text-muted-foreground">
-            We couldn't find your email address. Please try the verification process again.
+            The verification session has expired or is invalid. Please try the verification process again.
           </p>
           <Link to="/login">
             <Button variant="outline" className="mt-4">
@@ -67,16 +87,18 @@ export const OTPVerificationPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Verify your email
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Enter the verification code sent to {email}
-        </p>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <div className="space-y-6">
+        <div className="space-y-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Verify your email
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Enter the verification code sent to {email}
+          </p>
+        </div>
+        <OTPVerificationForm email={email} />
       </div>
-      <OTPVerificationForm email={email} />
-    </div>
+    </ErrorBoundary>
   );
 };

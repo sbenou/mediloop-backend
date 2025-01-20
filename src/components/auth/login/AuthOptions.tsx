@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader } from "lucide-react";
 import { useState } from "react";
 import { AuthService } from "@/services/auth";
 
@@ -132,6 +132,9 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
           variant="default"
           disabled={isOTPLoading || isLinkLoading}
         >
+          {isOTPLoading ? (
+            <Loader className="mr-2 h-4 w-4 animate-spin" />
+          ) : null}
           {isOTPLoading ? "Sending..." : "Reset with One-Time Code"}
         </Button>
         <Button
@@ -140,6 +143,9 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
           variant="outline"
           disabled={isOTPLoading || isLinkLoading}
         >
+          {isLinkLoading ? (
+            <Loader className="mr-2 h-4 w-4 animate-spin" />
+          ) : null}
           {isLinkLoading ? "Sending..." : "Reset with Email Link"}
         </Button>
       </CardContent>
