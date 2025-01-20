@@ -93,7 +93,7 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           render={({ slots }) => (
             <InputOTPGroup>
               {Array.from({ length: 6 }).map((_, i) => (
-                <InputOTPSlot key={i} {...slots?.[i]} />
+                <InputOTPSlot key={i} index={i} {...(slots?.[i] || {})} />
               ))}
             </InputOTPGroup>
           )}
