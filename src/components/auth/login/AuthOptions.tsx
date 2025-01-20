@@ -23,10 +23,28 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
     setIsLoading(true);
     try {
       console.log("Requesting OTP for:", email);
+      
+      // In development mode, bypass the actual OTP request
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode: Bypassing actual OTP request');
+        // Store email in localStorage with a 15-minute expiration
+        const expirationTime = new Date().getTime() + (15 * 60 * 1000);
+        localStorage.setItem('otp_email', email);
+        localStorage.setItem('otp_email_expiry', expirationTime.toString());
+        
+        toast({
+          title: "Development Mode",
+          description: "Verification code bypassed. Proceeding to verification page.",
+        });
+        
+        navigate("/login/verify");
+        return;
+      }
+
       await AuthService.requestOtp(email);
       
       // Store email in localStorage with a 15-minute expiration
-      const expirationTime = new Date().getTime() + (15 * 60 * 1000); // 15 minutes
+      const expirationTime = new Date().getTime() + (15 * 60 * 1000);
       localStorage.setItem('otp_email', email);
       localStorage.setItem('otp_email_expiry', expirationTime.toString());
 
@@ -35,23 +53,18 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description: "We've sent you a verification code.",
       });
 
-      // Navigate to the verification page
       navigate("/login/verify");
       
     } catch (error: any) {
       console.error('OTP Process Failed:', error);
       
-      if (process.env.NODE_ENV === 'development' && error.message?.includes('rate limit')) {
-        // In development mode, don't show rate limit errors
-        console.log('Rate limit error bypassed in development mode');
-        return;
-      }
-
       let description = "Unable to send verification code. ";
       if (error.name === 'TypeError') {
         description += "Please check your internet connection and try again.";
       } else if (error.message?.includes('not found')) {
         description = "This email is not associated with an account.";
+      } else if (error.message?.includes('rate limit')) {
+        description = "Too many attempts. Please try again in a few minutes.";
       } else {
         description += "Please try again later.";
       }
@@ -71,6 +84,17 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
     setIsLoading(true);
     try {
+      // In development mode, bypass the actual email sending
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode: Bypassing actual reset email');
+        toast({
+          title: "Development Mode",
+          description: "Reset email bypassed. Check console for details.",
+        });
+        navigate("/login", { replace: true });
+        return;
+      }
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password/new`,
       });
@@ -84,15 +108,11 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
       navigate("/login", { replace: true });
     } catch (error: any) {
-      if (process.env.NODE_ENV === 'development' && error.message?.includes('rate limit')) {
-        // In development mode, don't show rate limit errors
-        console.log('Rate limit error bypassed in development mode');
-        return;
-      }
-
       let description = "Unable to send reset email. ";
       if (error.name === 'TypeError') {
         description += "Please check your internet connection and try again.";
+      } else if (error.message?.includes('rate limit')) {
+        description = "Too many attempts. Please try again in a few minutes.";
       } else {
         description += "Please try again later.";
       }
