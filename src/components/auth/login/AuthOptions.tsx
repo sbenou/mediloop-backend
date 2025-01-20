@@ -22,6 +22,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
     setIsLoading(true);
     try {
+      console.log("Requesting OTP for:", email);
       await AuthService.requestOtp(email);
       
       // Store email in localStorage with a 15-minute expiration
@@ -34,6 +35,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description: "We've sent you a verification code.",
       });
 
+      // Navigate to the verification page
       navigate("/login/verify");
       
     } catch (error: any) {
@@ -119,7 +121,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
           variant="default"
           disabled={isLoading}
         >
-          Reset with One-Time Code
+          {isLoading ? "Sending..." : "Reset with One-Time Code"}
         </Button>
         <Button
           onClick={handleEmailLinkReset}
@@ -127,7 +129,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
           variant="outline"
           disabled={isLoading}
         >
-          Reset with Email Link
+          {isLoading ? "Sending..." : "Reset with Email Link"}
         </Button>
       </CardContent>
     </Card>
