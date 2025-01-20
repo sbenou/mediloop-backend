@@ -19,19 +19,21 @@ export const OTPVerificationPage = () => {
     checkSession();
   }, [navigate]);
 
-  // Get email from URL parameters
+  // Get email from URL parameters or localStorage
   const params = new URLSearchParams(window.location.search);
-  const email = params.get('email');
+  const urlEmail = params.get('email');
+  const storedEmail = localStorage.getItem('otp_email');
+  const email = urlEmail || storedEmail;
 
   if (!email) {
     return (
       <div className="space-y-6">
         <div className="space-y-4 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Email Not Found
+            No Email Found
           </h1>
           <p className="text-sm text-muted-foreground">
-            We couldn't find your email address. Please try logging in again.
+            We couldn't find your email address. Please try the verification process again.
           </p>
           <Link to="/login">
             <Button variant="outline" className="mt-4">
@@ -51,7 +53,7 @@ export const OTPVerificationPage = () => {
           Verify your email
         </h1>
         <p className="text-sm text-muted-foreground">
-          Enter the verification code sent to your email
+          Enter the verification code sent to {email}
         </p>
       </div>
       <OTPVerificationForm email={email} />
