@@ -68,7 +68,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="password">Password</Label>
         <div className="relative">
           <Input
