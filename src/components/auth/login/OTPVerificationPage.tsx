@@ -1,41 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { OTPVerificationForm } from './OTPVerificationForm';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { getOTPEmail } from '@/utils/auth';
 
 export const OTPVerificationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
-  // Get email from multiple sources
-  const getEmail = () => {
-    // Try to get email from location state first
-    const stateEmail = location.state?.email;
-    if (stateEmail) return stateEmail;
-
-    // Fallback to localStorage
-    const storedEmail = localStorage.getItem('otp_email');
-    const expiryTime = localStorage.getItem('otp_email_expiry');
-
-    if (storedEmail && expiryTime) {
-      const expiry = parseInt(expiryTime);
-      if (new Date().getTime() <= expiry) {
-        return storedEmail;
-      }
-    }
-
-    return null;
-  };
-
   useEffect(() => {
     const checkSession = async () => {
+      console.log("Checking session and email validity...");
+      
       // Check for expired OTP email
-      const email = getEmail();
+      const email = getOTPEmail();
       if (!email) {
+        console.log("No valid email found, redirecting to login");
         toast({
           variant: "destructive",
           title: "Session Expired",
@@ -46,7 +30,10 @@ export const OTPVerificationPage = () => {
       }
 
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("Session check result:", session ? "User authenticated" : "No active session");
+      
       if (session) {
+        console.log("User already authenticated, clearing OTP data and redirecting");
         // Clear OTP data if user is already authenticated
         localStorage.removeItem('otp_email');
         localStorage.removeItem('otp_email_expiry');
@@ -56,7 +43,7 @@ export const OTPVerificationPage = () => {
     checkSession();
   }, [navigate, toast]);
 
-  const email = getEmail();
+  const email = getOTPEmail();
 
   if (!email) {
     return (

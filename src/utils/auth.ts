@@ -1,18 +1,27 @@
-import { supabase } from '@/lib/supabase';
+export const getOTPEmail = () => {
+  console.log("Getting OTP email from available sources...");
+  
+  // Try to get email from location state first
+  const params = new URLSearchParams(window.location.search);
+  const stateEmail = history.state?.usr?.email;
+  if (stateEmail) {
+    console.log("Email found in location state:", stateEmail);
+    return stateEmail;
+  }
 
-export const sendPasswordResetEmail = async (email: string) => {
-  console.log("Sending password reset email...");
-  
-  // Get the current domain and ensure we stay on the preview domain
-  const currentDomain = window.location.origin;
-  // Use the same domain for the redirect
-  const redirectTo = `${currentDomain}/auth/callback?type=recovery`;
-  
-  console.log("Reset password redirect URL:", redirectTo);
-  
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo,
-  });
+  // Fallback to localStorage
+  const storedEmail = localStorage.getItem('otp_email');
+  const expiryTime = localStorage.getItem('otp_email_expiry');
 
-  return { data, error };
+  if (storedEmail && expiryTime) {
+    const expiry = parseInt(expiryTime);
+    if (new Date().getTime() <= expiry) {
+      console.log("Email found in localStorage:", storedEmail);
+      return storedEmail;
+    }
+    console.log("Stored email expired");
+  }
+
+  console.log("No valid email found");
+  return null;
 };
