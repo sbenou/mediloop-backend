@@ -24,11 +24,11 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
   const setAuth = useSetRecoilState(authState);
 
   const handleVerification = async () => {
-    if (!email || !otp) {
+    if (!email || otp.length !== 6) {
       toast({
         variant: "destructive",
         title: "Verification failed",
-        description: "Please enter the verification code.",
+        description: "Please enter a valid 6-digit verification code.",
       });
       return;
     }
@@ -83,17 +83,21 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
+    <div className="space-y-6">
+      <div className="flex justify-center">
         <InputOTP
           maxLength={6}
           value={otp}
           onChange={setOtp}
           disabled={isLoading}
         >
-          <InputOTPGroup>
+          <InputOTPGroup className="gap-2">
             {Array.from({ length: 6 }).map((_, i) => (
-              <InputOTPSlot key={i} index={i} />
+              <InputOTPSlot 
+                key={i} 
+                index={i}
+                className="w-10 h-10 text-center border-2"
+              />
             ))}
           </InputOTPGroup>
         </InputOTP>
