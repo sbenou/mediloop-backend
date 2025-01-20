@@ -24,15 +24,16 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
     try {
       await AuthService.requestOtp(email);
       
+      // Store email in localStorage with a 15-minute expiration
+      const expirationTime = new Date().getTime() + (15 * 60 * 1000); // 15 minutes
+      localStorage.setItem('otp_email', email);
+      localStorage.setItem('otp_email_expiry', expirationTime.toString());
+
       toast({
         title: "Check your email",
         description: "We've sent you a verification code.",
       });
 
-      // Store email in localStorage for persistence
-      localStorage.setItem('otp_email', email);
-
-      // Navigate to OTP verification without replace to preserve history
       navigate("/login/verify", { 
         state: { email }
       });

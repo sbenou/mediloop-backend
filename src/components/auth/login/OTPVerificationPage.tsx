@@ -10,9 +10,21 @@ export const OTPVerificationPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check for expired OTP email
+    const expiryTime = localStorage.getItem('otp_email_expiry');
+    if (expiryTime && new Date().getTime() > parseInt(expiryTime)) {
+      localStorage.removeItem('otp_email');
+      localStorage.removeItem('otp_email_expiry');
+      navigate('/login');
+      return;
+    }
+
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        // Clear OTP data if user is already authenticated
+        localStorage.removeItem('otp_email');
+        localStorage.removeItem('otp_email_expiry');
         navigate('/', { replace: true });
       }
     };
