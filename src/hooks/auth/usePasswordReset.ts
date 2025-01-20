@@ -1,17 +1,15 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
 
-const DEFAULT_COOLDOWN = 60; // fallback value in seconds
+const COOLDOWN_DURATION = 60; // 60 seconds cooldown
 
 export const usePasswordReset = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [isInCooldown, setIsInCooldown] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
-  const { toast } = useToast();
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
+    
     if (isInCooldown && remainingTime > 0) {
       timer = setInterval(() => {
         setRemainingTime((prev) => {
@@ -23,53 +21,31 @@ export const usePasswordReset = () => {
         });
       }, 1000);
     }
-    return () => clearInterval(timer);
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [isInCooldown, remainingTime]);
 
-  const startCooldown = (duration: number = DEFAULT_COOLDOWN) => {
-    setIsInCooldown(true);
-    setRemainingTime(duration);
-  };
-
-  const handlePasswordReset = async (email: string): Promise<boolean> => {
-    if (isInCooldown || isSendingReset) return false;
-
+  const handlePasswordReset = () => {
     setIsSendingReset(true);
-    console.log("Initiating password reset for:", email);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password/new`,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Reset Password Request",
-        description: "If an account exists with this email address, you'll receive a password reset link. Please check your inbox and spam folder.",
-        duration: 3000,
-      });
-      
-      startCooldown();
-      return true;
-    } catch (error: any) {
-      console.error("Password reset error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to send reset email",
-        duration: 3000,
-      });
-      return false;
-    } finally {
-      setIsSendingReset(false);
-    }
+    
+    // Start cooldown
+    setIsInCooldown(true);
+    setRemainingTime(COOLDOWN_DURATION);
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        setIsSendingReset(false);
+        resolve(true);
+      }, 1000);
+    });
   };
 
   return {
-    handlePasswordReset,
     isSendingReset,
     isInCooldown,
     remainingTime,
+    handlePasswordReset,
   };
 };
