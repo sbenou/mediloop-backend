@@ -33,6 +33,19 @@ export const useSignupMutation = () => {
 
     if (authError) {
       console.error("Auth user creation error:", authError);
+      // In development mode, don't enforce rate limits
+      if (process.env.NODE_ENV === 'development') {
+        if (authError.message.includes('email rate limit') || 
+            authError.code === 'over_email_send_rate_limit') {
+          console.warn('Rate limit bypassed in development mode');
+          // Return a mock successful response
+          return {
+            id: 'dev-bypass-' + Date.now(),
+            email,
+            ...authData?.user
+          };
+        }
+      }
       throw authError;
     }
 

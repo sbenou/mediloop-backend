@@ -13,7 +13,16 @@ export const AuthService = {
       email,
       options: { shouldCreateUser: false },
     });
-    if (error) throw error;
+    
+    // In development mode, bypass rate limit errors
+    if (error) {
+      if (process.env.NODE_ENV === 'development' && 
+         (error.message?.includes('rate limit') || error.code === 'over_email_send_rate_limit')) {
+        debug("Rate limit bypassed in development mode");
+        return;
+      }
+      throw error;
+    }
     debug("OTP request successful");
   },
 
@@ -24,7 +33,16 @@ export const AuthService = {
       token,
       type: 'email'
     });
-    if (error) throw error;
+    
+    // In development mode, bypass rate limit errors
+    if (error) {
+      if (process.env.NODE_ENV === 'development' && 
+         (error.message?.includes('rate limit') || error.code === 'over_email_send_rate_limit')) {
+        debug("Rate limit bypassed in development mode");
+        return;
+      }
+      throw error;
+    }
     debug("OTP verification successful");
   }
 };
