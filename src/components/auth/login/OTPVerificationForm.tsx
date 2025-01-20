@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { AuthService } from '@/services/auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -54,12 +54,18 @@ export const OTPVerificationForm = ({ email }: OTPVerificationFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Input
-          type="text"
-          placeholder="Enter verification code"
+        <InputOTP
           value={otp}
-          onChange={(e) => setOtp(e.target.value)}
+          onChange={(value) => setOtp(value)}
+          maxLength={6}
           disabled={isLoading}
+          render={({ slots }) => (
+            <InputOTPGroup>
+              {slots.map((slot, index) => (
+                <InputOTPSlot key={index} {...slot} />
+              ))}
+            </InputOTPGroup>
+          )}
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
