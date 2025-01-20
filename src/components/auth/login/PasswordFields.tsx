@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Eye, EyeOff } from "lucide-react";
+import { useSetRecoilState } from 'recoil';
+import { authState } from '@/store/auth/atoms';
 
 interface PasswordFieldsProps {
   email: string;
@@ -17,25 +19,42 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const setAuth = useSetRecoilState(authState);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Successfully logged in!",
-      });
+      if (data.user) {
+        // Update Recoil state with user data
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
 
-      onSuccess();
+        setAuth({
+          user: data.user,
+          profile,
+          isLoading: false,
+          permissions: [],
+        });
+
+        toast({
+          title: "Success",
+          description: "Successfully logged in!",
+        });
+
+        onSuccess();
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
