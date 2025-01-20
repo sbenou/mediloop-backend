@@ -45,7 +45,6 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
       if (error) throw error;
 
       if (data?.user) {
-        // Update Recoil state with user data
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -64,7 +63,6 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           description: "Email verified successfully!",
         });
 
-        // Clear stored email from localStorage
         localStorage.removeItem('otp_email');
         localStorage.removeItem('otp_email_expiry');
 
@@ -94,8 +92,8 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           disabled={isLoading}
           render={({ slots }) => (
             <InputOTPGroup>
-              {slots.map((slot, i) => (
-                <InputOTPSlot key={i} index={i} {...slot} />
+              {Array.from({ length: 6 }).map((_, i) => (
+                <InputOTPSlot key={i} {...slots?.[i]} />
               ))}
             </InputOTPGroup>
           )}
