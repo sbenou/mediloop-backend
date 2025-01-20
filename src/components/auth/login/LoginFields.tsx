@@ -44,8 +44,8 @@ export const LoginFields = ({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+      <div className="space-y-2 text-left">
+        <Label htmlFor="email" className="text-left">Email</Label>
         <Input
           id="email"
           type="email"
