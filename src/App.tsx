@@ -4,7 +4,7 @@ import { RecoilRoot } from "recoil";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./providers/AuthProvider";
-import { Index } from "./pages/Index";
+import Index from "./pages/Index";
 
 // Log the current environment
 console.log('Current environment:', import.meta.env.MODE);
