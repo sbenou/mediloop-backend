@@ -15,12 +15,13 @@ interface AuthOptionsProps {
 export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isOTPLoading, setIsOTPLoading] = useState(false);
+  const [isLinkLoading, setIsLinkLoading] = useState(false);
 
   const handleOTPSelection = async () => {
-    if (isLoading) return;
+    if (isOTPLoading) return;
 
-    setIsLoading(true);
+    setIsOTPLoading(true);
     try {
       console.log("Requesting OTP for:", email);
       
@@ -31,13 +32,18 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       localStorage.setItem('otp_email', email);
       localStorage.setItem('otp_email_expiry', expirationTime.toString());
 
+      console.log("Navigating to /login/verify with email:", email);
+      
       toast({
         title: "Check your email",
         description: "We've sent you a verification code.",
       });
 
       // Navigate with state
-      navigate("/login/verify", { state: { email } });
+      navigate("/login/verify", { 
+        state: { email },
+        replace: true // Use replace to prevent back navigation issues
+      });
       
     } catch (error: any) {
       console.error('OTP Process Failed:', error);
@@ -59,14 +65,14 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description,
       });
     } finally {
-      setIsLoading(false);
+      setIsOTPLoading(false);
     }
   };
 
   const handleEmailLinkReset = async () => {
-    if (isLoading) return;
+    if (isLinkLoading) return;
 
-    setIsLoading(true);
+    setIsLinkLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password/new`,
@@ -96,7 +102,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description,
       });
     } finally {
-      setIsLoading(false);
+      setIsLinkLoading(false);
     }
   };
 
@@ -124,17 +130,17 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
           onClick={handleOTPSelection}
           className="w-full"
           variant="default"
-          disabled={isLoading}
+          disabled={isOTPLoading || isLinkLoading}
         >
-          {isLoading ? "Sending..." : "Reset with One-Time Code"}
+          {isOTPLoading ? "Sending..." : "Reset with One-Time Code"}
         </Button>
         <Button
           onClick={handleEmailLinkReset}
           className="w-full"
           variant="outline"
-          disabled={isLoading}
+          disabled={isOTPLoading || isLinkLoading}
         >
-          {isLoading ? "Sending..." : "Reset with Email Link"}
+          {isLinkLoading ? "Sending..." : "Reset with Email Link"}
         </Button>
       </CardContent>
     </Card>
