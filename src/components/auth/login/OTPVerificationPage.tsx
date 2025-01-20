@@ -1,25 +1,50 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { OTPVerificationForm } from './OTPVerificationForm';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
 export const OTPVerificationPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
 
-  useEffect(() => {
-    // Check for expired OTP email
+  // Get email from multiple sources
+  const getEmail = () => {
+    // Try to get email from location state first
+    const stateEmail = location.state?.email;
+    if (stateEmail) return stateEmail;
+
+    // Fallback to localStorage
+    const storedEmail = localStorage.getItem('otp_email');
     const expiryTime = localStorage.getItem('otp_email_expiry');
-    if (expiryTime && new Date().getTime() > parseInt(expiryTime)) {
-      localStorage.removeItem('otp_email');
-      localStorage.removeItem('otp_email_expiry');
-      navigate('/login');
-      return;
+
+    if (storedEmail && expiryTime) {
+      const expiry = parseInt(expiryTime);
+      if (new Date().getTime() <= expiry) {
+        return storedEmail;
+      }
     }
 
+    return null;
+  };
+
+  useEffect(() => {
     const checkSession = async () => {
+      // Check for expired OTP email
+      const email = getEmail();
+      if (!email) {
+        toast({
+          variant: "destructive",
+          title: "Session Expired",
+          description: "Please start the password reset process again.",
+        });
+        navigate('/login');
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         // Clear OTP data if user is already authenticated
@@ -29,10 +54,9 @@ export const OTPVerificationPage = () => {
       }
     };
     checkSession();
-  }, [navigate]);
+  }, [navigate, toast]);
 
-  // Get email from localStorage
-  const email = localStorage.getItem('otp_email');
+  const email = getEmail();
 
   if (!email) {
     return (
