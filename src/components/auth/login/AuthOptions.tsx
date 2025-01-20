@@ -34,9 +34,7 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
         description: "We've sent you a verification code.",
       });
 
-      navigate("/login/verify", { 
-        state: { email }
-      });
+      navigate("/login/verify");
       
     } catch (error: any) {
       console.error('OTP Process Failed:', error);

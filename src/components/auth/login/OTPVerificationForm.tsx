@@ -65,8 +65,8 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
         });
 
         // Clear stored email from localStorage
-        localStorage.removeItem('verificationEmail');
-        localStorage.removeItem('emailStorageTimestamp');
+        localStorage.removeItem('otp_email');
+        localStorage.removeItem('otp_email_expiry');
 
         if (onSuccess) {
           onSuccess();
@@ -95,7 +95,7 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           render={({ slots }) => (
             <InputOTPGroup>
               {slots.map((slot, i) => (
-                <InputOTPSlot key={i} index={i} {...slot} />
+                <InputOTPSlot key={i} {...slot} />
               ))}
             </InputOTPGroup>
           )}

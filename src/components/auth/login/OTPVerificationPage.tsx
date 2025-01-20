@@ -31,11 +31,8 @@ export const OTPVerificationPage = () => {
     checkSession();
   }, [navigate]);
 
-  // Get email from URL parameters or localStorage
-  const params = new URLSearchParams(window.location.search);
-  const urlEmail = params.get('email');
-  const storedEmail = localStorage.getItem('otp_email');
-  const email = urlEmail || storedEmail;
+  // Get email from localStorage
+  const email = localStorage.getItem('otp_email');
 
   if (!email) {
     return (
