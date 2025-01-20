@@ -19,41 +19,61 @@ export const useSignupMutation = () => {
     // Sign out any existing session first
     await supabase.auth.signOut();
     
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-          role: roleMapping[userRole],
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            role: roleMapping[userRole],
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      },
-    });
+      });
 
-    if (authError) {
-      console.error("Auth user creation error:", authError);
-      // In development mode, don't enforce rate limits
-      if (process.env.NODE_ENV === 'development') {
-        if (authError.message.includes('email rate limit') || 
-            authError.code === 'over_email_send_rate_limit') {
+      if (authError) {
+        console.error("Auth user creation error:", authError);
+        // In development mode, return mock data instead of throwing error
+        if (process.env.NODE_ENV === 'development' && 
+           (authError.message?.includes('rate limit') || 
+            authError.code === 'over_email_send_rate_limit')) {
           console.warn('Rate limit bypassed in development mode');
-          // Return a mock successful response
           return {
-            id: 'dev-bypass-' + Date.now(),
+            id: 'dev-mock-' + Date.now(),
             email,
-            ...authData?.user
+            role: roleMapping[userRole],
+            user_metadata: {
+              full_name: name
+            }
           };
         }
+        throw authError;
       }
-      throw authError;
-    }
 
-    if (!authData.user?.id) {
-      throw new Error("User creation failed - no user ID returned");
-    }
+      if (!authData.user?.id) {
+        throw new Error("User creation failed - no user ID returned");
+      }
 
-    return authData.user;
+      return authData.user;
+    } catch (error) {
+      // If we're in development and hit a rate limit, return mock data
+      if (process.env.NODE_ENV === 'development' && 
+         error instanceof Error && 
+         (error.message?.includes('rate limit') || 
+          error.message?.includes('over_email_send_rate_limit'))) {
+        console.warn('Rate limit bypassed in development mode');
+        return {
+          id: 'dev-mock-' + Date.now(),
+          email,
+          role: roleMapping[userRole],
+          user_metadata: {
+            full_name: name
+          }
+        };
+      }
+      throw error;
+    }
   };
 
   const createUserProfile = async (userId: string, email: string, name: string, userRole: UserRole, licenseNumber: string) => {
