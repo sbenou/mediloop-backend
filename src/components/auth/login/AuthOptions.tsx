@@ -41,15 +41,19 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
     } catch (error: any) {
       console.error('OTP Process Failed:', error);
       
-      let description = "Failed to send verification code";
-      if (error.name === 'TypeError') {
-        description = "Please check your internet connection and try again.";
-      } else if (process.env.NODE_ENV === 'development' && error.message?.includes('rate limit')) {
+      if (process.env.NODE_ENV === 'development' && error.message?.includes('rate limit')) {
         // In development mode, don't show rate limit errors
         console.log('Rate limit error bypassed in development mode');
         return;
+      }
+
+      let description = "Unable to send verification code. ";
+      if (error.name === 'TypeError') {
+        description += "Please check your internet connection and try again.";
       } else if (error.message?.includes('not found')) {
         description = "This email is not associated with an account.";
+      } else {
+        description += "Please try again later.";
       }
       
       toast({
@@ -80,13 +84,17 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
       navigate("/login", { replace: true });
     } catch (error: any) {
-      let description = "Failed to send reset email";
-      if (error.name === 'TypeError') {
-        description = "Please check your internet connection and try again.";
-      } else if (process.env.NODE_ENV === 'development' && error.message?.includes('rate limit')) {
+      if (process.env.NODE_ENV === 'development' && error.message?.includes('rate limit')) {
         // In development mode, don't show rate limit errors
         console.log('Rate limit error bypassed in development mode');
         return;
+      }
+
+      let description = "Unable to send reset email. ";
+      if (error.name === 'TypeError') {
+        description += "Please check your internet connection and try again.";
+      } else {
+        description += "Please try again later.";
       }
       
       toast({
