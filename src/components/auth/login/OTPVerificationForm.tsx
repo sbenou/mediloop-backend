@@ -36,6 +36,7 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
     setIsLoading(true);
 
     try {
+      console.log("Verifying OTP for:", email);
       const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
@@ -45,6 +46,7 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
       if (error) throw error;
 
       if (data?.user) {
+        console.log("OTP verification successful, fetching user profile");
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -63,19 +65,31 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           description: "Email verified successfully!",
         });
 
+        // Clean up localStorage
         localStorage.removeItem('otp_email');
         localStorage.removeItem('otp_email_expiry');
 
         if (onSuccess) {
           onSuccess();
         }
-        navigate('/');
+        
+        console.log("Redirecting to home page");
+        navigate('/', { replace: true });
       }
     } catch (error: any) {
+      console.error("OTP verification failed:", error);
+      let description = "Failed to verify email. Please try again.";
+      
+      if (error.message?.includes('Invalid')) {
+        description = "Invalid verification code. Please check and try again.";
+      } else if (error.message?.includes('expired')) {
+        description = "Verification code has expired. Please request a new one.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Verification failed",
-        description: error.message || "Failed to verify email. Please try again.",
+        description,
       });
     } finally {
       setIsLoading(false);

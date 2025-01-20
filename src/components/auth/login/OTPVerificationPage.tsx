@@ -43,7 +43,7 @@ export const OTPVerificationPage = () => {
         toast({
           variant: "destructive",
           title: "Session Expired",
-          description: "Please start the password reset process again.",
+          description: "Please start the verification process again.",
         });
         navigate('/login');
         return;
@@ -88,7 +88,7 @@ export const OTPVerificationPage = () => {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <div className="container mx-auto px-4 py-8 max-w-md">
-        <Card>
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-2xl font-semibold text-center">
               Verify your email
