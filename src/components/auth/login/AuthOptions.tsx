@@ -44,8 +44,10 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       let description = "Failed to send verification code";
       if (error.name === 'TypeError') {
         description = "Please check your internet connection and try again.";
-      } else if (error.message?.includes('rate limit')) {
-        description = "Too many attempts. Please wait a moment before trying again.";
+      } else if (process.env.NODE_ENV === 'development' && error.message?.includes('rate limit')) {
+        // In development mode, don't show rate limit errors
+        console.log('Rate limit error bypassed in development mode');
+        return;
       } else if (error.message?.includes('not found')) {
         description = "This email is not associated with an account.";
       }
@@ -81,8 +83,10 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
       let description = "Failed to send reset email";
       if (error.name === 'TypeError') {
         description = "Please check your internet connection and try again.";
-      } else if (error.message?.includes('rate limit')) {
-        description = "Too many attempts. Please wait a moment before trying again.";
+      } else if (process.env.NODE_ENV === 'development' && error.message?.includes('rate limit')) {
+        // In development mode, don't show rate limit errors
+        console.log('Rate limit error bypassed in development mode');
+        return;
       }
       
       toast({
