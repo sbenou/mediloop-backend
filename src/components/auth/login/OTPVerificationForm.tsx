@@ -25,6 +25,7 @@ export const OTPVerificationForm = ({ email }: OTPVerificationFormProps) => {
       
       // Clear the stored email after successful verification
       localStorage.removeItem('otp_email');
+      localStorage.removeItem('otp_email_expiry');
       
       toast({
         title: "Success",
