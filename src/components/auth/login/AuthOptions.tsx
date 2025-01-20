@@ -24,23 +24,6 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
     try {
       console.log("Requesting OTP for:", email);
       
-      // In development mode, bypass the actual OTP request
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode: Bypassing actual OTP request');
-        // Store email in localStorage with a 15-minute expiration
-        const expirationTime = new Date().getTime() + (15 * 60 * 1000);
-        localStorage.setItem('otp_email', email);
-        localStorage.setItem('otp_email_expiry', expirationTime.toString());
-        
-        toast({
-          title: "Development Mode",
-          description: "Verification code bypassed. Proceeding to verification page.",
-        });
-        
-        navigate("/login/verify");
-        return;
-      }
-
       await AuthService.requestOtp(email);
       
       // Store email in localStorage with a 15-minute expiration
@@ -84,17 +67,6 @@ export const AuthOptions = ({ email, onBack }: AuthOptionsProps) => {
 
     setIsLoading(true);
     try {
-      // In development mode, bypass the actual email sending
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode: Bypassing actual reset email');
-        toast({
-          title: "Development Mode",
-          description: "Reset email bypassed. Check console for details.",
-        });
-        navigate("/login", { replace: true });
-        return;
-      }
-
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password/new`,
       });
