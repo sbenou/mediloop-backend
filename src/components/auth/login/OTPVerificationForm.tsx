@@ -86,18 +86,17 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
     <div className="space-y-4">
       <div className="space-y-2">
         <InputOTP
+          maxLength={6}
           value={otp}
           onChange={setOtp}
-          maxLength={6}
           disabled={isLoading}
-          render={({ slots }) => (
-            <InputOTPGroup>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <InputOTPSlot key={i} index={i} {...(slots?.[i] || {})} />
-              ))}
-            </InputOTPGroup>
-          )}
-        />
+        >
+          <InputOTPGroup>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <InputOTPSlot key={i} index={i} />
+            ))}
+          </InputOTPGroup>
+        </InputOTP>
       </div>
       <Button
         className="w-full"
