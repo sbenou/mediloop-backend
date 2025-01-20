@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./providers/AuthProvider";
 import { CartProvider } from "./contexts/CartContext";
+import { RecoilRoot } from "recoil";
 import Index from "./pages/Index";
 
 // Log the current environment
@@ -13,16 +14,18 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <CartProvider>
-            <Index />
-            <Toaster />
-          </CartProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+    <RecoilRoot>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <CartProvider>
+              <Index />
+              <Toaster />
+            </CartProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </RecoilRoot>
   );
 }
 
