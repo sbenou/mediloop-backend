@@ -1,45 +1,54 @@
-import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import { OTPVerificationForm } from './OTPVerificationForm';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { getOTPEmail } from '@/utils/auth';
-import { ErrorBoundary } from 'react-error-boundary';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { OTPVerificationForm } from "./OTPVerificationForm";
+import { ErrorBoundary } from "react-error-boundary";
+import { useToast } from "@/hooks/use-toast";
 
-const ErrorFallback = () => (
-  <div className="container mx-auto px-4 py-8">
-    <Card>
-      <CardContent className="space-y-4 text-center py-6">
-        <CardTitle>Something went wrong</CardTitle>
-        <CardDescription>
-          An error occurred while loading the verification page.
-        </CardDescription>
-        <Link to="/login">
-          <Button variant="outline" className="mt-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Login
-          </Button>
-        </Link>
-      </CardContent>
-    </Card>
-  </div>
-);
+function ErrorFallback({ error }: { error: Error }) {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "Something went wrong. Please try again.",
+    });
+    navigate('/login');
+  }, [toast, navigate]);
+
+  return null;
+}
 
 export const OTPVerificationPage = () => {
+  const [email, setEmail] = useState<string | null>(null);
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkSession = async () => {
-      console.log("Checking session and email validity...");
+    console.log("Getting OTP email from available sources...");
+    
+    // Try to get email from location state
+    const stateEmail = location.state?.email;
+    if (stateEmail) {
+      console.log("Email found in location state:", stateEmail);
+      setEmail(stateEmail);
+      return;
+    }
+
+    // Try to get email from localStorage
+    const storedEmail = localStorage.getItem('otp_email');
+    const expiryTime = localStorage.getItem('otp_email_expiry');
+    
+    if (storedEmail && expiryTime) {
+      const hasExpired = new Date().getTime() > parseInt(expiryTime);
       
-      // Check for expired OTP email
-      const email = getOTPEmail();
-      if (!email) {
-        console.log("No valid email found, redirecting to login");
+      if (hasExpired) {
+        console.log("Stored email has expired");
+        localStorage.removeItem('otp_email');
+        localStorage.removeItem('otp_email_expiry');
         toast({
           variant: "destructive",
           title: "Session Expired",
@@ -48,47 +57,30 @@ export const OTPVerificationPage = () => {
         navigate('/login');
         return;
       }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Session check result:", session ? "User authenticated" : "No active session");
       
-      if (session) {
-        console.log("User already authenticated, clearing OTP data and redirecting");
-        localStorage.removeItem('otp_email');
-        localStorage.removeItem('otp_email_expiry');
-        navigate('/', { replace: true });
-      }
-    };
-    checkSession();
-  }, [navigate, toast]);
+      console.log("Email found in localStorage:", storedEmail);
+      setEmail(storedEmail);
+      return;
+    }
 
-  const email = getOTPEmail();
+    // If no email is found, redirect to login
+    console.log("No email found, redirecting to login");
+    toast({
+      variant: "destructive",
+      title: "Invalid Access",
+      description: "Please start the verification process from the login page.",
+    });
+    navigate('/login');
+  }, [location.state, navigate, toast]);
 
   if (!email) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="space-y-4 text-center py-6">
-            <CardTitle>No Email Found</CardTitle>
-            <CardDescription>
-              The verification session has expired or is invalid. Please try the verification process again.
-            </CardDescription>
-            <Link to="/login">
-              <Button variant="outline" className="mt-4">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Login
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return null;
   }
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <div className="container mx-auto px-4 py-8 max-w-md">
-        <Card className="w-full">
+        <Card className="w-full shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-semibold text-center">
               Verify your email
@@ -98,7 +90,13 @@ export const OTPVerificationPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <OTPVerificationForm email={email} />
+            <OTPVerificationForm 
+              email={email} 
+              onSuccess={() => {
+                console.log("OTP verification successful");
+                navigate('/', { replace: true });
+              }} 
+            />
           </CardContent>
         </Card>
       </div>
