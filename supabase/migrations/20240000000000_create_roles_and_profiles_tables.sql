@@ -33,7 +33,7 @@ CREATE TRIGGER update_roles_updated_at
 -- Create the profiles table
 CREATE TABLE public.profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    role UUID NOT NULL REFERENCES public.roles(id),
+    role UUID NOT NULL REFERENCES public.roles(id), -- Enforce roles using FK
     full_name TEXT,
     email TEXT UNIQUE NOT NULL,
     license_number TEXT UNIQUE,
@@ -71,18 +71,3 @@ CREATE POLICY "Enable all actions for superadmin users" ON public.roles
         WHERE profiles.id = auth.uid()
         AND profiles.role = 'superadmin'
     ));
-
--- Create prescriptions table
-CREATE TABLE IF NOT EXISTS public.prescriptions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    doctor_id UUID NOT NULL REFERENCES public.profiles(id),
-    patient_id UUID NOT NULL REFERENCES public.profiles(id),
-    medication_name TEXT NOT NULL,
-    dosage TEXT NOT NULL,
-    frequency TEXT NOT NULL,
-    duration TEXT NOT NULL,
-    notes TEXT,
-    status prescription_status DEFAULT 'draft',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);

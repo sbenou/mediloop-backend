@@ -1,16 +1,15 @@
--- Add default permissions for each role
 DO $$
 DECLARE
     superadmin_role_id UUID;
     doctor_role_id UUID;
     pharmacist_role_id UUID;
-    user_role_id UUID;
+    patient_role_id UUID;
 BEGIN
     -- Get role IDs
     SELECT id INTO superadmin_role_id FROM public.roles WHERE name = 'superadmin';
     SELECT id INTO doctor_role_id FROM public.roles WHERE name = 'doctor';
     SELECT id INTO pharmacist_role_id FROM public.roles WHERE name = 'pharmacist';
-    SELECT id INTO user_role_id FROM public.roles WHERE name = 'user';
+    SELECT id INTO patient_role_id FROM public.roles WHERE name = 'patient';
 
     -- Superadmin gets all permissions
     INSERT INTO public.role_permissions (role_id, permission_id)
@@ -49,7 +48,7 @@ BEGIN
     -- Regular user gets basic permissions
     INSERT INTO public.role_permissions (role_id, permission_id)
     SELECT 
-        user_role_id,
+        patient_role_id,
         unnest(ARRAY[
             'view_dashboard',
             'view_products',
