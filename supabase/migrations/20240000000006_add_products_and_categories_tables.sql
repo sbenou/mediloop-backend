@@ -71,9 +71,10 @@ CREATE POLICY "Superadmins can insert products"
         EXISTS (
             SELECT 1 FROM profiles
             WHERE profiles.id = auth.uid()
-            AND profiles.role = 'superadmin'
-        )
-    );
+            AND profiles.role = (
+                 SELECT id FROM public.roles WHERE name = 'superadmin'
+            )
+        ));
 
 -- Insert sample data for categories
 DO $$

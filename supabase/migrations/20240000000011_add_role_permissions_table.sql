@@ -10,13 +10,16 @@ CREATE TABLE IF NOT EXISTS public.role_permissions (
 ALTER TABLE public.role_permissions ENABLE ROW LEVEL SECURITY;
 
 -- Only superadmin can manage role permissions
+-- Only superadmin can manage role permissions
 CREATE POLICY "Enable all actions for superadmin users" ON public.role_permissions
     FOR ALL
     TO authenticated
     USING (EXISTS (
         SELECT 1 FROM profiles
         WHERE profiles.id = auth.uid()
-        AND profiles.role = 'superadmin'
+        AND profiles.role = (
+             SELECT id FROM public.roles WHERE name = 'superadmin'
+        )
     ));
 
 -- Everyone can view role permissions

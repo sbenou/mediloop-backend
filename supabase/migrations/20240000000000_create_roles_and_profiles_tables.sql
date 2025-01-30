@@ -1,18 +1,18 @@
 -- Update roles table to change 'user' to 'patient'
-UPDATE public.roles
-SET name = 'patient',
-    description = 'Patient with basic access'
-WHERE name = 'user';
+-- UPDATE public.roles
+-- SET name = 'patient',
+--     description = 'Patient with basic access'
+-- WHERE name = 'user';
 
 -- Update profiles table to reflect the role change
-UPDATE public.profiles
-SET role = (SELECT id FROM public.roles WHERE name = 'patient')
-WHERE role = (SELECT id FROM public.roles WHERE name = 'user');
+-- UPDATE public.profiles
+-- SET role = (SELECT id FROM public.roles WHERE name = 'patient')
+-- WHERE role = (SELECT id FROM public.roles WHERE name = 'user');
 
--- Update the default role permissions migration
-UPDATE public.role_permissions
-SET role_id = (SELECT id FROM public.roles WHERE name = 'patient')
-WHERE role_id = (SELECT id FROM public.roles WHERE name = 'user');
+-- -- Update the default role permissions migration
+-- UPDATE public.role_permissions
+-- SET role_id = (SELECT id FROM public.roles WHERE name = 'patient')
+-- WHERE role_id = (SELECT id FROM public.roles WHERE name = 'user');
 
 -- Create the roles table
 CREATE TABLE IF NOT EXISTS public.roles (
@@ -85,8 +85,13 @@ CREATE POLICY "Enable all actions for superadmin users" ON public.roles
     USING (EXISTS (
         SELECT 1 FROM profiles
         WHERE profiles.id = auth.uid()
-        AND profiles.role = 'superadmin'
+        AND profiles.role = (
+            SELECT id FROM public.roles WHERE name = 'superadmin'
+        )
     ));
+
+-- Create the prescription_status enum type
+CREATE TYPE prescription_status AS ENUM ('draft', 'active', 'completed');
 
 -- Create prescriptions table
 CREATE TABLE IF NOT EXISTS public.prescriptions (

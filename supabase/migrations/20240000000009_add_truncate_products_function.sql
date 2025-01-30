@@ -23,6 +23,8 @@ AS $$
     SELECT 1 FROM auth.users
     JOIN public.profiles ON auth.users.id = profiles.id
     WHERE auth.users.id = auth.uid()
-    AND profiles.role = 'superadmin'
+    AND profiles.role = (
+      SELECT id FROM public.roles WHERE name = 'superadmin'
+    )
   );
 $$;
