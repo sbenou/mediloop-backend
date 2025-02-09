@@ -138,6 +138,27 @@ export type Database = {
         }
         Relationships: []
       }
+      permissions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       pharmacies: {
         Row: {
           address: string
@@ -182,7 +203,6 @@ export type Database = {
           medication_name: string
           notes: string | null
           patient_id: string
-          status: Database["public"]["Enums"]["prescription_status"] | null
           updated_at: string
         }
         Insert: {
@@ -195,7 +215,6 @@ export type Database = {
           medication_name: string
           notes?: string | null
           patient_id: string
-          status?: Database["public"]["Enums"]["prescription_status"] | null
           updated_at?: string
         }
         Update: {
@@ -208,7 +227,6 @@ export type Database = {
           medication_name?: string
           notes?: string | null
           patient_id?: string
-          status?: Database["public"]["Enums"]["prescription_status"] | null
           updated_at?: string
         }
         Relationships: [
@@ -369,20 +387,30 @@ export type Database = {
       role_permissions: {
         Row: {
           created_at: string
+          id: string
           permission_id: string
           role_id: string
         }
         Insert: {
           created_at?: string
+          id?: string
           permission_id: string
           role_id: string
         }
         Update: {
           created_at?: string
+          id?: string
           permission_id?: string
           role_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "role_permissions_role_id_fkey"
             columns: ["role_id"]
@@ -441,6 +469,35 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
             referencedColumns: ["id"]
           },
         ]
@@ -540,7 +597,7 @@ export type Database = {
         | "shipped"
         | "delivered"
         | "cancelled"
-      prescription_status: "draft" | "active" | "completed" | "cancelled"
+      prescription_status: "draft" | "active" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
