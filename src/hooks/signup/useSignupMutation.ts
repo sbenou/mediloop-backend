@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { UserRole } from "@/components/signup/SignupForm";
@@ -34,20 +35,32 @@ export const useSignupMutation = () => {
 
       if (authError) {
         console.error("Auth user creation error:", authError);
-        // In development mode, return mock data instead of throwing error
-        if (process.env.NODE_ENV === 'development' && 
-           (authError.message?.includes('rate limit') || 
-            authError.code === 'over_email_send_rate_limit')) {
-          console.warn('Rate limit bypassed in development mode');
-          return {
-            id: 'dev-mock-' + Date.now(),
-            email,
-            role: roleMapping[userRole],
-            user_metadata: {
-              full_name: name
-            }
-          };
+        
+        // Specific error handling
+        if (authError.message?.includes('rate limit') || 
+            authError.code === 'over_email_send_rate_limit') {
+          throw new Error('Email rate limit reached. Please wait 5 minutes before trying again.');
         }
+        
+        if (authError.message?.includes('Error sending confirmation email')) {
+          console.warn('Email sending error detected, checking environment...');
+          
+          // In development mode, return mock data
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Development mode detected - bypassing email confirmation');
+            return {
+              id: 'dev-mock-' + Date.now(),
+              email,
+              role: roleMapping[userRole],
+              user_metadata: {
+                full_name: name
+              }
+            };
+          }
+          
+          throw new Error('Failed to send confirmation email. Please make sure you have verified your domain in Supabase and try again.');
+        }
+        
         throw authError;
       }
 
