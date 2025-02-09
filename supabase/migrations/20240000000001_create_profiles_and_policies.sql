@@ -1,33 +1,10 @@
--- Update roles table to change 'user' to 'patient'
--- UPDATE public.roles
--- SET name = 'patient',
---     description = 'Patient with basic access'
--- WHERE name = 'user';
-
--- Update profiles table to reflect the role change
--- UPDATE public.profiles
--- SET role = (SELECT id FROM public.roles WHERE name = 'patient')
--- WHERE role = (SELECT id FROM public.roles WHERE name = 'user');
-
--- -- Update the default role permissions migration
--- UPDATE public.role_permissions
--- SET role_id = (SELECT id FROM public.roles WHERE name = 'patient')
--- WHERE role_id = (SELECT id FROM public.roles WHERE name = 'user');
-
--- Create the roles table
-CREATE TABLE IF NOT EXISTS public.roles (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
-
 -- Add RLS policies
-ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable read access for all users" ON public.roles;
 
 -- Everyone can view roles
-CREATE POLICY "Enable read access for all users" ON public.roles
+CREATE POLICY "Enable read access for all users"
+    ON public.roles
     FOR SELECT
     TO authenticated
     USING (true);
@@ -41,15 +18,17 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_roles_updated_at ON public.roles;
+
 CREATE TRIGGER update_roles_updated_at
     BEFORE UPDATE ON public.roles
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Create the profiles table
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    role UUID NOT NULL REFERENCES public.roles(id), -- Enforce roles using FK
+    role UUID NOT NULL REFERENCES public.roles(id),
     full_name TEXT,
     email TEXT UNIQUE NOT NULL,
     license_number TEXT UNIQUE,
@@ -58,6 +37,7 @@ CREATE TABLE public.profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
 -- Enable RLS on profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -78,17 +58,31 @@ CREATE POLICY "Enable insert for authenticated users only"
     FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable all actions for superadmin users" ON public.roles;
+
 -- Only superadmin can manage roles
-CREATE POLICY "Enable all actions for superadmin users" ON public.roles
-    FOR ALL
-    TO authenticated
-    USING (EXISTS (
-        SELECT 1 FROM profiles
-        WHERE profiles.id = auth.uid()
-        AND profiles.role = (
-            SELECT id FROM public.roles WHERE name = 'superadmin'
-        )
-    ));
+CREATE POLICY "Enable all actions for superadmin users"
+ON public.roles
+FOR ALL
+TO authenticated
+USING (
+    current_user = 'postgres' OR
+    EXISTS (
+        SELECT 1
+        FROM public.profiles
+        WHERE profiles.id::text = auth.uid()::text
+          AND profiles.role = (
+              SELECT id
+              FROM public.roles
+              WHERE name = 'superadmin'
+          )
+    )
+);
+
+ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+DROP TYPE IF EXISTS prescription_status CASCADE;
 
 -- Create the prescription_status enum type
 CREATE TYPE prescription_status AS ENUM ('draft', 'active', 'completed');

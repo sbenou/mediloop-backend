@@ -20,11 +20,14 @@ LANGUAGE sql
 SECURITY DEFINER
 AS $$
   SELECT EXISTS (
-    SELECT 1 FROM auth.users
+    SELECT 1 
+    FROM auth.users
     JOIN public.profiles ON auth.users.id = profiles.id
-    WHERE auth.users.id = auth.uid()
-    AND profiles.role = (
-      SELECT id FROM public.roles WHERE name = 'superadmin'
-    )
+    WHERE auth.users.id::text = auth.uid()::text
+      AND profiles.role::text = (
+        SELECT id::text 
+        FROM public.roles 
+        WHERE name = 'superadmin'
+      )
   );
 $$;

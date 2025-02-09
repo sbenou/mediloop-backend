@@ -65,16 +65,21 @@ CREATE POLICY "Products are viewable by all authenticated users"
 
 -- Add new policy for superadmins to insert products
 CREATE POLICY "Superadmins can insert products"
-    ON public.products FOR INSERT
+    ON public.products 
+    FOR INSERT
     TO authenticated
     WITH CHECK (
         EXISTS (
-            SELECT 1 FROM profiles
-            WHERE profiles.id = auth.uid()
-            AND profiles.role = (
-                 SELECT id FROM public.roles WHERE name = 'superadmin'
-            )
-        ));
+            SELECT 1 
+            FROM public.profiles
+            WHERE profiles.id::text = auth.uid()::text
+              AND profiles.role::text = (
+                  SELECT id::text 
+                  FROM public.roles 
+                  WHERE name = 'superadmin'
+              )
+        )
+    );
 
 -- Insert sample data for categories
 DO $$
@@ -127,55 +132,55 @@ BEGIN
     VALUES ('Face Care', skincare_id)
     RETURNING id INTO face_care_id;
     
-    -- Insert sample products
-    INSERT INTO public.products (
-        name,
-        description,
-        price,
-        type,
-        requires_prescription,
-        category_id,
-        subcategory_id,
-        image_url
-    ) VALUES
-    (
-        'Ibuprofen 400mg',
-        'Effective pain relief for headaches and mild pain',
-        12.99,
-        'medication',
-        false,
-        pain_relief_id,
-        painkillers_id,
-        'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    ),
-    (
-        'Amoxicillin 500mg',
-        'Broad-spectrum antibiotic for bacterial infections',
-        24.99,
-        'medication',
-        true,
-        antibiotics_id,
-        broad_spectrum_id,
-        'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    ),
-    (
-        'Vitamin D3 1000IU',
-        'Daily supplement for bone health',
-        15.99,
-        'parapharmacy',
-        false,
-        vitamins_id,
-        multivitamins_id,
-        'https://images.unsplash.com/photo-1577401132921-cb39bb0adcff?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    ),
-    (
-        'Hydrating Face Cream',
-        'Daily moisturizer for all skin types',
-        29.99,
-        'parapharmacy',
-        false,
-        skincare_id,
-        face_care_id,
-        'https://images.unsplash.com/photo-1556229162-5c63ed9c4efb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    );
+    -- -- Insert sample products
+    -- INSERT INTO public.products (
+    --     name,
+    --     description,
+    --     price,
+    --     type,
+    --     requires_prescription,
+    --     category_id,
+    --     subcategory_id,
+    --     image_url
+    -- ) VALUES
+    -- (
+    --     'Ibuprofen 400mg',
+    --     'Effective pain relief for headaches and mild pain',
+    --     12.99,
+    --     'medication',
+    --     false,
+    --     pain_relief_id,
+    --     painkillers_id,
+    --     'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+    -- ),
+    -- (
+    --     'Amoxicillin 500mg',
+    --     'Broad-spectrum antibiotic for bacterial infections',
+    --     24.99,
+    --     'medication',
+    --     true,
+    --     antibiotics_id,
+    --     broad_spectrum_id,
+    --     'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+    -- ),
+    -- (
+    --     'Vitamin D3 1000IU',
+    --     'Daily supplement for bone health',
+    --     15.99,
+    --     'parapharmacy',
+    --     false,
+    --     vitamins_id,
+    --     multivitamins_id,
+    --     'https://images.unsplash.com/photo-1577401132921-cb39bb0adcff?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+    -- ),
+    -- (
+    --     'Hydrating Face Cream',
+    --     'Daily moisturizer for all skin types',
+    --     29.99,
+    --     'parapharmacy',
+    --     false,
+    --     skincare_id,
+    --     face_care_id,
+    --     'https://images.unsplash.com/photo-1556229162-5c63ed9c4efb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+    -- );
 END $$;

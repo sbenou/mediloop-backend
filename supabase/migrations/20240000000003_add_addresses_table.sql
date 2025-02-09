@@ -15,27 +15,35 @@ CREATE TABLE IF NOT EXISTS public.addresses (
 -- Add RLS policies for addresses
 ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own addresses" ON public.addresses;
+
 CREATE POLICY "Users can view their own addresses"
     ON public.addresses
     FOR SELECT
     USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert their own addresses" ON public.addresses;
 
 CREATE POLICY "Users can insert their own addresses"
     ON public.addresses
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own addresses" ON public.addresses;
+
 CREATE POLICY "Users can update their own addresses"
     ON public.addresses
     FOR UPDATE
     USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete their own addresses" ON public.addresses;
 
 CREATE POLICY "Users can delete their own addresses"
     ON public.addresses
     FOR DELETE
     USING (auth.uid() = user_id);
 
--- Create function to ensure only one default address per user
+-- Ensure the function exists or gets updated
 CREATE OR REPLACE FUNCTION public.ensure_single_default_address()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -49,7 +57,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for default address management
+-- Safely drop the trigger if it exists
+DROP TRIGGER IF EXISTS ensure_single_default_address_trigger ON public.addresses;
+
+-- Create the trigger after ensuring the function exists
 CREATE TRIGGER ensure_single_default_address_trigger
     BEFORE INSERT OR UPDATE ON public.addresses
     FOR EACH ROW

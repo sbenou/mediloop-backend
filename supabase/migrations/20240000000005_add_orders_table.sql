@@ -1,7 +1,11 @@
 -- First enable the moddatetime extension
 create extension if not exists moddatetime schema extensions;
 
+DROP TYPE IF EXISTS order_status CASCADE;
+
 create type order_status as enum ('pending', 'processing', 'shipped', 'delivered', 'cancelled');
+
+DROP TABLE IF EXISTS public.orders CASCADE;
 
 create table public.orders (
   id uuid default gen_random_uuid() primary key,

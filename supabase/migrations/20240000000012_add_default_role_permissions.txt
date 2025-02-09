@@ -1,0 +1,40 @@
+DO $$
+DECLARE
+    superadmin_role_id UUID;
+    doctor_role_id UUID;
+    pharmacist_role_id UUID;
+    patient_role_id UUID;
+BEGIN
+    -- Fetch role IDs
+    SELECT id INTO superadmin_role_id FROM public.roles WHERE name = 'superadmin';
+    SELECT id INTO doctor_role_id FROM public.roles WHERE name = 'doctor';
+    SELECT id INTO pharmacist_role_id FROM public.roles WHERE name = 'pharmacist';
+    SELECT id INTO patient_role_id FROM public.roles WHERE name = 'patient';
+
+    -- Superadmin: All permissions
+    INSERT INTO public.role_permissions (role_id, permission_id, created_at)
+    SELECT superadmin_role_id, id, TIMEZONE('utc', NOW())
+    FROM public.permissions
+    ON CONFLICT DO NOTHING;
+
+    -- Doctor Permissions
+    INSERT INTO public.role_permissions (role_id, permission_id, created_at)
+    SELECT doctor_role_id, id, TIMEZONE('utc', NOW())
+    FROM public.permissions
+    WHERE id IN ('view_dashboard', 'view_prescriptions', 'manage_prescriptions', 'view_settings')
+    ON CONFLICT DO NOTHING;
+
+    -- Pharmacist Permissions
+    INSERT INTO public.role_permissions (role_id, permission_id, created_at)
+    SELECT pharmacist_role_id, id, TIMEZONE('utc', NOW())
+    FROM public.permissions
+    WHERE id IN ('view_dashboard', 'view_products', 'edit_products', 'view_prescriptions', 'manage_prescriptions', 'view_settings')
+    ON CONFLICT DO NOTHING;
+
+    -- Patient Permissions
+    INSERT INTO public.role_permissions (role_id, permission_id, created_at)
+    SELECT patient_role_id, id, TIMEZONE('utc', NOW())
+    FROM public.permissions
+    WHERE id IN ('view_dashboard', 'view_products', 'view_orders', 'view_prescriptions', 'view_settings')
+    ON CONFLICT DO NOTHING;
+END $$;

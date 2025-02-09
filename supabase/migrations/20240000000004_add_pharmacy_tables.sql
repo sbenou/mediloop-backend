@@ -29,6 +29,8 @@ CREATE POLICY "Pharmacies are viewable by all authenticated users"
     TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Users can view their own pharmacy selection" ON public.user_pharmacies;
+
 -- Policies for user_pharmacies
 CREATE POLICY "Users can view their own pharmacy selection"
     ON public.user_pharmacies
@@ -36,17 +38,23 @@ CREATE POLICY "Users can view their own pharmacy selection"
     TO authenticated
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own pharmacy selection" ON public.user_pharmacies;
+
 CREATE POLICY "Users can insert their own pharmacy selection"
     ON public.user_pharmacies
     FOR INSERT
     TO authenticated
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own pharmacy selection" ON public.user_pharmacies;
+
 CREATE POLICY "Users can update their own pharmacy selection"
     ON public.user_pharmacies
     FOR UPDATE
     TO authenticated
     USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete their own pharmacy selection" ON public.user_pharmacies;
 
 CREATE POLICY "Users can delete their own pharmacy selection"
     ON public.user_pharmacies
