@@ -74,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailPayload = {
-      from: 'Mediloop <notifications@notifications.mediloop.lu>',
+      from: 'Mediloop <noreply@notifications.mediloop.lu>',
       to: [email],
       subject,
       html,
