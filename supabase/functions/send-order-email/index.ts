@@ -74,14 +74,16 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailPayload = {
-      from: 'Mediloop <noreply@notifications.mediloop.lu>',
+      from: 'Mediloop <no-reply@notifications.mediloop.lu>',
       to: [email],
       subject,
       html,
     };
     
     console.log('Sending email with payload:', {
-      ...emailPayload,
+      from: emailPayload.from,
+      to: emailPayload.to,
+      subject: emailPayload.subject,
       html: '(HTML content omitted from logs)'
     });
 
@@ -110,7 +112,10 @@ const handler = async (req: Request): Promise<Response> => {
       
       console.error('Resend API error:', errorDetail);
       
-      // Check for specific error types
+      if (responseText.includes('rate_limit')) {
+        throw new Error('Email rate limit reached. Please try again in a few minutes.');
+      }
+      
       if (responseText.includes('verify a domain') || responseText.includes('domain not verified')) {
         throw new Error('Email domain not verified. Please verify notifications.mediloop.lu in Resend.');
       }
@@ -129,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error('Error in send-order-email function:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
-      details: "Please make sure you have verified notifications.mediloop.lu in Resend and that the RESEND_API_KEY is correct."
+      details: "Please check the edge function logs for more details."
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
@@ -138,3 +143,4 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+
