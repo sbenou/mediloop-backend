@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
@@ -74,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Pharmacy App <orders@resend.dev>',
+        from: 'Pharmacy App <orders@yourdomain.com>', // Replace with your verified domain
         to: [email],
         subject,
         html,
@@ -84,6 +85,12 @@ const handler = async (req: Request): Promise<Response> => {
     if (!res.ok) {
       const error = await res.text();
       console.error('Resend API error:', error);
+      
+      // Check if it's a domain verification error
+      if (error.includes('verify a domain')) {
+        throw new Error('Email service not properly configured. Please verify your domain in Resend.');
+      }
+      
       throw new Error(`Failed to send email: ${error}`);
     }
 
@@ -96,7 +103,10 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error) {
     console.error('Error in send-order-email function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: "If you're seeing this in development, make sure you have verified your domain in Resend and updated the 'from' address."
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
@@ -104,3 +114,4 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+
