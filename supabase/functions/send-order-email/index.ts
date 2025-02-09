@@ -75,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Pharmacy App <noreply@resend.dev>', // Using Resend's default domain for testing
+        from: 'Mediloop <notifications@mediloop.lu>',
         to: [email],
         subject,
         html,
