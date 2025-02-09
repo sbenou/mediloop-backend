@@ -75,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Pharmacy App <orders@yourdomain.com>', // Replace with your verified domain
+        from: 'Pharmacy App <noreply@resend.dev>', // Using Resend's default domain for testing
         to: [email],
         subject,
         html,
