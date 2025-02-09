@@ -23,6 +23,8 @@ interface OrderEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log('Starting order email handler');
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -30,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { type, email, details } = await req.json() as OrderEmailRequest;
-    console.log('Processing email request:', { type, email, details });
+    console.log('Received request:', { type, email, details });
 
     let subject: string;
     let html: string;
@@ -66,7 +68,22 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     }
 
-    console.log('Sending email with:', { subject, to: email });
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set');
+      throw new Error('Email service configuration is missing');
+    }
+
+    const emailPayload = {
+      from: 'Mediloop <notifications@notifications.mediloop.lu>',
+      to: [email],
+      subject,
+      html,
+    };
+    
+    console.log('Sending email with payload:', {
+      ...emailPayload,
+      html: '(HTML content omitted from logs)'
+    });
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -74,27 +91,34 @@ const handler = async (req: Request): Promise<Response> => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
-      body: JSON.stringify({
-        from: 'Mediloop <notifications@notifications.mediloop.lu>',
-        to: [email],
-        subject,
-        html,
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
+    const responseText = await res.text();
+    console.log('Resend API response status:', res.status);
+    console.log('Resend API response headers:', Object.fromEntries(res.headers.entries()));
+    console.log('Resend API response body:', responseText);
+
     if (!res.ok) {
-      const error = await res.text();
-      console.error('Resend API error:', error);
-      
-      // Check if it's a domain verification error
-      if (error.includes('verify a domain')) {
-        throw new Error('Email service not properly configured. Please verify your domain in Resend.');
+      // Try to parse the error response as JSON
+      let errorDetail;
+      try {
+        errorDetail = JSON.parse(responseText);
+      } catch {
+        errorDetail = responseText;
       }
       
-      throw new Error(`Failed to send email: ${error}`);
+      console.error('Resend API error:', errorDetail);
+      
+      // Check for specific error types
+      if (responseText.includes('verify a domain') || responseText.includes('domain not verified')) {
+        throw new Error('Email domain not verified. Please verify notifications.mediloop.lu in Resend.');
+      }
+      
+      throw new Error(`Failed to send email: ${responseText}`);
     }
 
-    const data = await res.json();
+    const data = JSON.parse(responseText);
     console.log('Email sent successfully:', data);
 
     return new Response(JSON.stringify(data), {
@@ -105,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error('Error in send-order-email function:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
-      details: "If you're seeing this in development, make sure you have verified your domain in Resend and updated the 'from' address."
+      details: "Please make sure you have verified notifications.mediloop.lu in Resend and that the RESEND_API_KEY is correct."
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
@@ -114,4 +138,3 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
-
