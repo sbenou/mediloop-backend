@@ -25,7 +25,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', { event, session: session?.user?.id });
   
-  if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+  if (event === 'SIGNED_OUT') {
     // Clear any stored tokens
     localStorage.removeItem('supabase.auth.token');
   }
