@@ -75,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Mediloop <notifications@mediloop.lu>',
+        from: 'Mediloop <notifications@notifications.mediloop.lu>',
         to: [email],
         subject,
         html,
