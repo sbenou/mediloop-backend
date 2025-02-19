@@ -92,12 +92,16 @@ export const useSignupMutation = () => {
   const createUserProfile = async (userId: string, email: string, name: string, userRole: UserRole, licenseNumber: string) => {
     try {
       console.log("Creating new profile...");
+      
+      // Only include license number for doctors and pharmacists
+      const shouldIncludeLicense = userRole === 'doctor' || userRole === 'pharmacist';
+      
       const { error: profileError } = await supabase.rpc('create_profile_secure', {
         user_id: userId,
         user_role: roleMapping[userRole],
         user_full_name: name,
         user_email: email,
-        user_license_number: licenseNumber || null
+        user_license_number: shouldIncludeLicense ? licenseNumber : null
       });
 
       if (profileError) {
