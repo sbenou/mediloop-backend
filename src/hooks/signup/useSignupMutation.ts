@@ -92,7 +92,7 @@ export const useSignupMutation = () => {
   const createUserProfile = async (userId: string, email: string, name: string, userRole: UserRole, licenseNumber: string) => {
     try {
       console.log("Creating new profile...");
-      const { error: profileError } = await supabase.rpc('create_profile', {
+      const { error: profileError } = await supabase.rpc('create_profile_secure', {
         user_id: userId,
         user_role: roleMapping[userRole],
         user_full_name: name,

@@ -539,6 +539,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_profile_secure: {
+        Args: {
+          user_id: string
+          user_role: string
+          user_full_name: string
+          user_email: string
+          user_license_number: string
+        }
+        Returns: undefined
+      }
       handle_connection_request: {
         Args: {
           doctor_id: string
