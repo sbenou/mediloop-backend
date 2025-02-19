@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -41,7 +42,7 @@ export const useSignup = () => {
         options: {
           data: {
             full_name: name,
-            role: userRole, // Use the role directly from the database
+            role: userRole,
           },
         },
       });
@@ -78,10 +79,11 @@ export const useSignup = () => {
         .from('profiles')
         .select('id')
         .eq('id', authData.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileCheckError) {
         console.error("Error checking existing profile:", profileCheckError);
+        throw profileCheckError;
       }
 
       if (!existingProfile) {
@@ -99,6 +101,12 @@ export const useSignup = () => {
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
+          // Log additional details about the current state
+          console.log("Attempted profile creation with:", {
+            userId: authData.user.id,
+            email,
+            role: userRole,
+          });
           throw new Error("Failed to create user profile: " + profileError.message);
         }
         console.log("Profile created successfully");
