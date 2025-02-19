@@ -93,15 +93,24 @@ export const useSignupMutation = () => {
     try {
       console.log("Creating new profile...");
       
-      // Only include license number for doctors and pharmacists
-      const shouldIncludeLicense = userRole === 'doctor' || userRole === 'pharmacist';
-      
+      // First, check if the role requires a license
+      const { data: roleData, error: roleError } = await supabase
+        .from('roles')
+        .select('requires_license')
+        .eq('name', roleMapping[userRole])
+        .single();
+
+      if (roleError) {
+        console.error("Error checking role requirements:", roleError);
+        throw new Error("Failed to verify role requirements: " + roleError.message);
+      }
+
       const { error: profileError } = await supabase.rpc('create_profile_secure', {
         user_id: userId,
         user_role: roleMapping[userRole],
         user_full_name: name,
         user_email: email,
-        user_license_number: shouldIncludeLicense ? licenseNumber : null
+        user_license_number: roleData.requires_license ? licenseNumber : null
       });
 
       if (profileError) {
