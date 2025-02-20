@@ -18,12 +18,10 @@ export const useSignup = () => {
     userRole: string,
     licenseNumber: string
   ) => {
-    console.log("=== Starting signup process ===");
-    console.log("Input parameters:", { email, name, userRole, hasPassword: !!password, hasLicense: !!licenseNumber });
+    console.log("Starting signup process for email:", email);
 
     if (rateLimitExpiresAt && Date.now() < rateLimitExpiresAt) {
       const remainingMinutes = Math.ceil((rateLimitExpiresAt - Date.now()) / 60000);
-      console.log("Rate limit active:", { remainingMinutes });
       toast({
         variant: "destructive",
         title: "Rate Limit Active",
@@ -32,16 +30,12 @@ export const useSignup = () => {
       return;
     }
 
-    if (isSubmitting) {
-      console.log("Submission already in progress, returning");
-      return;
-    }
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     
     try {
-      // Create auth user first
-      console.log("=== Creating auth user ===");
+      console.log("Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -49,27 +43,17 @@ export const useSignup = () => {
           data: {
             full_name: name,
             role: userRole,
+            license_number: licenseNumber || null,
           },
         },
       });
 
       if (authError) {
-        console.error("Auth user creation error:", authError);
-        console.log("Auth error details:", {
-          message: authError.message,
-          code: authError.code,
-          status: authError.status
-        });
-        
         if (authError.message.includes('email rate limit') || 
             authError.code === 'over_email_send_rate_limit') {
           const rateLimitDuration = 5 * 60 * 1000;
-          const expiresAt = Date.now() + rateLimitDuration;
+          setRateLimitExpiresAt(Date.now() + rateLimitDuration);
           
-          console.log("Rate limit triggered:", { expiresAt, rateLimitDuration });
-          setRateLimitExpiresAt(expiresAt);
-          setIsSubmitting(false);
-
           toast({
             variant: "destructive",
             title: "Email Rate Limit Reached",
@@ -80,66 +64,42 @@ export const useSignup = () => {
         throw authError;
       }
 
-      console.log("Auth user created successfully:", authData.user?.id);
-
       if (!authData.user?.id) {
-        console.error("No user ID returned from auth signup");
         throw new Error("User creation failed - no user ID returned");
       }
 
-      // First check if profile exists
-      console.log("=== Checking for existing profile ===");
-      console.log("Checking profile for user ID:", authData.user.id);
+      console.log("Auth user created successfully:", authData.user.id);
       
+      // Wait a short moment to allow the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log("Checking for existing profile...");
       const { data: existingProfile, error: profileCheckError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('*')
         .eq('id', authData.user.id)
         .maybeSingle();
 
       if (profileCheckError) {
-        console.error("Error checking existing profile:", profileCheckError);
-        console.log("Profile check error details:", {
-          message: profileCheckError.message,
-          code: profileCheckError.code,
-          details: profileCheckError.details,
-          hint: profileCheckError.hint
-        });
         throw profileCheckError;
       }
 
-      console.log("Existing profile check result:", existingProfile);
-
       if (!existingProfile) {
-        console.log("=== Creating new profile ===");
-        console.log("Profile creation parameters:", {
-          id: authData.user.id,
-          email,
-          full_name: name,
-          role: userRole,
-          license_number: licenseNumber || null
-        });
-
+        console.log("No existing profile found, creating new profile...");
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert([{
+          .upsert([{
             id: authData.user.id,
             email,
             full_name: name,
             role: userRole,
             license_number: licenseNumber || null,
-          }]);
+          }], {
+            onConflict: 'id'
+          });
 
         if (profileError) {
-          console.error("Profile creation error:", profileError);
-          console.log("Profile creation error details:", {
-            message: profileError.message,
-            code: profileError.code,
-            details: profileError.details,
-            hint: profileError.hint
-          });
-          
-          // Log additional details about the current state
+          console.log("Profile creation error:", profileError);
           console.log("Attempted profile creation with:", {
             userId: authData.user.id,
             email,
@@ -147,13 +107,23 @@ export const useSignup = () => {
           });
           throw new Error("Failed to create user profile: " + profileError.message);
         }
-        console.log("Profile created successfully");
       } else {
-        console.log("Profile already exists:", existingProfile);
+        console.log("Profile exists, updating if needed...");
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            email,
+            full_name: name,
+            role: userRole,
+            license_number: licenseNumber || null,
+          })
+          .eq('id', authData.user.id);
+
+        if (updateError) {
+          throw updateError;
+        }
       }
 
-      console.log("=== Signup process completed successfully ===");
-      
       toast({
         title: "Account created successfully",
         description: "Please check your email to verify your account.",
@@ -161,14 +131,7 @@ export const useSignup = () => {
       
       navigate('/login');
     } catch (error: any) {
-      console.error("=== Signup process failed ===");
-      console.error("Final error:", error);
-      console.log("Error details:", {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      });
-      
+      console.log("Signup error:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -176,7 +139,6 @@ export const useSignup = () => {
       });
     } finally {
       setIsSubmitting(false);
-      console.log("=== Signup process ended ===");
     }
   };
 
