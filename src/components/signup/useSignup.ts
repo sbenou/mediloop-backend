@@ -35,6 +35,13 @@ export const useSignup = () => {
     setIsSubmitting(true);
     
     try {
+      // First, check if user already exists
+      const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email);
+      
+      if (existingUser) {
+        throw new Error("An account with this email already exists");
+      }
+
       console.log("Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -69,60 +76,22 @@ export const useSignup = () => {
       }
 
       console.log("Auth user created successfully:", authData.user.id);
-      
-      // Wait a short moment to allow the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      console.log("Checking for existing profile...");
-      const { data: existingProfile, error: profileCheckError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .maybeSingle();
+      // Use RPC call to create profile
+      const { error: rpcError } = await supabase.rpc('create_profile_secure', {
+        user_id: authData.user.id,
+        user_role: userRole,
+        user_full_name: name,
+        user_email: email,
+        user_license_number: licenseNumber || null
+      });
 
-      if (profileCheckError) {
-        throw profileCheckError;
+      if (rpcError) {
+        console.error("Profile creation error:", rpcError);
+        throw new Error("Failed to create user profile: " + rpcError.message);
       }
 
-      if (!existingProfile) {
-        console.log("No existing profile found, creating new profile...");
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert([{
-            id: authData.user.id,
-            email,
-            full_name: name,
-            role: userRole,
-            license_number: licenseNumber || null,
-          }], {
-            onConflict: 'id'
-          });
-
-        if (profileError) {
-          console.log("Profile creation error:", profileError);
-          console.log("Attempted profile creation with:", {
-            userId: authData.user.id,
-            email,
-            role: userRole,
-          });
-          throw new Error("Failed to create user profile: " + profileError.message);
-        }
-      } else {
-        console.log("Profile exists, updating if needed...");
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            email,
-            full_name: name,
-            role: userRole,
-            license_number: licenseNumber || null,
-          })
-          .eq('id', authData.user.id);
-
-        if (updateError) {
-          throw updateError;
-        }
-      }
+      console.log("Profile created successfully");
 
       toast({
         title: "Account created successfully",
@@ -131,7 +100,7 @@ export const useSignup = () => {
       
       navigate('/login');
     } catch (error: any) {
-      console.log("Signup error:", error);
+      console.error("Signup error:", error);
       toast({
         variant: "destructive",
         title: "Error",
