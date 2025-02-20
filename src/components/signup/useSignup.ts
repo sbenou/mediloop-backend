@@ -18,8 +18,12 @@ export const useSignup = () => {
     userRole: string,
     licenseNumber: string
   ) => {
+    console.log("=== Starting signup process ===");
+    console.log("Input parameters:", { email, name, userRole, hasPassword: !!password, hasLicense: !!licenseNumber });
+
     if (rateLimitExpiresAt && Date.now() < rateLimitExpiresAt) {
       const remainingMinutes = Math.ceil((rateLimitExpiresAt - Date.now()) / 60000);
+      console.log("Rate limit active:", { remainingMinutes });
       toast({
         variant: "destructive",
         title: "Rate Limit Active",
@@ -28,14 +32,16 @@ export const useSignup = () => {
       return;
     }
 
-    if (isSubmitting) return;
+    if (isSubmitting) {
+      console.log("Submission already in progress, returning");
+      return;
+    }
 
     setIsSubmitting(true);
-    console.log("Starting signup process for email:", email);
-
+    
     try {
       // Create auth user first
-      console.log("Creating auth user...");
+      console.log("=== Creating auth user ===");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -49,11 +55,18 @@ export const useSignup = () => {
 
       if (authError) {
         console.error("Auth user creation error:", authError);
+        console.log("Auth error details:", {
+          message: authError.message,
+          code: authError.code,
+          status: authError.status
+        });
+        
         if (authError.message.includes('email rate limit') || 
             authError.code === 'over_email_send_rate_limit') {
           const rateLimitDuration = 5 * 60 * 1000;
           const expiresAt = Date.now() + rateLimitDuration;
           
+          console.log("Rate limit triggered:", { expiresAt, rateLimitDuration });
           setRateLimitExpiresAt(expiresAt);
           setIsSubmitting(false);
 
@@ -70,11 +83,14 @@ export const useSignup = () => {
       console.log("Auth user created successfully:", authData.user?.id);
 
       if (!authData.user?.id) {
+        console.error("No user ID returned from auth signup");
         throw new Error("User creation failed - no user ID returned");
       }
 
       // First check if profile exists
-      console.log("Checking for existing profile...");
+      console.log("=== Checking for existing profile ===");
+      console.log("Checking profile for user ID:", authData.user.id);
+      
       const { data: existingProfile, error: profileCheckError } = await supabase
         .from('profiles')
         .select('id')
@@ -83,12 +99,27 @@ export const useSignup = () => {
 
       if (profileCheckError) {
         console.error("Error checking existing profile:", profileCheckError);
+        console.log("Profile check error details:", {
+          message: profileCheckError.message,
+          code: profileCheckError.code,
+          details: profileCheckError.details,
+          hint: profileCheckError.hint
+        });
         throw profileCheckError;
       }
 
+      console.log("Existing profile check result:", existingProfile);
+
       if (!existingProfile) {
-        console.log("No existing profile found, creating new profile...");
-        // Create the profile only if it doesn't exist
+        console.log("=== Creating new profile ===");
+        console.log("Profile creation parameters:", {
+          id: authData.user.id,
+          email,
+          full_name: name,
+          role: userRole,
+          license_number: licenseNumber || null
+        });
+
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
@@ -101,6 +132,13 @@ export const useSignup = () => {
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
+          console.log("Profile creation error details:", {
+            message: profileError.message,
+            code: profileError.code,
+            details: profileError.details,
+            hint: profileError.hint
+          });
+          
           // Log additional details about the current state
           console.log("Attempted profile creation with:", {
             userId: authData.user.id,
@@ -114,6 +152,8 @@ export const useSignup = () => {
         console.log("Profile already exists:", existingProfile);
       }
 
+      console.log("=== Signup process completed successfully ===");
+      
       toast({
         title: "Account created successfully",
         description: "Please check your email to verify your account.",
@@ -121,7 +161,13 @@ export const useSignup = () => {
       
       navigate('/login');
     } catch (error: any) {
-      console.error("Signup error:", error);
+      console.error("=== Signup process failed ===");
+      console.error("Final error:", error);
+      console.log("Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
       
       toast({
         variant: "destructive",
@@ -130,6 +176,7 @@ export const useSignup = () => {
       });
     } finally {
       setIsSubmitting(false);
+      console.log("=== Signup process ended ===");
     }
   };
 
