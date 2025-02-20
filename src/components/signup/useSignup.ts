@@ -70,26 +70,40 @@ export const useSignup = () => {
 
       console.log("Auth user created successfully:", authData.user.id);
 
-      // Add delay before profile creation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Check if profile already exists
+      const { data: existingProfile, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', authData.user.id)
+        .single();
 
-      console.log("Creating profile for user:", authData.user.id);
-      const { error: rpcError } = await supabase.rpc('create_profile_secure', {
-        user_id: authData.user.id,
-        user_role: userRole,
-        user_full_name: name,
-        user_email: email,
-        user_license_number: licenseNumber || null
-      });
-
-      if (rpcError) {
-        console.error("Profile creation error:", rpcError);
-        // If profile creation fails, attempt to delete the auth user
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw new Error("Failed to create user profile: " + rpcError.message);
+      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+        console.error("Error checking for existing profile:", profileCheckError);
+        throw profileCheckError;
       }
 
-      console.log("Profile created successfully");
+      console.log("Creating/updating profile for user:", authData.user.id);
+      
+      const { error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: authData.user.id,
+          role: userRole,
+          full_name: name,
+          email: email,
+          license_number: licenseNumber || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
+
+      if (upsertError) {
+        console.error("Profile creation/update error:", upsertError);
+        throw new Error("Failed to create/update user profile: " + upsertError.message);
+      }
+
+      console.log("Profile created/updated successfully");
 
       toast({
         title: "Account created successfully",
