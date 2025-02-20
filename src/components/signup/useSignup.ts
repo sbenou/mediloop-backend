@@ -69,29 +69,8 @@ export const useSignup = () => {
       }
 
       console.log("Auth user created successfully:", authData.user.id);
-
-      // Wait a short moment to allow the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Update the profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          role: userRole,
-          full_name: name,
-          email: email,
-          license_number: licenseNumber || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', authData.user.id);
-
-      if (updateError) {
-        console.error("Profile update error:", updateError);
-        throw new Error("Failed to update user profile: " + updateError.message);
-      }
-
-      console.log("Profile updated successfully");
-
+      
+      // Let the database trigger handle profile creation
       toast({
         title: "Account created successfully",
         description: "Please check your email to verify your account.",
