@@ -13,27 +13,30 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     storageKey: 'supabase.auth.token',
     storage: localStorage,
-    flowType: 'pkce', // Add PKCE flow for better security
+    flowType: 'pkce',
   },
   global: {
     headers: {
       'X-Client-Info': 'lovable-delivery',
     },
   },
-  // Add proper CORS configuration
-  headers: {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  },
 });
+
+// Helper function to safely fetch data with error handling
+export async function fetchFromSupabase<T>(
+  query: Promise<{ data: T | null; error: any }>
+): Promise<T> {
+  const { data, error } = await query;
+  if (error) throw error;
+  if (!data) throw new Error('No data returned');
+  return data as T;
+}
 
 // Handle auth state changes and log them
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', { event, session: session?.user?.id });
   
   if (event === 'SIGNED_OUT') {
-    // Clear any stored tokens
     localStorage.removeItem('supabase.auth.token');
   }
 });
@@ -41,7 +44,6 @@ supabase.auth.onAuthStateChange((event, session) => {
 // Handle initial session
 supabase.auth.getSession().then(({ data: { session } }) => {
   if (!session) {
-    // Clear any stale tokens if no valid session exists
     localStorage.removeItem('supabase.auth.token');
   }
 });
