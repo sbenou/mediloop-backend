@@ -70,7 +70,10 @@ export const useSignup = () => {
 
       console.log("Auth user created successfully:", authData.user.id);
 
-      // Use RPC call to create profile
+      // Add delay before profile creation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log("Creating profile for user:", authData.user.id);
       const { error: rpcError } = await supabase.rpc('create_profile_secure', {
         user_id: authData.user.id,
         user_role: userRole,
@@ -81,6 +84,8 @@ export const useSignup = () => {
 
       if (rpcError) {
         console.error("Profile creation error:", rpcError);
+        // If profile creation fails, attempt to delete the auth user
+        await supabase.auth.admin.deleteUser(authData.user.id);
         throw new Error("Failed to create user profile: " + rpcError.message);
       }
 
