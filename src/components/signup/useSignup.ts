@@ -35,13 +35,6 @@ export const useSignup = () => {
     setIsSubmitting(true);
     
     try {
-      // First, check if user already exists
-      const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email);
-      
-      if (existingUser) {
-        throw new Error("An account with this email already exists");
-      }
-
       console.log("Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
