@@ -85,38 +85,40 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
   return (
     <div className="space-y-4">
-      {showPassword && (
-        <Button
-          type="button"
-          variant="ghost"
-          className="p-0 h-auto font-normal hover:bg-transparent -mt-2 mb-4"
-          onClick={handleBackToEmail}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to email
-        </Button>
-      )}
-      <form onSubmit={handleContinue} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        {!showPassword && (
-          <button
-            type="submit"
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2"
+      <div>
+        {showPassword && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="p-0 h-auto font-normal hover:bg-transparent mb-4"
+            onClick={handleBackToEmail}
           >
-            Continue with Email
-          </button>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to email
+          </Button>
         )}
-      </form>
+        <form onSubmit={handleContinue} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          {!showPassword && (
+            <button
+              type="submit"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2"
+            >
+              Continue with Email
+            </button>
+          )}
+        </form>
+      </div>
 
       {showPassword && (
         <PasswordFields
@@ -127,4 +129,4 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       )}
     </div>
   );
-};
+}
