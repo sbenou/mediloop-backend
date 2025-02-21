@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { toast } from "@/components/ui/use-toast";
 
 interface MapUpdaterProps {
   coordinates: { lat: number; lon: number };
@@ -80,6 +81,22 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       return pharmacies;
     };
 
+    // Function to filter pharmacies based on drawn shape
+    const filterByShape = (layer: L.Layer) => {
+      const basePharmacies = filterByLocation();
+      return basePharmacies.filter(pharmacy => {
+        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
+        const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+        
+        if (layer instanceof L.Circle) {
+          return layer.getBounds().contains(pharmacyLatLng);
+        } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+          return layer.getBounds().contains(pharmacyLatLng);
+        }
+        return false;
+      });
+    };
+
     // Initial pharmacy list based on location mode
     onPharmaciesInShape(filterByLocation());
 
@@ -94,25 +111,26 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       const layer = event.layer;
       drawnItems.addLayer(layer);
       
-      // Filter pharmacies based on shape
-      const pharmaciesInShape = pharmacies.filter(pharmacy => {
-        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
-        const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-        
-        if (layer instanceof L.Circle) {
-          return layer.getBounds().contains(pharmacyLatLng);
-        } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-          return layer.getBounds().contains(pharmacyLatLng);
-        }
-        return false;
-      });
+      // Filter pharmacies based on shape and current location mode
+      const filteredPharmacies = filterByShape(layer);
+      onPharmaciesInShape(filteredPharmacies);
 
-      onPharmaciesInShape(pharmaciesInShape);
+      // Show toast with number of pharmacies in shape
+      toast({
+        title: "Shape drawn",
+        description: `Found ${filteredPharmacies.length} pharmacies in this area`,
+      });
     });
 
     map.on(L.Draw.Event.DELETED, () => {
       // When shape is deleted, reset to initial state based on location mode
-      onPharmaciesInShape(filterByLocation());
+      const filteredPharmacies = filterByLocation();
+      onPharmaciesInShape(filteredPharmacies);
+      
+      toast({
+        title: "Shape deleted",
+        description: `Showing ${filteredPharmacies.length} pharmacies`,
+      });
     });
 
     return () => {
