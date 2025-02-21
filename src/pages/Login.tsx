@@ -45,12 +45,6 @@ const Login = () => {
     };
   }, [navigate]);
 
-  // If user is already authenticated, redirect to home
-  if (isAuthenticated) {
-    console.log('User is authenticated, redirecting to home...');
-    return <Navigate to="/" replace />;
-  }
-
   // Only show loading state for a brief moment during initial auth check
   if (isLoading) {
     console.log('Auth state is loading...');
@@ -63,6 +57,12 @@ const Login = () => {
         </Card>
       </div>
     );
+  }
+
+  // If user is already authenticated and not on the login page, redirect to home
+  if (isAuthenticated && window.location.pathname !== '/login') {
+    console.log('User is authenticated, redirecting to home...');
+    return <Navigate to="/" replace />;
   }
 
   // Show login form
