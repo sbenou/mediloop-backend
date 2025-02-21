@@ -81,6 +81,41 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       return pharmacies;
     };
 
+    // Function to check if a point is inside a circle
+    const isPointInCircle = (point: L.LatLng, circle: L.Circle) => {
+      const center = circle.getLatLng();
+      const radius = circle.getRadius();
+      const distance = center.distanceTo(point);
+      return distance <= radius;
+    };
+
+    // Function to check if a point is inside a polygon or rectangle
+    const isPointInPolygon = (point: L.LatLng, polygon: L.Polygon | L.Rectangle) => {
+      const bounds = polygon.getBounds();
+      if (!bounds.contains(point)) return false;
+
+      if (polygon instanceof L.Rectangle) return true;
+
+      // For complex polygons, we need to check if the point is actually inside
+      const latLngs = polygon.getLatLngs()[0] as L.LatLng[];
+      const x = point.lng;
+      const y = point.lat;
+      let inside = false;
+
+      for (let i = 0, j = latLngs.length - 1; i < latLngs.length; j = i++) {
+        const xi = latLngs[i].lng;
+        const yi = latLngs[i].lat;
+        const xj = latLngs[j].lng;
+        const yj = latLngs[j].lat;
+
+        const intersect = ((yi > y) !== (yj > y)) &&
+          (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+
+      return inside;
+    };
+
     // Function to filter pharmacies based on drawn shape
     const filterByShape = (layer: L.Layer) => {
       const basePharmacies = filterByLocation();
@@ -89,9 +124,9 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
         
         if (layer instanceof L.Circle) {
-          return layer.getBounds().contains(pharmacyLatLng);
+          return isPointInCircle(pharmacyLatLng, layer);
         } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-          return layer.getBounds().contains(pharmacyLatLng);
+          return isPointInPolygon(pharmacyLatLng, layer);
         }
         return false;
       });
