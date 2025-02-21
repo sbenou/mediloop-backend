@@ -3,6 +3,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -59,21 +60,26 @@ const UserMenu = () => {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-        <UserAvatar />
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center space-x-2 hover:opacity-80 transition-opacity outline-none">
+          <UserAvatar />
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        className="w-56 bg-white border rounded-md shadow-lg z-50"
-        sideOffset={5}
-        collisionPadding={20}
-      >
-        <UserMenuItems 
-          userRole={userProfile?.role}
-          userName={userProfile?.full_name}
-        />
-      </DropdownMenuContent>
+      <DropdownMenuPortal>
+        <DropdownMenuContent 
+          align="end" 
+          sideOffset={5}
+          className="w-56 bg-white border rounded-md shadow-lg z-[100] animate-in fade-in-0 zoom-in-95"
+          collisionPadding={20}
+          forceMount
+        >
+          <UserMenuItems 
+            userRole={userProfile?.role}
+            userName={userProfile?.full_name}
+          />
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
     </DropdownMenu>
   );
 };
