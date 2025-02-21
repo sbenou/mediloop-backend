@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Eye, EyeOff, Loader, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Loader } from "lucide-react";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { useNavigate } from 'react-router-dom';
@@ -14,10 +13,9 @@ interface PasswordFieldsProps {
   email: string;
   onSuccess: () => void;
   onForgotPassword: () => void;
-  onBack: () => void;
 }
 
-export const PasswordFields = ({ email, onSuccess, onForgotPassword, onBack }: PasswordFieldsProps) => {
+export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordFieldsProps) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -122,64 +120,53 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword, onBack }: P
   };
 
   return (
-    <>
+    <form onSubmit={handleLogin} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
+            required
+            className="pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+      </div>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <Loader className="mr-2 h-4 w-4 animate-spin" />
+            Signing in...
+          </>
+        ) : (
+          "Sign in"
+        )}
+      </Button>
       <Button
         type="button"
-        variant="ghost"
-        className="p-0 h-auto font-normal hover:bg-transparent -mt-2 mb-4"
-        onClick={onBack}
+        variant="link"
+        className="w-full"
+        onClick={onForgotPassword}
+        disabled={isLoading}
       >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to email
+        Forgot your password?
       </Button>
-      <form onSubmit={handleLogin} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              required
-              className="pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              tabIndex={-1}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
-            </>
-          ) : (
-            "Sign in"
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="link"
-          className="w-full"
-          onClick={onForgotPassword}
-          disabled={isLoading}
-        >
-          Forgot your password?
-        </Button>
-      </form>
-    </>
+    </form>
   );
 };

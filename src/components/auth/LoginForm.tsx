@@ -4,9 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { PasswordFields } from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
 import { supabase } from "@/lib/supabase";
+import { ArrowLeft } from "lucide-react";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -83,6 +85,17 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
   return (
     <div className="space-y-4">
+      {showPassword && (
+        <Button
+          type="button"
+          variant="ghost"
+          className="p-0 h-auto font-normal hover:bg-transparent -mt-2 mb-4"
+          onClick={handleBackToEmail}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to email
+        </Button>
+      )}
       <form onSubmit={handleContinue} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -110,7 +123,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           email={email}
           onSuccess={handleLoginSuccess}
           onForgotPassword={handleForgotPassword}
-          onBack={handleBackToEmail}
         />
       )}
     </div>
