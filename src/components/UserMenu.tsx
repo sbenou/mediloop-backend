@@ -12,22 +12,23 @@ import UserMenuItems from "./user-menu/UserMenuItems";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const UserMenu = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: userProfile, refetch: refetchProfile } = useQuery({
+  const { data: userProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
+      console.log('Fetching user profile in UserMenu query');
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
-        console.log('No session found in UserMenu');
+        console.log('No session found in UserMenu query');
         return null;
       }
       
-      console.log('Fetching user profile in UserMenu');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -39,30 +40,20 @@ const UserMenu = () => {
         throw error;
       }
       
-      console.log('Profile fetch successful:', data);
+      console.log('Profile fetch successful in UserMenu query:', data);
       return data;
     },
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     retry: 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        console.log('Auth state changed in UserMenu, refetching profile');
-        refetchProfile();
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [refetchProfile]);
-
-  // Prefetch profile data
+  // Prefetch profile data when authenticated
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('Prefetching profile data in UserMenu');
       queryClient.prefetchQuery({
         queryKey: ['userProfile'],
         queryFn: async () => {
@@ -81,6 +72,7 @@ const UserMenu = () => {
     }
   }, [isAuthenticated, queryClient]);
 
+  // Show connection button if not authenticated
   if (!isAuthenticated) {
     return (
       <button
@@ -89,6 +81,15 @@ const UserMenu = () => {
       >
         Connection
       </button>
+    );
+  }
+
+  // Show loading skeleton while authentication or profile is loading
+  if (authLoading || profileLoading) {
+    return (
+      <div className="h-10 w-10 rounded-full">
+        <Skeleton className="h-full w-full rounded-full" />
+      </div>
     );
   }
 

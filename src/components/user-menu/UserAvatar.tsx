@@ -8,6 +8,7 @@ const UserAvatar = () => {
   const { data: userProfile } = useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
+      console.log('Fetching user profile in UserAvatar');
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return null;
       
@@ -17,9 +18,10 @@ const UserAvatar = () => {
         .eq('id', session.user.id)
         .maybeSingle();
         
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 
   return (
