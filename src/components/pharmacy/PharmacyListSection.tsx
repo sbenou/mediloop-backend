@@ -41,20 +41,33 @@ const PharmacyListSection = ({
   onSetDefaultPharmacy
 }: PharmacyListSectionProps) => {
   const [filteredPharmacies, setFilteredPharmacies] = useState(pharmacies);
-  const [showDefaultLocation, setShowDefaultLocation] = useState(false); // Changed to false by default
+  const [showDefaultLocation, setShowDefaultLocation] = useState(false);
 
   useEffect(() => {
-    if (!coordinates) return;
+    if (!coordinates?.lat || !coordinates?.lon) {
+      setFilteredPharmacies(pharmacies);
+      return;
+    }
 
     if (showDefaultLocation) {
-      const userLocation = L.latLng(coordinates.lat, coordinates.lon);
-      const nearbyPharmacies = pharmacies.filter(pharmacy => {
-        const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-        return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km radius
-      });
-      setFilteredPharmacies(nearbyPharmacies);
+      try {
+        const userLocation = L.latLng(coordinates.lat, coordinates.lon);
+        const nearbyPharmacies = pharmacies.filter(pharmacy => {
+          if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
+          try {
+            const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+            return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km radius
+          } catch (error) {
+            console.error('Error calculating distance for pharmacy:', pharmacy, error);
+            return false;
+          }
+        });
+        setFilteredPharmacies(nearbyPharmacies);
+      } catch (error) {
+        console.error('Error creating user location:', error);
+        setFilteredPharmacies(pharmacies);
+      }
     } else {
-      // When location is not shown, display all pharmacies
       setFilteredPharmacies(pharmacies);
     }
   }, [showDefaultLocation, coordinates, pharmacies]);
