@@ -62,6 +62,10 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     }
   };
 
+  const handleBackToEmail = () => {
+    setShowPassword(false);
+  };
+
   return (
     <div className="space-y-4">
       <form onSubmit={handleContinue} className="space-y-4">
@@ -84,7 +88,10 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             >
               Continue with Email
             </button>
-            <AuthOptions />
+            <AuthOptions 
+              email={email} 
+              onBack={handleBackToEmail}
+            />
           </>
         )}
       </form>
