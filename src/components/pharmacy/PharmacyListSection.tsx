@@ -41,7 +41,7 @@ const PharmacyListSection = ({
   onSetDefaultPharmacy
 }: PharmacyListSectionProps) => {
   const [filteredPharmacies, setFilteredPharmacies] = useState(pharmacies);
-  const [showDefaultLocation, setShowDefaultLocation] = useState(true);
+  const [showDefaultLocation, setShowDefaultLocation] = useState(false); // Changed to false by default
 
   useEffect(() => {
     if (!coordinates) return;
@@ -50,10 +50,11 @@ const PharmacyListSection = ({
       const userLocation = L.latLng(coordinates.lat, coordinates.lon);
       const nearbyPharmacies = pharmacies.filter(pharmacy => {
         const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-        return userLocation.distanceTo(pharmacyLocation) <= 2000;
+        return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km radius
       });
       setFilteredPharmacies(nearbyPharmacies);
     } else {
+      // When location is not shown, display all pharmacies
       setFilteredPharmacies(pharmacies);
     }
   }, [showDefaultLocation, coordinates, pharmacies]);
