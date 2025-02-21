@@ -8,13 +8,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "./user-menu/UserAvatar";
 import UserMenuItems from "./user-menu/UserMenuItems";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const UserMenu = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { data: userProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['userProfile'],
@@ -44,22 +45,14 @@ const UserMenu = () => {
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate('/login', { replace: true });
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
   // Show connection button if not authenticated
   if (!isAuthenticated) {
     return (
       <button
         onClick={() => {
-          console.log('Navigating to login page');
-          navigate('/login', { replace: true });
+          console.log('Connection button clicked, navigating to login');
+          // Force navigation to login without any conditions
+          window.location.href = '/login';
         }}
         className="text-primary hover:text-primary/80 transition-colors"
       >
@@ -78,12 +71,12 @@ const UserMenu = () => {
   }
 
   return (
-    <div className="relative">
-      <DropdownMenu>
-        <DropdownMenuTrigger className="outline-none">
-          <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
+    <div className="relative inline-block">
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none">
             <UserAvatar />
-          </div>
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           align="end" 
