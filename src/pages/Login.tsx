@@ -45,13 +45,13 @@ const Login = () => {
     };
   }, [navigate]);
 
-  console.log('Login render state:', { isAuthenticated, isLoading });
-
+  // If user is already authenticated, redirect to home
   if (isAuthenticated) {
     console.log('User is authenticated, redirecting to home...');
     return <Navigate to="/" replace />;
   }
 
+  // Only show loading state for a brief moment during initial auth check
   if (isLoading) {
     console.log('Auth state is loading...');
     return (
@@ -65,6 +65,7 @@ const Login = () => {
     );
   }
 
+  // Show login form
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-lg origin-center transform transition-all duration-700 ease-in-out hover:shadow-xl animate-[scale-in_0.7s_ease-out] motion-reduce:transition-none motion-reduce:hover:transform-none">
