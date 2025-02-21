@@ -15,6 +15,7 @@ interface LoginFormProps {
 export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showResetOptions, setShowResetOptions] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -37,7 +38,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
   const handleForgotPassword = () => {
     console.log('Forgot password clicked');
-    navigate("/reset-password", { state: { email } });
+    setShowResetOptions(true);
   };
 
   const handleLoginSuccess = async () => {
@@ -64,7 +65,21 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
   const handleBackToEmail = () => {
     setShowPassword(false);
+    setShowResetOptions(false);
   };
+
+  const handleBackToPassword = () => {
+    setShowResetOptions(false);
+  };
+
+  if (showResetOptions) {
+    return (
+      <AuthOptions 
+        email={email} 
+        onBack={handleBackToPassword}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -81,18 +96,12 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           />
         </div>
         {!showPassword && (
-          <>
-            <button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2"
-            >
-              Continue with Email
-            </button>
-            <AuthOptions 
-              email={email} 
-              onBack={handleBackToEmail}
-            />
-          </>
+          <button
+            type="submit"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2"
+          >
+            Continue with Email
+          </button>
         )}
       </form>
 
@@ -101,6 +110,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           email={email}
           onSuccess={handleLoginSuccess}
           onForgotPassword={handleForgotPassword}
+          onBack={handleBackToEmail}
         />
       )}
     </div>
