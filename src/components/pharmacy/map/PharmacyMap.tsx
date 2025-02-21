@@ -21,15 +21,16 @@ interface PharmacyMapProps {
 
 export function PharmacyMap({ coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation }: PharmacyMapProps) {
   // Default center of Luxembourg if no coordinates provided
-  const center: L.LatLngExpression = [coordinates.lat || 49.8153, coordinates.lon || 6.1296];
+  const defaultCenter: L.LatLngExpression = [49.8153, 6.1296];
 
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
         className="h-full"
         style={{ height: '100%', width: '100%' }}
-        center={center}
-        zoom={11}
+        whenCreated={(map) => {
+          map.setView(defaultCenter, 11);
+        }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
