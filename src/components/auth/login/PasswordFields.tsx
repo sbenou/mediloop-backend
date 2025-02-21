@@ -26,49 +26,54 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return; // Prevent multiple submissions
     setIsLoading(true);
 
     try {
+      console.log('Attempting login for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
-
-      if (data.user) {
-        // Fetch the user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        }
-
-        // Update Recoil state with user data
-        setAuth({
-          user: data.user,
-          profile: profile || null,
-          isLoading: false,
-          permissions: [],
-        });
-
-        toast({
-          title: "Success",
-          description: "Successfully logged in!",
-        });
-
-        // Call onSuccess to trigger any parent component handlers
-        onSuccess();
-
-        // Navigate to home page after successful login
-        navigate('/', { replace: true });
+      if (error) {
+        console.error('Login error:', error);
+        throw error;
       }
+
+      if (!data.user) {
+        throw new Error('No user data received');
+      }
+
+      console.log('Login successful, fetching profile');
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+      }
+
+      console.log('Setting auth state');
+      setAuth({
+        user: data.user,
+        profile: profile || null,
+        isLoading: false,
+        permissions: [],
+      });
+
+      toast({
+        title: "Success",
+        description: "Successfully logged in!",
+      });
+
+      console.log('Navigating to home page');
+      navigate('/', { replace: true });
+      onSuccess();
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Login process error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -79,8 +84,13 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
     }
   };
 
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleLogin(e);
+  };
+
   return (
-    <div className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2 text-left">
         <Label htmlFor="password">Password</Label>
         <div className="relative">
@@ -105,7 +115,6 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       <Button
         type="submit"
         className="w-full"
-        onClick={handleLogin}
         disabled={isLoading}
       >
         {isLoading ? "Logging in..." : "Log in"}
@@ -119,6 +128,6 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       >
         Forgot your password?
       </Button>
-    </div>
+    </form>
   );
 };
