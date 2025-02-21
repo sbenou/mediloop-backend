@@ -37,8 +37,8 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
-    // Initialize draw control with proper type declarations
-    const drawControl = new (L.Control as any).Draw({
+    // Create draw options with proper type handling
+    const drawOptions = {
       position: 'topright',
       draw: {
         circle: {
@@ -71,11 +71,13 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
         featureGroup: drawnItems,
         remove: true
       }
-    });
+    };
 
+    // Initialize draw control with proper type handling
+    const drawControl = new (L.Control as any).Draw(drawOptions);
     map.addControl(drawControl);
 
-    // Handle draw events
+    // Handle draw events with explicit type checking
     map.on(L.Draw.Event.CREATED, (event: any) => {
       const layer = event.layer;
       drawnItems.addLayer(layer);
@@ -155,6 +157,8 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
+          center={center}
+          zoom={13}
           whenReady={() => {}}
         >
           <TileLayer
