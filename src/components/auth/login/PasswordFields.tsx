@@ -121,9 +121,9 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4 text-left">
-      <div className="space-y-2">
-        <Label htmlFor="password" className="text-left">Password</Label>
+    <form onSubmit={handleLogin} className="space-y-4 text-start w-full">
+      <div className="space-y-2 text-start">
+        <Label htmlFor="password" className="text-start block">Password</Label>
         <div className="relative">
           <Input
             id="password"

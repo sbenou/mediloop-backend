@@ -84,7 +84,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   }
 
   return (
-    <div className="space-y-4 text-left">
+    <div className="space-y-4 text-left !text-start w-full">
       <div>
         {showPassword && (
           <Button
@@ -98,8 +98,8 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
           </Button>
         )}
         <form onSubmit={handleContinue} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-left">Email</Label>
+          <div className="space-y-2 text-start">
+            <Label htmlFor="email" className="text-start block">Email</Label>
             <Input
               id="email"
               type="email"
