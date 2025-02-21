@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +23,7 @@ const UserAvatar = () => {
   });
 
   return (
-    <Avatar>
+    <Avatar className="cursor-pointer">
       {userProfile?.avatar_url ? (
         <AvatarImage src={userProfile.avatar_url} alt="Profile" />
       ) : null}
