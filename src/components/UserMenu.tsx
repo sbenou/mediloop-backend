@@ -1,3 +1,4 @@
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,8 +8,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "./user-menu/UserAvatar";
 import UserMenuItems from "./user-menu/UserMenuItems";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 const UserMenu = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
   const { data: userProfile } = useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
@@ -24,7 +30,19 @@ const UserMenu = () => {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
+    enabled: isAuthenticated,
   });
+
+  if (!isAuthenticated) {
+    return (
+      <button
+        onClick={() => navigate('/login')}
+        className="text-primary hover:text-primary/80 transition-colors"
+      >
+        Connection
+      </button>
+    );
+  }
 
   return (
     <DropdownMenu>

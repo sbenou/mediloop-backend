@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { Eye, EyeOff } from "lucide-react";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
+import { useNavigate } from 'react-router-dom';
 
 interface PasswordFieldsProps {
   email: string;
@@ -20,6 +22,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const setAuth = useSetRecoilState(authState);
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,13 +37,14 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       if (error) throw error;
 
       if (data.user) {
-        // Update Recoil state with user data
+        // Fetch the user profile
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
           .single();
 
+        // Update Recoil state with user data
         setAuth({
           user: data.user,
           profile,
@@ -53,7 +57,8 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
           description: "Successfully logged in!",
         });
 
-        onSuccess();
+        // Navigate to home page after successful login
+        navigate('/');
       }
     } catch (error: any) {
       toast({
