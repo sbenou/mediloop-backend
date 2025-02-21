@@ -55,4 +55,3 @@ supabase.auth.getSession().then(({ data: { session } }) => {
     localStorage.removeItem('supabase.auth.token');
   }
 });
-

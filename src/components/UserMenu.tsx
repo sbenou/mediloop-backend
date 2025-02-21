@@ -49,7 +49,10 @@ const UserMenu = () => {
       <DropdownMenuTrigger className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
         <UserAvatar />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent 
+        align="end" 
+        className="w-56 bg-white border rounded-md shadow-lg z-50"
+      >
         <UserMenuItems 
           userRole={userProfile?.role}
           userName={userProfile?.full_name}
