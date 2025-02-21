@@ -66,6 +66,8 @@ const UserMenu = () => {
       <DropdownMenuContent 
         align="end" 
         className="w-56 bg-white border rounded-md shadow-lg z-50"
+        sideOffset={5}
+        collisionPadding={20}
       >
         <UserMenuItems 
           userRole={userProfile?.role}
