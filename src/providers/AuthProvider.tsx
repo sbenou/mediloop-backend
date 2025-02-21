@@ -15,18 +15,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth state...');
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        
+        if (error) {
+          console.error('Session error:', error);
+          if (mounted) {
+            setAuth({
+              user: null,
+              profile: null,
+              permissions: [],
+              isLoading: false, // Make sure to set loading to false even on error
+            });
+          }
+          return;
+        }
 
         if (session?.user) {
-          console.log('Initial session found:', session.user.id);
+          console.log('Session found:', session.user.id);
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
 
-          if (profileError) throw profileError;
+          if (profileError) {
+            console.error('Profile error:', profileError);
+            if (mounted) {
+              setAuth({
+                user: null,
+                profile: null,
+                permissions: [],
+                isLoading: false,
+              });
+            }
+            return;
+          }
 
           if (mounted) {
             setAuth({
@@ -37,6 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
           }
         } else {
+          console.log('No session found');
           if (mounted) {
             setAuth({
               user: null,
@@ -47,7 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('Auth initialization error:', error);
         if (mounted) {
           setAuth({
             user: null,
@@ -59,6 +84,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    // Set initial loading state
+    setAuth(prev => ({ ...prev, isLoading: true }));
+    
+    // Initialize auth
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -112,6 +141,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     return () => {
+      console.log('Cleaning up auth provider...');
       mounted = false;
       subscription.unsubscribe();
     };
