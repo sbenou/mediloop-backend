@@ -107,7 +107,6 @@ const PharmacyListSection = ({
   }
 
   const center: L.LatLngExpression = [coordinates.lat, coordinates.lon];
-  const defaultCenter: L.LatLngExpression = [0, 0];
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
@@ -145,8 +144,6 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={defaultCenter}
-          zoom={13}
           whenCreated={(map) => {
             map.setView(center, 13);
           }}
