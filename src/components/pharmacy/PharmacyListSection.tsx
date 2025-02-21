@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import PharmacyCard from "@/components/PharmacyCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -19,33 +20,55 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
   const map = useMap();
   
   useEffect(() => {
+    if (!map) return;
+
     map.setView([coordinates.lat, coordinates.lon], 13);
 
     // Initialize draw controls
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
-    const drawControl = new L.Control.Draw({
+    // Initialize draw control with proper type declarations
+    const drawControl = new (L.Control as any).Draw({
+      position: 'topright',
       draw: {
+        polygon: {
+          allowIntersection: false,
+          drawError: {
+            color: '#e1e100',
+            message: '<strong>Oh snap!<strong> you can\'t draw that!'
+          },
+          shapeOptions: {
+            color: '#97009c'
+          }
+        },
+        rectangle: {
+          shapeOptions: {
+            color: '#97009c'
+          }
+        },
+        circle: {
+          shapeOptions: {
+            color: '#97009c'
+          }
+        },
         marker: false,
         polyline: false,
-        circlemarker: false,
-        rectangle: true,
-        circle: true,
-        polygon: true,
+        circlemarker: false
       },
       edit: {
         featureGroup: drawnItems,
+        remove: true
       }
     });
+
     map.addControl(drawControl);
 
     // Handle draw events
-    map.on(L.Draw.Event.CREATED, (e: any) => {
-      const layer = e.layer;
+    map.on(L.Draw.Event.CREATED, (event: any) => {
+      const layer = event.layer;
       drawnItems.addLayer(layer);
       
-      // Log the drawn shape's coordinates
       if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
         console.log('Drawn area coordinates:', layer.getLatLngs());
       } else if (layer instanceof L.Circle) {
@@ -119,6 +142,8 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
+          center={[coordinates.lat, coordinates.lon]}
+          zoom={13}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
