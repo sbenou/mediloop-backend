@@ -157,8 +157,6 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={center}
-          zoom={13}
           whenReady={() => {}}
         >
           <TileLayer
