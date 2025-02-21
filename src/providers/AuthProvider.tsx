@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
-import { useQuery } from '@tanstack/react-query';
 import { UserProfile } from '@/types/user';
 import { toast } from '@/components/ui/use-toast';
 
@@ -99,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               });
             }
           }
-        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        } else if (event === 'SIGNED_OUT') {
           if (mounted) {
             setAuth({
               user: null,
