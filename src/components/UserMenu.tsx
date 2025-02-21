@@ -3,7 +3,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -45,16 +44,23 @@ const UserMenu = () => {
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 
-  const handleConnectionClick = () => {
-    console.log('Connection button clicked, navigating to login');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   // Show connection button if not authenticated
   if (!isAuthenticated) {
     return (
       <button
-        onClick={handleConnectionClick}
+        onClick={() => {
+          console.log('Navigating to login page');
+          navigate('/login', { replace: true });
+        }}
         className="text-primary hover:text-primary/80 transition-colors"
       >
         Connection
@@ -72,26 +78,25 @@ const UserMenu = () => {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="outline-none">
-        <button 
-          className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer"
-          aria-label="Open user menu"
+    <div className="relative">
+      <DropdownMenu>
+        <DropdownMenuTrigger className="outline-none">
+          <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
+            <UserAvatar />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent 
+          align="end" 
+          sideOffset={5}
+          className="w-56 bg-white border rounded-md shadow-lg z-[100] animate-in fade-in-0 zoom-in-95"
         >
-          <UserAvatar />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        sideOffset={5}
-        className="w-56 bg-white border rounded-md shadow-lg z-[100] animate-in fade-in-0 zoom-in-95"
-      >
-        <UserMenuItems 
-          userRole={userProfile?.role}
-          userName={userProfile?.full_name}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <UserMenuItems 
+            userRole={userProfile?.role}
+            userName={userProfile?.full_name}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 };
 
