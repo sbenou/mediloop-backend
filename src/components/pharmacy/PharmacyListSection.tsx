@@ -144,9 +144,7 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          whenReady={(map) => {
-            map.target.setView(center, 13);
-          }}
+          whenReady={() => {}}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
