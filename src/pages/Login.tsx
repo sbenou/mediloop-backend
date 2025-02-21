@@ -11,42 +11,49 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check initial session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Current session:', session ? 'Active' : 'None');
+    const initialize = async () => {
+      console.log('Login page mounted, checking session...');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Session check error:', error);
+        return;
+      }
       
       if (session?.user) {
-        console.log('User is authenticated, redirecting to home');
+        console.log('Active session found, redirecting to home...');
         navigate('/', { replace: true });
+      } else {
+        console.log('No active session found');
       }
     };
 
-    checkSession();
+    initialize();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
+      console.log('Auth state changed in Login:', event, session?.user?.id);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('User signed in, redirecting to home');
+        console.log('User signed in, redirecting to home...');
         navigate('/', { replace: true });
       }
     });
 
     return () => {
+      console.log('Login page unmounting, cleaning up...');
       subscription.unsubscribe();
     };
   }, [navigate]);
 
-  // If authenticated, redirect to home page
+  console.log('Login render state:', { isAuthenticated, isLoading });
+
   if (isAuthenticated) {
-    console.log('User is authenticated via useAuth, redirecting to home');
+    console.log('User is authenticated, redirecting to home...');
     return <Navigate to="/" replace />;
   }
 
-  // Don't show login form while checking auth status
   if (isLoading) {
+    console.log('Auth state is loading...');
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
@@ -69,7 +76,7 @@ const Login = () => {
         </CardHeader>
         <CardContent>
           <LoginForm onSuccess={() => {
-            console.log('Login form success callback');
+            console.log('Login form success callback executed');
           }} />
         </CardContent>
         <CardFooter className="flex flex-col items-start space-y-2">
