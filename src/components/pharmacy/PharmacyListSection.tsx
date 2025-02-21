@@ -38,15 +38,22 @@ interface MapUpdaterProps {
   coordinates: { lat: number; lon: number };
   pharmacies: any[];
   onPharmaciesInShape: (pharmacies: any[]) => void;
+  showDefaultLocation: boolean;
 }
 
-function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape }: MapUpdaterProps) {
+function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation }: MapUpdaterProps) {
   const map = useMap();
   
   useEffect(() => {
     if (!map) return;
 
-    map.setView([coordinates.lat, coordinates.lon], 13);
+    // Center map on Luxembourg if not showing default location
+    const defaultView = showDefaultLocation 
+      ? [coordinates.lat, coordinates.lon]
+      : [49.8153, 6.1296]; // Luxembourg center coordinates
+    
+    const zoomLevel = showDefaultLocation ? 13 : 10;
+    map.setView(defaultView as L.LatLngExpression, zoomLevel);
 
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
@@ -91,6 +98,20 @@ function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape }: MapUpdater
       }
     };
 
+    // Update initial pharmacy list based on location mode
+    if (showDefaultLocation) {
+      // Filter pharmacies within 2km radius of user location
+      const userLocation = L.latLng(coordinates.lat, coordinates.lon);
+      const nearbyPharmacies = pharmacies.filter(pharmacy => {
+        const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+        return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km in meters
+      });
+      onPharmaciesInShape(nearbyPharmacies);
+    } else {
+      // Show all pharmacies when not using default location
+      onPharmaciesInShape(pharmacies);
+    }
+
     const drawControl = new (L.Control as any).Draw(drawOptions);
     map.addControl(drawControl);
 
@@ -118,16 +139,25 @@ function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape }: MapUpdater
       onPharmaciesInShape(pharmaciesInShape);
     });
 
-    // Clear filtered pharmacies when shape is deleted
+    // Reset to location-based filtering when shape is deleted
     map.on(L.Draw.Event.DELETED, () => {
-      onPharmaciesInShape(pharmacies);
+      if (showDefaultLocation) {
+        const userLocation = L.latLng(coordinates.lat, coordinates.lon);
+        const nearbyPharmacies = pharmacies.filter(pharmacy => {
+          const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+          return userLocation.distanceTo(pharmacyLocation) <= 2000;
+        });
+        onPharmaciesInShape(nearbyPharmacies);
+      } else {
+        onPharmaciesInShape(pharmacies);
+      }
     });
 
     return () => {
       map.removeControl(drawControl);
       map.removeLayer(drawnItems);
     };
-  }, [coordinates, map, pharmacies, onPharmaciesInShape]);
+  }, [coordinates, map, pharmacies, onPharmaciesInShape, showDefaultLocation]);
   
   return null;
 }
@@ -151,6 +181,22 @@ const PharmacyListSection = ({
 }: PharmacyListSectionProps) => {
   const [filteredPharmacies, setFilteredPharmacies] = useState(pharmacies);
   const [showDefaultLocation, setShowDefaultLocation] = useState(true);
+
+  // Update filtered pharmacies when showDefaultLocation changes
+  useEffect(() => {
+    if (!coordinates) return;
+
+    if (showDefaultLocation) {
+      const userLocation = L.latLng(coordinates.lat, coordinates.lon);
+      const nearbyPharmacies = pharmacies.filter(pharmacy => {
+        const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+        return userLocation.distanceTo(pharmacyLocation) <= 2000;
+      });
+      setFilteredPharmacies(nearbyPharmacies);
+    } else {
+      setFilteredPharmacies(pharmacies);
+    }
+  }, [showDefaultLocation, coordinates, pharmacies]);
 
   if (!coordinates) {
     return <div>Loading location...</div>;
@@ -212,6 +258,7 @@ const PharmacyListSection = ({
             coordinates={coordinates} 
             pharmacies={pharmacies}
             onPharmaciesInShape={setFilteredPharmacies}
+            showDefaultLocation={showDefaultLocation}
           />
           
           {/* User location marker */}
