@@ -67,19 +67,21 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       }
     };
 
-    // Update initial pharmacy list based on location mode
-    if (showDefaultLocation && coordinates.lat && coordinates.lon) {
-      // Filter pharmacies within 2km radius of user location
-      const userLocation = L.latLng(coordinates.lat, coordinates.lon);
-      const nearbyPharmacies = pharmacies.filter(pharmacy => {
-        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
-        const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-        return userLocation.distanceTo(pharmacyLocation) <= 2000;
-      });
-      onPharmaciesInShape(nearbyPharmacies);
-    } else {
-      onPharmaciesInShape(pharmacies);
-    }
+    // Function to filter pharmacies based on user location
+    const filterByLocation = () => {
+      if (showDefaultLocation && coordinates.lat && coordinates.lon) {
+        const userLocation = L.latLng(coordinates.lat, coordinates.lon);
+        return pharmacies.filter(pharmacy => {
+          if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
+          const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+          return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km radius
+        });
+      }
+      return pharmacies;
+    };
+
+    // Initial pharmacy list based on location mode
+    onPharmaciesInShape(filterByLocation());
 
     const drawControl = new (L.Control as any).Draw(drawOptions);
     map.addControl(drawControl);
@@ -92,6 +94,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       const layer = event.layer;
       drawnItems.addLayer(layer);
       
+      // Filter pharmacies based on shape
       const pharmaciesInShape = pharmacies.filter(pharmacy => {
         if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
         const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
@@ -108,17 +111,8 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
     });
 
     map.on(L.Draw.Event.DELETED, () => {
-      if (showDefaultLocation && coordinates.lat && coordinates.lon) {
-        const userLocation = L.latLng(coordinates.lat, coordinates.lon);
-        const nearbyPharmacies = pharmacies.filter(pharmacy => {
-          if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
-          const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-          return userLocation.distanceTo(pharmacyLocation) <= 2000;
-        });
-        onPharmaciesInShape(nearbyPharmacies);
-      } else {
-        onPharmaciesInShape(pharmacies);
-      }
+      // When shape is deleted, reset to initial state based on location mode
+      onPharmaciesInShape(filterByLocation());
     });
 
     return () => {
