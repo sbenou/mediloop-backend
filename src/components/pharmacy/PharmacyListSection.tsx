@@ -48,8 +48,21 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
           showRadius: true,
           metric: true
         },
-        polygon: false,
-        rectangle: false,
+        polygon: {
+          allowIntersection: false,
+          drawError: {
+            color: '#e1e100',
+            message: '<strong>Oh snap!</strong> you can\'t draw that!'
+          },
+          shapeOptions: {
+            color: '#97009c'
+          }
+        },
+        rectangle: {
+          shapeOptions: {
+            color: '#97009c'
+          }
+        },
         marker: false,
         polyline: false,
         circlemarker: false
@@ -67,7 +80,9 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
       const layer = event.layer;
       drawnItems.addLayer(layer);
       
-      if (layer instanceof L.Circle) {
+      if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+        console.log('Drawn area coordinates:', layer.getLatLngs());
+      } else if (layer instanceof L.Circle) {
         console.log('Circle center:', layer.getLatLng(), 'radius:', layer.getRadius());
       }
     });
