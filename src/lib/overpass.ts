@@ -64,8 +64,11 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
 
   const query = `
     [out:json][timeout:25];
+    area["ISO3166-1"="LU"][admin_level=2]->.luxembourg;
     (
-      node["amenity"="pharmacy"](around:${radius},${lat},${lon});
+      node["amenity"="pharmacy"](area.luxembourg);
+      way["amenity"="pharmacy"](area.luxembourg);
+      relation["amenity"="pharmacy"](area.luxembourg);
     );
     out body;
     >;
