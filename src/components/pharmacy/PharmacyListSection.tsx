@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import PharmacyCard from "@/components/PharmacyCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -7,6 +6,8 @@ import L from 'leaflet';
 import { useEffect, useState } from "react";
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -149,6 +150,7 @@ const PharmacyListSection = ({
   onSetDefaultPharmacy
 }: PharmacyListSectionProps) => {
   const [filteredPharmacies, setFilteredPharmacies] = useState(pharmacies);
+  const [showDefaultLocation, setShowDefaultLocation] = useState(true);
 
   if (!coordinates) {
     return <div>Loading location...</div>;
@@ -159,6 +161,15 @@ const PharmacyListSection = ({
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
       <div className="overflow-y-auto space-y-4 pr-4 relative z-50">
+        <div className="flex items-center space-x-2 p-4 bg-white rounded-lg shadow">
+          <Switch
+            id="show-location"
+            checked={showDefaultLocation}
+            onCheckedChange={setShowDefaultLocation}
+          />
+          <Label htmlFor="show-location">Show my location</Label>
+        </div>
+
         {isLoading && (
           <>
             {[1, 2, 3].map((i) => (
@@ -204,9 +215,11 @@ const PharmacyListSection = ({
           />
           
           {/* User location marker */}
-          <Marker position={center}>
-            <Popup>Your location</Popup>
-          </Marker>
+          {showDefaultLocation && (
+            <Marker position={center}>
+              <Popup>Your location</Popup>
+            </Marker>
+          )}
 
           {/* Pharmacy markers */}
           {pharmacies.map((pharmacy) => (
