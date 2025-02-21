@@ -17,6 +17,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Ensure measurement types are initialized
+if (typeof window !== 'undefined') {
+  (window as any).type = true; // Ensure 'type' is declared globally
+}
+
 // Initialize Leaflet.draw localization
 L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
 L.drawLocal.draw.handlers.circle.radius = 'Radius';
@@ -24,6 +29,12 @@ L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing shape'
 L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
 L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
 L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
+
+// Initialize measurement formatting
+L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
+(L as any).drawLocal.draw.toolbar.buttons.polygon = 'Draw a polygon';
+(L as any).drawLocal.draw.toolbar.buttons.rectangle = 'Draw a rectangle';
+(L as any).drawLocal.draw.toolbar.buttons.circle = 'Draw a circle';
 
 function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
   const map = useMap();
@@ -37,7 +48,7 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
-    // Create draw options with proper type handling
+    // Create draw options with measurement enabled
     const drawOptions = {
       position: 'topright',
       draw: {
@@ -46,7 +57,8 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
             color: '#97009c'
           },
           showRadius: true,
-          metric: true
+          metric: true,
+          feet: false
         },
         polygon: {
           allowIntersection: false,
@@ -56,12 +68,16 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
           },
           shapeOptions: {
             color: '#97009c'
-          }
+          },
+          showArea: true,
+          metric: true
         },
         rectangle: {
           shapeOptions: {
             color: '#97009c'
-          }
+          },
+          showArea: true,
+          metric: true
         },
         marker: false,
         polyline: false,
