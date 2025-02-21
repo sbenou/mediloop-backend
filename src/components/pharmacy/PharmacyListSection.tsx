@@ -106,6 +106,8 @@ const PharmacyListSection = ({
     return <div>Loading location...</div>;
   }
 
+  const center: L.LatLngExpression = [coordinates.lat, coordinates.lon];
+
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
       <div className="overflow-y-auto space-y-4 pr-4 relative z-50">
@@ -142,7 +144,7 @@ const PharmacyListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon]}
+          center={center}
           zoom={13}
         >
           <TileLayer
@@ -151,9 +153,7 @@ const PharmacyListSection = ({
           <MapUpdater coordinates={coordinates} />
           
           {/* User location marker */}
-          <Marker 
-            position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
-          >
+          <Marker position={center}>
             <Popup>Your location</Popup>
           </Marker>
 
