@@ -4,8 +4,7 @@ import PharmacyCard from "@/components/PharmacyCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect } from "react";
-// Import leaflet-draw after leaflet
+import { useEffect, useState } from "react";
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 
@@ -19,24 +18,28 @@ L.Icon.Default.mergeOptions({
 
 // Ensure measurement types are initialized
 if (typeof window !== 'undefined') {
-  (window as any).type = true; // Ensure 'type' is declared globally
+  (window as any).type = true;
 }
 
-// Initialize Leaflet.draw localization
+// Initialize Leaflet.draw localization and measurement formatting
 L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
 L.drawLocal.draw.handlers.circle.radius = 'Radius';
-L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing shape';
+L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
 L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
 L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
 L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
 
-// Initialize measurement formatting
-L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
 (L as any).drawLocal.draw.toolbar.buttons.polygon = 'Draw a polygon';
 (L as any).drawLocal.draw.toolbar.buttons.rectangle = 'Draw a rectangle';
 (L as any).drawLocal.draw.toolbar.buttons.circle = 'Draw a circle';
 
-function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
+interface MapUpdaterProps {
+  coordinates: { lat: number; lon: number };
+  pharmacies: any[];
+  onPharmaciesInShape: (pharmacies: any[]) => void;
+}
+
+function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape }: MapUpdaterProps) {
   const map = useMap();
   
   useEffect(() => {
@@ -44,11 +47,9 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
 
     map.setView([coordinates.lat, coordinates.lon], 13);
 
-    // Initialize draw controls
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
-    // Create draw options with measurement enabled
     const drawOptions = {
       position: 'topright',
       draw: {
@@ -89,27 +90,43 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
       }
     };
 
-    // Initialize draw control with proper type handling
     const drawControl = new (L.Control as any).Draw(drawOptions);
     map.addControl(drawControl);
 
-    // Handle draw events with explicit type checking
+    // Clear previous layers when drawing starts
+    map.on(L.Draw.Event.DRAWSTART, () => {
+      drawnItems.clearLayers();
+    });
+
+    // Find pharmacies within the drawn shape
     map.on(L.Draw.Event.CREATED, (event: any) => {
       const layer = event.layer;
       drawnItems.addLayer(layer);
       
-      if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-        console.log('Drawn area coordinates:', layer.getLatLngs());
-      } else if (layer instanceof L.Circle) {
-        console.log('Circle center:', layer.getLatLng(), 'radius:', layer.getRadius());
-      }
+      const pharmaciesInShape = pharmacies.filter(pharmacy => {
+        const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+        
+        if (layer instanceof L.Circle) {
+          return layer.getBounds().contains(pharmacyLatLng);
+        } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+          return layer.getBounds().contains(pharmacyLatLng);
+        }
+        return false;
+      });
+
+      onPharmaciesInShape(pharmaciesInShape);
+    });
+
+    // Clear filtered pharmacies when shape is deleted
+    map.on(L.Draw.Event.DELETED, () => {
+      onPharmaciesInShape(pharmacies);
     });
 
     return () => {
       map.removeControl(drawControl);
       map.removeLayer(drawnItems);
     };
-  }, [coordinates, map]);
+  }, [coordinates, map, pharmacies, onPharmaciesInShape]);
   
   return null;
 }
@@ -131,6 +148,8 @@ const PharmacyListSection = ({
   onPharmacySelect,
   onSetDefaultPharmacy
 }: PharmacyListSectionProps) => {
+  const [filteredPharmacies, setFilteredPharmacies] = useState(pharmacies);
+
   if (!coordinates) {
     return <div>Loading location...</div>;
   }
@@ -154,7 +173,7 @@ const PharmacyListSection = ({
           </>
         )}
 
-        {pharmacies?.map((pharmacy) => (
+        {filteredPharmacies.map((pharmacy) => (
           <PharmacyCard
             key={pharmacy.id}
             {...pharmacy}
@@ -164,7 +183,7 @@ const PharmacyListSection = ({
           />
         ))}
 
-        {pharmacies?.length === 0 && coordinates && !isLoading && (
+        {filteredPharmacies.length === 0 && coordinates && !isLoading && (
           <p className="text-center text-gray-500">No pharmacies found in this area</p>
         )}
       </div>
@@ -178,7 +197,11 @@ const PharmacyListSection = ({
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <MapUpdater coordinates={coordinates} />
+          <MapUpdater 
+            coordinates={coordinates} 
+            pharmacies={pharmacies}
+            onPharmaciesInShape={setFilteredPharmacies}
+          />
           
           {/* User location marker */}
           <Marker position={center}>
@@ -186,7 +209,7 @@ const PharmacyListSection = ({
           </Marker>
 
           {/* Pharmacy markers */}
-          {pharmacies?.map((pharmacy) => (
+          {pharmacies.map((pharmacy) => (
             <Marker
               key={pharmacy.id}
               position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon] as L.LatLngExpression}
