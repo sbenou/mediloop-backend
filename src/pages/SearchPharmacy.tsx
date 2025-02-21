@@ -8,7 +8,6 @@ import { usePharmacyState, LUXEMBOURG_COORDINATES } from "@/hooks/usePharmacySta
 import Header from "@/components/layout/Header";
 import SearchHeader from "@/components/pharmacy/SearchHeader";
 import PharmacyListSection from "@/components/pharmacy/PharmacyListSection";
-import { toast } from "@/components/ui/use-toast";
 
 const SearchPharmacy = () => {
   const { data: session } = useQuery({
@@ -31,24 +30,12 @@ const SearchPharmacy = () => {
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
   useEffect(() => {
+    // Set Luxembourg coordinates by default without showing the toast
+    setUserLocation(LUXEMBOURG_COORDINATES);
+    
+    // Only attempt geolocation if coordinates aren't set
     if (!coordinates && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          });
-        },
-        () => {
-          setUserLocation(LUXEMBOURG_COORDINATES);
-          toast({
-            title: "Using Default Location",
-            description: "Showing pharmacies in Luxembourg City. You can search for a specific location.",
-          });
-          
-          handleCitySearch("Luxembourg City");
-        }
-      );
+      handleCitySearch("Luxembourg City");
     }
   }, [coordinates]);
 
@@ -61,13 +48,11 @@ const SearchPharmacy = () => {
 
   const { pharmacies, isLoading } = usePharmacySearch(
     searchCoordinates,
-    searchRadius
+    10000 // Increased search radius to cover all of Luxembourg
   );
 
   useEffect(() => {
-    if (!coordinates) {
-      handleCitySearch("Luxembourg City");
-    } else if (session && userProfile?.city) {
+    if (!coordinates && session && userProfile?.city) {
       handleCitySearch(userProfile.city);
     }
   }, [session, userProfile?.city]);
