@@ -17,7 +17,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
     if (!map) return;
 
     // Center map on Luxembourg if not showing default location
-    const defaultView = showDefaultLocation 
+    const defaultView = showDefaultLocation && coordinates.lat && coordinates.lon
       ? [coordinates.lat, coordinates.lon]
       : [49.8153, 6.1296]; // Luxembourg center coordinates
     
@@ -68,10 +68,11 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
     };
 
     // Update initial pharmacy list based on location mode
-    if (showDefaultLocation) {
+    if (showDefaultLocation && coordinates.lat && coordinates.lon) {
       // Filter pharmacies within 2km radius of user location
       const userLocation = L.latLng(coordinates.lat, coordinates.lon);
       const nearbyPharmacies = pharmacies.filter(pharmacy => {
+        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
         const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
         return userLocation.distanceTo(pharmacyLocation) <= 2000;
       });
@@ -92,6 +93,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       drawnItems.addLayer(layer);
       
       const pharmaciesInShape = pharmacies.filter(pharmacy => {
+        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
         const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
         
         if (layer instanceof L.Circle) {
@@ -106,9 +108,10 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
     });
 
     map.on(L.Draw.Event.DELETED, () => {
-      if (showDefaultLocation) {
+      if (showDefaultLocation && coordinates.lat && coordinates.lon) {
         const userLocation = L.latLng(coordinates.lat, coordinates.lon);
         const nearbyPharmacies = pharmacies.filter(pharmacy => {
+          if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
           const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
           return userLocation.distanceTo(pharmacyLocation) <= 2000;
         });

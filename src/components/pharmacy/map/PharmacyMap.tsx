@@ -20,14 +20,16 @@ interface PharmacyMapProps {
 }
 
 export function PharmacyMap({ coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation }: PharmacyMapProps) {
-  const center: L.LatLngExpression = [coordinates.lat, coordinates.lon];
+  // Default center of Luxembourg if no coordinates provided
+  const center: L.LatLngExpression = [coordinates.lat || 49.8153, coordinates.lon || 6.1296];
 
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
         className="h-full"
         style={{ height: '100%', width: '100%' }}
-        whenReady={() => {}}
+        center={center}
+        zoom={11}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -39,25 +41,27 @@ export function PharmacyMap({ coordinates, pharmacies, onPharmaciesInShape, show
           showDefaultLocation={showDefaultLocation}
         />
         
-        {showDefaultLocation && (
-          <Marker position={center}>
+        {showDefaultLocation && coordinates.lat && coordinates.lon && (
+          <Marker position={[coordinates.lat, coordinates.lon]}>
             <Popup>Your location</Popup>
           </Marker>
         )}
 
         {pharmacies.map((pharmacy) => (
-          <Marker
-            key={pharmacy.id}
-            position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon] as L.LatLngExpression}
-          >
-            <Popup>
-              <div className="text-sm">
-                <p className="font-semibold">{pharmacy.name}</p>
-                <p>{pharmacy.address}</p>
-                <p>{pharmacy.hours}</p>
-              </div>
-            </Popup>
-          </Marker>
+          pharmacy.coordinates && pharmacy.coordinates.lat && pharmacy.coordinates.lon && (
+            <Marker
+              key={pharmacy.id}
+              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <p className="font-semibold">{pharmacy.name}</p>
+                  <p>{pharmacy.address}</p>
+                  <p>{pharmacy.hours}</p>
+                </div>
+              </Popup>
+            </Marker>
+          )
         ))}
       </MapContainer>
     </div>
