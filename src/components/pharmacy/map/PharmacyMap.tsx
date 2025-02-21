@@ -28,8 +28,8 @@ export function PharmacyMap({ coordinates, pharmacies, onPharmaciesInShape, show
       <MapContainer
         className="h-full"
         style={{ height: '100%', width: '100%' }}
-        whenCreated={(map) => {
-          map.setView(defaultCenter, 11);
+        whenReady={(map) => {
+          map.target.setView(defaultCenter, 11);
         }}
       >
         <TileLayer
