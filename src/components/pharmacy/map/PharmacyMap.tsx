@@ -15,11 +15,12 @@ L.Icon.Default.mergeOptions({
 interface PharmacyMapProps {
   coordinates: { lat: number; lon: number };
   pharmacies: any[];
+  filteredPharmacies: any[]; // Add this prop to receive the filtered pharmacies
   onPharmaciesInShape: (pharmacies: any[]) => void;
   showDefaultLocation: boolean;
 }
 
-export function PharmacyMap({ coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation }: PharmacyMapProps) {
+export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPharmaciesInShape, showDefaultLocation }: PharmacyMapProps) {
   // Default center of Luxembourg if no coordinates provided
   const defaultCenter: L.LatLngExpression = [49.8153, 6.1296];
 
@@ -46,7 +47,7 @@ export function PharmacyMap({ coordinates, pharmacies, onPharmaciesInShape, show
           </Marker>
         )}
 
-        {pharmacies.map((pharmacy) => (
+        {filteredPharmacies.map((pharmacy) => (
           pharmacy.coordinates && pharmacy.coordinates.lat && pharmacy.coordinates.lon && (
             <Marker
               key={pharmacy.id}

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import L from 'leaflet';
 import 'leaflet-draw';
@@ -101,6 +102,7 @@ const PharmacyListSection = ({
       <PharmacyMap
         coordinates={coordinates}
         pharmacies={pharmacies}
+        filteredPharmacies={filteredPharmacies}
         onPharmaciesInShape={setFilteredPharmacies}
         showDefaultLocation={showDefaultLocation}
       />
