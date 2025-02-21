@@ -3,10 +3,11 @@ import { Card } from "@/components/ui/card";
 import PharmacyCard from "@/components/PharmacyCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import { useEffect } from "react";
+// Import leaflet-draw after leaflet
 import 'leaflet-draw';
+import 'leaflet-draw/dist/leaflet.draw.css';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -15,6 +16,14 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+// Initialize Leaflet.draw localization
+L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
+L.drawLocal.draw.handlers.circle.radius = 'Radius';
+L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing shape';
+L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
+L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
+L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
 
 function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
   const map = useMap();
@@ -32,26 +41,15 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
     const drawControl = new (L.Control as any).Draw({
       position: 'topright',
       draw: {
-        polygon: {
-          allowIntersection: false,
-          drawError: {
-            color: '#e1e100',
-            message: '<strong>Oh snap!<strong> you can\'t draw that!'
-          },
-          shapeOptions: {
-            color: '#97009c'
-          }
-        },
-        rectangle: {
-          shapeOptions: {
-            color: '#97009c'
-          }
-        },
         circle: {
           shapeOptions: {
             color: '#97009c'
-          }
+          },
+          showRadius: true,
+          metric: true
         },
+        polygon: false,
+        rectangle: false,
         marker: false,
         polyline: false,
         circlemarker: false
@@ -69,9 +67,7 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
       const layer = event.layer;
       drawnItems.addLayer(layer);
       
-      if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-        console.log('Drawn area coordinates:', layer.getLatLngs());
-      } else if (layer instanceof L.Circle) {
+      if (layer instanceof L.Circle) {
         console.log('Circle center:', layer.getLatLng(), 'radius:', layer.getRadius());
       }
     });
