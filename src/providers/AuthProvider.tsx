@@ -9,6 +9,27 @@ import { toast } from '@/components/ui/use-toast';
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
 
+  const fetchAndSetProfile = async (userId: string) => {
+    try {
+      console.log('Fetching profile for user:', userId);
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        throw profileError;
+      }
+
+      return profile;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      throw error;
+    }
+  };
+
   // Initialize auth state with session
   useEffect(() => {
     let mounted = true;
@@ -52,34 +73,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        console.log('Fetching profile for user:', session.user.id);
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (!mounted) return;
-
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
+        try {
+          const profile = await fetchAndSetProfile(session.user.id);
+          console.log('Profile fetched successfully, setting auth state...');
+          setAuth({
+            user: session.user,
+            profile: profile as UserProfile,
+            permissions: [],
+            isLoading: false,
+          });
+        } catch (error) {
+          console.error('Profile fetch failed:', error);
           setAuth({
             user: null,
             profile: null,
             permissions: [],
             isLoading: false,
           });
-          return;
         }
-
-        console.log('Profile fetched successfully, setting auth state...');
-        setAuth({
-          user: session.user,
-          profile: profile as UserProfile,
-          permissions: [],
-          isLoading: false,
-        });
-
       } catch (error) {
         console.error('Unexpected error during auth initialization:', error);
         if (mounted) {
@@ -94,17 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     console.log('Starting auth initialization...');
-    initializeAuth().catch(error => {
-      console.error('Critical error during auth initialization:', error);
-      if (mounted) {
-        setAuth({
-          user: null,
-          profile: null,
-          permissions: [],
-          isLoading: false,
-        });
-      }
-    });
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -115,32 +116,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in, fetching profile...');
           try {
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-
+            const profile = await fetchAndSetProfile(session.user.id);
+            
             if (!mounted) return;
 
-            if (profileError) {
-              console.error('Profile fetch error after sign in:', profileError);
-              setAuth({
-                user: null,
-                profile: null,
-                permissions: [],
-                isLoading: false,
-              });
-              return;
-            }
-
-            console.log('Setting auth state after successful sign in...');
             setAuth({
               user: session.user,
               profile: profile as UserProfile,
               permissions: [],
               isLoading: false,
             });
+
             toast({
               title: "Welcome back!",
               description: "You have successfully signed in.",
@@ -156,8 +142,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               });
             }
           }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out, clearing auth state...');
+        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+          console.log('User signed out or deleted, clearing auth state...');
           setAuth({
             user: null,
             profile: null,

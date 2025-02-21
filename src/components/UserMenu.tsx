@@ -5,7 +5,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "./user-menu/UserAvatar";
 import UserMenuItems from "./user-menu/UserMenuItems";
@@ -16,29 +16,41 @@ import { useEffect } from "react";
 const UserMenu = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: userProfile, refetch: refetchProfile } = useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return null;
+      if (!session?.user?.id) {
+        console.log('No session found in UserMenu');
+        return null;
+      }
       
+      console.log('Fetching user profile in UserMenu');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .maybeSingle();
         
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) {
+        console.error('Profile fetch error in UserMenu:', error);
+        throw error;
+      }
+      
+      console.log('Profile fetch successful:', data);
       return data;
     },
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    retry: 2,
   });
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
+        console.log('Auth state changed in UserMenu, refetching profile');
         refetchProfile();
       }
     });
@@ -47,6 +59,27 @@ const UserMenu = () => {
       subscription.unsubscribe();
     };
   }, [refetchProfile]);
+
+  // Prefetch profile data
+  useEffect(() => {
+    if (isAuthenticated) {
+      queryClient.prefetchQuery({
+        queryKey: ['userProfile'],
+        queryFn: async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user?.id) return null;
+          
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+            
+          return data;
+        }
+      });
+    }
+  }, [isAuthenticated, queryClient]);
 
   if (!isAuthenticated) {
     return (
@@ -69,17 +102,19 @@ const UserMenu = () => {
           <UserAvatar />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        sideOffset={5}
-        className="w-56 bg-white border rounded-md shadow-lg z-[100] animate-in fade-in-0 zoom-in-95"
-        collisionPadding={20}
-      >
-        <UserMenuItems 
-          userRole={userProfile?.role}
-          userName={userProfile?.full_name}
-        />
-      </DropdownMenuContent>
+      <DropdownMenuPortal>
+        <DropdownMenuContent 
+          align="end" 
+          sideOffset={5}
+          className="w-56 bg-white border rounded-md shadow-lg z-[100] animate-in fade-in-0 zoom-in-95"
+          collisionPadding={20}
+        >
+          <UserMenuItems 
+            userRole={userProfile?.role}
+            userName={userProfile?.full_name}
+          />
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
     </DropdownMenu>
   );
 };
