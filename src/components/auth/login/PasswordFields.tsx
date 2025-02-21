@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Eye, EyeOff, Loader } from "lucide-react";
+import { Eye, EyeOff, Loader, ArrowLeft } from "lucide-react";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { useNavigate } from 'react-router-dom';
@@ -14,9 +14,10 @@ interface PasswordFieldsProps {
   email: string;
   onSuccess: () => void;
   onForgotPassword: () => void;
+  onBack: () => void;
 }
 
-export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordFieldsProps) => {
+export const PasswordFields = ({ email, onSuccess, onForgotPassword, onBack }: PasswordFieldsProps) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -122,6 +123,15 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
   return (
     <form onSubmit={handleLogin} className="space-y-4">
+      <Button
+        type="button"
+        variant="ghost"
+        className="mb-2 p-0 h-auto font-normal hover:bg-transparent"
+        onClick={onBack}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to email
+      </Button>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <div className="relative">
