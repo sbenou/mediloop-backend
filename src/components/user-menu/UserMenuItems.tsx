@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { FileText, Settings, ShoppingBag, UserCircle, Shield, LogOut } from "lucide-react";
 import {
@@ -6,6 +7,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useSetRecoilState } from "recoil";
+import { authState } from "@/store/auth/atoms";
 
 interface UserMenuItemsProps {
   userRole?: string;
@@ -14,23 +17,51 @@ interface UserMenuItemsProps {
 
 const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
   const navigate = useNavigate();
+  const setAuth = useSetRecoilState(authState);
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      console.log('Initiating logout...');
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Logout error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to log out. Please try again.",
+        });
+        return;
+      }
+
+      // Clear auth state explicitly
+      setAuth({
+        user: null,
+        profile: null,
+        permissions: [],
+        isLoading: false,
+      });
+
+      // Clear any stored session data
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Navigate to login page
+      navigate('/login');
+      
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      
+      console.log('Logout successful');
+    } catch (error) {
+      console.error('Unexpected error during logout:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to log out. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
       });
-      return;
     }
-    
-    navigate('/login');
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    });
   };
 
   return (
