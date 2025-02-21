@@ -1,10 +1,10 @@
-
 import { useEffect, useState } from "react";
 import L from 'leaflet';
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import { PharmacyList } from "./list/PharmacyList";
 import { PharmacyMap } from "./map/PharmacyMap";
+import { toast } from "@/components/ui/use-toast";
 
 // Ensure measurement types are initialized
 if (typeof window !== 'undefined') {
@@ -42,6 +42,16 @@ const PharmacyListSection = ({
 }: PharmacyListSectionProps) => {
   const [filteredPharmacies, setFilteredPharmacies] = useState(pharmacies);
   const [showDefaultLocation, setShowDefaultLocation] = useState(false);
+
+  const handleLocationToggle = (checked: boolean) => {
+    setShowDefaultLocation(checked);
+    if (checked) {
+      toast({
+        title: "Using location",
+        description: "Currently showing pharmacies within 2km of your location",
+      });
+    }
+  };
 
   useEffect(() => {
     if (!coordinates?.lat || !coordinates?.lon) {
@@ -85,7 +95,7 @@ const PharmacyListSection = ({
         onPharmacySelect={onPharmacySelect}
         onSetDefaultPharmacy={onSetDefaultPharmacy}
         showDefaultLocation={showDefaultLocation}
-        onLocationToggle={setShowDefaultLocation}
+        onLocationToggle={handleLocationToggle}
       />
       
       <PharmacyMap
