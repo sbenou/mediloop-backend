@@ -142,8 +142,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               });
             }
           }
-        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-          console.log('User signed out or deleted, clearing auth state...');
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out, clearing auth state...');
           setAuth({
             user: null,
             profile: null,
