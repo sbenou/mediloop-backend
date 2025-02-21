@@ -38,16 +38,20 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
       if (data.user) {
         // Fetch the user profile
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
           .single();
 
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        }
+
         // Update Recoil state with user data
         setAuth({
           user: data.user,
-          profile,
+          profile: profile || null,
           isLoading: false,
           permissions: [],
         });
@@ -57,10 +61,14 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
           description: "Successfully logged in!",
         });
 
+        // Call onSuccess to trigger any parent component handlers
+        onSuccess();
+
         // Navigate to home page after successful login
-        navigate('/');
+        navigate('/', { replace: true });
       }
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         variant: "destructive",
         title: "Error",
