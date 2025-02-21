@@ -10,12 +10,13 @@ import UserAvatar from "./user-menu/UserAvatar";
 import UserMenuItems from "./user-menu/UserMenuItems";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useEffect } from "react";
 
 const UserMenu = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const { data: userProfile } = useQuery({
+  const { data: userProfile, refetch: refetchProfile } = useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -31,7 +32,20 @@ const UserMenu = () => {
       return data;
     },
     enabled: isAuthenticated,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        refetchProfile();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [refetchProfile]);
 
   if (!isAuthenticated) {
     return (
