@@ -1,14 +1,47 @@
 
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 const Login = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check initial session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session:', session ? 'Active' : 'None');
+      
+      if (session?.user) {
+        console.log('User is authenticated, redirecting to home');
+        navigate('/', { replace: true });
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('User signed in, redirecting to home');
+        navigate('/', { replace: true });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // If authenticated, redirect to home page
   if (isAuthenticated) {
+    console.log('User is authenticated via useAuth, redirecting to home');
     return <Navigate to="/" replace />;
   }
 
@@ -35,7 +68,9 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm onSuccess={() => {}} />
+          <LoginForm onSuccess={() => {
+            console.log('Login form success callback');
+          }} />
         </CardContent>
         <CardFooter className="flex flex-col items-start space-y-2">
           <div className="text-sm text-muted-foreground">

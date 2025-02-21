@@ -26,11 +26,12 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return; // Prevent multiple submissions
+    if (isLoading) return;
     setIsLoading(true);
 
     try {
-      console.log('Attempting login for:', email);
+      console.log('Starting login process for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -42,10 +43,13 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       }
 
       if (!data.user) {
+        console.error('No user data received');
         throw new Error('No user data received');
       }
 
-      console.log('Login successful, fetching profile');
+      console.log('Login successful, user:', data.user.id);
+      console.log('Fetching user profile...');
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -54,12 +58,14 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
       if (profileError) {
         console.error('Profile fetch error:', profileError);
+        throw profileError;
       }
 
-      console.log('Setting auth state');
+      console.log('Profile fetched successfully:', profile);
+
       setAuth({
         user: data.user,
-        profile: profile || null,
+        profile: profile,
         isLoading: false,
         permissions: [],
       });
@@ -69,7 +75,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         description: "Successfully logged in!",
       });
 
-      console.log('Navigating to home page');
+      console.log('Navigating to home page...');
       navigate('/', { replace: true });
       onSuccess();
     } catch (error: any) {
@@ -79,18 +85,19 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         title: "Error",
         description: error.message || "Failed to log in",
       });
+      setAuth({
+        user: null,
+        profile: null,
+        isLoading: false,
+        permissions: [],
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleLogin(e);
-  };
-
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleLogin} className="space-y-4">
       <div className="space-y-2 text-left">
         <Label htmlFor="password">Password</Label>
         <div className="relative">
