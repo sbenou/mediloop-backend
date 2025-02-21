@@ -1,3 +1,4 @@
+
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -27,14 +28,21 @@ import Signup from "./pages/Signup";
 // Log the current environment
 console.log('Current environment:', import.meta.env.MODE);
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
     <RecoilRoot>
-      <BrowserRouter>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrowserRouter>
             <CartProvider>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -58,9 +66,9 @@ function App() {
               </Routes>
               <Toaster />
             </CartProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
+          </BrowserRouter>
+        </AuthProvider>
+      </QueryClientProvider>
     </RecoilRoot>
   );
 }

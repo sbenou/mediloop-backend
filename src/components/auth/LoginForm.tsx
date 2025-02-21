@@ -1,7 +1,12 @@
+
 import { useState } from "react";
-import { LoginFields } from "./login/LoginFields";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { PasswordFields } from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
+import { supabase } from "@/lib/supabase";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -9,43 +14,88 @@ interface LoginFormProps {
 
 export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPasswordField, setShowPasswordField] = useState(false);
-  const [showResetOptions, setShowResetOptions] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleEmailSubmit = async () => {
-    setShowPasswordField(true);
+  const handleContinue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Continue clicked with email:', email);
+
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "Email required",
+        description: "Please enter your email address.",
+      });
+      return;
+    }
+
+    // Show password fields
+    setShowPassword(true);
   };
 
   const handleForgotPassword = () => {
-    setShowResetOptions(true);
-    setShowPasswordField(false);
+    console.log('Forgot password clicked');
+    navigate("/reset-password", { state: { email } });
+  };
+
+  const handleLoginSuccess = async () => {
+    console.log('Login success, checking session...');
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Session check error after login:', error);
+      return;
+    }
+
+    if (session?.user) {
+      console.log('Valid session found, proceeding with success callback');
+      onSuccess();
+    } else {
+      console.error('No session found after successful login');
+      toast({
+        variant: "destructive",
+        title: "Login Error",
+        description: "Failed to establish session. Please try again.",
+      });
+    }
   };
 
   return (
-    <form className="space-y-4">
-      {!showPasswordField && !showResetOptions ? (
-        <LoginFields
-          email={email}
-          onEmailChange={setEmail}
-          isLoading={isLoading}
-          onEmailSubmit={handleEmailSubmit}
-        />
-      ) : showPasswordField ? (
+    <div className="space-y-4">
+      <form onSubmit={handleContinue} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        {!showPassword && (
+          <>
+            <button
+              type="submit"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2"
+            >
+              Continue with Email
+            </button>
+            <AuthOptions />
+          </>
+        )}
+      </form>
+
+      {showPassword && (
         <PasswordFields
           email={email}
-          onSuccess={onSuccess}
+          onSuccess={handleLoginSuccess}
           onForgotPassword={handleForgotPassword}
         />
-      ) : (
-        <AuthOptions 
-          email={email}
-          onBack={() => {
-            setShowResetOptions(false);
-            setShowPasswordField(true);
-          }}
-        />
       )}
-    </form>
+    </div>
   );
 };
