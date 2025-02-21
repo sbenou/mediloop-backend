@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { searchPharmacies } from "@/lib/overpass";
 
@@ -17,7 +18,13 @@ export const usePharmacySearch = (
         return JSON.parse(cachedData);
       }
 
-      const results = await searchPharmacies(coordinates.lat, coordinates.lon, searchRadius);
+      // When searching for all pharmacies in Luxembourg, use Luxembourg's center coordinates
+      // and a larger radius to cover the whole country
+      const searchLat = coordinates.lat;
+      const searchLon = coordinates.lon;
+      const searchDist = searchRadius;
+
+      const results = await searchPharmacies(searchLat, searchLon, searchDist);
       
       // Cache the results
       sessionStorage.setItem(cacheKey, JSON.stringify(results));
