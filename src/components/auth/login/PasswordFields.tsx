@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader } from "lucide-react";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { useNavigate } from 'react-router-dom';
@@ -27,33 +27,49 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
+    
     setIsLoading(true);
+    console.log('Starting login process...', { email });
 
     try {
-      console.log('Starting login process for:', email);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // First, sign in with password
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        console.error('Login error:', error);
-        throw error;
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        throw signInError;
       }
 
-      if (!data.user) {
-        console.error('No user data received');
+      if (!signInData.user) {
+        console.error('No user data received after sign in');
         throw new Error('No user data received');
       }
 
-      console.log('Login successful, user:', data.user.id);
-      console.log('Fetching user profile...');
+      console.log('Sign in successful:', signInData.user.id);
 
+      // Get the session to confirm authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session fetch error:', sessionError);
+        throw sessionError;
+      }
+
+      if (!session) {
+        console.error('No session after successful sign in');
+        throw new Error('Authentication failed - no session');
+      }
+
+      console.log('Session confirmed:', session.user.id);
+
+      // Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', data.user.id)
+        .eq('id', session.user.id)
         .single();
 
       if (profileError) {
@@ -61,35 +77,43 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         throw profileError;
       }
 
-      console.log('Profile fetched successfully:', profile);
-
+      // Update global auth state
       setAuth({
-        user: data.user,
-        profile: profile,
-        isLoading: false,
+        user: session.user,
+        profile,
         permissions: [],
+        isLoading: false,
       });
 
+      console.log('Auth state updated successfully');
+
+      // Show success message
       toast({
-        title: "Success",
-        description: "Successfully logged in!",
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
       });
 
+      // Navigate to home page
       console.log('Navigating to home page...');
       navigate('/', { replace: true });
       onSuccess();
+
     } catch (error: any) {
-      console.error('Login process error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to log in",
-      });
+      console.error('Login failed:', error);
+      
+      // Reset auth state
       setAuth({
         user: null,
         profile: null,
-        isLoading: false,
         permissions: [],
+        isLoading: false,
+      });
+
+      // Show error message
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: error.message || "An error occurred during login. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -98,7 +122,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
   return (
     <form onSubmit={handleLogin} className="space-y-4">
-      <div className="space-y-2 text-left">
+      <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <div className="relative">
           <Input
@@ -109,11 +133,13 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
             required
+            className="pr-10"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            tabIndex={-1}
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
@@ -124,7 +150,14 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         className="w-full"
         disabled={isLoading}
       >
-        {isLoading ? "Logging in..." : "Log in"}
+        {isLoading ? (
+          <>
+            <Loader className="mr-2 h-4 w-4 animate-spin" />
+            Signing in...
+          </>
+        ) : (
+          "Sign in"
+        )}
       </Button>
       <Button
         type="button"
