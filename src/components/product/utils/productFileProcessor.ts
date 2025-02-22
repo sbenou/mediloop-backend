@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { Category, Subcategory } from "../types/product";
 
@@ -31,6 +30,9 @@ const setupCategoriesAndSubcategories = async (rows: string[]) => {
     // First, collect all unique category-type combinations and their subcategories
     const categoryMap = new Map<string, Set<string>>();
     
+    // Log the initial data
+    console.log('Initial rows:', rows);
+    
     for (const row of rows.slice(1)) {
       const values = row.split(',').map(value => value.trim());
       console.log('Processing row:', values);
@@ -48,51 +50,67 @@ const setupCategoriesAndSubcategories = async (rows: string[]) => {
       if (!categoryMap.has(key)) {
         categoryMap.set(key, new Set());
       }
-      categoryMap.get(key)?.add(subcategoryName);
+      const subcategories = categoryMap.get(key);
+      if (subcategories) {
+        subcategories.add(subcategoryName);
+        console.log(`Added subcategory ${subcategoryName} to category ${key}`);
+      }
     }
 
-    console.log('Category map created:', Object.fromEntries(categoryMap));
+    console.log('Category map created:', Array.from(categoryMap.entries()));
 
     // Create categories first
     const categoryIdMap = new Map<string, string>();
     
     for (const [categoryKey, subcategories] of categoryMap) {
       const [name, type] = categoryKey.split('|');
-      console.log('Processing category:', { name, type });
+      console.log('Processing category:', { name, type, subcategories: Array.from(subcategories) });
       
-      // Check if category exists
-      const { data: existingCategory, error: queryError } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('name', name)
-        .eq('type', type)
-        .maybeSingle();
-      
-      if (queryError) {
-        console.error('Error querying existing category:', queryError);
-        throw queryError;
-      }
-      
-      if (existingCategory) {
-        categoryIdMap.set(categoryKey, existingCategory.id);
-        console.log('Found existing category:', existingCategory);
-      } else {
-        const { data: newCategory, error: insertError } = await supabase
+      try {
+        // Check if category exists
+        const { data: existingCategory, error: queryError } = await supabase
           .from('categories')
-          .insert([{ name, type }])
-          .select()
-          .single();
-          
-        if (insertError) {
-          console.error('Error creating new category:', insertError);
-          throw insertError;
-        }
-        if (!newCategory) throw new Error(`Failed to create category: ${name} (${type})`);
+          .select('*')
+          .eq('name', name)
+          .eq('type', type)
+          .maybeSingle();
         
-        categoryIdMap.set(categoryKey, newCategory.id);
-        console.log('Created new category:', newCategory);
+        if (queryError) {
+          console.error('Error querying existing category:', { error: queryError, name, type });
+          throw queryError;
+        }
+        
+        if (existingCategory) {
+          categoryIdMap.set(categoryKey, existingCategory.id);
+          console.log('Found existing category:', { categoryKey, id: existingCategory.id });
+        } else {
+          console.log('Attempting to create new category:', { name, type });
+          const { data: newCategory, error: insertError } = await supabase
+            .from('categories')
+            .insert([{ name, type }])
+            .select()
+            .single();
+            
+          if (insertError) {
+            console.error('Error creating new category:', { error: insertError, name, type });
+            throw insertError;
+          }
+          
+          if (!newCategory) {
+            console.error('No category returned after insert:', { name, type });
+            throw new Error(`Failed to create category: ${name} (${type})`);
+          }
+          
+          categoryIdMap.set(categoryKey, newCategory.id);
+          console.log('Created new category:', { categoryKey, id: newCategory.id });
+        }
+      } catch (error) {
+        console.error('Error processing category:', { categoryKey, error });
+        throw error;
       }
     }
+    
+    console.log('Category ID map created:', Object.fromEntries(categoryIdMap));
     
     // Create subcategories
     const subcategoryIdMap = new Map<string, string>();
@@ -108,47 +126,66 @@ const setupCategoriesAndSubcategories = async (rows: string[]) => {
         const mapKey = `${categoryId}|${subcategoryName}`;
         console.log('Processing subcategory:', { categoryId, subcategoryName });
         
-        // Check if subcategory exists
-        const { data: existingSubcategory, error: queryError } = await supabase
-          .from('subcategories')
-          .select('*')
-          .eq('name', subcategoryName)
-          .eq('category_id', categoryId)
-          .maybeSingle();
-        
-        if (queryError) {
-          console.error('Error querying existing subcategory:', queryError);
-          throw queryError;
-        }
-        
-        if (existingSubcategory) {
-          subcategoryIdMap.set(mapKey, existingSubcategory.id);
-          console.log('Found existing subcategory:', existingSubcategory);
-        } else {
-          const { data: newSubcategory, error: insertError } = await supabase
+        try {
+          // Check if subcategory exists
+          const { data: existingSubcategory, error: queryError } = await supabase
             .from('subcategories')
-            .insert([{
-              name: subcategoryName,
-              category_id: categoryId
-            }])
-            .select()
-            .single();
-            
-          if (insertError) {
-            console.error('Error creating new subcategory:', insertError);
-            throw insertError;
-          }
-          if (!newSubcategory) throw new Error(`Failed to create subcategory: ${subcategoryName}`);
+            .select('*')
+            .eq('name', subcategoryName)
+            .eq('category_id', categoryId)
+            .maybeSingle();
           
-          subcategoryIdMap.set(mapKey, newSubcategory.id);
-          console.log('Created new subcategory:', newSubcategory);
+          if (queryError) {
+            console.error('Error querying existing subcategory:', { error: queryError, subcategoryName, categoryId });
+            throw queryError;
+          }
+          
+          if (existingSubcategory) {
+            subcategoryIdMap.set(mapKey, existingSubcategory.id);
+            console.log('Found existing subcategory:', { mapKey, id: existingSubcategory.id });
+          } else {
+            console.log('Attempting to create new subcategory:', { name: subcategoryName, categoryId });
+            const { data: newSubcategory, error: insertError } = await supabase
+              .from('subcategories')
+              .insert([{
+                name: subcategoryName,
+                category_id: categoryId
+              }])
+              .select()
+              .single();
+              
+            if (insertError) {
+              console.error('Error creating new subcategory:', { error: insertError, subcategoryName, categoryId });
+              throw insertError;
+            }
+            
+            if (!newSubcategory) {
+              console.error('No subcategory returned after insert:', { subcategoryName, categoryId });
+              throw new Error(`Failed to create subcategory: ${subcategoryName}`);
+            }
+            
+            subcategoryIdMap.set(mapKey, newSubcategory.id);
+            console.log('Created new subcategory:', { mapKey, id: newSubcategory.id });
+          }
+        } catch (error) {
+          console.error('Error processing subcategory:', { subcategoryName, categoryId, error });
+          throw error;
         }
       }
     }
     
+    console.log('Final maps created:', {
+      categories: Object.fromEntries(categoryIdMap),
+      subcategories: Object.fromEntries(subcategoryIdMap)
+    });
+    
     return { categoryIdMap, subcategoryIdMap };
   } catch (error) {
-    console.error('Error in setupCategoriesAndSubcategories:', error);
+    console.error('Error in setupCategoriesAndSubcategories:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'Stack trace not available'
+    });
     throw error;
   }
 };
