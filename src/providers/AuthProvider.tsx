@@ -9,25 +9,53 @@ import { toast } from '@/components/ui/use-toast';
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
 
-  const fetchAndSetProfile = async (userId: string) => {
+  const fetchAndSetProfile = async (userId: string): Promise<UserProfile | null> => {
+    console.log('Fetching profile for user:', userId);
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Profile fetch error:', error);
+      return null;
+    }
+
+    console.log('Profile data:', profile);
+    return profile;
+  };
+
+  const updateAuthState = async (session: any | null) => {
+    if (!session?.user) {
+      console.log('No session, clearing auth state');
+      setAuth({
+        user: null,
+        profile: null,
+        permissions: [],
+        isLoading: false,
+      });
+      return;
+    }
+
     try {
-      console.log('Fetching profile for user:', userId);
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Profile fetch error:', profileError);
-        throw profileError;
-      }
-
-      console.log('Profile data:', profile);
-      return profile;
+      console.log('Fetching profile for session:', session.user.id);
+      const profile = await fetchAndSetProfile(session.user.id);
+      
+      setAuth({
+        user: session.user,
+        profile: profile,
+        permissions: [],
+        isLoading: false,
+      });
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      throw error;
+      console.error('Error updating auth state:', error);
+      setAuth({
+        user: null,
+        profile: null,
+        permissions: [],
+        isLoading: false,
+      });
     }
   };
 
@@ -36,59 +64,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
-        // Set initial loading state
         setAuth(state => ({ ...state, isLoading: true }));
         console.log('Getting session...');
         
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (!mounted) return;
-
-        if (error) {
-          console.error('Session error:', error);
-          setAuth({
-            user: null,
-            profile: null,
-            permissions: [],
-            isLoading: false,
-          });
-          return;
-        }
-
-        if (!session?.user) {
-          console.log('No active session found');
-          setAuth({
-            user: null,
-            profile: null,
-            permissions: [],
-            isLoading: false,
-          });
-          return;
-        }
-
-        console.log('Session found, fetching profile');
-        try {
-          const profile = await fetchAndSetProfile(session.user.id);
-          if (!mounted) return;
-
-          console.log('Setting auth state with profile:', profile);
-          setAuth({
-            user: session.user,
-            profile: profile as UserProfile,
-            permissions: [],
-            isLoading: false,
-          });
-        } catch (error) {
-          console.error('Profile fetch failed:', error);
-          if (mounted) {
-            setAuth({
-              user: null,
-              profile: null,
-              permissions: [],
-              isLoading: false,
-            });
-          }
-        }
+        
+        await updateAuthState(session);
       } catch (error) {
         console.error('Auth initialization error:', error);
         if (mounted) {
@@ -110,52 +93,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (!mounted) return;
 
-        // Set loading state for the auth change
         setAuth(state => ({ ...state, isLoading: true }));
 
-        if (event === 'SIGNED_IN' && session?.user) {
-          try {
-            const profile = await fetchAndSetProfile(session.user.id);
-            if (!mounted) return;
-
-            console.log('Setting auth state after sign in:', {
-              user: session.user,
-              profile: profile,
-            });
-
-            setAuth({
-              user: session.user,
-              profile: profile as UserProfile,
-              permissions: [],
-              isLoading: false,
-            });
-
+        switch (event) {
+          case 'SIGNED_IN':
+            await updateAuthState(session);
             toast({
               title: "Welcome back!",
               description: "You have successfully signed in.",
             });
-          } catch (error) {
-            console.error('Sign in error:', error);
-            if (mounted) {
-              setAuth({
-                user: null,
-                profile: null,
-                permissions: [],
-                isLoading: false,
-              });
-            }
-          }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
-          setAuth({
-            user: null,
-            profile: null,
-            permissions: [],
-            isLoading: false,
-          });
-        } else {
-          // For other events, just update the loading state
-          setAuth(state => ({ ...state, isLoading: false }));
+            break;
+          
+          case 'SIGNED_OUT':
+            setAuth({
+              user: null,
+              profile: null,
+              permissions: [],
+              isLoading: false,
+            });
+            break;
+          
+          default:
+            // For other events, just update loading state
+            setAuth(state => ({ ...state, isLoading: false }));
         }
       }
     );

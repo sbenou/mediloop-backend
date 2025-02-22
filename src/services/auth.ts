@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 
 const debug = (message: string, data?: any) => {
@@ -14,7 +15,6 @@ export const AuthService = {
       options: { shouldCreateUser: false },
     });
     
-    // In development mode, bypass rate limit errors
     if (error) {
       if (process.env.NODE_ENV === 'development' && 
          (error.message?.includes('rate limit') || error.code === 'over_email_send_rate_limit')) {
@@ -34,7 +34,6 @@ export const AuthService = {
       type: 'email'
     });
     
-    // In development mode, bypass rate limit errors
     if (error) {
       if (process.env.NODE_ENV === 'development' && 
          (error.message?.includes('rate limit') || error.code === 'over_email_send_rate_limit')) {
