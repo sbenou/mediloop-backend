@@ -28,9 +28,10 @@ export const CategoryContent = ({
     console.log('Subcategory clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
     setTimeout(() => {
+      const dbType = type === 'pharmacy' ? 'medication' : type;
       const filterEvent = new CustomEvent('filterProducts', { 
         detail: { 
-          type, 
+          type: dbType, 
           category: categoryId, 
           subcategory: subcategoryId 
         }
@@ -45,9 +46,10 @@ export const CategoryContent = ({
     console.log('Description clicked:', { type, categoryId, subcategoryId });
     navigate('/products');
     setTimeout(() => {
+      const dbType = type === 'pharmacy' ? 'medication' : type;
       const filterEvent = new CustomEvent('filterProducts', { 
         detail: { 
-          type, 
+          type: dbType, 
           category: categoryId, 
           subcategory: subcategoryId 
         }
