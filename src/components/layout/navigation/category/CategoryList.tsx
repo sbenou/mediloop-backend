@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SubcategoryItem } from './SubcategoryItem';
 
 interface CategoryListProps {
-  selectedType: 'medication' | 'parapharmacy' | null;
+  selectedType: 'pharmacy' | 'parapharmacy' | null;
   categories: any[];
   getUniqueCategories: (categories: any[], type: string) => any[];
   handleSubcategoryClick: (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => void;

@@ -1,12 +1,13 @@
+
 import { Link } from 'react-router-dom';
 import { NavigationMenuContent } from "@/components/ui/navigation-menu";
 import { CategoryContent } from './CategoryContent';
 
 interface NavigationContentProps {
-  selectedType: 'medication' | 'parapharmacy' | null;
-  setSelectedType: (type: 'medication' | 'parapharmacy' | null) => void;
+  selectedType: 'pharmacy' | 'parapharmacy' | null;
+  setSelectedType: (type: 'pharmacy' | 'parapharmacy' | null) => void;
   categories: any[];
-  getFilteredCategories: (type: 'medication' | 'parapharmacy') => any[];
+  getFilteredCategories: (type: 'pharmacy' | 'parapharmacy') => any[];
   getUniqueDescriptions: (subcategory: any) => string[];
 }
 
