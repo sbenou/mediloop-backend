@@ -61,7 +61,7 @@ export function UserMenuItems() {
       
       {/* Admin settings - shown only for superadmin */}
       {userRole === "superadmin" && (
-        <DropdownMenuItem onClick={() => navigate("/admin")}>
+        <DropdownMenuItem onClick={() => navigate("/admin-settings")}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Admin Settings</span>
         </DropdownMenuItem>
