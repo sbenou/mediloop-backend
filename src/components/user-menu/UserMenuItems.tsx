@@ -26,11 +26,6 @@ export function UserMenuItems() {
         <span>Personal Details</span>
       </DropdownMenuItem>
 
-      <DropdownMenuItem onClick={() => navigate("/settings")}>
-        <Settings className="mr-2 h-4 w-4" />
-        <span>My Settings</span>
-      </DropdownMenuItem>
-
       {/* Orders section - available for all authenticated users */}
       <DropdownMenuItem onClick={() => navigate("/my-orders")}>
         <ShoppingBag className="mr-2 h-4 w-4" />
@@ -58,15 +53,18 @@ export function UserMenuItems() {
         </>
       )}
       
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={() => navigate("/settings")}>
+        <Settings className="mr-2 h-4 w-4" />
+        <span>My Settings</span>
+      </DropdownMenuItem>
+      
       {/* Admin settings - shown only for superadmin */}
       {userRole === "superadmin" && (
-        <>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate("/admin")}>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Admin Settings</span>
-          </DropdownMenuItem>
-        </>
+        <DropdownMenuItem onClick={() => navigate("/admin")}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Admin Settings</span>
+        </DropdownMenuItem>
       )}
       
       <DropdownMenuSeparator />
