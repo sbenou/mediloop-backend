@@ -32,6 +32,14 @@ export const CategoryList = ({
   const filteredCategories = getUniqueCategories(categories, selectedType);
   console.log('Filtered categories:', filteredCategories);
 
+  if (!filteredCategories || filteredCategories.length === 0) {
+    return (
+      <div className="text-sm text-muted-foreground p-2">
+        {t('common.navigation.noCategoriesFound')}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {filteredCategories.map((category) => {
