@@ -35,15 +35,20 @@ export const useAdminData = (userProfile: UserProfile | null) => {
     enabled: Boolean(userProfile?.role === 'superadmin'),
     staleTime: 1000 * 60, // 1 minute
     retry: false, // Don't retry if unauthorized
-    onError: (error) => {
-      console.error('Error in useAdminData query:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load admin data. Please try again.",
-      });
+    meta: {
+      errorMessage: "Failed to load admin data. Please try again."
     }
   });
+
+  // Handle errors outside the query configuration
+  if (error) {
+    console.error('Error in useAdminData query:', error);
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "Failed to load admin data. Please try again.",
+    });
+  }
 
   const updateUserRole = async (userId: string, newRole: UserProfile['role']) => {
     try {
