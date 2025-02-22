@@ -6,8 +6,10 @@ import {
   userPermissionsSelector,
   isLoadingSelector 
 } from '@/store/auth/selectors';
+import { authState } from '@/store/auth/atoms';
 
 export const useAuth = () => {
+  const auth = useRecoilValue(authState);
   const isAuthenticated = useRecoilValue(isAuthenticatedSelector);
   const userRole = useRecoilValue(userRoleSelector);
   const permissions = useRecoilValue(userPermissionsSelector);
@@ -17,7 +19,8 @@ export const useAuth = () => {
     isAuthenticated, 
     userRole, 
     isLoading,
-    permissions 
+    permissions,
+    profile: auth.profile
   });
 
   return {

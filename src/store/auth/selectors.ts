@@ -6,7 +6,7 @@ export const isAuthenticatedSelector = selector({
   key: 'isAuthenticated',
   get: ({ get }) => {
     const auth = get(authState);
-    return !!auth.user && !!auth.profile;
+    return !!auth.user && !!auth.profile && !auth.isLoading;
   },
 });
 
@@ -24,7 +24,7 @@ export const userPermissionsSelector = selector({
   key: 'userPermissions',
   get: ({ get }) => {
     const auth = get(authState);
-    return auth.permissions;
+    return auth.permissions || [];
   },
 });
 

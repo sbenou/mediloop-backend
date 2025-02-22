@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
@@ -15,14 +14,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data, error } = await supabase
         .from('role_permissions')
         .select('permission_id')
-        .eq('role_id', roleId as string);
+        .eq('role_id', roleId);
 
       if (error) {
         console.error('Error fetching permissions:', error);
         return [];
       }
 
-      return (data ?? []).map(rp => rp.permission_id);
+      const permissions = (data ?? []).map(rp => rp.permission_id);
+      console.log('Fetched permissions:', permissions);
+      return permissions;
     } catch (error) {
       console.error('Error in fetchUserPermissions:', error);
       return [];
@@ -63,6 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return null;
       }
 
+      console.log('Fetched profile:', profile);
       return profile ? safeQueryResult<UserProfile>(profile) : null;
     } catch (error) {
       console.error('Error in fetchAndSetProfile:', error);
@@ -71,16 +73,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const updateAuthState = useCallback(async (session: any | null) => {
+    if (!session?.user) {
+      setAuth({
+        user: null,
+        profile: null,
+        permissions: [],
+        isLoading: false,
+      });
+      return;
+    }
+
     try {
-      if (!session?.user) {
-        setAuth({
-          user: null,
-          profile: null,
-          permissions: [],
-          isLoading: false,
-        });
-        return;
-      }
+      setAuth(prev => ({
+        ...prev,
+        user: session.user,
+        isLoading: true,
+      }));
 
       const profile = await fetchAndSetProfile(session.user.id);
       
@@ -118,11 +126,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Set initial loading state
-    setAuth(state => ({ ...state, isLoading: true }));
-
     const initializeAuth = async () => {
       try {
+        setAuth(prev => ({ ...prev, isLoading: true }));
+        
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!mounted) return;
