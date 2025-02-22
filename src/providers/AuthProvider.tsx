@@ -34,26 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchAndSetProfile = async (userId: string): Promise<UserProfile | null> => {
     console.log('Starting profile fetch for user:', userId);
     try {
-      // First verify the profile query works
-      const { data: profileCheck, error: checkError } = await supabase
-        .from('profiles')
-        .select('id, role, role_id')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      console.log('Profile check result:', profileCheck, 'Error:', checkError);
-
-      if (checkError) {
-        console.error('Profile check error:', checkError);
-        throw checkError;
-      }
-
-      if (!profileCheck) {
-        console.error('No profile found in initial check for user:', userId);
-        return null;
-      }
-
-      // Now get the full profile with all required fields
+      console.log('Fetching profile data...');
       const { data: profile, error } = await supabase
         .from('profiles')
         .select(`
@@ -90,7 +71,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return null;
       }
 
-      console.log('Profile data received:', profile);
+      console.log('Profile data received:', {
+        id: profile.id,
+        role: profile.role,
+        avatar_url: profile.avatar_url
+      });
       return profile;
     } catch (error) {
       console.error('Error in fetchAndSetProfile:', error);
@@ -113,8 +98,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      // Set loading state before fetching profile
+      setAuth(state => ({ ...state, isLoading: true }));
+      
+      console.log('Fetching profile for user:', session.user.id);
       const profile = await fetchAndSetProfile(session.user.id);
-      console.log('Setting auth state with profile:', profile);
       
       if (!profile) {
         console.error('No profile found after fetch, clearing auth state');
@@ -131,6 +119,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const permissions = profile.role_id 
         ? await fetchUserPermissions(profile.role_id)
         : [];
+
+      console.log('Setting final auth state with profile:', {
+        userId: profile.id,
+        role: profile.role,
+        permissions: permissions.length
+      });
 
       setAuth({
         user: session.user,
