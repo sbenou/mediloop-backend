@@ -6,7 +6,7 @@ export const isAuthenticatedSelector = selector({
   key: 'isAuthenticated',
   get: ({ get }) => {
     const auth = get(authState);
-    return !!auth.user;
+    return !!auth.user && !!auth.profile;
   },
 });
 
@@ -14,7 +14,9 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    return auth.profile?.role || null;
+    if (!auth.profile) return null;
+    console.log('Current user role:', auth.profile.role);
+    return auth.profile.role;
   },
 });
 

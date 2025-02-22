@@ -13,7 +13,12 @@ export const useAuth = () => {
   const permissions = useRecoilValue(userPermissionsSelector);
   const isLoading = useRecoilValue(isLoadingSelector);
 
-  console.log('useAuth hook values:', { isAuthenticated, userRole, isLoading });
+  console.log('useAuth hook values:', { 
+    isAuthenticated, 
+    userRole, 
+    isLoading,
+    permissions 
+  });
 
   return {
     isAuthenticated,

@@ -11,22 +11,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchAndSetProfile = async (userId: string): Promise<UserProfile | null> => {
     console.log('Fetching profile for user:', userId);
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error('Profile fetch error:', error);
+      if (error) {
+        console.error('Profile fetch error:', error);
+        throw error;
+      }
+
+      console.log('Profile data received:', profile);
+      return profile;
+    } catch (error) {
+      console.error('Error in fetchAndSetProfile:', error);
       throw error;
     }
-
-    console.log('Profile data:', profile);
-    return profile;
   };
 
   const updateAuthState = async (session: any | null) => {
+    console.log('Updating auth state with session:', session?.user?.id);
+    
     try {
       if (!session?.user) {
         console.log('No session, clearing auth state');
@@ -39,8 +46,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      console.log('Fetching profile for session:', session.user.id);
       const profile = await fetchAndSetProfile(session.user.id);
+      console.log('Setting auth state with profile:', profile);
       
       setAuth({
         user: session.user,
@@ -49,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isLoading: false,
       });
     } catch (error) {
-      console.error('Error updating auth state:', error);
+      console.error('Error in updateAuthState:', error);
       setAuth({
         user: null,
         profile: null,
@@ -63,15 +70,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let mounted = true;
 
     const initializeAuth = async () => {
+      console.log('Initializing auth...');
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('Got session:', session?.user?.id);
         
         if (!mounted) return;
         
-        // Set loading state immediately after getting session
-        setAuth(state => ({ ...state, isLoading: true }));
-        
-        await updateAuthState(session);
+        if (session?.user) {
+          setAuth(state => ({ ...state, isLoading: true }));
+          await updateAuthState(session);
+        } else {
+          setAuth({
+            user: null,
+            profile: null,
+            permissions: [],
+            isLoading: false,
+          });
+        }
       } catch (error) {
         console.error('Auth initialization error:', error);
         if (mounted) {
@@ -112,12 +128,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
             break;
           
+          case 'USER_UPDATED':
+            if (session) {
+              await updateAuthState(session);
+            }
+            break;
+          
           default:
-            // Only update loading state for other events if it's true
-            setAuth(state => ({
-              ...state,
-              isLoading: false
-            }));
+            if (session) {
+              await updateAuthState(session);
+            } else {
+              setAuth(state => ({
+                ...state,
+                isLoading: false
+              }));
+            }
         }
       }
     );
@@ -131,3 +156,5 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return <>{children}</>;
 };
+
+export default AuthProvider;
