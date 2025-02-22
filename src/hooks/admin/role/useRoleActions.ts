@@ -1,3 +1,4 @@
+
 import { useRoleMutations } from "@/hooks/useRoleMutations";
 import { Role } from "@/types/role";
 
@@ -24,10 +25,14 @@ export const useRoleActions = ({
 }: UseRoleActionsProps) => {
   const { createRoleMutation, updateRoleMutation, deleteRoleMutation } = useRoleMutations();
 
-  const handleEdit = (role: Role) => {
-    setIsEditing(role.id);
-    setEditName(role.name);
-    setEditDescription(role.description);
+  const handleEdit = (roleId: string) => {
+    setIsEditing(roleId);
+    // Find the role in tempRole or get it from the database
+    const roleToEdit = tempRole?.id === roleId ? tempRole : null;
+    if (roleToEdit) {
+      setEditName(roleToEdit.name);
+      setEditDescription(roleToEdit.description || '');
+    }
   };
 
   const handleSave = async (id: string) => {
