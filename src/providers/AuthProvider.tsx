@@ -145,8 +145,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               });
             }
           }
-        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-          console.log('User signed out or deleted');
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setAuth({
             user: null,
             profile: null,
