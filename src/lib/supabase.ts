@@ -13,20 +13,14 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     storageKey: 'supabase.auth.token',
-    storage: localStorage,
-    flowType: 'pkce',
+  },
+  headers: {
+    apikey: supabaseAnonKey,
   },
   global: {
-    fetch: (...args) => {
-      // Add custom headers to identify requests in network panel
-      const [url, config] = args;
-      return fetch(url, {
-        ...config,
-        headers: {
-          ...config?.headers,
-          'X-Client-Info': 'lovable-delivery',
-        },
-      });
+    headers: {
+      apikey: supabaseAnonKey,
+      'X-Client-Info': 'lovable-delivery',
     },
   },
 });
