@@ -29,12 +29,11 @@ export const processProductFile = async (
     console.log('Processing rows to collect categories and subcategories...');
     rows.slice(1).forEach(row => {
       const values = row.split(',').map(value => value.trim());
-      const categoryName = values[3];  // Category is in the 4th column
-      const subcategoryName = values[4];  // Subcategory is in the 5th column
-      const type = values[2].toLowerCase();  // Type is in the 3rd column
+      const [name, price, type, categoryName, subcategoryName] = values;
+      console.log('Processing row:', { name, type, categoryName, subcategoryName });
       
       if (categoryName && type) {
-        uniqueCategories.add(`${categoryName}|${type}`);
+        uniqueCategories.add(`${categoryName}|${type.toLowerCase()}`);
         if (!uniqueSubcategories.has(categoryName)) {
           uniqueSubcategories.set(categoryName, new Set());
         }
@@ -44,38 +43,46 @@ export const processProductFile = async (
       }
     });
 
-    console.log('Unique categories found:', uniqueCategories);
+    console.log('Unique categories found:', Array.from(uniqueCategories));
     console.log('Unique subcategories:', Object.fromEntries(uniqueSubcategories));
 
     // Insert categories if they don't exist
     for (const categoryInfo of uniqueCategories) {
       const [name, type] = categoryInfo.split('|');
-      const { data: existingCat } = await supabase
+      console.log('Processing category:', { name, type });
+      
+      const { data: existingCat, error: checkError } = await supabase
         .from('categories')
         .select('*')
         .eq('name', name)
         .eq('type', type)
         .maybeSingle();
 
-      console.log(`Checking category: ${name} (${type})`, existingCat ? 'exists' : 'needs to be created');
+      if (checkError) {
+        console.error('Error checking category:', checkError);
+        continue;
+      }
 
       if (!existingCat) {
-        const { data: newCat, error: catError } = await supabase
+        console.log('Creating new category:', { name, type });
+        const { data: newCat, error: insertError } = await supabase
           .from('categories')
           .insert([{ name, type }])
           .select()
           .single();
 
-        if (catError) {
-          console.error('Error creating category:', catError);
+        if (insertError) {
+          console.error('Error creating category:', insertError);
           continue;
         }
         console.log('Created new category:', newCat);
+      } else {
+        console.log('Category already exists:', existingCat);
       }
     }
 
     // Refresh categories data
-    const { data: updatedCategories } = await supabase
+    const { data: updatedCategories, error: catQueryError } = await supabase
       .from('categories')
       .select(`
         id,
@@ -87,13 +94,18 @@ export const processProductFile = async (
         )
       `);
 
-    console.log('Updated categories after insertion:', updatedCategories);
+    if (catQueryError) {
+      console.error('Error fetching updated categories:', catQueryError);
+      throw catQueryError;
+    }
+
+    console.log('Updated categories:', updatedCategories);
 
     // Insert subcategories
     for (const [categoryName, subcategorySet] of uniqueSubcategories) {
       const category = updatedCategories?.find(c => c.name === categoryName);
       if (!category) {
-        console.log(`Category not found for subcategories: ${categoryName}`);
+        console.error(`Category not found for subcategories: ${categoryName}`);
         continue;
       }
 
@@ -118,7 +130,7 @@ export const processProductFile = async (
     }
 
     // Refresh categories data again to get updated subcategories
-    const { data: finalCategories } = await supabase
+    const { data: finalCategories, error: finalCatError } = await supabase
       .from('categories')
       .select(`
         id,
@@ -130,33 +142,41 @@ export const processProductFile = async (
         )
       `);
 
+    if (finalCatError) {
+      console.error('Error fetching final categories:', finalCatError);
+      throw finalCatError;
+    }
+
     console.log('Final categories with subcategories:', finalCategories);
 
     // Process products
     const products = rows.slice(1).map(row => {
       const values = row.split(',').map(value => value.trim());
       const [name, priceStr, typeStr, categoryName, subcategoryName, requires_prescriptionStr, description, image_url] = values;
+      console.log('Processing product:', { name, typeStr, categoryName, subcategoryName });
 
       if (!name || !priceStr || !typeStr || !categoryName || !subcategoryName) {
-        console.error('Missing required fields:', row);
+        console.error('Missing required fields:', values);
         return null;
       }
 
       const type = typeStr.toLowerCase();
       const category = finalCategories?.find(c => 
-        c.name === categoryName && 
-        c.type === type
+        c.name.toLowerCase() === categoryName.toLowerCase() && 
+        c.type.toLowerCase() === type.toLowerCase()
       );
 
       if (!category) {
-        console.error(`Category not found: ${categoryName}`);
+        console.error(`Category not found: ${categoryName} (${type})`);
         return null;
       }
 
-      const subcategory = category.subcategories?.find(s => s.name === subcategoryName);
+      const subcategory = category.subcategories?.find(s => 
+        s.name.toLowerCase() === subcategoryName.toLowerCase()
+      );
 
       if (!subcategory) {
-        console.error(`Subcategory not found: ${subcategoryName}`);
+        console.error(`Subcategory not found: ${subcategoryName} in category ${categoryName}`);
         return null;
       }
 
@@ -174,34 +194,38 @@ export const processProductFile = async (
 
     console.log(`Processed ${products.length} valid products`);
 
-    let newProducts = [];
-    let skippedCount = 0;
+    if (products.length === 0) {
+      throw new Error('No valid products found in the file');
+    }
 
-    // Check for existing products in a single query
-    const { data: existingProducts } = await supabase
+    // Check for existing products
+    const { data: existingProducts, error: existingError } = await supabase
       .from('products')
       .select('name')
       .in('name', products.map(p => p!.name));
 
-    console.log('Existing products:', existingProducts);
+    if (existingError) {
+      console.error('Error checking existing products:', existingError);
+      throw existingError;
+    }
 
     const existingProductNames = new Set(existingProducts?.map(p => p.name) || []);
+    const newProducts = products.filter(product => !existingProductNames.has(product!.name));
+    const skippedCount = products.length - newProducts.length;
 
-    // Filter out existing products
-    newProducts = products.filter(product => !existingProductNames.has(product!.name));
-    skippedCount = products.length - newProducts.length;
-
-    console.log(`New products to insert: ${newProducts.length}, Skipped: ${skippedCount}`);
+    console.log(`Products to insert: ${newProducts.length}, Skipped: ${skippedCount}`);
 
     if (newProducts.length > 0) {
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('products')
         .insert(newProducts);
 
-      if (error) {
-        console.error('Error inserting products:', error);
-        throw error;
+      if (insertError) {
+        console.error('Error inserting products:', insertError);
+        throw insertError;
       }
+      
+      console.log('Successfully inserted products');
     }
 
     return { newProducts, skippedCount };
