@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { Category, Subcategory } from "../types/product";
 
@@ -10,7 +11,7 @@ const validateSuperAdminAccess = async () => {
 
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('role')
+      .select('*')
       .eq('id', user.id)
       .single();
 
@@ -20,6 +21,8 @@ const validateSuperAdminAccess = async () => {
     if (!profile || profile.role !== 'superadmin') {
       throw new Error('Permission denied: Only superadmins can upload products');
     }
+
+    return profile;
   } catch (error) {
     console.error('Error in validateSuperAdminAccess:', error);
     throw error;
@@ -126,8 +129,8 @@ export const processProductFile = async (
     console.log('Starting file processing...');
     
     // First validate that the current user is a superadmin
-    await validateSuperAdminAccess();
-    console.log('Superadmin access validated');
+    const profile = await validateSuperAdminAccess();
+    console.log('Superadmin access validated:', profile);
 
     const text = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
