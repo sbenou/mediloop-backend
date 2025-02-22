@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
@@ -23,8 +24,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return [];
       }
 
-      const permissions = (data ?? []).map(rp => rp.permission_id);
-      return permissions;
+      return (data ?? []).map(rp => rp.permission_id);
     } catch (error) {
       console.error('Error in fetchUserPermissions:', error);
       return [];
@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const fetchAndSetProfile = useCallback(async (userId: string): Promise<{ profile: UserProfile | null; permissions: string[] }> => {
+    console.log('Starting profile fetch for user:', userId);
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -59,15 +60,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('id', userId)
         .single();
 
-      if (error || !profile) {
+      if (error) {
         console.error('Profile fetch error:', error);
         return { profile: null, permissions: [] };
       }
 
       const safeProfile = safeQueryResult<UserProfile>(profile);
-      const permissions = safeProfile?.role_id 
+      if (!safeProfile) {
+        console.error('No profile found for user:', userId);
+        return { profile: null, permissions: [] };
+      }
+
+      const permissions = safeProfile.role_id 
         ? await fetchUserPermissions(safeProfile.role_id)
         : [];
+
+      console.log('Profile and permissions fetched:', { 
+        profileId: safeProfile.id, 
+        role: safeProfile.role,
+        permissionsCount: permissions.length 
+      });
 
       return { 
         profile: safeProfile,
@@ -79,8 +91,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [fetchUserPermissions]);
 
-  const updateAuthState = useCallback(async (session: any | null, shouldToast: boolean = false) => {
+  const updateAuthState = useCallback(async (session: any | null) => {
     if (!session?.user) {
+      console.log('No session or user, clearing auth state');
       setAuth({
         user: null,
         profile: null,
@@ -91,6 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
+      // Set loading state but maintain existing user data
       setAuth(prev => ({
         ...prev,
         user: session.user,
@@ -100,6 +114,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { profile, permissions } = await fetchAndSetProfile(session.user.id);
 
       if (!profile) {
+        console.error('No profile found after fetch, clearing auth state');
         setAuth({
           user: null,
           profile: null,
@@ -109,6 +124,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      console.log('Updating auth state with:', {
+        userId: session.user.id,
+        role: profile.role,
+        permissionsCount: permissions.length
+      });
+
       setAuth({
         user: session.user,
         profile,
@@ -116,12 +137,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isLoading: false,
       });
 
-      if (shouldToast) {
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
-        });
-      }
     } catch (error) {
       console.error('Error in updateAuthState:', error);
       setAuth({
@@ -136,15 +151,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    setAuth(prev => ({ ...prev, isLoading: true }));
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('Initial session check:', session?.user?.id);
         
         if (!mounted) return;
         
         if (session) {
-          await updateAuthState(session, false);
+          await updateAuthState(session);
         } else {
           setAuth({
             user: null,
@@ -166,32 +181,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    // Initialize auth state
+    console.log('Initializing auth provider');
+    setAuth(prev => ({ ...prev, isLoading: true }));
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
+        console.log('Auth state changed:', { event, session: session?.user?.id });
 
-        switch (event) {
-          case 'SIGNED_IN':
-            await updateAuthState(session, true);
-            break;
-          
-          case 'SIGNED_OUT':
-            setAuth({
-              user: null,
-              profile: null,
-              permissions: [],
-              isLoading: false,
-            });
-            break;
-          
-          case 'USER_UPDATED':
-          case 'TOKEN_REFRESHED':
-            if (session) {
-              await updateAuthState(session, false);
-            }
-            break;
+        if (event === 'SIGNED_IN' && session) {
+          await updateAuthState(session);
+        } else if (event === 'SIGNED_OUT') {
+          setAuth({
+            user: null,
+            profile: null,
+            permissions: [],
+            isLoading: false,
+          });
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          await updateAuthState(session);
         }
       }
     );
