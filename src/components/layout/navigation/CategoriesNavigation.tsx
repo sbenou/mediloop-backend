@@ -47,7 +47,9 @@ export const CategoriesNavigation = () => {
 
   const getUniqueCategories = (categories: any[], type: string) => {
     console.log('Getting unique categories for type:', type);
-    const filtered = categories?.filter(cat => cat.type === type) || [];
+    // Map the UI type to the database type
+    const dbType = type === 'pharmacy' ? 'medication' : type;
+    const filtered = categories?.filter(cat => cat.type === dbType) || [];
     console.log('Filtered categories:', filtered);
     return filtered;
   };
