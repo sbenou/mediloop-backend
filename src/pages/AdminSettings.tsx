@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Toaster } from "@/components/ui/toaster";
@@ -12,30 +13,25 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 const AdminSettings = () => {
   const navigate = useNavigate();
+  const { profile, isLoading: authLoading } = useAuth();
   
-  const { data: userProfile } = useQuery({
-    queryKey: ['userProfile'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle();
-        
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    },
-  });
+  const { users, isLoading: adminDataLoading, updateUserRole } = useAdminData(profile);
 
-  const { users, isLoading, updateUserRole } = useAdminData(userProfile);
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <h1 className="text-2xl font-bold mb-4">Loading...</h1>
+      </div>
+    );
+  }
 
-  if (userProfile?.role !== 'superadmin') {
+  // Check if user is superadmin
+  if (profile?.role !== 'superadmin') {
     return (
       <div className="container mx-auto py-8 px-4">
         <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
@@ -72,7 +68,7 @@ const AdminSettings = () => {
         <h1 className="text-2xl font-bold mb-6">Admin Settings</h1>
         <AdminTabs 
           users={users}
-          isLoading={isLoading}
+          isLoading={adminDataLoading}
           updateUserRole={updateUserRole}
         />
         <Toaster />
