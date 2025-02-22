@@ -1,91 +1,93 @@
+
+import React, { forwardRef } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { forwardRef, useState } from "react";
-import { Role } from "@/types/role";
-import { RoleActions } from "./role/RoleActions";
-import { RolePermissionsDialog } from "./role/RolePermissionsDialog";
-import { useRolePermissions } from "./role/useRolePermissions";
+import { Edit2, Save, Trash2 } from "lucide-react";
 
 interface RoleTableRowProps {
-  role: Role;
+  role: {
+    id: string;
+    name: string;
+    description: string | null;
+  };
   isEditing: boolean;
   editName: string;
   editDescription: string;
-  onEdit: (role: Role) => void;
-  onSave: (id: string) => void;
-  onDelete: (id: string) => void;
-  setEditName: (name: string) => void;
-  setEditDescription: (description: string) => void;
+  onEdit: (roleId: string) => void;
+  onSave: (roleId: string) => void;
+  onDelete: (roleId: string) => void;
+  setEditName: (value: string) => void;
+  setEditDescription: (value: string) => void;
 }
 
-export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(
-  ({
-    role,
-    isEditing,
-    editName,
-    editDescription,
-    onEdit,
-    onSave,
-    onDelete,
-    setEditName,
-    setEditDescription,
-  }, ref) => {
-    const [showPermissions, setShowPermissions] = useState(false);
-    
-    const {
-      rolePermissions,
-      isLoading,
-      handlePermissionsSave,
-    } = useRolePermissions(role.id, showPermissions);
-
-    return (
-      <>
-        <TableRow>
-          <TableCell>
-            {isEditing ? (
-              <Input
-                ref={ref}
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="max-w-[200px]"
-              />
-            ) : (
-              role.name
-            )}
-          </TableCell>
-          <TableCell>
-            {isEditing ? (
-              <Input
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-              />
-            ) : (
-              role.description
-            )}
-          </TableCell>
-          <TableCell>
-            <RoleActions
-              isEditing={isEditing}
-              onEdit={() => onEdit(role)}
-              onSave={() => onSave(role.id)}
-              onDelete={() => onDelete(role.id)}
-              onManagePermissions={() => setShowPermissions(true)}
-            />
-          </TableCell>
-        </TableRow>
-
-        {!isLoading && (
-          <RolePermissionsDialog
-            role={role}
-            showPermissions={showPermissions}
-            rolePermissions={rolePermissions}
-            onClose={() => setShowPermissions(false)}
-            onSave={handlePermissionsSave}
+export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
+  role,
+  isEditing,
+  editName,
+  editDescription,
+  onEdit,
+  onSave,
+  onDelete,
+  setEditName,
+  setEditDescription
+}, ref) => {
+  return (
+    <TableRow key={role.id}>
+      <TableCell className="text-left">
+        {isEditing ? (
+          <Input
+            ref={ref}
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            className="max-w-[200px]"
           />
+        ) : (
+          role.name
         )}
-      </>
-    );
-  }
-);
+      </TableCell>
+      <TableCell className="text-left">
+        {isEditing ? (
+          <Input
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            className="max-w-[300px]"
+          />
+        ) : (
+          role.description || "-"
+        )}
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-2">
+          {isEditing ? (
+            <Button
+              onClick={() => onSave(role.id)}
+              variant="outline"
+              size="sm"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              onClick={() => onEdit(role.id)}
+              variant="outline"
+              size="sm"
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            onClick={() => onDelete(role.id)}
+            variant="outline"
+            size="sm"
+            disabled={isEditing}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+});
 
 RoleTableRow.displayName = "RoleTableRow";
