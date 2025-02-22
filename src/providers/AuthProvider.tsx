@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           updated_at
         `)
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Profile fetch error:', error);
@@ -145,6 +145,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         permissions: [],
         isLoading: false,
       });
+      
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "There was an error loading your profile. Please try logging in again.",
+      });
     }
   }, [fetchAndSetProfile, setAuth]);
 
@@ -153,6 +159,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
+        // Set initial loading state
+        setAuth(prev => ({ ...prev, isLoading: true }));
+        
         const { data: { session } } = await supabase.auth.getSession();
         console.log('Initial session check:', session?.user?.id);
         
@@ -177,13 +186,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             permissions: [],
             isLoading: false,
           });
+          
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Failed to initialize authentication. Please try again.",
+          });
         }
       }
     };
 
     // Initialize auth state
     console.log('Initializing auth provider');
-    setAuth(prev => ({ ...prev, isLoading: true }));
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
