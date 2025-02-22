@@ -9,7 +9,7 @@ interface UserAvatarProps {
 
 const UserAvatar = ({ userProfile }: UserAvatarProps) => {
   return (
-    <Avatar className="cursor-pointer">
+    <Avatar className="h-10 w-10 cursor-pointer">
       {userProfile?.avatar_url ? (
         <AvatarImage 
           src={userProfile.avatar_url} 
