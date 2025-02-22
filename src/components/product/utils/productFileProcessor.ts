@@ -4,7 +4,14 @@ import { Category, Subcategory } from "../types/product";
 const validateSuperAdminAccess = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('Auth user data:', { userId: user?.id, email: user?.email });
+    
     if (!user) throw new Error('No authenticated user found');
+
+    console.log('Attempting to query profile for user:', { 
+      userId: user.id,
+      timestamp: new Date().toISOString()
+    });
 
     // Query profiles table directly without joining with auth.users
     const { data: profile, error } = await supabase
@@ -13,6 +20,12 @@ const validateSuperAdminAccess = async () => {
       .eq('id', user.id)
       .single();
 
+    console.log('Profile query result:', { 
+      profile,
+      error,
+      userId: user.id
+    });
+
     if (error) throw error;
     if (!profile || profile.role !== 'superadmin') {
       throw new Error('Permission denied: Only superadmins can upload products');
@@ -20,7 +33,11 @@ const validateSuperAdminAccess = async () => {
 
     return profile;
   } catch (error) {
-    console.error('Error in validateSuperAdminAccess:', error);
+    console.error('Error in validateSuperAdminAccess:', {
+      error,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : 'No stack trace'
+    });
     throw error;
   }
 };
