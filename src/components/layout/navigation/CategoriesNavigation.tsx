@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 export const CategoriesNavigation = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>(null);
+  const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>('medication');
   const { t } = useTranslation();
 
   const { data: categories } = useQuery({
@@ -46,14 +46,10 @@ export const CategoriesNavigation = () => {
   });
 
   const getUniqueCategories = (categories: any[], type: string) => {
-    const seen = new Set();
-    return categories?.filter(cat => {
-      if (cat.type === type && !seen.has(cat.name)) {
-        seen.add(cat.name);
-        return true;
-      }
-      return false;
-    }) || [];
+    console.log('Getting unique categories for type:', type);
+    const filtered = categories?.filter(cat => cat.type === type) || [];
+    console.log('Filtered categories:', filtered);
+    return filtered;
   };
 
   const getUniqueDescriptions = (subcategory: any): string[] => {
