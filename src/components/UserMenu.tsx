@@ -8,14 +8,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "./user-menu/UserAvatar";
 import UserMenuItems from "./user-menu/UserMenuItems";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const UserMenu = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const { data: userProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['userProfile'],
@@ -48,16 +47,17 @@ const UserMenu = () => {
   // Show connection button if not authenticated
   if (!isAuthenticated) {
     return (
-      <button
-        onClick={() => {
-          console.log('Connection button clicked, navigating to login');
-          // Force navigation to login without any conditions
-          window.location.href = '/login';
-        }}
+      <a
+        href="/login"
         className="text-primary hover:text-primary/80 transition-colors"
+        onClick={(e) => {
+          e.preventDefault();
+          console.log('Connection link clicked, navigating to login');
+          window.location.replace('/login');
+        }}
       >
         Connection
-      </button>
+      </a>
     );
   }
 
@@ -72,16 +72,20 @@ const UserMenu = () => {
 
   return (
     <div className="relative inline-block">
-      <DropdownMenu modal={false}>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none">
+          <button 
+            type="button"
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none"
+          >
             <UserAvatar />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           align="end" 
           sideOffset={5}
-          className="w-56 bg-white border rounded-md shadow-lg z-[100] animate-in fade-in-0 zoom-in-95"
+          forceMount
+          className="z-[9999] w-56 bg-white border rounded-md shadow-lg animate-in fade-in-0 zoom-in-95"
         >
           <UserMenuItems 
             userRole={userProfile?.role}
