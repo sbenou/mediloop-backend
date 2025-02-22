@@ -10,12 +10,10 @@ interface UserAvatarProps {
 const UserAvatar = ({ userProfile }: UserAvatarProps) => {
   return (
     <Avatar className="h-10 w-10 cursor-pointer">
-      {userProfile?.avatar_url ? (
-        <AvatarImage 
-          src={userProfile.avatar_url} 
-          alt={userProfile.full_name || 'Profile'} 
-        />
-      ) : null}
+      <AvatarImage 
+        src={userProfile?.avatar_url || ''} 
+        alt={userProfile?.full_name || 'Profile'} 
+      />
       <AvatarFallback className="bg-[#7E69AB]/10">
         <User className="h-5 w-5 text-[#7E69AB]" />
       </AvatarFallback>
