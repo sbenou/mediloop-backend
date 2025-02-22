@@ -64,11 +64,7 @@ export const useProductQuery = ({
       
       let query = supabase
         .from('products')
-        .select(`
-          *,
-          categories!inner (id, name),
-          subcategories!inner (id, name)
-        `, { count: 'exact' });
+        .select('*, categories(*), subcategories(*)', { count: 'exact' });
       
       // Apply filters
       if (filters.type) {
@@ -77,13 +73,12 @@ export const useProductQuery = ({
         query = query.eq('type', 'parapharmacy');
       }
       
-      // Use the correct column names and ensure proper equality checks
       if (filters.category) {
-        query = query.eq('categories.id', filters.category);
+        query = query.eq('category_id', filters.category);
       }
       
       if (filters.subcategory) {
-        query = query.eq('subcategories.id', filters.subcategory);
+        query = query.eq('subcategory_id', filters.subcategory);
       }
 
       if (filters.description) {
