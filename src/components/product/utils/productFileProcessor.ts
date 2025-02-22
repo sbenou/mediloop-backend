@@ -15,13 +15,18 @@ export const processProductFile = async (
       reader.readAsText(file);
     });
 
+    console.log('File content loaded, parsing rows...');
     const rows = text.split('\n').filter(row => row.trim() !== '');
+    console.log(`Found ${rows.length} rows in the file`);
+    
     const headers = rows[0].split(',').map(header => header.trim());
+    console.log('Headers:', headers);
     
     // First, collect all unique categories and subcategories
     const uniqueCategories = new Set<string>();
     const uniqueSubcategories = new Map<string, Set<string>>();
     
+    console.log('Processing rows to collect categories and subcategories...');
     rows.slice(1).forEach(row => {
       const values = row.split(',').map(value => value.trim());
       const categoryName = values[3];  // Category is in the 4th column
@@ -39,6 +44,9 @@ export const processProductFile = async (
       }
     });
 
+    console.log('Unique categories found:', uniqueCategories);
+    console.log('Unique subcategories:', Object.fromEntries(uniqueSubcategories));
+
     // Insert categories if they don't exist
     for (const categoryInfo of uniqueCategories) {
       const [name, type] = categoryInfo.split('|');
@@ -48,6 +56,8 @@ export const processProductFile = async (
         .eq('name', name)
         .eq('type', type)
         .maybeSingle();
+
+      console.log(`Checking category: ${name} (${type})`, existingCat ? 'exists' : 'needs to be created');
 
       if (!existingCat) {
         const { data: newCat, error: catError } = await supabase
@@ -60,6 +70,7 @@ export const processProductFile = async (
           console.error('Error creating category:', catError);
           continue;
         }
+        console.log('Created new category:', newCat);
       }
     }
 
@@ -76,15 +87,21 @@ export const processProductFile = async (
         )
       `);
 
+    console.log('Updated categories after insertion:', updatedCategories);
+
     // Insert subcategories
     for (const [categoryName, subcategorySet] of uniqueSubcategories) {
       const category = updatedCategories?.find(c => c.name === categoryName);
-      if (!category) continue;
+      if (!category) {
+        console.log(`Category not found for subcategories: ${categoryName}`);
+        continue;
+      }
 
       for (const subcategoryName of subcategorySet) {
         const existingSubcat = category.subcategories?.find(s => s.name === subcategoryName);
         
         if (!existingSubcat) {
+          console.log(`Creating new subcategory: ${subcategoryName} for category ${categoryName}`);
           const { error: subcatError } = await supabase
             .from('subcategories')
             .insert([{
@@ -112,6 +129,8 @@ export const processProductFile = async (
           name
         )
       `);
+
+    console.log('Final categories with subcategories:', finalCategories);
 
     // Process products
     const products = rows.slice(1).map(row => {
@@ -153,6 +172,8 @@ export const processProductFile = async (
       };
     }).filter(product => product !== null);
 
+    console.log(`Processed ${products.length} valid products`);
+
     let newProducts = [];
     let skippedCount = 0;
 
@@ -162,11 +183,15 @@ export const processProductFile = async (
       .select('name')
       .in('name', products.map(p => p!.name));
 
+    console.log('Existing products:', existingProducts);
+
     const existingProductNames = new Set(existingProducts?.map(p => p.name) || []);
 
     // Filter out existing products
     newProducts = products.filter(product => !existingProductNames.has(product!.name));
     skippedCount = products.length - newProducts.length;
+
+    console.log(`New products to insert: ${newProducts.length}, Skipped: ${skippedCount}`);
 
     if (newProducts.length > 0) {
       const { error } = await supabase
@@ -174,6 +199,7 @@ export const processProductFile = async (
         .insert(newProducts);
 
       if (error) {
+        console.error('Error inserting products:', error);
         throw error;
       }
     }
