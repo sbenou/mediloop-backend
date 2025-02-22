@@ -21,12 +21,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
       console.log('Profile check result:', profileCheck, 'Error:', checkError);
 
-      // Now get the full profile
+      // Now get the full profile with all required fields
       const { data: profile, error } = await supabase
         .from('profiles')
         .select(`
           id,
           role,
+          role_id,
           full_name,
           email,
           avatar_url,
@@ -39,7 +40,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           cns_card_back,
           cns_number,
           doctor_stamp_url,
-          doctor_signature_url
+          doctor_signature_url,
+          deleted_at,
+          created_at,
+          updated_at
         `)
         .eq('id', userId)
         .maybeSingle();
