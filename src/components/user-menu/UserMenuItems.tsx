@@ -26,6 +26,11 @@ export function UserMenuItems() {
         <span>Personal Details</span>
       </DropdownMenuItem>
 
+      <DropdownMenuItem onClick={() => navigate("/settings")}>
+        <Settings className="mr-2 h-4 w-4" />
+        <span>My Settings</span>
+      </DropdownMenuItem>
+
       {/* Orders section - available for all authenticated users */}
       <DropdownMenuItem onClick={() => navigate("/my-orders")}>
         <ShoppingBag className="mr-2 h-4 w-4" />
