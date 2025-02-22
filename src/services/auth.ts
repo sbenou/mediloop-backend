@@ -43,5 +43,59 @@ export const AuthService = {
       throw error;
     }
     debug("OTP verification successful");
+  },
+
+  // Manually refresh the session token
+  refreshToken: async () => {
+    debug("Manually refreshing session token");
+    const { data, error } = await supabase.auth.refreshSession();
+    
+    if (error) {
+      debug("Token refresh failed:", error);
+      throw error;
+    }
+    
+    debug("Token refresh successful");
+    return data;
+  },
+
+  // Revoke the current session
+  revokeSession: async () => {
+    debug("Revoking current session");
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    
+    if (error) {
+      debug("Session revocation failed:", error);
+      throw error;
+    }
+    
+    debug("Session successfully revoked");
+  },
+
+  // Revoke all sessions for the current user
+  revokeAllSessions: async () => {
+    debug("Revoking all sessions");
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
+    
+    if (error) {
+      debug("Global session revocation failed:", error);
+      throw error;
+    }
+    
+    debug("All sessions successfully revoked");
+  },
+
+  // Get current session data
+  getSession: async () => {
+    debug("Getting current session");
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      debug("Get session failed:", error);
+      throw error;
+    }
+    
+    debug("Session retrieved:", session?.user?.id);
+    return session;
   }
 };
