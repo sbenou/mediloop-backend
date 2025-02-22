@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Address } from "../types";
@@ -13,9 +14,14 @@ export const DefaultAddress = () => {
   const { data: defaultAddress, isLoading } = useQuery({
     queryKey: ['default-address'],
     queryFn: async () => {
+      console.log('Fetching default address...');
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) {
+        console.log('No user found');
+        return null;
+      }
       
+      console.log('Fetching address for user:', user.id);
       const { data, error } = await supabase
         .from('addresses')
         .select('*')
@@ -23,9 +29,14 @@ export const DefaultAddress = () => {
         .eq('is_default', true)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching default address:', error);
+        throw error;
+      }
+      console.log('Default address fetched:', data);
       return data as Address;
     },
+    retry: false, // Don't retry on error
   });
 
   const handleManageAddresses = () => {
