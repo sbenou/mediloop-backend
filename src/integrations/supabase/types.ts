@@ -258,7 +258,7 @@ export type Database = {
           price: number
           requires_prescription: boolean | null
           subcategory_id: string | null
-          type: string | null
+          type: string
         }
         Insert: {
           category_id?: string | null
@@ -271,7 +271,7 @@ export type Database = {
           price: number
           requires_prescription?: boolean | null
           subcategory_id?: string | null
-          type?: string | null
+          type: string
         }
         Update: {
           category_id?: string | null
@@ -284,7 +284,7 @@ export type Database = {
           price?: number
           requires_prescription?: boolean | null
           subcategory_id?: string | null
-          type?: string | null
+          type?: string
         }
         Relationships: [
           {
