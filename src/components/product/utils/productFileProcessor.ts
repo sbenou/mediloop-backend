@@ -2,6 +2,97 @@
 import { supabase } from "@/lib/supabase";
 import { Category, Subcategory } from "../types/product";
 
+const setupCategoriesAndSubcategories = async (rows: string[]) => {
+  // First, collect all unique category-type combinations and their subcategories
+  const categoryMap = new Map<string, Set<string>>();
+  
+  rows.slice(1).forEach(row => {
+    const values = row.split(',').map(value => value.trim());
+    const [, , typeStr, categoryName, subcategoryName] = values;
+    
+    if (!categoryName || !typeStr || !subcategoryName) return;
+    
+    // Convert 'pharmacy' to 'medication' for consistency
+    const type = typeStr.toLowerCase() === 'pharmacy' ? 'medication' : typeStr.toLowerCase();
+    const key = `${categoryName}|${type}`;
+    
+    if (!categoryMap.has(key)) {
+      categoryMap.set(key, new Set());
+    }
+    categoryMap.get(key)?.add(subcategoryName);
+  });
+
+  // Create categories first
+  const categoryIdMap = new Map<string, string>();
+  
+  for (const [categoryKey, subcategories] of categoryMap) {
+    const [name, type] = categoryKey.split('|');
+    
+    // Check if category exists
+    const { data: existingCategory } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('name', name)
+      .eq('type', type)
+      .maybeSingle();
+    
+    if (existingCategory) {
+      categoryIdMap.set(categoryKey, existingCategory.id);
+    } else {
+      const { data: newCategory, error: categoryError } = await supabase
+        .from('categories')
+        .insert([{ name, type }])
+        .select()
+        .single();
+        
+      if (categoryError) throw categoryError;
+      if (!newCategory) throw new Error(`Failed to create category: ${name} (${type})`);
+      
+      categoryIdMap.set(categoryKey, newCategory.id);
+    }
+  }
+  
+  // Create subcategories
+  const subcategoryIdMap = new Map<string, string>();
+  
+  for (const [categoryKey, subcategoryNames] of categoryMap) {
+    const categoryId = categoryIdMap.get(categoryKey);
+    if (!categoryId) continue;
+    
+    for (const subcategoryName of subcategoryNames) {
+      const mapKey = `${categoryId}|${subcategoryName}`;
+      
+      // Check if subcategory exists
+      const { data: existingSubcategory } = await supabase
+        .from('subcategories')
+        .select('*')
+        .eq('name', subcategoryName)
+        .eq('category_id', categoryId)
+        .maybeSingle();
+      
+      if (existingSubcategory) {
+        subcategoryIdMap.set(mapKey, existingSubcategory.id);
+      } else {
+        const { data: newSubcategory, error: subcategoryError } = await supabase
+          .from('subcategories')
+          .insert([{
+            name: subcategoryName,
+            category_id: categoryId
+          }])
+          .select()
+          .single();
+          
+        if (subcategoryError) throw subcategoryError;
+        if (!newSubcategory) throw new Error(`Failed to create subcategory: ${subcategoryName}`);
+        
+        subcategoryIdMap.set(mapKey, newSubcategory.id);
+      }
+    }
+  }
+  
+  return { categoryIdMap, subcategoryIdMap };
+};
+
 export const processProductFile = async (
   file: File,
   categories: Category[] | undefined,
@@ -15,155 +106,37 @@ export const processProductFile = async (
       reader.readAsText(file);
     });
 
-    console.log('File content loaded, parsing rows...');
     const rows = text.split('\n').filter(row => row.trim() !== '');
-    console.log(`Found ${rows.length} rows in the file`);
-    
-    const headers = rows[0].split(',').map(header => header.trim());
-    console.log('Headers:', headers);
-    
-    // First, collect all unique categories and subcategories
-    const uniqueCategories = new Set<string>();
-    const uniqueSubcategories = new Map<string, Set<string>>();
-    
-    console.log('Processing rows to collect categories and subcategories...');
-    rows.slice(1).forEach(row => {
-      const values = row.split(',').map(value => value.trim());
-      const [name, price, typeStr, categoryName, subcategoryName] = values;
-      
-      // Convert 'pharmacy' to 'medication' for consistency with our schema
-      const type = typeStr.toLowerCase() === 'pharmacy' ? 'medication' : typeStr.toLowerCase();
-      
-      if (categoryName && type) {
-        uniqueCategories.add(`${categoryName}|${type}`);
-        if (!uniqueSubcategories.has(categoryName)) {
-          uniqueSubcategories.set(categoryName, new Set());
-        }
-        if (subcategoryName) {
-          uniqueSubcategories.get(categoryName)?.add(subcategoryName);
-        }
-      }
-    });
-
-    console.log('Unique categories found:', Array.from(uniqueCategories));
-
-    // Insert categories if they don't exist
-    const createdCategories = new Map<string, string>();
-    
-    for (const categoryInfo of uniqueCategories) {
-      const [name, type] = categoryInfo.split('|');
-      console.log('Processing category:', { name, type });
-      
-      try {
-        // Try to find existing category
-        const { data: existingCat } = await supabase
-          .from('categories')
-          .select('*')
-          .eq('name', name)
-          .eq('type', type)
-          .maybeSingle();
-
-        if (!existingCat) {
-          // Create new category
-          const { data: newCat, error: insertError } = await supabase
-            .from('categories')
-            .insert([{ name, type }])
-            .select()
-            .single();
-
-          if (insertError) throw insertError;
-          if (!newCat) throw new Error('Failed to create category');
-          
-          console.log('Created new category:', newCat);
-          createdCategories.set(categoryInfo, newCat.id);
-        } else {
-          console.log('Found existing category:', existingCat);
-          createdCategories.set(categoryInfo, existingCat.id);
-        }
-      } catch (error) {
-        console.error(`Error processing category ${name}:`, error);
-        throw new Error(`Failed to process category ${name}`);
-      }
+    if (rows.length <= 1) {
+      throw new Error('File is empty or contains only headers');
     }
 
-    // Verify all categories were created
-    if (createdCategories.size !== uniqueCategories.size) {
-      throw new Error('Not all categories were created successfully');
-    }
-
-    // Insert subcategories
-    const createdSubcategories = new Map<string, string>();
-    
-    for (const [categoryName, subcategorySet] of uniqueSubcategories) {
-      for (const subcategoryName of subcategorySet) {
-        const relevantCategories = Array.from(createdCategories.entries())
-          .filter(([key]) => key.startsWith(categoryName + '|'))
-          .map(([_, id]) => id);
-
-        for (const categoryId of relevantCategories) {
-          try {
-            // Check if subcategory exists
-            const { data: existingSubcat } = await supabase
-              .from('subcategories')
-              .select('*')
-              .eq('name', subcategoryName)
-              .eq('category_id', categoryId)
-              .maybeSingle();
-
-            if (!existingSubcat) {
-              // Create new subcategory
-              const { data: newSubcat, error: insertError } = await supabase
-                .from('subcategories')
-                .insert([{
-                  name: subcategoryName,
-                  category_id: categoryId
-                }])
-                .select()
-                .single();
-
-              if (insertError) throw insertError;
-              if (!newSubcat) throw new Error('Failed to create subcategory');
-              
-              console.log('Created new subcategory:', newSubcat);
-              createdSubcategories.set(`${categoryId}|${subcategoryName}`, newSubcat.id);
-            } else {
-              console.log('Found existing subcategory:', existingSubcat);
-              createdSubcategories.set(`${categoryId}|${subcategoryName}`, existingSubcat.id);
-            }
-          } catch (error) {
-            console.error(`Error processing subcategory ${subcategoryName}:`, error);
-            throw new Error(`Failed to process subcategory ${subcategoryName}`);
-          }
-        }
-      }
-    }
+    const { categoryIdMap, subcategoryIdMap } = await setupCategoriesAndSubcategories(rows);
 
     // Process products
     const products = rows.slice(1).map(row => {
       const values = row.split(',').map(value => value.trim());
       const [name, priceStr, typeStr, categoryName, subcategoryName, requires_prescriptionStr, description, image_url] = values;
       
-      // Convert 'pharmacy' to 'medication' for consistency
-      const type = typeStr.toLowerCase() === 'pharmacy' ? 'medication' : typeStr.toLowerCase();
-      
-      if (!name || !priceStr || !type || !categoryName || !subcategoryName) {
-        console.error('Missing required fields:', values);
+      if (!name || !priceStr || !typeStr || !categoryName || !subcategoryName) {
+        console.error('Missing required fields:', { name, priceStr, typeStr, categoryName, subcategoryName });
         return null;
       }
 
+      const type = typeStr.toLowerCase() === 'pharmacy' ? 'medication' : typeStr.toLowerCase();
       const categoryKey = `${categoryName}|${type}`;
-      const categoryId = createdCategories.get(categoryKey);
+      const categoryId = categoryIdMap.get(categoryKey);
       
       if (!categoryId) {
-        console.error(`Category not found for key: ${categoryKey}`);
+        console.error(`Category not found: ${categoryName} (${type})`);
         return null;
       }
-
+      
       const subcategoryKey = `${categoryId}|${subcategoryName}`;
-      const subcategoryId = createdSubcategories.get(subcategoryKey);
+      const subcategoryId = subcategoryIdMap.get(subcategoryKey);
       
       if (!subcategoryId) {
-        console.error(`Subcategory not found for key: ${subcategoryKey}`);
+        console.error(`Subcategory not found: ${subcategoryName}`);
         return null;
       }
 
@@ -179,8 +152,6 @@ export const processProductFile = async (
       };
     }).filter(product => product !== null);
 
-    console.log(`Processed ${products.length} valid products`);
-
     if (products.length === 0) {
       throw new Error('No valid products found in the file');
     }
@@ -191,28 +162,18 @@ export const processProductFile = async (
       .select('name')
       .in('name', products.map(p => p!.name));
 
-    if (existingError) {
-      console.error('Error checking existing products:', existingError);
-      throw existingError;
-    }
+    if (existingError) throw existingError;
 
     const existingProductNames = new Set(existingProducts?.map(p => p.name) || []);
     const newProducts = products.filter(product => !existingProductNames.has(product!.name));
     const skippedCount = products.length - newProducts.length;
-
-    console.log(`Products to insert: ${newProducts.length}, Skipped: ${skippedCount}`);
 
     if (newProducts.length > 0) {
       const { error: insertError } = await supabase
         .from('products')
         .insert(newProducts);
 
-      if (insertError) {
-        console.error('Error inserting products:', insertError);
-        throw insertError;
-      }
-      
-      console.log('Successfully inserted products');
+      if (insertError) throw insertError;
     }
 
     return { newProducts, skippedCount };
