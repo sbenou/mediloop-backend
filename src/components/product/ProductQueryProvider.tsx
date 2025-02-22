@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -82,7 +83,7 @@ export const useProductQuery = ({
 
       // Add description filter
       if (filters.description) {
-        query = query.ilike('description', filters.description);
+        query = query.ilike('description', `%${filters.description}%`);
       }
       
       if (searchTerm) {
