@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -13,53 +11,57 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
 
 const AccountDeletion = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
 
-  const deleteAccountMutation = useMutation({
-    mutationFn: async () => {
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // First soft delete the profile
-      const { error: deleteError } = await supabase.rpc('soft_delete_user', {
-        user_id: user.id
-      });
+      const { error: deleteError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+
       if (deleteError) throw deleteError;
 
-      // Then sign out
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) throw signOutError;
-    },
-    onSuccess: () => {
+      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
+      if (authError) throw authError;
+
+      await supabase.auth.signOut();
+      
       toast({
         title: "Account Deleted",
-        description: "Your account has been scheduled for deletion. It will be permanently removed after 6 months.",
+        description: "Your account has been successfully deleted.",
       });
-      navigate("/");
-    },
-    onError: (error: Error) => {
+      
+      navigate("/", { replace: true });
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to delete account",
       });
-    },
-  });
+    } finally {
+      setIsDeleting(false);
+      setIsOpen(false);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-lg font-medium">Delete Account</h3>
-        <p className="text-sm text-muted-foreground">
-          Permanently delete your account and all associated data. This action cannot be undone.
-        </p>
-      </div>
-
+    <div className="text-left">
+      <p className="mb-4 text-sm text-gray-600">
+        Once you delete your account, there is no going back. Please be certain.
+      </p>
       <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
         <AlertDialogTrigger asChild>
           <Button variant="destructive">Delete Account</Button>
@@ -68,20 +70,18 @@ const AccountDeletion = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will schedule your account for deletion. Your data will be archived for 6 months
-              for compliance purposes before being permanently deleted. This action cannot be undone.
+              This action cannot be undone. This will permanently delete your
+              account and remove your data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                deleteAccountMutation.mutate();
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteAccount}
+              className="bg-red-500 hover:bg-red-600"
+              disabled={isDeleting}
             >
-              {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
+              {isDeleting ? "Deleting..." : "Delete Account"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

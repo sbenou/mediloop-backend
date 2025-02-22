@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,7 +81,7 @@ const PasswordChange = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
       {isOtpUser && (
         <Alert>
           <AlertDescription>
@@ -90,7 +91,7 @@ const PasswordChange = () => {
       )}
 
       {!isOtpUser && (
-        <div className="space-y-2">
+        <div className="space-y-2 text-left">
           <Label htmlFor="current-password">Current Password</Label>
           <Input
             id="current-password"
@@ -102,7 +103,7 @@ const PasswordChange = () => {
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="new-password">New Password</Label>
         <Input
           id="new-password"
@@ -113,7 +114,7 @@ const PasswordChange = () => {
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="confirm-password">Confirm New Password</Label>
         <Input
           id="confirm-password"
@@ -124,9 +125,11 @@ const PasswordChange = () => {
         />
       </div>
 
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? "Updating..." : isOtpUser ? "Set Password" : "Update Password"}
-      </Button>
+      <div className="flex justify-start">
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Updating..." : isOtpUser ? "Set Password" : "Update Password"}
+        </Button>
+      </div>
     </form>
   );
 };

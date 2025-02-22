@@ -1,5 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+
 import Header from "@/components/layout/Header";
 import PasswordChange from "@/components/settings/PasswordChange";
 import AccountDeletion from "@/components/settings/AccountDeletion";
@@ -10,21 +9,21 @@ const Settings = () => {
     <div>
       <Header />
       <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
+        <h1 className="text-3xl font-bold mb-8 text-left">Account Settings</h1>
         
-        <div className="space-y-6">
+        <div className="max-w-2xl mx-auto space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Password Management</CardTitle>
+              <CardTitle className="text-left">Password Management</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <PasswordChange />
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Danger Zone</CardTitle>
+              <CardTitle className="text-left">Danger Zone</CardTitle>
             </CardHeader>
             <CardContent>
               <AccountDeletion />
