@@ -11,7 +11,27 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storageKey: 'supabase.auth.token',
+    storage: {
+      // Use cookies for session storage instead of localStorage
+      getItem: (key: string) => {
+        const item = document.cookie
+          .split('; ')
+          .find((row) => row.startsWith(`${key}=`))
+          ?.split('=')[1];
+        try {
+          return item ? JSON.parse(decodeURIComponent(item)) : null;
+        } catch (e) {
+          return null;
+        }
+      },
+      setItem: (key: string, value: any) => {
+        // Set cookie with Secure and SameSite attributes
+        document.cookie = `${key}=${encodeURIComponent(JSON.stringify(value))}; path=/; secure; samesite=strict`;
+      },
+      removeItem: (key: string) => {
+        document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      },
+    },
   },
   global: {
     headers: {
@@ -48,15 +68,23 @@ export async function fetchFromSupabase<T extends Record<string, any>>(
 // Handle auth state changes and log them
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', { event, session: session?.user?.id });
-  
-  if (event === 'SIGNED_OUT') {
-    localStorage.removeItem('supabase.auth.token');
-  }
 });
 
 // Handle initial session
 supabase.auth.getSession().then(({ data: { session } }) => {
-  if (!session) {
-    localStorage.removeItem('supabase.auth.token');
+  if (session) {
+    console.log('Initial session loaded:', session.user.id);
   }
 });
+
+export const getSessionFromCookie = () => {
+  try {
+    const sessionStr = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith('supabase.auth.token='))
+      ?.split('=')[1];
+    return sessionStr ? JSON.parse(decodeURIComponent(sessionStr)) : null;
+  } catch (e) {
+    return null;
+  }
+};
