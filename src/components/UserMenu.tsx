@@ -22,6 +22,7 @@ const UserMenu = () => {
   // Refetch profile data when component mounts or auth state changes
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('Auth state changed, invalidating profile query');
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     }
   }, [isAuthenticated, queryClient]);
@@ -44,11 +45,6 @@ const UserMenu = () => {
         
       if (error) {
         console.error('Profile fetch error in UserMenu:', error);
-        toast({
-          variant: "destructive",
-          title: "Error loading profile",
-          description: "Please try refreshing the page",
-        });
         throw error;
       }
       
@@ -94,6 +90,7 @@ const UserMenu = () => {
 
   // Show loading skeleton while authentication or profile is loading
   if (authLoading || profileLoading) {
+    console.log('Loading state:', { authLoading, profileLoading });
     return (
       <div className="h-10 w-10 rounded-full">
         <Skeleton className="h-full w-full rounded-full" />
@@ -101,17 +98,7 @@ const UserMenu = () => {
     );
   }
 
-  // Handle error state
-  if (error) {
-    return (
-      <button
-        onClick={() => window.location.reload()}
-        className="text-primary hover:text-primary/80 transition-colors"
-      >
-        Reload
-      </button>
-    );
-  }
+  console.log('Rendering UserMenu with profile:', userProfile);
 
   return (
     <DropdownMenu>
@@ -119,6 +106,7 @@ const UserMenu = () => {
         <button 
           type="button"
           className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none"
+          aria-label="User menu"
         >
           <UserAvatar />
         </button>
@@ -126,7 +114,6 @@ const UserMenu = () => {
       <DropdownMenuContent 
         align="end" 
         sideOffset={5}
-        forceMount
         className="z-[9999] w-56 bg-white border rounded-md shadow-lg animate-in fade-in-0 zoom-in-95"
       >
         <UserMenuItems 
