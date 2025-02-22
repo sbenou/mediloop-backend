@@ -96,21 +96,17 @@ export const processProductFile = async (
       );
 
       if (!subcategory) {
-        // Create new subcategory
-        const { data: newSubcategory, error: subError } = supabase
-          .from('subcategories')
-          .insert([{
-            name: subcategoryName,
-            category_id: matchedCategory.id
-          }])
-          .select()
-          .single();
-
-        if (subError) {
-          console.error('Error creating subcategory:', subError);
-          return null;
-        }
-        subcategory = newSubcategory;
+        // Create new subcategory asynchronously
+        return {
+          name,
+          price: parseFloat(priceStr) || 0,
+          type,
+          requires_prescription: requires_prescriptionStr.toLowerCase() === 'true',
+          description: description || '',
+          category_id: matchedCategory.id,
+          subcategory_name: subcategoryName, // Store subcategory name for creation
+          pending_subcategory: true
+        };
       }
 
       return {
@@ -126,6 +122,30 @@ export const processProductFile = async (
 
     if (products.length === 0) {
       throw new Error("No valid products found in the CSV file");
+    }
+
+    // Handle products with pending subcategories
+    for (const product of products) {
+      if (product.pending_subcategory) {
+        const { data: newSubcategory, error: subError } = await supabase
+          .from('subcategories')
+          .insert([{
+            name: product.subcategory_name,
+            category_id: product.category_id
+          }])
+          .select()
+          .single();
+
+        if (subError) {
+          console.error('Error creating subcategory:', subError);
+          continue;
+        }
+
+        // Update product with new subcategory id
+        delete product.pending_subcategory;
+        delete product.subcategory_name;
+        product.subcategory_id = newSubcategory.id;
+      }
     }
 
     let newProducts = [];
