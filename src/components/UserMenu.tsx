@@ -5,7 +5,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import UserAvatar from "./user-menu/UserAvatar";
-import UserMenuItems from "./user-menu/UserMenuItems";
+import { UserMenuItems } from "./user-menu/UserMenuItems";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,10 +55,7 @@ const UserMenu = () => {
         sideOffset={5}
         className="z-[9999] w-56 bg-white border rounded-md shadow-lg animate-in fade-in-0 zoom-in-95"
       >
-        <UserMenuItems 
-          userRole={profile?.role}
-          userName={profile?.full_name}
-        />
+        <UserMenuItems />
       </DropdownMenuContent>
     </DropdownMenu>
   );
