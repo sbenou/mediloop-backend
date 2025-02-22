@@ -17,8 +17,16 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     flowType: 'pkce',
   },
   global: {
-    headers: {
-      'X-Client-Info': 'lovable-delivery',
+    fetch: (...args) => {
+      // Add custom headers to identify requests in network panel
+      const [url, config] = args;
+      return fetch(url, {
+        ...config,
+        headers: {
+          ...config?.headers,
+          'X-Client-Info': 'lovable-delivery',
+        },
+      });
     },
   },
 });

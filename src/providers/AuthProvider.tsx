@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
@@ -9,7 +9,7 @@ import { toast } from '@/components/ui/use-toast';
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
 
-  const fetchUserPermissions = async (roleId: string): Promise<string[]> => {
+  const fetchUserPermissions = useCallback(async (roleId: string): Promise<string[]> => {
     console.log('Fetching permissions for role:', roleId);
     try {
       const { data, error } = await supabase
@@ -22,19 +22,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return [];
       }
 
-      const permissions = data.map(rp => rp.permission_id);
-      console.log('Fetched permissions:', permissions);
-      return permissions;
+      return data.map(rp => rp.permission_id);
     } catch (error) {
       console.error('Error in fetchUserPermissions:', error);
       return [];
     }
-  };
+  }, []);
 
-  const fetchAndSetProfile = async (userId: string): Promise<UserProfile | null> => {
+  const fetchAndSetProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
     console.log('Starting profile fetch for user:', userId);
     try {
-      console.log('Fetching profile data...');
       const { data: profile, error } = await supabase
         .from('profiles')
         .select(`
@@ -59,36 +56,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           updated_at
         `)
         .eq('id', userId)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('Profile fetch error:', error);
-        throw error;
-      }
-
-      if (!profile) {
-        console.error('No profile found for user:', userId);
         return null;
       }
 
-      console.log('Profile data received:', {
-        id: profile.id,
-        role: profile.role,
-        avatar_url: profile.avatar_url
-      });
       return profile;
     } catch (error) {
       console.error('Error in fetchAndSetProfile:', error);
-      throw error;
+      return null;
     }
-  };
+  }, []);
 
-  const updateAuthState = async (session: any | null) => {
-    console.log('Updating auth state with session:', session?.user?.id);
-    
+  const updateAuthState = useCallback(async (session: any | null) => {
     try {
       if (!session?.user) {
-        console.log('No session, clearing auth state');
         setAuth({
           user: null,
           profile: null,
@@ -98,14 +82,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Set loading state before fetching profile
-      setAuth(state => ({ ...state, isLoading: true }));
-      
-      console.log('Fetching profile for user:', session.user.id);
       const profile = await fetchAndSetProfile(session.user.id);
       
       if (!profile) {
-        console.error('No profile found after fetch, clearing auth state');
         setAuth({
           user: null,
           profile: null,
@@ -115,16 +94,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Fetch permissions if we have a role_id
       const permissions = profile.role_id 
         ? await fetchUserPermissions(profile.role_id)
         : [];
-
-      console.log('Setting final auth state with profile:', {
-        userId: profile.id,
-        role: profile.role,
-        permissions: permissions.length
-      });
 
       setAuth({
         user: session.user,
@@ -141,16 +113,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isLoading: false,
       });
     }
-  };
+  }, [fetchAndSetProfile, fetchUserPermissions, setAuth]);
 
   useEffect(() => {
     let mounted = true;
 
     const initializeAuth = async () => {
-      console.log('Initializing auth...');
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Got session:', session?.user?.id);
         
         if (!mounted) return;
         
@@ -182,8 +152,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
-
         if (!mounted) return;
 
         switch (event) {
@@ -214,22 +182,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           default:
             if (session) {
               await updateAuthState(session);
-            } else {
-              setAuth(state => ({
-                ...state,
-                isLoading: false
-              }));
             }
         }
       }
     );
 
     return () => {
-      console.log('Cleaning up AuthProvider');
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [setAuth]);
+  }, [setAuth, updateAuthState]);
 
   return <>{children}</>;
 };
