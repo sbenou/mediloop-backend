@@ -1,6 +1,6 @@
 
-import { useRecoilValue, useRecoilCallback } from 'recoil';
-import { useMemo, useCallback } from 'react';
+import { useRecoilValue } from 'recoil';
+import { useMemo } from 'react';
 import { 
   isAuthenticatedSelector, 
   userRoleSelector, 
@@ -10,31 +10,27 @@ import {
 import { authState } from '@/store/auth/atoms';
 
 export const useAuth = () => {
+  // Get all state values first
   const auth = useRecoilValue(authState);
   const isAuthenticated = useRecoilValue(isAuthenticatedSelector);
   const userRole = useRecoilValue(userRoleSelector);
   const permissions = useRecoilValue(userPermissionsSelector);
   const isLoading = useRecoilValue(isLoadingSelector);
 
-  // Memoize profile to prevent unnecessary re-renders
-  const profile = useMemo(() => auth.profile, [auth.profile]);
-  
-  // Memoize user to prevent unnecessary re-renders
-  const user = useMemo(() => auth.user, [auth.user]);
-
-  // Memoize hasPermission function
-  const hasPermission = useCallback((permission: string) => 
-    isLoading || permissions.includes(permission),
-    [isLoading, permissions]
-  );
+  // Memoize all values together to prevent unnecessary re-renders
+  const memoizedValues = useMemo(() => ({
+    profile: auth.profile,
+    user: auth.user,
+    hasPermission: (permission: string) => isLoading || permissions.includes(permission),
+  }), [auth.profile, auth.user, isLoading, permissions]);
 
   return {
     isAuthenticated,
     userRole,
     permissions,
     isLoading,
-    hasPermission,
-    user,
-    profile,
+    hasPermission: memoizedValues.hasPermission,
+    user: memoizedValues.user,
+    profile: memoizedValues.profile,
   };
 };
