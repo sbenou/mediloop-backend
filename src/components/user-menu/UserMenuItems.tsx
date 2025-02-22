@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useSetRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface UserMenuItemsProps {
   userRole?: string;
@@ -18,6 +19,7 @@ interface UserMenuItemsProps {
 const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
   const navigate = useNavigate();
   const setAuth = useSetRecoilState(authState);
+  const queryClient = useQueryClient();
 
   const handleLogout = async () => {
     try {
@@ -42,11 +44,11 @@ const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
         isLoading: false,
       });
 
+      // Clear queries
+      queryClient.clear();
+      
       // Clear any stored session data
       localStorage.removeItem('supabase.auth.token');
-      
-      // Navigate to login page
-      navigate('/login');
       
       toast({
         title: "Logged out",
@@ -54,6 +56,9 @@ const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
       });
       
       console.log('Logout successful');
+      
+      // Navigate to login page with replace to prevent going back
+      navigate('/login', { replace: true });
     } catch (error) {
       console.error('Unexpected error during logout:', error);
       toast({
@@ -64,35 +69,40 @@ const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
     }
   };
 
+  const handleNavigation = (path: string) => {
+    console.log('Navigating to:', path);
+    navigate(path);
+  };
+
   return (
     <>
       <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
-        {userName}
+        {userName || 'User'}
       </div>
       <DropdownMenuSeparator />
       <DropdownMenuItem
-        onClick={() => navigate('/my-details')}
+        onClick={() => handleNavigation('/my-details')}
         className="cursor-pointer"
       >
         <UserCircle className="mr-2 h-4 w-4 text-[#7E69AB]" />
         Profile
       </DropdownMenuItem>
       <DropdownMenuItem
-        onClick={() => navigate('/my-orders')}
+        onClick={() => handleNavigation('/my-orders')}
         className="cursor-pointer"
       >
         <ShoppingBag className="mr-2 h-4 w-4 text-[#7E69AB]" />
         My Orders
       </DropdownMenuItem>
       <DropdownMenuItem
-        onClick={() => navigate('/my-prescriptions')}
+        onClick={() => handleNavigation('/my-prescriptions')}
         className="cursor-pointer"
       >
         <FileText className="mr-2 h-4 w-4 text-[#7E69AB]" />
         My Prescriptions
       </DropdownMenuItem>
       <DropdownMenuItem
-        onClick={() => navigate('/settings')}
+        onClick={() => handleNavigation('/settings')}
         className="cursor-pointer"
       >
         <Settings className="mr-2 h-4 w-4 text-[#7E69AB]" />
@@ -100,7 +110,7 @@ const UserMenuItems = ({ userRole, userName }: UserMenuItemsProps) => {
       </DropdownMenuItem>
       {userRole === 'superadmin' && (
         <DropdownMenuItem
-          onClick={() => navigate('/admin-settings')}
+          onClick={() => handleNavigation('/admin-settings')}
           className="cursor-pointer"
         >
           <Shield className="mr-2 h-4 w-4 text-[#7E69AB]" />
