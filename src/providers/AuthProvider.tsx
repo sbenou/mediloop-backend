@@ -10,17 +10,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
 
   const fetchAndSetProfile = async (userId: string): Promise<UserProfile | null> => {
-    console.log('Fetching profile for user:', userId);
+    console.log('Starting profile fetch for user:', userId);
     try {
+      // First verify the profile query works
+      const { data: profileCheck, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('id', userId)
+        .maybeSingle();
+        
+      console.log('Profile check result:', profileCheck, 'Error:', checkError);
+
+      // Now get the full profile
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          role,
+          full_name,
+          email,
+          avatar_url,
+          auth_method,
+          is_blocked,
+          city,
+          date_of_birth,
+          license_number,
+          cns_card_front,
+          cns_card_back,
+          cns_number,
+          doctor_stamp_url,
+          doctor_signature_url
+        `)
         .eq('id', userId)
         .maybeSingle();
 
       if (error) {
         console.error('Profile fetch error:', error);
         throw error;
+      }
+
+      if (!profile) {
+        console.error('No profile found for user:', userId);
+        return null;
       }
 
       console.log('Profile data received:', profile);
@@ -49,9 +80,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const profile = await fetchAndSetProfile(session.user.id);
       console.log('Setting auth state with profile:', profile);
       
+      if (!profile) {
+        console.error('No profile found after fetch, clearing auth state');
+        setAuth({
+          user: null,
+          profile: null,
+          permissions: [],
+          isLoading: false,
+        });
+        return;
+      }
+
       setAuth({
         user: session.user,
-        profile: profile,
+        profile,
         permissions: [],
         isLoading: false,
       });
