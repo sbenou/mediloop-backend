@@ -3,10 +3,14 @@ import { supabase } from "@/lib/supabase";
 import { Category, Subcategory } from "../types/product";
 
 const validateSuperAdminAccess = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) throw new Error('No authenticated user found');
+
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', supabase.auth.getUser()?.data?.user?.id)
+    .eq('id', user.id)
     .single();
 
   if (error) throw error;
