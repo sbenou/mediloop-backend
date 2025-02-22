@@ -16,6 +16,73 @@ export const processProductFile = async (
     });
 
     const rows = text.split('\n').filter(row => row.trim() !== '');
+    
+    // First, ensure we have our basic categories
+    const basicCategories = [
+      { name: 'Pain Relief', type: 'medication' },
+      { name: 'Antibiotics', type: 'medication' },
+      { name: 'Vitamins', type: 'parapharmacy' },
+      { name: 'Skincare', type: 'parapharmacy' }
+    ];
+
+    // Insert categories if they don't exist
+    for (const cat of basicCategories) {
+      const { data: existingCat } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('name', cat.name)
+        .eq('type', cat.type)
+        .single();
+
+      if (!existingCat) {
+        const { data: newCat, error: catError } = await supabase
+          .from('categories')
+          .insert([cat])
+          .select()
+          .single();
+
+        if (catError) {
+          console.error('Error creating category:', catError);
+          continue;
+        }
+
+        // Create basic subcategories for each category
+        const subcategoriesMap: Record<string, string[]> = {
+          'Pain Relief': ['Painkillers', 'Anti-inflammatory'],
+          'Antibiotics': ['Broad Spectrum', 'Narrow Spectrum'],
+          'Vitamins': ['Multivitamins', 'Mineral Supplements'],
+          'Skincare': ['Face Care', 'Body Care']
+        };
+
+        const subcategoriesToCreate = subcategoriesMap[cat.name].map(subName => ({
+          name: subName,
+          category_id: newCat.id
+        }));
+
+        const { error: subError } = await supabase
+          .from('subcategories')
+          .insert(subcategoriesToCreate);
+
+        if (subError) {
+          console.error('Error creating subcategories:', subError);
+        }
+      }
+    }
+
+    // Refresh categories and subcategories data
+    const { data: updatedCategories } = await supabase
+      .from('categories')
+      .select(`
+        id,
+        name,
+        type,
+        subcategories (
+          id,
+          name
+        )
+      `);
+
+    // Process products
     const products = rows.slice(1).map(row => {
       const values = row.split(',').map(value => value.trim());
       
@@ -32,72 +99,39 @@ export const processProductFile = async (
       }
 
       const type = typeStr.toLowerCase();
+      const dbType = type === 'pharmacy' ? 'medication' : type;
       
       // Find matching category based on product name keywords
       let matchedCategory = null;
-      if (type === 'parapharmacy') {
+      if (dbType === 'parapharmacy') {
         if (name.toLowerCase().includes('vitamin') || name.toLowerCase().includes('supplement')) {
-          matchedCategory = categories?.find(c => c.name.toLowerCase() === 'vitamins' && c.type === type);
+          matchedCategory = updatedCategories?.find(c => c.name === 'Vitamins' && c.type === dbType);
         } else if (name.toLowerCase().includes('skin') || name.toLowerCase().includes('face') || name.toLowerCase().includes('cream')) {
-          matchedCategory = categories?.find(c => c.name.toLowerCase() === 'skincare' && c.type === type);
+          matchedCategory = updatedCategories?.find(c => c.name === 'Skincare' && c.type === dbType);
         }
-      } else if (type === 'medication') {
+      } else if (dbType === 'medication') {
         if (name.toLowerCase().includes('pain') || name.toLowerCase().includes('relief')) {
-          matchedCategory = categories?.find(c => c.name.toLowerCase() === 'pain relief' && c.type === type);
+          matchedCategory = updatedCategories?.find(c => c.name === 'Pain Relief' && c.type === dbType);
         } else if (name.toLowerCase().includes('antibiotic')) {
-          matchedCategory = categories?.find(c => c.name.toLowerCase() === 'antibiotics' && c.type === type);
+          matchedCategory = updatedCategories?.find(c => c.name === 'Antibiotics' && c.type === dbType);
         }
       }
 
-      // If no specific match found, try to find any category of the correct type
+      // If no specific match found, use first category of correct type
       if (!matchedCategory) {
-        matchedCategory = categories?.find(c => c.type === type);
+        matchedCategory = updatedCategories?.find(c => c.type === dbType);
       }
 
       // Find matching subcategory
       let matchedSubcategory = null;
       if (matchedCategory) {
-        if (type === 'parapharmacy') {
-          if (name.toLowerCase().includes('vitamin')) {
-            matchedSubcategory = subcategories?.find(s => 
-              s.category_id === matchedCategory.id && 
-              s.name.toLowerCase() === 'multivitamins'
-            );
-          } else if (name.toLowerCase().includes('face') || name.toLowerCase().includes('cream')) {
-            matchedSubcategory = subcategories?.find(s => 
-              s.category_id === matchedCategory.id && 
-              s.name.toLowerCase() === 'face care'
-            );
-          }
-        } else if (type === 'medication') {
-          if (name.toLowerCase().includes('pain')) {
-            matchedSubcategory = subcategories?.find(s => 
-              s.category_id === matchedCategory.id && 
-              s.name.toLowerCase() === 'painkillers'
-            );
-          } else if (name.toLowerCase().includes('antibiotic')) {
-            matchedSubcategory = subcategories?.find(s => 
-              s.category_id === matchedCategory.id && 
-              s.name.toLowerCase() === 'broad spectrum'
-            );
-          }
-        }
-
-        // If no specific match found, use the first subcategory of the category
-        if (!matchedSubcategory) {
-          matchedSubcategory = subcategories?.find(s => s.category_id === matchedCategory.id);
-        }
+        matchedSubcategory = matchedCategory.subcategories?.[0];
       }
-
-      console.log(`Mapping product "${name}" (${type}):`, {
-        category: matchedCategory?.name,
-        subcategory: matchedSubcategory?.name
-      });
 
       return {
         name,
         price: parseFloat(priceStr) || 0,
-        type,
+        type: dbType,
         requires_prescription: requires_prescriptionStr.toLowerCase() === 'true',
         description: description || '',
         category_id: matchedCategory?.id || null,
