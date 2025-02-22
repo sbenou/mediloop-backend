@@ -9,13 +9,35 @@ import { toast } from '@/components/ui/use-toast';
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
 
+  const fetchUserPermissions = async (roleId: string): Promise<string[]> => {
+    console.log('Fetching permissions for role:', roleId);
+    try {
+      const { data, error } = await supabase
+        .from('role_permissions')
+        .select('permission_id')
+        .eq('role_id', roleId);
+
+      if (error) {
+        console.error('Error fetching permissions:', error);
+        return [];
+      }
+
+      const permissions = data.map(rp => rp.permission_id);
+      console.log('Fetched permissions:', permissions);
+      return permissions;
+    } catch (error) {
+      console.error('Error in fetchUserPermissions:', error);
+      return [];
+    }
+  };
+
   const fetchAndSetProfile = async (userId: string): Promise<UserProfile | null> => {
     console.log('Starting profile fetch for user:', userId);
     try {
       // First verify the profile query works
       const { data: profileCheck, error: checkError } = await supabase
         .from('profiles')
-        .select('id, role')
+        .select('id, role, role_id')
         .eq('id', userId)
         .maybeSingle();
         
@@ -105,10 +127,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      // Fetch permissions if we have a role_id
+      const permissions = profile.role_id 
+        ? await fetchUserPermissions(profile.role_id)
+        : [];
+
       setAuth({
         user: session.user,
         profile,
-        permissions: [],
+        permissions,
         isLoading: false,
       });
     } catch (error) {
