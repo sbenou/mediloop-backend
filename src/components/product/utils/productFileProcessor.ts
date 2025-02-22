@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { Category, Subcategory } from "../types/product";
 
