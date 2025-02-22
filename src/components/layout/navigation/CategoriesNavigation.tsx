@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import {
   NavigationMenuContent,
@@ -39,7 +40,7 @@ export const CategoriesNavigation = () => {
         .order('name');
       
       if (error) throw error;
-      console.log('Categories with products:', data);
+      console.log('Categories with subcategories:', data);
       return data;
     },
   });

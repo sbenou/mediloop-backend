@@ -1,3 +1,4 @@
+
 import { useTranslation } from 'react-i18next';
 import { SubcategoryItem } from './SubcategoryItem';
 
@@ -28,21 +29,27 @@ export const CategoryList = ({
     );
   }
 
+  const filteredCategories = getUniqueCategories(categories, selectedType);
+  console.log('Filtered categories:', filteredCategories);
+
   return (
     <div className="space-y-4">
-      {getUniqueCategories(categories, selectedType).map((category) => (
+      {filteredCategories.map((category) => (
         <div key={category.id} className="space-y-2">
-          {category.subcategories?.map((subcategory: any) => (
-            <SubcategoryItem
-              key={subcategory.id}
-              subcategory={subcategory}
-              selectedType={selectedType}
-              categoryId={category.id}
-              handleSubcategoryClick={handleSubcategoryClick}
-              handleDescriptionClick={handleDescriptionClick}
-              getUniqueDescriptions={getUniqueDescriptions}
-            />
-          ))}
+          <h3 className="font-medium text-sm">{t(`categories.${selectedType}.${category.name.toLowerCase().replace(/ /g, '_')}`, { defaultValue: category.name })}</h3>
+          <div className="pl-4 space-y-1">
+            {category.subcategories?.map((subcategory: any) => (
+              <SubcategoryItem
+                key={subcategory.id}
+                subcategory={subcategory}
+                selectedType={selectedType}
+                categoryId={category.id}
+                handleSubcategoryClick={handleSubcategoryClick}
+                handleDescriptionClick={handleDescriptionClick}
+                getUniqueDescriptions={getUniqueDescriptions}
+              />
+            ))}
+          </div>
         </div>
       ))}
     </div>
