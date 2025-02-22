@@ -16,13 +16,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error('Profile fetch error:', profileError);
         throw profileError;
       }
 
+      console.log('Profile data:', profile);
       return profile;
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -30,21 +31,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Initialize auth state with session
   useEffect(() => {
     let mounted = true;
 
-    // Set initial loading state immediately
-    setAuth(prev => {
-      console.log('Setting initial loading state...');
-      return { ...prev, isLoading: true };
-    });
-
     const initializeAuth = async () => {
-      if (!mounted) return;
-
       try {
+        // Set initial loading state
+        setAuth(state => ({ ...state, isLoading: true }));
         console.log('Getting session...');
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!mounted) return;
@@ -60,10 +55,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        console.log('Session response:', session ? 'Session exists' : 'No session');
-
         if (!session?.user) {
-          console.log('No active session found, setting initial state...');
+          console.log('No active session found');
           setAuth({
             user: null,
             profile: null,
@@ -73,9 +66,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
+        console.log('Session found, fetching profile');
         try {
           const profile = await fetchAndSetProfile(session.user.id);
-          console.log('Profile fetched successfully, setting auth state...');
+          if (!mounted) return;
+
+          console.log('Setting auth state with profile:', profile);
           setAuth({
             user: session.user,
             profile: profile as UserProfile,
@@ -84,15 +80,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           });
         } catch (error) {
           console.error('Profile fetch failed:', error);
-          setAuth({
-            user: null,
-            profile: null,
-            permissions: [],
-            isLoading: false,
-          });
+          if (mounted) {
+            setAuth({
+              user: null,
+              profile: null,
+              permissions: [],
+              isLoading: false,
+            });
+          }
         }
       } catch (error) {
-        console.error('Unexpected error during auth initialization:', error);
+        console.error('Auth initialization error:', error);
         if (mounted) {
           setAuth({
             user: null,
@@ -104,22 +102,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    console.log('Starting auth initialization...');
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change event:', event);
-        console.log('Auth state changed:', { event, session: session?.user?.id });
+        console.log('Auth state change:', event, session?.user?.id);
 
         if (!mounted) return;
 
+        // Set loading state for the auth change
+        setAuth(state => ({ ...state, isLoading: true }));
+
         if (event === 'SIGNED_IN' && session?.user) {
-          console.log('User signed in, fetching profile...');
           try {
             const profile = await fetchAndSetProfile(session.user.id);
-            
             if (!mounted) return;
+
+            console.log('Setting auth state after sign in:', {
+              user: session.user,
+              profile: profile,
+            });
 
             setAuth({
               user: session.user,
@@ -133,7 +135,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               description: "You have successfully signed in.",
             });
           } catch (error) {
-            console.error('Error handling sign in:', error);
+            console.error('Sign in error:', error);
             if (mounted) {
               setAuth({
                 user: null,
@@ -143,20 +145,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               });
             }
           }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out, clearing auth state...');
+        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+          console.log('User signed out or deleted');
           setAuth({
             user: null,
             profile: null,
             permissions: [],
             isLoading: false,
           });
+        } else {
+          // For other events, just update the loading state
+          setAuth(state => ({ ...state, isLoading: false }));
         }
       }
     );
 
     return () => {
-      console.log('Cleaning up AuthProvider...');
+      console.log('Cleaning up AuthProvider');
       mounted = false;
       subscription.unsubscribe();
     };
