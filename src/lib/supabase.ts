@@ -39,6 +39,21 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
       'X-Client-Info': 'lovable-delivery',
     },
   },
+  // Add debug logging
+  logger: {
+    debug: (...args) => {
+      console.log('Supabase Debug:', ...args);
+    },
+    info: (...args) => {
+      console.log('Supabase Info:', ...args);
+    },
+    warn: (...args) => {
+      console.warn('Supabase Warning:', ...args);
+    },
+    error: (...args) => {
+      console.error('Supabase Error:', ...args);
+    },
+  },
 };
 
 // Initialize the Supabase client with improved configuration
@@ -48,16 +63,18 @@ export const supabase = createClient<Database>(
   supabaseOptions
 );
 
-// Helper function with improved type safety
+// Helper function with improved type safety and logging
 export async function fetchFromSupabase<T extends Record<string, any>>(
   query: Promise<{ data: T | null; error: any }>
 ): Promise<T | null> {
   try {
+    console.log('Starting Supabase query:', query);
     const { data, error } = await query;
     if (error) {
       console.error('Supabase query error:', error);
       return null;
     }
+    console.log('Supabase query successful:', data);
     return data as T;
   } catch (error) {
     console.error('Supabase fetch error:', error);
