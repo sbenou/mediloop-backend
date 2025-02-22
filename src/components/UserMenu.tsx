@@ -56,7 +56,7 @@ const UserMenu = () => {
       return data;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   useEffect(() => {
