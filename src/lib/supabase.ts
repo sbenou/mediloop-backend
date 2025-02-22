@@ -1,21 +1,17 @@
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 import { safeQueryResult } from '@/types/user';
 
 const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
-// Initialize the Supabase client with improved configuration
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+const supabaseOptions: SupabaseClientOptions<"public"> = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
     storageKey: 'supabase.auth.token',
-  },
-  headers: {
-    apikey: supabaseAnonKey,
   },
   global: {
     headers: {
@@ -23,10 +19,17 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       'X-Client-Info': 'lovable-delivery',
     },
   },
-});
+};
 
-// Helper function to safely fetch data with error handling and proper typing
-export async function fetchFromSupabase<T>(
+// Initialize the Supabase client with improved configuration
+export const supabase = createClient<Database>(
+  supabaseUrl, 
+  supabaseAnonKey,
+  supabaseOptions
+);
+
+// Helper function with improved type safety
+export async function fetchFromSupabase<T extends Record<string, any>>(
   query: Promise<{ data: T | null; error: any }>
 ): Promise<T | null> {
   try {
@@ -35,7 +38,7 @@ export async function fetchFromSupabase<T>(
       console.error('Supabase query error:', error);
       return null;
     }
-    return safeQueryResult<T>(data);
+    return data as T;
   } catch (error) {
     console.error('Supabase fetch error:', error);
     return null;

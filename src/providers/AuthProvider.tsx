@@ -1,9 +1,8 @@
-
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
-import { UserProfile } from '@/types/user';
+import { UserProfile, safeQueryResult } from '@/types/user';
 import { toast } from '@/components/ui/use-toast';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -15,14 +14,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data, error } = await supabase
         .from('role_permissions')
         .select('permission_id')
-        .eq('role_id', roleId);
+        .eq('role_id', roleId as string);
 
       if (error) {
         console.error('Error fetching permissions:', error);
         return [];
       }
 
-      return data.map(rp => rp.permission_id);
+      return (data ?? []).map(rp => rp.permission_id);
     } catch (error) {
       console.error('Error in fetchUserPermissions:', error);
       return [];
@@ -63,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return null;
       }
 
-      return profile;
+      return profile ? safeQueryResult<UserProfile>(profile) : null;
     } catch (error) {
       console.error('Error in fetchAndSetProfile:', error);
       return null;
