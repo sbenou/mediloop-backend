@@ -6,8 +6,8 @@ export const isAuthenticatedSelector = selector({
   key: 'isAuthenticated',
   get: ({ get }) => {
     const auth = get(authState);
-    // If we have a user in state, consider them authenticated even while loading
-    return !!auth.user || (!!auth.profile && !auth.isLoading);
+    // Consider authenticated if we have both user and profile
+    return !!auth.user && !!auth.profile;
   },
 });
 
