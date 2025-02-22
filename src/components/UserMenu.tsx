@@ -19,7 +19,6 @@ const UserMenu = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Refetch profile data when component mounts or auth state changes
   useEffect(() => {
     if (isAuthenticated) {
       console.log('Auth state changed, invalidating profile query');
@@ -57,11 +56,9 @@ const UserMenu = () => {
       return data;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    retry: 2
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Show error toast when query fails
   useEffect(() => {
     if (error) {
       console.error('Query error:', error);
@@ -73,14 +70,10 @@ const UserMenu = () => {
     }
   }, [error]);
 
-  // Show connection button if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !authLoading) {
     return (
       <button
-        onClick={() => {
-          console.log('Connection button clicked, navigating to login');
-          navigate('/login', { replace: true });
-        }}
+        onClick={() => navigate('/login', { replace: true })}
         className="text-primary hover:text-primary/80 transition-colors"
       >
         Connection
@@ -88,7 +81,6 @@ const UserMenu = () => {
     );
   }
 
-  // Show loading skeleton while authentication or profile is loading
   if (authLoading || profileLoading) {
     console.log('Loading state:', { authLoading, profileLoading });
     return (
@@ -108,7 +100,7 @@ const UserMenu = () => {
           className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none"
           aria-label="User menu"
         >
-          <UserAvatar />
+          <UserAvatar userProfile={userProfile} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 

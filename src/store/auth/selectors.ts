@@ -1,3 +1,4 @@
+
 import { selector } from 'recoil';
 import { authState } from './atoms';
 
@@ -5,7 +6,7 @@ export const isAuthenticatedSelector = selector({
   key: 'isAuthenticated',
   get: ({ get }) => {
     const auth = get(authState);
-    return !!auth.user;
+    return !!auth.user && !auth.isLoading;
   },
 });
 
