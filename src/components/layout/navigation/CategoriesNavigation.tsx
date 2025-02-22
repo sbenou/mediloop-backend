@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 export const CategoriesNavigation = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [selectedType, setSelectedType] = useState<'medication' | 'parapharmacy' | null>('medication');
+  const [selectedType, setSelectedType] = useState<'pharmacy' | 'parapharmacy' | null>('pharmacy');
   const { t } = useTranslation();
 
   const { data: categories } = useQuery({

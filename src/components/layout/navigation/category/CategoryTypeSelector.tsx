@@ -1,8 +1,9 @@
+
 import { useTranslation } from 'react-i18next';
 
 interface CategoryTypeSelectorProps {
-  selectedType: 'medication' | 'parapharmacy' | null;
-  setSelectedType: (type: 'medication' | 'parapharmacy' | null) => void;
+  selectedType: 'pharmacy' | 'parapharmacy' | null;
+  setSelectedType: (type: 'pharmacy' | 'parapharmacy' | null) => void;
 }
 
 export const CategoryTypeSelector = ({ selectedType, setSelectedType }: CategoryTypeSelectorProps) => {
@@ -11,9 +12,9 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   return (
     <div className="space-y-2 border-r pr-4">
       <button
-        onClick={() => setSelectedType('medication')}
+        onClick={() => setSelectedType('pharmacy')}
         className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
-          selectedType === 'medication' 
+          selectedType === 'pharmacy' 
             ? 'bg-primary text-primary-foreground' 
             : 'hover:bg-accent'
         }`}

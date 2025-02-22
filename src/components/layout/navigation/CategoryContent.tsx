@@ -7,9 +7,9 @@ import { CategoryList } from './category/CategoryList';
 interface CategoryContentProps {
   categories: any[];
   getUniqueCategories: (categories: any[], type: string) => any[];
-  selectedType: 'medication' | 'parapharmacy' | null;
-  setSelectedType: (type: 'medication' | 'parapharmacy' | null) => void;
-  getFilteredCategories?: (type: 'medication' | 'parapharmacy') => any[];
+  selectedType: 'pharmacy' | 'parapharmacy' | null;
+  setSelectedType: (type: 'pharmacy' | 'parapharmacy' | null) => void;
+  getFilteredCategories?: (type: 'pharmacy' | 'parapharmacy') => any[];
   getUniqueDescriptions?: (subcategory: any) => string[];
 }
 
