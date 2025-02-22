@@ -2,6 +2,19 @@
 import { supabase } from "@/lib/supabase";
 import { Category, Subcategory } from "../types/product";
 
+const validateSuperAdminAccess = async () => {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', supabase.auth.getUser()?.data?.user?.id)
+    .single();
+
+  if (error) throw error;
+  if (!profile || profile.role !== 'superadmin') {
+    throw new Error('Permission denied: Only superadmins can upload products');
+  }
+};
+
 const setupCategoriesAndSubcategories = async (rows: string[]) => {
   // First, collect all unique category-type combinations and their subcategories
   const categoryMap = new Map<string, Set<string>>();
@@ -99,6 +112,9 @@ export const processProductFile = async (
   subcategories: Subcategory[] | undefined
 ) => {
   try {
+    // First validate that the current user is a superadmin
+    await validateSuperAdminAccess();
+
     const text = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => resolve(e.target?.result as string);
