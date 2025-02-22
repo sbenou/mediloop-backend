@@ -29,11 +29,13 @@ export const processProductFile = async (
     console.log('Processing rows to collect categories and subcategories...');
     rows.slice(1).forEach(row => {
       const values = row.split(',').map(value => value.trim());
-      const [name, price, type, categoryName, subcategoryName] = values;
-      console.log('Processing row:', { name, type, categoryName, subcategoryName });
+      const [name, price, typeStr, categoryName, subcategoryName] = values;
+      
+      // Convert 'pharmacy' to 'medication' for consistency with our schema
+      const type = typeStr.toLowerCase() === 'pharmacy' ? 'medication' : typeStr.toLowerCase();
       
       if (categoryName && type) {
-        uniqueCategories.add(`${categoryName}|${type.toLowerCase()}`);
+        uniqueCategories.add(`${categoryName}|${type}`);
         if (!uniqueSubcategories.has(categoryName)) {
           uniqueSubcategories.set(categoryName, new Set());
         }
@@ -76,8 +78,6 @@ export const processProductFile = async (
           continue;
         }
         console.log('Created new category:', newCat);
-      } else {
-        console.log('Category already exists:', existingCat);
       }
     }
 
@@ -99,31 +99,27 @@ export const processProductFile = async (
       throw catQueryError;
     }
 
-    console.log('Updated categories:', updatedCategories);
-
     // Insert subcategories
     for (const [categoryName, subcategorySet] of uniqueSubcategories) {
-      const category = updatedCategories?.find(c => c.name === categoryName);
-      if (!category) {
-        console.error(`Category not found for subcategories: ${categoryName}`);
-        continue;
-      }
+      const categoryEntries = updatedCategories?.filter(c => c.name === categoryName) || [];
+      
+      for (const category of categoryEntries) {
+        for (const subcategoryName of subcategorySet) {
+          const existingSubcat = category.subcategories?.find(s => s.name === subcategoryName);
+          
+          if (!existingSubcat) {
+            console.log(`Creating new subcategory: ${subcategoryName} for category ${categoryName}`);
+            const { error: subcatError } = await supabase
+              .from('subcategories')
+              .insert([{
+                name: subcategoryName,
+                category_id: category.id
+              }]);
 
-      for (const subcategoryName of subcategorySet) {
-        const existingSubcat = category.subcategories?.find(s => s.name === subcategoryName);
-        
-        if (!existingSubcat) {
-          console.log(`Creating new subcategory: ${subcategoryName} for category ${categoryName}`);
-          const { error: subcatError } = await supabase
-            .from('subcategories')
-            .insert([{
-              name: subcategoryName,
-              category_id: category.id
-            }]);
-
-          if (subcatError) {
-            console.error('Error creating subcategory:', subcatError);
-            continue;
+            if (subcatError) {
+              console.error('Error creating subcategory:', subcatError);
+              continue;
+            }
           }
         }
       }
@@ -147,20 +143,21 @@ export const processProductFile = async (
       throw finalCatError;
     }
 
-    console.log('Final categories with subcategories:', finalCategories);
-
     // Process products
     const products = rows.slice(1).map(row => {
       const values = row.split(',').map(value => value.trim());
       const [name, priceStr, typeStr, categoryName, subcategoryName, requires_prescriptionStr, description, image_url] = values;
-      console.log('Processing product:', { name, typeStr, categoryName, subcategoryName });
+      
+      // Convert 'pharmacy' to 'medication' for consistency
+      const type = typeStr.toLowerCase() === 'pharmacy' ? 'medication' : typeStr.toLowerCase();
+      
+      console.log('Processing product:', { name, type, categoryName, subcategoryName });
 
-      if (!name || !priceStr || !typeStr || !categoryName || !subcategoryName) {
+      if (!name || !priceStr || !type || !categoryName || !subcategoryName) {
         console.error('Missing required fields:', values);
         return null;
       }
 
-      const type = typeStr.toLowerCase();
       const category = finalCategories?.find(c => 
         c.name.toLowerCase() === categoryName.toLowerCase() && 
         c.type.toLowerCase() === type.toLowerCase()
@@ -184,7 +181,7 @@ export const processProductFile = async (
         name,
         price: parseFloat(priceStr) || 0,
         type,
-        requires_prescription: requires_prescriptionStr.toLowerCase() === 'true',
+        requires_prescription: requires_prescriptionStr?.toLowerCase() === 'true',
         description: description || '',
         image_url: image_url || null,
         category_id: category.id,
