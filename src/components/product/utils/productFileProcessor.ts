@@ -19,8 +19,8 @@ export const processProductFile = async (
     
     // First, ensure we have our basic categories
     const basicCategories = [
-      { name: 'Pain Relief', type: 'medication' },
-      { name: 'Antibiotics', type: 'medication' },
+      { name: 'Pain Relief', type: 'pharmacy' },
+      { name: 'Antibiotics', type: 'pharmacy' },
       { name: 'Vitamins', type: 'parapharmacy' },
       { name: 'Skincare', type: 'parapharmacy' }
     ];
@@ -32,7 +32,7 @@ export const processProductFile = async (
         .select('*')
         .eq('name', cat.name)
         .eq('type', cat.type)
-        .single();
+        .maybeSingle();
 
       if (!existingCat) {
         const { data: newCat, error: catError } = await supabase
@@ -45,31 +45,10 @@ export const processProductFile = async (
           console.error('Error creating category:', catError);
           continue;
         }
-
-        // Create basic subcategories for each category
-        const subcategoriesMap: Record<string, string[]> = {
-          'Pain Relief': ['Painkillers', 'Anti-inflammatory'],
-          'Antibiotics': ['Broad Spectrum', 'Narrow Spectrum'],
-          'Vitamins': ['Multivitamins', 'Mineral Supplements'],
-          'Skincare': ['Face Care', 'Body Care']
-        };
-
-        const subcategoriesToCreate = subcategoriesMap[cat.name].map(subName => ({
-          name: subName,
-          category_id: newCat.id
-        }));
-
-        const { error: subError } = await supabase
-          .from('subcategories')
-          .insert(subcategoriesToCreate);
-
-        if (subError) {
-          console.error('Error creating subcategories:', subError);
-        }
       }
     }
 
-    // Refresh categories and subcategories data
+    // Refresh categories data
     const { data: updatedCategories } = await supabase
       .from('categories')
       .select(`
@@ -86,56 +65,62 @@ export const processProductFile = async (
     const products = rows.slice(1).map(row => {
       const values = row.split(',').map(value => value.trim());
       
-      if (values.length < 5) {
+      if (values.length < 7) {
         console.error('Invalid row format:', row);
         return null;
       }
 
-      const [name, priceStr, typeStr, requires_prescriptionStr, description] = values;
+      const [name, priceStr, typeStr, categoryName, subcategoryName, requires_prescriptionStr, description] = values;
 
-      if (!name || !priceStr || !typeStr) {
+      if (!name || !priceStr || !typeStr || !categoryName || !subcategoryName) {
         console.error('Missing required fields:', row);
         return null;
       }
 
       const type = typeStr.toLowerCase();
-      const dbType = type === 'pharmacy' ? 'medication' : type;
       
-      // Find matching category based on product name keywords
-      let matchedCategory = null;
-      if (dbType === 'parapharmacy') {
-        if (name.toLowerCase().includes('vitamin') || name.toLowerCase().includes('supplement')) {
-          matchedCategory = updatedCategories?.find(c => c.name === 'Vitamins' && c.type === dbType);
-        } else if (name.toLowerCase().includes('skin') || name.toLowerCase().includes('face') || name.toLowerCase().includes('cream')) {
-          matchedCategory = updatedCategories?.find(c => c.name === 'Skincare' && c.type === dbType);
-        }
-      } else if (dbType === 'medication') {
-        if (name.toLowerCase().includes('pain') || name.toLowerCase().includes('relief')) {
-          matchedCategory = updatedCategories?.find(c => c.name === 'Pain Relief' && c.type === dbType);
-        } else if (name.toLowerCase().includes('antibiotic')) {
-          matchedCategory = updatedCategories?.find(c => c.name === 'Antibiotics' && c.type === dbType);
-        }
-      }
+      // Find matching category
+      const matchedCategory = updatedCategories?.find(c => 
+        c.name.toLowerCase() === categoryName.toLowerCase() && 
+        c.type === type
+      );
 
-      // If no specific match found, use first category of correct type
       if (!matchedCategory) {
-        matchedCategory = updatedCategories?.find(c => c.type === dbType);
+        console.error(`Category not found: ${categoryName}`);
+        return null;
       }
 
-      // Find matching subcategory
-      let matchedSubcategory = null;
-      if (matchedCategory) {
-        matchedSubcategory = matchedCategory.subcategories?.[0];
+      // Find or create subcategory
+      let subcategory = matchedCategory.subcategories?.find(s => 
+        s.name.toLowerCase() === subcategoryName.toLowerCase()
+      );
+
+      if (!subcategory) {
+        // Create new subcategory
+        const { data: newSubcategory, error: subError } = supabase
+          .from('subcategories')
+          .insert([{
+            name: subcategoryName,
+            category_id: matchedCategory.id
+          }])
+          .select()
+          .single();
+
+        if (subError) {
+          console.error('Error creating subcategory:', subError);
+          return null;
+        }
+        subcategory = newSubcategory;
       }
 
       return {
         name,
         price: parseFloat(priceStr) || 0,
-        type: dbType,
+        type,
         requires_prescription: requires_prescriptionStr.toLowerCase() === 'true',
         description: description || '',
-        category_id: matchedCategory?.id || null,
-        subcategory_id: matchedSubcategory?.id || null,
+        category_id: matchedCategory.id,
+        subcategory_id: subcategory.id,
       };
     }).filter(product => product !== null);
 
