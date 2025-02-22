@@ -1,4 +1,5 @@
 
+import { memo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { UserProfile } from "@/types/user";
@@ -7,7 +8,7 @@ interface UserAvatarProps {
   userProfile?: UserProfile | null;
 }
 
-const UserAvatar = ({ userProfile }: UserAvatarProps) => {
+const UserAvatar = memo(({ userProfile }: UserAvatarProps) => {
   return (
     <Avatar className="h-10 w-10 cursor-pointer">
       <AvatarImage 
@@ -19,6 +20,8 @@ const UserAvatar = ({ userProfile }: UserAvatarProps) => {
       </AvatarFallback>
     </Avatar>
   );
-};
+});
+
+UserAvatar.displayName = 'UserAvatar';
 
 export default UserAvatar;

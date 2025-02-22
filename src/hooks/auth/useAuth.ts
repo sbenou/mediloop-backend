@@ -1,5 +1,6 @@
 
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useRecoilCallback } from 'recoil';
+import { useMemo, useCallback } from 'react';
 import { 
   isAuthenticatedSelector, 
   userRoleSelector, 
@@ -15,15 +16,25 @@ export const useAuth = () => {
   const permissions = useRecoilValue(userPermissionsSelector);
   const isLoading = useRecoilValue(isLoadingSelector);
 
+  // Memoize profile to prevent unnecessary re-renders
+  const profile = useMemo(() => auth.profile, [auth.profile]);
+  
+  // Memoize user to prevent unnecessary re-renders
+  const user = useMemo(() => auth.user, [auth.user]);
+
+  // Memoize hasPermission function
+  const hasPermission = useCallback((permission: string) => 
+    isLoading || permissions.includes(permission),
+    [isLoading, permissions]
+  );
+
   return {
     isAuthenticated,
     userRole,
     permissions,
     isLoading,
-    // Consider the user having permission if we're still loading
-    hasPermission: (permission: string) => 
-      isLoading || permissions.includes(permission),
-    user: auth.user,
-    profile: auth.profile,
+    hasPermission,
+    user,
+    profile,
   };
 };
