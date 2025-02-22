@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { ProductFilters } from "./ProductFilters";
 import { ProductSort } from "./ProductSort";
 import { ProductGrid } from "./ProductGrid";
@@ -27,6 +28,24 @@ export const ProductSearch = () => {
     sortBy,
     itemsPerPage: ITEMS_PER_PAGE
   });
+
+  useEffect(() => {
+    const handleFilterProducts = (event: CustomEvent<{ type: string; category: string; subcategory: string }>) => {
+      console.log('Filter event received:', event.detail);
+      setFilters({
+        type: event.detail.type,
+        category: event.detail.category,
+        subcategory: event.detail.subcategory
+      });
+      setCurrentPage(1); // Reset to first page when filters change
+    };
+
+    window.addEventListener('filterProducts', handleFilterProducts as EventListener);
+
+    return () => {
+      window.removeEventListener('filterProducts', handleFilterProducts as EventListener);
+    };
+  }, []);
 
   const handleFilterChange = (newFilters: { type?: string; category?: string; subcategory?: string; description?: string }) => {
     console.log('Applying new filters:', newFilters);
