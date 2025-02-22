@@ -6,7 +6,8 @@ export const isAuthenticatedSelector = selector({
   key: 'isAuthenticated',
   get: ({ get }) => {
     const auth = get(authState);
-    return !!auth.user && !!auth.profile && !auth.isLoading;
+    // Consider authenticated if we have both user and profile, even while loading
+    return !!auth.user && !!auth.profile;
   },
 });
 
@@ -14,9 +15,7 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    if (!auth.profile) return null;
-    console.log('Current user role:', auth.profile.role);
-    return auth.profile.role;
+    return auth.profile?.role || null;
   },
 });
 
