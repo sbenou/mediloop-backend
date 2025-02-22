@@ -62,8 +62,12 @@ const UserMenu = () => {
     },
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    retry: 2,
-    onError: (error) => {
+    retry: 2
+  });
+
+  // Show error toast when query fails
+  useEffect(() => {
+    if (error) {
       console.error('Query error:', error);
       toast({
         variant: "destructive",
@@ -71,7 +75,7 @@ const UserMenu = () => {
         description: "Failed to load profile data. Please refresh the page.",
       });
     }
-  });
+  }, [error]);
 
   // Show connection button if not authenticated
   if (!isAuthenticated) {
