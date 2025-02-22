@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (error) {
       console.error('Profile fetch error:', error);
-      return null;
+      throw error;
     }
 
     console.log('Profile data:', profile);
@@ -27,18 +27,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const updateAuthState = async (session: any | null) => {
-    if (!session?.user) {
-      console.log('No session, clearing auth state');
-      setAuth({
-        user: null,
-        profile: null,
-        permissions: [],
-        isLoading: false,
-      });
-      return;
-    }
-
     try {
+      if (!session?.user) {
+        console.log('No session, clearing auth state');
+        setAuth({
+          user: null,
+          profile: null,
+          permissions: [],
+          isLoading: false,
+        });
+        return;
+      }
+
       console.log('Fetching profile for session:', session.user.id);
       const profile = await fetchAndSetProfile(session.user.id);
       
@@ -64,12 +64,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
-        setAuth(state => ({ ...state, isLoading: true }));
-        console.log('Getting session...');
-        
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!mounted) return;
+        
+        // Set loading state immediately after getting session
+        setAuth(state => ({ ...state, isLoading: true }));
         
         await updateAuthState(session);
       } catch (error) {
@@ -93,10 +93,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (!mounted) return;
 
-        setAuth(state => ({ ...state, isLoading: true }));
-
         switch (event) {
           case 'SIGNED_IN':
+            setAuth(state => ({ ...state, isLoading: true }));
             await updateAuthState(session);
             toast({
               title: "Welcome back!",
@@ -114,8 +113,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             break;
           
           default:
-            // For other events, just update loading state
-            setAuth(state => ({ ...state, isLoading: false }));
+            // Only update loading state for other events if it's true
+            setAuth(state => ({
+              ...state,
+              isLoading: false
+            }));
         }
       }
     );

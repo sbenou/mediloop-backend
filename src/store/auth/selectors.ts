@@ -6,7 +6,7 @@ export const isAuthenticatedSelector = selector({
   key: 'isAuthenticated',
   get: ({ get }) => {
     const auth = get(authState);
-    return !!auth.user && !auth.isLoading;
+    return !!auth.user;
   },
 });
 
