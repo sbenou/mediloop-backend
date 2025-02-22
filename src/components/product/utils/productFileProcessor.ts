@@ -1,21 +1,17 @@
-
 import { supabase } from "@/lib/supabase";
 import { Category, Subcategory } from "../types/product";
 
 const validateSuperAdminAccess = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    console.log('Current user:', user);
-    
     if (!user) throw new Error('No authenticated user found');
 
+    // Query profiles table directly without joining with auth.users
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, role')
       .eq('id', user.id)
       .single();
-
-    console.log('Profile query result:', { profile, error });
 
     if (error) throw error;
     if (!profile || profile.role !== 'superadmin') {
@@ -165,8 +161,7 @@ export const processProductFile = async (
     console.log('Starting file processing...');
     
     // First validate that the current user is a superadmin
-    const profile = await validateSuperAdminAccess();
-    console.log('Superadmin access validated:', profile);
+    await validateSuperAdminAccess();
 
     const text = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
