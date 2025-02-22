@@ -47,17 +47,16 @@ const UserMenu = () => {
   // Show connection button if not authenticated
   if (!isAuthenticated) {
     return (
-      <a
-        href="/login"
-        className="text-primary hover:text-primary/80 transition-colors"
-        onClick={(e) => {
-          e.preventDefault();
-          console.log('Connection link clicked, navigating to login');
-          window.location.replace('/login');
+      <button
+        onClick={() => {
+          console.log('Connection button clicked, navigating to login');
+          // Force a full page reload to clear any stale auth state
+          window.location.href = '/login';
         }}
+        className="text-primary hover:text-primary/80 transition-colors"
       >
         Connection
-      </a>
+      </button>
     );
   }
 
@@ -71,29 +70,27 @@ const UserMenu = () => {
   }
 
   return (
-    <div className="relative inline-block">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button 
-            type="button"
-            className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none"
-          >
-            <UserAvatar />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent 
-          align="end" 
-          sideOffset={5}
-          forceMount
-          className="z-[9999] w-56 bg-white border rounded-md shadow-lg animate-in fade-in-0 zoom-in-95"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button 
+          type="button"
+          className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none"
         >
-          <UserMenuItems 
-            userRole={userProfile?.role}
-            userName={userProfile?.full_name}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+          <UserAvatar />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        align="end" 
+        sideOffset={5}
+        forceMount
+        className="z-[9999] w-56 bg-white border rounded-md shadow-lg animate-in fade-in-0 zoom-in-95"
+      >
+        <UserMenuItems 
+          userRole={userProfile?.role}
+          userName={userProfile?.full_name}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 
