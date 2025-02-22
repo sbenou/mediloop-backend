@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
@@ -34,6 +33,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchAndSetProfile = useCallback(async (userId: string): Promise<{ profile: UserProfile | null; permissions: string[] }> => {
     console.log('Starting profile fetch for user:', userId);
     try {
+      setAuth(prev => ({ ...prev, isLoading: true }));
+
       const { data: profile, error } = await supabase
         .from('profiles')
         .select(`
@@ -81,10 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         permissionsCount: permissions.length 
       });
 
-      return { 
-        profile: safeProfile,
-        permissions
-      };
+      return { profile: safeProfile, permissions };
     } catch (error) {
       console.error('Error in fetchAndSetProfile:', error);
       return { profile: null, permissions: [] };
@@ -104,7 +102,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // Set loading state but maintain existing user data
       setAuth(prev => ({
         ...prev,
         user: session.user,
@@ -159,7 +156,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
-        // Set initial loading state
         setAuth(prev => ({ ...prev, isLoading: true }));
         
         const { data: { session } } = await supabase.auth.getSession();
@@ -196,7 +192,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Initialize auth state
     console.log('Initializing auth provider');
     initializeAuth();
 
