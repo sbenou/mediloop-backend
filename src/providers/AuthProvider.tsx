@@ -21,6 +21,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
       console.log('Profile check result:', profileCheck, 'Error:', checkError);
 
+      if (checkError) {
+        console.error('Profile check error:', checkError);
+        throw checkError;
+      }
+
+      if (!profileCheck) {
+        console.error('No profile found in initial check for user:', userId);
+        return null;
+      }
+
       // Now get the full profile with all required fields
       const { data: profile, error } = await supabase
         .from('profiles')
