@@ -1,21 +1,28 @@
-
 import { supabase } from "@/lib/supabase";
 import { Category, Subcategory } from "../types/product";
 
 const validateSuperAdminAccess = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) throw new Error('No authenticated user found');
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('Current user:', user);
+    
+    if (!user) throw new Error('No authenticated user found');
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
-  if (error) throw error;
-  if (!profile || profile.role !== 'superadmin') {
-    throw new Error('Permission denied: Only superadmins can upload products');
+    console.log('Profile query result:', { profile, error });
+
+    if (error) throw error;
+    if (!profile || profile.role !== 'superadmin') {
+      throw new Error('Permission denied: Only superadmins can upload products');
+    }
+  } catch (error) {
+    console.error('Error in validateSuperAdminAccess:', error);
+    throw error;
   }
 };
 
@@ -116,8 +123,11 @@ export const processProductFile = async (
   subcategories: Subcategory[] | undefined
 ) => {
   try {
+    console.log('Starting file processing...');
+    
     // First validate that the current user is a superadmin
     await validateSuperAdminAccess();
+    console.log('Superadmin access validated');
 
     const text = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -198,7 +208,10 @@ export const processProductFile = async (
 
     return { newProducts, skippedCount };
   } catch (error) {
-    console.error('File processing error:', error);
+    console.error('File processing error:', {
+      error,
+      location: error.stack || 'Stack trace not available'
+    });
     throw error;
   }
 };
