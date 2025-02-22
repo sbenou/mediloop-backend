@@ -1,3 +1,4 @@
+
 name,price,type,category,subcategory,requires_prescription,description,image_url
 Ibuprofen 400mg,12.99,pharmacy,Pain Relief,Pain Medication,true,Effective pain relief medication,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae
 Vitamin C 1000mg,15.99,parapharmacy,Vitamins,Immune Support,false,Immune system support supplement,https://images.unsplash.com/photo-1577401132921-cb39bb0adcff
