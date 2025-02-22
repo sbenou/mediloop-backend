@@ -39,20 +39,9 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
       'X-Client-Info': 'lovable-delivery',
     },
   },
-  // Add debug logging
-  logger: {
-    debug: (...args) => {
-      console.log('Supabase Debug:', ...args);
-    },
-    info: (...args) => {
-      console.log('Supabase Info:', ...args);
-    },
-    warn: (...args) => {
-      console.warn('Supabase Warning:', ...args);
-    },
-    error: (...args) => {
-      console.error('Supabase Error:', ...args);
-    },
+  // Enable debug mode for development
+  db: {
+    schema: 'public',
   },
 };
 
