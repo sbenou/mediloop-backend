@@ -15,19 +15,15 @@ export const useAuth = () => {
   const permissions = useRecoilValue(userPermissionsSelector);
   const isLoading = useRecoilValue(isLoadingSelector);
 
-  console.log('useAuth hook values:', { 
-    isAuthenticated, 
-    userRole, 
-    isLoading,
-    permissions,
-    profile: auth.profile
-  });
-
   return {
     isAuthenticated,
     userRole,
     permissions,
     isLoading,
-    hasPermission: (permission: string) => permissions.includes(permission),
+    // Consider the user having permission if we're still loading
+    hasPermission: (permission: string) => 
+      isLoading || permissions.includes(permission),
+    user: auth.user,
+    profile: auth.profile,
   };
 };

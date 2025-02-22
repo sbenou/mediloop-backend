@@ -14,11 +14,20 @@ import { authState } from "@/store/auth/atoms";
 
 const UserMenu = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const { profile } = useRecoilValue(authState);
+  const { user, profile } = useRecoilValue(authState);
   const navigate = useNavigate();
 
-  // Don't show anything while initially loading
-  if (isLoading && !isAuthenticated && !profile) {
+  // If we have a user but are loading the profile, show the avatar in a loading state
+  if (user && isLoading) {
+    return (
+      <div className="h-10 w-10">
+        <UserAvatar userProfile={profile} />
+      </div>
+    );
+  }
+
+  // If we're loading and have no user data, show skeleton
+  if (isLoading && !user) {
     return (
       <div className="h-10 w-10 rounded-full">
         <Skeleton className="h-full w-full rounded-full" />
@@ -26,8 +35,8 @@ const UserMenu = () => {
     );
   }
 
-  // Show login button if not authenticated
-  if (!isAuthenticated) {
+  // Show login button if not authenticated and not loading
+  if (!isAuthenticated && !isLoading) {
     return (
       <button
         onClick={() => navigate('/login', { replace: true })}
