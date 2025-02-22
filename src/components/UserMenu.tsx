@@ -17,7 +17,17 @@ const UserMenu = () => {
   const { profile } = useRecoilValue(authState);
   const navigate = useNavigate();
 
-  if (!isAuthenticated && !isLoading) {
+  // Don't show anything while initially loading
+  if (isLoading && !isAuthenticated && !profile) {
+    return (
+      <div className="h-10 w-10 rounded-full">
+        <Skeleton className="h-full w-full rounded-full" />
+      </div>
+    );
+  }
+
+  // Show login button if not authenticated
+  if (!isAuthenticated) {
     return (
       <button
         onClick={() => navigate('/login', { replace: true })}
@@ -28,17 +38,7 @@ const UserMenu = () => {
     );
   }
 
-  if (isLoading) {
-    console.log('Auth loading state');
-    return (
-      <div className="h-10 w-10 rounded-full">
-        <Skeleton className="h-full w-full rounded-full" />
-      </div>
-    );
-  }
-
-  console.log('Rendering UserMenu with profile:', profile);
-
+  // Show user menu if authenticated
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
@@ -117,6 +118,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
+    // Set initial loading state
+    setAuth(state => ({ ...state, isLoading: true }));
+
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -124,7 +128,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!mounted) return;
         
         if (session?.user) {
-          setAuth(state => ({ ...state, isLoading: true }));
           await updateAuthState(session);
         } else {
           setAuth({
@@ -153,9 +156,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       async (event, session) => {
         if (!mounted) return;
 
+        console.log('Auth state changed:', { event, session: session?.user?.id });
+
         switch (event) {
           case 'SIGNED_IN':
-            setAuth(state => ({ ...state, isLoading: true }));
             await updateAuthState(session);
             toast({
               title: "Welcome back!",
