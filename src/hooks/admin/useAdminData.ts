@@ -1,5 +1,5 @@
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/types/user";
 import { toast } from "@/components/ui/use-toast";
@@ -11,9 +11,11 @@ export const useAdminData = (userProfile: UserProfile | null) => {
     queryKey: ['admin', 'users'],
     queryFn: async () => {
       console.log('Fetching users for admin page with profile:', userProfile?.id);
+      
+      // Check for superadmin role
       if (!userProfile || userProfile.role !== 'superadmin') {
         console.log('User is not authorized to fetch admin data');
-        return [];
+        throw new Error('Not authorized to fetch admin data');
       }
 
       const { data, error } = await supabase
@@ -24,20 +26,23 @@ export const useAdminData = (userProfile: UserProfile | null) => {
       
       if (error) {
         console.error('Error fetching users:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not load users. Please try again.",
-        });
         throw error;
       }
 
       console.log('Fetched users:', data?.length);
-      return data as UserProfile[];
+      return data || [];
     },
-    enabled: !!userProfile && userProfile.role === 'superadmin',
+    enabled: Boolean(userProfile?.role === 'superadmin'),
     staleTime: 1000 * 60, // 1 minute
-    retry: 1,
+    retry: false, // Don't retry if unauthorized
+    onError: (error) => {
+      console.error('Error in useAdminData query:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load admin data. Please try again.",
+      });
+    }
   });
 
   const updateUserRole = async (userId: string, newRole: UserProfile['role']) => {
@@ -58,7 +63,6 @@ export const useAdminData = (userProfile: UserProfile | null) => {
         throw error;
       }
 
-      // Invalidate the users query to refetch the updated data
       await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
 
       toast({
@@ -70,15 +74,6 @@ export const useAdminData = (userProfile: UserProfile | null) => {
       throw error;
     }
   };
-
-  if (error) {
-    console.error('Error in useAdminData:', error);
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Failed to load admin data. Please try again.",
-    });
-  }
 
   return { 
     users, 

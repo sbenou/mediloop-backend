@@ -1,6 +1,4 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { Toaster } from "@/components/ui/toaster";
 import { AdminTabs } from "@/components/admin/tabs/AdminTabs";
 import { useAdminData } from "@/hooks/admin/useAdminData";
@@ -36,7 +34,7 @@ const AdminSettings = () => {
   }
 
   // Check if user is superadmin
-  if (profile?.role !== 'superadmin') {
+  if (!profile || profile.role !== 'superadmin') {
     return (
       <div className="container mx-auto py-8 px-4">
         <Header showUserMenu={false} showBackLink={true} />
@@ -45,6 +43,10 @@ const AdminSettings = () => {
       </div>
     );
   }
+
+  console.log('Admin Settings - Current users:', users);
+  console.log('Admin Settings - Loading state:', adminDataLoading);
+  console.log('Admin Settings - Current profile:', profile);
 
   return (
     <div>
