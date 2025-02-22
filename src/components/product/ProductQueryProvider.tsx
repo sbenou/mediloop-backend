@@ -58,12 +58,16 @@ export const useProductQuery = ({
       console.log('Fetching products with filters:', filters);
       console.log('User profile:', userProfile);
       
+      // First, let's verify the filters being used
+      console.log('Category ID:', filters.category);
+      console.log('Subcategory ID:', filters.subcategory);
+      
       let query = supabase
         .from('products')
         .select(`
           *,
-          category:categories(id, name),
-          subcategory:subcategories(id, name)
+          categories!inner (id, name),
+          subcategories!inner (id, name)
         `, { count: 'exact' });
       
       // Apply filters
@@ -73,15 +77,15 @@ export const useProductQuery = ({
         query = query.eq('type', 'parapharmacy');
       }
       
+      // Use the correct column names and ensure proper equality checks
       if (filters.category) {
-        query = query.eq('category_id', filters.category);
+        query = query.eq('categories.id', filters.category);
       }
       
       if (filters.subcategory) {
-        query = query.eq('subcategory_id', filters.subcategory);
+        query = query.eq('subcategories.id', filters.subcategory);
       }
 
-      // Add description filter
       if (filters.description) {
         query = query.ilike('description', `%${filters.description}%`);
       }
@@ -111,12 +115,17 @@ export const useProductQuery = ({
       // Apply pagination
       const from = (currentPage - 1) * itemsPerPage;
       query = query.range(from, from + itemsPerPage - 1);
-      
+
+      // Execute the query and log the raw query for debugging
+      console.log('Executing query:', query);
       const { data, error, count } = await query;
       
       console.log('Query result:', { data, error, count });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Query error:', error);
+        throw error;
+      }
       
       return {
         products: data || [],
