@@ -6,26 +6,50 @@ import { safeQueryResult } from '@/types/user';
 const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
+// Create a custom storage implementation
+const customStorage = {
+  getItem: (key: string): string | null => {
+    // Don't retrieve items if there's no session
+    const hasSession = localStorage.getItem('sb-session');
+    if (!hasSession) {
+      console.log('No session found, preventing storage access:', key);
+      return null;
+    }
+    const item = localStorage.getItem(key);
+    console.log('Getting from storage:', { key, value: item });
+    return item;
+  },
+  setItem: (key: string, value: string): void => {
+    console.log('Setting to storage:', { key, value });
+    localStorage.setItem(key, value);
+  },
+  removeItem: (key: string): void => {
+    console.log('Removing from storage:', { key });
+    localStorage.removeItem(key);
+    // If removing session, clear all Supabase-related items
+    if (key === 'sb-session') {
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('sb-')) {
+          localStorage.removeItem(k);
+        }
+      });
+    }
+  },
+  clear: () => {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+  }
+};
+
 const supabaseOptions: SupabaseClientOptions<"public"> = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: {
-      getItem: key => {
-        const item = localStorage.getItem(key);
-        console.log('Getting from storage:', { key, value: item }); // Debug log
-        return item;
-      },
-      setItem: (key, value) => {
-        console.log('Setting to storage:', { key, value }); // Debug log
-        localStorage.setItem(key, value);
-      },
-      removeItem: key => {
-        console.log('Removing from storage:', { key }); // Debug log
-        localStorage.removeItem(key);
-      }
-    }
+    storage: customStorage
   },
   global: {
     headers: {
@@ -33,7 +57,6 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
       'X-Client-Info': 'lovable-delivery',
     },
   },
-  // Enable debug mode for development
   db: {
     schema: 'public',
   },
@@ -46,33 +69,19 @@ export const supabase = createClient<Database>(
   supabaseOptions
 );
 
-// Helper function with improved type safety and logging
-export async function fetchFromSupabase<T extends Record<string, any>>(
-  query: Promise<{ data: T | null; error: any }>
-): Promise<T | null> {
-  try {
-    console.log('Starting Supabase query:', query);
-    const { data, error } = await query;
-    if (error) {
-      console.error('Supabase query error:', error);
-      return null;
-    }
-    console.log('Supabase query successful:', data);
-    return data as T;
-  } catch (error) {
-    console.error('Supabase fetch error:', error);
-    return null;
-  }
-}
-
 // Handle auth state changes and log them
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', { event, session: session?.user?.id });
+  if (event === 'SIGNED_OUT') {
+    customStorage.clear();
+  }
 });
 
 // Handle initial session
 supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session) {
+  if (!session) {
+    customStorage.clear();
+  } else {
     console.log('Initial session loaded:', session.user.id);
   }
 });
