@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
@@ -15,12 +16,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       profile: null,
       permissions: [],
       isLoading: false,
-    });
-    // Clear all Supabase-related items from localStorage
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('sb-')) {
-        localStorage.removeItem(key);
-      }
     });
   }, [setAuth]);
 
@@ -49,8 +44,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchAndSetProfile = useCallback(async (userId: string): Promise<{ profile: UserProfile | null; permissions: string[] }> => {
     console.log('Starting profile fetch for user:', userId);
     try {
-      setAuth(prev => ({ ...prev, isLoading: true }));
-
       const { data: profile, error } = await supabase
         .from('profiles')
         .select(`
@@ -160,16 +153,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       try {
         setAuth(prev => ({ ...prev, isLoading: true }));
+        
+        // Check for existing session in storage first
+        const existingSession = localStorage.getItem('sb-' + supabase.supabaseUrl);
+        if (existingSession) {
+          const { currentSession } = JSON.parse(existingSession);
+          if (currentSession && mounted) {
+            await updateAuthState(currentSession);
+            return;
+          }
+        }
+
+        // If no stored session, check current session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Session fetch error:', error);
-          clearAuthState();
+          if (mounted) clearAuthState();
           return;
         }
 
-        console.log('Initial session check:', session?.user?.id);
-        
         if (mounted) {
           if (session) {
             await updateAuthState(session);
@@ -179,7 +182,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        clearAuthState();
+        if (mounted) clearAuthState();
       }
     };
 
