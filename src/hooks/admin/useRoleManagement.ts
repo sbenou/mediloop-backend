@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { useRoleState } from "./role/useRoleState";
 import { useRoleQueries } from "./role/useRoleQueries";
@@ -27,7 +28,14 @@ export const useRoleManagement = () => {
 
   const { roles, isLoading, queryClient } = useRoleQueries();
 
-  const { handleEdit, handleSave, handleDelete, confirmDelete } = useRoleActions({
+  const { 
+    handleEdit, 
+    handleSave, 
+    handleDelete, 
+    handleCancel, 
+    confirmDelete,
+    handleManagePermissions 
+  } = useRoleActions({
     setIsEditing,
     setEditName,
     setEditDescription,
@@ -108,7 +116,9 @@ export const useRoleManagement = () => {
     handleEdit,
     handleSave,
     handleDelete,
+    handleCancel,
     confirmDelete,
     handleCreateRole,
+    handleManagePermissions,
   };
 };
