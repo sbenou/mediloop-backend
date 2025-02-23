@@ -43,20 +43,46 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         throw signInError;
       }
 
-      if (!signInData.session) {
-        console.error('No session data received');
-        throw new Error('No session data received');
+      if (!signInData.user) {
+        console.error('No user data received after sign in');
+        throw new Error('No user data received');
       }
 
-      console.log('Sign in successful:', signInData.session.user.id);
+      console.log('Sign in successful:', signInData.user.id);
 
-      // Update global auth state with session data
+      // Get the session to confirm authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session fetch error:', sessionError);
+        throw sessionError;
+      }
+
+      if (!session) {
+        console.error('No session after successful sign in');
+        throw new Error('Authentication failed - no session');
+      }
+
+      console.log('Session confirmed:', session.user.id);
+
+      // Update global auth state
       setAuth({
-        user: signInData.session.user,
-        profile: null, // This will be fetched by AuthProvider
+        user: session.user,
+        profile: null, // Let AuthProvider handle profile fetching
         permissions: [],
         isLoading: true,
       });
+
+      // Wait a brief moment to ensure session is established
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Verify session one more time
+      const { data: { session: verifiedSession } } = await supabase.auth.getSession();
+      if (!verifiedSession) {
+        throw new Error('Failed to establish session, please try again');
+      }
+
+      console.log('Session verified, proceeding with navigation');
 
       // Show success message
       toast({
