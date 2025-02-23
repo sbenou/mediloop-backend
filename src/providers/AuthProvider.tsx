@@ -46,27 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          role,
-          role_id,
-          full_name,
-          email,
-          avatar_url,
-          auth_method,
-          is_blocked,
-          city,
-          date_of_birth,
-          license_number,
-          cns_card_front,
-          cns_card_back,
-          cns_number,
-          doctor_stamp_url,
-          doctor_signature_url,
-          deleted_at,
-          created_at,
-          updated_at
-        `)
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
 
@@ -153,18 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       try {
         setAuth(prev => ({ ...prev, isLoading: true }));
-        
-        // Check for existing session in storage first
-        const existingSession = localStorage.getItem('sb-' + supabase.supabaseUrl);
-        if (existingSession) {
-          const { currentSession } = JSON.parse(existingSession);
-          if (currentSession && mounted) {
-            await updateAuthState(currentSession);
-            return;
-          }
-        }
 
-        // If no stored session, check current session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -193,10 +162,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       console.log('Auth state changed:', { event, session: session?.user?.id });
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        await updateAuthState(session);
-      } else if (event === 'SIGNED_OUT') {
-        clearAuthState();
+      switch (event) {
+        case 'SIGNED_IN':
+        case 'TOKEN_REFRESHED':
+          await updateAuthState(session);
+          break;
+        case 'SIGNED_OUT':
+          clearAuthState();
+          break;
       }
     });
 
