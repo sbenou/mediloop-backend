@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
@@ -157,15 +156,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Immediately check for an existing session
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('Initial session check:', session?.user?.id);
-    
-    if (mounted && session) {
-      await updateAuthState(session);
-    }
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Initial session check:', session?.user?.id);
+        
+        if (mounted && session) {
+          await updateAuthState(session);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      }
+    };
 
-    // Subscribe to auth changes
+    initializeAuth();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
