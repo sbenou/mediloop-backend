@@ -9,12 +9,6 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create a custom storage implementation
 const customStorage = {
   getItem: (key: string): string | null => {
-    // Don't retrieve items if there's no session
-    const hasSession = localStorage.getItem('sb-session');
-    if (!hasSession) {
-      console.log('No session found, preventing storage access:', key);
-      return null;
-    }
     const item = localStorage.getItem(key);
     console.log('Getting from storage:', { key, value: item });
     return item;
@@ -26,16 +20,9 @@ const customStorage = {
   removeItem: (key: string): void => {
     console.log('Removing from storage:', { key });
     localStorage.removeItem(key);
-    // If removing session, clear all Supabase-related items
-    if (key === 'sb-session') {
-      Object.keys(localStorage).forEach(k => {
-        if (k.startsWith('sb-')) {
-          localStorage.removeItem(k);
-        }
-      });
-    }
   },
   clear: () => {
+    console.log('Clearing storage');
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith('sb-')) {
         localStorage.removeItem(key);
