@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
@@ -8,11 +8,9 @@ import { toast } from '@/components/ui/use-toast';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
-  const lastSessionId = useRef<string | null>(null);
 
   const clearAuthState = useCallback(() => {
     console.log('Clearing auth state');
-    lastSessionId.current = null;
     setAuth({
       user: null,
       profile: null,
@@ -50,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Profile fetch error:', error);
@@ -89,12 +87,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Prevent duplicate updates for the same session
-    if (lastSessionId.current === session.user.id) {
-      console.log('Session already processed, skipping update');
-      return;
-    }
-
     try {
       setAuth(prev => ({
         ...prev,
@@ -116,7 +108,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         permissionsCount: permissions.length
       });
 
-      lastSessionId.current = session.user.id;
       setAuth({
         user: session.user,
         profile,
@@ -149,8 +140,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        if (mounted && session) {
-          await updateAuthState(session);
+        if (mounted) {
+          if (session) {
+            await updateAuthState(session);
+          } else {
+            clearAuthState();
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -166,6 +161,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Auth state changed:', { event, session: session?.user?.id });
 
       switch (event) {
+        case 'INITIAL_SESSION':
+          if (!session) clearAuthState();
+          break;
         case 'SIGNED_IN':
         case 'TOKEN_REFRESHED':
           await updateAuthState(session);

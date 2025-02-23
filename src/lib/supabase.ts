@@ -9,33 +9,13 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
-    storage: {
-      // This ensures the session is stored in cookies instead of localStorage
-      getItem: (key) => {
-        const item = document.cookie
-          .split(';')
-          .find(cookie => cookie.trim().startsWith(`${key}=`));
-        if (!item) return null;
-        return JSON.parse(decodeURIComponent(item.split('=')[1]));
-      },
-      setItem: (key, value) => {
-        // Set cookie with secure parameters
-        document.cookie = `${key}=${encodeURIComponent(JSON.stringify(value))}; path=/; secure; samesite=strict; max-age=2592000`; // 30 days
-      },
-      removeItem: (key) => {
-        document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-      },
-    },
+    storage: sessionStorage, // Use sessionStorage instead of custom implementation
   },
   global: {
     headers: {
       apikey: supabaseAnonKey,
       'X-Client-Info': 'lovable-delivery',
     },
-  },
-  db: {
-    schema: 'public',
   },
 };
 
