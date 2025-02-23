@@ -36,6 +36,8 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
   setEditName,
   setEditDescription
 }, ref) => {
+  console.log('RoleTableRow render:', { isEditing, role }); // Debug log
+
   return (
     <TableRow key={role.id}>
       <TableCell className="text-left">
@@ -69,6 +71,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
                 onClick={() => onSave(role.id)}
                 variant="outline"
                 size="sm"
+                title="Save"
               >
                 <Save className="h-4 w-4" />
               </Button>
@@ -76,6 +79,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
                 onClick={onCancel}
                 variant="outline"
                 size="sm"
+                title="Cancel"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -86,6 +90,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
                 onClick={() => onEdit(role.id)}
                 variant="outline"
                 size="sm"
+                title="Edit"
               >
                 <Edit2 className="h-4 w-4" />
               </Button>
@@ -93,6 +98,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
                 onClick={() => onManagePermissions(role.id)}
                 variant="outline"
                 size="sm"
+                title="Manage Permissions"
               >
                 <Shield className="h-4 w-4" />
               </Button>
@@ -103,6 +109,7 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
             variant="outline"
             size="sm"
             disabled={isEditing}
+            title="Delete"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
