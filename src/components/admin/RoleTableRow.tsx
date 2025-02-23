@@ -4,6 +4,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Edit2, Save, Trash2, Shield, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface RoleTableRowProps {
   role: {
@@ -67,52 +68,94 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
         <div className="flex justify-end gap-2">
           {isEditing ? (
             <>
-              <Button
-                onClick={() => onSave(role.id)}
-                variant="outline"
-                size="sm"
-                title="Save"
-              >
-                <Save className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={onCancel}
-                variant="outline"
-                size="sm"
-                title="Cancel"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onSave(role.id)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Save changes</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={onCancel}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Cancel editing</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </>
           ) : (
             <>
-              <Button
-                onClick={() => onEdit(role.id)}
-                variant="outline"
-                size="sm"
-                title="Edit"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={() => onManagePermissions(role.id)}
-                variant="outline"
-                size="sm"
-                title="Manage Permissions"
-              >
-                <Shield className="h-4 w-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onEdit(role.id)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit role</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onManagePermissions(role.id)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Shield className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Manage permissions</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </>
           )}
-          <Button
-            onClick={() => onDelete(role.id)}
-            variant="outline"
-            size="sm"
-            disabled={isEditing}
-            title="Delete"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => onDelete(role.id)}
+                  variant="outline"
+                  size="sm"
+                  disabled={isEditing}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete role</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </TableCell>
     </TableRow>

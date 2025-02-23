@@ -1,6 +1,7 @@
 
 import { useRoleMutations } from "@/hooks/useRoleMutations";
 import { Role } from "@/types/role";
+import { useRouter } from "react-router-dom";
 
 interface UseRoleActionsProps {
   setIsEditing: (id: string | null) => void;
@@ -24,6 +25,7 @@ export const useRoleActions = ({
   tempRole,
 }: UseRoleActionsProps) => {
   const { createRoleMutation, updateRoleMutation, deleteRoleMutation } = useRoleMutations();
+  const router = useRouter();
 
   const handleEdit = (roleId: string) => {
     setIsEditing(roleId);
@@ -72,8 +74,8 @@ export const useRoleActions = ({
   };
 
   const handleManagePermissions = (roleId: string) => {
-    // This will be handled by the parent component
-    console.log('Managing permissions for role:', roleId);
+    // Navigate to the role permissions page
+    router.navigate(`/admin/roles/${roleId}/permissions`);
   };
 
   return {
