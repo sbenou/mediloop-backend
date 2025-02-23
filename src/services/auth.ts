@@ -7,6 +7,15 @@ const debug = (message: string, data?: any) => {
   }
 };
 
+const clearLocalStorage = () => {
+  debug('Clearing local storage');
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+};
+
 export const AuthService = {
   requestOtp: async (email: string): Promise<void> => {
     debug("Requesting OTP for:", email);
@@ -62,26 +71,16 @@ export const AuthService = {
   // Revoke the current session
   revokeSession: async () => {
     debug("Revoking current session");
-    const { error } = await supabase.auth.signOut({ scope: 'local' });
-    
-    if (error) {
-      debug("Session revocation failed:", error);
-      throw error;
-    }
-    
+    await supabase.auth.signOut({ scope: 'local' });
+    clearLocalStorage();
     debug("Session successfully revoked");
   },
 
   // Revoke all sessions for the current user
   revokeAllSessions: async () => {
     debug("Revoking all sessions");
-    const { error } = await supabase.auth.signOut({ scope: 'global' });
-    
-    if (error) {
-      debug("Global session revocation failed:", error);
-      throw error;
-    }
-    
+    await supabase.auth.signOut({ scope: 'global' });
+    clearLocalStorage();
     debug("All sessions successfully revoked");
   },
 
