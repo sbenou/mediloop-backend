@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
@@ -90,6 +91,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [fetchUserPermissions]);
 
   const updateAuthState = useCallback(async (session: any | null) => {
+    console.log('Updating auth state with session:', session?.user?.id);
+    
     if (!session?.user) {
       console.log('No session or user, clearing auth state');
       setAuth({
@@ -154,72 +157,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    const initializeAuth = async () => {
-      try {
-        setAuth(prev => ({ ...prev, isLoading: true }));
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Initial session check:', session?.user?.id);
-        
-        if (!mounted) return;
-        
-        if (session) {
-          await updateAuthState(session);
-        } else {
-          setAuth({
-            user: null,
-            profile: null,
-            permissions: [],
-            isLoading: false,
-          });
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        if (mounted) {
-          setAuth({
-            user: null,
-            profile: null,
-            permissions: [],
-            isLoading: false,
-          });
-          
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "Failed to initialize authentication. Please try again.",
-          });
-        }
+    // Immediately check for an existing session
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('Initial session check:', session?.user?.id);
+    
+    if (mounted && session) {
+      await updateAuthState(session);
+    }
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      
+      console.log('Auth state changed:', { event, session: session?.user?.id });
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        await updateAuthState(session);
+      } else if (event === 'SIGNED_OUT') {
+        setAuth({
+          user: null,
+          profile: null,
+          permissions: [],
+          isLoading: false,
+        });
       }
-    };
-
-    console.log('Initializing auth provider');
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        console.log('Auth state changed:', { event, session: session?.user?.id });
-
-        if (event === 'SIGNED_IN' && session) {
-          await updateAuthState(session);
-        } else if (event === 'SIGNED_OUT') {
-          setAuth({
-            user: null,
-            profile: null,
-            permissions: [],
-            isLoading: false,
-          });
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          await updateAuthState(session);
-        }
-      }
-    );
+    });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [setAuth, updateAuthState]);
+  }, [updateAuthState, setAuth]);
 
   return <>{children}</>;
 };
