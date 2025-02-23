@@ -11,6 +11,21 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+    storage: {
+      getItem: key => {
+        const item = localStorage.getItem(key);
+        console.log('Getting from storage:', { key, value: item }); // Debug log
+        return item;
+      },
+      setItem: (key, value) => {
+        console.log('Setting to storage:', { key, value }); // Debug log
+        localStorage.setItem(key, value);
+      },
+      removeItem: key => {
+        console.log('Removing from storage:', { key }); // Debug log
+        localStorage.removeItem(key);
+      }
+    }
   },
   global: {
     headers: {
