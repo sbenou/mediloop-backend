@@ -11,27 +11,6 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: {
-      // Use cookies for session storage instead of localStorage
-      getItem: (key: string) => {
-        const item = document.cookie
-          .split('; ')
-          .find((row) => row.startsWith(`${key}=`))
-          ?.split('=')[1];
-        try {
-          return item ? JSON.parse(decodeURIComponent(item)) : null;
-        } catch (e) {
-          return null;
-        }
-      },
-      setItem: (key: string, value: any) => {
-        // Set cookie with Secure and SameSite attributes
-        document.cookie = `${key}=${encodeURIComponent(JSON.stringify(value))}; path=/; secure; samesite=strict`;
-      },
-      removeItem: (key: string) => {
-        document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-      },
-    },
   },
   global: {
     headers: {
@@ -85,12 +64,10 @@ supabase.auth.getSession().then(({ data: { session } }) => {
 
 export const getSessionFromCookie = () => {
   try {
-    const sessionStr = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('supabase.auth.token='))
-      ?.split('=')[1];
-    return sessionStr ? JSON.parse(decodeURIComponent(sessionStr)) : null;
+    const sessionStr = localStorage.getItem('sb-session');
+    return sessionStr ? JSON.parse(sessionStr) : null;
   } catch (e) {
+    console.error('Error parsing session:', e);
     return null;
   }
 };
