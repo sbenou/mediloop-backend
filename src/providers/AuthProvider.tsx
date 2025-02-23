@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
@@ -8,9 +8,11 @@ import { toast } from '@/components/ui/use-toast';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
+  const lastSessionId = useRef<string | null>(null);
 
   const clearAuthState = useCallback(() => {
     console.log('Clearing auth state');
+    lastSessionId.current = null;
     setAuth({
       user: null,
       profile: null,
@@ -48,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('Profile fetch error:', error);
@@ -87,6 +89,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    // Prevent duplicate updates for the same session
+    if (lastSessionId.current === session.user.id) {
+      console.log('Session already processed, skipping update');
+      return;
+    }
+
     try {
       setAuth(prev => ({
         ...prev,
@@ -108,6 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         permissionsCount: permissions.length
       });
 
+      lastSessionId.current = session.user.id;
       setAuth({
         user: session.user,
         profile,
@@ -132,8 +141,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
-        setAuth(prev => ({ ...prev, isLoading: true }));
-
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -142,12 +149,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        if (mounted) {
-          if (session) {
-            await updateAuthState(session);
-          } else {
-            clearAuthState();
-          }
+        if (mounted && session) {
+          await updateAuthState(session);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
