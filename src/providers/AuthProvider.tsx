@@ -46,51 +46,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          role,
-          role_id,
-          full_name,
-          email,
-          avatar_url,
-          auth_method,
-          is_blocked,
-          city,
-          date_of_birth,
-          license_number,
-          cns_card_front,
-          cns_card_back,
-          cns_number,
-          doctor_stamp_url,
-          doctor_signature_url,
-          deleted_at,
-          created_at,
-          updated_at
-        `)
+        .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Profile fetch error:', error);
         return { profile: null, permissions: [] };
       }
 
-      if (!profile) {
+      const safeProfile = safeQueryResult<UserProfile>(profile);
+      if (!safeProfile) {
         console.error('No profile found for user:', userId);
         return { profile: null, permissions: [] };
       }
 
-      const permissions = profile.role_id 
-        ? await fetchUserPermissions(profile.role_id)
+      const permissions = safeProfile.role_id 
+        ? await fetchUserPermissions(safeProfile.role_id)
         : [];
 
       console.log('Profile and permissions fetched:', { 
-        profileId: profile.id, 
-        role: profile.role,
+        profileId: safeProfile.id, 
+        role: safeProfile.role,
         permissionsCount: permissions.length 
       });
 
-      return { profile, permissions };
+      return { profile: safeProfile, permissions };
     } catch (error) {
       console.error('Error in fetchAndSetProfile:', error);
       return { profile: null, permissions: [] };
