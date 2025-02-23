@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
@@ -8,6 +8,7 @@ import { toast } from '@/components/ui/use-toast';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
+  const processingAuth = useRef(false);
 
   const clearAuthState = useCallback(() => {
     console.log('Clearing auth state');
@@ -79,6 +80,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [fetchUserPermissions]);
 
   const updateAuthState = useCallback(async (session: any | null) => {
+    if (processingAuth.current) {
+      console.log('Auth update already in progress, skipping');
+      return;
+    }
+
     console.log('Updating auth state with session:', session?.user?.id);
     
     if (!session?.user) {
@@ -88,6 +94,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
+      processingAuth.current = true;
+      
       setAuth(prev => ({
         ...prev,
         user: session.user,
@@ -124,6 +132,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Authentication Error",
         description: "There was an error loading your profile. Please try logging in again.",
       });
+    } finally {
+      processingAuth.current = false;
     }
   }, [fetchAndSetProfile, setAuth, clearAuthState]);
 
