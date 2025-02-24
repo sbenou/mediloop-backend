@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -9,6 +10,7 @@ import SearchHeader from "@/components/pharmacy/SearchHeader";
 import DoctorListSection from "@/components/doctor/DoctorListSection";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { LocationToggle } from "@/components/shared/LocationToggle";
 
 const DoctorSearch = () => {
   const { isAuthenticated } = useAuth();
@@ -84,11 +86,41 @@ const DoctorSearch = () => {
     }
   }, [doctors?.length, searchRadius, session]);
 
+  const handleLocationToggle = (checked: boolean) => {
+    if (checked) {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            });
+            toast({
+              title: "Using your location",
+              description: "Showing doctors within 2km of your location",
+            });
+          },
+          () => {
+            toast({
+              title: "Location access denied",
+              description: "Please enable location access or search for a specific city.",
+              variant: "destructive",
+            });
+          }
+        );
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
+        <LocationToggle
+          showDefaultLocation={!!userLocation}
+          onLocationToggle={handleLocationToggle}
+        />
         <DoctorListSection
           doctors={doctors}
           isLoading={isLoading || isSearching}
