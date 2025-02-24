@@ -3,7 +3,7 @@ import React, { forwardRef } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit2, Save, Trash2, Shield, X } from "lucide-react";
+import { Edit2, Save, Trash2 } from "lucide-react";
 
 interface RoleTableRowProps {
   role: {
@@ -17,8 +17,6 @@ interface RoleTableRowProps {
   onEdit: (roleId: string) => void;
   onSave: (roleId: string) => void;
   onDelete: (roleId: string) => void;
-  onCancel: () => void;
-  onManagePermissions: (roleId: string) => void;
   setEditName: (value: string) => void;
   setEditDescription: (value: string) => void;
 }
@@ -31,8 +29,6 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
   onEdit,
   onSave,
   onDelete,
-  onCancel,
-  onManagePermissions,
   setEditName,
   setEditDescription
 }, ref) => {
@@ -64,39 +60,21 @@ export const RoleTableRow = forwardRef<HTMLInputElement, RoleTableRowProps>(({
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
           {isEditing ? (
-            <>
-              <Button
-                onClick={() => onSave(role.id)}
-                variant="outline"
-                size="sm"
-              >
-                <Save className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={onCancel}
-                variant="outline"
-                size="sm"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </>
+            <Button
+              onClick={() => onSave(role.id)}
+              variant="outline"
+              size="sm"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
           ) : (
-            <>
-              <Button
-                onClick={() => onEdit(role.id)}
-                variant="outline"
-                size="sm"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={() => onManagePermissions(role.id)}
-                variant="outline"
-                size="sm"
-              >
-                <Shield className="h-4 w-4" />
-              </Button>
-            </>
+            <Button
+              onClick={() => onEdit(role.id)}
+              variant="outline"
+              size="sm"
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
           )}
           <Button
             onClick={() => onDelete(role.id)}

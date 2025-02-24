@@ -27,17 +27,12 @@ export const useRoleActions = ({
 
   const handleEdit = (roleId: string) => {
     setIsEditing(roleId);
+    // Find the role in tempRole or get it from the database
     const roleToEdit = tempRole?.id === roleId ? tempRole : null;
     if (roleToEdit) {
       setEditName(roleToEdit.name);
       setEditDescription(roleToEdit.description || '');
     }
-  };
-
-  const handleCancel = () => {
-    setIsEditing(null);
-    setEditName('');
-    setEditDescription('');
   };
 
   const handleSave = async (id: string) => {
@@ -71,17 +66,10 @@ export const useRoleActions = ({
     setRoleToDelete(null);
   };
 
-  const handleManagePermissions = (roleId: string) => {
-    // This will be handled by the parent component
-    console.log('Managing permissions for role:', roleId);
-  };
-
   return {
     handleEdit,
     handleSave,
     handleDelete,
-    handleCancel,
     confirmDelete,
-    handleManagePermissions,
   };
 };
