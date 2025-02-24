@@ -49,13 +49,12 @@ const DoctorSearch = () => {
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
-  // Effect to initialize location and geolocation
+  // Effect to initialize location
   useEffect(() => {
     // Set Luxembourg coordinates by default without showing the toast
     setUserLocation(LUXEMBOURG_COORDINATES);
     
-    // Only attempt geolocation if coordinates aren't set
-    if (!coordinates && "geolocation" in navigator) {
+    if (!coordinates) {
       handleCitySearch("Luxembourg City");
     }
   }, [coordinates]);
