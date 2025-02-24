@@ -70,27 +70,12 @@ const DoctorSearch = () => {
 
   const handleLocationToggle = (checked: boolean) => {
     if (checked) {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setUserLocation({
-              lat: position.coords.latitude,
-              lon: position.coords.longitude
-            });
-            setSearchRadius(2000); // Reset radius when changing location
-            toast({
-              title: "Using your location",
-              description: "Showing doctors within 2km of your location",
-            });
-          },
-          () => {
-            toast({
-              title: "Location access denied",
-              description: "Please enable location access or search for a specific city.",
-              variant: "destructive",
-            });
-          }
-        );
+      setSearchRadius(2000); // Reset radius when changing location
+      if (userLocation) {
+        toast({
+          title: "Using your location",
+          description: "Showing doctors within 2km of your location",
+        });
       }
     } else {
       if (userProfile?.city) {
@@ -146,3 +131,4 @@ const DoctorSearch = () => {
 };
 
 export default DoctorSearch;
+
