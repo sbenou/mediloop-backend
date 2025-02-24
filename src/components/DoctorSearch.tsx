@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
@@ -10,8 +10,10 @@ import SearchHeader from "@/components/pharmacy/SearchHeader";
 import DoctorListSection from "@/components/doctor/DoctorListSection";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { LocationToggle } from "@/components/shared/LocationToggle";
 
 const DoctorSearch = () => {
+  const [showDefaultLocation, setShowDefaultLocation] = useState(false);
   const { isAuthenticated } = useAuth();
   const { data: session } = useQuery({
     queryKey: ['session'],
@@ -67,6 +69,43 @@ const DoctorSearch = () => {
     }
   }, [doctors?.length, searchRadius]);
 
+  const handleLocationToggle = (checked: boolean) => {
+    setShowDefaultLocation(checked);
+    if (checked) {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            });
+            setSearchRadius(2000);
+            toast({
+              title: "Using your location",
+              description: "Showing doctors within 2km of your location",
+            });
+          },
+          () => {
+            setShowDefaultLocation(false);
+            toast({
+              title: "Location access denied",
+              description: "Please enable location access or search for a specific city.",
+              variant: "destructive",
+            });
+          }
+        );
+      }
+    } else {
+      if (userProfile?.city) {
+        handleCitySearch(userProfile.city);
+      } else {
+        setUserLocation(null);
+        handleCitySearch("Luxembourg City");
+      }
+      setSearchRadius(2000);
+    }
+  };
+
   // Convert string coordinates to numbers for DoctorListSection
   const displayCoordinates = {
     lat: parseFloat(searchCoordinates.lat),
@@ -78,6 +117,10 @@ const DoctorSearch = () => {
       <Header />
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
+        <LocationToggle
+          showDefaultLocation={showDefaultLocation}
+          onLocationToggle={handleLocationToggle}
+        />
         <DoctorListSection
           doctors={doctors}
           isLoading={isDoctorsLoading || isSearching}
