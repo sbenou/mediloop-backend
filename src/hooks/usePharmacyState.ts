@@ -97,11 +97,6 @@ export const usePharmacyState = (session: any) => {
       } catch (error) {
         console.error('Geolocation error:', error);
         setUserLocation(null);
-        toast({
-          title: "Location access denied",
-          description: "Please enable location access or search for a specific city.",
-          variant: "destructive",
-        });
       }
     }
   };
