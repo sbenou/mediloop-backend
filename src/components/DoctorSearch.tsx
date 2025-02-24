@@ -77,7 +77,7 @@ const DoctorSearch = () => {
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <LocationToggle
-          showDefaultLocation={!userLocation}
+          showDefaultLocation={!userLocation || userLocation === LUXEMBOURG_COORDINATES}
           onLocationToggle={(checked) => {
             if (!checked) {
               // When disabling location
@@ -89,7 +89,24 @@ const DoctorSearch = () => {
               }
             } else {
               // When enabling location
-              setUserLocation(null);
+              if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    setUserLocation({
+                      lat: position.coords.latitude,
+                      lon: position.coords.longitude
+                    });
+                    toast({
+                      title: "Using your location",
+                      description: "Showing locations near you",
+                    });
+                  },
+                  (error) => {
+                    console.error('Geolocation error:', error);
+                    setUserLocation(LUXEMBOURG_COORDINATES);
+                  }
+                );
+              }
             }
             setSearchRadius(2000);
           }}
