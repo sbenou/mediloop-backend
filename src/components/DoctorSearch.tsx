@@ -20,7 +20,7 @@ const DoctorSearch = () => {
       const { data: { session } } = await supabase.auth.getSession();
       return session;
     },
-    staleTime: 1000 * 60 * 5, // Consider session stable for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   const {
@@ -31,7 +31,6 @@ const DoctorSearch = () => {
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
-  // Determine search coordinates with useMemo to prevent unnecessary recalculations
   const searchCoordinates = coordinates 
     ? { 
         lat: coordinates.lat, 
@@ -49,20 +48,18 @@ const DoctorSearch = () => {
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
-  // Effect to handle user location based on session and coordinates
+  // Effect to initialize location
   useEffect(() => {
-    setUserLocation(LUXEMBOURG_COORDINATES);
-    
-    if (!session) {
-      if (!coordinates) {
+    if (!coordinates && !userLocation) {
+      if (session && userProfile?.city) {
+        handleCitySearch(userProfile.city);
+      } else {
         handleCitySearch("Luxembourg City");
       }
-    } else if (!coordinates && userProfile?.city) {
-      handleCitySearch(userProfile.city);
     }
   }, [session, coordinates, userProfile?.city]);
 
-  // Effect to gradually increase search radius if no doctors found
+  // Effect for search radius adjustment
   useEffect(() => {
     if (doctors?.length === 0 && searchRadius < 10000) {
       setSearchRadius(prev => Math.min(prev + 2000, 10000));
@@ -78,7 +75,7 @@ const DoctorSearch = () => {
               lat: position.coords.latitude,
               lon: position.coords.longitude
             });
-            setSearchRadius(2000); // Reset radius when changing location
+            setSearchRadius(2000);
             toast({
               title: "Using your location",
               description: "Showing doctors within 2km of your location",
@@ -97,14 +94,13 @@ const DoctorSearch = () => {
       if (userProfile?.city) {
         handleCitySearch(userProfile.city);
       } else {
-        setUserLocation(LUXEMBOURG_COORDINATES);
+        setUserLocation(null);
         handleCitySearch("Luxembourg City");
       }
-      setSearchRadius(2000); // Reset radius when changing location
+      setSearchRadius(2000);
     }
   };
 
-  // Convert string coordinates to numbers for DoctorListSection
   const displayCoordinates = {
     lat: parseFloat(searchCoordinates.lat),
     lon: parseFloat(searchCoordinates.lon)
@@ -116,7 +112,7 @@ const DoctorSearch = () => {
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <LocationToggle
-          showDefaultLocation={!!userLocation}
+          showDefaultLocation={false}
           onLocationToggle={handleLocationToggle}
         />
         <DoctorListSection
