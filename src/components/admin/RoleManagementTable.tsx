@@ -3,14 +3,17 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { RoleTableRow } from "./RoleTableRow";
 import { CreateRoleModal } from "./role/CreateRoleModal";
 import { DeleteRoleDialog } from "./role/DeleteRoleDialog";
+import { RolePermissionsDialog } from "./role/RolePermissionsDialog";
 import { useRoleManagement } from "@/hooks/admin/useRoleManagement";
 
 export const RoleManagementTable = () => {
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [selectedRoleName, setSelectedRoleName] = useState<string>("");
   const {
     roles,
     isLoading,
@@ -43,6 +46,14 @@ export const RoleManagementTable = () => {
       nameInputRef.current.focus();
     }
   }, [isEditing]);
+
+  const handleManagePermissions = (roleId: string) => {
+    const role = roles.find(r => r.id === roleId);
+    if (role) {
+      setSelectedRoleId(roleId);
+      setSelectedRoleName(role.name);
+    }
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -85,6 +96,7 @@ export const RoleManagementTable = () => {
                   onSave={handleSave}
                   onDelete={handleDelete}
                   onCancel={handleCancelEdit}
+                  onManagePermissions={handleManagePermissions}
                   setEditName={setEditName}
                   setEditDescription={setEditDescription}
                   ref={nameInputRef}
@@ -112,6 +124,13 @@ export const RoleManagementTable = () => {
         isOpen={!!roleToDelete}
         onClose={() => setRoleToDelete(null)}
         onConfirm={() => roleToDelete && confirmDelete(roleToDelete)}
+      />
+
+      <RolePermissionsDialog
+        isOpen={!!selectedRoleId}
+        onClose={() => setSelectedRoleId(null)}
+        roleId={selectedRoleId}
+        roleName={selectedRoleName}
       />
     </>
   );
