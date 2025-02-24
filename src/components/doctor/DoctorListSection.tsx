@@ -14,6 +14,16 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Create a custom red icon for user location
+const userLocationIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
 function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
   const map = useMap();
   
@@ -43,13 +53,15 @@ interface DoctorListSectionProps {
   isLoading: boolean;
   coordinates: { lat: number; lon: number };
   onConnect: (doctorId: string, source: 'database' | 'overpass') => void;
+  showUserLocation?: boolean;
 }
 
 const DoctorListSection = ({
   doctors,
   isLoading,
   coordinates,
-  onConnect
+  onConnect,
+  showUserLocation = false
 }: DoctorListSectionProps) => {
   if (!coordinates) {
     return <div>Loading location...</div>;
@@ -96,11 +108,14 @@ const DoctorListSection = ({
           <MapUpdater coordinates={coordinates} />
           
           {/* User location marker */}
-          <Marker 
-            position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
-          >
-            <Popup>Your location</Popup>
-          </Marker>
+          {showUserLocation && (
+            <Marker 
+              position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
+              icon={userLocationIcon}
+            >
+              <Popup>Your location</Popup>
+            </Marker>
+          )}
 
           {/* Doctor markers */}
           {doctors?.filter(doctor => doctor.coordinates).map((doctor) => (

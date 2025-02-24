@@ -71,13 +71,15 @@ const DoctorSearch = () => {
     lon: parseFloat(searchCoordinates.lon)
   };
 
+  const isUsingUserLocation = userLocation && userLocation !== LUXEMBOURG_COORDINATES;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <LocationToggle
-          showDefaultLocation={userLocation && userLocation !== LUXEMBOURG_COORDINATES}
+          showDefaultLocation={isUsingUserLocation}
           onLocationToggle={(checked) => {
             if (!checked) {
               // When disabling location
@@ -104,6 +106,11 @@ const DoctorSearch = () => {
                   (error) => {
                     console.error('Geolocation error:', error);
                     setUserLocation(LUXEMBOURG_COORDINATES);
+                    toast({
+                      title: "Location Error",
+                      description: "Could not get your location. Using default location instead.",
+                      variant: "destructive",
+                    });
                   }
                 );
               }
@@ -115,6 +122,7 @@ const DoctorSearch = () => {
           doctors={doctors}
           isLoading={isDoctorsLoading || isSearching}
           coordinates={displayCoordinates}
+          showUserLocation={isUsingUserLocation}
           onConnect={(doctorId, source) => {
             if (!isAuthenticated) {
               toast({
