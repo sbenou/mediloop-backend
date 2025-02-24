@@ -44,7 +44,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       }
 
       if (!signInData.user) {
-        console.error('No user data received after sign in');
+        console.error('No user data received');
         throw new Error('No user data received');
       }
 
@@ -121,7 +121,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4 text-start w-full">
+    <form onSubmit={handleLogin} className="space-y-4 text-start">
       <div className="space-y-2 text-start">
         <Label htmlFor="password" className="text-start block">Password</Label>
         <div className="relative">
