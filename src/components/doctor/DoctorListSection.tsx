@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import type { LatLngExpression, Icon } from 'leaflet';
+import type { LatLngExpression, Icon, MarkerProps } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useEffect, useState, useRef } from "react";
@@ -17,7 +17,7 @@ L.Icon.Default.mergeOptions({
 });
 
 // Create a custom red icon for user location
-const userLocationIcon: Icon = new L.Icon({
+const userLocationIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -27,7 +27,7 @@ const userLocationIcon: Icon = new L.Icon({
 });
 
 // Create larger icon for selected marker
-const createSelectedIcon = (): Icon => new L.Icon({
+const createSelectedIcon = () => new L.Icon({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [31, 51],
@@ -37,7 +37,7 @@ const createSelectedIcon = (): Icon => new L.Icon({
 });
 
 // Default icon for non-selected markers
-const defaultIcon: Icon = new L.Icon.Default();
+const defaultIcon = new L.Icon.Default();
 
 function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
   const map = useMap();
@@ -142,8 +142,8 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          defaultCenter={centerPosition}
-          defaultZoom={13}
+          center={centerPosition}
+          zoom={13}
           scrollWheelZoom={false}
         >
           <TileLayer
@@ -153,8 +153,7 @@ const DoctorListSection = ({
           
           {showUserLocation && (
             <Marker 
-              position={centerPosition}
-              icon={userLocationIcon}
+              position={centerPosition as L.LatLngExpression}
             >
               <Popup>Your location</Popup>
             </Marker>
@@ -170,14 +169,13 @@ const DoctorListSection = ({
               <Marker
                 key={doctor.id}
                 position={position}
-                icon={selectedDoctorId === doctor.id ? createSelectedIcon() : defaultIcon}
+                eventHandlers={{
+                  click: () => handleDoctorSelect(doctor.id),
+                }}
                 ref={(ref) => {
                   if (ref) {
                     markerRefs.current[doctor.id] = ref;
                   }
-                }}
-                eventHandlers={{
-                  click: () => handleDoctorSelect(doctor.id),
                 }}
               >
                 <Popup>
