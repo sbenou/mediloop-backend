@@ -77,20 +77,21 @@ const DoctorSearch = () => {
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <LocationToggle
-          showDefaultLocation={!!userLocation}
+          showDefaultLocation={!userLocation}
           onLocationToggle={(checked) => {
-            if (checked) {
-              setUserLocation(null); // This will trigger the location request
-              setSearchRadius(2000);
-            } else {
-              setUserLocation(LUXEMBOURG_COORDINATES); // Set to Luxembourg without requesting location
+            if (!checked) {
+              // When disabling location
+              setUserLocation(LUXEMBOURG_COORDINATES);
               if (userProfile?.city) {
                 handleCitySearch(userProfile.city);
               } else {
                 handleCitySearch("Luxembourg City");
               }
-              setSearchRadius(2000);
+            } else {
+              // When enabling location
+              setUserLocation(null);
             }
+            setSearchRadius(2000);
           }}
         />
         <DoctorListSection
