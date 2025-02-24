@@ -10,7 +10,7 @@ interface UserAvatarProps {
 
 const UserAvatar = memo(({ userProfile }: UserAvatarProps) => {
   return (
-    <Avatar className="h-10 w-10 cursor-pointer">
+    <Avatar className="h-10 w-10">
       <AvatarImage 
         src={userProfile?.avatar_url || ''} 
         alt={userProfile?.full_name || 'Profile'} 
@@ -19,6 +19,12 @@ const UserAvatar = memo(({ userProfile }: UserAvatarProps) => {
         <User className="h-5 w-5 text-[#7E69AB]" />
       </AvatarFallback>
     </Avatar>
+  );
+}, (prevProps, nextProps) => {
+  // Only re-render if the avatar_url or full_name changed
+  return (
+    prevProps.userProfile?.avatar_url === nextProps.userProfile?.avatar_url &&
+    prevProps.userProfile?.full_name === nextProps.userProfile?.full_name
   );
 });
 
