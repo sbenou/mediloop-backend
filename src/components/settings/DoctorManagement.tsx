@@ -1,9 +1,11 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { UserPlus, UserMinus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Doctor {
   id: string;
@@ -15,6 +17,7 @@ interface Doctor {
 
 const DoctorManagement = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: session } = useQuery({
     queryKey: ['session'],
@@ -66,6 +69,10 @@ const DoctorManagement = () => {
     },
   });
 
+  const handleChangeDoctor = () => {
+    navigate('/find-doctor');
+  };
+
   if (!session?.user?.id) {
     return <div>Please log in to manage your doctor connections.</div>;
   }
@@ -81,7 +88,7 @@ const DoctorManagement = () => {
             <p className="text-gray-500">No GP connected yet.</p>
             <Button 
               className="mt-2"
-              onClick={() => window.location.href = '/find-doctor'}
+              onClick={handleChangeDoctor}
             >
               <UserPlus className="mr-2 h-4 w-4" />
               Find a GP
@@ -103,15 +110,25 @@ const DoctorManagement = () => {
                     City: {connection.doctor.city}
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeDoctorMutation.mutate(connection.doctor.id)}
-                  disabled={removeDoctorMutation.isPending}
-                >
-                  <UserMinus className="mr-2 h-4 w-4" />
-                  Remove
-                </Button>
+                <div className="space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleChangeDoctor}
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Change GP
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeDoctorMutation.mutate(connection.doctor.id)}
+                    disabled={removeDoctorMutation.isPending}
+                  >
+                    <UserMinus className="mr-2 h-4 w-4" />
+                    Remove
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
