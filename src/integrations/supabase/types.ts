@@ -72,6 +72,7 @@ export type Database = {
       doctor_patient_connections: {
         Row: {
           created_at: string
+          deleted_at: string | null
           doctor_id: string
           id: string
           patient_id: string
@@ -80,6 +81,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           doctor_id: string
           id?: string
           patient_id: string
@@ -88,6 +90,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           doctor_id?: string
           id?: string
           patient_id?: string

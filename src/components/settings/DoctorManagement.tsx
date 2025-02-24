@@ -40,7 +40,8 @@ const DoctorManagement = () => {
           doctor:profiles!doctor_id(id, full_name, license_number, city)
         `)
         .eq('patient_id', session.user.id)
-        .eq('status', 'accepted');
+        .eq('status', 'accepted')
+        .is('deleted_at', null); // Only get active connections
       
       if (error) throw error;
       return data;
@@ -52,11 +53,16 @@ const DoctorManagement = () => {
     mutationFn: async (doctorId: string) => {
       if (!session?.user?.id) throw new Error('Not authenticated');
 
+      // Perform soft delete by setting deleted_at
       const { error } = await supabase
         .from('doctor_patient_connections')
-        .delete()
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          status: 'pending' as const // Reset status to allow new connection
+        })
         .eq('doctor_id', doctorId)
-        .eq('patient_id', session.user.id);
+        .eq('patient_id', session.user.id)
+        .is('deleted_at', null);
 
       if (error) throw error;
     },
@@ -64,7 +70,7 @@ const DoctorManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['doctorConnections'] });
       toast({
         title: "Doctor Removed",
-        description: "The doctor has been removed from your connections.",
+        description: "You can now select a new doctor.",
       });
     },
   });
