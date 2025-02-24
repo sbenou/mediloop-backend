@@ -6,32 +6,42 @@ import { safeQueryResult } from '@/types/user';
 const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
+// Improved cookie storage implementation with secure options
+const cookieStorage = {
+  getItem: (key: string) => {
+    const item = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith(`${key}=`))
+      ?.split('=')[1];
+    try {
+      return item ? JSON.parse(decodeURIComponent(item)) : null;
+    } catch (e) {
+      console.error('Error parsing cookie:', e);
+      return null;
+    }
+  },
+  setItem: (key: string, value: any) => {
+    // Set cookie with improved security and persistence
+    const date = new Date();
+    // Set expiry to 1 year from now
+    date.setFullYear(date.getFullYear() + 1);
+    
+    document.cookie = `${key}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; path=/; secure; samesite=strict`;
+  },
+  removeItem: (key: string) => {
+    document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
+  },
+};
+
 const supabaseOptions: SupabaseClientOptions<"public"> = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: {
-      // Use cookies for session storage instead of localStorage
-      getItem: (key: string) => {
-        const item = document.cookie
-          .split('; ')
-          .find((row) => row.startsWith(`${key}=`))
-          ?.split('=')[1];
-        try {
-          return item ? JSON.parse(decodeURIComponent(item)) : null;
-        } catch (e) {
-          return null;
-        }
-      },
-      setItem: (key: string, value: any) => {
-        // Set cookie with Secure and SameSite attributes
-        document.cookie = `${key}=${encodeURIComponent(JSON.stringify(value))}; path=/; secure; samesite=strict`;
-      },
-      removeItem: (key: string) => {
-        document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-      },
-    },
+    storage: cookieStorage,
+    storageKey: 'supabase.auth.token',
+    // Set a longer window for token refresh
+    flowType: 'pkce',
   },
   global: {
     headers: {
@@ -39,7 +49,6 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
       'X-Client-Info': 'lovable-delivery',
     },
   },
-  // Enable debug mode for development
   db: {
     schema: 'public',
   },
@@ -91,6 +100,7 @@ export const getSessionFromCookie = () => {
       ?.split('=')[1];
     return sessionStr ? JSON.parse(decodeURIComponent(sessionStr)) : null;
   } catch (e) {
+    console.error('Error getting session from cookie:', e);
     return null;
   }
 };
