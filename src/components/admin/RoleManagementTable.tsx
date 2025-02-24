@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +35,7 @@ export const RoleManagementTable = () => {
     handleDelete,
     confirmDelete,
     handleCreateRole,
+    handleCancelEdit,
   } = useRoleManagement();
 
   useEffect(() => {
@@ -82,6 +84,7 @@ export const RoleManagementTable = () => {
                   onEdit={handleEdit}
                   onSave={handleSave}
                   onDelete={handleDelete}
+                  onCancel={handleCancelEdit}
                   setEditName={setEditName}
                   setEditDescription={setEditDescription}
                   ref={nameInputRef}

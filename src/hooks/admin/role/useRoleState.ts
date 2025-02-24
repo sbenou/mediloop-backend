@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Role } from "@/types/role";
 
@@ -11,6 +12,12 @@ export const useRoleState = () => {
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleDescription, setNewRoleDescription] = useState("");
   const [baseRoleId, setBaseRoleId] = useState<string>("");
+
+  const handleCancelEdit = () => {
+    setIsEditing(null);
+    setEditName("");
+    setEditDescription("");
+  };
 
   return {
     isEditing,
@@ -31,5 +38,6 @@ export const useRoleState = () => {
     setNewRoleName,
     setNewRoleDescription,
     setBaseRoleId,
+    handleCancelEdit,
   };
 };
