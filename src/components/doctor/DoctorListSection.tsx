@@ -101,6 +101,8 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
+          center={[coordinates.lat, coordinates.lon]}
+          zoom={13}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -110,7 +112,7 @@ const DoctorListSection = ({
           {/* User location marker */}
           {showUserLocation && (
             <Marker 
-              position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
+              position={[coordinates.lat, coordinates.lon]}
               icon={userLocationIcon}
             >
               <Popup>Your location</Popup>
@@ -124,7 +126,7 @@ const DoctorListSection = ({
               position={[
                 doctor.coordinates?.lat || coordinates.lat,
                 doctor.coordinates?.lon || coordinates.lon
-              ] as L.LatLngExpression}
+              ]}
             >
               <Popup>
                 <div className="text-sm">

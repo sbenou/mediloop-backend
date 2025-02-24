@@ -1,10 +1,12 @@
 
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRecoilState } from 'recoil';
 import { supabase } from "@/lib/supabase";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
 import { useDoctorSearch } from "@/hooks/useDoctorSearch";
 import { usePharmacyState, LUXEMBOURG_COORDINATES } from "@/hooks/usePharmacyState";
+import { userLocationState, isUsingLocationState } from "@/store/location/atoms";
 import Header from "@/components/layout/Header";
 import SearchHeader from "@/components/pharmacy/SearchHeader";
 import DoctorListSection from "@/components/doctor/DoctorListSection";
@@ -23,11 +25,9 @@ const DoctorSearch = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  const {
-    userLocation,
-    setUserLocation,
-    userProfile,
-  } = usePharmacyState(session);
+  const [userLocation, setUserLocation] = useRecoilState(userLocationState);
+  const [isUsingLocation, setIsUsingLocation] = useRecoilState(isUsingLocationState);
+  const { userProfile } = usePharmacyState(session);
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
@@ -51,6 +51,7 @@ const DoctorSearch = () => {
   useEffect(() => {
     if (!session) {
       setUserLocation(LUXEMBOURG_COORDINATES);
+      setIsUsingLocation(false);
       if (!coordinates) {
         handleCitySearch("Luxembourg City");
       }
@@ -71,19 +72,18 @@ const DoctorSearch = () => {
     lon: parseFloat(searchCoordinates.lon)
   };
 
-  const isUsingUserLocation = userLocation && userLocation !== LUXEMBOURG_COORDINATES;
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <LocationToggle
-          showDefaultLocation={isUsingUserLocation}
+          showDefaultLocation={isUsingLocation}
           onLocationToggle={(checked) => {
             if (!checked) {
               // When disabling location
               setUserLocation(LUXEMBOURG_COORDINATES);
+              setIsUsingLocation(false);
               if (userProfile?.city) {
                 handleCitySearch(userProfile.city);
               } else {
@@ -98,6 +98,7 @@ const DoctorSearch = () => {
                       lat: position.coords.latitude,
                       lon: position.coords.longitude
                     });
+                    setIsUsingLocation(true);
                     toast({
                       title: "Using your location",
                       description: "Showing locations near you",
@@ -106,6 +107,7 @@ const DoctorSearch = () => {
                   (error) => {
                     console.error('Geolocation error:', error);
                     setUserLocation(LUXEMBOURG_COORDINATES);
+                    setIsUsingLocation(false);
                     toast({
                       title: "Location Error",
                       description: "Could not get your location. Using default location instead.",
@@ -122,7 +124,7 @@ const DoctorSearch = () => {
           doctors={doctors}
           isLoading={isDoctorsLoading || isSearching}
           coordinates={displayCoordinates}
-          showUserLocation={isUsingUserLocation}
+          showUserLocation={isUsingLocation}
           onConnect={(doctorId, source) => {
             if (!isAuthenticated) {
               toast({
