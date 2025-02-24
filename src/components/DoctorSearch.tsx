@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { LocationToggle } from "@/components/shared/LocationToggle";
 
 const DoctorSearch = () => {
+  const [showDefaultLocation, setShowDefaultLocation] = useState(false);
   const { isAuthenticated } = useAuth();
   const { data: session } = useQuery({
     queryKey: ['session'],
@@ -67,6 +68,7 @@ const DoctorSearch = () => {
   }, [doctors?.length, searchRadius]);
 
   const handleLocationToggle = (checked: boolean) => {
+    setShowDefaultLocation(checked);
     if (checked) {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -82,6 +84,7 @@ const DoctorSearch = () => {
             });
           },
           () => {
+            setShowDefaultLocation(false);
             toast({
               title: "Location access denied",
               description: "Please enable location access or search for a specific city.",
@@ -112,7 +115,7 @@ const DoctorSearch = () => {
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <LocationToggle
-          showDefaultLocation={false}
+          showDefaultLocation={showDefaultLocation}
           onLocationToggle={handleLocationToggle}
         />
         <DoctorListSection
