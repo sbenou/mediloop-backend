@@ -30,6 +30,23 @@ const DoctorSearch = () => {
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
+  const searchCoordinates = coordinates 
+    ? { 
+        lat: coordinates.lat, 
+        lon: coordinates.lon 
+      } 
+    : userLocation 
+      ? {
+          lat: userLocation.lat.toString(),
+          lon: userLocation.lon.toString()
+        }
+      : {
+          lat: LUXEMBOURG_COORDINATES.lat.toString(),
+          lon: LUXEMBOURG_COORDINATES.lon.toString()
+        };
+
+  const { doctors, isLoading } = useDoctorSearch(searchCoordinates, searchRadius);
+
   // Effect to handle user location based on session and coordinates
   useEffect(() => {
     if (!session) {
@@ -50,23 +67,6 @@ const DoctorSearch = () => {
       setSearchRadius(prev => Math.min(prev + 2000, 10000));
     }
   }, [doctors?.length, searchRadius]);
-
-  const searchCoordinates = coordinates 
-    ? { 
-        lat: coordinates.lat, 
-        lon: coordinates.lon 
-      } 
-    : userLocation 
-      ? {
-          lat: userLocation.lat.toString(),
-          lon: userLocation.lon.toString()
-        }
-      : {
-          lat: LUXEMBOURG_COORDINATES.lat.toString(),
-          lon: LUXEMBOURG_COORDINATES.lon.toString()
-        };
-
-  const { doctors, isLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
   const handleLocationToggle = (checked: boolean) => {
     if (checked) {
@@ -103,6 +103,12 @@ const DoctorSearch = () => {
     }
   };
 
+  // Convert string coordinates to numbers for DoctorListSection
+  const displayCoordinates = {
+    lat: parseFloat(searchCoordinates.lat),
+    lon: parseFloat(searchCoordinates.lon)
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -115,7 +121,7 @@ const DoctorSearch = () => {
         <DoctorListSection
           doctors={doctors}
           isLoading={isLoading || isSearching}
-          coordinates={searchCoordinates}
+          coordinates={displayCoordinates}
           onConnect={(doctorId, source) => {
             if (!isAuthenticated) {
               toast({
