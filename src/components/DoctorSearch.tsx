@@ -22,7 +22,7 @@ const DoctorSearch = () => {
       const { data: { session } } = await supabase.auth.getSession();
       return session;
     },
-    staleTime: 1000 * 60 * 5, // Consider session stable for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   const {
@@ -35,18 +35,25 @@ const DoctorSearch = () => {
 
   // Check for location permission on component mount
   useEffect(() => {
-    if ("permissions" in navigator) {
-      navigator.permissions.query({ name: 'geolocation' })
-        .then((result) => {
+    const checkPermission = async () => {
+      if ("permissions" in navigator) {
+        try {
+          const result = await navigator.permissions.query({ name: 'geolocation' });
           setHasLocationPermission(result.state === 'granted');
+          
           result.addEventListener('change', () => {
             setHasLocationPermission(result.state === 'granted');
           });
-        });
-    }
+        } catch (error) {
+          console.log('Permission check error:', error);
+          setHasLocationPermission(null); // Reset to null on error
+        }
+      }
+    };
+    
+    checkPermission();
   }, []);
 
-  // Determine search coordinates
   const searchCoordinates = coordinates 
     ? { 
         lat: coordinates.lat, 
@@ -64,7 +71,6 @@ const DoctorSearch = () => {
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
-  // Effect to handle user location based on session and coordinates
   useEffect(() => {
     if (!session) {
       setUserLocation(LUXEMBOURG_COORDINATES);
@@ -76,7 +82,6 @@ const DoctorSearch = () => {
     }
   }, [session, coordinates, userProfile?.city]);
 
-  // Effect to gradually increase search radius if no doctors found
   useEffect(() => {
     if (doctors?.length === 0 && searchRadius < 10000) {
       setSearchRadius(prev => Math.min(prev + 2000, 10000));
@@ -86,16 +91,6 @@ const DoctorSearch = () => {
   const handleLocationToggle = (checked: boolean) => {
     setShowDefaultLocation(checked);
     if (checked) {
-      if (hasLocationPermission === false) {
-        toast({
-          title: "Location access denied",
-          description: "Please enable location access in your browser settings.",
-          variant: "destructive",
-        });
-        setShowDefaultLocation(false);
-        return;
-      }
-
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -104,12 +99,14 @@ const DoctorSearch = () => {
               lon: position.coords.longitude
             });
             setSearchRadius(2000);
+            setHasLocationPermission(true);
             toast({
               title: "Using your location",
               description: "Showing doctors within 2km of your location",
             });
           },
-          () => {
+          (error) => {
+            console.log('Geolocation error:', error);
             setShowDefaultLocation(false);
             setHasLocationPermission(false);
             toast({
@@ -131,7 +128,6 @@ const DoctorSearch = () => {
     }
   };
 
-  // Convert string coordinates to numbers for DoctorListSection
   const displayCoordinates = {
     lat: parseFloat(searchCoordinates.lat),
     lon: parseFloat(searchCoordinates.lon)
