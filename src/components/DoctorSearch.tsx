@@ -8,9 +8,7 @@ import { usePharmacyState, LUXEMBOURG_COORDINATES } from "@/hooks/usePharmacySta
 import Header from "@/components/layout/Header";
 import SearchHeader from "@/components/pharmacy/SearchHeader";
 import DoctorListSection from "@/components/doctor/DoctorListSection";
-import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { LocationToggle } from "@/components/shared/LocationToggle";
 
 const DoctorSearch = () => {
   const { isAuthenticated } = useAuth();
@@ -68,24 +66,6 @@ const DoctorSearch = () => {
     }
   }, [doctors?.length, searchRadius]);
 
-  const handleLocationToggle = (checked: boolean) => {
-    if (checked && userLocation) {
-      setSearchRadius(2000); // Reset radius when changing location
-      toast({
-        title: "Using your location",
-        description: "Showing doctors within 2km of your location",
-      });
-    } else {
-      if (userProfile?.city) {
-        handleCitySearch(userProfile.city);
-      } else {
-        setUserLocation(LUXEMBOURG_COORDINATES);
-        handleCitySearch("Luxembourg City");
-      }
-      setSearchRadius(2000); // Reset radius when changing location
-    }
-  };
-
   // Convert string coordinates to numbers for DoctorListSection
   const displayCoordinates = {
     lat: parseFloat(searchCoordinates.lat),
@@ -97,10 +77,6 @@ const DoctorSearch = () => {
       <Header />
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
-        <LocationToggle
-          showDefaultLocation={false}
-          onLocationToggle={handleLocationToggle}
-        />
         <DoctorListSection
           doctors={doctors}
           isLoading={isDoctorsLoading || isSearching}
@@ -129,4 +105,3 @@ const DoctorSearch = () => {
 };
 
 export default DoctorSearch;
-

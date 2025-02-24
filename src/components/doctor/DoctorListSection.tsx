@@ -1,47 +1,14 @@
-import { Card } from "@/components/ui/card";
-import DoctorCard from "@/components/doctor/DoctorCard";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+
+import { useEffect, useState } from "react";
+import { LocationToggle } from "@/components/shared/LocationToggle";
+import { toast } from "@/components/ui/use-toast";
 import L from 'leaflet';
-import { useEffect } from "react";
-
-// Fix for default marker icons in Leaflet with Vite
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    map.setView([coordinates.lat, coordinates.lon], 13);
-  }, [coordinates, map]);
-  
-  return null;
-}
-
-interface Doctor {
-  id: string;
-  full_name: string;
-  city: string;
-  license_number: string;
-  email?: string;
-  hours?: string;
-  source?: 'database' | 'overpass';
-  coordinates?: {
-    lat: number;
-    lon: number;
-  };
-}
 
 interface DoctorListSectionProps {
-  doctors: Doctor[] | undefined;
+  doctors: any[];
   isLoading: boolean;
   coordinates: { lat: number; lon: number };
-  onConnect: (doctorId: string, source: 'database' | 'overpass') => void;
+  onConnect: (doctorId: string, source: string) => void;
 }
 
 const DoctorListSection = ({
@@ -50,78 +17,79 @@ const DoctorListSection = ({
   coordinates,
   onConnect
 }: DoctorListSectionProps) => {
+  const [filteredDoctors, setFilteredDoctors] = useState(doctors);
+  const [showDefaultLocation, setShowDefaultLocation] = useState(false);
+
+  const handleLocationToggle = (checked: boolean) => {
+    setShowDefaultLocation(checked);
+    if (checked) {
+      toast({
+        title: "Using location",
+        description: "Currently showing doctors within 2km of your location",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!coordinates?.lat || !coordinates?.lon) {
+      setFilteredDoctors(doctors);
+      return;
+    }
+
+    if (showDefaultLocation) {
+      try {
+        const userLocation = L.latLng(coordinates.lat, coordinates.lon);
+        const nearbyDoctors = doctors.filter(doctor => {
+          if (!doctor.coordinates?.lat || !doctor.coordinates?.lon) return false;
+          try {
+            const doctorLocation = L.latLng(doctor.coordinates.lat, doctor.coordinates.lon);
+            return userLocation.distanceTo(doctorLocation) <= 2000; // 2km radius
+          } catch (error) {
+            console.error('Error calculating distance for doctor:', doctor, error);
+            return false;
+          }
+        });
+        setFilteredDoctors(nearbyDoctors);
+      } catch (error) {
+        console.error('Error creating user location:', error);
+        setFilteredDoctors(doctors);
+      }
+    } else {
+      setFilteredDoctors(doctors);
+    }
+  }, [showDefaultLocation, coordinates, doctors]);
+
   if (!coordinates) {
     return <div>Loading location...</div>;
   }
 
   return (
-    <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
-      <div className="overflow-y-auto space-y-4 pr-4 relative z-50">
-        {isLoading && (
-          <>
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <div className="p-6">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              </Card>
-            ))}
-          </>
-        )}
-
-        {doctors?.map((doctor) => (
-          <DoctorCard
-            key={doctor.id}
-            {...doctor}
-            onConnect={() => onConnect(doctor.id, doctor.source || 'database')}
-          />
-        ))}
-
-        {doctors?.length === 0 && coordinates && !isLoading && (
-          <p className="text-center text-gray-500">No doctors found in this area</p>
-        )}
-      </div>
-
-      <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
-        <MapContainer
-          className="h-full"
-          style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <MapUpdater coordinates={coordinates} />
-          
-          {/* User location marker */}
-          <Marker 
-            position={[coordinates.lat, coordinates.lon] as L.LatLngExpression}
-          >
-            <Popup>Your location</Popup>
-          </Marker>
-
-          {/* Doctor markers */}
-          {doctors?.filter(doctor => doctor.coordinates).map((doctor) => (
-            <Marker
-              key={doctor.id}
-              position={[
-                doctor.coordinates?.lat || coordinates.lat,
-                doctor.coordinates?.lon || coordinates.lon
-              ] as L.LatLngExpression}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <p className="font-semibold">{doctor.full_name}</p>
-                  <p>{doctor.city}</p>
-                  <p>{doctor.license_number}</p>
-                  {doctor.hours && <p>{doctor.hours}</p>}
-                </div>
-              </Popup>
-            </Marker>
+    <div className="space-y-4">
+      <LocationToggle
+        showDefaultLocation={showDefaultLocation}
+        onLocationToggle={handleLocationToggle}
+      />
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredDoctors.map((doctor: any) => (
+            <div key={doctor.id} className="p-4 border rounded-lg">
+              <h3 className="font-bold">{doctor.name}</h3>
+              <p>{doctor.address}</p>
+              <button 
+                onClick={() => onConnect(doctor.id, doctor.source)}
+                className="mt-2 bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+              >
+                Connect
+              </button>
+            </div>
           ))}
-        </MapContainer>
-      </div>
+          {filteredDoctors.length === 0 && (
+            <p className="text-center col-span-full">No doctors found in this area</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
