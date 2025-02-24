@@ -9,7 +9,7 @@ import { UserMenuItems } from "./user-menu/UserMenuItems";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCallback, memo, useMemo } from 'react';
+import { useCallback, memo } from 'react';
 
 const UserMenu = memo(() => {
   const { isAuthenticated, isLoading, profile, user } = useAuth();
@@ -19,15 +19,19 @@ const UserMenu = memo(() => {
     navigate('/login', { replace: true });
   }, [navigate]);
 
-  // Memoize the profile check
-  const shouldShowSkeleton = useMemo(() => {
-    return (user && isLoading) || (isLoading && !user);
-  }, [user, isLoading]);
-
-  // If still in initial loading state, show skeleton
-  if (shouldShowSkeleton) {
+  // Show skeleton loader while checking initial auth state
+  if (user && isLoading) {
     return (
       <div className="h-10 w-10">
+        <Skeleton className="h-full w-full rounded-full" />
+      </div>
+    );
+  }
+
+  // Show skeleton while loading and no user data
+  if (isLoading && !user) {
+    return (
+      <div className="h-10 w-10 rounded-full">
         <Skeleton className="h-full w-full rounded-full" />
       </div>
     );

@@ -18,20 +18,19 @@ export const useAuth = () => {
   const isLoading = useRecoilValue(isLoadingSelector);
 
   // Memoize all values together to prevent unnecessary re-renders
-  return useMemo(() => ({
-    isAuthenticated,
-    userRole,
-    permissions,
-    isLoading,
-    hasPermission: (permission: string) => permissions.includes(permission),
-    user: auth.user,
+  const memoizedValues = useMemo(() => ({
     profile: auth.profile,
-  }), [
+    user: auth.user,
+    hasPermission: (permission: string) => isLoading || permissions.includes(permission),
+  }), [auth.profile, auth.user, isLoading, permissions]);
+
+  return {
     isAuthenticated,
     userRole,
     permissions,
     isLoading,
-    auth.user,
-    auth.profile
-  ]);
+    hasPermission: memoizedValues.hasPermission,
+    user: memoizedValues.user,
+    profile: memoizedValues.profile,
+  };
 };
