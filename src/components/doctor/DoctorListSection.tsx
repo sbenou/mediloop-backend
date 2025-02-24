@@ -1,10 +1,10 @@
-
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -20,6 +20,16 @@ const userLocationIcon = new L.Icon({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Create larger icon for selected marker
+const createSelectedIcon = () => new L.Icon({
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [31, 51],
+  iconAnchor: [15, 51],
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
@@ -63,12 +73,25 @@ const DoctorListSection = ({
   onConnect,
   showUserLocation = false
 }: DoctorListSectionProps) => {
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
+  const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
+  const listItemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
   if (!coordinates) {
     return <div>Loading location...</div>;
   }
 
-  // Convert coordinates to LatLngTuple type
   const centerPosition: [number, number] = [coordinates.lat, coordinates.lon];
+
+  const handleDoctorSelect = (doctorId: string) => {
+    setSelectedDoctorId(doctorId);
+    const marker = markerRefs.current[doctorId];
+    if (marker) {
+      marker.openPopup();
+    }
+    // Scroll the card into view
+    listItemRefs.current[doctorId]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
@@ -88,11 +111,21 @@ const DoctorListSection = ({
         )}
 
         {doctors?.map((doctor) => (
-          <DoctorCard
+          <div
             key={doctor.id}
-            {...doctor}
-            onConnect={() => onConnect(doctor.id, doctor.source || 'database')}
-          />
+            ref={(el) => listItemRefs.current[doctor.id] = el}
+            onClick={() => handleDoctorSelect(doctor.id)}
+            className={cn(
+              "transition-all duration-200",
+              selectedDoctorId === doctor.id && "scale-[1.02]"
+            )}
+          >
+            <DoctorCard
+              {...doctor}
+              onConnect={() => onConnect(doctor.id, doctor.source || 'database')}
+              isSelected={selectedDoctorId === doctor.id}
+            />
+          </div>
         ))}
 
         {doctors?.length === 0 && coordinates && !isLoading && (
@@ -112,7 +145,6 @@ const DoctorListSection = ({
           />
           <MapUpdater coordinates={coordinates} />
           
-          {/* User location marker */}
           {showUserLocation && (
             <Marker 
               position={centerPosition}
@@ -122,16 +154,25 @@ const DoctorListSection = ({
             </Marker>
           )}
 
-          {/* Doctor markers */}
           {doctors?.filter(doctor => doctor.coordinates).map((doctor) => {
             const position: [number, number] = [
               doctor.coordinates?.lat || coordinates.lat,
               doctor.coordinates?.lon || coordinates.lon
             ];
+            
             return (
               <Marker
                 key={doctor.id}
                 position={position}
+                icon={selectedDoctorId === doctor.id ? createSelectedIcon() : undefined}
+                ref={(ref) => {
+                  if (ref) {
+                    markerRefs.current[doctor.id] = ref;
+                  }
+                }}
+                eventHandlers={{
+                  click: () => handleDoctorSelect(doctor.id),
+                }}
               >
                 <Popup>
                   <div className="text-sm">
