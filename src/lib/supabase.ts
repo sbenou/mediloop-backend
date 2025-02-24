@@ -9,22 +9,7 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    storage: {
-      getItem: (key) => {
-        const item = document.cookie
-          .split('; ')
-          .find(cookie => cookie.startsWith(`${key}=`));
-        if (!item) return null;
-        return JSON.parse(decodeURIComponent(item.split('=')[1]));
-      },
-      setItem: (key, value) => {
-        // Set cookie with secure parameters and domain-level scope
-        document.cookie = `${key}=${encodeURIComponent(JSON.stringify(value))}; path=/; secure; samesite=strict; max-age=2592000`; // 30 days
-      },
-      removeItem: (key) => {
-        document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
-      },
-    }
+    storage: sessionStorage
   },
   global: {
     headers: {
@@ -40,8 +25,3 @@ export const supabase = createClient<Database>(
   supabaseAnonKey,
   supabaseOptions
 );
-
-// Handle auth state changes
-supabase.auth.onAuthStateChange((event, session) => {
-  console.log('Auth state changed:', { event, session: session?.user?.id });
-});
