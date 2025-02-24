@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 import { ArrowLeft, User } from 'lucide-react';
@@ -11,10 +12,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../LanguageSelector';
 import MobileMenu from './navigation/MobileMenu';
-import ConnectionMenu from './navigation/ConnectionMenu';
 import CartButton from './navigation/CartButton';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   showUserMenu?: boolean;
@@ -26,9 +27,14 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
+  const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
   const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
+
+  const handleNavigateToLogin = () => {
+    navigate('/login', { replace: true });
+  };
 
   // List of public routes that don't require authentication
   const publicRoutes = ['/', '/products', '/services', '/search-pharmacy', '/become-transporter', '/become-partner', '/login', '/signup', '/reset-password'];
@@ -87,7 +93,12 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
                 ) : isAuthenticated ? (
                   <UserMenu />
                 ) : (
-                  <ConnectionMenu />
+                  <button
+                    onClick={handleNavigateToLogin}
+                    className="text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Connection
+                  </button>
                 )}
                 <CartButton 
                   isOpen={isCartOpen}
