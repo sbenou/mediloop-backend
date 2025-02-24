@@ -6,14 +6,25 @@ import { safeQueryResult } from '@/types/user';
 const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
+// Create storage key based on project URL
 const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
 
-// Define cookie storage adapter
+// Define cookie storage adapter with secure defaults
 const cookieStorage = {
   getItem: (key: string) => {
     try {
       const matches = document.cookie.match(new RegExp(`(?:^|; )${key}=([^;]*)`));
-      return matches ? JSON.parse(decodeURIComponent(matches[1])) : null;
+      if (!matches) return null;
+      
+      const value = JSON.parse(decodeURIComponent(matches[1]));
+      
+      // Check if the stored session is expired
+      if (value.expires_at && value.expires_at < Date.now() / 1000) {
+        cookieStorage.removeItem(key);
+        return null;
+      }
+      
+      return value;
     } catch (e) {
       console.error('Error reading auth cookie:', e);
       return null;
@@ -21,8 +32,10 @@ const cookieStorage = {
   },
   setItem: (key: string, value: any) => {
     try {
+      // Set expiration to match token expiration
+      const expiresIn = value.expires_in || 3600; // Default to 1 hour if not provided
       const expires = new Date();
-      expires.setFullYear(expires.getFullYear() + 1);
+      expires.setSeconds(expires.getSeconds() + expiresIn);
       
       document.cookie = [
         `${key}=${encodeURIComponent(JSON.stringify(value))}`,
@@ -85,22 +98,41 @@ supabase.auth.onAuthStateChange((event, session) => {
     console.log('User signed in:', session?.user?.id);
   } else if (event === 'SIGNED_OUT') {
     console.log('User signed out');
+    // Clear any remaining session data
+    cookieStorage.removeItem(STORAGE_KEY);
   } else if (event === 'TOKEN_REFRESHED') {
     console.log('Token refreshed for user:', session?.user?.id);
   }
 });
 
-// Initial session check
+// Initial session check and potential refresh
 supabase.auth.getSession().then(({ data: { session } }) => {
   if (session) {
     console.log('Initial session loaded:', session.user.id);
+    // Verify token expiration and refresh if needed
+    const expiresAt = session?.expires_at || 0;
+    const now = Math.floor(Date.now() / 1000);
+    if (expiresAt - now < 600) { // Refresh if less than 10 minutes left
+      supabase.auth.refreshSession().then(({ data }) => {
+        if (data.session) {
+          console.log('Session refreshed during initial load');
+        }
+      });
+    }
   }
 });
 
+// Safe method to get session from cookie
 export const getSessionFromCookie = () => {
   try {
     const sessionStr = cookieStorage.getItem(STORAGE_KEY);
-    return sessionStr || null;
+    if (!sessionStr) return null;
+    
+    // Additional validation of session data
+    if (typeof sessionStr === 'object' && 'access_token' in sessionStr) {
+      return sessionStr;
+    }
+    return null;
   } catch (e) {
     console.error('Error getting session from cookie:', e);
     return null;
