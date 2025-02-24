@@ -77,7 +77,7 @@ const DoctorSearch = () => {
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <LocationToggle
-          showDefaultLocation={!userLocation || userLocation === LUXEMBOURG_COORDINATES}
+          showDefaultLocation={userLocation && userLocation !== LUXEMBOURG_COORDINATES}
           onLocationToggle={(checked) => {
             if (!checked) {
               // When disabling location
