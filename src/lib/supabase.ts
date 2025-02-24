@@ -6,7 +6,9 @@ import { safeQueryResult } from '@/types/user';
 const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
-// Define cookie storage with strict security settings and long expiration
+const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
+
+// Define cookie storage adapter
 const cookieStorage = {
   getItem: (key: string) => {
     try {
@@ -19,7 +21,6 @@ const cookieStorage = {
   },
   setItem: (key: string, value: any) => {
     try {
-      // Set cookie with 1-year expiration
       const expires = new Date();
       expires.setFullYear(expires.getFullYear() + 1);
       
@@ -28,7 +29,7 @@ const cookieStorage = {
         `expires=${expires.toUTCString()}`,
         'path=/',
         'secure',
-        'samesite=strict'
+        'samesite=strict',
       ].join('; ');
     } catch (e) {
       console.error('Error setting auth cookie:', e);
@@ -49,13 +50,8 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
     persistSession: true,
     detectSessionInUrl: true,
     storage: cookieStorage,
-    storageKey: 'sb-auth-token',
+    storageKey: STORAGE_KEY,
     flowType: 'pkce'
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'supabase-js'
-    }
   }
 };
 
@@ -66,7 +62,7 @@ export const supabase = createClient<Database>(
   supabaseOptions
 );
 
-// Helper function with improved type safety and logging
+// Helper function with improved type safety
 export async function fetchFromSupabase<T extends Record<string, any>>(
   query: Promise<{ data: T | null; error: any }>
 ): Promise<T | null> {
@@ -85,10 +81,16 @@ export async function fetchFromSupabase<T extends Record<string, any>>(
 
 // Log auth state changes for debugging
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log('Auth state changed:', event, session?.user?.id);
+  if (event === 'SIGNED_IN') {
+    console.log('User signed in:', session?.user?.id);
+  } else if (event === 'SIGNED_OUT') {
+    console.log('User signed out');
+  } else if (event === 'TOKEN_REFRESHED') {
+    console.log('Token refreshed for user:', session?.user?.id);
+  }
 });
 
-// Check initial session
+// Initial session check
 supabase.auth.getSession().then(({ data: { session } }) => {
   if (session) {
     console.log('Initial session loaded:', session.user.id);
@@ -97,7 +99,7 @@ supabase.auth.getSession().then(({ data: { session } }) => {
 
 export const getSessionFromCookie = () => {
   try {
-    const sessionStr = cookieStorage.getItem('sb-auth-token');
+    const sessionStr = cookieStorage.getItem(STORAGE_KEY);
     return sessionStr || null;
   } catch (e) {
     console.error('Error getting session from cookie:', e);
