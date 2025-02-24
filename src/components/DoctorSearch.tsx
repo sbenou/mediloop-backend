@@ -80,13 +80,13 @@ const DoctorSearch = () => {
           showDefaultLocation={!!userLocation}
           onLocationToggle={(checked) => {
             if (checked) {
-              setUserLocation(LUXEMBOURG_COORDINATES); // Set default location first
+              setUserLocation(null); // This will trigger the location request
               setSearchRadius(2000);
             } else {
+              setUserLocation(LUXEMBOURG_COORDINATES); // Set to Luxembourg without requesting location
               if (userProfile?.city) {
                 handleCitySearch(userProfile.city);
               } else {
-                setUserLocation(null);
                 handleCitySearch("Luxembourg City");
               }
               setSearchRadius(2000);
