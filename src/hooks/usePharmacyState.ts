@@ -27,6 +27,33 @@ export const usePharmacyState = (session: any) => {
     enabled: !!session?.user?.id,
   });
 
+  // Add query for user's main address
+  useQuery({
+    queryKey: ['userMainAddress', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      const { data, error } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('is_default', true)
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      if (!data && session?.user?.id) {
+        toast({
+          title: "No Default Address",
+          description: "Please set your main address in your profile settings.",
+          variant: "destructive",
+        });
+      }
+      return data;
+    },
+    enabled: !!session?.user?.id,
+    retry: false, // Don't retry on error to avoid showing multiple toasts
+  });
+
   const { data: defaultPharmacy } = useQuery({
     queryKey: ['defaultPharmacy', session?.user?.id],
     queryFn: async () => {
@@ -44,12 +71,10 @@ export const usePharmacyState = (session: any) => {
 
   const handleSetUserLocation = async (newLocation: { lat: number; lon: number } | null) => {
     if (newLocation === LUXEMBOURG_COORDINATES) {
-      // When setting to Luxembourg coordinates, don't request geolocation
       setUserLocation(newLocation);
       return;
     }
 
-    // If we're not setting to Luxembourg coordinates and geolocation is available
     if ("geolocation" in navigator) {
       try {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
