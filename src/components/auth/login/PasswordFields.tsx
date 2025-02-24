@@ -32,36 +32,60 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
     console.log('Starting login process...', { email });
 
     try {
+      // First, sign in with password
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError) throw signInError;
-      if (!signInData?.user) throw new Error('No user data received');
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        throw signInError;
+      }
 
-      // Wait for session to be established
+      if (!signInData.user) {
+        console.error('No user data received after sign in');
+        throw new Error('No user data received');
+      }
+
+      console.log('Sign in successful:', signInData.user.id);
+
+      // Get the session to confirm authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
-      if (!session) throw new Error('No session established');
+      
+      if (sessionError) {
+        console.error('Session fetch error:', sessionError);
+        throw sessionError;
+      }
 
-      // Fetch the user's profile
+      if (!session) {
+        console.error('No session after successful sign in');
+        throw new Error('Authentication failed - no session');
+      }
+
+      console.log('Session confirmed:', session.user.id);
+
+      // Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', signInData.user.id)
+        .eq('id', session.user.id)
         .single();
 
-      if (profileError) throw profileError;
-      if (!profile) throw new Error('No profile found');
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        throw profileError;
+      }
 
-      // Set initial auth state
+      // Update global auth state
       setAuth({
-        user: signInData.user,
+        user: session.user,
         profile,
         permissions: [],
-        isLoading: true,
+        isLoading: false,
       });
+
+      console.log('Auth state updated successfully');
 
       // Show success message
       toast({
@@ -70,6 +94,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       });
 
       // Navigate to home page
+      console.log('Navigating to home page...');
       navigate('/', { replace: true });
       onSuccess();
 
@@ -88,7 +113,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: error.message || "Authentication failed, please try again.",
+        description: error.message || "An error occurred during login. Please try again.",
       });
     } finally {
       setIsLoading(false);

@@ -3,18 +3,51 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 const Login = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  // If user is already authenticated, redirect to home
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
+  useEffect(() => {
+    const initialize = async () => {
+      console.log('Login page mounted, checking session...');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Session check error:', error);
+        return;
+      }
+      
+      if (session?.user) {
+        console.log('Active session found, redirecting to home...');
+        navigate('/', { replace: true });
+      } else {
+        console.log('No active session found');
+      }
+    };
+
+    initialize();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed in Login:', event, session?.user?.id);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('User signed in, redirecting to home...');
+        navigate('/', { replace: true });
+      }
+    });
+
+    return () => {
+      console.log('Login page unmounting, cleaning up...');
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // Only show loading state for a brief moment during initial auth check
   if (isLoading) {
+    console.log('Auth state is loading...');
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
@@ -24,6 +57,12 @@ const Login = () => {
         </Card>
       </div>
     );
+  }
+
+  // If user is already authenticated and not on the login page, redirect to home
+  if (isAuthenticated && window.location.pathname !== '/login') {
+    console.log('User is authenticated, redirecting to home...');
+    return <Navigate to="/" replace />;
   }
 
   // Show login form
@@ -37,7 +76,9 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm onSuccess={() => navigate('/', { replace: true })} />
+          <LoginForm onSuccess={() => {
+            console.log('Login form success callback executed');
+          }} />
         </CardContent>
         <CardFooter className="flex flex-col items-start space-y-2">
           <div className="text-sm text-muted-foreground">
