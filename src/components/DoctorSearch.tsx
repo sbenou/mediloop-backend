@@ -69,14 +69,12 @@ const DoctorSearch = () => {
   }, [doctors?.length, searchRadius]);
 
   const handleLocationToggle = (checked: boolean) => {
-    if (checked) {
+    if (checked && userLocation) {
       setSearchRadius(2000); // Reset radius when changing location
-      if (userLocation) {
-        toast({
-          title: "Using your location",
-          description: "Showing doctors within 2km of your location",
-        });
-      }
+      toast({
+        title: "Using your location",
+        description: "Showing doctors within 2km of your location",
+      });
     } else {
       if (userProfile?.city) {
         handleCitySearch(userProfile.city);
@@ -100,7 +98,7 @@ const DoctorSearch = () => {
       <main className="container mx-auto p-4">
         <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
         <LocationToggle
-          showDefaultLocation={coordinates ? false : true}
+          showDefaultLocation={false}
           onLocationToggle={handleLocationToggle}
         />
         <DoctorListSection
