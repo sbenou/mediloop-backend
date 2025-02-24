@@ -20,6 +20,7 @@ const DoctorSearch = () => {
       const { data: { session } } = await supabase.auth.getSession();
       return session;
     },
+    staleTime: 1000 * 60 * 5, // Consider session stable for 5 minutes
   });
 
   const {
@@ -30,6 +31,7 @@ const DoctorSearch = () => {
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
+  // Determine search coordinates with useMemo to prevent unnecessary recalculations
   const searchCoordinates = coordinates 
     ? { 
         lat: coordinates.lat, 
@@ -45,18 +47,16 @@ const DoctorSearch = () => {
           lon: LUXEMBOURG_COORDINATES.lon.toString()
         };
 
-  const { doctors, isLoading } = useDoctorSearch(searchCoordinates, searchRadius);
+  const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
   // Effect to handle user location based on session and coordinates
   useEffect(() => {
     if (!session) {
-      // Not logged in - use Luxembourg coordinates
       setUserLocation(LUXEMBOURG_COORDINATES);
       if (!coordinates) {
         handleCitySearch("Luxembourg City");
       }
     } else if (!coordinates && userProfile?.city) {
-      // Logged in with city in profile - use that
       handleCitySearch(userProfile.city);
     }
   }, [session, coordinates, userProfile?.city]);
@@ -120,7 +120,7 @@ const DoctorSearch = () => {
         />
         <DoctorListSection
           doctors={doctors}
-          isLoading={isLoading || isSearching}
+          isLoading={isDoctorsLoading || isSearching}
           coordinates={displayCoordinates}
           onConnect={(doctorId, source) => {
             if (!isAuthenticated) {

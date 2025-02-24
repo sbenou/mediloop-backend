@@ -16,9 +16,11 @@ export const useDoctorSearch = (
   searchRadius: number
 ) => {
   const { data: doctors, isLoading } = useQuery({
-    queryKey: ["doctors", coordinates, searchRadius],
+    queryKey: ["doctors", coordinates?.lat, coordinates?.lon, searchRadius],
     queryFn: async () => {
       if (!coordinates) return [];
+      
+      console.log('Fetching doctors with coordinates:', coordinates);
       
       // Get doctors from Overpass API with current radius
       const overpassDoctors = await searchDoctors(
@@ -39,7 +41,12 @@ export const useDoctorSearch = (
         .select("id, full_name, city, license_number")
         .eq("role", "doctor");
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching doctors from database:', error);
+        throw error;
+      }
+
+      console.log('Database doctors:', dbDoctors);
 
       // Add source field to database results
       const formattedDbDoctors = (dbDoctors || []).map(doc => ({
