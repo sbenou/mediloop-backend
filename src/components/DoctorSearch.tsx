@@ -30,61 +30,43 @@ const DoctorSearch = () => {
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
+  // Effect to handle user location based on session and coordinates
   useEffect(() => {
-    if (!session && !coordinates && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          });
-        },
-        () => {
-          setUserLocation(LUXEMBOURG_COORDINATES);
-          toast({
-            title: "Using Default Location",
-            description: "Showing doctors in Luxembourg City. You can search for a specific location.",
-          });
-          
-          handleCitySearch("Luxembourg City");
-        }
-      );
+    if (!session) {
+      // Not logged in - use Luxembourg coordinates
+      setUserLocation(LUXEMBOURG_COORDINATES);
+      if (!coordinates) {
+        handleCitySearch("Luxembourg City");
+      }
+    } else if (!coordinates && userProfile?.city) {
+      // Logged in with city in profile - use that
+      handleCitySearch(userProfile.city);
     }
-  }, [session, coordinates]);
+  }, [session, coordinates, userProfile?.city]);
+
+  // Effect to gradually increase search radius if no doctors found
+  useEffect(() => {
+    if (doctors?.length === 0 && searchRadius < 10000) {
+      setSearchRadius(prev => Math.min(prev + 2000, 10000));
+    }
+  }, [doctors?.length, searchRadius]);
 
   const searchCoordinates = coordinates 
     ? { 
-        lat: parseFloat(coordinates.lat), 
-        lon: parseFloat(coordinates.lon) 
+        lat: coordinates.lat, 
+        lon: coordinates.lon 
       } 
     : userLocation 
       ? {
-          lat: userLocation.lat,
-          lon: userLocation.lon
+          lat: userLocation.lat.toString(),
+          lon: userLocation.lon.toString()
         }
       : {
-          lat: LUXEMBOURG_COORDINATES.lat,
-          lon: LUXEMBOURG_COORDINATES.lon
+          lat: LUXEMBOURG_COORDINATES.lat.toString(),
+          lon: LUXEMBOURG_COORDINATES.lon.toString()
         };
 
-  const { doctors, isLoading } = useDoctorSearch(
-    coordinates ? { lat: coordinates.lat, lon: coordinates.lon } : null,
-    searchRadius
-  );
-
-  useEffect(() => {
-    if (!session && !coordinates) {
-      handleCitySearch("Luxembourg City");
-    } else if (session && userProfile?.city) {
-      handleCitySearch(userProfile.city);
-    }
-  }, [session, userProfile?.city]);
-
-  useEffect(() => {
-    if (session && doctors?.length === 0 && searchRadius < 10000) {
-      setSearchRadius(prev => Math.min(prev + 2000, 10000));
-    }
-  }, [doctors?.length, searchRadius, session]);
+  const { doctors, isLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
   const handleLocationToggle = (checked: boolean) => {
     if (checked) {
@@ -95,6 +77,7 @@ const DoctorSearch = () => {
               lat: position.coords.latitude,
               lon: position.coords.longitude
             });
+            setSearchRadius(2000); // Reset radius when changing location
             toast({
               title: "Using your location",
               description: "Showing doctors within 2km of your location",
@@ -109,6 +92,14 @@ const DoctorSearch = () => {
           }
         );
       }
+    } else {
+      if (userProfile?.city) {
+        handleCitySearch(userProfile.city);
+      } else {
+        setUserLocation(LUXEMBOURG_COORDINATES);
+        handleCitySearch("Luxembourg City");
+      }
+      setSearchRadius(2000); // Reset radius when changing location
     }
   };
 
