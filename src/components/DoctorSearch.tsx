@@ -49,11 +49,6 @@ const DoctorSearch = () => {
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
-  // Get geolocation permission immediately
-  if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(() => {}, () => {});
-  }
-
   // Effect to initialize location
   useEffect(() => {
     // Set Luxembourg coordinates by default without showing the toast
