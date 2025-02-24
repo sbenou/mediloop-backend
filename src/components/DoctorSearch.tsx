@@ -14,7 +14,6 @@ import { LocationToggle } from "@/components/shared/LocationToggle";
 
 const DoctorSearch = () => {
   const [showDefaultLocation, setShowDefaultLocation] = useState(false);
-  const [hasLocationPermission, setHasLocationPermission] = useState<boolean | null>(null);
   const { isAuthenticated } = useAuth();
   const { data: session } = useQuery({
     queryKey: ['session'],
@@ -32,27 +31,6 @@ const DoctorSearch = () => {
   } = usePharmacyState(session);
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
-
-  // Check for location permission on component mount
-  useEffect(() => {
-    const checkPermission = async () => {
-      if ("permissions" in navigator) {
-        try {
-          const result = await navigator.permissions.query({ name: 'geolocation' });
-          setHasLocationPermission(result.state === 'granted');
-          
-          result.addEventListener('change', () => {
-            setHasLocationPermission(result.state === 'granted');
-          });
-        } catch (error) {
-          console.log('Permission check error:', error);
-          setHasLocationPermission(null); // Reset to null on error
-        }
-      }
-    };
-    
-    checkPermission();
-  }, []);
 
   const searchCoordinates = coordinates 
     ? { 
@@ -99,16 +77,14 @@ const DoctorSearch = () => {
               lon: position.coords.longitude
             });
             setSearchRadius(2000);
-            setHasLocationPermission(true);
             toast({
               title: "Using your location",
               description: "Showing doctors within 2km of your location",
             });
           },
           (error) => {
-            console.log('Geolocation error:', error);
+            console.error('Geolocation error:', error);
             setShowDefaultLocation(false);
-            setHasLocationPermission(false);
             toast({
               title: "Location access denied",
               description: "Please enable location access or search for a specific city.",
