@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -40,6 +41,45 @@ export const usePharmacyState = (session: any) => {
     },
     enabled: !!session?.user?.id,
   });
+
+  const handleSetUserLocation = async (newLocation: { lat: number; lon: number } | null) => {
+    if (newLocation === LUXEMBOURG_COORDINATES) {
+      // When setting to Luxembourg coordinates, don't request geolocation
+      setUserLocation(newLocation);
+      return;
+    }
+
+    // If we're not setting to Luxembourg coordinates and geolocation is available
+    if ("geolocation" in navigator) {
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 27000
+          });
+        });
+
+        setUserLocation({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude
+        });
+        
+        toast({
+          title: "Using your location",
+          description: "Showing locations near you",
+        });
+      } catch (error) {
+        console.error('Geolocation error:', error);
+        setUserLocation(null);
+        toast({
+          title: "Location access denied",
+          description: "Please enable location access or search for a specific city.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const handlePharmacySelect = async (pharmacyId: string) => {
     if (!session) {
@@ -97,7 +137,7 @@ export const usePharmacyState = (session: any) => {
 
   return {
     userLocation,
-    setUserLocation,
+    setUserLocation: handleSetUserLocation,
     userProfile,
     defaultPharmacy,
     handlePharmacySelect,
