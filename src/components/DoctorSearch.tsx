@@ -49,16 +49,23 @@ const DoctorSearch = () => {
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
-  // Effect to initialize location
+  // Effect to initialize location and geolocation
   useEffect(() => {
-    if (!coordinates && !userLocation) {
-      if (session && userProfile?.city) {
-        handleCitySearch(userProfile.city);
-      } else {
-        handleCitySearch("Luxembourg City");
-      }
+    // Set Luxembourg coordinates by default without showing the toast
+    setUserLocation(LUXEMBOURG_COORDINATES);
+    
+    // Only attempt geolocation if coordinates aren't set
+    if (!coordinates && "geolocation" in navigator) {
+      handleCitySearch("Luxembourg City");
     }
-  }, [session, coordinates, userProfile?.city]);
+  }, [coordinates]);
+
+  // Effect to handle city-based search
+  useEffect(() => {
+    if (!coordinates && session && userProfile?.city) {
+      handleCitySearch(userProfile.city);
+    }
+  }, [session, userProfile?.city]);
 
   // Effect for search radius adjustment
   useEffect(() => {
