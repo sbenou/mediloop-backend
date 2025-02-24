@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -33,6 +34,9 @@ const createSelectedIcon = () => new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
+
+// Default icon for non-selected markers
+const defaultIcon = new L.Icon.Default();
 
 function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
   const map = useMap();
@@ -139,6 +143,7 @@ const DoctorListSection = ({
           style={{ height: '100%', width: '100%' }}
           center={centerPosition}
           zoom={13}
+          scrollWheelZoom={false}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -148,7 +153,7 @@ const DoctorListSection = ({
           {showUserLocation && (
             <Marker 
               position={centerPosition}
-              icon={userLocationIcon as L.Icon}
+              icon={userLocationIcon}
             >
               <Popup>Your location</Popup>
             </Marker>
@@ -164,7 +169,7 @@ const DoctorListSection = ({
               <Marker
                 key={doctor.id}
                 position={position}
-                icon={selectedDoctorId === doctor.id ? createSelectedIcon() : undefined}
+                icon={selectedDoctorId === doctor.id ? createSelectedIcon() : defaultIcon}
                 ref={(ref) => {
                   if (ref) {
                     markerRefs.current[doctor.id] = ref;
