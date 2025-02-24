@@ -9,6 +9,7 @@ import Header from "@/components/layout/Header";
 import SearchHeader from "@/components/pharmacy/SearchHeader";
 import DoctorListSection from "@/components/doctor/DoctorListSection";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 const DoctorSearch = () => {
   const { isAuthenticated } = useAuth();

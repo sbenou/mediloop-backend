@@ -1,23 +1,23 @@
 
 import { useEffect, useState } from "react";
 import { LocationToggle } from "@/components/shared/LocationToggle";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import L from 'leaflet';
 
 interface DoctorListSectionProps {
-  doctors: any[];
+  doctors: any[] | undefined; // Make doctors prop possibly undefined
   isLoading: boolean;
   coordinates: { lat: number; lon: number };
   onConnect: (doctorId: string, source: string) => void;
 }
 
 const DoctorListSection = ({
-  doctors,
+  doctors = [], // Provide default empty array
   isLoading,
   coordinates,
   onConnect
 }: DoctorListSectionProps) => {
-  const [filteredDoctors, setFilteredDoctors] = useState(doctors);
+  const [filteredDoctors, setFilteredDoctors] = useState<any[]>([]);
   const [showDefaultLocation, setShowDefaultLocation] = useState(false);
 
   const handleLocationToggle = (checked: boolean) => {
@@ -31,8 +31,8 @@ const DoctorListSection = ({
   };
 
   useEffect(() => {
-    if (!coordinates?.lat || !coordinates?.lon) {
-      setFilteredDoctors(doctors);
+    if (!coordinates?.lat || !coordinates?.lon || !doctors) {
+      setFilteredDoctors([]);
       return;
     }
 
@@ -40,7 +40,7 @@ const DoctorListSection = ({
       try {
         const userLocation = L.latLng(coordinates.lat, coordinates.lon);
         const nearbyDoctors = doctors.filter(doctor => {
-          if (!doctor.coordinates?.lat || !doctor.coordinates?.lon) return false;
+          if (!doctor?.coordinates?.lat || !doctor?.coordinates?.lon) return false;
           try {
             const doctorLocation = L.latLng(doctor.coordinates.lat, doctor.coordinates.lon);
             return userLocation.distanceTo(doctorLocation) <= 2000; // 2km radius
@@ -52,7 +52,7 @@ const DoctorListSection = ({
         setFilteredDoctors(nearbyDoctors);
       } catch (error) {
         console.error('Error creating user location:', error);
-        setFilteredDoctors(doctors);
+        setFilteredDoctors([]);
       }
     } else {
       setFilteredDoctors(doctors);
@@ -70,7 +70,7 @@ const DoctorListSection = ({
         onLocationToggle={handleLocationToggle}
       />
       {isLoading ? (
-        <div>Loading...</div>
+        <div>Loading doctors...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredDoctors.map((doctor: any) => (
