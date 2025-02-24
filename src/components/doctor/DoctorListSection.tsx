@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import L from 'leaflet';
 
 interface DoctorListSectionProps {
-  doctors: any[] | undefined;
+  doctors: any[];
   isLoading: boolean;
   coordinates: { lat: number; lon: number } | null;
   onConnect: (doctorId: string, source: string) => void;
@@ -62,6 +62,10 @@ const DoctorListSection = ({
     }
   }, [showDefaultLocation, coordinates, doctors]);
 
+  if (!coordinates) {
+    return <div>Loading location...</div>;
+  }
+
   return (
     <div className="space-y-4">
       <LocationToggle
@@ -71,22 +75,27 @@ const DoctorListSection = ({
       {isLoading ? (
         <div>Loading doctors...</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDoctors.map((doctor: any) => (
-            <div key={doctor.id} className="p-4 border rounded-lg">
-              <h3 className="font-bold">{doctor.name || doctor.full_name}</h3>
-              <p>{doctor.address || doctor.city}</p>
-              <button 
-                onClick={() => onConnect(doctor.id, doctor.source)}
-                className="mt-2 bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-              >
-                Connect
-              </button>
-            </div>
-          ))}
-          {filteredDoctors.length === 0 && (
-            <p className="text-center col-span-full">No doctors found in this area</p>
-          )}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="h-[600px] rounded-lg border">
+            {/* Map will be added here by the parent component */}
+          </div>
+          <div className="space-y-4">
+            {filteredDoctors.map((doctor) => (
+              <div key={doctor.id} className="p-4 border rounded-lg">
+                <h3 className="font-bold">{doctor.name || doctor.full_name}</h3>
+                <p>{doctor.address || doctor.city}</p>
+                <button 
+                  onClick={() => onConnect(doctor.id, doctor.source)}
+                  className="mt-2 bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+                >
+                  Connect
+                </button>
+              </div>
+            ))}
+            {filteredDoctors.length === 0 && (
+              <p className="text-center">No doctors found in this area</p>
+            )}
+          </div>
         </div>
       )}
     </div>
