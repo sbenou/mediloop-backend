@@ -18,7 +18,7 @@ export const useDoctorSearch = (
   const { data: doctors, isLoading } = useQuery({
     queryKey: ["doctors", coordinates?.lat, coordinates?.lon, searchRadius],
     queryFn: async () => {
-      if (!coordinates?.lat || !coordinates?.lon) return [];
+      if (!coordinates) return [];
       
       console.log('Fetching doctors with coordinates:', coordinates);
       
@@ -32,11 +32,7 @@ export const useDoctorSearch = (
       // Add source field to Overpass results
       const formattedOverpassDoctors = overpassDoctors.map(doc => ({
         ...doc,
-        source: 'overpass' as const,
-        coordinates: {
-          lat: doc.coordinates?.lat || 0,
-          lon: doc.coordinates?.lon || 0
-        }
+        source: 'overpass' as const
       }));
 
       // Get doctors from database
@@ -47,7 +43,7 @@ export const useDoctorSearch = (
 
       if (error) {
         console.error('Error fetching doctors from database:', error);
-        return formattedOverpassDoctors; // Return Overpass results even if DB fails
+        throw error;
       }
 
       console.log('Database doctors:', dbDoctors);
@@ -55,8 +51,7 @@ export const useDoctorSearch = (
       // Add source field to database results
       const formattedDbDoctors = (dbDoctors || []).map(doc => ({
         ...doc,
-        source: 'database' as const,
-        coordinates: coordinates // Use search coordinates as fallback
+        source: 'database' as const
       }));
 
       // Combine and deduplicate results
@@ -68,10 +63,10 @@ export const useDoctorSearch = (
       // Remove duplicates based on id
       return Array.from(new Map(allDoctors.map(item => [item.id, item])).values());
     },
-    enabled: !!coordinates?.lat && !!coordinates?.lon,
+    enabled: !!coordinates,
     staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
   });
 
-  return { doctors: doctors || [], isLoading };
+  return { doctors, isLoading };
 };
