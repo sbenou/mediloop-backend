@@ -67,6 +67,9 @@ const DoctorListSection = ({
     return <div>Loading location...</div>;
   }
 
+  // Convert coordinates to LatLngTuple type
+  const centerPosition: [number, number] = [coordinates.lat, coordinates.lon];
+
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
       <div className="overflow-y-auto space-y-4 pr-4 relative z-50">
@@ -101,7 +104,7 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={[coordinates.lat, coordinates.lon]}
+          center={centerPosition}
           zoom={13}
         >
           <TileLayer
@@ -112,32 +115,35 @@ const DoctorListSection = ({
           {/* User location marker */}
           {showUserLocation && (
             <Marker 
-              position={[coordinates.lat, coordinates.lon]}
-              icon={userLocationIcon}
+              position={centerPosition}
+              icon={userLocationIcon as L.Icon}
             >
               <Popup>Your location</Popup>
             </Marker>
           )}
 
           {/* Doctor markers */}
-          {doctors?.filter(doctor => doctor.coordinates).map((doctor) => (
-            <Marker
-              key={doctor.id}
-              position={[
-                doctor.coordinates?.lat || coordinates.lat,
-                doctor.coordinates?.lon || coordinates.lon
-              ]}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <p className="font-semibold">{doctor.full_name}</p>
-                  <p>{doctor.city}</p>
-                  <p>{doctor.license_number}</p>
-                  {doctor.hours && <p>{doctor.hours}</p>}
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          {doctors?.filter(doctor => doctor.coordinates).map((doctor) => {
+            const position: [number, number] = [
+              doctor.coordinates?.lat || coordinates.lat,
+              doctor.coordinates?.lon || coordinates.lon
+            ];
+            return (
+              <Marker
+                key={doctor.id}
+                position={position}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <p className="font-semibold">{doctor.full_name}</p>
+                    <p>{doctor.city}</p>
+                    <p>{doctor.license_number}</p>
+                    {doctor.hours && <p>{doctor.hours}</p>}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       </div>
     </div>
