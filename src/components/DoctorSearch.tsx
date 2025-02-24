@@ -51,8 +51,9 @@ const DoctorSearch = () => {
 
   // Effect to handle user location based on session and coordinates
   useEffect(() => {
+    setUserLocation(LUXEMBOURG_COORDINATES);
+    
     if (!session) {
-      setUserLocation(LUXEMBOURG_COORDINATES);
       if (!coordinates) {
         handleCitySearch("Luxembourg City");
       }

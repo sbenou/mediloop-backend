@@ -18,7 +18,7 @@ export const LocationToggle = ({
         checked={showDefaultLocation}
         onCheckedChange={onLocationToggle}
       />
-      <Label htmlFor="location-mode">Show near my location</Label>
+      <Label htmlFor="location-mode">Show my location</Label>
     </div>
   );
 };
