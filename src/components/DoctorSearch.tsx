@@ -14,6 +14,7 @@ import { LocationToggle } from "@/components/shared/LocationToggle";
 
 const DoctorSearch = () => {
   const [showDefaultLocation, setShowDefaultLocation] = useState(false);
+  const [hasLocationPermission, setHasLocationPermission] = useState<boolean | null>(null);
   const { isAuthenticated } = useAuth();
   const { data: session } = useQuery({
     queryKey: ['session'],
@@ -32,7 +33,20 @@ const DoctorSearch = () => {
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
-  // Determine search coordinates with useMemo to prevent unnecessary recalculations
+  // Check for location permission on component mount
+  useEffect(() => {
+    if ("permissions" in navigator) {
+      navigator.permissions.query({ name: 'geolocation' })
+        .then((result) => {
+          setHasLocationPermission(result.state === 'granted');
+          result.addEventListener('change', () => {
+            setHasLocationPermission(result.state === 'granted');
+          });
+        });
+    }
+  }, []);
+
+  // Determine search coordinates
   const searchCoordinates = coordinates 
     ? { 
         lat: coordinates.lat, 
@@ -72,6 +86,16 @@ const DoctorSearch = () => {
   const handleLocationToggle = (checked: boolean) => {
     setShowDefaultLocation(checked);
     if (checked) {
+      if (hasLocationPermission === false) {
+        toast({
+          title: "Location access denied",
+          description: "Please enable location access in your browser settings.",
+          variant: "destructive",
+        });
+        setShowDefaultLocation(false);
+        return;
+      }
+
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -87,6 +111,7 @@ const DoctorSearch = () => {
           },
           () => {
             setShowDefaultLocation(false);
+            setHasLocationPermission(false);
             toast({
               title: "Location access denied",
               description: "Please enable location access or search for a specific city.",
