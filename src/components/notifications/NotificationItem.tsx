@@ -1,40 +1,14 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-
-export type NotificationType = 
-  | "payment_failed" 
-  | "payment_successful" 
-  | "delivery_incoming" 
-  | "delivery_successful" 
-  | "delivery_late" 
-  | "delivery_failed" 
-  | "prescription_created" 
-  | "prescription_updated" 
-  | "patient_connected" 
-  | "new_user_registered" 
-  | "new_subscription" 
-  | "new_teleconsultation" 
-  | "new_doctor" 
-  | "new_pharmacy";
-
-export interface Notification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  read: boolean;
-  createdAt: string;
-  link?: string;
-  meta?: Record<string, any>;
-}
+import { Notification } from "@/types/supabase";
 
 interface NotificationItemProps {
   notification: Notification;
   onMarkRead: (id: string) => void;
 }
 
-const getNotificationColor = (type: NotificationType) => {
+const getNotificationColor = (type: string) => {
   switch (type) {
     case "payment_failed":
       return "bg-red-100 text-red-800 border-red-200";
@@ -63,7 +37,7 @@ const getNotificationColor = (type: NotificationType) => {
 
 const NotificationItem = ({ notification, onMarkRead }: NotificationItemProps) => {
   const notificationColor = getNotificationColor(notification.type);
-  const timeAgo = formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true });
+  const timeAgo = formatDistanceToNow(new Date(notification.created_at), { addSuffix: true });
   
   return (
     <div 

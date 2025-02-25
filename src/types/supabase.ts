@@ -20,3 +20,4 @@ export type Role = Tables<'roles'>
 export type RolePermission = Tables<'role_permissions'>
 export type Subcategory = Tables<'subcategories'>
 export type UserPharmacy = Tables<'user_pharmacies'>
+export type Notification = Tables<'notifications'>

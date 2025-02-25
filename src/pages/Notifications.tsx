@@ -1,136 +1,135 @@
 
-import { useState } from "react";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import NotificationItem, { Notification, NotificationType } from "@/components/notifications/NotificationItem";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
+import NotificationItem from "@/components/notifications/NotificationItem";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+import { seedUserNotifications } from "@/utils/seedNotifications";
+import { toast } from "@/components/ui/use-toast";
 
 const Notifications = () => {
-  const { profile } = useAuth();
-  const [currentTab, setCurrentTab] = useState<"all" | "alerts" | "unread">("all");
-  
-  // This would normally be fetched from the database
-  // For now, we'll use mock data
-  const mockNotifications: Notification[] = [
-    {
-      id: "1",
-      type: "payment_successful" as NotificationType,
-      title: "Payment Successful",
-      message: "Your payment for order #ORD-2023-001 has been processed",
-      read: false,
-      createdAt: new Date(Date.now() - 1800000).toISOString(),
-    },
-    {
-      id: "2",
-      type: "delivery_incoming" as NotificationType,
-      title: "Delivery On The Way",
-      message: "Your order #ORD-2023-001 is out for delivery",
-      read: false,
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: "3",
-      type: "prescription_created" as NotificationType,
-      title: "New Prescription",
-      message: "Dr. Smith has created a new prescription for you",
-      read: true,
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ];
-  
-  // Filter notifications based on current tab
-  const filteredNotifications = mockNotifications.filter(notification => {
-    if (currentTab === "all") return true;
-    if (currentTab === "alerts") {
+  const { user } = useAuth();
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    setupRealtimeSubscription,
+  } = useNotifications();
+  const [isSeeding, setIsSeeding] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      const cleanup = setupRealtimeSubscription();
+      return cleanup;
+    }
+  }, [user, fetchNotifications, setupRealtimeSubscription]);
+
+  const handleSeedNotifications = async () => {
+    if (!user) return;
+    
+    setIsSeeding(true);
+    try {
+      await seedUserNotifications(user.id);
+      toast({
+        title: "Notifications seeded",
+        description: "Test notifications have been added to your account",
+      });
+      fetchNotifications();
+    } catch (error) {
+      console.error("Error seeding notifications:", error);
+      toast({
+        title: "Error",
+        description: "Failed to seed notifications",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const alerts = notifications.filter(
+    (notif) =>
+      notif.type === "payment_failed" ||
+      notif.type === "delivery_late" ||
+      notif.type === "delivery_failed"
+  );
+
+  const renderContent = (items: typeof notifications) => {
+    if (isLoading) {
       return (
-        notification.type === "payment_failed" || 
-        notification.type === "delivery_late" || 
-        notification.type === "delivery_failed"
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="ml-2">Loading notifications...</span>
+        </div>
       );
     }
-    if (currentTab === "unread") {
-      return !notification.read;
+
+    if (items.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>No notifications</p>
+        </div>
+      );
     }
-    return true;
-  });
-  
-  const handleMarkRead = (id: string) => {
-    // In a real app, this would update the database
-    console.log("Marking notification as read:", id);
+
+    return items.map((notification) => (
+      <NotificationItem
+        key={notification.id}
+        notification={notification}
+        onMarkRead={markAsRead}
+      />
+    ));
   };
-  
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      
-      <main className="flex-1 container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Notifications</h1>
-        
-        <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as any)} className="mb-8">
-          <TabsList className="grid w-full md:w-auto grid-cols-3 md:inline-flex">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="unread">Unread</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="mt-6">
-            {filteredNotifications.length > 0 ? (
-              <div className="space-y-4">
-                {filteredNotifications.map(notification => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
-                    onMarkRead={handleMarkRead}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No notifications</p>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="unread" className="mt-6">
-            {filteredNotifications.length > 0 ? (
-              <div className="space-y-4">
-                {filteredNotifications.map(notification => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
-                    onMarkRead={handleMarkRead}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No unread notifications</p>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="alerts" className="mt-6">
-            {filteredNotifications.length > 0 ? (
-              <div className="space-y-4">
-                {filteredNotifications.map(notification => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
-                    onMarkRead={handleMarkRead}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No alerts</p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </main>
-      
-      <Footer />
+    <div className="container py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Notifications</h1>
+        <div className="flex space-x-2">
+          {process.env.NODE_ENV === "development" && (
+            <Button onClick={handleSeedNotifications} disabled={isSeeding}>
+              {isSeeding ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Seeding...
+                </>
+              ) : (
+                "Seed Test Notifications"
+              )}
+            </Button>
+          )}
+          <Button variant="outline" onClick={markAllAsRead} disabled={unreadCount === 0}>
+            Mark all as read
+          </Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Notifications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            </TabsList>
+            <TabsContent value="all" className="mt-6 space-y-4">
+              {renderContent(notifications)}
+            </TabsContent>
+            <TabsContent value="alerts" className="mt-6 space-y-4">
+              {renderContent(alerts)}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

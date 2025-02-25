@@ -1,14 +1,17 @@
 
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import NotificationItem, { Notification } from "./NotificationItem";
+import NotificationItem from "./NotificationItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Notification } from "@/types/supabase";
+import { Loader2 } from "lucide-react";
 
 interface NotificationTabsProps {
   notifications: Notification[];
   unreadCount: number;
+  isLoading: boolean;
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
 }
@@ -16,6 +19,7 @@ interface NotificationTabsProps {
 const NotificationTabs = ({
   notifications,
   unreadCount,
+  isLoading,
   onMarkRead,
   onMarkAllRead,
 }: NotificationTabsProps) => {
@@ -39,11 +43,38 @@ const NotificationTabs = ({
     setCurrentTab(value as "all" | "alerts");
   };
 
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="ml-2">Loading notifications...</span>
+        </div>
+      );
+    }
+
+    if (allNotifications.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>No {currentTab === "alerts" ? "alerts" : "notifications"}</p>
+        </div>
+      );
+    }
+
+    return allNotifications.map((notification) => (
+      <NotificationItem
+        key={notification.id}
+        notification={notification}
+        onMarkRead={onMarkRead}
+      />
+    ));
+  };
+
   return (
     <div className="w-full">
       <div className="flex justify-between items-center p-3 border-b">
         <h3 className="font-semibold">Notifications</h3>
-        <Button variant="ghost" size="sm" onClick={onMarkAllRead} disabled={unreadCount === 0}>
+        <Button variant="ghost" size="sm" onClick={onMarkAllRead} disabled={unreadCount === 0 || isLoading}>
           Mark all as read
         </Button>
       </div>
@@ -56,37 +87,13 @@ const NotificationTabs = ({
         
         <TabsContent value="all" className="py-2">
           <ScrollArea className="h-[400px] px-3">
-            {allNotifications.length > 0 ? (
-              allNotifications.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onMarkRead={onMarkRead}
-                />
-              ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No notifications</p>
-              </div>
-            )}
+            {renderContent()}
           </ScrollArea>
         </TabsContent>
         
         <TabsContent value="alerts" className="py-2">
           <ScrollArea className="h-[400px] px-3">
-            {alerts.length > 0 ? (
-              alerts.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onMarkRead={onMarkRead}
-                />
-              ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No alerts</p>
-              </div>
-            )}
+            {renderContent()}
           </ScrollArea>
         </TabsContent>
       </Tabs>
