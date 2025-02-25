@@ -50,7 +50,7 @@ export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: 
       <RoleSelector selectedRole={userRole} onRoleChange={handleRoleChange} />
 
       <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
+        <Label htmlFor="name" className="text-left block w-full">Full Name</Label>
         <div className="relative">
           <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -65,7 +65,7 @@ export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: 
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="signup-email">Email</Label>
+        <Label htmlFor="signup-email" className="text-left block w-full">Email</Label>
         <div className="relative">
           <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -81,7 +81,7 @@ export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: 
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="signup-password">Password</Label>
+        <Label htmlFor="signup-password" className="text-left block w-full">Password</Label>
         <div className="relative">
           <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -98,7 +98,7 @@ export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: 
 
       {(userRole === "doctor" || userRole === "pharmacist") && (
         <div className="space-y-2">
-          <Label htmlFor="license">Professional License Number</Label>
+          <Label htmlFor="license" className="text-left block w-full">Professional License Number</Label>
           <Input
             id="license"
             placeholder="Enter your license number"
