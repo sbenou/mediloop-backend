@@ -10,53 +10,27 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   const { t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <div className="border-r pr-4">
-          <button
-            onClick={() => setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy')}
-            className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
-              selectedType === 'pharmacy' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'hover:bg-accent'
-            }`}
-          >
-            {t('common.navigation.pharmacy')}
-          </button>
-          <button
-            onClick={() => setSelectedType(selectedType === 'parapharmacy' ? null : 'parapharmacy')}
-            className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
-              selectedType === 'parapharmacy' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'hover:bg-accent'
-            }`}
-          >
-            {t('common.navigation.parapharmacy')}
-          </button>
-
-          {selectedType && (
-            <div className="mt-4 px-3">
-              {selectedType === 'pharmacy' && (
-                <img
-                  src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
-                  alt="Pharmacy"
-                  className="w-full h-32 object-cover rounded-md"
-                />
-              )}
-              {selectedType === 'parapharmacy' && (
-                <img
-                  src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae"
-                  alt="Parapharmacy"
-                  className="w-full h-32 object-cover rounded-md"
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="space-y-2">
-        {/* This empty div preserves the grid layout for categories */}
-      </div>
+    <div className="space-y-2 border-r pr-4">
+      <button
+        onClick={() => setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy')}
+        className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
+          selectedType === 'pharmacy' 
+            ? 'bg-primary text-primary-foreground' 
+            : 'hover:bg-accent'
+        }`}
+      >
+        {t('common.navigation.pharmacy')}
+      </button>
+      <button
+        onClick={() => setSelectedType(selectedType === 'parapharmacy' ? null : 'parapharmacy')}
+        className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
+          selectedType === 'parapharmacy' 
+            ? 'bg-primary text-primary-foreground' 
+            : 'hover:bg-accent'
+        }`}
+      >
+        {t('common.navigation.parapharmacy')}
+      </button>
     </div>
   );
 };
