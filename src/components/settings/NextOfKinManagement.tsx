@@ -21,13 +21,14 @@ const NextOfKinManagement = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
       
+      // Use any to bypass TypeScript errors until database types are updated
       const { data, error } = await supabase
-        .from('next_of_kin')
+        .from('next_of_kin' as any)
         .select('*')
         .eq('user_id', user.id);
         
       if (error) throw error;
-      return data as NextOfKin[];
+      return data as unknown as NextOfKin[];
     }
   });
 
@@ -38,7 +39,7 @@ const NextOfKinManagement = () => {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
-        .from('next_of_kin')
+        .from('next_of_kin' as any)
         .insert([{ ...kin, user_id: user.id }])
         .select()
         .single();
@@ -71,7 +72,7 @@ const NextOfKinManagement = () => {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
-        .from('next_of_kin')
+        .from('next_of_kin' as any)
         .update({ ...kin })
         .eq('id', kin.id)
         .eq('user_id', user.id)
@@ -106,7 +107,7 @@ const NextOfKinManagement = () => {
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
-        .from('next_of_kin')
+        .from('next_of_kin' as any)
         .delete()
         .eq('id', kinId)
         .eq('user_id', user.id);

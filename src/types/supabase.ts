@@ -1,3 +1,4 @@
+
 import { Database } from './database.types';
 import { Tables } from './database.types';
 
@@ -19,3 +20,4 @@ export type Role = Tables<'roles'>
 export type RolePermission = Tables<'role_permissions'>
 export type Subcategory = Tables<'subcategories'>
 export type UserPharmacy = Tables<'user_pharmacies'>
+export type NextOfKin = Tables<'next_of_kin'> // Add this line
