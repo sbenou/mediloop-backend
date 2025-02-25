@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchPharmacies } from "@/lib/overpass";
 
@@ -6,6 +7,9 @@ export const usePharmacySearch = (
   coordinates: { lat: number; lon: number } | null,
   searchRadius: number = 5000
 ) => {
+  const [search, setSearch] = useState("");
+  const [isMapView, setIsMapView] = useState(false);
+
   const { data: pharmacies, isLoading } = useQuery({
     queryKey: ["pharmacies", coordinates?.lat, coordinates?.lon, searchRadius],
     queryFn: async () => {
@@ -37,5 +41,23 @@ export const usePharmacySearch = (
     retryDelay: 1000,
   });
 
-  return { pharmacies: pharmacies || [], isLoading };
+  const searchPharmacy = (query: string) => {
+    setSearch(query);
+    // In a real implementation, this would filter pharmacies or trigger a new search
+    console.log("Searching for pharmacy:", query);
+  };
+
+  const toggleView = () => {
+    setIsMapView(prev => !prev);
+  };
+
+  return { 
+    pharmacies: pharmacies || [], 
+    isLoading,
+    search,
+    setSearch,
+    searchPharmacy,
+    isMapView,
+    toggleView
+  };
 };
