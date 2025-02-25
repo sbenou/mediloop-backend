@@ -14,15 +14,20 @@ import { useAuth } from '@/hooks/auth/useAuth';
 const SearchPharmacy = () => {
   const [search, setSearch] = useState('');
   const [isMapView, setIsMapView] = useState(false);
-  const { coordinates } = useQuery({
+  
+  // Get default coordinates for Luxembourg
+  const { data: coordinates } = useQuery({
     queryKey: ['geo-coordinates'],
     queryFn: async () => {
       // Default coordinates for Luxembourg
       return { lat: 49.8153, lon: 6.1296 };
     },
-  }).data || { lat: 49.8153, lon: 6.1296 };
+  });
   
-  const { pharmacies, isLoading } = usePharmacySearch(coordinates);
+  // Use default coordinates if query hasn't returned yet
+  const currentCoordinates = coordinates || { lat: 49.8153, lon: 6.1296 };
+  
+  const { pharmacies, isLoading } = usePharmacySearch(currentCoordinates);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState<string | null>(null);
   
   const location = useLocation();
@@ -86,7 +91,7 @@ const SearchPharmacy = () => {
               </button>
             </div>
             <PharmacyMap
-              coordinates={coordinates}
+              coordinates={currentCoordinates}
               pharmacies={pharmacies}
               filteredPharmacies={pharmacies}
               onPharmaciesInShape={() => {}}
@@ -106,7 +111,7 @@ const SearchPharmacy = () => {
             <PharmacyListSection
               pharmacies={pharmacies}
               isLoading={isLoading}
-              coordinates={coordinates}
+              coordinates={currentCoordinates}
               defaultPharmacyId={null}
               onPharmacySelect={handleSelectPharmacy}
               onSetDefaultPharmacy={() => {}}
