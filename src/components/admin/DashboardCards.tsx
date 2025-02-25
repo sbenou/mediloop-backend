@@ -17,7 +17,7 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('users')}
-        style={{ backgroundColor: "#2A7A9B" }} // Keep the teal color from previous implementation
+        style={{ backgroundColor: "#1EAEDB" }} // Blue theme
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
@@ -51,7 +51,7 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('roles')}
-        style={{ backgroundColor: "#176D4A" }} // Keep the green color from previous implementation
+        style={{ backgroundColor: "#8B5CF6" }} // Purple theme
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
@@ -85,7 +85,7 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('permissions')}
-        style={{ backgroundColor: "#BF7F21" }} // Keep the orange/brown color from previous implementation
+        style={{ backgroundColor: "#F97316" }} // Bright Orange instead of Rose
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
@@ -119,7 +119,7 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('products')}
-        style={{ backgroundColor: "#6C3894" }} // Keep the purple color from previous implementation
+        style={{ backgroundColor: "#059669" }} // Emerald theme
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
