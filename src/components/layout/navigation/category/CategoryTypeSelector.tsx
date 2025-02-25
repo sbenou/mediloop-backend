@@ -16,7 +16,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   };
 
   return (
-    <div className="flex flex-col border-r pr-4 pb-4 w-[400px]">
+    <div className="flex flex-col border-r pr-4 pb-4 w-[400px] h-full">
       <div>
         <button
           onClick={() => {
@@ -47,7 +47,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
       </div>
       
       {selectedType && (
-        <div className="mt-20">
+        <div className="flex-grow flex items-end mt-4">
           {selectedType === 'pharmacy' && (
             <img
               src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
