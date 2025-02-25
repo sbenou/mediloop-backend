@@ -5,12 +5,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import PharmacyList from "@/components/pharmacy/list/PharmacyList";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PharmacySelectionProps {
   userId?: string;
   redirectAfterSelection?: boolean;
+  onComplete?: () => void;
+}
+
+interface Pharmacy {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  phone?: string;
+  hours?: string;
 }
 
 interface LocationState {
@@ -19,7 +29,7 @@ interface LocationState {
   userRole?: string;
 }
 
-const PharmacySelection = ({ userId, redirectAfterSelection = false }: PharmacySelectionProps) => {
+const PharmacySelection = ({ userId, redirectAfterSelection = false, onComplete }: PharmacySelectionProps) => {
   const [selectedPharmacyId, setSelectedPharmacyId] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -74,7 +84,9 @@ const PharmacySelection = ({ userId, redirectAfterSelection = false }: PharmacyS
         description: "Your pharmacy has been set successfully.",
       });
       
-      if (redirectAfterSelection || isPharmacistSignup) {
+      if (onComplete) {
+        onComplete();
+      } else if (redirectAfterSelection || isPharmacistSignup) {
         navigate('/');
       }
     },
@@ -104,88 +116,58 @@ const PharmacySelection = ({ userId, redirectAfterSelection = false }: PharmacyS
     }
   };
 
-  // Show a special UI for pharmacists during signup
-  if (isPharmacistSignup) {
-    return (
-      <Card className="mx-auto max-w-4xl">
-        <CardHeader>
-          <CardTitle>Select Your Pharmacy</CardTitle>
-          <CardDescription>
-            As a pharmacist, please select the pharmacy you work at from the list below.
-            This will connect your account to that pharmacy.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading pharmacies...</div>
-          ) : (
-            <div className="space-y-4">
-              {pharmacies && pharmacies.length > 0 ? (
-                <PharmacyList 
-                  pharmacies={pharmacies.map(p => ({
-                    ...p,
-                    distance: '-' // Not calculating distance in this view
-                  }))}
-                  onSelect={handleSelectPharmacy}
-                  selectedPharmacyId={selectedPharmacyId}
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <p>No pharmacies found. Please contact support.</p>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="justify-between">
-          <Button variant="outline" onClick={() => navigate('/')}>
-            Skip for now
-          </Button>
-          <Button 
-            onClick={handleConfirmSelection}
-            disabled={!selectedPharmacyId || setPharmacyMutation.isPending}
-          >
-            {setPharmacyMutation.isPending ? "Saving..." : "Confirm Selection"}
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
-
-  // Regular component for non-signup flows
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Select Your Pharmacy</h2>
-      {isLoading ? (
-        <div className="text-center py-8">Loading pharmacies...</div>
-      ) : (
-        <>
-          {pharmacies && pharmacies.length > 0 ? (
-            <PharmacyList 
-              pharmacies={pharmacies.map(p => ({
-                ...p,
-                distance: '-' // Not calculating distance in this view
-              }))}
-              onSelect={handleSelectPharmacy}
-              selectedPharmacyId={selectedPharmacyId}
-            />
-          ) : (
-            <div className="text-center py-8">
-              <p>No pharmacies found. Please try again later.</p>
-            </div>
-          )}
-          
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleConfirmSelection}
-              disabled={!selectedPharmacyId || setPharmacyMutation.isPending}
-            >
-              {setPharmacyMutation.isPending ? "Saving..." : "Confirm Selection"}
-            </Button>
+    <Card className="mx-auto">
+      <CardHeader>
+        <CardTitle>Select Your Pharmacy</CardTitle>
+        <CardDescription>
+          Please select the pharmacy you work at from the list below.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-8">Loading pharmacies...</div>
+        ) : (
+          <div className="space-y-4">
+            {pharmacies && pharmacies.length > 0 ? (
+              <div className="grid gap-4">
+                {pharmacies.map(pharmacy => (
+                  <div 
+                    key={pharmacy.id}
+                    className={`p-4 border rounded-md cursor-pointer transition-colors ${
+                      selectedPharmacyId === pharmacy.id ? 'bg-primary/10 border-primary' : 'hover:bg-accent'
+                    }`}
+                    onClick={() => handleSelectPharmacy(pharmacy.id)}
+                  >
+                    <h3 className="font-medium">{pharmacy.name}</h3>
+                    <p className="text-sm text-muted-foreground">{pharmacy.address}, {pharmacy.city}</p>
+                    {pharmacy.phone && <p className="text-sm">{pharmacy.phone}</p>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p>No pharmacies found. Please contact support.</p>
+              </div>
+            )}
           </div>
-        </>
-      )}
-    </div>
+        )}
+      </CardContent>
+      <CardFooter className="justify-between">
+        <Button variant="outline" onClick={() => {
+          if (onComplete) onComplete();
+          else navigate('/');
+        }}>
+          Skip for now
+        </Button>
+        <Button 
+          onClick={handleConfirmSelection}
+          disabled={!selectedPharmacyId || setPharmacyMutation.isPending}
+        >
+          {setPharmacyMutation.isPending ? "Saving..." : "Confirm Selection"}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 

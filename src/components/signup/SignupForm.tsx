@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +11,10 @@ export type UserRole = "patient" | "doctor" | "pharmacist" | "delivery";
 
 interface SignupFormProps {
   defaultRole?: UserRole;
+  onRegistrationComplete?: (userId: string, role: string) => void;
 }
 
-export const SignupForm = ({ defaultRole = "patient" }: SignupFormProps) => {
+export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: SignupFormProps) => {
   const [userRole, setUserRole] = useState<UserRole>(defaultRole);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +24,7 @@ export const SignupForm = ({ defaultRole = "patient" }: SignupFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleSignup(email, password, name, userRole, licenseNumber);
+    await handleSignup(email, password, name, userRole, licenseNumber, onRegistrationComplete);
   };
 
   return (

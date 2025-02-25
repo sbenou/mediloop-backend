@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -22,7 +21,8 @@ export const useSignup = () => {
     password: string,
     name: string,
     role: UserRole,
-    licenseNumber?: string
+    licenseNumber?: string,
+    onRegistrationComplete?: (userId: string, role: string) => void
   ) => {
     try {
       // Check rate limiting
@@ -93,16 +93,12 @@ export const useSignup = () => {
           description: "Your account has been created successfully",
         });
 
-        // Navigate to appropriate page based on role
-        if (role === "pharmacist") {
-          navigate("/search-pharmacy", { 
-            state: { 
-              isNewSignup: true,
-              userId: data.user.id,
-              userRole: role
-            } 
-          });
+        // If this is a pharmacist and we have onRegistrationComplete callback,
+        // call it rather than navigating
+        if (role === "pharmacist" && onRegistrationComplete) {
+          onRegistrationComplete(data.user.id, role);
         } else {
+          // Otherwise, navigate to home
           navigate("/");
         }
       }
