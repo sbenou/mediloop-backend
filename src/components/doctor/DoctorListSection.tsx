@@ -142,8 +142,8 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          whenCreated={(map) => {
-            map.setView(centerPosition as L.LatLngExpression, 13);
+          whenReady={(map) => {
+            map.target.setView(centerPosition as L.LatLngExpression, 13);
           }}
         >
           <TileLayer
