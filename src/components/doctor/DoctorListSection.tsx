@@ -1,9 +1,7 @@
-
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
-import type { MapContainerProps } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useEffect, useState, useRef } from "react";
@@ -142,9 +140,9 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          center={centerPosition}
-          zoom={13}
-          scrollWheelZoom={false}
+          whenCreated={(map) => {
+            map.setView(centerPosition as L.LatLngExpression, 13);
+          }}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
