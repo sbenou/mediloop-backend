@@ -16,7 +16,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   };
 
   return (
-    <div className="flex flex-col border-r pr-4 w-[400px] min-h-[calc(100vh-4rem)]">
+    <div className="flex flex-col border-r pr-4 w-[400px] h-[calc(100vh-4rem)] overflow-hidden">
       <div>
         <button
           onClick={() => {
@@ -47,13 +47,13 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
       </div>
       
       {selectedType && (
-        <div className="flex-grow flex items-end mt-4">
+        <div className="flex-grow flex items-end mt-4 overflow-hidden">
           {selectedType === 'pharmacy' && (
             <img
               src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
               alt="Pharmacy"
               onLoad={handleImageLoad}
-              className={`w-full h-64 object-cover rounded-md transition-opacity duration-300 ${
+              className={`w-full h-56 object-cover rounded-md transition-opacity duration-300 ${
                 imageLoaded ? 'opacity-100' : 'opacity-0'
               }`}
             />
@@ -63,7 +63,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
               src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae"
               alt="Parapharmacy"
               onLoad={handleImageLoad}
-              className={`w-full h-64 object-cover rounded-md transition-opacity duration-300 ${
+              className={`w-full h-56 object-cover rounded-md transition-opacity duration-300 ${
                 imageLoaded ? 'opacity-100' : 'opacity-0'
               }`}
             />
