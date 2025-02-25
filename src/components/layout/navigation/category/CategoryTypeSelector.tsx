@@ -33,7 +33,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
       </button>
       
       {selectedType && (
-        <div className="mt-8">
+        <div className="mt-4">
           {selectedType === 'pharmacy' && (
             <img
               src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
