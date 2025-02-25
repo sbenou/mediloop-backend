@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, Users, Shield, Box } from "lucide-react";
+import { Users, UserCheck, Lock, Box } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DashboardCardProps {
@@ -32,7 +32,7 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
       >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-purple-700" />
+            <UserCheck className="h-5 w-5 text-purple-700" />
             <span>Roles</span>
           </CardTitle>
         </CardHeader>
@@ -49,7 +49,7 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
       >
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-rose-700" />
+            <Lock className="h-5 w-5 text-rose-700" />
             <span>Permissions</span>
           </CardTitle>
         </CardHeader>

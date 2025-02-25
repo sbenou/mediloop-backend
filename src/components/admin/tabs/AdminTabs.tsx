@@ -1,6 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, Shield, Box } from "lucide-react";
+import { LayoutDashboard, Users, UserCheck, Lock, Box } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardCards } from "../DashboardCards";
 import { UserManagementTable } from "../UserManagementTable";
@@ -40,25 +40,25 @@ export const AdminTabs = ({ users, isLoading, updateUserRole }: {
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-      <TabsList>
+      <TabsList className="flex space-x-2">
         <TabsTrigger value="dashboard">
           <LayoutDashboard className="h-4 w-4 mr-2" />
           Dashboard
         </TabsTrigger>
         <TabsTrigger value="users">
-          <Users className="h-4 w-4 mr-2" color={getIconColor('users')} />
+          <Users className="h-4 w-4 mr-2" style={{ color: getIconColor('users') }} />
           Users
         </TabsTrigger>
         <TabsTrigger value="roles">
-          <Shield className="h-4 w-4 mr-2" color={getIconColor('roles')} />
+          <UserCheck className="h-4 w-4 mr-2" style={{ color: getIconColor('roles') }} />
           Roles
         </TabsTrigger>
         <TabsTrigger value="permissions">
-          <Shield className="h-4 w-4 mr-2" color={getIconColor('permissions')} />
+          <Lock className="h-4 w-4 mr-2" style={{ color: getIconColor('permissions') }} />
           Permissions
         </TabsTrigger>
         <TabsTrigger value="products">
-          <Box className="h-4 w-4 mr-2" color={getIconColor('products')} />
+          <Box className="h-4 w-4 mr-2" style={{ color: getIconColor('products') }} />
           Products
         </TabsTrigger>
       </TabsList>
