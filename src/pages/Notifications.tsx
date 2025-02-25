@@ -77,4 +77,62 @@ const Notifications = () => {
           <TabsContent value="all" className="mt-6">
             {filteredNotifications.length > 0 ? (
               <div className="space-y-4">
-                {filteredNotifications.
+                {filteredNotifications.map(notification => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onMarkRead={handleMarkRead}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No notifications</p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="unread" className="mt-6">
+            {filteredNotifications.length > 0 ? (
+              <div className="space-y-4">
+                {filteredNotifications.map(notification => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onMarkRead={handleMarkRead}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No unread notifications</p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="alerts" className="mt-6">
+            {filteredNotifications.length > 0 ? (
+              <div className="space-y-4">
+                {filteredNotifications.map(notification => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onMarkRead={handleMarkRead}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No alerts</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </main>
+      
+      <Footer />
+    </div>
+  );
+};
+
+export default Notifications;
