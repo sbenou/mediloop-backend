@@ -12,7 +12,9 @@ const Signup = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
+  // This function is called when the initial registration is complete
   const handleRegistrationComplete = (newUserId: string, role: string) => {
+    console.log("Registration complete for user:", newUserId, "with role:", role);
     if (role === 'pharmacist') {
       setUserId(newUserId);
       setUserRole(role);

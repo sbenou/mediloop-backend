@@ -24,12 +24,30 @@ export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleSignup(email, password, name, userRole, licenseNumber, onRegistrationComplete);
+    console.log(`Submitting signup form for role: ${userRole}`);
+    await handleSignup(
+      email, 
+      password, 
+      name, 
+      userRole, 
+      licenseNumber, 
+      onRegistrationComplete
+    );
+  };
+
+  const handleRoleChange = (newRole: UserRole) => {
+    console.log(`Role changed to: ${newRole}`);
+    setUserRole(newRole);
+    
+    // Reset license number when changing roles
+    if (newRole !== "doctor" && newRole !== "pharmacist") {
+      setLicenseNumber("");
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <RoleSelector selectedRole={userRole} onRoleChange={setUserRole} />
+      <RoleSelector selectedRole={userRole} onRoleChange={handleRoleChange} />
 
       <div className="space-y-2">
         <Label htmlFor="name">Full Name</Label>

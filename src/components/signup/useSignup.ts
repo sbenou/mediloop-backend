@@ -95,10 +95,12 @@ export const useSignup = () => {
 
         // If this is a pharmacist and we have onRegistrationComplete callback,
         // call it rather than navigating
-        if (role === "pharmacist" && onRegistrationComplete) {
+        if (role === 'pharmacist' && onRegistrationComplete) {
+          console.log("Calling onRegistrationComplete for pharmacist");
           onRegistrationComplete(data.user.id, role);
         } else {
           // Otherwise, navigate to home
+          console.log("Navigating to home for non-pharmacist or no callback");
           navigate("/");
         }
       }

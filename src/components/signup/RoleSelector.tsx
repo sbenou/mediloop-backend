@@ -1,3 +1,4 @@
+
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { UserRole } from "./SignupForm";
@@ -9,10 +10,15 @@ interface RoleSelectorProps {
 }
 
 export const RoleSelector = ({ selectedRole, onRoleChange, disabled = false }: RoleSelectorProps) => {
+  const handleChange = (value: string) => {
+    console.log(`Role selected in RoleSelector: ${value}`);
+    onRoleChange(value as UserRole);
+  };
+
   return (
     <RadioGroup
       value={selectedRole}
-      onValueChange={(value) => onRoleChange(value as UserRole)}
+      onValueChange={handleChange}
       className="flex flex-col space-y-1 mb-4"
       disabled={disabled}
     >
