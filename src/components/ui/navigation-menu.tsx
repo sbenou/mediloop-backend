@@ -13,7 +13,7 @@ const NavigationMenu = React.forwardRef<
   <NavigationMenuPrimitive.Root
     ref={ref}
     className={cn(
-      "relative z-50 flex max-w-max flex-1 items-center justify-center",
+      "relative z-10 flex max-w-max flex-1 items-center justify-center",
       className
     )}
     {...props}
@@ -69,7 +69,7 @@ const NavigationMenuContent = React.forwardRef<
   <NavigationMenuPrimitive.Content
     ref={ref}
     className={cn(
-      "data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out md:absolute md:w-auto z-[100] bg-popover rounded-md border shadow-md",
+      "data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out md:absolute md:w-auto z-50 bg-popover rounded-md border shadow-md",
       className
     )}
     {...props}
