@@ -2,18 +2,22 @@
 import { Users, UserCheck, Lock, Box } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
+import { useDashboardStats } from "@/hooks/admin/useDashboardStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface DashboardCardProps {
   onCardClick: (tab: string) => void;
 }
 
 export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
+  const { data: stats, isLoading } = useDashboardStats();
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('users')}
-        style={{ backgroundColor: "#2A7A9B" }} // Teal color like in image
+        style={{ backgroundColor: "#2A7A9B" }} // Keep the teal color from previous implementation
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
@@ -29,9 +33,13 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
               <CardTitle className="text-xl font-medium text-white mb-1">
                 Users
               </CardTitle>
-              <p className="text-sm text-white/70">
-                450 registered
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-4 w-20 bg-white/20" />
+              ) : (
+                <p className="text-sm text-white/70">
+                  {stats?.total_users || 0} registered
+                </p>
+              )}
             </div>
             <p className="text-sm text-white/90">
               Manage user accounts and permissions
@@ -43,7 +51,7 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('roles')}
-        style={{ backgroundColor: "#176D4A" }} // Green color like in image
+        style={{ backgroundColor: "#176D4A" }} // Keep the green color from previous implementation
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
@@ -59,9 +67,13 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
               <CardTitle className="text-xl font-medium text-white mb-1">
                 Roles
               </CardTitle>
-              <p className="text-sm text-white/70">
-                16 active
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-4 w-20 bg-white/20" />
+              ) : (
+                <p className="text-sm text-white/70">
+                  {stats?.total_roles || 0} active
+                </p>
+              )}
             </div>
             <p className="text-sm text-white/90">
               Create and manage user roles
@@ -73,7 +85,7 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('permissions')}
-        style={{ backgroundColor: "#BF7F21" }} // Orange/Brown color like in image
+        style={{ backgroundColor: "#BF7F21" }} // Keep the orange/brown color from previous implementation
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
@@ -89,9 +101,13 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
               <CardTitle className="text-xl font-medium text-white mb-1">
                 Permissions
               </CardTitle>
-              <p className="text-sm text-white/70">
-                (Profiles)
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-4 w-20 bg-white/20" />
+              ) : (
+                <p className="text-sm text-white/70">
+                  {stats?.total_permissions || 0} defined
+                </p>
+              )}
             </div>
             <p className="text-sm text-white/90">
               Configure system permissions and policies
@@ -103,7 +119,7 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('products')}
-        style={{ backgroundColor: "#6C3894" }} // Purple color like in image
+        style={{ backgroundColor: "#6C3894" }} // Keep the purple color from previous implementation
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
@@ -119,9 +135,13 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
               <CardTitle className="text-xl font-medium text-white mb-1">
                 Products
               </CardTitle>
-              <p className="text-sm text-white/70">
-                (Inventory)
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-4 w-20 bg-white/20" />
+              ) : (
+                <p className="text-sm text-white/70">
+                  {stats?.total_products || 0} items
+                </p>
+              )}
             </div>
             <p className="text-sm text-white/90">
               Manage product uploads and inventory

@@ -555,6 +555,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_admin_dashboard_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_users: number
+          total_roles: number
+          total_permissions: number
+          total_products: number
+        }[]
+      }
       handle_connection_request: {
         Args: {
           doctor_id: string
