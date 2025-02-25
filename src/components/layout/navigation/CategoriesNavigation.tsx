@@ -67,7 +67,7 @@ export const CategoriesNavigation = () => {
     <NavigationMenuItem>
       <NavigationMenuTrigger>{t('common.navigation.medications')}</NavigationMenuTrigger>
       <NavigationMenuContent>
-        <div className={`grid gap-3 p-4 ${isMobile ? 'w-[300px]' : 'w-[600px]'} md:grid-cols-2`}>
+        <div className={`grid gap-3 p-4 ${isMobile ? 'min-w-[300px]' : 'min-w-[600px]'} md:grid-cols-2 w-auto max-w-none`}>
           <CategoryContent 
             categories={categories || []}
             getUniqueCategories={getUniqueCategories}
