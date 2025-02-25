@@ -41,7 +41,15 @@ const NextOfKinManagement = () => {
         .eq('user_id', user.id);
         
       if (error) throw error;
-      return (data || []) as NextOfKinRecord[];
+      
+      // Convert the raw database records to the expected NextOfKin type
+      // by ensuring relation is typed as RelationType
+      const typedData = (data || []).map(record => ({
+        ...record,
+        relation: record.relation as RelationType
+      })) as NextOfKin[];
+      
+      return typedData;
     }
   });
 
@@ -58,7 +66,10 @@ const NextOfKinManagement = () => {
         .single();
         
       if (error) throw error;
-      return data;
+      return {
+        ...data,
+        relation: data.relation as RelationType
+      } as NextOfKin;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['next-of-kin'] });
@@ -93,7 +104,10 @@ const NextOfKinManagement = () => {
         .single();
         
       if (error) throw error;
-      return data;
+      return {
+        ...data,
+        relation: data.relation as RelationType
+      } as NextOfKin;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['next-of-kin'] });
