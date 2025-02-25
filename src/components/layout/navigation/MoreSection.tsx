@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent } from "@/components/ui/navigation-menu";
 import { Info, HelpCircle, Settings, Heart } from 'lucide-react';
@@ -9,7 +10,7 @@ export const MoreSection = () => {
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>{t('common.navigation.more')}</NavigationMenuTrigger>
-      <NavigationMenuContent>
+      <NavigationMenuContent className="flex justify-center">
         <div className="w-[200px] p-4">
           <nav className="flex flex-col space-y-2">
             <Link 
