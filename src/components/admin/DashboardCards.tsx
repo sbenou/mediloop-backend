@@ -1,6 +1,7 @@
 
 import { Users, UserCheck, Lock, Box } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronRight } from "lucide-react";
 
 interface DashboardCardProps {
   onCardClick: (tab: string) => void;
@@ -10,70 +11,122 @@ export const DashboardCards = ({ onCardClick }: DashboardCardProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <Card 
-        className="cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-200 to-blue-300 border-blue-400"
+        className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('users')}
+        style={{ backgroundColor: "#2A7A9B" }} // Teal color like in image
       >
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Users className="h-5 w-5 text-blue-700" />
-            <span>Users</span>
-          </CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between">
+            <div className="p-2 rounded-full bg-white/10">
+              <Users className="h-6 w-6 text-white" />
+            </div>
+            <ChevronRight className="h-5 w-5 text-white/70" />
+          </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Manage user accounts and permissions
-          </p>
+        <CardContent className="pt-0">
+          <div className="space-y-6">
+            <div>
+              <CardTitle className="text-xl font-medium text-white mb-1">
+                Users
+              </CardTitle>
+              <p className="text-sm text-white/70">
+                450 registered
+              </p>
+            </div>
+            <p className="text-sm text-white/90">
+              Manage user accounts and permissions
+            </p>
+          </div>
         </CardContent>
       </Card>
 
       <Card 
-        className="cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-200 to-purple-300 border-purple-400"
+        className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('roles')}
+        style={{ backgroundColor: "#176D4A" }} // Green color like in image
       >
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <UserCheck className="h-5 w-5 text-purple-700" />
-            <span>Roles</span>
-          </CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between">
+            <div className="p-2 rounded-full bg-white/10">
+              <UserCheck className="h-6 w-6 text-white" />
+            </div>
+            <ChevronRight className="h-5 w-5 text-white/70" />
+          </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Create and manage user roles
-          </p>
+        <CardContent className="pt-0">
+          <div className="space-y-6">
+            <div>
+              <CardTitle className="text-xl font-medium text-white mb-1">
+                Roles
+              </CardTitle>
+              <p className="text-sm text-white/70">
+                16 active
+              </p>
+            </div>
+            <p className="text-sm text-white/90">
+              Create and manage user roles
+            </p>
+          </div>
         </CardContent>
       </Card>
 
       <Card 
-        className="cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-br from-rose-200 to-rose-300 border-rose-400"
+        className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('permissions')}
+        style={{ backgroundColor: "#BF7F21" }} // Orange/Brown color like in image
       >
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Lock className="h-5 w-5 text-rose-700" />
-            <span>Permissions</span>
-          </CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between">
+            <div className="p-2 rounded-full bg-white/10">
+              <Lock className="h-6 w-6 text-white" />
+            </div>
+            <ChevronRight className="h-5 w-5 text-white/70" />
+          </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Configure system permissions and policies
-          </p>
+        <CardContent className="pt-0">
+          <div className="space-y-6">
+            <div>
+              <CardTitle className="text-xl font-medium text-white mb-1">
+                Permissions
+              </CardTitle>
+              <p className="text-sm text-white/70">
+                (Profiles)
+              </p>
+            </div>
+            <p className="text-sm text-white/90">
+              Configure system permissions and policies
+            </p>
+          </div>
         </CardContent>
       </Card>
 
       <Card 
-        className="cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-br from-emerald-200 to-emerald-300 border-emerald-400"
+        className="cursor-pointer hover:shadow-lg transition-shadow border-0"
         onClick={() => onCardClick('products')}
+        style={{ backgroundColor: "#6C3894" }} // Purple color like in image
       >
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Box className="h-5 w-5 text-emerald-700" />
-            <span>Products</span>
-          </CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between">
+            <div className="p-2 rounded-full bg-white/10">
+              <Box className="h-6 w-6 text-white" />
+            </div>
+            <ChevronRight className="h-5 w-5 text-white/70" />
+          </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Manage product uploads and inventory
-          </p>
+        <CardContent className="pt-0">
+          <div className="space-y-6">
+            <div>
+              <CardTitle className="text-xl font-medium text-white mb-1">
+                Products
+              </CardTitle>
+              <p className="text-sm text-white/70">
+                (Inventory)
+              </p>
+            </div>
+            <p className="text-sm text-white/90">
+              Manage product uploads and inventory
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
