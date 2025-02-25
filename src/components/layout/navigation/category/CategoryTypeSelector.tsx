@@ -38,14 +38,14 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
             <div className="mt-4 px-3">
               {selectedType === 'pharmacy' && (
                 <img
-                  src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"
+                  src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
                   alt="Pharmacy"
                   className="w-full h-32 object-cover rounded-md"
                 />
               )}
               {selectedType === 'parapharmacy' && (
                 <img
-                  src="https://images.unsplash.com/photo-1472396961693-142e6e269027"
+                  src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae"
                   alt="Parapharmacy"
                   className="w-full h-32 object-cover rounded-md"
                 />
@@ -53,6 +53,9 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
             </div>
           )}
         </div>
+      </div>
+      <div className="space-y-2">
+        {/* This empty div preserves the grid layout for categories */}
       </div>
     </div>
   );
