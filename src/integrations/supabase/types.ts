@@ -114,6 +114,48 @@ export type Database = {
           },
         ]
       }
+      next_of_kin: {
+        Row: {
+          city: string
+          country: string
+          created_at: string
+          full_name: string
+          id: string
+          phone_number: string
+          postal_code: string
+          relation: string
+          street: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city: string
+          country: string
+          created_at?: string
+          full_name: string
+          id?: string
+          phone_number: string
+          postal_code: string
+          relation: string
+          street: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone_number?: string
+          postal_code?: string
+          relation?: string
+          street?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
