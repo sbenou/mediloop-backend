@@ -1,5 +1,6 @@
 
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 interface CategoryTypeSelectorProps {
   selectedType: 'pharmacy' | 'parapharmacy' | null;
@@ -8,12 +9,20 @@ interface CategoryTypeSelectorProps {
 
 export const CategoryTypeSelector = ({ selectedType, setSelectedType }: CategoryTypeSelectorProps) => {
   const { t } = useTranslation();
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
 
   return (
     <div className="flex flex-col border-r pr-4 pb-4 w-[400px]">
       <div>
         <button
-          onClick={() => setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy')}
+          onClick={() => {
+            setImageLoaded(false);
+            setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy');
+          }}
           className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
             selectedType === 'pharmacy' 
               ? 'bg-primary text-primary-foreground' 
@@ -23,7 +32,10 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
           {t('common.navigation.pharmacy')}
         </button>
         <button
-          onClick={() => setSelectedType(selectedType === 'parapharmacy' ? null : 'parapharmacy')}
+          onClick={() => {
+            setImageLoaded(false);
+            setSelectedType(selectedType === 'parapharmacy' ? null : 'parapharmacy');
+          }}
           className={`block w-full text-left px-3 py-2 rounded-md transition-colors mt-2 ${
             selectedType === 'parapharmacy' 
               ? 'bg-primary text-primary-foreground' 
@@ -40,14 +52,20 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
             <img
               src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
               alt="Pharmacy"
-              className="w-full h-64 object-cover rounded-md"
+              onLoad={handleImageLoad}
+              className={`w-full h-64 object-cover rounded-md transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             />
           )}
           {selectedType === 'parapharmacy' && (
             <img
               src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae"
               alt="Parapharmacy"
-              className="w-full h-64 object-cover rounded-md"
+              onLoad={handleImageLoad}
+              className={`w-full h-64 object-cover rounded-md transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             />
           )}
         </div>
