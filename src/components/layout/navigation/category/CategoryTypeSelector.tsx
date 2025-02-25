@@ -10,8 +10,8 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col min-h-[500px] space-y-2 border-r pr-4 pb-4 w-[400px]">
-      <div className="flex-none">
+    <div className="flex flex-col border-r pr-4 pb-4 w-[400px]">
+      <div>
         <button
           onClick={() => setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy')}
           className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
@@ -35,7 +35,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
       </div>
       
       {selectedType && (
-        <div className="flex-grow flex items-end">
+        <div className="mt-20">
           {selectedType === 'pharmacy' && (
             <img
               src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
