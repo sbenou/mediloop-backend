@@ -10,7 +10,7 @@ export const MoreSection = () => {
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>{t('common.navigation.more')}</NavigationMenuTrigger>
-      <NavigationMenuContent className="flex justify-center">
+      <NavigationMenuContent className="data-[side=right]:origin-top-right">
         <div className="w-[200px] p-4">
           <nav className="flex flex-col space-y-2">
             <Link 
