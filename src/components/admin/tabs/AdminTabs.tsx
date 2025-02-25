@@ -22,13 +22,13 @@ export const AdminTabs = ({ users, isLoading, updateUserRole }: {
     
     switch (tabName) {
       case 'users':
-        return "#1d4ed8"; // text-blue-700
+        return "#2A7A9B"; // Teal
       case 'roles':
-        return "#7e22ce"; // text-purple-700
+        return "#176D4A"; // Green
       case 'permissions':
-        return "#be123c"; // text-rose-700
+        return "#BF7F21"; // Orange/Brown
       case 'products':
-        return "#047857"; // text-emerald-700
+        return "#6C3894"; // Purple
       default:
         return "currentColor";
     }
@@ -40,28 +40,30 @@ export const AdminTabs = ({ users, isLoading, updateUserRole }: {
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-      <TabsList className="flex space-x-2">
-        <TabsTrigger value="dashboard">
-          <LayoutDashboard className="h-4 w-4 mr-2" />
-          Dashboard
-        </TabsTrigger>
-        <TabsTrigger value="users">
-          <Users className="h-4 w-4 mr-2" style={{ color: getIconColor('users') }} />
-          Users
-        </TabsTrigger>
-        <TabsTrigger value="roles">
-          <UserCheck className="h-4 w-4 mr-2" style={{ color: getIconColor('roles') }} />
-          Roles
-        </TabsTrigger>
-        <TabsTrigger value="permissions">
-          <Lock className="h-4 w-4 mr-2" style={{ color: getIconColor('permissions') }} />
-          Permissions
-        </TabsTrigger>
-        <TabsTrigger value="products">
-          <Box className="h-4 w-4 mr-2" style={{ color: getIconColor('products') }} />
-          Products
-        </TabsTrigger>
-      </TabsList>
+      <div className="px-6">
+        <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1">
+          <TabsTrigger value="dashboard">
+            <LayoutDashboard className="h-4 w-4 mr-2" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users className="h-4 w-4 mr-2" style={{ color: getIconColor('users') }} />
+            Users
+          </TabsTrigger>
+          <TabsTrigger value="roles">
+            <UserCheck className="h-4 w-4 mr-2" style={{ color: getIconColor('roles') }} />
+            Roles
+          </TabsTrigger>
+          <TabsTrigger value="permissions">
+            <Lock className="h-4 w-4 mr-2" style={{ color: getIconColor('permissions') }} />
+            Permissions
+          </TabsTrigger>
+          <TabsTrigger value="products">
+            <Box className="h-4 w-4 mr-2" style={{ color: getIconColor('products') }} />
+            Products
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="dashboard">
         <DashboardCards onCardClick={handleTabChange} />
