@@ -9,8 +9,8 @@ export const MoreSection = () => {
   
   return (
     <NavigationMenuItem>
-      <NavigationMenuTrigger>{t('common.navigation.more')}</NavigationMenuTrigger>
-      <NavigationMenuContent>
+      <NavigationMenuTrigger className="relative">{t('common.navigation.more')}</NavigationMenuTrigger>
+      <NavigationMenuContent className="data-[motion^=from-]:animate-none data-[motion^=to-]:animate-none">
         <div className="w-[200px] p-4">
           <nav className="flex flex-col space-y-2">
             <Link 
