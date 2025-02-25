@@ -10,7 +10,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-2 border-r pr-4 w-[300px]">
+    <div className="space-y-2 border-r pr-4 w-[400px]">
       <button
         onClick={() => setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy')}
         className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
@@ -38,14 +38,14 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
             <img
               src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
               alt="Pharmacy"
-              className="w-full h-48 object-cover rounded-md"
+              className="w-full h-64 object-cover rounded-md"
             />
           )}
           {selectedType === 'parapharmacy' && (
             <img
               src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae"
               alt="Parapharmacy"
-              className="w-full h-48 object-cover rounded-md"
+              className="w-full h-64 object-cover rounded-md"
             />
           )}
         </div>
