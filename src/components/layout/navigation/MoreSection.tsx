@@ -8,9 +8,9 @@ export const MoreSection = () => {
   const { t } = useTranslation();
   
   return (
-    <NavigationMenuItem className="relative">
+    <NavigationMenuItem>
       <NavigationMenuTrigger>{t('common.navigation.more')}</NavigationMenuTrigger>
-      <NavigationMenuContent className="absolute right-0 data-[side=right]:origin-top-right">
+      <NavigationMenuContent>
         <div className="w-[200px] p-4">
           <nav className="flex flex-col space-y-2">
             <Link 
