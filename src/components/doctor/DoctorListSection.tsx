@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -141,8 +142,8 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          initialCenter={centerPosition}
-          initialZoom={13}
+          center={centerPosition}
+          zoom={13}
           scrollWheelZoom={false}
         >
           <TileLayer
