@@ -142,9 +142,7 @@ const DoctorListSection = ({
         <MapContainer
           className="h-full"
           style={{ height: '100%', width: '100%' }}
-          whenReady={(map) => {
-            map.target.setView(centerPosition as L.LatLngExpression, 13);
-          }}
+          whenReady={() => {}}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -153,7 +151,8 @@ const DoctorListSection = ({
           
           {showUserLocation && (
             <Marker 
-              position={centerPosition as L.LatLngExpression}
+              position={centerPosition}
+              icon={userLocationIcon}
             >
               <Popup>Your location</Popup>
             </Marker>
