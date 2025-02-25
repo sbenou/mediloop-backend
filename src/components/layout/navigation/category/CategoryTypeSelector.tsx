@@ -10,7 +10,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-2 border-r pr-4 w-[400px]">
+    <div className="space-y-2 border-r pr-4 pb-4 w-[400px]">
       <button
         onClick={() => setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy')}
         className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
