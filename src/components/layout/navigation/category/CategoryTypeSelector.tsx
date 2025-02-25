@@ -16,7 +16,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   };
 
   return (
-    <div className="flex flex-col border-r pr-4 pb-4 w-[400px] min-h-[calc(100vh-4rem)]">
+    <div className="flex flex-col border-r pr-4 pb-8 w-[400px] min-h-[calc(100vh-4rem)]">
       <div>
         <button
           onClick={() => {
