@@ -1,7 +1,8 @@
+
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import type { LatLngExpression, Icon } from 'leaflet';
+import type { LatLngExpression, Icon, MarkerProps } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useEffect, useState, useRef } from "react";
@@ -142,8 +143,8 @@ const DoctorListSection = ({
           className="h-full"
           style={{ height: '100%', width: '100%' }}
           whenReady={() => {}}
-          center={centerPosition}
-          zoom={13}
+          defaultCenter={centerPosition}
+          defaultZoom={13}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -153,7 +154,7 @@ const DoctorListSection = ({
           {showUserLocation && (
             <Marker 
               position={centerPosition}
-              icon={userLocationIcon as Icon<any>}
+              icon={userLocationIcon}
             >
               <Popup>Your location</Popup>
             </Marker>
@@ -177,6 +178,7 @@ const DoctorListSection = ({
                     markerRefs.current[doctor.id] = ref;
                   }
                 }}
+                icon={defaultIcon}
               >
                 <Popup>
                   <div className="text-sm">
