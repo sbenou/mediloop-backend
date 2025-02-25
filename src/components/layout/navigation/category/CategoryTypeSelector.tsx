@@ -10,7 +10,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col justify-between h-full space-y-2 border-r pr-4 pb-4 w-[400px]">
+    <div className="flex flex-col h-[600px] space-y-2 border-r pr-4 pb-4 w-[400px]">
       <div>
         <button
           onClick={() => setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy')}
@@ -35,7 +35,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
       </div>
       
       {selectedType && (
-        <div>
+        <div className="mt-auto">
           {selectedType === 'pharmacy' && (
             <img
               src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
