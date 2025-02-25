@@ -1,3 +1,4 @@
+
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
@@ -9,6 +10,7 @@ import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import CountrySelector from "@/components/CountrySelector";
 
 const Index = () => {
   console.log('Index page - Rendering');
@@ -55,6 +57,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <CountrySelector />
       
       <main className="flex-1">
         <HeroSection />

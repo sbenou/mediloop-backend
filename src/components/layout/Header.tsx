@@ -1,5 +1,5 @@
 
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 import { ArrowLeft, User } from 'lucide-react';
 import { useState } from 'react';
@@ -15,7 +15,7 @@ import MobileMenu from './navigation/MobileMenu';
 import CartButton from './navigation/CartButton';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useNavigate } from 'react-router-dom';
+import NotificationBell from '../NotificationBell';
 
 interface HeaderProps {
   showUserMenu?: boolean;
@@ -91,7 +91,10 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
                 {isLoading ? (
                   <LoadingSkeleton />
                 ) : isAuthenticated ? (
-                  <UserMenu />
+                  <>
+                    <NotificationBell />
+                    <UserMenu />
+                  </>
                 ) : (
                   <button
                     onClick={handleNavigateToLogin}
