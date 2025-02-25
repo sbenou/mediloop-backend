@@ -1,6 +1,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { SubcategoryItem } from './SubcategoryItem';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CategoryListProps {
   selectedType: 'pharmacy' | 'parapharmacy' | null;
@@ -41,30 +42,32 @@ export const CategoryList = ({
   }
 
   return (
-    <div className="space-y-4">
-      {filteredCategories.map((category) => {
-        console.log('Category:', category.name, 'Subcategories:', category.subcategories);
-        return (
-          <div key={category.id} className="space-y-2">
-            <h3 className="font-medium text-sm px-3 py-2">
-              {t(`categories.${selectedType}.${category.name.toLowerCase().replace(/ /g, '_')}`, { defaultValue: category.name })}
-            </h3>
-            <div className="pl-4 space-y-1">
-              {Array.isArray(category.subcategories) && category.subcategories.map((subcategory: any) => (
-                <SubcategoryItem
-                  key={subcategory.id}
-                  subcategory={subcategory}
-                  selectedType={selectedType}
-                  categoryId={category.id}
-                  handleSubcategoryClick={handleSubcategoryClick}
-                  handleDescriptionClick={handleDescriptionClick}
-                  getUniqueDescriptions={getUniqueDescriptions}
-                />
-              ))}
+    <ScrollArea className="h-[calc(100vh-200px)]">
+      <div className="space-y-4 pr-4">
+        {filteredCategories.map((category) => {
+          console.log('Category:', category.name, 'Subcategories:', category.subcategories);
+          return (
+            <div key={category.id} className="space-y-2">
+              <h3 className="font-medium text-sm px-3 py-2">
+                {t(`categories.${selectedType}.${category.name.toLowerCase().replace(/ /g, '_')}`, { defaultValue: category.name })}
+              </h3>
+              <div className="pl-4 space-y-1">
+                {Array.isArray(category.subcategories) && category.subcategories.map((subcategory: any) => (
+                  <SubcategoryItem
+                    key={subcategory.id}
+                    subcategory={subcategory}
+                    selectedType={selectedType}
+                    categoryId={category.id}
+                    handleSubcategoryClick={handleSubcategoryClick}
+                    handleDescriptionClick={handleDescriptionClick}
+                    getUniqueDescriptions={getUniqueDescriptions}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </ScrollArea>
   );
 };
