@@ -21,7 +21,10 @@ export const useDashboardStats = () => {
         throw new Error(error.message);
       }
       
-      return data || {
+      // Handle the case when data is an array - take the first element
+      const stats = Array.isArray(data) ? data[0] : data;
+      
+      return stats || {
         total_users: 0,
         total_roles: 0,
         total_permissions: 0,
