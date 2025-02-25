@@ -1,82 +1,80 @@
 
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { useLocationSearch } from "@/hooks/useLocationSearch";
-import { usePharmacySearch } from "@/hooks/usePharmacySearch";
-import { usePharmacyState, LUXEMBOURG_COORDINATES } from "@/hooks/usePharmacyState";
-import Header from "@/components/layout/Header";
-import SearchHeader from "@/components/pharmacy/SearchHeader";
-import PharmacyListSection from "@/components/pharmacy/PharmacyListSection";
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { SearchHeader } from '@/components/pharmacy/SearchHeader';
+import { usePharmacySearch } from '@/hooks/usePharmacySearch';
+import { PharmacyListSection } from '@/components/pharmacy/PharmacyListSection';
+import PharmacyMap from '@/components/pharmacy/map/PharmacyMap';
+import PharmacySelection from '@/components/settings/pharmacy/PharmacySelection';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 const SearchPharmacy = () => {
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
-    },
-  });
+  const { search, setSearch, searchPharmacy, pharmacies, isLoading, isMapView, toggleView } = usePharmacySearch();
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState<string | null>(null);
+  
+  const location = useLocation();
+  const { profile } = useAuth();
+  const locationState = location.state || {};
+  const isPharmacistSignup = locationState.isNewSignup && locationState.userRole === 'pharmacist';
+  const isPharmacist = profile?.role === 'pharmacist' || isPharmacistSignup;
 
-  const {
-    userLocation,
-    setUserLocation,
-    userProfile,
-    defaultPharmacy,
-    handlePharmacySelect,
-    handleSetDefaultPharmacy
-  } = usePharmacyState(session);
+  // Handle pharmacy selection
+  const handleSelectPharmacy = (pharmacyId: string) => {
+    setSelectedPharmacyId(pharmacyId);
+  };
 
-  const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
+  // If this is a pharmacist during signup, show the pharmacy selection component
+  if (isPharmacistSignup || isPharmacist) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto py-8 px-4">
+          <h1 className="text-3xl font-bold mb-6">Select Your Pharmacy</h1>
+          <PharmacySelection 
+            userId={locationState.userId} 
+            redirectAfterSelection={true}
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    // Set Luxembourg coordinates by default without showing the toast
-    setUserLocation(LUXEMBOURG_COORDINATES);
-    
-    // Only attempt geolocation if coordinates aren't set
-    if (!coordinates && "geolocation" in navigator) {
-      handleCitySearch("Luxembourg City");
-    }
-  }, [coordinates]);
-
-  const searchCoordinates = coordinates 
-    ? { 
-        lat: parseFloat(coordinates.lat), 
-        lon: parseFloat(coordinates.lon) 
-      } 
-    : userLocation || LUXEMBOURG_COORDINATES;
-
-  const { pharmacies, isLoading } = usePharmacySearch(
-    searchCoordinates,
-    10000 // Increased search radius to cover all of Luxembourg
-  );
-
-  useEffect(() => {
-    if (!coordinates && session && userProfile?.city) {
-      handleCitySearch(userProfile.city);
-    }
-  }, [session, userProfile?.city]);
-
-  useEffect(() => {
-    if (session && pharmacies.length === 0 && searchRadius < 10000) {
-      setSearchRadius(prev => Math.min(prev + 2000, 10000));
-    }
-  }, [pharmacies.length, searchRadius, session]);
-
+  // Regular pharmacy search for patients
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="container mx-auto p-4">
-        <SearchHeader onSearch={handleCitySearch} />
-        <PharmacyListSection
-          pharmacies={pharmacies}
-          isLoading={isLoading || isSearching}
-          coordinates={searchCoordinates}
-          defaultPharmacyId={defaultPharmacy}
-          onPharmacySelect={handlePharmacySelect}
-          onSetDefaultPharmacy={handleSetDefaultPharmacy}
+      <main className="flex-1">
+        <SearchHeader
+          search={search}
+          onSearchChange={setSearch}
+          onSubmit={searchPharmacy}
+          isLoading={isLoading}
+          isMapView={isMapView}
+          onToggleView={toggleView}
         />
+
+        {isMapView ? (
+          <PharmacyMap
+            pharmacies={pharmacies}
+            onSelectPharmacy={handleSelectPharmacy}
+            selectedPharmacyId={selectedPharmacyId}
+          />
+        ) : (
+          <div className="container mx-auto py-8 px-4">
+            <PharmacyListSection
+              pharmacies={pharmacies}
+              isLoading={isLoading}
+              onSelectPharmacy={handleSelectPharmacy}
+              selectedPharmacyId={selectedPharmacyId}
+            />
+          </div>
+        )}
       </main>
+      <Footer />
     </div>
   );
 };
