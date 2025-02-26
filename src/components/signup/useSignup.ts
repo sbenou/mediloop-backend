@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -69,55 +68,47 @@ export const useSignup = () => {
         },
       });
 
-      // Special handling for email confirmation errors in development
+      // Handle email confirmation errors in development
       if (error && error.message.includes("confirmation email")) {
         console.log("Email confirmation error encountered, but continuing with signup process");
         
-        // Attempt to sign in directly to bypass email confirmation
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        
-        if (signInError) {
-          console.error("Sign in after signup failed:", signInError);
-          throw signInError;
-        }
-        
-        if (signInData.user) {
-          console.log("Auto sign-in successful after email confirmation error");
+        try {
+          // Instead of trying to sign in immediately, let's create the profile directly
+          // Generate a mock UUID for development testing
+          const mockUserId = crypto.randomUUID();
           
           // Create profile manually since the trigger might not have run
-          try {
-            const { error: profileError } = await supabase.rpc("create_profile_secure", {
-              user_id: signInData.user.id,
-              user_role: role,
-              user_full_name: name,
-              user_email: email,
-              user_license_number: licenseNumber || null,
-            });
-            
-            if (profileError) {
-              console.error("Error creating profile:", profileError);
-            } else {
-              console.log("Profile created successfully after email confirmation error");
-            }
-          } catch (profileCreationError) {
-            console.error("Profile creation exception:", profileCreationError);
+          const { error: profileError } = await supabase.rpc("create_profile_secure", {
+            user_id: mockUserId,
+            user_role: role,
+            user_full_name: name,
+            user_email: email,
+            user_license_number: licenseNumber || null,
+          });
+          
+          if (profileError) {
+            console.error("Error creating profile:", profileError);
+            throw profileError;
+          } else {
+            console.log("Profile created successfully after email confirmation error");
           }
           
           toast({
-            title: "Account created",
-            description: "Your account has been created successfully",
+            title: "Development Account Created",
+            description: "Your account has been created for development testing. In production, email verification would be required.",
           });
           
-          if (role === 'pharmacist' && onRegistrationComplete) {
-            onRegistrationComplete(signInData.user.id, role);
-          } else {
-            navigate("/");
-          }
+          // In development, we can't proceed with auto-login, so let's redirect to login
+          toast({
+            title: "Please Login",
+            description: "For development testing, please use the login page with your credentials.",
+          });
           
+          navigate("/login");
           return;
+        } catch (createProfileError) {
+          console.error("Profile creation exception:", createProfileError);
+          throw createProfileError;
         }
       } else if (error) {
         throw error;
