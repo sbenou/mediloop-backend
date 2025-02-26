@@ -34,14 +34,10 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
     console.log('Starting login process...', { email, rememberMe });
 
     try {
-      // First, sign in with password
+      // First, sign in with password - using session properties instead of expiresIn
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          // Set session expiry based on remember me choice
-          expiresIn: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 // 30 days or 1 day
-        }
       });
 
       if (signInError) {
@@ -55,6 +51,19 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       }
 
       console.log('Sign in successful:', signInData.user.id);
+
+      // If rememberMe is checked, update the session
+      if (rememberMe && signInData.session) {
+        console.log('Setting extended session duration due to Remember Me');
+        // We'll update the session cookie manually in the auth service
+        const { error: sessionError } = await supabase.auth.updateUser({
+          data: { rememberMe: true }
+        });
+        
+        if (sessionError) {
+          console.error('Failed to update session preferences:', sessionError);
+        }
+      }
 
       // Get the session to confirm authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();

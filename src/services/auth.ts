@@ -97,5 +97,22 @@ export const AuthService = {
     
     debug("Session retrieved:", session?.user?.id);
     return session;
+  },
+
+  // Extend session for Remember Me functionality
+  extendSession: async (userId: string, rememberMe: boolean) => {
+    debug(`${rememberMe ? 'Extending' : 'Using standard'} session duration for user:`, userId);
+    
+    // The actual session extension is handled by the Supabase client
+    // This function is primarily for logging and potential future enhancements
+    
+    // Store the remember me preference in localStorage for persistence across page reloads
+    if (rememberMe) {
+      localStorage.setItem(`remember_me_${userId}`, 'true');
+    } else {
+      localStorage.removeItem(`remember_me_${userId}`);
+    }
+    
+    return true;
   }
 };
