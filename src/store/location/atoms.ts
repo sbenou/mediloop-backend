@@ -19,6 +19,12 @@ export const userLocationState = atom<Coordinates>({
   default: defaultCoordinates
 });
 
+// Flag to indicate if user's actual location is being used
+export const isUsingLocationState = atom<boolean>({
+  key: 'isUsingLocationState',
+  default: false
+});
+
 // Selected pharmacy state
 export const selectedPharmacyState = atom<string | null>({
   key: 'selectedPharmacyState',
