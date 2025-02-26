@@ -2,21 +2,17 @@
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import UserAvatar from "./UserAvatar";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Button } from "@/components/ui/button";
+import UserMenuItems from "./UserMenuItems";
 
 const EnhancedUserMenu = () => {
   const { profile, user } = useAuth();
-  const navigate = useNavigate();
 
   if (!user || !profile) {
     return null;
@@ -40,33 +36,7 @@ const EnhancedUserMenu = () => {
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate('/upgrade')}>
-            Upgrade to Pro
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate('/profile')}>
-            Account
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate('/billing')}>
-            Billing
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate('/notifications')}>
-            Notifications
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-red-600 focus:text-red-600"
-          onClick={() => {
-            // Handle logout
-          }}
-        >
-          Log out
-        </DropdownMenuItem>
+        <UserMenuItems />
       </DropdownMenuContent>
     </DropdownMenu>
   );

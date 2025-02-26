@@ -25,6 +25,8 @@ import FindDoctor from "./pages/FindDoctor";
 import SearchPharmacy from "./pages/SearchPharmacy";
 import Signup from "./pages/Signup";
 import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage";
+import Teleconsultations from "./pages/Teleconsultations";
+import Billing from "./pages/Billing";
 import './App.css';
 
 // Log the current environment
@@ -66,6 +68,8 @@ function App() {
                   <Route path="/find-doctor" element={<FindDoctor />} />
                   <Route path="/search-pharmacy" element={<SearchPharmacy />} />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/teleconsultations" element={<Teleconsultations />} />
+                  <Route path="/billing" element={<Billing />} />
                 </Routes>
                 <Toaster />
               </BrowserRouter>
