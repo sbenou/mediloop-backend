@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -76,9 +77,13 @@ export const useSignup = () => {
         });
         
         if (error) {
-          // Specific handling for email rate limits
+          // Handle specific error cases
           if (error.message.includes("rate limit") || error.code === 'over_email_send_rate_limit') {
             throw new Error("Email rate limit exceeded. Please try again later.");
+          }
+          if (error.message.includes("sending confirmation email")) {
+            // This is a common error in development environments
+            throw new Error("Error sending confirmation email. This is usually a temporary issue.");
           }
           throw error;
         }
@@ -87,12 +92,22 @@ export const useSignup = () => {
         userData = data;
         userId = data.user?.id || null;
       } catch (signupError: any) {
-        // Special case for development to avoid rate limit issues
+        // Special case for development to avoid common issues
         if (process.env.NODE_ENV === 'development' && 
             (signupError.message.includes("rate limit") || 
+             signupError.message.includes("confirmation email") || 
              signupError.message.includes("email confirmation"))) {
           
-          console.log("Development mode: Rate limit or email confirmation error bypassed");
+          console.log("Development mode: Email-related error bypassed:", signupError.message);
+          
+          // For development, offer a better user experience by showing a helpful message
+          if (signupError.message.includes("confirmation email")) {
+            toast({
+              title: "Development Environment",
+              description: "The system cannot send confirmation emails in this environment. Please try the login flow using the same credentials.",
+              duration: 6000,
+            });
+          }
           
           // Try to sign in with provided credentials to check if user exists
           const { data, error } = await supabase.auth.signInWithPassword({
@@ -106,13 +121,23 @@ export const useSignup = () => {
             userData = data;
             console.log("Found existing user, proceeding with profile creation");
           } else {
-            // In development, show a toast but don't proceed with a fake ID
-            toast({
-              title: "Rate limit encountered",
-              description: "In production, a verification email would be sent. Please try again later or use a different email.",
-              variant: "destructive",
-            });
-            throw new Error("Email rate limit or verification issue encountered");
+            // In development, but can't sign in (user probably doesn't exist yet)
+            // For development only: Generate a random UUID only for demonstration purposes
+            if (process.env.NODE_ENV === 'development' && signupError.message.includes("confirmation email")) {
+              // Show a clear warning toast
+              toast({
+                title: "Development only",
+                description: "Please use an existing account. In production, verification emails would be sent properly.",
+                variant: "destructive",
+                duration: 6000,
+              });
+              
+              console.log("Cannot proceed with signup due to email confirmation issues");
+              return; // Don't proceed further - this prevents foreign key constraint errors
+            }
+            
+            // For any other error, show the error
+            throw signupError;
           }
         } else {
           // For any other error or in production, throw the original error
@@ -125,18 +150,46 @@ export const useSignup = () => {
         console.log("User signup successful:", userId);
 
         try {
-          // Call the RPC function to create the profile
-          const { error: profileError } = await supabase.rpc("create_profile_secure", {
-            user_id: userId,
-            user_role: role,
-            user_full_name: name,
-            user_email: email,
-            user_license_number: licenseNumber || null,
-          });
+          // First check if profile already exists
+          const { data: existingProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", userId)
+            .maybeSingle();
+            
+          if (existingProfile) {
+            console.log("Profile already exists for user:", userId);
+            
+            // Update the existing profile with the new data
+            const { error: updateError } = await supabase
+              .from("profiles")
+              .update({
+                role: role,
+                full_name: name,
+                email: email,
+                license_number: licenseNumber || null,
+                updated_at: new Date()
+              })
+              .eq("id", userId);
+              
+            if (updateError) {
+              console.error("Error updating profile:", updateError);
+              throw updateError;
+            }
+          } else {
+            // Call the RPC function to create the profile
+            const { error: profileError } = await supabase.rpc("create_profile_secure", {
+              user_id: userId,
+              user_role: role,
+              user_full_name: name,
+              user_email: email,
+              user_license_number: licenseNumber || null,
+            });
 
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
-            throw profileError;
+            if (profileError) {
+              console.error("Error creating profile:", profileError);
+              throw profileError;
+            }
           }
 
           // Show success message
