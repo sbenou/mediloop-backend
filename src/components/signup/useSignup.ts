@@ -168,7 +168,7 @@ export const useSignup = () => {
                 full_name: name,
                 email: email,
                 license_number: licenseNumber || null,
-                updated_at: new Date()
+                updated_at: new Date().toISOString() // Fix: Convert Date to ISO string
               })
               .eq("id", userId);
               
