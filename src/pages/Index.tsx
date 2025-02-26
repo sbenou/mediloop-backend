@@ -10,18 +10,33 @@ import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Suspense } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 
-// Lazy load the CountrySelector to avoid immediate Recoil usage on page load
-const CountrySelector = () => {
-  if (typeof window === "undefined") return null;
+// Lazy load the CountrySelector component
+const LazyCountrySelector = lazy(() => import("@/components/CountrySelector"));
+
+// Wrapper component to handle client-side only rendering
+const ClientOnlyCountrySelector = () => {
+  const [isMounted, setIsMounted] = useState(false);
   
-  // Only import and use on client side
-  const LazyCountrySelector = require("@/components/CountrySelector").default;
-  return <LazyCountrySelector />;
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  if (!isMounted) {
+    return null;
+  }
+  
+  return (
+    <ErrorBoundary fallback={<div>Error loading country selector</div>}>
+      <Suspense fallback={<div>Loading country selector...</div>}>
+        <LazyCountrySelector />
+      </Suspense>
+    </ErrorBoundary>
+  );
 };
 
 const Index = () => {
@@ -72,11 +87,7 @@ const Index = () => {
         <div className="min-h-screen flex flex-col">
           <Header />
           
-          <ErrorBoundary fallback={<div>Error loading country selector</div>}>
-            <Suspense fallback={<div>Loading country selector...</div>}>
-              <CountrySelector />
-            </Suspense>
-          </ErrorBoundary>
+          <ClientOnlyCountrySelector />
           
           <main className="flex-1">
             <HeroSection />
