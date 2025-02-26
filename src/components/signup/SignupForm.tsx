@@ -3,9 +3,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Mail, Key, User, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Mail, Key, User, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { RoleSelector } from "./RoleSelector";
 import { useSignup } from "./useSignup";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export type UserRole = "patient" | "doctor" | "pharmacist" | "delivery";
 
@@ -21,19 +22,30 @@ export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: 
   const [name, setName] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [signupError, setSignupError] = useState<string | null>(null);
   const { handleSignup, isSubmitting, rateLimitExpiresAt } = useSignup();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSignupError(null);
     console.log(`Submitting signup form for role: ${userRole}`);
-    await handleSignup(
-      email, 
-      password, 
-      name, 
-      userRole, 
-      licenseNumber, 
-      onRegistrationComplete
-    );
+    
+    try {
+      await handleSignup(
+        email, 
+        password, 
+        name, 
+        userRole, 
+        licenseNumber, 
+        onRegistrationComplete
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        setSignupError(error.message);
+      } else {
+        setSignupError("An unexpected error occurred during signup.");
+      }
+    }
   };
 
   const handleRoleChange = (newRole: UserRole) => {
@@ -53,6 +65,24 @@ export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {signupError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{signupError}</AlertDescription>
+        </Alert>
+      )}
+
+      {process.env.NODE_ENV === "development" && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Development Mode</AlertTitle>
+          <AlertDescription>
+            Email verification is bypassed in development mode. If you encounter any issues, try using an existing account.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <RoleSelector selectedRole={userRole} onRoleChange={handleRoleChange} />
 
       <div className="space-y-2">
