@@ -88,7 +88,7 @@ const SidebarItem = ({ icon, label, path, active, collapsed, onClick }: SidebarI
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [openAccordions, setOpenAccordions] = useState<string[]>(["profile"]);
-  const { userRole } = useAuth();
+  const { userRole, profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -122,6 +122,9 @@ export const Sidebar = () => {
     );
   };
 
+  const isPharmacist = profile?.role === "pharmacist";
+  const isSuperAdmin = profile?.role === "superadmin";
+
   return (
     <div
       className={cn(
@@ -142,7 +145,7 @@ export const Sidebar = () => {
       </div>
 
       {/* Conditional platform section for pharmacists */}
-      {userRole === "pharmacist" && (
+      {isPharmacist && (
         <div className={cn("p-4 border-b", collapsed && "flex justify-center")}>
           {!collapsed && <div className="text-sm font-medium text-muted-foreground mb-2">Platform</div>}
         </div>
@@ -273,7 +276,7 @@ export const Sidebar = () => {
         </div>
 
         {/* Admin section - only for admins and superadmins */}
-        {(userRole === "admin" || userRole === "superadmin") && (
+        {(profile?.role === "admin" || isSuperAdmin) && (
           collapsed ? (
             <SidebarItem
               icon={<Settings size={20} />}
@@ -307,7 +310,7 @@ export const Sidebar = () => {
                     />
                     
                     {/* Super admin only */}
-                    {userRole === "superadmin" && (
+                    {isSuperAdmin && (
                       <>
                         <SidebarItem
                           icon={<Shield size={18} />}

@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { supabase } from './lib/supabase';
 
@@ -25,7 +25,7 @@ import CreatePrescription from './pages/CreatePrescription';
 import Notifications from './pages/Notifications';
 
 // Auth Components
-import { EmailConfirmationHandler } from './components/auth/EmailConfirmationHandler';
+import EmailConfirmationHandler from './components/auth/EmailConfirmationHandler';
 import { OTPVerificationPage } from './components/auth/login/OTPVerificationPage';
 
 // States
@@ -42,7 +42,6 @@ function App() {
   const setAuth = useSetRecoilState(authState);
   const isAuthenticated = useRecoilValue(isAuthenticatedSelector);
   const isLoading = useRecoilValue(isLoadingSelector);
-  const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
@@ -69,7 +68,9 @@ function App() {
 
           // Fetch user permissions
           supabase
-            .rpc('get_user_permissions')
+            .from('role_permissions')
+            .select('permission_id')
+            .eq('role_id', session.user.id)
             .then(({ data, error }) => {
               if (error) {
                 console.error('Error fetching permissions:', error);
@@ -77,7 +78,8 @@ function App() {
               }
               
               if (data) {
-                setAuth((prev) => ({ ...prev, permissions: data }));
+                const permissions = data.map(item => item.permission_id);
+                setAuth((prev) => ({ ...prev, permissions }));
               }
             });
       }
@@ -106,15 +108,18 @@ function App() {
 
           // Fetch user permissions
           const { data: permissionsData, error: permissionsError } = await supabase
-            .rpc('get_user_permissions');
+            .from('role_permissions')
+            .select('permission_id')
+            .eq('role_id', session.user.id);
             
           if (permissionsError) {
             console.error('Error fetching permissions:', permissionsError);
           } else if (permissionsData) {
-            setAuth((prev) => ({ ...prev, permissions: permissionsData }));
+            const permissions = permissionsData.map(item => item.permission_id);
+            setAuth((prev) => ({ ...prev, permissions }));
           }
         } else {
-          setAuth({ user: null, profile: null, permissions: [] });
+          setAuth((prev) => ({ ...prev, user: null, profile: null, permissions: [] }));
         }
       }
     );
