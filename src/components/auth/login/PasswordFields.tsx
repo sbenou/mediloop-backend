@@ -9,6 +9,7 @@ import { Eye, EyeOff, Loader } from "lucide-react";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { useNavigate } from 'react-router-dom';
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PasswordFieldsProps {
   email: string;
@@ -19,6 +20,7 @@ interface PasswordFieldsProps {
 export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordFieldsProps) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const setAuth = useSetRecoilState(authState);
@@ -29,13 +31,17 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
     if (isLoading) return;
     
     setIsLoading(true);
-    console.log('Starting login process...', { email });
+    console.log('Starting login process...', { email, rememberMe });
 
     try {
       // First, sign in with password
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          // Set session expiry based on remember me choice
+          expiresIn: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 // 30 days or 1 day
+        }
       });
 
       if (signInError) {
@@ -145,6 +151,18 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
           </button>
         </div>
       </div>
+      
+      <div className="flex items-center space-x-2">
+        <Checkbox 
+          id="rememberMe" 
+          checked={rememberMe} 
+          onCheckedChange={(checked) => setRememberMe(checked === true)}
+        />
+        <Label htmlFor="rememberMe" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          Remember me
+        </Label>
+      </div>
+      
       <Button
         type="submit"
         className="w-full"
