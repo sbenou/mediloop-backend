@@ -59,124 +59,115 @@ export const useSignup = () => {
         return;
       }
 
-      // Try to sign up
+      // Try to sign up or sign in
       let userId: string | null = null;
       let userData = null;
       
-      try {
-        // Start sign up process
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: name,
-              role: role,
-            },
-          },
-        });
-        
-        if (error) {
-          // Handle specific error cases
-          if (error.message.includes("rate limit") || error.code === 'over_email_send_rate_limit') {
-            throw new Error("Email rate limit exceeded. Please try again later.");
-          }
-          if (error.message.includes("sending confirmation email")) {
-            console.log("Email confirmation error detected in development mode");
-            
-            if (process.env.NODE_ENV === 'development') {
-              // In development mode, provide a helpful message but don't throw
-              toast({
-                title: "Development Environment",
-                description: "Email confirmation bypassed in development mode.",
-                duration: 4000,
-              });
-              
-              // Try to sign in instead to check if account exists
-              const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-              });
-              
-              if (!signInError && signInData.user) {
-                // User exists and credentials are valid
-                userId = signInData.user.id;
-                userData = signInData;
-                console.log("Found existing user, proceeding with profile creation");
-              } else {
-                // Generate a mock user ID for development purposes
-                console.log("Creating mock user ID for development");
-                userId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-                
-                toast({
-                  title: "Development Only",
-                  description: "Using mock user ID for development. In production, verification emails would be sent properly.",
-                  duration: 6000,
-                });
-              }
-            } else {
-              // In production, this is a real error
-              throw new Error("Error sending confirmation email. This is usually a temporary issue.");
-            }
-          } else {
-            throw error;
-          }
-        } else {
-          // Store user data if signup is successful
-          userData = data;
-          userId = data.user?.id || null;
-          
-          if (!userId && process.env.NODE_ENV === 'development') {
-            console.log("No user ID returned in development mode, using mock ID");
-            userId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-          }
-        }
-      } catch (signupError: any) {
-        // Special case for development to avoid common issues
-        if (process.env.NODE_ENV === 'development' && 
-            (signupError.message.includes("rate limit") || 
-             signupError.message.includes("confirmation email") || 
-             signupError.message.includes("email confirmation"))) {
-          
-          console.log("Development mode: Email-related error bypassed:", signupError.message);
-          
-          // For development, offer a better user experience by showing a helpful message
-          toast({
-            title: "Development Environment",
-            description: "Email confirmation bypassed in development mode.",
-            duration: 4000,
-          });
-          
-          // Try to sign in with provided credentials to check if user exists
-          const { data, error } = await supabase.auth.signInWithPassword({
+      // For development mode, try to sign in first in case the user already exists
+      // This helps bypass email verification issues
+      if (process.env.NODE_ENV === 'development') {
+        try {
+          console.log("Development mode: Attempting sign in first");
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email,
             password,
           });
           
-          if (!error && data.user) {
+          if (!signInError && signInData.user) {
             // User exists and credentials are valid
-            userId = data.user.id;
-            userData = data;
+            userId = signInData.user.id;
+            userData = signInData;
             console.log("Found existing user, proceeding with profile creation");
+            
+            toast({
+              title: "Development Mode",
+              description: "Signed in with existing account in development mode.",
+              duration: 3000,
+            });
+          }
+        } catch (signInError) {
+          console.log("Development sign-in attempt failed (likely new user):", signInError);
+          // Continue with signup flow
+        }
+      }
+      
+      // If we don't have a user ID yet, proceed with normal signup
+      if (!userId) {
+        try {
+          console.log("Proceeding with normal signup flow");
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: name,
+                role: role,
+              },
+              // In development, let's force email confirmation to be bypassed
+              emailRedirectTo: process.env.NODE_ENV === 'development' 
+                ? window.location.origin 
+                : `${window.location.origin}/auth/confirm`,
+            },
+          });
+          
+          if (error) {
+            // For development mode, special handling of email errors
+            if (process.env.NODE_ENV === 'development' && 
+                (error.message.includes("email") || 
+                 error.message.includes("confirmation") ||
+                 error.message.includes("rate limit") || 
+                 error.code === 'over_email_send_rate_limit')) {
+              
+              console.log("Development mode: Email error detected, using workaround", error.message);
+              
+              // Generate a development mock ID
+              userId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+              
+              toast({
+                title: "Development Mode",
+                description: "Email verification bypassed in development. Using mock user ID.",
+                duration: 4000,
+              });
+            } else {
+              // Production or non-email error - throw it
+              throw error;
+            }
           } else {
+            // Normal signup was successful
+            userData = data;
+            userId = data.user?.id || null;
+            
+            if (!userId && process.env.NODE_ENV === 'development') {
+              console.log("No user ID returned in development mode, using mock ID");
+              userId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+            }
+          }
+        } catch (signupError: any) {
+          // Special case for development to avoid common issues
+          if (process.env.NODE_ENV === 'development' && 
+              (signupError.message?.includes("email") || 
+              signupError.message?.includes("confirmation"))) {
+            
+            console.log("Development mode: Email-related error bypassed:", signupError.message);
+            
             // Generate a mock user ID for development purposes
             userId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
             
             toast({
-              title: "Development Only",
-              description: "Using mock user ID for development. In production, verification emails would be sent properly.",
-              duration: 6000,
+              title: "Development Mode",
+              description: "Email verification bypassed in development. Using mock user ID.",
+              duration: 4000,
             });
+          } else {
+            // For any other error or in production, throw the original error
+            throw signupError;
           }
-        } else {
-          // For any other error or in production, throw the original error
-          throw signupError;
         }
       }
 
       // Only proceed if we have a valid user ID
       if (userId) {
-        console.log("User signup successful:", userId);
+        console.log("User signup/signin successful:", userId);
 
         try {
           // First check if profile already exists
@@ -229,7 +220,9 @@ export const useSignup = () => {
           // Show success message
           toast({
             title: "Account created",
-            description: "Your account has been created successfully",
+            description: process.env.NODE_ENV === 'development'
+              ? "Your account has been created successfully (dev mode)"
+              : "Your account has been created successfully. Please check your email to verify your account.",
           });
 
           // If this is a pharmacist and we have onRegistrationComplete callback,
@@ -237,10 +230,18 @@ export const useSignup = () => {
           if (role === 'pharmacist' && onRegistrationComplete) {
             console.log("Calling onRegistrationComplete for pharmacist");
             onRegistrationComplete(userId, role);
-          } else {
-            // Otherwise, navigate to home
-            console.log("Navigating to home for non-pharmacist or no callback");
+          } else if (process.env.NODE_ENV === 'development' || userId.startsWith('dev-')) {
+            // In development, we can navigate directly
+            console.log("Development mode: Navigating to home");
             navigate("/");
+          } else {
+            // In production with email verification, show message but don't navigate
+            console.log("Production mode: Waiting for email verification");
+            toast({
+              title: "Verification Required",
+              description: "Please check your email to verify your account before logging in.",
+              duration: 6000,
+            });
           }
         } catch (profileError) {
           console.error("Profile creation error:", profileError);
