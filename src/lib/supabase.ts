@@ -80,4 +80,61 @@ export async function fetchFromSupabase<T extends Record<string, any>>(
   query: Promise<{ data: T | null; error: any }>
 ): Promise<T | null> {
   try {
-    const { data,
+    const { data, error } = await query;
+    if (error) {
+      console.error('Supabase query error:', error);
+      return null;
+    }
+    return data as T;
+  } catch (error) {
+    console.error('Supabase fetch error:', error);
+    return null;
+  }
+}
+
+// Log auth state changes for debugging
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN') {
+    console.log('User signed in:', session?.user?.id);
+  } else if (event === 'SIGNED_OUT') {
+    console.log('User signed out');
+    // Clear any remaining session data
+    cookieStorage.removeItem(STORAGE_KEY);
+  } else if (event === 'TOKEN_REFRESHED') {
+    console.log('Token refreshed for user:', session?.user?.id);
+  }
+});
+
+// Initial session check and potential refresh
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    console.log('Initial session loaded:', session.user.id);
+    // Verify token expiration and refresh if needed
+    const expiresAt = session?.expires_at || 0;
+    const now = Math.floor(Date.now() / 1000);
+    if (expiresAt - now < 600) { // Refresh if less than 10 minutes left
+      supabase.auth.refreshSession().then(({ data }) => {
+        if (data.session) {
+          console.log('Session refreshed during initial load');
+        }
+      });
+    }
+  }
+});
+
+// Safe method to get session from cookie
+export const getSessionFromCookie = () => {
+  try {
+    const sessionStr = cookieStorage.getItem(STORAGE_KEY);
+    if (!sessionStr) return null;
+    
+    // Additional validation of session data
+    if (typeof sessionStr === 'object' && 'access_token' in sessionStr) {
+      return sessionStr;
+    }
+    return null;
+  } catch (e) {
+    console.error('Error getting session from cookie:', e);
+    return null;
+  }
+};
