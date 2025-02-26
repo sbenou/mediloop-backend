@@ -10,9 +10,7 @@ import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { CartProvider } from "@/contexts/CartContext";
-import { CurrencyProvider } from "@/contexts/CurrencyContext";
-import { useState, useEffect } from "react";
+import CountrySelector from "@/components/CountrySelector";
 
 const Index = () => {
   console.log('Index page - Rendering');
@@ -56,34 +54,23 @@ const Index = () => {
     },
   });
 
-  // Client-side only component rendering
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   return (
-    <CurrencyProvider>
-      <CartProvider>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          
-          {/* Country selector is temporarily disabled to fix loading issues */}
-          
-          <main className="flex-1">
-            <HeroSection />
-            <GetStartedSteps />
-            <FeaturesGrid />
-            <PartnerSection />
-            <DeliveryPersonSection />
-            <StatsSection stats={stats || { ordersCount: 0, pharmaciesCount: 0, doctorsCount: 0, prescriptionsCount: 0, connectionsCount: 0 }} />
-            <TestimonialsSection />
-          </main>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <CountrySelector />
+      
+      <main className="flex-1">
+        <HeroSection />
+        <GetStartedSteps />
+        <FeaturesGrid />
+        <PartnerSection />
+        <DeliveryPersonSection />
+        <StatsSection stats={stats || { ordersCount: 0, pharmaciesCount: 0, doctorsCount: 0, prescriptionsCount: 0, connectionsCount: 0 }} />
+        <TestimonialsSection />
+      </main>
 
-          <Footer />
-        </div>
-      </CartProvider>
-    </CurrencyProvider>
+      <Footer />
+    </div>
   );
 };
 

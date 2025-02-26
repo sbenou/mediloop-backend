@@ -1,57 +1,78 @@
 
-import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { RecoilRoot } from 'recoil';
-import { AuthProvider } from './providers/AuthProvider';
+import { ProductSearch } from '@/components/ProductSearch';
+import { CartProvider } from '@/contexts/CartContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AuthProvider from '@/providers/AuthProvider';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from "@/components/ui/toaster";
+import { RecoilRoot } from "recoil";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
+import Products from "./pages/Products";
+import Services from "./pages/Services";
+import Profile from "./pages/Profile";
+import MyOrders from "./pages/MyOrders";
+import MyPrescriptions from "./pages/MyPrescriptions";
+import Settings from "./pages/Settings";
+import AdminSettings from "./pages/AdminSettings";
+import BecomePartner from "./pages/BecomePartner";
+import BecomeTransporter from "./pages/BecomeTransporter";
+import CreatePrescription from "./pages/CreatePrescription";
+import DoctorConnections from "./pages/DoctorConnections";
+import FindDoctor from "./pages/FindDoctor";
+import SearchPharmacy from "./pages/SearchPharmacy";
+import Signup from "./pages/Signup";
+import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage";
+import './App.css';
 
-// Lazy load pages
-const Index = lazy(() => import('./pages/Index'));
-const Login = lazy(() => import('./pages/Login'));
-const Signup = lazy(() => import('./pages/Signup'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword'));
-const Profile = lazy(() => import('./pages/Profile'));
-const Products = lazy(() => import('./pages/Products'));
-const SearchPharmacy = lazy(() => import('./pages/SearchPharmacy'));
-const FindDoctor = lazy(() => import('./pages/FindDoctor'));
-const BecomePartner = lazy(() => import('./pages/BecomePartner'));
-const BecomeTransporter = lazy(() => import('./pages/BecomeTransporter'));
-const MyPrescriptions = lazy(() => import('./pages/MyPrescriptions'));
-const CreatePrescription = lazy(() => import('./pages/CreatePrescription'));
-const DoctorConnections = lazy(() => import('./pages/DoctorConnections'));
-const MyOrders = lazy(() => import('./pages/MyOrders'));
-const AdminSettings = lazy(() => import('./pages/AdminSettings'));
-const Settings = lazy(() => import('./pages/Settings'));
-const Services = lazy(() => import('./pages/Services'));
-const Notifications = lazy(() => import('./pages/Notifications'));
+// Log the current environment
+console.log('Current environment:', import.meta.env.MODE);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
     <RecoilRoot>
-      <AuthProvider>
-        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/search-pharmacy" element={<SearchPharmacy />} />
-            <Route path="/find-doctor" element={<FindDoctor />} />
-            <Route path="/become-partner" element={<BecomePartner />} />
-            <Route path="/become-transporter" element={<BecomeTransporter />} />
-            <Route path="/my-prescriptions" element={<MyPrescriptions />} />
-            <Route path="/create-prescription" element={<CreatePrescription />} />
-            <Route path="/doctor-connections" element={<DoctorConnections />} />
-            <Route path="/my-orders" element={<MyOrders />} />
-            <Route path="/admin-settings" element={<AdminSettings />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <CurrencyProvider>
+            <CartProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/login/verify" element={<OTPVerificationPage />} />
+                  <Route path="/reset-password/*" element={<ResetPassword />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/services" element={<Services />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/my-orders" element={<MyOrders />} />
+                  <Route path="/my-prescriptions" element={<MyPrescriptions />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/admin-settings" element={<AdminSettings />} />
+                  <Route path="/become-partner" element={<BecomePartner />} />
+                  <Route path="/become-transporter" element={<BecomeTransporter />} />
+                  <Route path="/create-prescription" element={<CreatePrescription />} />
+                  <Route path="/doctor-connections" element={<DoctorConnections />} />
+                  <Route path="/find-doctor" element={<FindDoctor />} />
+                  <Route path="/search-pharmacy" element={<SearchPharmacy />} />
+                  <Route path="/signup" element={<Signup />} />
+                </Routes>
+                <Toaster />
+              </BrowserRouter>
+            </CartProvider>
+          </CurrencyProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </RecoilRoot>
   );
 }
