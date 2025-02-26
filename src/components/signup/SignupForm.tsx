@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Mail, Key, User } from "lucide-react";
+import { UserPlus, Mail, Key, User, Eye, EyeOff } from "lucide-react";
 import { RoleSelector } from "./RoleSelector";
 import { useSignup } from "./useSignup";
 
@@ -20,6 +20,7 @@ export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: 
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { handleSignup, isSubmitting, rateLimitExpiresAt } = useSignup();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,13 +87,21 @@ export const SignupForm = ({ defaultRole = "patient", onRegistrationComplete }: 
           <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             id="signup-password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Create a password"
-            className="pl-8"
+            className="pl-8 pr-10"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
         </div>
       </div>
 
