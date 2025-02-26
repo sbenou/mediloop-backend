@@ -3,6 +3,10 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 
 const Login = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -77,11 +81,11 @@ const Login = () => {
     console.log('Auth state is loading...');
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-lg rounded-lg border bg-card text-card-foreground shadow-sm">
-          <div className="flex flex-col space-y-1.5 p-6">
+        <Card className="w-full max-w-lg">
+          <CardHeader>
             <h3 className="text-2xl font-semibold leading-none tracking-tight">Loading...</h3>
-          </div>
-        </div>
+          </CardHeader>
+        </Card>
       </div>
     );
   }
@@ -95,23 +99,22 @@ const Login = () => {
   // Show login form
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-lg rounded-lg border bg-card text-card-foreground shadow-sm origin-center transform transition-all duration-700 ease-in-out hover:shadow-xl animate-[scale-in_0.7s_ease-out] motion-reduce:transition-none motion-reduce:hover:transform-none">
-        <div className="flex flex-col space-y-1.5 p-6 text-left">
+      <Card className="w-full max-w-lg origin-center transform transition-all duration-700 ease-in-out hover:shadow-xl animate-[scale-in_0.7s_ease-out] motion-reduce:transition-none motion-reduce:hover:transform-none">
+        <CardHeader className="text-left">
           <h3 className="text-2xl font-bold text-left leading-none tracking-tight">Login</h3>
           <p className="text-sm text-muted-foreground text-left">
             Enter your email to get started
           </p>
-        </div>
-        <div className="p-6 pt-0">
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block text-left">
+              <Label htmlFor="email" className="block text-left">
                 Email
-              </label>
-              <input
+              </Label>
+              <Input
                 id="email"
                 type="email"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
@@ -119,14 +122,14 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block text-left">
+              <Label htmlFor="password" className="block text-left">
                 Password
-              </label>
+              </Label>
               <div className="relative">
-                <input
+                <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pr-10"
+                  className="pr-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
@@ -159,10 +162,10 @@ const Login = () => {
                 {error}
               </div>
             )}
-            <button
+            <Button
               type="submit"
               disabled={loginLoading}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
+              className="w-full"
             >
               {loginLoading ? (
                 <>
@@ -174,25 +177,26 @@ const Login = () => {
               ) : (
                 "Sign in"
               )}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="text-primary underline-offset-4 hover:underline inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 w-full"
+              variant="link"
+              className="w-full"
               onClick={() => navigate('/reset-password')}
             >
               Forgot your password?
-            </button>
+            </Button>
           </form>
-        </div>
-        <div className="flex items-center p-6 pt-0 flex-col items-start space-y-2">
+        </CardContent>
+        <CardFooter className="flex-col items-start space-y-2">
           <div className="text-sm text-muted-foreground">
             Don't have an account?{" "}
             <Link to="/signup" className="text-primary hover:underline">
               Sign up
             </Link>
           </div>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 };
