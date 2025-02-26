@@ -7,6 +7,44 @@ import { UserRole } from "./SignupForm";
 import { AuthService } from "@/services/auth";
 
 const RATE_LIMIT_KEY = "signup_rate_limit";
+const DEV_USERS_KEY = "dev_mock_users";
+
+// Development-only function to store mock users
+const storeMockUser = (email: string, password: string, userId: string, role: string) => {
+  if (process.env.NODE_ENV !== 'development') return;
+  
+  try {
+    const storedUsers = localStorage.getItem(DEV_USERS_KEY);
+    const users = storedUsers ? JSON.parse(storedUsers) : {};
+    users[email] = { password, userId, role };
+    localStorage.setItem(DEV_USERS_KEY, JSON.stringify(users));
+    console.log(`Development mode: Stored mock user ${email} with ID ${userId}`);
+  } catch (e) {
+    console.error("Error storing mock user:", e);
+  }
+};
+
+// Development-only function to retrieve mock users
+const getMockUser = (email: string, password: string) => {
+  if (process.env.NODE_ENV !== 'development') return null;
+  
+  try {
+    const storedUsers = localStorage.getItem(DEV_USERS_KEY);
+    if (!storedUsers) return null;
+    
+    const users = JSON.parse(storedUsers);
+    const user = users[email];
+    
+    if (user && user.password === password) {
+      console.log(`Development mode: Retrieved mock user ${email}`);
+      return user;
+    }
+    return null;
+  } catch (e) {
+    console.error("Error retrieving mock user:", e);
+    return null;
+  }
+};
 
 export const useSignup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,7 +77,32 @@ export const useSignup = () => {
 
       setIsSubmitting(true);
 
-      // Check if user already exists
+      // DEVELOPMENT MODE ONLY: Check for mock user
+      if (process.env.NODE_ENV === 'development') {
+        const mockUser = getMockUser(email, password);
+        
+        if (mockUser) {
+          console.log("Development mode: Using existing mock user", mockUser);
+          
+          toast({
+            title: "Development Mode",
+            description: "Signed in with mock user in development mode.",
+            duration: 3000,
+          });
+          
+          // If this is a pharmacist and we have onRegistrationComplete callback,
+          // call it rather than navigating
+          if (mockUser.role === 'pharmacist' && onRegistrationComplete) {
+            onRegistrationComplete(mockUser.userId, mockUser.role);
+          } else {
+            navigate("/");
+          }
+          
+          return;
+        }
+      }
+
+      // Check if user already exists in profiles
       const { data: existingUsers, error: checkError } = await supabase
         .from("profiles")
         .select("id")
@@ -47,54 +110,74 @@ export const useSignup = () => {
         .maybeSingle();
 
       if (checkError) {
-        throw checkError;
+        console.error("Error checking existing profile:", checkError);
+        // Continue with signup flow, don't throw here
       }
 
       if (existingUsers) {
-        toast({
-          title: "Account already exists",
-          description: "An account with this email already exists",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Try to sign up or sign in
-      let userId: string | null = null;
-      let userData = null;
-      
-      // For development mode, try to sign in first in case the user already exists
-      // This helps bypass email verification issues
-      if (process.env.NODE_ENV === 'development') {
+        // Try to sign in instead since the profile exists
         try {
-          console.log("Development mode: Attempting sign in first");
+          console.log("Profile exists, attempting sign in");
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email,
             password,
           });
           
           if (!signInError && signInData.user) {
-            // User exists and credentials are valid
-            userId = signInData.user.id;
-            userData = signInData;
-            console.log("Found existing user, proceeding with profile creation");
+            console.log("Sign in successful with existing credentials");
             
             toast({
-              title: "Development Mode",
-              description: "Signed in with existing account in development mode.",
+              title: "Sign in successful",
+              description: "Signed in with existing account.",
               duration: 3000,
             });
+            
+            // If this is a pharmacist and we have onRegistrationComplete callback,
+            // call it rather than navigating
+            if (role === 'pharmacist' && onRegistrationComplete) {
+              onRegistrationComplete(signInData.user.id, role);
+            } else {
+              navigate("/");
+            }
+            
+            return;
+          } else {
+            // Sign in failed, but profile exists
+            toast({
+              title: "Account already exists",
+              description: "An account with this email already exists but the password is incorrect",
+              variant: "destructive",
+            });
+            return;
           }
         } catch (signInError) {
-          console.log("Development sign-in attempt failed (likely new user):", signInError);
-          // Continue with signup flow
+          console.error("Error during sign in:", signInError);
+          // Continue with new account creation
         }
       }
+
+      // Try to sign up or sign in
+      let userId: string | null = null;
+      let userData = null;
       
-      // If we don't have a user ID yet, proceed with normal signup
-      if (!userId) {
+      // DEVELOPMENT MODE ONLY: Create mock user if we're in development
+      if (process.env.NODE_ENV === 'development') {
+        // Generate a mock user ID for development purposes
+        userId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        console.log("Development mode: Created mock user ID:", userId);
+        
+        // Store mock user for future sign-ins
+        storeMockUser(email, password, userId, role);
+        
+        toast({
+          title: "Development Mode",
+          description: "Created mock user for development. Email verification bypassed.",
+          duration: 4000,
+        });
+      } else {
+        // PRODUCTION MODE: Proceed with normal signup
         try {
-          console.log("Proceeding with normal signup flow");
+          console.log("Production mode: Proceeding with normal signup flow");
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -103,117 +186,66 @@ export const useSignup = () => {
                 full_name: name,
                 role: role,
               },
-              // In development, let's force email confirmation to be bypassed
-              emailRedirectTo: process.env.NODE_ENV === 'development' 
-                ? window.location.origin 
-                : `${window.location.origin}/auth/confirm`,
+              emailRedirectTo: `${window.location.origin}/auth/confirm`,
             },
           });
           
           if (error) {
-            // For development mode, special handling of email errors
-            if (process.env.NODE_ENV === 'development' && 
-                (error.message.includes("email") || 
-                 error.message.includes("confirmation") ||
-                 error.message.includes("rate limit") || 
-                 error.code === 'over_email_send_rate_limit')) {
-              
-              console.log("Development mode: Email error detected, using workaround", error.message);
-              
-              // Generate a development mock ID
-              userId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-              
-              toast({
-                title: "Development Mode",
-                description: "Email verification bypassed in development. Using mock user ID.",
-                duration: 4000,
-              });
-            } else {
-              // Production or non-email error - throw it
-              throw error;
-            }
-          } else {
-            // Normal signup was successful
-            userData = data;
-            userId = data.user?.id || null;
-            
-            if (!userId && process.env.NODE_ENV === 'development') {
-              console.log("No user ID returned in development mode, using mock ID");
-              userId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-            }
+            throw error;
+          }
+          
+          // Normal signup was successful
+          userData = data;
+          userId = data.user?.id || null;
+          
+          if (!userId) {
+            throw new Error("Failed to create user account");
           }
         } catch (signupError: any) {
-          // Special case for development to avoid common issues
-          if (process.env.NODE_ENV === 'development' && 
-              (signupError.message?.includes("email") || 
-              signupError.message?.includes("confirmation"))) {
-            
-            console.log("Development mode: Email-related error bypassed:", signupError.message);
-            
-            // Generate a mock user ID for development purposes
-            userId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-            
-            toast({
-              title: "Development Mode",
-              description: "Email verification bypassed in development. Using mock user ID.",
-              duration: 4000,
-            });
-          } else {
-            // For any other error or in production, throw the original error
-            throw signupError;
-          }
+          console.error("Signup error:", signupError);
+          throw signupError;
         }
       }
 
       // Only proceed if we have a valid user ID
       if (userId) {
-        console.log("User signup/signin successful:", userId);
+        console.log("User ID obtained:", userId);
 
         try {
-          // First check if profile already exists
-          const { data: existingProfile } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("id", userId)
-            .maybeSingle();
+          // In development mode with mock user ID, create a profile
+          if (userId.startsWith('dev-') && process.env.NODE_ENV === 'development') {
+            console.log("Creating mock profile for development user");
             
-          if (existingProfile) {
-            console.log("Profile already exists for user:", userId);
-            
-            // Update the existing profile with the new data
-            const { error: updateError } = await supabase
+            // Create a mock profile directly in the profiles table
+            const { error: insertError } = await supabase
               .from("profiles")
-              .update({
+              .insert({
+                id: userId,
                 role: role,
                 full_name: name,
                 email: email,
                 license_number: licenseNumber || null,
+                created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
-              })
-              .eq("id", userId);
+              });
               
-            if (updateError) {
-              console.error("Error updating profile:", updateError);
-              throw updateError;
+            if (insertError) {
+              console.error("Error creating mock profile:", insertError);
+              // Continue anyway for development mode
             }
           } else {
-            if (userId.startsWith('dev-') && process.env.NODE_ENV === 'development') {
-              // In development with mock user ID, just show success message
-              console.log("Development mode: Skipping profile creation for mock user ID");
-            } else {
-              // Call the RPC function to create the profile
-              const { error: profileError } = await supabase.rpc("create_profile_secure", {
-                user_id: userId,
-                user_role: role,
-                user_full_name: name,
-                user_email: email,
-                user_license_number: licenseNumber || null,
-              });
+            // In production, call the RPC function to create the profile
+            const { error: profileError } = await supabase.rpc("create_profile_secure", {
+              user_id: userId,
+              user_role: role,
+              user_full_name: name,
+              user_email: email,
+              user_license_number: licenseNumber || null,
+            });
 
-              if (profileError) {
-                console.error("Error creating profile:", profileError);
-                throw profileError;
-              }
+            if (profileError) {
+              console.error("Error creating profile:", profileError);
+              throw profileError;
             }
           }
 
@@ -268,6 +300,58 @@ export const useSignup = () => {
       }
 
       let errorMessage = "An error occurred during signup. Please try again.";
+      
+      // In development mode, for email confirmation errors, try the mock user approach
+      if (process.env.NODE_ENV === 'development' && 
+          error instanceof Error && 
+          (error.message.includes("email") || error.message.includes("confirmation"))) {
+        
+        console.log("Development mode: Handling email error with mock user approach");
+        
+        // Generate a mock user ID
+        const mockUserId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        
+        // Store mock user
+        storeMockUser(email, password, mockUserId, role);
+        
+        // Create a mock profile
+        try {
+          const { error: insertError } = await supabase
+            .from("profiles")
+            .insert({
+              id: mockUserId,
+              role: role,
+              full_name: name,
+              email: email,
+              license_number: licenseNumber || null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+            
+          if (!insertError) {
+            toast({
+              title: "Development Mode Fallback",
+              description: "Created mock user as a fallback due to email issues.",
+              duration: 4000,
+            });
+            
+            // If this is a pharmacist and we have onRegistrationComplete callback,
+            // call it rather than navigating
+            if (role === 'pharmacist' && onRegistrationComplete) {
+              onRegistrationComplete(mockUserId, role);
+            } else {
+              navigate("/");
+            }
+            
+            // Exit without showing error
+            return;
+          }
+        } catch (mockError) {
+          console.error("Error creating mock profile as fallback:", mockError);
+          // Continue to show original error
+        }
+      }
+      
       if (error instanceof Error) {
         errorMessage = error.message;
       }
