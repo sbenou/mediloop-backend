@@ -1,8 +1,9 @@
+
 -- Create categories table
 CREATE TABLE IF NOT EXISTS public.categories (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
-    type TEXT NOT NULL CHECK (type IN ('medication', 'parapharmacy')),
+    type TEXT NOT NULL CHECK (type IN ('medication', 'parapharmacy', 'wearable')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
     image_url TEXT,
-    type TEXT NOT NULL CHECK (type IN ('medication', 'parapharmacy')),
+    type TEXT NOT NULL CHECK (type IN ('medication', 'parapharmacy', 'wearable')),
     requires_prescription BOOLEAN DEFAULT false,
     category_id UUID REFERENCES public.categories(id),
     subcategory_id UUID REFERENCES public.subcategories(id),
@@ -88,11 +89,15 @@ DECLARE
     antibiotics_id UUID;
     vitamins_id UUID;
     skincare_id UUID;
+    wearables_id UUID;
     painkillers_id UUID;
     antiinflam_id UUID;
     broad_spectrum_id UUID;
     multivitamins_id UUID;
     face_care_id UUID;
+    smartwatches_id UUID;
+    fitness_trackers_id UUID;
+    smart_rings_id UUID;
 BEGIN
     -- Insert categories and store their IDs
     INSERT INTO public.categories (name, type) 
@@ -110,6 +115,10 @@ BEGIN
     INSERT INTO public.categories (name, type) 
     VALUES ('Skincare', 'parapharmacy') 
     RETURNING id INTO skincare_id;
+
+    INSERT INTO public.categories (name, type) 
+    VALUES ('Wearables', 'wearable') 
+    RETURNING id INTO wearables_id;
 
     -- Insert subcategories using the category IDs
     INSERT INTO public.subcategories (name, category_id)
@@ -132,55 +141,4 @@ BEGIN
     VALUES ('Face Care', skincare_id)
     RETURNING id INTO face_care_id;
     
-    -- -- Insert sample products
-    -- INSERT INTO public.products (
-    --     name,
-    --     description,
-    --     price,
-    --     type,
-    --     requires_prescription,
-    --     category_id,
-    --     subcategory_id,
-    --     image_url
-    -- ) VALUES
-    -- (
-    --     'Ibuprofen 400mg',
-    --     'Effective pain relief for headaches and mild pain',
-    --     12.99,
-    --     'medication',
-    --     false,
-    --     pain_relief_id,
-    --     painkillers_id,
-    --     'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    -- ),
-    -- (
-    --     'Amoxicillin 500mg',
-    --     'Broad-spectrum antibiotic for bacterial infections',
-    --     24.99,
-    --     'medication',
-    --     true,
-    --     antibiotics_id,
-    --     broad_spectrum_id,
-    --     'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    -- ),
-    -- (
-    --     'Vitamin D3 1000IU',
-    --     'Daily supplement for bone health',
-    --     15.99,
-    --     'parapharmacy',
-    --     false,
-    --     vitamins_id,
-    --     multivitamins_id,
-    --     'https://images.unsplash.com/photo-1577401132921-cb39bb0adcff?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    -- ),
-    -- (
-    --     'Hydrating Face Cream',
-    --     'Daily moisturizer for all skin types',
-    --     29.99,
-    --     'parapharmacy',
-    --     false,
-    --     skincare_id,
-    --     face_care_id,
-    --     'https://images.unsplash.com/photo-1556229162-5c63ed9c4efb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    -- );
-END $$;
+    INSERT INTO public
