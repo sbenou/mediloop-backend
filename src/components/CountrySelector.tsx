@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { userLocationState } from "@/store/location/atoms";
 import ReactCountryFlag from "react-country-flag";
 import { Address } from "@/types/supabase";
+import { ErrorBoundary } from "react-error-boundary";
 
 type Country = {
   code: string;
@@ -30,7 +31,13 @@ const AVAILABLE_COUNTRIES: Country[] = [
   }
 ];
 
-const CountrySelector = () => {
+// Default coordinates (Luxembourg)
+const DEFAULT_COORDINATES = {
+  lat: 49.8153,
+  lon: 6.1296
+};
+
+const CountrySelectorContent = () => {
   const [open, setOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string>("LU");
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
@@ -125,6 +132,15 @@ const CountrySelector = () => {
         </div>
       </DialogContent>
     </Dialog>
+  );
+};
+
+// Main component with error boundary
+const CountrySelector = () => {
+  return (
+    <ErrorBoundary fallback={<div className="hidden">Error loading country selector</div>}>
+      <CountrySelectorContent />
+    </ErrorBoundary>
   );
 };
 

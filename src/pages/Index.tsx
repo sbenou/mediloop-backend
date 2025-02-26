@@ -10,7 +10,17 @@ import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import CountrySelector from "@/components/CountrySelector";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+
+// Lazy load the CountrySelector to avoid immediate Recoil usage on page load
+const CountrySelector = () => {
+  if (typeof window === "undefined") return null;
+  
+  // Only import and use on client side
+  const LazyCountrySelector = require("@/components/CountrySelector").default;
+  return <LazyCountrySelector />;
+};
 
 const Index = () => {
   console.log('Index page - Rendering');
@@ -57,7 +67,12 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <CountrySelector />
+      
+      <ErrorBoundary fallback={<div>Error loading country selector</div>}>
+        <Suspense fallback={<div>Loading country selector...</div>}>
+          <CountrySelector />
+        </Suspense>
+      </ErrorBoundary>
       
       <main className="flex-1">
         <HeroSection />
