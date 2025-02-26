@@ -10,34 +10,9 @@ import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Suspense, lazy, useState, useEffect } from "react";
-import { ErrorBoundary } from "react-error-boundary";
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
-
-// Lazy load the CountrySelector component
-const LazyCountrySelector = lazy(() => import("@/components/CountrySelector"));
-
-// Wrapper component to handle client-side only rendering
-const ClientOnlyCountrySelector = () => {
-  const [isMounted, setIsMounted] = useState(false);
-  
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-  
-  if (!isMounted) {
-    return null;
-  }
-  
-  return (
-    <ErrorBoundary fallback={<div>Error loading country selector</div>}>
-      <Suspense fallback={<div>Loading country selector...</div>}>
-        <LazyCountrySelector />
-      </Suspense>
-    </ErrorBoundary>
-  );
-};
+import { useState, useEffect } from "react";
 
 const Index = () => {
   console.log('Index page - Rendering');
@@ -81,13 +56,19 @@ const Index = () => {
     },
   });
 
+  // Client-side only component rendering
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <CurrencyProvider>
       <CartProvider>
         <div className="min-h-screen flex flex-col">
           <Header />
           
-          <ClientOnlyCountrySelector />
+          {/* Country selector is temporarily disabled to fix loading issues */}
           
           <main className="flex-1">
             <HeroSection />
