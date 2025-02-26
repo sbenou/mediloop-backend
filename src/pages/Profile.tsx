@@ -7,8 +7,6 @@ import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import PersonalDetails from "@/components/settings/PersonalDetails";
 import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
-import Header from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar";
 
 const Profile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -29,47 +27,38 @@ const Profile = () => {
   }, [searchParams, setSearchParams]);
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <Sidebar />
+    <div className="container mx-auto py-8 px-4 overflow-y-auto">
+      <h1 className="text-3xl font-bold mb-8">Profile</h1>
       
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <div className="container mx-auto py-8 px-4 overflow-y-auto">
-          <h1 className="text-3xl font-bold mb-8">Profile</h1>
-          
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="personal">Personal Information</TabsTrigger>
-              <TabsTrigger value="addresses">Addresses</TabsTrigger>
-              <TabsTrigger value="pharmacy">Pharmacy</TabsTrigger>
-              <TabsTrigger value="doctor">Doctor</TabsTrigger>
-              <TabsTrigger value="nextofkin">Next of Kin</TabsTrigger>
-            </TabsList>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="personal">Personal Information</TabsTrigger>
+          <TabsTrigger value="addresses">Addresses</TabsTrigger>
+          <TabsTrigger value="pharmacy">Pharmacy</TabsTrigger>
+          <TabsTrigger value="doctor">Doctor</TabsTrigger>
+          <TabsTrigger value="nextofkin">Next of Kin</TabsTrigger>
+        </TabsList>
 
-            <TabsContent value="personal">
-              <PersonalDetails />
-            </TabsContent>
+        <TabsContent value="personal">
+          <PersonalDetails />
+        </TabsContent>
 
-            <TabsContent value="addresses">
-              <AddressManagement />
-            </TabsContent>
+        <TabsContent value="addresses">
+          <AddressManagement />
+        </TabsContent>
 
-            <TabsContent value="pharmacy">
-              <PharmacySelection />
-            </TabsContent>
+        <TabsContent value="pharmacy">
+          <PharmacySelection />
+        </TabsContent>
 
-            <TabsContent value="doctor">
-              <DoctorManagement />
-            </TabsContent>
+        <TabsContent value="doctor">
+          <DoctorManagement />
+        </TabsContent>
 
-            <TabsContent value="nextofkin">
-              <NextOfKinManagement />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+        <TabsContent value="nextofkin">
+          <NextOfKinManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
