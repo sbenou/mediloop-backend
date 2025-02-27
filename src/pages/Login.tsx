@@ -21,8 +21,8 @@ const Login = () => {
       }
       
       if (session?.user) {
-        console.log('Active session found, redirecting to home...');
-        navigate('/', { replace: true });
+        console.log('Active session found, redirecting to dashboard...');
+        navigate('/dashboard', { replace: true });
       } else {
         console.log('No active session found');
       }
@@ -34,8 +34,8 @@ const Login = () => {
       console.log('Auth state changed in Login:', event, session?.user?.id);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('User signed in, redirecting to home...');
-        navigate('/', { replace: true });
+        console.log('User signed in, redirecting to dashboard...');
+        navigate('/dashboard', { replace: true });
       }
     });
 
@@ -59,10 +59,10 @@ const Login = () => {
     );
   }
 
-  // If user is already authenticated and not on the login page, redirect to home
-  if (isAuthenticated && window.location.pathname !== '/login') {
-    console.log('User is authenticated, redirecting to home...');
-    return <Navigate to="/" replace />;
+  // If user is already authenticated, redirect to dashboard
+  if (isAuthenticated) {
+    console.log('User is authenticated, redirecting to dashboard...');
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Show login form

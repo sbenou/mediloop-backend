@@ -12,12 +12,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import CountrySelector from "@/components/CountrySelector";
 import { useAuth } from "@/hooks/auth/useAuth";
-import PatientLayout from "@/components/layout/PatientLayout";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   console.log('Index page - Rendering');
-  const { isAuthenticated, userRole } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
   // Fetch statistics including new connection count
   const { data: stats } = useQuery({
     queryKey: ['platform-stats'],
@@ -58,7 +67,7 @@ const Index = () => {
   });
 
   // Regular home page content
-  const homePageContent = (
+  return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <CountrySelector />
@@ -76,28 +85,6 @@ const Index = () => {
       <Footer />
     </div>
   );
-
-  // If the user is authenticated, check role and show appropriate layout
-  if (isAuthenticated) {
-    // For patient role, show patient layout with home page content
-    if (userRole === 'patient') {
-      return (
-        <PatientLayout>
-          <div className="space-y-8">
-            <h1 className="text-3xl font-bold">Welcome to Your Patient Dashboard</h1>
-            <GetStartedSteps />
-            <StatsSection stats={stats || { ordersCount: 0, pharmaciesCount: 0, doctorsCount: 0, prescriptionsCount: 0, connectionsCount: 0 }} />
-          </div>
-        </PatientLayout>
-      );
-    }
-    
-    // For now, other roles see the regular home page
-    return homePageContent;
-  }
-
-  // Not authenticated - show regular home page
-  return homePageContent;
 };
 
 export default Index;

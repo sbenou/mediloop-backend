@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarProvider,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
   ChevronDown,
@@ -25,12 +26,16 @@ import {
   FileText,
   Calendar,
   Settings,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/auth/useAuth";
+import UserAvatar from "../user-menu/UserAvatar";
 
 const PatientSidebarContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { profile } = useAuth();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   const toggleGroup = (groupName: string) => {
@@ -49,12 +54,16 @@ const PatientSidebarContent = () => {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
-        <img
-          src="/logo.svg"
-          alt="Mediloop"
-          className="h-8 w-auto"
-        />
+      <SidebarHeader className="p-4 border-b">
+        <div className="flex items-center space-x-3">
+          <div className="bg-primary text-primary-foreground p-2 rounded-md">
+            <FileText className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm">Mediloop</h3>
+            <p className="text-xs text-muted-foreground">Healthcare Platform</p>
+          </div>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -167,36 +176,57 @@ const PatientSidebarContent = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => navigate('/my-prescriptions')}
-                  className="w-full"
+                  className="w-full flex justify-between items-center"
                 >
-                  <FileText className="mr-2 h-4 w-4" />
-                  My Prescriptions
+                  <span className="flex items-center">
+                    <FileText className="mr-2 h-4 w-4" />
+                    My Prescriptions
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-50" />
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => navigate('/teleconsultations')}
-                  className="w-full"
+                  className="w-full flex justify-between items-center"
                 >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Teleconsultations
+                  <span className="flex items-center">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Teleconsultations
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-50" />
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => navigate('/settings')}
-                  className="w-full"
+                  className="w-full flex justify-between items-center"
                 >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                  <span className="flex items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-50" />
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="mt-auto border-t p-4">
+        {profile && (
+          <div className="flex items-center space-x-3">
+            <UserAvatar userProfile={profile} />
+            <div className="overflow-hidden">
+              <p className="text-sm font-medium truncate">{profile.full_name || profile.email}</p>
+              <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+            </div>
+          </div>
+        )}
+      </SidebarFooter>
     </Sidebar>
   );
 };
