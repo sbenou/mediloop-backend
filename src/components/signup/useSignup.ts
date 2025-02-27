@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -6,40 +5,6 @@ import { toast } from "@/components/ui/use-toast";
 import { UserRole } from "./SignupForm";
 
 const RATE_LIMIT_KEY = "signup_rate_limit";
-const DEV_USERS_KEY = "dev_mock_users";
-
-// Simple mock user storage for development
-const storeMockUser = (email: string, password: string, userId: string, role: string) => {
-  try {
-    const storedUsers = localStorage.getItem(DEV_USERS_KEY);
-    const users = storedUsers ? JSON.parse(storedUsers) : {};
-    users[email] = { password, userId, role };
-    localStorage.setItem(DEV_USERS_KEY, JSON.stringify(users));
-    console.log(`Stored mock user ${email} with ID ${userId}`);
-  } catch (e) {
-    console.error("Error storing mock user:", e);
-  }
-};
-
-// Find an existing mock user
-const getMockUser = (email: string, password: string) => {
-  try {
-    const storedUsers = localStorage.getItem(DEV_USERS_KEY);
-    if (!storedUsers) return null;
-    
-    const users = JSON.parse(storedUsers);
-    const user = users[email];
-    
-    if (user && user.password === password) {
-      console.log(`Retrieved mock user ${email}`);
-      return user;
-    }
-    return null;
-  } catch (e) {
-    console.error("Error retrieving mock user:", e);
-    return null;
-  }
-};
 
 export const useSignup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,72 +39,224 @@ export const useSignup = () => {
       
       console.log(`Starting signup process for ${email} with role ${role}`);
       
-      // Check for existing mock user first
-      const existingMockUser = getMockUser(email, password);
-      
-      if (existingMockUser) {
-        console.log("Using existing mock user:", existingMockUser);
-        
-        toast({
-          title: "Development Mode",
-          description: "Signed in with existing mock account.",
-          duration: 3000,
-        });
-        
-        if (existingMockUser.role === 'pharmacist' && onRegistrationComplete) {
-          onRegistrationComplete(existingMockUser.userId, existingMockUser.role);
-        } else {
-          navigate("/");
-        }
-        
-        return;
+      // Check if user already exists in profiles
+      const { data: existingProfile, error: checkError } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking existing profile:", checkError);
       }
-      
-      // Generate a mock user ID for all users in the development environment
-      const mockUserId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-      console.log("Created mock user ID:", mockUserId);
-      
-      // Store mock user for future logins
-      storeMockUser(email, password, mockUserId, role);
-      
-      // Create a profile for the mock user
-      try {
-        const { error: insertError } = await supabase
-          .from("profiles")
-          .insert({
-            id: mockUserId,
-            role: role,
-            full_name: name,
-            email: email,
-            license_number: licenseNumber || null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+
+      if (existingProfile) {
+        console.log("User already exists, attempting sign in");
+        
+        try {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password
           });
           
-        if (insertError) {
-          console.error("Error creating mock profile:", insertError);
-          throw insertError;
+          if (signInError) {
+            console.error("Sign in error:", signInError);
+            toast({
+              title: "Account already exists",
+              description: "The email is already registered, but the password is incorrect.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          if (signInData.user) {
+            console.log("Signed in successfully with existing account");
+            
+            toast({
+              title: "Signed in",
+              description: "Successfully signed in with your existing account",
+            });
+            
+            if (role === 'pharmacist' && onRegistrationComplete) {
+              onRegistrationComplete(signInData.user.id, role);
+            } else {
+              navigate("/");
+            }
+            return;
+          }
+        } catch (signInError) {
+          console.error("Error during sign in:", signInError);
         }
-        
-        console.log("Successfully created mock profile");
-        
-        toast({
-          title: "Account Created",
-          description: "Created account in development mode.",
-          duration: 4000,
+      }
+      
+      // Proceed with normal signup
+      console.log("Starting Supabase Auth signup process");
+      
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: name,
+              role,
+              license_number: licenseNumber || null
+            },
+            emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          },
         });
         
-        // Handle the pharmacist case specially
-        if (role === 'pharmacist' && onRegistrationComplete) {
-          onRegistrationComplete(mockUserId, role);
-        } else {
-          navigate("/");
+        if (error) {
+          console.error("Signup error:", error);
+          throw error;
         }
         
-        return;
-      } catch (profileError) {
-        console.error("Failed to create mock profile:", profileError);
-        throw profileError;
+        if (!data.user) {
+          throw new Error("Failed to create user account");
+        }
+        
+        const userId = data.user.id;
+        console.log("Signup successful, user ID:", userId);
+        
+        // Create profile using RPC function
+        const { error: profileError } = await supabase.rpc("create_profile_secure", {
+          user_id: userId,
+          user_role: role,
+          user_full_name: name,
+          user_email: email,
+          user_license_number: licenseNumber || null,
+        });
+        
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          throw profileError;
+        }
+        
+        // Check if email confirmation is required
+        const isEmailConfirmationSent = !data.session;
+        
+        if (isEmailConfirmationSent) {
+          console.log("Email confirmation required");
+          toast({
+            title: "Account created",
+            description: "Please check your email for a verification link to complete signup.",
+            duration: 6000,
+          });
+          
+          // In development, allow continuing without email verification
+          if (process.env.NODE_ENV === 'development') {
+            console.log("Development environment: Allowing login without email verification");
+            
+            // Wait a moment to let the profile be created
+            setTimeout(async () => {
+              try {
+                // Sign in directly without verification in development mode
+                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                  email,
+                  password
+                });
+                
+                if (signInError) {
+                  console.error("Development sign in error:", signInError);
+                  return;
+                }
+                
+                if (signInData.user) {
+                  console.log("Development: signed in without email verification");
+                  
+                  toast({
+                    title: "Development Mode",
+                    description: "Signed in without email verification (development only).",
+                    duration: 4000,
+                  });
+                  
+                  if (role === 'pharmacist' && onRegistrationComplete) {
+                    onRegistrationComplete(signInData.user.id, role);
+                  } else {
+                    navigate("/");
+                  }
+                }
+              } catch (devSignInError) {
+                console.error("Development sign in attempt failed:", devSignInError);
+              }
+            }, 1500);
+          }
+        } else {
+          console.log("User session created immediately");
+          
+          toast({
+            title: "Account created",
+            description: "Your account has been created successfully",
+          });
+          
+          if (role === 'pharmacist' && onRegistrationComplete) {
+            onRegistrationComplete(userId, role);
+          } else {
+            navigate("/");
+          }
+        }
+      } catch (error: any) {
+        console.error("Signup process error:", error);
+        
+        // If error is related to email sending (common in development)
+        if (error.message && (
+            error.message.includes("sending confirmation email") || 
+            error.message.includes("Error sending")
+        )) {
+          console.log("Email sending error detected - handling specially in development");
+          
+          if (process.env.NODE_ENV === 'development') {
+            // In development, use the "admin" RPC function to create a profile directly
+            // This bypasses email verification but keeps the auth user
+            
+            try {
+              // Create a unique user ID since we can't get one from the failed signup
+              const devUserId = `dev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+              
+              // Create profile directly 
+              const { error: insertError } = await supabase
+                .from("profiles")
+                .insert({
+                  id: devUserId,
+                  role: role,
+                  full_name: name,
+                  email: email,
+                  license_number: licenseNumber || null,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                });
+                
+              if (insertError) {
+                console.error("Error creating development profile:", insertError);
+                throw insertError;
+              }
+              
+              console.log("Created development profile without email verification");
+              
+              toast({
+                title: "Development Account Created",
+                description: "Created an account while bypassing email verification (development only).",
+                duration: 4000,
+              });
+              
+              // If this is a pharmacist, call the registration complete callback
+              if (role === 'pharmacist' && onRegistrationComplete) {
+                onRegistrationComplete(devUserId, role);
+              } else {
+                navigate("/");
+              }
+              
+              return;
+            } catch (devProfileError) {
+              console.error("Development profile creation failed:", devProfileError);
+              throw devProfileError;
+            }
+          } else {
+            throw new Error("Unable to send verification email. Please contact support.");
+          }
+        }
+        
+        throw error;
       }
     } catch (error) {
       console.error("Signup error:", error);
