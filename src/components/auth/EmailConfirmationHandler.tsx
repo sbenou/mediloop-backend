@@ -18,6 +18,32 @@ const EmailConfirmationHandler = () => {
         // Get the URL parameters
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
+        const errorParam = params.get('error');
+        const errorCode = params.get('error_code');
+        const errorDescription = params.get('error_description');
+        
+        // If we have error params in the URL, show them instead of processing
+        if (errorParam || errorCode || errorDescription) {
+          console.error('Error from URL parameters:', { errorParam, errorCode, errorDescription });
+          
+          // Create a user-friendly error message
+          let errorMessage = 'There was a problem verifying your email.';
+          
+          if (errorDescription) {
+            // Convert URL-encoded spaces to actual spaces and capitalize first letter
+            errorMessage = errorDescription
+              .replace(/\+/g, ' ')
+              .replace(/^./, str => str.toUpperCase());
+          }
+          
+          if (errorCode === 'otp_expired') {
+            errorMessage = 'This verification link has expired or already been used. If needed, you can request a new verification email.';
+          }
+          
+          setError(errorMessage);
+          setIsProcessing(false);
+          return;
+        }
         
         console.log('Email confirmation code:', code);
 
