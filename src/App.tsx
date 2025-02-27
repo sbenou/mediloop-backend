@@ -27,6 +27,7 @@ import Signup from "./pages/Signup";
 import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage";
 import Teleconsultations from "./pages/Teleconsultations";
 import Billing from "./pages/Billing";
+import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
 import './App.css';
 
 // Log the current environment
@@ -70,6 +71,7 @@ function App() {
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/teleconsultations" element={<Teleconsultations />} />
                   <Route path="/billing" element={<Billing />} />
+                  <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
                 </Routes>
                 <Toaster />
               </BrowserRouter>
