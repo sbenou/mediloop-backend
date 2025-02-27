@@ -108,9 +108,9 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         description: "You have successfully signed in.",
       });
 
-      // Navigate to home page
-      console.log('Navigating to home page...');
-      navigate('/', { replace: true });
+      // Navigate to dashboard page
+      console.log('Navigating to dashboard...');
+      navigate('/dashboard', { replace: true });
       onSuccess();
 
     } catch (error: any) {
