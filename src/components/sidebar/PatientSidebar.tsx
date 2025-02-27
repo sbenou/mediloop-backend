@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -10,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarProvider,
 } from "@/components/ui/sidebar";
 import {
   ChevronDown,
@@ -26,7 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const PatientSidebar = () => {
+const PatientSidebarContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
@@ -196,6 +198,15 @@ const PatientSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
+  );
+};
+
+// Wrapper component with SidebarProvider
+const PatientSidebar = () => {
+  return (
+    <SidebarProvider>
+      <PatientSidebarContent />
+    </SidebarProvider>
   );
 };
 
