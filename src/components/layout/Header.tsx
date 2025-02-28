@@ -1,109 +1,115 @@
 
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import UserMenu from "../UserMenu";
-import { Button } from "../ui/button";
-import { ChevronLeft, Bell, ShoppingCart, Globe } from "lucide-react";
-import NotificationBell from "../NotificationBell";
-import CartButton from "./navigation/CartButton";
-import { MainNavigation } from "./navigation/MainNavigation";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import UserMenu from '@/components/UserMenu';
+import { ArrowLeft, User } from 'lucide-react';
+import { useState } from 'react';
+import {
+  NavigationMenu,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
+import { MainNavigation } from './navigation/MainNavigation';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../LanguageSelector';
+import MobileMenu from './navigation/MobileMenu';
+import CartButton from './navigation/CartButton';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { Skeleton } from '@/components/ui/skeleton';
+import NotificationBell from '../NotificationBell';
 
 interface HeaderProps {
   showUserMenu?: boolean;
   showBackLink?: boolean;
-  onBackClick?: () => void;
 }
 
-const Header = ({ showUserMenu = true, showBackLink = false, onBackClick }: HeaderProps) => {
-  const navigate = useNavigate();
+const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState("en");
-  
-  const handleBackClick = () => {
-    if (onBackClick) {
-      onBackClick();
-    } else {
-      navigate(-1);
-    }
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isHomePage = location.pathname === '/';
+  const { t } = useTranslation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  const handleNavigateToLogin = () => {
+    navigate('/login', { replace: true });
   };
 
-  const languages = [
-    { code: "en", name: "English" },
-    { code: "fr", name: "Français" },
-    { code: "de", name: "Deutsch" }
-  ];
+  // List of public routes that don't require authentication
+  const publicRoutes = ['/', '/products', '/services', '/search-pharmacy', '/become-transporter', '/become-partner', '/login', '/signup', '/reset-password'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
 
-  const handleLanguageChange = (langCode: string) => {
-    setCurrentLanguage(langCode);
-    // Here you would typically update the i18n language context
-  };
+  const LoadingSkeleton = () => (
+    <div className="flex items-center space-x-2">
+      <Skeleton className="h-10 w-10 rounded-full">
+        <div className="h-full w-full flex items-center justify-center">
+          <User className="h-5 w-5 text-muted-foreground/50" />
+        </div>
+      </Skeleton>
+    </div>
+  );
 
   return (
-    <header className="border-b bg-background">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center justify-start gap-4">
-          {showBackLink && (
-            <Button variant="ghost" size="icon" onClick={handleBackClick}>
-              <ChevronLeft className="h-6 w-6" />
-              <span className="sr-only">Back</span>
-            </Button>
-          )}
-          <Link to="/" className="font-semibold text-lg flex items-center gap-2">
-            <img src="/favicon.ico" alt="Logo" className="w-6 h-6" />
-            Mediloop
-          </Link>
-          
-          <div className="hidden md:flex ml-6">
-            <MainNavigation />
+    <header className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 py-1.5 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4 sm:gap-16">
+            {showBackLink ? (
+              <Link to="/" className="flex items-center text-primary hover:text-primary/80">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Link>
+            ) : (
+              <Link to="/">
+                <img 
+                  src="/lovable-uploads/1d4b50b5-2725-470b-a070-5227c3aa24b6.png" 
+                  alt="LuxMed Logo" 
+                  className={`${isHomePage ? 'h-14 sm:h-16' : 'h-12 sm:h-14'} transition-all duration-200`}
+                />
+              </Link>
+            )}
+
+            {isMobile ? (
+              <MobileMenu 
+                isOpen={isMobileMenuOpen}
+                onOpenChange={setIsMobileMenuOpen}
+              />
+            ) : (
+              <NavigationMenu className="hidden md:block">
+                <NavigationMenuList>
+                  <MainNavigation />
+                </NavigationMenuList>
+              </NavigationMenu>
+            )}
           </div>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <NotificationBell />
-          
-          {/* Language Selector */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-primary hover:text-primary/80 transition-colors">
-                <Globe className="h-5 w-5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-48 p-0">
-              <div className="p-2">
-                {languages.map((lang) => (
+
+          <div className="flex items-center space-x-3">
+            <LanguageSelector />
+            {showUserMenu && (
+              <>
+                {isLoading ? (
+                  <LoadingSkeleton />
+                ) : isAuthenticated ? (
+                  <>
+                    <NotificationBell />
+                    <UserMenu />
+                  </>
+                ) : (
                   <button
-                    key={lang.code}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-md flex items-center justify-between ${
-                      currentLanguage === lang.code ? "bg-accent" : "hover:bg-accent"
-                    }`}
-                    onClick={() => handleLanguageChange(lang.code)}
+                    onClick={handleNavigateToLogin}
+                    className="text-primary hover:text-primary/80 transition-colors"
                   >
-                    {lang.name}
-                    {currentLanguage === lang.code && (
-                      <Badge variant="secondary" className="ml-auto text-xs">
-                        Active
-                      </Badge>
-                    )}
+                    Connection
                   </button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-          
-          {/* Connection button (only shown when user is not authenticated) */}
-          {!showUserMenu && (
-            <button
-              onClick={() => navigate('/login')}
-              className="text-primary hover:text-primary/80 transition-colors"
-            >
-              Connection
-            </button>
-          )}
-          
-          <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
-          {showUserMenu && <UserMenu />}
+                )}
+                <CartButton 
+                  isOpen={isCartOpen}
+                  onOpenChange={setIsCartOpen}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>

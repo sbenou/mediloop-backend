@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronDown, Users, Database, ShieldCheck, Package, UserCog } from "lucide-react";
+import { ChevronDown, Users, Database, ShieldCheck, Package } from "lucide-react";
 
 interface DashboardStats {
   total_users: number;
@@ -167,12 +167,12 @@ const SuperAdminDashboard = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="cursor-pointer hover:bg-gray-50 transition-colors border-dashed" onClick={() => navigate("/admin-settings?tab=customers")}>
+                <Card className="cursor-pointer hover:bg-gray-50 transition-colors border-dashed" onClick={() => navigate("/admin-settings?tab=products")}>
                   <CardContent className="flex flex-col items-center justify-center pt-6 pb-6">
-                    <UserCog className="h-10 w-10 mb-2 text-primary" />
-                    <h3 className="font-medium">Manage Customers</h3>
+                    <Package className="h-10 w-10 mb-2 text-primary" />
+                    <h3 className="font-medium">Manage Products</h3>
                     <p className="text-sm text-muted-foreground text-center mt-1">
-                      View and manage pharmacists and doctors
+                      Add or modify product listings
                     </p>
                   </CardContent>
                 </Card>
