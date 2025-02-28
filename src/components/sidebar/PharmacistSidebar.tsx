@@ -27,6 +27,8 @@ import {
   Home,
   Upload,
   Bell,
+  MapPin,
+  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -247,7 +249,7 @@ const PharmacistSidebarContent = () => {
                 {isGroupExpanded('patients') && (
                   <div className="pl-6 space-y-1 mt-1">
                     <SidebarMenuButton
-                      onClick={() => navigateToTab('/pharmacy/patients', 'all')}
+                      onClick={() => navigate('/pharmacy/patients')}
                       className="w-full text-sm"
                     >
                       <Users className="mr-2 h-4 w-4" />
@@ -298,7 +300,7 @@ const PharmacistSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigateToTab('/pharmacy/prescriptions')}
+                  onClick={() => navigate('/pharmacy/prescriptions')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
