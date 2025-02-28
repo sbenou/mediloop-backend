@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -16,15 +16,19 @@ import {
 } from "@/components/ui/sidebar";
 import {
   ChevronDown,
+  User,
   Users,
   ShoppingBag,
   CreditCard,
   FileText,
   ChevronRight,
   LogOut,
+  ClipboardList,
   Home,
   Upload,
-  Settings,
+  Bell,
+  MapPin,
+  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -64,6 +68,11 @@ const PharmacistSidebarContent = () => {
   };
 
   const isGroupExpanded = (groupName: string) => expandedGroups.includes(groupName);
+
+  const navigateToTab = (path: string, tab?: string) => {
+    console.log(`Navigate to: ${path}${tab ? `?tab=${tab}` : ''}`);
+    navigate(path + (tab ? `?tab=${tab}` : ''));
+  };
 
   const handleLogout = async () => {
     try {
@@ -272,14 +281,14 @@ const PharmacistSidebarContent = () => {
                 {isGroupExpanded('orders') && (
                   <div className="pl-6 space-y-1 mt-1">
                     <SidebarMenuButton
-                      onClick={() => navigate('/pharmacy/orders?tab=all')}
+                      onClick={() => navigateToTab('/pharmacy/orders', 'all')}
                       className="w-full text-sm"
                     >
                       <ShoppingBag className="mr-2 h-4 w-4" />
                       All Orders
                     </SidebarMenuButton>
                     <SidebarMenuButton
-                      onClick={() => navigate('/pharmacy/orders?tab=payments')}
+                      onClick={() => navigateToTab('/pharmacy/orders', 'payments')}
                       className="w-full text-sm"
                     >
                       <CreditCard className="mr-2 h-4 w-4" />
@@ -295,13 +304,12 @@ const PharmacistSidebarContent = () => {
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
-                    <FileText className="mr-2 h-4 w-4" />
+                    <ClipboardList className="mr-2 h-4 w-4" />
                     Prescriptions
                   </span>
                   <ChevronRight className="h-4 w-4 opacity-50" />
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -362,7 +370,7 @@ const PharmacistSidebarContent = () => {
 
 const PharmacistSidebar = () => {
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider>
       <PharmacistSidebarContent />
     </SidebarProvider>
   );
