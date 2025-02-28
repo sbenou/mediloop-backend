@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, User, MapPin, UserRound } from "lucide-react";
+import Header from "@/components/layout/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PharmacistLayout from "@/components/layout/PharmacistLayout";
 
 // Mock data - would be replaced with real data from database
 const mockPatient = {
@@ -50,117 +50,120 @@ const PatientDetail = () => {
   // In a real app, fetch the patient data based on the ID
   
   return (
-    <PharmacistLayout>
-      <div className="space-y-6">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/pharmacy/patients')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Patients
-        </Button>
-        
-        <h1 className="text-2xl font-bold">{mockPatient.name}</h1>
-        
-        <Tabs defaultValue="personal" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="personal">
-              <User className="h-4 w-4 mr-2" />
-              Personal Information
-            </TabsTrigger>
-            <TabsTrigger value="addresses">
-              <MapPin className="h-4 w-4 mr-2" />
-              Addresses
-            </TabsTrigger>
-            <TabsTrigger value="doctor">
-              <UserRound className="h-4 w-4 mr-2" />
-              My Doctor
-            </TabsTrigger>
-          </TabsList>
+    <div>
+      <Header />
+      <div className="container mx-auto py-8">
+        <div className="space-y-6">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/pharmacy/patients')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Patients
+          </Button>
           
-          <TabsContent value="personal">
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Full Name</p>
-                    <p>{mockPatient.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Email</p>
-                    <p>{mockPatient.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                    <p>{mockPatient.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Date of Birth</p>
-                    <p>{new Date(mockPatient.dateOfBirth).toLocaleDateString()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          <h1 className="text-2xl font-bold">{mockPatient.name}</h1>
           
-          <TabsContent value="addresses">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {mockPatient.addresses.map((address) => (
-                <Card key={address.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle>{address.type}</CardTitle>
-                      {address.isDefault && (
-                        <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                          Default
-                        </div>
-                      )}
+          <Tabs defaultValue="personal" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="personal">
+                <User className="h-4 w-4 mr-2" />
+                Personal Information
+              </TabsTrigger>
+              <TabsTrigger value="addresses">
+                <MapPin className="h-4 w-4 mr-2" />
+                Addresses
+              </TabsTrigger>
+              <TabsTrigger value="doctor">
+                <UserRound className="h-4 w-4 mr-2" />
+                My Doctor
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="personal">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Personal Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Full Name</p>
+                      <p>{mockPatient.name}</p>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-1">
-                    <p>{address.street}</p>
-                    <p>{address.city}, {address.postalCode}</p>
-                    <p>{address.country}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="doctor">
-            <Card>
-              <CardHeader>
-                <CardTitle>Doctor Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Doctor Name</p>
-                    <p>{mockPatient.doctor.name}</p>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Email</p>
+                      <p>{mockPatient.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                      <p>{mockPatient.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Date of Birth</p>
+                      <p>{new Date(mockPatient.dateOfBirth).toLocaleDateString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Specialty</p>
-                    <p>{mockPatient.doctor.specialty}</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="addresses">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {mockPatient.addresses.map((address) => (
+                  <Card key={address.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>{address.type}</CardTitle>
+                        {address.isDefault && (
+                          <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                            Default
+                          </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-1">
+                      <p>{address.street}</p>
+                      <p>{address.city}, {address.postalCode}</p>
+                      <p>{address.country}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="doctor">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Doctor Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Doctor Name</p>
+                      <p>{mockPatient.doctor.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Specialty</p>
+                      <p>{mockPatient.doctor.specialty}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Clinic</p>
+                      <p>{mockPatient.doctor.clinic}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                      <p>{mockPatient.doctor.phone}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Clinic</p>
-                    <p>{mockPatient.doctor.clinic}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                    <p>{mockPatient.doctor.phone}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
-    </PharmacistLayout>
+    </div>
   );
 };
 
