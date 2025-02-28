@@ -27,15 +27,30 @@ import {
   Calendar,
   Settings,
   ChevronRight,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UserAvatar from "../user-menu/UserAvatar";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuGroup
+} from "@/components/ui/dropdown-menu";
+import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useRecoilState } from "recoil";
+import { authState } from "@/store/auth/atoms";
 
 const PatientSidebarContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile } = useAuth();
+  const [auth, setAuth] = useRecoilState(authState);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   const toggleGroup = (groupName: string) => {
@@ -50,6 +65,35 @@ const PatientSidebarContent = () => {
 
   const navigateToTab = (path: string, tab?: string) => {
     navigate(path + (tab ? `?tab=${tab}` : ''));
+  };
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear auth state
+      setAuth({
+        user: null,
+        profile: null,
+        isLoading: false,
+        permissions: [],
+      });
+      
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+      
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+      });
+    }
   };
 
   return (
@@ -216,15 +260,49 @@ const PatientSidebarContent = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="mt-auto border-t p-4">
+      <SidebarFooter className="border-t mt-auto p-4">
         {profile && (
-          <div className="flex items-center space-x-3">
-            <UserAvatar userProfile={profile} />
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium truncate">{profile.full_name || profile.email}</p>
-              <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center space-x-3 cursor-pointer">
+                <UserAvatar userProfile={profile} />
+                <div className="overflow-hidden">
+                  <p className="text-sm font-medium truncate">{profile.full_name || profile.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+                </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{profile.full_name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {profile.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  Account
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/billing')}>
+                  Billing
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </SidebarFooter>
     </Sidebar>

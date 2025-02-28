@@ -1,128 +1,22 @@
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { FilePlus, Eye } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 
-// Mock data - in a real app, this would come from an API
-const MOCK_PRESCRIPTIONS = [
-  {
-    id: 1,
-    patientName: "John Doe",
-    createdAt: "2024-03-15",
-    medications: [
-      {
-        name: "Amoxicillin",
-        frequency: "daily",
-        dosesPerFrequency: "3",
-        quantity: "30 tablets"
-      }
-    ],
-    doctorName: "Dr. Smith",
-    doctorAddress: "123 Medical Center",
-    patientAddress: "456 Patient St"
-  },
-  {
-    id: 2,
-    patientName: "John Doe",
-    createdAt: "2024-03-14",
-    medications: [
-      {
-        name: "Ibuprofen",
-        frequency: "daily",
-        dosesPerFrequency: "2",
-        quantity: "20 tablets"
-      }
-    ],
-    doctorName: "Dr. Johnson",
-    doctorAddress: "789 Health Ave",
-    patientAddress: "456 Patient St"
-  }
-];
+import PatientLayout from "@/components/layout/PatientLayout";
 
 const MyPrescriptions = () => {
-  const navigate = useNavigate();
-
   return (
-    <div className="container mx-auto py-8 px-4">
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink 
-              onClick={() => navigate('/')} 
-              className="hover:text-primary hover:underline cursor-pointer"
-            >
-              Home
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink>My Prescriptions</BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-primary">My Prescriptions</h1>
-        <Button
-          onClick={() => navigate('/create-prescription')}
-          className="flex items-center space-x-2"
-        >
-          <FilePlus className="h-4 w-4" />
-          <span>Create New Prescription</span>
-        </Button>
+    <PatientLayout>
+      <div>
+        <h1 className="text-3xl font-bold mb-6">My Prescriptions</h1>
+        <p className="text-muted-foreground mb-8">View and manage your prescriptions</p>
+        
+        {/* Placeholder content for prescriptions */}
+        <div className="bg-gray-100 rounded-lg p-8 text-center">
+          <p className="text-lg">No active prescriptions found</p>
+          <p className="text-muted-foreground mt-2">
+            Your prescriptions will appear here once you receive them from your doctor
+          </p>
+        </div>
       </div>
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Created Date</TableHead>
-              <TableHead>Medications</TableHead>
-              <TableHead>Doctor</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {MOCK_PRESCRIPTIONS.map((prescription) => (
-              <TableRow key={prescription.id}>
-                <TableCell>{prescription.createdAt}</TableCell>
-                <TableCell>
-                  {prescription.medications.map(med => med.name).join(", ")}
-                </TableCell>
-                <TableCell>{prescription.doctorName}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(`/prescription/${prescription.id}`, { 
-                      state: { data: prescription } 
-                    })}
-                    className="flex items-center space-x-2"
-                  >
-                    <Eye className="h-4 w-4" />
-                    <span>View</span>
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    </PatientLayout>
   );
 };
 

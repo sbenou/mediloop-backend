@@ -5,16 +5,24 @@ import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import PersonalDetails from "@/components/settings/PersonalDetails";
 import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
-import Header from "@/components/layout/Header";
+import PatientLayout from "@/components/layout/PatientLayout";
+import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 
 const Profile = () => {
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'personal';
+
+  useEffect(() => {
+    console.log('Profile page rendered with tab:', activeTab);
+  }, [activeTab]);
+
   return (
-    <div>
-      <Header />
-      <div className="container mx-auto py-8 px-4">
+    <PatientLayout>
+      <div>
         <h1 className="text-3xl font-bold mb-8">Profile</h1>
         
-        <Tabs defaultValue="personal" className="space-y-4">
+        <Tabs defaultValue={activeTab} value={activeTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="personal">Personal Information</TabsTrigger>
             <TabsTrigger value="addresses">Addresses</TabsTrigger>
@@ -44,7 +52,7 @@ const Profile = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </PatientLayout>
   );
 };
 

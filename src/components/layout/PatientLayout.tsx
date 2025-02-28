@@ -14,7 +14,7 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
     <div className="flex min-h-screen w-full">
       <PatientSidebar />
       <div className="flex-1">
-        <header className="border-b h-16 px-6 flex items-center justify-end space-x-2">
+        <header className="border-b h-16 px-6 flex items-center justify-end space-x-4">
           <NotificationBell />
           <CartButton isOpen={false} onOpenChange={() => {}} />
           <EnhancedUserMenu />
