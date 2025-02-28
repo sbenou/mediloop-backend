@@ -32,6 +32,8 @@ import Notifications from "./pages/Notifications";
 import DoctorConnections from "./pages/DoctorConnections";
 import AdminSettings from "./pages/AdminSettings";
 import Billing from "./pages/Billing";
+import { CartProvider } from "@/contexts/CartContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 
 // Pharmacy routes
 import PatientsPage from "./pages/pharmacy/PatientsPage";
@@ -50,16 +52,28 @@ const WithQueryClient = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+const WithProviders = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <WithQueryClient>
+      <CurrencyProvider>
+        <CartProvider>
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
+        </CartProvider>
+      </CurrencyProvider>
+    </WithQueryClient>
+  );
+};
+
 const router = createBrowserRouter([
   {
     path: "/",
     element: (
-      <WithQueryClient>
-        <AuthProvider>
-          <Outlet />
-          <Toaster />
-        </AuthProvider>
-      </WithQueryClient>
+      <WithProviders>
+        <Outlet />
+      </WithProviders>
     ),
     children: [
       {
