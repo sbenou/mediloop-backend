@@ -283,11 +283,16 @@ const PharmacistSidebar = () => {
                     <Building className="h-5 w-5 text-primary/60" />
                   )}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm">{pharmacyName || "Pharmacy"}</h3>
-                  <p className="text-xs text-muted-foreground">Connected</p>
+                <div className="flex-1">
+                  <div className="flex items-center">
+                    <h3 className="font-semibold text-sm mr-2">{pharmacyName || "Pharmacy"}</h3>
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                    </span>
+                  </div>
                 </div>
-                <ChevronDown className="h-3 w-3 text-muted-foreground ml-auto" />
+                <ChevronDown className="h-3 w-3 text-muted-foreground" />
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" side="top" sideOffset={10}>
