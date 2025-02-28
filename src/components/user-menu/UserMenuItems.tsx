@@ -39,7 +39,8 @@ export const UserMenuItems = () => {
         description: "You have been successfully logged out",
       });
       
-      navigate("/");
+      // Force a hard redirect to ensure complete logout
+      window.location.href = "/";
     } catch (error) {
       console.error("Logout error:", error);
       toast({
@@ -56,7 +57,8 @@ export const UserMenuItems = () => {
       <>
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => navigate('/upgrade')}>
-            Upgrade to Pro
+            <CreditCard className="mr-2 h-4 w-4" />
+            <span>Upgrade to Pro</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

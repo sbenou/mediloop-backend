@@ -2,9 +2,12 @@
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { usePharmacyDashboardStats } from "@/hooks/admin/useDashboardStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const DashboardPage = () => {
   const { profile } = useAuth();
+  const { data: stats, isLoading, error } = usePharmacyDashboardStats();
 
   return (
     <PharmacistLayout>
@@ -22,7 +25,11 @@ const DashboardPage = () => {
               <CardTitle className="text-sm font-medium">Active Patients</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+124</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <div className="text-2xl font-bold">+{stats?.total_patients || 0}</div>
+              )}
             </CardContent>
           </Card>
           
@@ -31,7 +38,11 @@ const DashboardPage = () => {
               <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <div className="text-2xl font-bold">+{stats?.pending_orders || 0}</div>
+              )}
             </CardContent>
           </Card>
           
@@ -40,7 +51,11 @@ const DashboardPage = () => {
               <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€4,200</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <div className="text-2xl font-bold">€{stats?.monthly_revenue.toLocaleString() || 0}</div>
+              )}
             </CardContent>
           </Card>
           
@@ -49,7 +64,11 @@ const DashboardPage = () => {
               <CardTitle className="text-sm font-medium">Prescriptions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+48</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <div className="text-2xl font-bold">+{stats?.total_prescriptions || 0}</div>
+              )}
             </CardContent>
           </Card>
         </div>

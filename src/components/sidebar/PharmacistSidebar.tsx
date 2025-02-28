@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -95,7 +95,8 @@ const PharmacistSidebar = () => {
         description: "You have been successfully logged out",
       });
       
-      navigate("/");
+      // Force redirect to home page
+      window.location.href = "/";
     } catch (error) {
       console.error("Logout error:", error);
       toast({
