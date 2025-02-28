@@ -26,27 +26,43 @@ const PrescriptionsPage = () => {
     const fetchPrescriptions = async () => {
       try {
         setLoading(true);
-        // In a real implementation, this would be filtered to show only prescriptions for this pharmacy
+        // First, get basic prescription data
         const { data, error } = await supabase
           .from('prescriptions')
-          .select(`
-            *,
-            patient:patient_id (full_name),
-            doctor:doctor_id (full_name)
-          `)
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
         
-        const formattedPrescriptions = data?.map(prescription => ({
-          ...prescription,
-          patient_name: prescription.patient?.full_name,
-          doctor_name: prescription.doctor?.full_name,
-        })) || [];
+        // Now fetch the patient and doctor names separately
+        const prescriptionsWithNames = await Promise.all(
+          (data || []).map(async (prescription) => {
+            // Get patient name
+            const { data: patientData, error: patientError } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', prescription.patient_id)
+              .single();
+
+            // Get doctor name
+            const { data: doctorData, error: doctorError } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', prescription.doctor_id)
+              .single();
+
+            return {
+              ...prescription,
+              patient_name: patientError ? 'Unknown Patient' : patientData?.full_name,
+              doctor_name: doctorError ? 'Unknown Doctor' : doctorData?.full_name,
+            };
+          })
+        );
         
-        setPrescriptions(formattedPrescriptions);
+        setPrescriptions(prescriptionsWithNames);
       } catch (error) {
         console.error('Error fetching prescriptions:', error);
+        setPrescriptions([]);
       } finally {
         setLoading(false);
       }

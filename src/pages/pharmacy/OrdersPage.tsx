@@ -31,26 +31,49 @@ const OrdersPage = () => {
         // In a real implementation, this would be filtered to show only orders for this pharmacy
         const { data, error } = await supabase
           .from('orders')
-          .select(`
-            *,
-            profiles:user_id (
-              email,
-              full_name
-            )
-          `)
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
+
+        // Now fetch user profiles separately for each order
+        const ordersWithUserInfo = await Promise.all(
+          (data || []).map(async (order) => {
+            try {
+              const { data: userData, error: userError } = await supabase
+                .from('profiles')
+                .select('email, full_name')
+                .eq('id', order.user_id)
+                .single();
+
+              if (userError || !userData) {
+                return {
+                  ...order,
+                  user_email: 'Unknown',
+                  user_name: 'Unknown User',
+                };
+              }
+
+              return {
+                ...order,
+                user_email: userData.email,
+                user_name: userData.full_name,
+              };
+            } catch (error) {
+              console.error('Error fetching user data for order:', error);
+              return {
+                ...order,
+                user_email: 'Unknown',
+                user_name: 'Unknown User',
+              };
+            }
+          })
+        );
         
-        const formattedOrders = data?.map(order => ({
-          ...order,
-          user_email: order.profiles?.email,
-          user_name: order.profiles?.full_name,
-        })) || [];
-        
-        setOrders(formattedOrders);
+        setOrders(ordersWithUserInfo);
       } catch (error) {
         console.error('Error fetching orders:', error);
+        setOrders([]);
       } finally {
         setLoading(false);
       }

@@ -35,22 +35,33 @@ const PrescriptionDetail = () => {
 
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        // Get the prescription data
+        const { data: prescriptionData, error: prescriptionError } = await supabase
           .from('prescriptions')
-          .select(`
-            *,
-            patient:patient_id (full_name),
-            doctor:doctor_id (full_name)
-          `)
+          .select('*')
           .eq('id', id)
           .single();
 
-        if (error) throw error;
-        
+        if (prescriptionError) throw prescriptionError;
+
+        // Get patient data
+        const { data: patientData, error: patientError } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', prescriptionData.patient_id)
+          .single();
+
+        // Get doctor data
+        const { data: doctorData, error: doctorError } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', prescriptionData.doctor_id)
+          .single();
+
         setPrescription({
-          ...data,
-          patient_name: data.patient?.full_name,
-          doctor_name: data.doctor?.full_name,
+          ...prescriptionData,
+          patient_name: patientError ? 'Unknown Patient' : patientData?.full_name,
+          doctor_name: doctorError ? 'Unknown Doctor' : doctorData?.full_name,
         });
       } catch (error) {
         console.error('Error fetching prescription data:', error);

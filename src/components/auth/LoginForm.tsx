@@ -10,11 +10,7 @@ import { AuthOptions } from "./login/AuthOptions";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";
 
-interface LoginFormProps {
-  onSuccess: () => void;
-}
-
-export const LoginForm = ({ onSuccess }: LoginFormProps) => {
+export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showResetOptions, setShowResetOptions] = useState(false);
@@ -54,7 +50,29 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
     if (session?.user) {
       console.log('Valid session found, proceeding with success callback');
-      onSuccess();
+      // Check user role and redirect accordingly
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          navigate('/dashboard');
+          return;
+        }
+        
+        if (profile?.role === 'pharmacist') {
+          navigate('/pharmacy/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        console.error('Error during role check:', err);
+        navigate('/dashboard'); // Fallback redirect
+      }
     } else {
       console.error('No session found after successful login');
       toast({
