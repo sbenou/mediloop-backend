@@ -243,7 +243,7 @@ const PatientSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigateToTab('/settings')}
+                  onClick={() => navigate('/settings')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
@@ -265,17 +265,17 @@ const PatientSidebarContent = () => {
               <div className="flex items-center space-x-3 cursor-pointer">
                 <UserAvatar userProfile={profile} />
                 <div className="overflow-hidden">
-                  <p className="text-sm font-medium truncate">{profile.full_name || 'sam testington'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{profile.email || 'bencu004@hotmail.com'}</p>
+                  <p className="text-sm font-medium truncate">{profile?.full_name || 'sam testington'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{profile?.email || 'bencu004@hotmail.com'}</p>
                 </div>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{profile.full_name}</p>
+                  <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {profile.email}
+                    {profile?.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
