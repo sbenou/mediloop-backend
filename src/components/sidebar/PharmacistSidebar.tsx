@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardHeader } from "@/components/ui/card";
+import UserMenuItems from "@/components/user-menu/UserMenuItems";
 
 const PharmacistSidebar = () => {
   const navigate = useNavigate();
