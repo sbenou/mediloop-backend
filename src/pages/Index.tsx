@@ -2,17 +2,26 @@
 import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import HeroSection from "@/components/home/HeroSection";
-import FeaturesGrid from "@/components/home/FeaturesGrid";
-import StatsSection from "@/components/home/StatsSection";
-import TestimonialsSection from "@/components/home/TestimonialsSection";
+import { HeroSection } from "@/components/home/HeroSection";
+import { FeaturesGrid } from "@/components/home/FeaturesGrid";
+import { StatsSection } from "@/components/home/StatsSection";
+import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
-import DeliveryPersonSection from "@/components/home/DeliveryPersonSection";
-import PartnerSection from "@/components/home/PartnerSection";
+import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
+import { PartnerSection } from "@/components/home/PartnerSection";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   console.info("Index page - Rendering");
+  
+  // Mock data for StatsSection - will be replaced by actual API data
+  const mockStats = {
+    ordersCount: 125000,
+    pharmaciesCount: 450,
+    doctorsCount: 1200,
+    prescriptionsCount: 250000,
+    connectionsCount: 35000
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -20,7 +29,7 @@ const Index = () => {
       <main className="flex-1">
         <HeroSection />
         <FeaturesGrid />
-        <StatsSection />
+        <StatsSection stats={mockStats} />
         <TestimonialsSection />
         <GetStartedSteps />
         <DeliveryPersonSection />
