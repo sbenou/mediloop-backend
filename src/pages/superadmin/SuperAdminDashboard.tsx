@@ -22,7 +22,7 @@ const SuperAdminDashboard = () => {
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "dashboard";
 
-  const { data: statsData, isLoading: statsLoading } = useQuery({
+  const { data: statsDataArray, isLoading: statsLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_admin_dashboard_stats");
@@ -32,8 +32,8 @@ const SuperAdminDashboard = () => {
   });
 
   // Extract the first item from the stats array or use default values
-  const stats: DashboardStats = statsData && statsData.length > 0 
-    ? statsData[0] 
+  const statsData: DashboardStats = statsDataArray && statsDataArray.length > 0 
+    ? statsDataArray[0] 
     : { total_users: 0, total_roles: 0, total_permissions: 0, total_products: 0 };
 
   const handleTabChange = (value: string) => {
@@ -62,7 +62,7 @@ const SuperAdminDashboard = () => {
                 {statsLoading ? (
                   <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
                 ) : (
-                  stats.total_users || 0
+                  statsData.total_users || 0
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -82,7 +82,7 @@ const SuperAdminDashboard = () => {
                 {statsLoading ? (
                   <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
                 ) : (
-                  stats.total_roles || 0
+                  statsData.total_roles || 0
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -102,7 +102,7 @@ const SuperAdminDashboard = () => {
                 {statsLoading ? (
                   <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
                 ) : (
-                  stats.total_permissions || 0
+                  statsData.total_permissions || 0
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -122,7 +122,7 @@ const SuperAdminDashboard = () => {
                 {statsLoading ? (
                   <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
                 ) : (
-                  stats.total_products || 0
+                  statsData.total_products || 0
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
