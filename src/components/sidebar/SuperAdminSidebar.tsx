@@ -21,7 +21,6 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   ChevronDown, 
-  ChevronRight, 
   Home, 
   User, 
   Settings, 
@@ -107,6 +106,19 @@ export function SuperAdminSidebar() {
                       </SidebarMenuSub>
                     </CollapsibleContent>
                   </Collapsible>
+                </SidebarMenuItem>
+                
+                {/* Settings */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === "/settings"}
+                  >
+                    <Link to="/settings">
+                      <Settings className="h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
