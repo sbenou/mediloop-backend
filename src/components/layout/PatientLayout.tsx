@@ -11,32 +11,32 @@ interface PatientLayoutProps {
 
 const PatientLayout = ({ children }: PatientLayoutProps) => {
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex h-screen w-full overflow-hidden">
       {/* Left section - Sidebar */}
-      <div className="w-64 shrink-0">
+      <aside className="w-64 h-full shrink-0 border-r">
         <PatientSidebar />
-      </div>
+      </aside>
       
-      {/* Mid section - Contains main content area and right panel */}
-      <div className="flex-1 flex flex-col">
-        {/* Top bar - spans the entire mid section */}
-        <header className="border-b h-16 px-6 flex items-center justify-end space-x-4">
+      {/* Right section - Contains header and content area with right panel */}
+      <div className="flex flex-col flex-1">
+        {/* Header spans the entire width of this section */}
+        <header className="h-16 border-b px-6 flex items-center justify-end space-x-4">
           <NotificationBell />
           <CartButton isOpen={false} onOpenChange={() => {}} />
           <EnhancedUserMenu />
         </header>
         
-        {/* Content area - split into main content and right panel */}
-        <div className="flex flex-1">
-          {/* Main content */}
-          <div className="flex-1 p-6 overflow-auto">
+        {/* Main content wrapper */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Main content area */}
+          <main className="flex-1 p-6 overflow-auto">
             {children}
-          </div>
+          </main>
           
-          {/* Right panel - Same width as sidebar */}
-          <div className="w-64 shrink-0 bg-gray-50">
-            {/* This space will be filled with additional content later */}
-          </div>
+          {/* Right panel */}
+          <aside className="w-64 shrink-0 bg-gray-50 border-l h-full">
+            {/* Panel content will go here */}
+          </aside>
         </div>
       </div>
     </div>
