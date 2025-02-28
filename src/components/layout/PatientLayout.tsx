@@ -17,15 +17,8 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
         <PatientSidebar />
       </div>
       
-      {/* Middle section - Currently empty but will contain content from sidebar links */}
-      <div className="flex-1 border-r">
-        <div className="min-h-screen bg-gray-50">
-          {/* This space will be filled by content from sidebar navigation */}
-        </div>
-      </div>
-      
-      {/* Right section - Main content area */}
-      <div className="flex-1 flex flex-col">
+      {/* Middle section - Main content area */}
+      <div className="flex-1 flex flex-col border-r">
         {/* Top bar */}
         <header className="border-b h-16 px-6 flex items-center justify-end space-x-4">
           <NotificationBell />
@@ -37,6 +30,13 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
         <main className="p-6 overflow-auto flex-grow">
           {children}
         </main>
+      </div>
+      
+      {/* Right section - Currently empty but will contain additional content */}
+      <div className="flex-1">
+        <div className="min-h-screen bg-gray-50">
+          {/* This space will be filled with additional content later */}
+        </div>
       </div>
     </div>
   );
