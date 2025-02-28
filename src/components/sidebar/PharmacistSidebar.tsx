@@ -55,7 +55,7 @@ const PharmacistSidebar = () => {
   const [auth, setAuth] = useRecoilState(authState);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [pharmacyLogo, setPharmacyLogo] = useState<string | null>(null);
-  const [pharmacyName, setPharmacyName] = useState<string>("City Pharmacy");
+  const [pharmacyName, setPharmacyName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -270,51 +270,23 @@ const PharmacistSidebar = () => {
         <SidebarFooter className="border-t mt-auto p-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex flex-col items-center cursor-pointer hover:bg-gray-100 rounded-md p-2 transition-colors">
-                <div className="relative w-14 h-14 mb-2">
-                  <div 
-                    className="w-full h-full rounded-md border-2 border-primary/20 bg-secondary flex items-center justify-center overflow-hidden"
-                  >
-                    {pharmacyLogo ? (
-                      <img 
-                        src={pharmacyLogo} 
-                        alt="Pharmacy Logo" 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Building className="h-8 w-8 text-primary/60" />
-                    )}
-                  </div>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button 
-                          className="absolute -bottom-1 -right-1 bg-primary text-white p-1 rounded-full shadow-md hover:bg-primary/90"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            logoInputRef.current?.click();
-                          }}
-                        >
-                          <Camera className="h-3 w-3" />
-                          <input 
-                            type="file" 
-                            ref={logoInputRef} 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={handlePharmacyLogoChange}
-                          />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Upload pharmacy logo</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+              <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 rounded-md p-2 transition-colors">
+                <div className="bg-secondary p-2 rounded-md">
+                  {pharmacyLogo ? (
+                    <img 
+                      src={pharmacyLogo} 
+                      alt="Pharmacy Logo" 
+                      className="h-5 w-5 object-cover"
+                    />
+                  ) : (
+                    <Building className="h-5 w-5 text-primary/60" />
+                  )}
                 </div>
-                <div className="text-center">
-                  <p className="text-xs font-medium line-clamp-2">{pharmacyName}</p>
+                <div>
+                  <h3 className="font-semibold text-sm">{pharmacyName || "Pharmacy"}</h3>
+                  <p className="text-xs text-muted-foreground">Connected</p>
                 </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground mt-1" />
+                <ChevronDown className="h-3 w-3 text-muted-foreground ml-auto" />
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" side="top" sideOffset={10}>
@@ -362,6 +334,15 @@ const PharmacistSidebar = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          {/* Hidden input for pharmacy logo upload */}
+          <input 
+            type="file" 
+            ref={logoInputRef} 
+            className="hidden" 
+            accept="image/*"
+            onChange={handlePharmacyLogoChange}
+          />
         </SidebarFooter>
       </Sidebar>
     </SidebarProvider>
