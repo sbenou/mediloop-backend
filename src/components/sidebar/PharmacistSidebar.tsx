@@ -22,6 +22,9 @@ import {
   FileText,
   ChevronRight,
   LogOut,
+  Bell,
+  User,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -30,7 +33,15 @@ import { toast } from "@/components/ui/use-toast";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuGroup, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 const PharmacistSidebar = () => {
   const navigate = useNavigate();
@@ -220,25 +231,66 @@ const PharmacistSidebar = () => {
         </SidebarContent>
 
         <SidebarFooter className="border-t mt-auto p-4">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10 cursor-pointer">
-              <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Profile'} />
-              <AvatarFallback className="bg-[#7E69AB]/10 rounded-full">
-                <User className="h-5 w-5 text-[#7E69AB]" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium truncate">{profile?.full_name || 'Pharmacy User'}</p>
-              <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
-            </div>
-            <button 
-              onClick={handleLogout}
-              className="ml-auto p-2 text-red-500 hover:bg-red-50 rounded-full"
-              title="Log out"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 rounded-md p-2 transition-colors">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Profile'} />
+                  <AvatarFallback className="bg-[#7E69AB]/10 rounded-full">
+                    <User className="h-5 w-5 text-[#7E69AB]" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="overflow-hidden flex-1">
+                  <p className="text-sm font-medium truncate">{profile?.full_name || 'Pharmacy User'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" side="top" sideOffset={10}>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Profile'} />
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col space-y-0.5">
+                    <p className="text-sm font-medium">{profile?.full_name || 'Pharmacy User'}</p>
+                    <p className="text-xs text-muted-foreground">{profile?.email}</p>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/upgrade')}>
+                Upgrade to Pro
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Account</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/billing')}>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Billing</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/notifications')}>
+                  <Bell className="mr-2 h-4 w-4" />
+                  <span>Notifications</span>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="text-red-600 focus:text-red-600"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
     </SidebarProvider>
