@@ -9,13 +9,49 @@ interface DashboardStats {
   total_prescriptions: number;
 }
 
+interface AdminDashboardStats {
+  total_users: number;
+  total_roles: number;
+  total_permissions: number;
+  total_products: number;
+}
+
+// Hook for admin dashboard stats
+export const useDashboardStats = () => {
+  return useQuery({
+    queryKey: ['admin', 'dashboard-stats'],
+    queryFn: async (): Promise<AdminDashboardStats> => {
+      try {
+        const { data, error } = await supabase
+          .rpc('get_admin_dashboard_stats');
+
+        if (error) throw error;
+        
+        return {
+          total_users: data?.[0]?.total_users || 0,
+          total_roles: data?.[0]?.total_roles || 0,
+          total_permissions: data?.[0]?.total_permissions || 0,
+          total_products: data?.[0]?.total_products || 0
+        };
+      } catch (error) {
+        console.error('Error fetching admin dashboard stats:', error);
+        return {
+          total_users: 0,
+          total_roles: 0,
+          total_permissions: 0,
+          total_products: 0
+        };
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+// Hook for pharmacy dashboard stats
 export const usePharmacyDashboardStats = () => {
   return useQuery({
     queryKey: ['pharmacy', 'dashboard-stats'],
     queryFn: async (): Promise<DashboardStats> => {
-      // Here we would ideally have a database function to get pharmacy-specific stats
-      // For now, we're making multiple queries
-      
       try {
         // Count total patients (this would be filtered by pharmacy in a real implementation)
         const { count: patientsCount, error: patientsError } = await supabase
@@ -33,7 +69,7 @@ export const usePharmacyDashboardStats = () => {
           
         if (ordersError) throw ordersError;
         
-        // Calculate monthly revenue
+        // Calculate monthly revenue - use delivered instead of completed which isn't in the enum
         const currentDate = new Date();
         const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         
@@ -41,11 +77,18 @@ export const usePharmacyDashboardStats = () => {
           .from('orders')
           .select('total')
           .gte('created_at', firstDayOfMonth.toISOString())
-          .eq('status', 'completed');
+          .eq('status', 'delivered');
           
         if (revenueError) throw revenueError;
         
-        const monthlyRevenue = revenueData?.reduce((sum, order) => sum + parseFloat(order.total), 0) || 0;
+        // Correctly type and convert the order total to number
+        const monthlyRevenue = revenueData?.reduce((sum, order) => {
+          // Ensure total is treated as a number
+          const orderTotal = typeof order.total === 'string' 
+            ? parseFloat(order.total) 
+            : (typeof order.total === 'number' ? order.total : 0);
+          return sum + orderTotal;
+        }, 0) || 0;
         
         // Count prescriptions
         const { count: prescriptionsCount, error: prescriptionsError } = await supabase
@@ -62,7 +105,6 @@ export const usePharmacyDashboardStats = () => {
         };
       } catch (error) {
         console.error('Error fetching pharmacy dashboard stats:', error);
-        // Return default values if there's an error
         return {
           total_patients: 0,
           pending_orders: 0,
@@ -71,7 +113,6 @@ export const usePharmacyDashboardStats = () => {
         };
       }
     },
-    // Refresh every 5 minutes
     staleTime: 5 * 60 * 1000,
   });
 };
