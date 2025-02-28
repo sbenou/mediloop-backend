@@ -57,8 +57,39 @@ const PharmacistSidebar = () => {
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [pharmacyLogo, setPharmacyLogo] = useState<string | null>(null);
   const [pharmacyName, setPharmacyName] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(true); // Default to connected
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Simulate connection status check
+  useEffect(() => {
+    const checkConnectionStatus = () => {
+      // In a real app, this would check if the pharmacist is online/available
+      // For demo, we'll just use navigator.onLine as a basic check
+      setIsConnected(navigator.onLine);
+    };
+
+    // Initial check
+    checkConnectionStatus();
+
+    // Setup event listeners for online/offline status
+    window.addEventListener('online', () => setIsConnected(true));
+    window.addEventListener('offline', () => setIsConnected(false));
+
+    // For demo purposes, occasionally toggle the connection status randomly
+    const intervalId = setInterval(() => {
+      // 90% chance to stay connected, 10% chance to disconnect
+      if (Math.random() > 0.9) {
+        setIsConnected(prev => !prev);
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('online', () => setIsConnected(true));
+      window.removeEventListener('offline', () => setIsConnected(false));
+      clearInterval(intervalId);
+    };
+  }, []);
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups((prev) =>
@@ -136,6 +167,17 @@ const PharmacistSidebar = () => {
         description: "There was an error uploading the pharmacy logo.",
       });
     }
+  };
+
+  const toggleConnectionStatus = () => {
+    setIsConnected(prev => !prev);
+    
+    toast({
+      title: isConnected ? "Status: Offline" : "Status: Online",
+      description: isConnected 
+        ? "You are now showing as offline to others" 
+        : "You are now showing as online to others",
+    });
   };
 
   return (
@@ -286,10 +328,31 @@ const PharmacistSidebar = () => {
                 <div className="flex-1">
                   <div className="flex items-center">
                     <h3 className="font-semibold text-sm mr-2">{pharmacyName || "Pharmacy"}</h3>
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                    </span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span 
+                            className="relative flex h-2.5 w-2.5 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleConnectionStatus();
+                            }}
+                          >
+                            {isConnected ? (
+                              <>
+                                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                              </>
+                            ) : (
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-gray-300"></span>
+                            )}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>{isConnected ? 'Online - Click to go offline' : 'Offline - Click to go online'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -311,6 +374,16 @@ const PharmacistSidebar = () => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={toggleConnectionStatus}>
+                <span className="relative flex h-3 w-3 mr-2">
+                  {isConnected ? (
+                    <span className="inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                  ) : (
+                    <span className="inline-flex rounded-full h-3 w-3 bg-gray-300"></span>
+                  )}
+                </span>
+                <span>{isConnected ? 'Set as Offline' : 'Set as Online'}</span>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/upgrade')}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 <span>Upgrade to Pro</span>
