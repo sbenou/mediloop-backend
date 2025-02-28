@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import UserMenu from "@/components/UserMenu";
+import UserMenu from "../UserMenu";
 import { Button } from "../ui/button";
 import { ChevronLeft } from "lucide-react";
 
