@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { PatientLayout } from "@/components/layout/PatientLayout";
+import PatientLayout from "@/components/layout/PatientLayout";
 import { Profile as ProfileComponent } from "@/components/settings/Profile";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";

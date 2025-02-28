@@ -48,9 +48,22 @@ const AdminSettings = () => {
   console.log('Admin Settings - Loading state:', adminDataLoading);
   console.log('Admin Settings - Current profile:', profile);
 
+  const handleBackNavigation = () => {
+    // Redirect back to superadmin dashboard if user is superadmin
+    if (profile.role === 'superadmin') {
+      navigate('/superadmin/dashboard');
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <div>
-      <Header showUserMenu={false} showBackLink={true} />
+      <Header 
+        showUserMenu={false} 
+        showBackLink={true} 
+        onBackClick={handleBackNavigation}
+      />
       <div className="container mx-auto py-4 px-4">
         <Breadcrumb>
           <BreadcrumbList>

@@ -20,9 +20,10 @@ import NotificationBell from '../NotificationBell';
 interface HeaderProps {
   showUserMenu?: boolean;
   showBackLink?: boolean;
+  onBackClick?: () => void;
 }
 
-const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
+const Header = ({ showUserMenu = true, showBackLink = false, onBackClick }: HeaderProps) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -30,10 +31,26 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
   const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
   const { t } = useTranslation();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, profile } = useAuth();
 
   const handleNavigateToLogin = () => {
     navigate('/login', { replace: true });
+  };
+
+  const handleBackClick = () => {
+    if (onBackClick) {
+      onBackClick();
+      return;
+    }
+
+    // Default back logic based on user role
+    if (profile?.role === 'superadmin') {
+      navigate('/superadmin/dashboard');
+    } else if (profile?.role === 'pharmacist') {
+      navigate('/pharmacy/dashboard');
+    } else {
+      navigate('/');
+    }
   };
 
   // List of public routes that don't require authentication
@@ -56,10 +73,13 @@ const Header = ({ showUserMenu = true, showBackLink = false }: HeaderProps) => {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4 sm:gap-16">
             {showBackLink ? (
-              <Link to="/" className="flex items-center text-primary hover:text-primary/80">
+              <button 
+                onClick={handleBackClick} 
+                className="flex items-center text-primary hover:text-primary/80"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
-              </Link>
+              </button>
             ) : (
               <Link to="/">
                 <img 
