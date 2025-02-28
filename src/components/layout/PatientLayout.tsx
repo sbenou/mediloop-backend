@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import PatientSidebar from "../sidebar/PatientSidebar";
 import EnhancedUserMenu from "../user-menu/EnhancedUserMenu";
 import NotificationBell from "../NotificationBell";
@@ -10,6 +10,8 @@ interface PatientLayoutProps {
 }
 
 const PatientLayout = ({ children }: PatientLayoutProps) => {
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Left section - Sidebar */}
@@ -22,7 +24,10 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
         {/* Header spans the entire width of this section */}
         <header className="h-16 border-b px-6 flex items-center justify-end space-x-4">
           <NotificationBell />
-          <CartButton isOpen={false} onOpenChange={() => {}} />
+          <CartButton 
+            isOpen={isCartOpen} 
+            onOpenChange={setIsCartOpen} 
+          />
           <EnhancedUserMenu />
         </header>
         
