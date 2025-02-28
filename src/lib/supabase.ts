@@ -74,6 +74,13 @@ const localStorage = {
       // Fallback to localStorage
       const value = window.localStorage.getItem(key);
       if (!value) {
+        // Check sessionStorage as a last resort
+        const sessionValue = window.sessionStorage.getItem(key);
+        if (sessionValue) {
+          console.log(`Local storage: Found session in sessionStorage for key ${key}`);
+          return JSON.parse(sessionValue);
+        }
+        
         console.log(`Local storage: No session found for key ${key}`);
         return null;
       }
@@ -102,11 +109,15 @@ const localStorage = {
       // Also store in localStorage
       window.localStorage.setItem(key, JSON.stringify(value));
       
+      // Additionally store in sessionStorage for extra redundancy
+      window.sessionStorage.setItem(key, JSON.stringify(value));
+      
       // Try to store session explicitly with timestamp for debugging
       try {
         window.localStorage.setItem(`${key}_timestamp`, JSON.stringify({
           timestamp: new Date().toISOString(),
-          userId: value?.user?.id || 'unknown'
+          userId: value?.user?.id || 'unknown',
+          role: value?.user?.role || 'unknown'
         }));
       } catch (e) {
         // Ignore this error as it's just for debugging
@@ -125,6 +136,7 @@ const localStorage = {
     try {
       cookieStorage.removeItem(key);
       window.localStorage.removeItem(key);
+      window.sessionStorage.removeItem(key);
       window.localStorage.removeItem(`${key}_timestamp`);
       console.log(`Local storage: Session removed for key ${key}`);
     } catch (e) {

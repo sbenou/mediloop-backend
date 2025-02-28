@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,20 +16,12 @@ const Login = () => {
         try {
           console.log('Checking user role for:', user.id);
           
-          // Get user profile to check role
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-          
-          if (error) {
-            console.error('Profile fetch error:', error);
-            navigate('/dashboard');
+          if (!profile) {
+            console.error('No profile found, cannot redirect');
             return;
           }
           
-          console.log('User role found:', profile?.role);
+          console.log('User role found:', profile.role);
 
           // Force session storage on successful login for ALL user types
           const { data: { session } } = await supabase.auth.getSession();
@@ -37,33 +29,24 @@ const Login = () => {
             // Get the storage key
             const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
             
-            // Store in both localStorage and cookies for redundancy
+            // Store in localStorage to ensure persistence
             try {
               window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-              
-              // Also set in cookie with 7-day expiry (for all users)
-              const expires = new Date();
-              expires.setDate(expires.getDate() + 7);
-              
-              document.cookie = [
-                `${STORAGE_KEY}=${encodeURIComponent(JSON.stringify(session))}`,
-                `expires=${expires.toUTCString()}`,
-                'path=/',
-                'secure',
-                'samesite=strict',
-              ].join('; ');
-              
               console.log('Session explicitly stored for all user types upon login success');
+              
+              // Set in session storage too for redundancy
+              window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+              console.log('Session also stored in sessionStorage for redundancy');
             } catch (storageError) {
               console.error('Error storing session:', storageError);
             }
           }
           
           // Redirect based on role
-          if (profile?.role === 'superadmin') {
+          if (profile.role === 'superadmin') {
             console.log('Redirecting to superadmin dashboard...');
             navigate('/superadmin/dashboard', { replace: true });
-          } else if (profile?.role === 'pharmacist') {
+          } else if (profile.role === 'pharmacist') {
             console.log('Redirecting to pharmacy dashboard...');
             navigate('/pharmacy/dashboard', { replace: true });
           } else {
@@ -78,7 +61,7 @@ const Login = () => {
     };
     
     checkUserRole();
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, profile, navigate]);
 
   // Show loading state
   if (isLoading) {

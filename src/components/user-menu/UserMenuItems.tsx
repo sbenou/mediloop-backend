@@ -76,7 +76,10 @@ export const UserMenuItems = () => {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate(`${routePrefix}/profile`)}>
+          <DropdownMenuItem onClick={() => {
+            console.log(`Navigating to profile route: ${routePrefix}/profile`);
+            navigate(`${routePrefix}/profile`);
+          }}>
             <User className="mr-2 h-4 w-4" />
             <span>Account</span>
           </DropdownMenuItem>
