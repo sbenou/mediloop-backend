@@ -87,9 +87,9 @@ export function SuperAdminSidebar() {
                         <SidebarMenuItem>
                           <SidebarMenuSubButton 
                             asChild 
-                            isActive={location.pathname === "/profile" && location.search.includes("tab=personal")}
+                            isActive={location.pathname === "/superadmin/profile" && location.search.includes("tab=personal")}
                           >
-                            <Link to="/profile?tab=personal">
+                            <Link to="/superadmin/profile?tab=personal">
                               Personal Information
                             </Link>
                           </SidebarMenuSubButton>
@@ -97,9 +97,9 @@ export function SuperAdminSidebar() {
                         <SidebarMenuItem>
                           <SidebarMenuSubButton 
                             asChild 
-                            isActive={location.pathname === "/profile" && location.search.includes("tab=addresses")}
+                            isActive={location.pathname === "/superadmin/profile" && location.search.includes("tab=addresses")}
                           >
-                            <Link to="/profile?tab=addresses">
+                            <Link to="/superadmin/profile?tab=addresses">
                               Addresses
                             </Link>
                           </SidebarMenuSubButton>
@@ -120,9 +120,9 @@ export function SuperAdminSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === "/settings"}
+                    isActive={location.pathname === "/superadmin/settings"}
                   >
-                    <Link to="/settings">
+                    <Link to="/superadmin/settings">
                       <Settings className="h-4 w-4" />
                       <span>Settings</span>
                     </Link>

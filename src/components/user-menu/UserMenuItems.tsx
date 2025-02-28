@@ -15,6 +15,7 @@ import { User, CreditCard, Bell, LogOut } from "lucide-react";
 export const UserMenuItems = () => {
   const navigate = useNavigate();
   const [auth, setAuth] = useRecoilState(authState);
+  const userRole = auth.profile?.role || 'user';
 
   const handleLogout = async () => {
     try {
@@ -51,27 +52,39 @@ export const UserMenuItems = () => {
     }
   };
 
+  // Get the appropriate route prefix based on user role
+  const getRoutePrefix = () => {
+    if (userRole === 'superadmin') {
+      return '/superadmin';
+    } else if (userRole === 'pharmacist') {
+      return '/pharmacy';
+    }
+    return '';
+  };
+
   // Use useMemo to prevent unnecessary re-renders
   const menuItems = useMemo(() => {
+    const routePrefix = getRoutePrefix();
+    
     return (
       <>
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate('/upgrade')}>
+          <DropdownMenuItem onClick={() => navigate(`${routePrefix}/upgrade`)}>
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Upgrade to Pro</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate('/profile')}>
+          <DropdownMenuItem onClick={() => navigate(`${routePrefix}/profile`)}>
             <User className="mr-2 h-4 w-4" />
             <span>Account</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate('/billing')}>
+          <DropdownMenuItem onClick={() => navigate(`${routePrefix}/billing`)}>
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Billing</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate('/notifications')}>
+          <DropdownMenuItem onClick={() => navigate(`${routePrefix}/notifications`)}>
             <Bell className="mr-2 h-4 w-4" />
             <span>Notifications</span>
           </DropdownMenuItem>
@@ -86,7 +99,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate]);
+  }, [navigate, userRole]);
 
   return menuItems;
 };

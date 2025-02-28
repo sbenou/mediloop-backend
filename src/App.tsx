@@ -97,6 +97,11 @@ function App() {
                   
                   {/* Superadmin routes */}
                   <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
+                  <Route path="/superadmin/profile" element={<SuperAdminDashboard />} />
+                  <Route path="/superadmin/settings" element={<SuperAdminDashboard />} />
+                  <Route path="/superadmin/billing" element={<SuperAdminDashboard />} />
+                  <Route path="/superadmin/notifications" element={<SuperAdminDashboard />} />
+                  <Route path="/superadmin/upgrade" element={<SuperAdminDashboard />} />
                 </Routes>
                 <Toaster />
               </BrowserRouter>
