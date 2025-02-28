@@ -17,19 +17,22 @@ const SuperAdminDashboard = () => {
   const { profile, isLoading, isAuthenticated } = useAuth();
   const { data, isLoading: statsLoading } = useDashboardStats();
 
-  // Check if we're on a settings page
+  // Check which page we're on within the superadmin section
   const isSettingsPage = location.pathname === '/superadmin/settings';
-  
-  // Check if we're on a profile page
   const isProfilePage = location.pathname === '/superadmin/profile';
+  const isNotificationsPage = location.pathname === '/superadmin/notifications';
+  const isBillingPage = location.pathname === '/superadmin/billing';
+  const isUpgradePage = location.pathname === '/superadmin/upgrade';
 
   // Redirect non-superadmin users
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || profile?.role !== 'superadmin')) {
+      console.log("Not authorized as superadmin, redirecting to login");
       navigate('/login');
     }
   }, [isAuthenticated, profile, isLoading, navigate]);
 
+  // Show loading state
   if (isLoading) {
     return (
       <div className="flex h-screen w-full">
@@ -48,16 +51,14 @@ const SuperAdminDashboard = () => {
     );
   }
 
+  // If not authenticated or not a superadmin, don't render anything
   if (!isAuthenticated || profile?.role !== 'superadmin') {
     return null; // Will be redirected by useEffect
   }
 
-  const handleTabChange = (value: string) => {
-    if (value === 'settings') {
-      navigate('/admin-settings');
-    } else {
-      navigate(`/admin-settings?tab=${value}`);
-    }
+  // Function to handle dashboard card clicks but only within the admin settings section
+  const handleAdminTabChange = (value: string) => {
+    navigate(`/admin-settings?tab=${value}`);
   };
 
   return (
@@ -66,7 +67,7 @@ const SuperAdminDashboard = () => {
       
       <div className="flex-1 overflow-auto">
         <main className="p-8">
-          {/* Show appropriate content based on the route */}
+          {/* Show appropriate content based on the current route */}
           {isSettingsPage ? (
             <>
               <h1 className="text-3xl font-bold mb-6">Account Settings</h1>
@@ -97,10 +98,25 @@ const SuperAdminDashboard = () => {
               <p className="mt-4">Email: {profile?.email || 'No email found'}</p>
               <p className="mt-2">Role: {profile?.role || 'superadmin'}</p>
             </>
+          ) : isNotificationsPage ? (
+            <>
+              <h1 className="text-3xl font-bold mb-6">Notifications</h1>
+              <p>Your notification settings and history will appear here.</p>
+            </>
+          ) : isBillingPage ? (
+            <>
+              <h1 className="text-3xl font-bold mb-6">Billing</h1>
+              <p>Your billing information and subscription details will appear here.</p>
+            </>
+          ) : isUpgradePage ? (
+            <>
+              <h1 className="text-3xl font-bold mb-6">Upgrade Plan</h1>
+              <p>Available upgrade options and plan details will appear here.</p>
+            </>
           ) : (
             <>
               <h1 className="text-3xl font-bold mb-6">SuperAdmin Dashboard</h1>
-              <DashboardCards onCardClick={handleTabChange} />
+              <DashboardCards onCardClick={handleAdminTabChange} />
             </>
           )}
         </main>

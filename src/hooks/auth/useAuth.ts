@@ -39,6 +39,31 @@ export const useAuth = () => {
     }
   }, [isAuthenticated, isLoading]);
 
+  // Debug checks for route mismatches based on role
+  useEffect(() => {
+    if (isAuthenticated && !isLoading && userRole) {
+      const currentPath = window.location.pathname;
+      
+      // Check if a superadmin is on a non-superadmin page
+      if (userRole === 'superadmin' && 
+          !currentPath.startsWith('/superadmin') && 
+          !currentPath.startsWith('/admin-settings') &&
+          currentPath !== '/login') {
+        console.warn(`Warning: Superadmin user accessing non-superadmin route: ${currentPath}`);
+      }
+      
+      // Check if a pharmacist is on a non-pharmacy page
+      if (userRole === 'pharmacist' && 
+          !currentPath.startsWith('/pharmacy') && 
+          currentPath !== '/login') {
+        console.warn(`Warning: Pharmacist user accessing non-pharmacy route: ${currentPath}`);
+      }
+      
+      // Log the current role and path for debugging
+      console.log(`Current user role: ${userRole}, Current path: ${currentPath}`);
+    }
+  }, [isAuthenticated, isLoading, userRole]);
+
   // Memoize all values together to prevent unnecessary re-renders
   const memoizedValues = useMemo(() => ({
     profile: auth.profile,

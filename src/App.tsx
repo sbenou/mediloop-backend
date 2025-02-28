@@ -4,7 +4,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AuthProvider from '@/providers/AuthProvider';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { RecoilRoot } from "recoil";
 import Index from "./pages/Index";
@@ -65,6 +65,8 @@ function App() {
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  
+                  {/* Patient routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/login/verify" element={<OTPVerificationPage />} />
@@ -75,7 +77,7 @@ function App() {
                   <Route path="/my-orders" element={<MyOrders />} />
                   <Route path="/my-prescriptions" element={<MyPrescriptions />} />
                   <Route path="/settings" element={<Settings />} />
-                  <Route path="/admin-settings" element={<AdminSettings />} />
+                  <Route path="/billing" element={<Billing />} />
                   <Route path="/become-partner" element={<BecomePartner />} />
                   <Route path="/become-transporter" element={<BecomeTransporter />} />
                   <Route path="/create-prescription" element={<CreatePrescription />} />
@@ -84,8 +86,10 @@ function App() {
                   <Route path="/search-pharmacy" element={<SearchPharmacy />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/teleconsultations" element={<Teleconsultations />} />
-                  <Route path="/billing" element={<Billing />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
+                  
+                  {/* Global admin route */}
+                  <Route path="/admin-settings" element={<AdminSettings />} />
                   
                   {/* Pharmacy routes */}
                   <Route path="/pharmacy/dashboard" element={<DashboardPage />} />
@@ -95,7 +99,7 @@ function App() {
                   <Route path="/pharmacy/prescriptions" element={<PrescriptionsPage />} />
                   <Route path="/pharmacy/prescriptions/:id" element={<PrescriptionDetail />} />
                   
-                  {/* Superadmin routes */}
+                  {/* Superadmin routes - DO NOT add redirects here */}
                   <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
                   <Route path="/superadmin/profile" element={<SuperAdminDashboard />} />
                   <Route path="/superadmin/settings" element={<SuperAdminDashboard />} />

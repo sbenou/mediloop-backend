@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -31,11 +31,32 @@ import {
   Building2
 } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/use-toast";
 
 export function SuperAdminSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of the system"
+      });
+      navigate('/login');
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: "There was a problem logging you out"
+      });
+    }
+  };
   
   return (
     <SidebarProvider defaultOpen={true}>
@@ -108,7 +129,7 @@ export function SuperAdminSidebar() {
                   </Collapsible>
                 </SidebarMenuItem>
                 
-                {/* Settings */}
+                {/* Settings - IMPORTANT: This links to superadmin/settings, NOT settings */}
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     asChild 
@@ -117,6 +138,32 @@ export function SuperAdminSidebar() {
                     <Link to="/superadmin/settings">
                       <Settings className="h-4 w-4" />
                       <span>Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                {/* Notifications */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === "/superadmin/notifications"}
+                  >
+                    <Link to="/superadmin/notifications">
+                      <Bell className="h-4 w-4" />
+                      <span>Notifications</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                {/* Billing */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === "/superadmin/billing"}
+                  >
+                    <Link to="/superadmin/billing">
+                      <CreditCard className="h-4 w-4" />
+                      <span>Billing</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -146,10 +193,17 @@ export function SuperAdminSidebar() {
         </SidebarContent>
         
         <SidebarFooter className="mt-auto">
-          <div className="px-3 py-2">
-            <div className="text-xs text-muted-foreground">
+          <div className="px-3 py-2 flex flex-col">
+            <div className="text-xs text-muted-foreground mb-2">
               Logged in as {profile?.role || 'superadmin'}
             </div>
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </button>
           </div>
         </SidebarFooter>
       </Sidebar>
