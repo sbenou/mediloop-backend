@@ -243,7 +243,7 @@ const PatientSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigate('/settings')}
+                  onClick={() => navigate('/dashboard?view=settings')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
@@ -287,7 +287,7 @@ const PatientSidebarContent = () => {
                 <DropdownMenuItem onClick={() => navigate('/billing')}>
                   Billing
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                <DropdownMenuItem onClick={() => navigate('/dashboard?view=settings')}>
                   Settings
                 </DropdownMenuItem>
               </DropdownMenuGroup>

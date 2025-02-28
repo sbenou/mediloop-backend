@@ -3,15 +3,53 @@ import PatientLayout from "@/components/layout/PatientLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import PasswordChange from "@/components/settings/PasswordChange";
+import AccountDeletion from "@/components/settings/AccountDeletion";
+import { CardHeader, CardTitle } from "@/components/ui/card";
 
 const Dashboard = () => {
   const { profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const view = searchParams.get('view');
 
   // Log for debugging
   useEffect(() => {
-    console.log("Dashboard page loaded");
-  }, []);
+    console.log("Dashboard page loaded with view:", view);
+  }, [view]);
 
+  // Render settings view when requested
+  if (view === "settings") {
+    return (
+      <PatientLayout>
+        <div>
+          <h1 className="text-3xl font-bold mb-8 text-left">Account Settings</h1>
+          
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-left">Password Management</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <PasswordChange />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-left">Danger Zone</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AccountDeletion />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </PatientLayout>
+    );
+  }
+
+  // Default dashboard view
   return (
     <PatientLayout>
       <div className="space-y-8">
