@@ -24,6 +24,7 @@ import {
   LogOut,
   Home,
   User,
+  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -122,14 +123,14 @@ const PharmacistSidebar = () => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate('/pharmacy/dashboard')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      isActiveRoute('/dashboard') && "text-primary"
+                      isActiveRoute('/pharmacy/dashboard') && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
-                      <Home className="mr-2 h-4 w-4" />
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
                     </span>
                     <ChevronRight className="h-4 w-4 opacity-50" />
