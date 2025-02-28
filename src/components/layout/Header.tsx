@@ -3,7 +3,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import UserMenu from "../UserMenu";
 import { Button } from "../ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Bell, ShoppingCart } from "lucide-react";
+import NotificationBell from "../NotificationBell";
+import CartButton from "./navigation/CartButton";
+import { MainNavigation } from "./navigation/MainNavigation";
 
 interface HeaderProps {
   showUserMenu?: boolean;
@@ -13,6 +16,7 @@ interface HeaderProps {
 
 const Header = ({ showUserMenu = true, showBackLink = false, onBackClick }: HeaderProps) => {
   const navigate = useNavigate();
+  const [isCartOpen, setIsCartOpen] = useState(false);
   
   const handleBackClick = () => {
     if (onBackClick) {
@@ -36,8 +40,17 @@ const Header = ({ showUserMenu = true, showBackLink = false, onBackClick }: Head
             <img src="/favicon.ico" alt="Logo" className="w-6 h-6" />
             Mediloop
           </Link>
+          
+          <div className="hidden md:flex ml-6">
+            <MainNavigation />
+          </div>
         </div>
-        {showUserMenu && <UserMenu />}
+        
+        <div className="flex items-center space-x-4">
+          <NotificationBell />
+          <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
+          {showUserMenu && <UserMenu />}
+        </div>
       </div>
     </header>
   );
