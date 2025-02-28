@@ -1,27 +1,15 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import SuperAdminSidebar from "@/components/sidebar/SuperAdminSidebar";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Navigate, useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
+import { Navigate } from "react-router-dom";
 
 interface SuperAdminLayoutProps {
   children: React.ReactNode;
 }
 
 const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
-  const { isAuthenticated, isLoading, profile, userRole } = useAuth();
-  const navigate = useNavigate();
-
-  // Add logging for debugging
-  useEffect(() => {
-    console.log("SuperAdminLayout - Auth state:", { 
-      isAuthenticated, 
-      isLoading, 
-      role: profile?.role,
-      userRole
-    });
-  }, [isAuthenticated, isLoading, profile, userRole]);
+  const { isAuthenticated, isLoading, profile } = useAuth();
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -34,20 +22,11 @@ const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
-    console.log("SuperAdminLayout - Not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
   // Redirect if not a superadmin
   if (profile?.role !== "superadmin") {
-    console.log("SuperAdminLayout - Not superadmin, redirecting to dashboard", {
-      role: profile?.role
-    });
-    toast({
-      title: "Access Denied",
-      description: "You don't have permission to access the admin dashboard.",
-      variant: "destructive"
-    });
     return <Navigate to="/dashboard" replace />;
   }
 
