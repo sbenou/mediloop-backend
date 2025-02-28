@@ -40,7 +40,10 @@ const CountrySelector = () => {
   // Check if user has a default address
   useEffect(() => {
     const checkUserAddress = async () => {
+      console.log("CountrySelector: Checking user address");
+      
       if (isAuthenticated && user) {
+        console.log("CountrySelector: User is authenticated, checking for default address");
         // Fetch user's main address
         const { data, error } = await supabase
           .from('addresses')
@@ -50,6 +53,7 @@ const CountrySelector = () => {
           .single();
         
         if (!error && data) {
+          console.log("CountrySelector: Found default address:", data);
           setMainAddress(data);
           
           // Set location based on country
@@ -61,26 +65,40 @@ const CountrySelector = () => {
 
           // Don't show dialog if user has a default address
           return;
+        } else {
+          console.log("CountrySelector: No default address found or error:", error);
         }
+      } else {
+        console.log("CountrySelector: User is not authenticated");
       }
       
       // Show dialog for anonymous users or authenticated users without a default address
       const savedCountry = localStorage.getItem('selectedCountry');
       if (savedCountry) {
+        console.log("CountrySelector: Found saved country:", savedCountry);
         setSelectedCountry(savedCountry);
         const country = AVAILABLE_COUNTRIES.find(c => c.code === savedCountry);
         if (country) {
           setUserLocation(country.coordinates);
         }
       } else {
-        setOpen(true);
+        console.log("CountrySelector: No saved country, showing dialog");
+        // Force open the dialog after a short delay to ensure it's visible
+        setTimeout(() => {
+          setOpen(true);
+        }, 100);
       }
     };
+    
+    // Clear country selection from localStorage for testing purposes
+    // Comment this out in production
+    // localStorage.removeItem('selectedCountry');
     
     checkUserAddress();
   }, [isAuthenticated, user, setUserLocation, userLocation]);
   
   const handleSelectCountry = () => {
+    console.log("CountrySelector: Selecting country:", selectedCountry);
     const country = AVAILABLE_COUNTRIES.find(c => c.code === selectedCountry);
     if (country) {
       setUserLocation(country.coordinates);
