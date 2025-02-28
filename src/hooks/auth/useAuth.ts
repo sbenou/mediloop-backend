@@ -39,6 +39,17 @@ export const useAuth = () => {
     }
   }, [isAuthenticated, isLoading]);
 
+  // Debug log for auth state
+  useEffect(() => {
+    console.log("useAuth - Current auth state:", {
+      isAuthenticated,
+      isLoading,
+      userRole,
+      profileRole: auth.profile?.role,
+      userId: auth.user?.id
+    });
+  }, [isAuthenticated, isLoading, userRole, auth.profile, auth.user]);
+
   // Memoize all values together to prevent unnecessary re-renders
   const memoizedValues = useMemo(() => ({
     profile: auth.profile,

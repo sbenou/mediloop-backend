@@ -1,10 +1,11 @@
 
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -14,7 +15,7 @@ const Login = () => {
     const checkUserRole = async () => {
       if (isAuthenticated && user) {
         try {
-          console.log('Checking user role for:', user.id);
+          console.log('Login - Checking user role for:', user.id);
           
           // Get user profile to check role
           const { data: profile, error } = await supabase
@@ -25,11 +26,16 @@ const Login = () => {
           
           if (error) {
             console.error('Profile fetch error:', error);
+            toast({
+              title: "Error",
+              description: "Could not fetch your user profile. Please try again.",
+              variant: "destructive"
+            });
             navigate('/dashboard');
             return;
           }
           
-          console.log('User role found:', profile?.role);
+          console.log('Login - User role found:', profile?.role);
 
           // Force session storage on successful login for ALL user types
           const { data: { session } } = await supabase.auth.getSession();
@@ -60,18 +66,29 @@ const Login = () => {
           }
           
           // Redirect based on role
-          if (profile?.role === 'pharmacist') {
-            console.log('Redirecting to pharmacy dashboard...');
-            navigate('/pharmacy/dashboard', { replace: true });
-          } else if (profile?.role === 'superadmin') {
-            console.log('Redirecting to superadmin dashboard...');
+          if (!profile || !profile.role) {
+            console.error('Login - No role found in profile, defaulting to user dashboard');
+            navigate('/dashboard', { replace: true });
+            return;
+          }
+          
+          if (profile.role === 'superadmin') {
+            console.log('Login - Redirecting to superadmin dashboard...');
             navigate('/superadmin-dashboard', { replace: true });
+          } else if (profile.role === 'pharmacist') {
+            console.log('Login - Redirecting to pharmacy dashboard...');
+            navigate('/pharmacy/dashboard', { replace: true });
           } else {
-            console.log('Redirecting to dashboard...');
+            console.log('Login - Redirecting to user dashboard...');
             navigate('/dashboard', { replace: true });
           }
         } catch (err) {
           console.error('Error checking role:', err);
+          toast({
+            title: "Error",
+            description: "An error occurred during login redirection. Please try again.",
+            variant: "destructive"
+          });
           navigate('/dashboard');
         }
       }
