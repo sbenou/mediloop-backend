@@ -30,6 +30,34 @@ const Login = () => {
           }
           
           console.log('User role found:', profile?.role);
+
+          // Force session storage on successful login for ALL user types
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            // Get the storage key
+            const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+            
+            // Store in both localStorage and cookies for redundancy
+            try {
+              window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+              
+              // Also set in cookie with 7-day expiry (for all users)
+              const expires = new Date();
+              expires.setDate(expires.getDate() + 7);
+              
+              document.cookie = [
+                `${STORAGE_KEY}=${encodeURIComponent(JSON.stringify(session))}`,
+                `expires=${expires.toUTCString()}`,
+                'path=/',
+                'secure',
+                'samesite=strict',
+              ].join('; ');
+              
+              console.log('Session explicitly stored for all user types upon login success');
+            } catch (storageError) {
+              console.error('Error storing session:', storageError);
+            }
+          }
           
           // Redirect based on role
           if (profile?.role === 'pharmacist') {

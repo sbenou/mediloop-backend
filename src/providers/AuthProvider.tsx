@@ -103,6 +103,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
+      // Explicitly store the session to ensure it persists for all user types
+      const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+      localStorage.setItem(STORAGE_KEY, session);
+      
+      console.log('Session explicitly stored for user:', session.user.id);
+
       setAuth(prev => ({
         ...prev,
         user: session.user,
@@ -172,6 +178,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!mounted) return;
         
         if (session) {
+          // Ensure session is stored again for all user types
+          const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+          localStorage.setItem(STORAGE_KEY, session);
+          console.log('Session refreshed in storage during initialization');
+          
           await updateAuthState(session);
         } else {
           setAuth({
@@ -209,6 +220,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('Auth state changed:', { event, session: session?.user?.id });
 
         if (event === 'SIGNED_IN' && session) {
+          // Ensure session is stored immediately on sign in for all user types
+          const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+          localStorage.setItem(STORAGE_KEY, session);
+          console.log('Session stored in storage during SIGNED_IN event');
+          
           await updateAuthState(session);
         } else if (event === 'SIGNED_OUT') {
           setAuth({
@@ -218,6 +234,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             isLoading: false,
           });
         } else if (event === 'TOKEN_REFRESHED' && session) {
+          // Ensure refreshed token is stored properly
+          const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+          localStorage.setItem(STORAGE_KEY, session);
+          console.log('Session stored in storage during TOKEN_REFRESHED event');
+          
           await updateAuthState(session);
         }
       }

@@ -44,6 +44,8 @@ const cookieStorage = {
         'secure',
         'samesite=strict',
       ].join('; ');
+      
+      console.log(`Cookie storage: Session stored for key ${key}`);
     } catch (e) {
       console.error('Error setting auth cookie:', e);
     }
@@ -51,6 +53,7 @@ const cookieStorage = {
   removeItem: (key: string) => {
     try {
       document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
+      console.log(`Cookie storage: Session removed for key ${key}`);
     } catch (e) {
       console.error('Error removing auth cookie:', e);
     }
@@ -63,20 +66,28 @@ const localStorage = {
     try {
       // First try to get from cookie for cross-browser compatibility
       const cookieValue = cookieStorage.getItem(key);
-      if (cookieValue) return cookieValue;
+      if (cookieValue) {
+        console.log(`Local storage: Found session in cookie for key ${key}`);
+        return cookieValue;
+      }
       
       // Fallback to localStorage
       const value = window.localStorage.getItem(key);
-      if (!value) return null;
+      if (!value) {
+        console.log(`Local storage: No session found for key ${key}`);
+        return null;
+      }
       
       const parsed = JSON.parse(value);
       
       // Check if the stored session is expired
       if (parsed.expires_at && parsed.expires_at < Date.now() / 1000) {
+        console.log(`Local storage: Session expired for key ${key}, removing`);
         localStorage.removeItem(key);
         return null;
       }
       
+      console.log(`Local storage: Found valid session for key ${key}`);
       return parsed;
     } catch (e) {
       console.error('Error reading auth from localStorage:', e);
@@ -91,8 +102,21 @@ const localStorage = {
       // Also store in localStorage
       window.localStorage.setItem(key, JSON.stringify(value));
       
+      // Try to store session explicitly with timestamp for debugging
+      try {
+        window.localStorage.setItem(`${key}_timestamp`, JSON.stringify({
+          timestamp: new Date().toISOString(),
+          userId: value?.user?.id || 'unknown'
+        }));
+      } catch (e) {
+        // Ignore this error as it's just for debugging
+      }
+      
       // Log success for debugging
       console.log(`Session stored successfully for key: ${key}`);
+      if (value?.user?.id) {
+        console.log(`Session stored for user: ${value.user.id}`);
+      }
     } catch (e) {
       console.error('Error setting auth in localStorage:', e);
     }
@@ -101,6 +125,8 @@ const localStorage = {
     try {
       cookieStorage.removeItem(key);
       window.localStorage.removeItem(key);
+      window.localStorage.removeItem(`${key}_timestamp`);
+      console.log(`Local storage: Session removed for key ${key}`);
     } catch (e) {
       console.error('Error removing auth from localStorage:', e);
     }
@@ -146,6 +172,12 @@ export async function fetchFromSupabase<T extends Record<string, any>>(
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_IN') {
     console.log('User signed in:', session?.user?.id);
+    
+    // Explicitly store session again to ensure it's properly saved
+    if (session) {
+      localStorage.setItem(STORAGE_KEY, session);
+    }
+    
     console.log('Session storage check after sign in:', localStorage.getItem(STORAGE_KEY) ? 'Session found' : 'No session found');
   } else if (event === 'SIGNED_OUT') {
     console.log('User signed out');
@@ -154,6 +186,12 @@ supabase.auth.onAuthStateChange((event, session) => {
     cookieStorage.removeItem(STORAGE_KEY);
   } else if (event === 'TOKEN_REFRESHED') {
     console.log('Token refreshed for user:', session?.user?.id);
+    
+    // Explicitly store refreshed session
+    if (session) {
+      localStorage.setItem(STORAGE_KEY, session);
+      console.log('Refreshed token stored in session storage');
+    }
   }
 });
 
