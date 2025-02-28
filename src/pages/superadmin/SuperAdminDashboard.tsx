@@ -9,20 +9,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronDown, Users, Database, ShieldCheck, Package } from "lucide-react";
 
+interface DashboardStats {
+  total_users: number;
+  total_roles: number;
+  total_permissions: number;
+  total_products: number;
+}
+
 const SuperAdminDashboard = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "dashboard";
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_admin_dashboard_stats");
       if (error) throw error;
-      return data;
+      return data as DashboardStats[];
     },
   });
+
+  // Extract the first item from the stats array or use default values
+  const stats: DashboardStats = statsData && statsData.length > 0 
+    ? statsData[0] 
+    : { total_users: 0, total_roles: 0, total_permissions: 0, total_products: 0 };
 
   const handleTabChange = (value: string) => {
     navigate(`/superadmin-dashboard?tab=${value}`);
@@ -50,7 +62,7 @@ const SuperAdminDashboard = () => {
                 {statsLoading ? (
                   <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
                 ) : (
-                  stats?.total_users || 0
+                  stats.total_users || 0
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -70,7 +82,7 @@ const SuperAdminDashboard = () => {
                 {statsLoading ? (
                   <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
                 ) : (
-                  stats?.total_roles || 0
+                  stats.total_roles || 0
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -90,7 +102,7 @@ const SuperAdminDashboard = () => {
                 {statsLoading ? (
                   <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
                 ) : (
-                  stats?.total_permissions || 0
+                  stats.total_permissions || 0
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -110,7 +122,7 @@ const SuperAdminDashboard = () => {
                 {statsLoading ? (
                   <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
                 ) : (
-                  stats?.total_products || 0
+                  stats.total_products || 0
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
