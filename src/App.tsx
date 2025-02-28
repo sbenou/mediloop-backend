@@ -29,6 +29,15 @@ import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage
 import Teleconsultations from "./pages/Teleconsultations";
 import Billing from "./pages/Billing";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
+
+// Pharmacy routes
+import DashboardPage from "./pages/pharmacy/DashboardPage";
+import PatientsPage from "./pages/pharmacy/PatientsPage";
+import PatientDetail from "./pages/pharmacy/PatientDetail";
+import OrdersPage from "./pages/pharmacy/OrdersPage";
+import PrescriptionsPage from "./pages/pharmacy/PrescriptionsPage";
+import PrescriptionDetail from "./pages/pharmacy/PrescriptionDetail";
+
 import './App.css';
 
 // Log the current environment
@@ -74,6 +83,14 @@ function App() {
                   <Route path="/teleconsultations" element={<Teleconsultations />} />
                   <Route path="/billing" element={<Billing />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
+                  
+                  {/* Pharmacy routes */}
+                  <Route path="/pharmacy/dashboard" element={<DashboardPage />} />
+                  <Route path="/pharmacy/patients" element={<PatientsPage />} />
+                  <Route path="/pharmacy/patients/:id" element={<PatientDetail />} />
+                  <Route path="/pharmacy/orders" element={<OrdersPage />} />
+                  <Route path="/pharmacy/prescriptions" element={<PrescriptionsPage />} />
+                  <Route path="/pharmacy/prescriptions/:id" element={<PrescriptionDetail />} />
                 </Routes>
                 <Toaster />
               </BrowserRouter>
