@@ -55,31 +55,6 @@ const Dashboard = () => {
             </div>
           </Card>
         </div>
-        
-        <div className="mt-12">
-          <div className="grid grid-cols-5 gap-4 text-center">
-            <div>
-              <h3 className="font-medium">Orders</h3>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-            <div>
-              <h3 className="font-medium">Partner Pharmacies</h3>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-            <div>
-              <h3 className="font-medium">Healthcare Providers</h3>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-            <div>
-              <h3 className="font-medium">Deliveries Made</h3>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-            <div>
-              <h3 className="font-medium">Prescriptions</h3>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </div>
-        </div>
       </div>
     </PatientLayout>
   );
