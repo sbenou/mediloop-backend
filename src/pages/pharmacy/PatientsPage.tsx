@@ -1,11 +1,10 @@
 
-import PharmacistLayout from "@/components/layout/PharmacistLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import Header from "@/components/layout/Header";
 
 // Mock data - would be replaced with real data from database
 const mockPatients = [
@@ -16,8 +15,6 @@ const mockPatients = [
 ];
 
 const PatientsPage = () => {
-  const [searchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'all';
   const navigate = useNavigate();
 
   const handleViewPatient = (patientId: string) => {
@@ -25,54 +22,49 @@ const PatientsPage = () => {
   };
 
   return (
-    <PharmacistLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Patients</h1>
-          <p className="text-muted-foreground mt-2">View and manage patient information</p>
-        </div>
-        
-        <Tabs defaultValue={activeTab} value={activeTab} className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="all">All Patients</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all">
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead className="w-20">Actions</TableHead>
+    <div>
+      <Header />
+      <div className="container mx-auto py-8">
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold">Patients</h1>
+            <p className="text-muted-foreground mt-2">View and manage patient information</p>
+          </div>
+          
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead className="w-20">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mockPatients.map((patient) => (
+                  <TableRow key={patient.id}>
+                    <TableCell className="font-medium">{patient.name}</TableCell>
+                    <TableCell>{patient.email}</TableCell>
+                    <TableCell>{patient.phone}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleViewPatient(patient.id)}
+                        title="View Patient"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockPatients.map((patient) => (
-                    <TableRow key={patient.id}>
-                      <TableCell className="font-medium">{patient.name}</TableCell>
-                      <TableCell>{patient.email}</TableCell>
-                      <TableCell>{patient.phone}</TableCell>
-                      <TableCell>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleViewPatient(patient.id)}
-                          title="View Patient"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
-        </Tabs>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
-    </PharmacistLayout>
+    </div>
   );
 };
 

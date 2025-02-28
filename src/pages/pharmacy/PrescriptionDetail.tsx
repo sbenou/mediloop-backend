@@ -1,25 +1,10 @@
 
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  ArrowLeft, 
-  Share, 
-  ShoppingCart,
-  Check,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/use-toast";
-import { PrescriptionStatus } from "@/types/supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Share, ShoppingCart, Check } from "lucide-react";
+import Header from "@/components/layout/Header";
 
 // Mock data - would be replaced with real data from database
 const mockPrescription = {
@@ -36,7 +21,7 @@ const mockPrescription = {
     specialty: "General Practitioner"
   },
   date: "2023-06-15",
-  status: "active" as PrescriptionStatus,
+  status: "active",
   medications: [
     { id: "m1", name: "Amoxicillin", dosage: "500mg", frequency: "3x daily", duration: "7 days", inCart: false },
     { id: "m2", name: "Ibuprofen", dosage: "400mg", frequency: "as needed", duration: "7 days", inCart: false }
@@ -63,148 +48,114 @@ const PrescriptionDetail = () => {
       
       return { ...prev, medications: updatedMedications };
     });
-    
-    toast({
-      title: "Added to Cart",
-      description: "Medication has been added to the cart",
-    });
   };
   
   const handleShareCart = () => {
     // In a real app, this would send a notification to the patient
-    toast({
-      title: "Cart Shared",
-      description: "Cart has been shared with the patient",
-    });
-  };
-  
-  const getStatusColor = (status: PrescriptionStatus) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    alert("Cart has been shared with the patient");
   };
 
   return (
-    <PharmacistLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/pharmacy/prescriptions')}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Prescriptions
-          </Button>
-          
-          {allInCart && (
+    <div>
+      <Header />
+      <div className="container mx-auto py-8">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
             <Button 
-              onClick={handleShareCart}
+              variant="outline" 
+              onClick={() => navigate('/pharmacy/prescriptions')}
               className="gap-2"
             >
-              <Share className="h-4 w-4" />
-              Share Cart with Patient
+              <ArrowLeft className="h-4 w-4" />
+              Back to Prescriptions
             </Button>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>Prescription #{prescription.id}</CardTitle>
-                  <CardDescription>
-                    Issued on {new Date(prescription.date).toLocaleDateString()}
-                  </CardDescription>
-                </div>
-                <Badge variant="outline" className={getStatusColor(prescription.status)}>
-                  {prescription.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-sm text-muted-foreground mb-2">Medications</h3>
-                <div className="space-y-4">
-                  {prescription.medications.map((medication) => (
-                    <div key={medication.id} className="flex items-center justify-between p-4 border rounded-md">
-                      <div>
-                        <p className="font-medium">{medication.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {medication.dosage} - {medication.frequency} - {medication.duration}
-                        </p>
-                      </div>
-                      <Button
-                        className="gap-2"
-                        variant={medication.inCart ? "outline" : "default"}
-                        onClick={() => handleAddToCart(medication.id)}
-                        disabled={medication.inCart}
-                      >
-                        {medication.inCart ? (
-                          <>
-                            <Check className="h-4 w-4" />
-                            Added
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="h-4 w-4" />
-                            Add to Cart
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {prescription.notes && (
-                <div>
-                  <h3 className="font-semibold text-sm text-muted-foreground mb-2">Notes</h3>
-                  <p>{prescription.notes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            
+            {allInCart && (
+              <Button 
+                onClick={handleShareCart}
+                className="gap-2"
+              >
+                <Share className="h-4 w-4" />
+                Share Cart with Patient
+              </Button>
+            )}
+          </div>
           
-          <div className="space-y-6">
-            <Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle>Patient Information</CardTitle>
+                <CardTitle>Prescription #{prescription.id}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="font-medium">{prescription.patient.name}</p>
-                <p className="text-sm text-muted-foreground">{prescription.patient.email}</p>
-                <p className="text-sm text-muted-foreground">{prescription.patient.phone}</p>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-sm text-muted-foreground mb-2">Medications</h3>
+                  <div className="space-y-4">
+                    {prescription.medications.map((medication) => (
+                      <div key={medication.id} className="flex items-center justify-between p-4 border rounded-md">
+                        <div>
+                          <p className="font-medium">{medication.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {medication.dosage} - {medication.frequency} - {medication.duration}
+                          </p>
+                        </div>
+                        <Button
+                          className="gap-2"
+                          variant={medication.inCart ? "outline" : "default"}
+                          onClick={() => handleAddToCart(medication.id)}
+                          disabled={medication.inCart}
+                        >
+                          {medication.inCart ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Added
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart className="h-4 w-4" />
+                              Add to Cart
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {prescription.notes && (
+                  <div>
+                    <h3 className="font-semibold text-sm text-muted-foreground mb-2">Notes</h3>
+                    <p>{prescription.notes}</p>
+                  </div>
+                )}
               </CardContent>
-              <CardFooter>
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate(`/pharmacy/patients/${prescription.patient.id}`)}
-                  className="w-full"
-                >
-                  View Patient Profile
-                </Button>
-              </CardFooter>
             </Card>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Doctor Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="font-medium">{prescription.doctor.name}</p>
-                <p className="text-sm text-muted-foreground">{prescription.doctor.specialty}</p>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Patient Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="font-medium">{prescription.patient.name}</p>
+                  <p className="text-sm text-muted-foreground">{prescription.patient.email}</p>
+                  <p className="text-sm text-muted-foreground">{prescription.patient.phone}</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Doctor Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="font-medium">{prescription.doctor.name}</p>
+                  <p className="text-sm text-muted-foreground">{prescription.doctor.specialty}</p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
-    </PharmacistLayout>
+    </div>
   );
 };
 
