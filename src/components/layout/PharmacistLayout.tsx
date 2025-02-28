@@ -59,7 +59,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   };
   
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <div className="flex h-screen w-full overflow-hidden">
       {/* Left section - Sidebar */}
       <aside className="w-64 h-full shrink-0 border-r">
         <PharmacistSidebar />
