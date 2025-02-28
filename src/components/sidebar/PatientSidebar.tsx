@@ -27,6 +27,7 @@ import {
   Settings,
   ChevronRight,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -63,6 +64,7 @@ const PatientSidebarContent = () => {
   const isGroupExpanded = (groupName: string) => expandedGroups.includes(groupName);
 
   const navigateToTab = (path: string, tab?: string) => {
+    console.log(`Navigate to: ${path}${tab ? `?tab=${tab}` : ''}`);
     navigate(path + (tab ? `?tab=${tab}` : ''));
   };
 
@@ -71,7 +73,6 @@ const PatientSidebarContent = () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear auth state
       setAuth({
         user: null,
         profile: null,
@@ -114,7 +115,6 @@ const PatientSidebarContent = () => {
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Profile Section */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => toggleGroup('profile')}
@@ -175,7 +175,6 @@ const PatientSidebarContent = () => {
                 )}
               </SidebarMenuItem>
 
-              {/* Orders Section */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => toggleGroup('orders')}
@@ -215,14 +214,13 @@ const PatientSidebarContent = () => {
                 )}
               </SidebarMenuItem>
 
-              {/* Other Main Menu Items */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigate('/my-prescriptions')}
+                  onClick={() => navigateToTab('/my-prescriptions')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
-                    <FileText className="mr-2 h-4 w-4" />
+                    <ClipboardList className="mr-2 h-4 w-4" />
                     My Prescriptions
                   </span>
                   <ChevronRight className="h-4 w-4 opacity-50" />
@@ -231,7 +229,7 @@ const PatientSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigate('/teleconsultations')}
+                  onClick={() => navigateToTab('/teleconsultations')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
@@ -244,7 +242,7 @@ const PatientSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigate('/settings')}
+                  onClick={() => navigateToTab('/settings')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
@@ -266,8 +264,8 @@ const PatientSidebarContent = () => {
               <div className="flex items-center space-x-3 cursor-pointer">
                 <UserAvatar userProfile={profile} />
                 <div className="overflow-hidden">
-                  <p className="text-sm font-medium truncate">{profile.full_name || profile.email}</p>
-                  <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+                  <p className="text-sm font-medium truncate">{profile.full_name || 'sam testington'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{profile.email || 'bencu004@hotmail.com'}</p>
                 </div>
               </div>
             </DropdownMenuTrigger>
@@ -308,7 +306,6 @@ const PatientSidebarContent = () => {
   );
 };
 
-// Wrapper component with SidebarProvider
 const PatientSidebar = () => {
   return (
     <SidebarProvider>
