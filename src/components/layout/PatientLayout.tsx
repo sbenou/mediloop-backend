@@ -34,7 +34,7 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
           </main>
           
           {/* Right panel */}
-          <aside className="w-64 shrink-0 bg-gray-50 border-l h-full">
+          <aside className="w-64 shrink-0 border-l h-full bg-background">
             {/* Panel content will go here */}
           </aside>
         </div>
