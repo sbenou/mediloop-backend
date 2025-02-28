@@ -101,6 +101,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       });
 
       console.log('Auth state updated successfully');
+      console.log('User role:', profile.role);
 
       // Show success message
       toast({
@@ -108,9 +109,15 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         description: "You have successfully signed in.",
       });
 
-      // Navigate to dashboard page
-      console.log('Navigating to dashboard...');
-      navigate('/dashboard', { replace: true });
+      // Redirect based on user role
+      if (profile.role === 'pharmacist') {
+        console.log('Redirecting to pharmacy dashboard...');
+        navigate('/pharmacy/dashboard', { replace: true });
+      } else {
+        console.log('Redirecting to dashboard...');
+        navigate('/dashboard', { replace: true });
+      }
+      
       onSuccess();
 
     } catch (error: any) {

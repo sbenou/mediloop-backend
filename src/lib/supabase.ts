@@ -57,12 +57,62 @@ const cookieStorage = {
   }
 };
 
+// Use both localStorage and cookie storage for better compatibility
+const localStorage = {
+  getItem: (key: string) => {
+    try {
+      // First try to get from cookie for cross-browser compatibility
+      const cookieValue = cookieStorage.getItem(key);
+      if (cookieValue) return cookieValue;
+      
+      // Fallback to localStorage
+      const value = window.localStorage.getItem(key);
+      if (!value) return null;
+      
+      const parsed = JSON.parse(value);
+      
+      // Check if the stored session is expired
+      if (parsed.expires_at && parsed.expires_at < Date.now() / 1000) {
+        localStorage.removeItem(key);
+        return null;
+      }
+      
+      return parsed;
+    } catch (e) {
+      console.error('Error reading auth from localStorage:', e);
+      return null;
+    }
+  },
+  setItem: (key: string, value: any) => {
+    try {
+      // Store in both cookie and localStorage for redundancy
+      cookieStorage.setItem(key, value);
+      
+      // Also store in localStorage
+      window.localStorage.setItem(key, JSON.stringify(value));
+      
+      // Log success for debugging
+      console.log(`Session stored successfully for key: ${key}`);
+    } catch (e) {
+      console.error('Error setting auth in localStorage:', e);
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      cookieStorage.removeItem(key);
+      window.localStorage.removeItem(key);
+    } catch (e) {
+      console.error('Error removing auth from localStorage:', e);
+    }
+  }
+};
+
 const supabaseOptions: SupabaseClientOptions<"public"> = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: cookieStorage,
+    storage: localStorage, // Use our combined storage implementation
     storageKey: STORAGE_KEY,
     flowType: 'pkce'
   }
@@ -96,9 +146,11 @@ export async function fetchFromSupabase<T extends Record<string, any>>(
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_IN') {
     console.log('User signed in:', session?.user?.id);
+    console.log('Session storage check after sign in:', localStorage.getItem(STORAGE_KEY) ? 'Session found' : 'No session found');
   } else if (event === 'SIGNED_OUT') {
     console.log('User signed out');
     // Clear any remaining session data
+    localStorage.removeItem(STORAGE_KEY);
     cookieStorage.removeItem(STORAGE_KEY);
   } else if (event === 'TOKEN_REFRESHED') {
     console.log('Token refreshed for user:', session?.user?.id);
@@ -109,6 +161,9 @@ supabase.auth.onAuthStateChange((event, session) => {
 supabase.auth.getSession().then(({ data: { session } }) => {
   if (session) {
     console.log('Initial session loaded:', session.user.id);
+    // Store the session explicitly to ensure it's saved
+    localStorage.setItem(STORAGE_KEY, session);
+    
     // Verify token expiration and refresh if needed
     const expiresAt = session?.expires_at || 0;
     const now = Math.floor(Date.now() / 1000);
@@ -116,25 +171,22 @@ supabase.auth.getSession().then(({ data: { session } }) => {
       supabase.auth.refreshSession().then(({ data }) => {
         if (data.session) {
           console.log('Session refreshed during initial load');
+          // Store the refreshed session
+          localStorage.setItem(STORAGE_KEY, data.session);
         }
       });
     }
+  } else {
+    console.log('No initial session found');
   }
 });
 
-// Safe method to get session from cookie
-export const getSessionFromCookie = () => {
+// Safe method to get session from storage
+export const getSessionFromStorage = () => {
   try {
-    const sessionStr = cookieStorage.getItem(STORAGE_KEY);
-    if (!sessionStr) return null;
-    
-    // Additional validation of session data
-    if (typeof sessionStr === 'object' && 'access_token' in sessionStr) {
-      return sessionStr;
-    }
-    return null;
+    return localStorage.getItem(STORAGE_KEY);
   } catch (e) {
-    console.error('Error getting session from cookie:', e);
+    console.error('Error getting session from storage:', e);
     return null;
   }
 };

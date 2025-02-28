@@ -14,6 +14,8 @@ const Login = () => {
     const checkUserRole = async () => {
       if (isAuthenticated && user) {
         try {
+          console.log('Checking user role for:', user.id);
+          
           // Get user profile to check role
           const { data: profile, error } = await supabase
             .from('profiles')
@@ -27,10 +29,14 @@ const Login = () => {
             return;
           }
           
+          console.log('User role found:', profile?.role);
+          
           // Redirect based on role
           if (profile?.role === 'pharmacist') {
+            console.log('Redirecting to pharmacy dashboard...');
             navigate('/pharmacy/dashboard', { replace: true });
           } else {
+            console.log('Redirecting to dashboard...');
             navigate('/dashboard', { replace: true });
           }
         } catch (err) {

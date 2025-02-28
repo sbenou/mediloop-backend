@@ -1,7 +1,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSessionFromStorage } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
 import { UserProfile, safeQueryResult } from '@/types/user';
 import { toast } from '@/components/ui/use-toast';
@@ -159,8 +159,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         setAuth(prev => ({ ...prev, isLoading: true }));
         
+        // First check for an existing session in storage
+        const storedSession = getSessionFromStorage();
+        if (storedSession) {
+          console.log('Found session in storage, attempting to use it');
+        }
+        
+        // Then get the current session from Supabase
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Initial session check:', session?.user?.id);
+        console.log('Initial session check:', session?.user?.id || 'No session found');
         
         if (!mounted) return;
         
