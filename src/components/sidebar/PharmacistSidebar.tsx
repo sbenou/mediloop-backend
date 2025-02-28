@@ -23,6 +23,7 @@ import {
   ChevronRight,
   LogOut,
   Home,
+  Upload,
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
