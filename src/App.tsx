@@ -38,10 +38,6 @@ import OrdersPage from "./pages/pharmacy/OrdersPage";
 import PrescriptionsPage from "./pages/pharmacy/PrescriptionsPage";
 import PrescriptionDetail from "./pages/pharmacy/PrescriptionDetail";
 
-// Superadmin routes
-import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
-import AdminCustomers from "./pages/superadmin/AdminCustomers";
-
 import './App.css';
 
 // Log the current environment
@@ -95,10 +91,6 @@ function App() {
                   <Route path="/pharmacy/orders" element={<OrdersPage />} />
                   <Route path="/pharmacy/prescriptions" element={<PrescriptionsPage />} />
                   <Route path="/pharmacy/prescriptions/:id" element={<PrescriptionDetail />} />
-                  
-                  {/* Superadmin routes */}
-                  <Route path="/superadmin-dashboard" element={<SuperAdminDashboard />} />
-                  <Route path="/admin-customers" element={<AdminCustomers />} />
                 </Routes>
                 <Toaster />
               </BrowserRouter>
