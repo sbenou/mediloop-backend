@@ -4,9 +4,19 @@ import { ProductManagementCard } from "./tabs/ProductManagementCard";
 import { PermissionsManagementCard } from "./tabs/PermissionsManagementCard";
 import { CustomersCard } from "./tabs/CustomersCard";
 
-export const DashboardCards = () => {
+interface DashboardCardsProps {
+  onCardClick?: (value: string) => void;
+}
+
+export const DashboardCards = ({ onCardClick }: DashboardCardsProps = {}) => {
+  const handleTabChange = (value: string) => {
+    if (onCardClick) {
+      onCardClick(value);
+    }
+  };
+
   return (
-    <Tabs defaultValue="dashboard" className="w-full">
+    <Tabs defaultValue="dashboard" className="w-full" onValueChange={handleTabChange}>
       <TabsList className="grid grid-cols-3 mb-4">
         <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         <TabsTrigger value="products">Products</TabsTrigger>
