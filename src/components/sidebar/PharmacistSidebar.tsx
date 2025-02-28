@@ -93,7 +93,7 @@ const PharmacistSidebar = () => {
       
       toast({
         title: "Logged out",
-        description: "You have been successfully logged out",
+        description: "Logged out successfully from pharmacy portal",
       });
       
       // Force redirect to home page
