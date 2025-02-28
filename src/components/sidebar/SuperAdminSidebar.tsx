@@ -112,9 +112,9 @@ export function SuperAdminSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === "/settings"}
+                    isActive={location.pathname === "/superadmin/settings"}
                   >
-                    <Link to="/settings">
+                    <Link to="/superadmin/settings">
                       <Settings className="h-4 w-4" />
                       <span>Settings</span>
                     </Link>

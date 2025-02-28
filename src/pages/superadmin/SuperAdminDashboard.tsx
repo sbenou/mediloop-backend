@@ -7,6 +7,9 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardCards } from "@/components/admin/DashboardCards";
 import { useDashboardStats } from "@/hooks/admin/useDashboardStats";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import PasswordChange from "@/components/settings/PasswordChange";
+import AccountDeletion from "@/components/settings/AccountDeletion";
 
 const SuperAdminDashboard = () => {
   const navigate = useNavigate();
@@ -66,10 +69,26 @@ const SuperAdminDashboard = () => {
           {/* Show appropriate content based on the route */}
           {isSettingsPage ? (
             <>
-              <h1 className="text-3xl font-bold mb-6">Admin Settings</h1>
-              <p className="mb-4">Redirecting to admin settings...</p>
-              {/* Auto-redirect to admin settings */}
-              {navigate('/admin-settings')}
+              <h1 className="text-3xl font-bold mb-6">Account Settings</h1>
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-left">Password Management</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <PasswordChange />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-left">Danger Zone</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <AccountDeletion />
+                  </CardContent>
+                </Card>
+              </div>
             </>
           ) : isProfilePage ? (
             <>
