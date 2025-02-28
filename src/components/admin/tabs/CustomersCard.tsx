@@ -1,89 +1,186 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Grid, List } from "lucide-react";
-import { useState } from "react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Search, Grid3X3, List, ExternalLink } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 export const CustomersCard = () => {
-  const [viewType, setViewType] = useState<"list" | "grid">("list");
-  
-  // Mocked data - in a real app, this would come from backend
-  const mockCustomers = [
-    { id: 1, name: "Dr. John Smith", role: "doctor", email: "john.smith@example.com" },
-    { id: 2, name: "Dr. Sarah Johnson", role: "doctor", email: "sarah.johnson@example.com" },
-    { id: 3, name: "PharmaCorp Inc.", role: "pharmacist", email: "contact@pharmacorp.com" },
-    { id: 4, name: "HealthMeds Pharmacy", role: "pharmacist", email: "info@healthmeds.com" },
-    { id: 5, name: "Dr. Michael Wong", role: "doctor", email: "mwong@mediclinic.com" },
-  ];
-  
+  const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | "doctor" | "pharmacist">("all");
+
+  const { data: customers, isLoading } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      let query = supabase
+        .from('profiles')
+        .select('*')
+        .not('deleted_at', 'is', null)
+        .in('role', ['doctor', 'pharmacist']);
+
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error("Error fetching customers:", error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  const filteredCustomers = customers?.filter((customer) => {
+    const matchesSearch = !searchQuery || 
+      customer.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesRole = roleFilter === "all" || customer.role === roleFilter;
+    
+    return matchesSearch && matchesRole;
+  });
+
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle>Customers</CardTitle>
-          <Tabs 
-            value={viewType}
-            onValueChange={(val) => setViewType(val as "list" | "grid")}
-            className="w-auto"
-          >
-            <TabsList className="grid grid-cols-2 w-[120px]">
-              <TabsTrigger value="list" className="flex items-center gap-1">
-                <List className="h-4 w-4" />
-                <span className="sr-only sm:not-sr-only sm:text-xs">List</span>
-              </TabsTrigger>
-              <TabsTrigger value="grid" className="flex items-center gap-1">
-                <Grid className="h-4 w-4" />
-                <span className="sr-only sm:not-sr-only sm:text-xs">Grid</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+      <CardHeader>
+        <CardTitle>Customer Management</CardTitle>
       </CardHeader>
       <CardContent>
-        <TabsContent value="list" className="mt-0">
-          <div className="rounded-md border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50 text-left">
-                  <th className="p-2 font-medium">Name</th>
-                  <th className="p-2 font-medium">Role</th>
-                  <th className="p-2 font-medium">Email</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockCustomers.map((customer) => (
-                  <tr key={customer.id} className="border-b">
-                    <td className="p-2">{customer.name}</td>
-                    <td className="p-2 capitalize">{customer.role}</td>
-                    <td className="p-2">{customer.email}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search customers..."
+                className="pl-8 w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex gap-4 items-center">
+              <RadioGroup 
+                defaultValue="all"
+                className="flex gap-4" 
+                value={roleFilter}
+                onValueChange={(value) => setRoleFilter(value as any)}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="all" id="filter-all" />
+                  <Label htmlFor="filter-all">All</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="doctor" id="filter-doctor" />
+                  <Label htmlFor="filter-doctor">Doctors</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="pharmacist" id="filter-pharmacist" />
+                  <Label htmlFor="filter-pharmacist">Pharmacists</Label>
+                </div>
+              </RadioGroup>
+              
+              <div className="flex border rounded-md">
+                <Button 
+                  variant={displayMode === "grid" ? "default" : "ghost"} 
+                  size="sm"
+                  onClick={() => setDisplayMode("grid")}
+                  className="rounded-r-none"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant={displayMode === "list" ? "default" : "ghost"} 
+                  size="sm"
+                  onClick={() => setDisplayMode("list")}
+                  className="rounded-l-none"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="grid" className="mt-0">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {mockCustomers.map((customer) => (
-              <div key={customer.id} className="rounded-lg border p-4 hover:bg-accent transition-colors">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full bg-primary/10 p-2">
-                    <Users className="h-4 w-4 text-primary" />
+
+          {isLoading ? (
+            <div className={displayMode === "grid" 
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" 
+              : "space-y-4"
+            }>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className={displayMode === "grid" 
+                  ? "h-48 w-full" 
+                  : "h-16 w-full"
+                } />
+              ))}
+            </div>
+          ) : displayMode === "grid" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredCustomers?.map((customer) => (
+                <Card key={customer.id} className="overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold">{customer.full_name}</h3>
+                        <p className="text-sm text-muted-foreground">{customer.email}</p>
+                      </div>
+                      <Badge variant={customer.role === "doctor" ? "default" : "secondary"}>
+                        {customer.role}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {customer.license_number && (
+                        <p className="text-xs">License: {customer.license_number}</p>
+                      )}
+                      {customer.city && (
+                        <p className="text-xs">Location: {customer.city}</p>
+                      )}
+                      <p className="text-xs">Customer since: {new Date(customer.created_at).toLocaleDateString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-medium">{customer.name}</h3>
-                    <p className="text-sm text-muted-foreground capitalize">{customer.role}</p>
-                    <p className="text-sm mt-1">{customer.email}</p>
+                  <div className="bg-muted p-2 flex justify-end">
+                    <Button variant="ghost" size="sm">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Profile
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredCustomers?.map((customer) => (
+                <div 
+                  key={customer.id} 
+                  className="flex items-center justify-between p-3 border rounded-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="font-medium">{customer.full_name}</p>
+                      <p className="text-sm text-muted-foreground">{customer.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant={customer.role === "doctor" ? "default" : "secondary"}>
+                      {customer.role}
+                    </Badge>
+                    <Button variant="ghost" size="sm">
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
+              ))}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
 };
-
-export default CustomersCard;

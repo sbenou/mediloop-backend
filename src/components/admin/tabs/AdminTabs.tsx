@@ -1,12 +1,13 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, UserCheck, Lock, Box } from "lucide-react";
+import { LayoutDashboard, Users, UserCheck, Lock, Box, Stethoscope } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardCards } from "../DashboardCards";
 import { UserManagementTable } from "../UserManagementTable";
 import { RoleManagementTable } from "../RoleManagementTable";
 import { PermissionsManagementCard } from "./PermissionsManagementCard";
 import { ProductManagementCard } from "./ProductManagementCard";
+import { CustomersCard } from "./CustomersCard";
 
 export const AdminTabs = ({ users, isLoading, updateUserRole }: {
   users?: any[];
@@ -29,6 +30,8 @@ export const AdminTabs = ({ users, isLoading, updateUserRole }: {
         return "#BF7F21"; // Orange/Brown
       case 'products':
         return "#6C3894"; // Purple
+      case 'customers':
+        return "#0E766E"; // Teal
       default:
         return "currentColor";
     }
@@ -62,6 +65,10 @@ export const AdminTabs = ({ users, isLoading, updateUserRole }: {
             <Box className="h-4 w-4 mr-2" style={{ color: getIconColor('products') }} />
             Products
           </TabsTrigger>
+          <TabsTrigger value="customers">
+            <Stethoscope className="h-4 w-4 mr-2" style={{ color: getIconColor('customers') }} />
+            Customers
+          </TabsTrigger>
         </TabsList>
       </div>
 
@@ -87,6 +94,10 @@ export const AdminTabs = ({ users, isLoading, updateUserRole }: {
 
       <TabsContent value="products">
         <ProductManagementCard />
+      </TabsContent>
+
+      <TabsContent value="customers">
+        <CustomersCard />
       </TabsContent>
     </Tabs>
   );
