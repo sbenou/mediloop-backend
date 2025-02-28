@@ -41,7 +41,6 @@ import PatientDetail from "./pages/pharmacy/PatientDetail";
 import OrdersPage from "./pages/pharmacy/OrdersPage";
 import PrescriptionsPage from "./pages/pharmacy/PrescriptionsPage";
 import PrescriptionDetail from "./pages/pharmacy/PrescriptionDetail";
-import DashboardPage from "./pages/pharmacy/DashboardPage";
 
 // Lazy-loaded components (examples)
 const Services = lazy(() => import("./pages/Services"));
@@ -166,10 +165,6 @@ const router = createBrowserRouter([
         element: <Billing />,
       },
       // Pharmacy routes
-      {
-        path: "pharmacy/dashboard",
-        element: <DashboardPage />,
-      },
       {
         path: "pharmacy/patients",
         element: <PatientsPage />,

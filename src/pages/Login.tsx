@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, userRole } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,29 +21,8 @@ const Login = () => {
       }
       
       if (session?.user) {
-        console.log('Active session found, checking role...');
-        
-        // Get user profile to check role
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
-          navigate('/dashboard', { replace: true });
-          return;
-        }
-        
-        // Redirect based on role
-        if (profile?.role === 'pharmacist') {
-          console.log('Pharmacist detected, redirecting to pharmacy dashboard...');
-          navigate('/pharmacy/dashboard', { replace: true });
-        } else {
-          console.log('Regular user detected, redirecting to standard dashboard...');
-          navigate('/dashboard', { replace: true });
-        }
+        console.log('Active session found, redirecting to dashboard...');
+        navigate('/dashboard', { replace: true });
       } else {
         console.log('No active session found');
       }
@@ -55,30 +34,8 @@ const Login = () => {
       console.log('Auth state changed in Login:', event, session?.user?.id);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('User signed in, checking role before redirecting...');
-        
-        // Get user profile to check role
-        supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data: profile, error }) => {
-            if (error) {
-              console.error('Profile fetch error after login:', error);
-              navigate('/dashboard', { replace: true });
-              return;
-            }
-            
-            // Redirect based on role
-            if (profile?.role === 'pharmacist') {
-              console.log('Pharmacist detected, redirecting to pharmacy dashboard...');
-              navigate('/pharmacy/dashboard', { replace: true });
-            } else {
-              console.log('Regular user detected, redirecting to standard dashboard...');
-              navigate('/dashboard', { replace: true });
-            }
-          });
+        console.log('User signed in, redirecting to dashboard...');
+        navigate('/dashboard', { replace: true });
       }
     });
 
@@ -102,12 +59,9 @@ const Login = () => {
     );
   }
 
-  // If user is already authenticated, redirect based on role
+  // If user is already authenticated, redirect to dashboard
   if (isAuthenticated) {
-    console.log('User is authenticated, redirecting based on role...');
-    if (userRole === 'pharmacist') {
-      return <Navigate to="/pharmacy/dashboard" replace />;
-    }
+    console.log('User is authenticated, redirecting to dashboard...');
     return <Navigate to="/dashboard" replace />;
   }
 

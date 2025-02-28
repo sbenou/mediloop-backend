@@ -1,7 +1,13 @@
 
-import { atom } from "recoil";
+import { atom } from 'recoil';
+import { LUXEMBOURG_COORDINATES } from '@/hooks/usePharmacyState';
 
-export const userLocationState = atom({
+export const userLocationState = atom<{ lat: number; lon: number } | null>({
   key: 'userLocationState',
-  default: { lat: 49.8153, lon: 6.1296 }, // Default to Luxembourg
+  default: LUXEMBOURG_COORDINATES
+});
+
+export const isUsingLocationState = atom<boolean>({
+  key: 'isUsingLocationState',
+  default: false
 });
