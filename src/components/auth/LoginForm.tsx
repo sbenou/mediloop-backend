@@ -64,10 +64,12 @@ export const LoginForm = () => {
           return;
         }
         
-        if (profile?.role === 'pharmacist') {
-          navigate('/pharmacy/dashboard');
+        if (profile?.role === 'superadmin') {
+          navigate('/superadmin-dashboard', { replace: true });
+        } else if (profile?.role === 'pharmacist') {
+          navigate('/pharmacy/dashboard', { replace: true });
         } else {
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         }
       } catch (err) {
         console.error('Error during role check:', err);
