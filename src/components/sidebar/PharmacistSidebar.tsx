@@ -314,46 +314,45 @@ const PharmacistSidebar = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 rounded-md p-2 transition-colors">
-                <div className="bg-secondary p-2 rounded-md">
-                  {pharmacyLogo ? (
-                    <img 
-                      src={pharmacyLogo} 
-                      alt="Pharmacy Logo" 
-                      className="h-5 w-5 object-cover"
-                    />
-                  ) : (
-                    <Building className="h-5 w-5 text-primary/60" />
-                  )}
+                <div className="relative">
+                  <div className="bg-secondary p-2 rounded-md">
+                    {pharmacyLogo ? (
+                      <img 
+                        src={pharmacyLogo} 
+                        alt="Pharmacy Logo" 
+                        className="h-5 w-5 object-cover"
+                      />
+                    ) : (
+                      <Building className="h-5 w-5 text-primary/60" />
+                    )}
+                  </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span 
+                          className="absolute -bottom-1 -right-1 flex h-3 w-3 cursor-pointer border-2 border-white rounded-full bg-background"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleConnectionStatus();
+                          }}
+                        >
+                          {isConnected ? (
+                            <span className="relative inline-flex rounded-full h-full w-full bg-green-500">
+                              <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            </span>
+                          ) : (
+                            <span className="relative inline-flex rounded-full h-full w-full bg-gray-300"></span>
+                          )}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>{isConnected ? 'Online - Click to go offline' : 'Offline - Click to go online'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center">
-                    <h3 className="font-semibold text-sm mr-2">{pharmacyName || "Pharmacy"}</h3>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span 
-                            className="relative flex h-2.5 w-2.5 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleConnectionStatus();
-                            }}
-                          >
-                            {isConnected ? (
-                              <>
-                                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                              </>
-                            ) : (
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-gray-300"></span>
-                            )}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          <p>{isConnected ? 'Online - Click to go offline' : 'Offline - Click to go online'}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
+                  <h3 className="font-semibold text-sm">{pharmacyName || "Pharmacy"}</h3>
                 </div>
                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
               </div>
