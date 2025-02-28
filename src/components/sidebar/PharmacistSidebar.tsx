@@ -25,6 +25,9 @@ import {
   Bell,
   User,
   Settings,
+  Camera,
+  Building,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -42,6 +45,8 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card, CardHeader } from "@/components/ui/card";
 
 const PharmacistSidebar = () => {
   const navigate = useNavigate();
@@ -49,8 +54,10 @@ const PharmacistSidebar = () => {
   const { profile } = useAuth();
   const [auth, setAuth] = useRecoilState(authState);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [pharmacyLogo, setPharmacyLogo] = useState<string | null>(null);
+  const [pharmacyName, setPharmacyName] = useState<string>("City Pharmacy");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups((prev) =>
@@ -68,8 +75,13 @@ const PharmacistSidebar = () => {
 
   const handleLogout = async () => {
     try {
+      console.log("Logout initiated from PharmacistSidebar");
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Supabase signOut error:", error);
+        throw error;
+      }
       
       setAuth({
         user: null,
@@ -98,6 +110,30 @@ const PharmacistSidebar = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     // Logo upload logic would go here
+  };
+
+  const handlePharmacyLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // In a real implementation, we would upload to Supabase storage here
+      // For now, create a temporary URL to display the image
+      const objectUrl = URL.createObjectURL(file);
+      setPharmacyLogo(objectUrl);
+      
+      toast({
+        title: "Logo uploaded",
+        description: "Pharmacy logo has been updated successfully",
+      });
+    } catch (error) {
+      console.error("Logo upload error:", error);
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "There was an error uploading the pharmacy logo.",
+      });
+    }
   };
 
   return (
@@ -233,18 +269,51 @@ const PharmacistSidebar = () => {
         <SidebarFooter className="border-t mt-auto p-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 rounded-md p-2 transition-colors">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Profile'} />
-                  <AvatarFallback className="bg-[#7E69AB]/10 rounded-full">
-                    <User className="h-5 w-5 text-[#7E69AB]" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="overflow-hidden flex-1">
-                  <p className="text-sm font-medium truncate">{profile?.full_name || 'Pharmacy User'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
+              <div className="flex flex-col items-center cursor-pointer hover:bg-gray-100 rounded-md p-2 transition-colors">
+                <div className="relative w-14 h-14 mb-2">
+                  <div 
+                    className="w-full h-full rounded-md border-2 border-primary/20 bg-secondary flex items-center justify-center overflow-hidden"
+                  >
+                    {pharmacyLogo ? (
+                      <img 
+                        src={pharmacyLogo} 
+                        alt="Pharmacy Logo" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Building className="h-8 w-8 text-primary/60" />
+                    )}
+                  </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button 
+                          className="absolute -bottom-1 -right-1 bg-primary text-white p-1 rounded-full shadow-md hover:bg-primary/90"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            logoInputRef.current?.click();
+                          }}
+                        >
+                          <Camera className="h-3 w-3" />
+                          <input 
+                            type="file" 
+                            ref={logoInputRef} 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={handlePharmacyLogoChange}
+                          />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Upload pharmacy logo</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <div className="text-center">
+                  <p className="text-xs font-medium line-clamp-2">{pharmacyName}</p>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground mt-1" />
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" side="top" sideOffset={10}>
@@ -264,7 +333,8 @@ const PharmacistSidebar = () => {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/upgrade')}>
-                Upgrade to Pro
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Upgrade to Pro</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
