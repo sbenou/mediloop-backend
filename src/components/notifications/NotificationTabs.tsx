@@ -23,7 +23,7 @@ const NotificationTabs = ({
   onMarkRead,
   onMarkAllRead,
 }: NotificationTabsProps) => {
-  const [currentTab, setCurrentTab] = useState<"all" | "alerts">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "alerts">("all");
   const navigate = useNavigate();
   
   // Filter alerts (payment failures, delivery issues)
@@ -35,12 +35,12 @@ const NotificationTabs = ({
   );
   
   // All other notifications
-  const allNotifications = currentTab === "all" 
+  const allNotifications = activeTab === "all" 
     ? notifications 
     : alerts;
 
   const handleTabChange = (value: string) => {
-    setCurrentTab(value as "all" | "alerts");
+    setActiveTab(value as "all" | "alerts");
   };
 
   const renderContent = () => {
@@ -56,7 +56,7 @@ const NotificationTabs = ({
     if (allNotifications.length === 0) {
       return (
         <div className="text-center py-8 text-muted-foreground">
-          <p>No {currentTab === "alerts" ? "alerts" : "notifications"}</p>
+          <p>No {activeTab === "alerts" ? "alerts" : "notifications"}</p>
         </div>
       );
     }
@@ -79,7 +79,7 @@ const NotificationTabs = ({
         </Button>
       </div>
       
-      <Tabs defaultValue="all" onValueChange={handleTabChange}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="alerts">Alerts</TabsTrigger>

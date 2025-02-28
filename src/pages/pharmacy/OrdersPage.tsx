@@ -96,7 +96,7 @@ const OrdersPage = () => {
           </p>
         </div>
 
-        <Tabs defaultValue={tab} onValueChange={handleTabChange}>
+        <Tabs value={tab} onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="all">All Orders</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
