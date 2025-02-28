@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       // Explicitly store the session to ensure it persists for all user types
       const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-      localStorage.setItem(STORAGE_KEY, session);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
       
       console.log('Session explicitly stored for user:', session.user.id);
 
@@ -180,7 +180,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session) {
           // Ensure session is stored again for all user types
           const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          localStorage.setItem(STORAGE_KEY, session);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
           console.log('Session refreshed in storage during initialization');
           
           await updateAuthState(session);
@@ -222,7 +222,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (event === 'SIGNED_IN' && session) {
           // Ensure session is stored immediately on sign in for all user types
           const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          localStorage.setItem(STORAGE_KEY, session);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
           console.log('Session stored in storage during SIGNED_IN event');
           
           await updateAuthState(session);
@@ -236,7 +236,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else if (event === 'TOKEN_REFRESHED' && session) {
           // Ensure refreshed token is stored properly
           const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          localStorage.setItem(STORAGE_KEY, session);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
           console.log('Session stored in storage during TOKEN_REFRESHED event');
           
           await updateAuthState(session);
