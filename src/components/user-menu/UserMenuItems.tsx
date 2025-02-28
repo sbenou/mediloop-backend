@@ -10,6 +10,7 @@ import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
+import { User, CreditCard, Bell, LogOut } from "lucide-react";
 
 export const UserMenuItems = () => {
   const navigate = useNavigate();
@@ -17,8 +18,13 @@ export const UserMenuItems = () => {
 
   const handleLogout = async () => {
     try {
+      console.log("Logout initiated from UserMenuItems");
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Supabase signOut error:", error);
+        throw error;
+      }
       
       // Clear auth state
       setAuth({
@@ -56,13 +62,16 @@ export const UserMenuItems = () => {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => navigate('/profile')}>
-            Account
+            <User className="mr-2 h-4 w-4" />
+            <span>Account</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate('/billing')}>
-            Billing
+            <CreditCard className="mr-2 h-4 w-4" />
+            <span>Billing</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate('/notifications')}>
-            Notifications
+            <Bell className="mr-2 h-4 w-4" />
+            <span>Notifications</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
@@ -70,7 +79,8 @@ export const UserMenuItems = () => {
           className="text-red-600 focus:text-red-600"
           onClick={handleLogout}
         >
-          Log out
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
         </DropdownMenuItem>
       </>
     );
