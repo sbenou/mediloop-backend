@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,22 +110,14 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       });
 
       // Redirect based on user role
-      if (profile.role === 'superadmin') {
-        console.log('Redirecting to superadmin dashboard...');
-        navigate('/superadmin-dashboard', { replace: true });
-        return; // Add early return to prevent onSuccess from being called
-      } else if (profile.role === 'pharmacist') {
+      if (profile.role === 'pharmacist') {
         console.log('Redirecting to pharmacy dashboard...');
         navigate('/pharmacy/dashboard', { replace: true });
-        return; // Add early return to prevent onSuccess from being called
       } else {
         console.log('Redirecting to dashboard...');
         navigate('/dashboard', { replace: true });
-        return; // Add early return to prevent onSuccess from being called
       }
       
-      // This line should never be reached due to the early returns above
-      // We'll keep it as a fallback just in case
       onSuccess();
 
     } catch (error: any) {
