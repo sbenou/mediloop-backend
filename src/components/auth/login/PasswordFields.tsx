@@ -110,14 +110,21 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       });
 
       // Redirect based on user role
-      if (profile.role === 'pharmacist') {
+      if (profile.role === 'superadmin') {
+        console.log('Redirecting to superadmin dashboard...');
+        navigate('/superadmin/dashboard', { replace: true });
+        return; // Early return to prevent onSuccess from being called
+      } else if (profile.role === 'pharmacist') {
         console.log('Redirecting to pharmacy dashboard...');
         navigate('/pharmacy/dashboard', { replace: true });
+        return; // Early return to prevent onSuccess from being called
       } else {
         console.log('Redirecting to dashboard...');
         navigate('/dashboard', { replace: true });
+        return; // Early return to prevent onSuccess from being called
       }
       
+      // This won't be called due to early returns
       onSuccess();
 
     } catch (error: any) {

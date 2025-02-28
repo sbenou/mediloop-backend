@@ -60,7 +60,10 @@ const Login = () => {
           }
           
           // Redirect based on role
-          if (profile?.role === 'pharmacist') {
+          if (profile?.role === 'superadmin') {
+            console.log('Redirecting to superadmin dashboard...');
+            navigate('/superadmin/dashboard', { replace: true });
+          } else if (profile?.role === 'pharmacist') {
             console.log('Redirecting to pharmacy dashboard...');
             navigate('/pharmacy/dashboard', { replace: true });
           } else {
