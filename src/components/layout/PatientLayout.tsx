@@ -17,19 +17,19 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
         <PatientSidebar />
       </div>
       
-      {/* Content wrapper - Contains both main content and right panel */}
+      {/* Mid section - Contains main content area and right panel */}
       <div className="flex flex-1">
         {/* Main content area */}
         <div className="flex-1 flex flex-col">
-          {/* Top bar - spans both main content and right panel */}
-          <header className="border-b h-16 px-6 flex items-center justify-end space-x-4 absolute right-0 top-0 w-[calc(100%-16rem)]">
+          {/* Top bar - spans the entire mid section */}
+          <header className="border-b h-16 px-6 flex items-center justify-end space-x-4">
             <NotificationBell />
             <CartButton isOpen={false} onOpenChange={() => {}} />
             <EnhancedUserMenu />
           </header>
           
           {/* Main content */}
-          <main className="p-6 overflow-auto flex-grow mt-16">
+          <main className="p-6 overflow-auto flex-grow">
             {children}
           </main>
         </div>
