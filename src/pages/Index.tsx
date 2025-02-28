@@ -1,87 +1,47 @@
 
+import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { HeroSection } from "@/components/home/HeroSection";
-import { FeaturesGrid } from "@/components/home/FeaturesGrid";
-import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
-import { PartnerSection } from "@/components/home/PartnerSection";
-import { StatsSection } from "@/components/home/StatsSection";
-import { TestimonialsSection } from "@/components/home/TestimonialsSection";
+import HeroSection from "@/components/home/HeroSection";
+import FeaturesGrid from "@/components/home/FeaturesGrid";
+import StatsSection from "@/components/home/StatsSection";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import CountrySelector from "@/components/CountrySelector";
-import { useAuth } from "@/hooks/auth/useAuth";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import DeliveryPersonSection from "@/components/home/DeliveryPersonSection";
+import PartnerSection from "@/components/home/PartnerSection";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  console.log('Index page - Rendering');
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  
-  // Redirect authenticated users to dashboard
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
+  console.info("Index page - Rendering");
 
-  // Fetch statistics including new connection count
-  const { data: stats } = useQuery({
-    queryKey: ['platform-stats'],
-    queryFn: async () => {
-      try {
-        const [
-          { count: ordersCount } = { count: 0 },
-          { count: pharmaciesCount } = { count: 0 },
-          { count: doctorsCount } = { count: 0 },
-          { count: prescriptionsCount } = { count: 0 },
-          { count: connectionsCount } = { count: 0 },
-        ] = await Promise.all([
-          supabase.from('orders').select('*', { count: 'exact', head: true }),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'pharmacist'),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'doctor'),
-          supabase.from('prescriptions').select('*', { count: 'exact', head: true }),
-          supabase.from('doctor_patient_connections').select('*', { count: 'exact', head: true }).eq('status', 'accepted'),
-        ]);
-
-        return {
-          ordersCount: ordersCount || 0,
-          pharmaciesCount: pharmaciesCount || 0,
-          doctorsCount: doctorsCount || 0,
-          prescriptionsCount: prescriptionsCount || 0,
-          connectionsCount: connectionsCount || 0,
-        };
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-        return {
-          ordersCount: 0,
-          pharmaciesCount: 0,
-          doctorsCount: 0,
-          prescriptionsCount: 0,
-          connectionsCount: 0,
-        };
-      }
-    },
-  });
-
-  // Regular home page content
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <CountrySelector />
-      
       <main className="flex-1">
         <HeroSection />
-        <GetStartedSteps />
         <FeaturesGrid />
-        <PartnerSection />
-        <DeliveryPersonSection />
-        <StatsSection stats={stats || { ordersCount: 0, pharmaciesCount: 0, doctorsCount: 0, prescriptionsCount: 0, connectionsCount: 0 }} />
+        <StatsSection />
         <TestimonialsSection />
+        <GetStartedSteps />
+        <DeliveryPersonSection />
+        <PartnerSection />
+        
+        {/* Temporary navigation section for testing pharmacy routes */}
+        <div className="container mx-auto py-8 border-t mt-12">
+          <h2 className="text-2xl font-bold mb-4">Testing Navigation</h2>
+          <div className="flex flex-wrap gap-4">
+            <Link to="/pharmacy/patients">
+              <Button variant="outline">Pharmacy Patients</Button>
+            </Link>
+            <Link to="/pharmacy/orders">
+              <Button variant="outline">Pharmacy Orders</Button>
+            </Link>
+            <Link to="/pharmacy/prescriptions">
+              <Button variant="outline">Pharmacy Prescriptions</Button>
+            </Link>
+          </div>
+        </div>
       </main>
-
       <Footer />
     </div>
   );
