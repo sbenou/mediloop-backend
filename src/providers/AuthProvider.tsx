@@ -105,9 +105,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       // Explicitly store the session to ensure it persists for all user types
       const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      
+      // Store in localStorage for persistence
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      
+      // Also store in sessionStorage for redundancy and for browsers that block localStorage
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
       
       console.log('Session explicitly stored for user:', session.user.id);
+      console.log('Session storage check in updateAuthState:', 
+        window.sessionStorage.getItem(STORAGE_KEY) ? 'Session found in sessionStorage' : 'No session in sessionStorage');
 
       setAuth(prev => ({
         ...prev,
@@ -180,8 +187,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session) {
           // Ensure session is stored again for all user types
           const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+          window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
           console.log('Session refreshed in storage during initialization');
+          console.log('Session storage check in initializeAuth:', 
+            window.sessionStorage.getItem(STORAGE_KEY) ? 'Session found in sessionStorage' : 'No session in sessionStorage');
           
           await updateAuthState(session);
         } else {
@@ -222,8 +232,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (event === 'SIGNED_IN' && session) {
           // Ensure session is stored immediately on sign in for all user types
           const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+          window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
           console.log('Session stored in storage during SIGNED_IN event');
+          console.log('Session storage check in SIGNED_IN:', 
+            window.sessionStorage.getItem(STORAGE_KEY) ? 'Session found in sessionStorage' : 'No session in sessionStorage');
           
           await updateAuthState(session);
         } else if (event === 'SIGNED_OUT') {
@@ -234,10 +247,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             isLoading: false,
           });
         } else if (event === 'TOKEN_REFRESHED' && session) {
-          // Ensure refreshed token is stored properly
+          // Ensure refreshed token is stored properly in all storage types
           const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+          window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
           console.log('Session stored in storage during TOKEN_REFRESHED event');
+          console.log('Session storage check in TOKEN_REFRESHED:', 
+            window.sessionStorage.getItem(STORAGE_KEY) ? 'Session found in sessionStorage' : 'No session in sessionStorage');
           
           await updateAuthState(session);
         }

@@ -80,6 +80,17 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
       console.log('Session confirmed:', session.user.id);
 
+      // IMPORTANT: Explicitly store session in all storage methods for all user types
+      const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+      
+      // Store in localStorage
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      console.log('Session explicitly stored in localStorage');
+      
+      // Also store in sessionStorage for redundancy
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      console.log('Session explicitly stored in sessionStorage');
+      
       // Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
