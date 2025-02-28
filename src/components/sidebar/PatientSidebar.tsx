@@ -29,6 +29,7 @@ import {
   ChevronRight,
   LogOut,
   ClipboardList,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -116,6 +117,19 @@ const PatientSidebarContent = () => {
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/dashboard')}
+                  className="w-full flex justify-between items-center"
+                >
+                  <span className="flex items-center">
+                    <Home className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-50" />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => toggleGroup('profile')}
