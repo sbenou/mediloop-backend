@@ -18,10 +18,8 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
   
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      {/* Left section - Sidebar */}
-      <div className="flex-shrink-0 h-full">
-        <UnifiedSidebar />
-      </div>
+      {/* Make sidebar full height */}
+      <UnifiedSidebar />
       
       {/* Right section - Contains header and content area */}
       <div className="flex flex-col flex-1 overflow-hidden">
