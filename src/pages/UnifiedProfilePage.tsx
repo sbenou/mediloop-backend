@@ -1,50 +1,43 @@
 
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const UnifiedProfilePage = () => {
-  const { profile, userRole } = useAuth();
+  const { profile } = useAuth();
 
   return (
     <UnifiedLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">My Profile</h1>
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold">Welcome, {profile?.full_name || 'User'}</h1>
+          <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
         </div>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>User Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p><span className="font-medium">Name:</span> {profile?.full_name || "Not set"}</p>
-              <p><span className="font-medium">Email:</span> {profile?.email || "Not set"}</p>
-              <p><span className="font-medium">Role:</span> {userRole || "patient"}</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <h3 className="font-medium mb-2">Prescriptions</h3>
-                <p className="text-3xl font-bold">5</p>
-                <p className="text-sm text-muted-foreground">Active prescriptions</p>
-              </div>
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <h3 className="font-medium mb-2">Orders</h3>
-                <p className="text-3xl font-bold">2</p>
-                <p className="text-sm text-muted-foreground">Recent orders</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <h3 className="font-medium text-lg mb-2">Prescriptions</h3>
+            <p className="text-muted-foreground text-sm">Total active prescriptions</p>
+            <p className="text-4xl font-bold mt-2">0</p>
+          </div>
+          
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <h3 className="font-medium text-lg mb-2">Orders</h3>
+            <p className="text-muted-foreground text-sm">Total orders placed</p>
+            <p className="text-4xl font-bold mt-2">0</p>
+          </div>
+          
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <h3 className="font-medium text-lg mb-2">Doctors</h3>
+            <p className="text-muted-foreground text-sm">Connected healthcare providers</p>
+            <p className="text-4xl font-bold mt-2">0</p>
+          </div>
+          
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <h3 className="font-medium text-lg mb-2">Teleconsultations</h3>
+            <p className="text-muted-foreground text-sm">Upcoming appointments</p>
+            <p className="text-4xl font-bold mt-2">0</p>
+          </div>
+        </div>
       </div>
     </UnifiedLayout>
   );
