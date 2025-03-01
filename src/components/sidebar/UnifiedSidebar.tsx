@@ -59,7 +59,7 @@ const UnifiedSidebar = () => {
   ];
 
   return (
-    <aside className="w-64 border-r bg-white h-screen flex flex-col">
+    <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       {/* Sidebar Header */}
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2">
