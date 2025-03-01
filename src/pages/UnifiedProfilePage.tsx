@@ -19,40 +19,40 @@ const UnifiedProfilePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="bg-white border rounded-lg shadow-sm">
               <CardHeader className="pb-1 pt-3">
-                <CardTitle className="text-sm">Prescriptions</CardTitle>
+                <CardTitle className="text-base">Prescriptions</CardTitle>
               </CardHeader>
               <CardContent className="py-2">
-                <p className="text-muted-foreground text-xs">Total active prescriptions</p>
+                <p className="text-muted-foreground text-sm">Total active prescriptions</p>
                 <p className="text-2xl font-bold mt-1">0</p>
               </CardContent>
             </Card>
             
             <Card className="bg-white border rounded-lg shadow-sm">
               <CardHeader className="pb-1 pt-3">
-                <CardTitle className="text-sm">Orders</CardTitle>
+                <CardTitle className="text-base">Orders</CardTitle>
               </CardHeader>
               <CardContent className="py-2">
-                <p className="text-muted-foreground text-xs">Total orders placed</p>
+                <p className="text-muted-foreground text-sm">Total orders placed</p>
                 <p className="text-2xl font-bold mt-1">0</p>
               </CardContent>
             </Card>
             
             <Card className="bg-white border rounded-lg shadow-sm">
               <CardHeader className="pb-1 pt-3">
-                <CardTitle className="text-sm">Doctors</CardTitle>
+                <CardTitle className="text-base">Doctors</CardTitle>
               </CardHeader>
               <CardContent className="py-2">
-                <p className="text-muted-foreground text-xs">Connected healthcare providers</p>
+                <p className="text-muted-foreground text-sm">Connected healthcare providers</p>
                 <p className="text-2xl font-bold mt-1">0</p>
               </CardContent>
             </Card>
             
             <Card className="bg-white border rounded-lg shadow-sm">
               <CardHeader className="pb-1 pt-3">
-                <CardTitle className="text-sm">Teleconsultations</CardTitle>
+                <CardTitle className="text-base">Teleconsultations</CardTitle>
               </CardHeader>
               <CardContent className="py-2">
-                <p className="text-muted-foreground text-xs">Upcoming appointments</p>
+                <p className="text-muted-foreground text-sm">Upcoming appointments</p>
                 <p className="text-2xl font-bold mt-1">0</p>
               </CardContent>
             </Card>
