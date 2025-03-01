@@ -28,10 +28,6 @@ const NotificationBell = () => {
     }
   }, [isAuthenticated, fetchNotifications, setupRealtimeSubscription]);
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
