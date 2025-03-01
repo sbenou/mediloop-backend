@@ -15,8 +15,8 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
   
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      {/* Sidebar */}
-      {isAuthenticated && <UnifiedSidebar />}
+      {/* Sidebar - Always show for unified layout */}
+      <UnifiedSidebar />
       
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
