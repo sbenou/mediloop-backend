@@ -19,7 +19,7 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Left section - Sidebar */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 h-full">
         <UnifiedSidebar />
       </div>
       

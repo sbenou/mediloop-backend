@@ -2,7 +2,6 @@
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PersonalDetails from "@/components/settings/PersonalDetails";
 
 const UnifiedProfilePage = () => {
@@ -26,27 +25,7 @@ const UnifiedProfilePage = () => {
           </CardContent>
         </Card>
         
-        <Tabs defaultValue="personal" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="personal">Personal Information</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="personal">
-            <PersonalDetails />
-          </TabsContent>
-
-          <TabsContent value="security">
-            <Card>
-              <CardHeader>
-                <CardTitle>Security Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>Security settings will be displayed here.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <PersonalDetails />
       </div>
     </UnifiedLayout>
   );

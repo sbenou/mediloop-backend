@@ -33,7 +33,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "../user-menu/UserAvatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 const UnifiedSidebar = () => {
   const { isAuthenticated, userRole, profile } = useAuth();
