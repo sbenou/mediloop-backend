@@ -102,8 +102,8 @@ const UnifiedSidebar = () => {
         <div className="flex items-center space-x-3">
           <UserAvatar userProfile={profile} />
           <div className="overflow-hidden">
-            <p className="text-sm font-medium truncate">{profile?.full_name || 'sam testington'}</p>
-            <p className="text-xs text-muted-foreground truncate">{profile?.email || 'bencu004@hotmail.com'}</p>
+            <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
+            <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>
           </div>
         </div>
       </div>
