@@ -16,7 +16,7 @@ const UnifiedProfilePage = () => {
             <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="bg-white border rounded-lg shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Prescriptions</CardTitle>
