@@ -5,6 +5,11 @@ import UnifiedSidebar from "../sidebar/UnifiedSidebar";
 import NotificationBell from "../NotificationBell";
 import UserMenu from "../UserMenu";
 import { ShoppingCart } from "lucide-react";
+import { MainNavigation } from "./navigation/MainNavigation";
+import {
+  NavigationMenu,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -23,8 +28,11 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
         {/* Header */}
         <header className="h-16 border-b px-6 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-semibold">Mediloop</h1>
-            <p className="text-sm text-muted-foreground">Healthcare Platform</p>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <MainNavigation />
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
           
           <div className="flex items-center space-x-4">

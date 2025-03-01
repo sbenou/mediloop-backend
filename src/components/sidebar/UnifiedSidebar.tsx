@@ -19,18 +19,12 @@ const UnifiedSidebar = () => {
     return location.pathname === path;
   };
 
-  const menuItems = [
+  const platformMenuItems = [
     {
       label: 'Dashboard',
       icon: <Home className="w-5 h-5 mr-3" />,
       path: '/dashboard',
       active: isLinkActive('/dashboard')
-    },
-    {
-      label: 'Profile',
-      icon: <User className="w-5 h-5 mr-3" />,
-      path: '/profile',
-      active: isLinkActive('/profile') || isLinkActive('/unified-profile')
     },
     {
       label: 'Orders',
@@ -39,17 +33,14 @@ const UnifiedSidebar = () => {
       active: isLinkActive('/my-orders')
     },
     {
-      label: 'My Prescriptions',
-      icon: <FileText className="w-5 h-5 mr-3" />,
-      path: '/my-prescriptions',
-      active: isLinkActive('/my-prescriptions')
-    },
-    {
       label: 'Teleconsultations',
       icon: <Calendar className="w-5 h-5 mr-3" />,
       path: '/teleconsultations',
       active: isLinkActive('/teleconsultations')
-    },
+    }
+  ];
+  
+  const adminMenuItems = [
     {
       label: 'Settings',
       icon: <Settings className="w-5 h-5 mr-3" />,
@@ -76,11 +67,33 @@ const UnifiedSidebar = () => {
       {/* Sidebar Sections */}
       <div className="flex-1 overflow-auto py-4">
         <div className="px-3 mb-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Platform</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">Platform</p>
         </div>
         
         <nav className="space-y-1 px-2">
-          {menuItems.map((item, index) => (
+          {platformMenuItems.map((item, index) => (
+            <Link
+              key={index}
+              to={item.path}
+              className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                item.active 
+                  ? 'bg-primary/10 text-primary font-medium' 
+                  : 'text-muted-foreground hover:bg-gray-100'
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        
+        {/* Admin Section */}
+        <div className="px-3 mb-2 mt-6">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">Admin</p>
+        </div>
+        
+        <nav className="space-y-1 px-2">
+          {adminMenuItems.map((item, index) => (
             <Link
               key={index}
               to={item.path}
