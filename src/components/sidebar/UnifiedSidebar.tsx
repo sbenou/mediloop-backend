@@ -182,7 +182,7 @@ const UnifiedSidebar = () => {
   }
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader className="flex items-center justify-center py-4">
         <div className="text-xl font-bold">MedConnect</div>
       </SidebarHeader>
