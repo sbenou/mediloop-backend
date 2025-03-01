@@ -29,6 +29,7 @@ import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage
 import Teleconsultations from "./pages/Teleconsultations";
 import Billing from "./pages/Billing";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
+import UnifiedProfilePage from "./pages/UnifiedProfilePage";
 
 // Pharmacy routes
 import DashboardPage from "./pages/pharmacy/DashboardPage";
@@ -106,6 +107,9 @@ function App() {
                   <Route path="/superadmin/billing" element={<SuperAdminDashboard />} />
                   <Route path="/superadmin/notifications" element={<SuperAdminDashboard />} />
                   <Route path="/superadmin/upgrade" element={<SuperAdminDashboard />} />
+                  
+                  {/* Unified Layout Example Route */}
+                  <Route path="/unified-profile" element={<UnifiedProfilePage />} />
                 </Routes>
                 <Toaster />
               </BrowserRouter>
