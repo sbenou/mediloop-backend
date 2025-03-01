@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import {
   Sidebar,
@@ -21,13 +21,8 @@ import {
   ShoppingBag,
   FileText,
   Users,
-  Bell,
   Building,
   CreditCard,
-  LifeBuoy,
-  LayoutDashboard,
-  Pill,
-  Heart,
   Stethoscope,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,16 +32,6 @@ import UserAvatar from "../user-menu/UserAvatar";
 const UnifiedSidebar = () => {
   const { isAuthenticated, userRole, profile } = useAuth();
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   // Handle logout
   const handleLogout = async () => {
@@ -221,7 +206,7 @@ const UnifiedSidebar = () => {
             
             <SidebarMenuItem>
               <SidebarMenuButton 
-                isActive={isLinkActive(`${linkPrefix}/profile`) || isLinkActive("/profile")}
+                isActive={isLinkActive(`${linkPrefix}/profile`) || isLinkActive("/profile") || isLinkActive("/unified-profile")}
                 tooltip="Profile"
               >
                 <Link to={userRole === "patient" || !userRole ? "/profile" : `${linkPrefix}/profile`} className="flex items-center w-full">

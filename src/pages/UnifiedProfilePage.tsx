@@ -10,22 +10,24 @@ const UnifiedProfilePage = () => {
   return (
     <UnifiedLayout>
       <div className="container mx-auto">
-        <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+        <h1 className="text-3xl font-bold mb-6">My Profile</h1>
         
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>User Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p><span className="font-medium">Name:</span> {profile?.full_name || "Not set"}</p>
-              <p><span className="font-medium">Email:</span> {profile?.email || "Not set"}</p>
-              <p><span className="font-medium">Role:</span> {userRole || "patient"}</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <PersonalDetails />
+        <div className="grid grid-cols-1 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p><span className="font-medium">Name:</span> {profile?.full_name || "Not set"}</p>
+                <p><span className="font-medium">Email:</span> {profile?.email || "Not set"}</p>
+                <p><span className="font-medium">Role:</span> {userRole || "patient"}</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <PersonalDetails />
+        </div>
       </div>
     </UnifiedLayout>
   );
