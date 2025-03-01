@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedSidebar from "../sidebar/UnifiedSidebar";
 import NotificationBell from "../NotificationBell";
 import UserMenu from "../UserMenu";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Bell } from "lucide-react";
 import { MainNavigation } from "./navigation/MainNavigation";
 import {
   NavigationMenu,
