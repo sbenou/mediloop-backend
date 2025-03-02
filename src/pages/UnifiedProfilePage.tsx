@@ -1,14 +1,19 @@
 
+import { useState, useEffect } from "react";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
-import { useState, useEffect } from "react";
+import { toast } from "@/components/ui/use-toast";
+import { ActivityFeed } from "@/components/activity/ActivityFeed";
+import { mockActivities } from "@/components/activity/mockActivities";
+import { Activity } from "@/components/activity/ActivityItem";
 
 const UnifiedProfilePage = () => {
   const { profile } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
+  const [activities, setActivities] = useState<Activity[]>(mockActivities);
 
   // Adjust layout when drawer state changes
   useEffect(() => {
@@ -22,6 +27,28 @@ const UnifiedProfilePage = () => {
       }
     }
   }, [isOpen]);
+
+  const handleMarkRead = (id: string) => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => 
+        activity.id === id ? { ...activity, read: true } : activity
+      )
+    );
+    toast({
+      title: "Activity marked as read",
+      duration: 2000,
+    });
+  };
+
+  const handleMarkAllRead = () => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => ({ ...activity, read: true }))
+    );
+    toast({
+      title: "All activities marked as read",
+      duration: 2000,
+    });
+  };
 
   return (
     <UnifiedLayout>
@@ -83,11 +110,12 @@ const UnifiedProfilePage = () => {
 
         {/* Activity drawer - without overlay */}
         <div className={`fixed inset-y-0 right-0 mt-16 w-[256px] border-l bg-white transition-transform duration-300 z-40 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-          <div className="p-4">
-            <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-500">No recent activity to display</p>
-            </div>
+          <div className="p-4 h-full">
+            <ActivityFeed 
+              activities={activities}
+              onMarkRead={handleMarkRead}
+              onMarkAllRead={handleMarkAllRead}
+            />
           </div>
         </div>
       </div>
