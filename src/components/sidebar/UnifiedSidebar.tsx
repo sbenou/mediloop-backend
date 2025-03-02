@@ -113,7 +113,7 @@ const UnifiedSidebar = () => {
       {/* User Profile */}
       <div className="border-t p-4">
         <div className="flex items-center space-x-3">
-          <UserAvatar userProfile={profile} />
+          <UserAvatar userProfile={profile} squared={true} />
           <div className="overflow-hidden">
             <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
             <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>
