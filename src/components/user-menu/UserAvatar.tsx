@@ -1,4 +1,3 @@
-
 import { memo, useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Upload, Building2 } from "lucide-react";

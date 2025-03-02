@@ -1,3 +1,4 @@
+
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Home, User, ShoppingBag, FileText, Settings, Calendar } from "lucide-react";
@@ -59,7 +60,22 @@ const UnifiedSidebar = () => {
                 id: null,
                 full_name: 'Mediloop',
                 email: null,
-                avatar_url: null
+                avatar_url: null,
+                role: 'organization',
+                role_id: null,
+                date_of_birth: null,
+                city: null,
+                auth_method: null,
+                is_blocked: null,
+                doctor_stamp_url: null,
+                doctor_signature_url: null,
+                cns_card_front: null,
+                cns_card_back: null,
+                cns_number: null,
+                deleted_at: null,
+                created_at: null,
+                updated_at: null,
+                license_number: null
               }} 
               squared={true} 
               canUpload={true} 
