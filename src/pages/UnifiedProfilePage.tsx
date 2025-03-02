@@ -59,7 +59,7 @@ const UnifiedProfilePage = () => {
         {/* Main content section with flexible width */}
         <div 
           id="main-content" 
-          className="flex-1 space-y-8 px-4 transition-all duration-300"
+          className="flex-1 space-y-8 px-2 transition-all duration-300"
         >
           <div>
             <h1 className="text-3xl font-bold">Welcome, {profile?.full_name || 'User'}</h1>
