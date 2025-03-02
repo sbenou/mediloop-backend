@@ -1,7 +1,7 @@
+
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -40,7 +40,7 @@ const UnifiedProfilePage = () => {
             <Card className="bg-white border rounded-lg shadow-sm p-6">
               <div className="text-center">
                 <h3 className="text-base font-medium">Prescriptions</h3>
-                <p className="text-sm text-muted-foreground">Total active prescriptions</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">Total active prescriptions</p>
                 <p className="text-4xl font-bold mt-2">0</p>
               </div>
             </Card>
@@ -48,7 +48,7 @@ const UnifiedProfilePage = () => {
             <Card className="bg-white border rounded-lg shadow-sm p-6">
               <div className="text-center">
                 <h3 className="text-base font-medium">Orders</h3>
-                <p className="text-sm text-muted-foreground">Total orders placed</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">Total orders placed</p>
                 <p className="text-4xl font-bold mt-2">0</p>
               </div>
             </Card>
@@ -56,7 +56,7 @@ const UnifiedProfilePage = () => {
             <Card className="bg-white border rounded-lg shadow-sm p-6">
               <div className="text-center">
                 <h3 className="text-base font-medium">Doctors</h3>
-                <p className="text-sm text-muted-foreground">Connected healthcare providers</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">Connected healthcare providers</p>
                 <p className="text-4xl font-bold mt-2">0</p>
               </div>
             </Card>
@@ -64,7 +64,7 @@ const UnifiedProfilePage = () => {
             <Card className="bg-white border rounded-lg shadow-sm p-6">
               <div className="text-center">
                 <h3 className="text-base font-medium">Teleconsultations</h3>
-                <p className="text-sm text-muted-foreground">Upcoming appointments</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">Upcoming appointments</p>
                 <p className="text-4xl font-bold mt-2">0</p>
               </div>
             </Card>
