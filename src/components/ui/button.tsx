@@ -47,7 +47,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(
           buttonVariants({ variant, size, className }),
-          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
+          "focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-primary focus-visible:ring-offset-1"
         )}
         ref={ref}
         {...props}
