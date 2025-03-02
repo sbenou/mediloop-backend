@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -15,9 +14,7 @@ const UnifiedProfilePage = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
 
-  // Adjust layout when drawer state changes
   useEffect(() => {
-    // Add or remove a class to the main content when drawer opens/closes
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
       if (isOpen) {
@@ -27,7 +24,6 @@ const UnifiedProfilePage = () => {
       }
     }
     
-    // Force a re-render to ensure the drawer displays properly
     window.dispatchEvent(new Event('resize'));
   }, [isOpen]);
 
@@ -56,10 +52,9 @@ const UnifiedProfilePage = () => {
   return (
     <UnifiedLayout>
       <div className="flex h-full relative">
-        {/* Main content section with flexible width */}
         <div 
           id="main-content" 
-          className="flex-1 space-y-8 px-1 transition-all duration-300"
+          className="flex-1 space-y-8 px-1 mx-0 transition-all duration-300"
         >
           <div>
             <h1 className="text-3xl font-bold">Welcome, {profile?.full_name || 'User'}</h1>
@@ -101,7 +96,6 @@ const UnifiedProfilePage = () => {
           </div>
         </div>
 
-        {/* Floating toggle button for the drawer */}
         <Button
           variant="outline"
           size="icon"
@@ -111,7 +105,6 @@ const UnifiedProfilePage = () => {
           {isOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
         </Button>
 
-        {/* Activity drawer - fixed position with proper z-index */}
         <div 
           className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         >
