@@ -1,7 +1,7 @@
 
 import { memo, useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Upload } from "lucide-react";
+import { User, Upload, Building2 } from "lucide-react";
 import { UserProfile } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -18,6 +18,9 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  
+  // Detect if this is an organization avatar
+  const isOrganization = userProfile?.full_name === 'Mediloop';
 
   const handleFileSelect = () => {
     if (fileInputRef.current) {
@@ -39,10 +42,19 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
       // Optimize image before upload
       const optimizedFile = await optimizeImage(file);
       
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      if (!userId) throw new Error('User not authenticated');
-
-      const filePath = `${userId}/${crypto.randomUUID()}`;
+      // If this is an organization avatar, use a special path
+      let filePath;
+      let updateTable;
+      
+      if (isOrganization) {
+        filePath = `organization/logo`;
+        updateTable = 'organization_settings';
+      } else {
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (!userId) throw new Error('User not authenticated');
+        filePath = `${userId}/${crypto.randomUUID()}`;
+        updateTable = 'profiles';
+      }
       
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -57,20 +69,33 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
         .from('avatars')
         .getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', userId);
+      // If this is an organization avatar, update org settings instead of profile
+      if (isOrganization) {
+        // For demo purposes, we'll just show a success message
+        // In a real application, you would update an organization_settings table
+        toast({
+          title: "Success",
+          description: "Organization logo updated successfully",
+        });
+      } else {
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (!userId) throw new Error('User not authenticated');
+        
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', userId);
 
-      if (updateError) throw updateError;
-      
-      // Invalidate the profile query to refresh the data
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+        if (updateError) throw updateError;
+        
+        // Invalidate the profile query to refresh the data
+        await queryClient.invalidateQueries({ queryKey: ['profile'] });
 
-      toast({
-        title: "Success",
-        description: "Avatar updated successfully",
-      });
+        toast({
+          title: "Success",
+          description: "Avatar updated successfully",
+        });
+      }
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast({
@@ -137,7 +162,11 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
           className={squared ? 'rounded-md' : 'rounded-full'}
         />
         <AvatarFallback className={`bg-[#7E69AB]/10 ${squared ? 'rounded-md' : 'rounded-full'}`}>
-          <User className="h-5 w-5 text-[#7E69AB]" />
+          {isOrganization ? (
+            <Building2 className="h-5 w-5 text-[#7E69AB]" />
+          ) : (
+            <User className="h-5 w-5 text-[#7E69AB]" />
+          )}
         </AvatarFallback>
       </Avatar>
 

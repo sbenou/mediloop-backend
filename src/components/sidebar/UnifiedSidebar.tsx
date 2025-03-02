@@ -1,4 +1,3 @@
-
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Home, User, ShoppingBag, FileText, Settings, Calendar } from "lucide-react";
@@ -55,7 +54,16 @@ const UnifiedSidebar = () => {
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <UserAvatar squared={true} canUpload={true} />
+            <UserAvatar 
+              userProfile={{
+                id: null,
+                full_name: 'Mediloop',
+                email: null,
+                avatar_url: null
+              }} 
+              squared={true} 
+              canUpload={true} 
+            />
           </div>
           <div>
             <h3 className="font-semibold text-sm">Mediloop</h3>
