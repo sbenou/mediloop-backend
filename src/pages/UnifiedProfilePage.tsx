@@ -71,7 +71,6 @@ const UnifiedProfilePage = () => {
           <SheetContent 
             side="right" 
             className="w-[320px] p-4 border-l"
-            closeButton={false}
           >
             <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
             <div className="space-y-4">
