@@ -21,9 +21,9 @@ const UnifiedProfilePage = () => {
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
       if (isOpen) {
-        mainContent.classList.add('mr-[256px]');
+        mainContent.classList.add('mr-[300px]');
       } else {
-        mainContent.classList.remove('mr-[256px]');
+        mainContent.classList.remove('mr-[300px]');
       }
     }
     
@@ -113,7 +113,7 @@ const UnifiedProfilePage = () => {
 
         {/* Activity drawer - fixed position with proper z-index */}
         <div 
-          className={`fixed inset-y-0 right-0 mt-16 w-[256px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         >
           <div className="p-4 h-full overflow-y-auto">
             <ActivityFeed 

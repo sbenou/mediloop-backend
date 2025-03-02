@@ -60,10 +60,10 @@ export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: Activity
       </div>
       
       <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setActiveTab(value as "all" | ActivityType)}>
-        <TabsList className="grid grid-cols-3 mb-4">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="prescription_created">Prescriptions</TabsTrigger>
-          <TabsTrigger value="order_placed">Orders</TabsTrigger>
+        <TabsList className="grid grid-cols-3 mb-4 w-full">
+          <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+          <TabsTrigger value="prescription_created" className="text-xs px-1">Prescriptions</TabsTrigger>
+          <TabsTrigger value="order_placed" className="text-xs">Orders</TabsTrigger>
         </TabsList>
         
         <TabsContent value="all" className="mt-0">
