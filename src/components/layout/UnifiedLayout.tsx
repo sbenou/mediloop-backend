@@ -25,8 +25,8 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
       
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-16 border-b px-6 flex items-center justify-between">
+        {/* Apply a consistent font family to header */}
+        <header className="h-16 border-b px-6 flex items-center justify-between font-sans">
           <div className="flex items-center space-x-4">
             <NavigationMenu>
               <NavigationMenuList>

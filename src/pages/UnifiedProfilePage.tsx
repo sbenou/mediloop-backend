@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -51,7 +52,8 @@ const UnifiedProfilePage = () => {
 
   return (
     <UnifiedLayout>
-      <div className="flex h-full relative">
+      {/* Apply consistent font-family to this page only */}
+      <div className="flex h-full relative font-sans">
         <div 
           id="main-content" 
           className="flex-1 space-y-8 px-1 mx-0 transition-all duration-300"
