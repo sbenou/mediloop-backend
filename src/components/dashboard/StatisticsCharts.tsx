@@ -26,22 +26,22 @@ import {
 
 type TimeFrame = "current-month" | "last-3-months";
 
-// Mock data generator
+// Mock data generator with more realistic and consistent data
 const generateMockData = (type: "prescriptions" | "teleconsultations", timeFrame: TimeFrame) => {
   if (timeFrame === "current-month") {
     // Generate data for current month (4 weeks)
     return [
-      { name: "Week 1", count: Math.floor(Math.random() * 10) },
-      { name: "Week 2", count: Math.floor(Math.random() * 10) },
-      { name: "Week 3", count: Math.floor(Math.random() * 10) },
-      { name: "Week 4", count: Math.floor(Math.random() * 10) }
+      { name: "Week 1", count: type === "prescriptions" ? 8 : 5 },
+      { name: "Week 2", count: type === "prescriptions" ? 12 : 7 },
+      { name: "Week 3", count: type === "prescriptions" ? 6 : 4 },
+      { name: "Week 4", count: type === "prescriptions" ? 10 : 6 }
     ];
   } else {
     // Generate data for last 3 months
     return [
-      { name: "Month 1", count: Math.floor(Math.random() * 25) },
-      { name: "Month 2", count: Math.floor(Math.random() * 25) },
-      { name: "Month 3", count: Math.floor(Math.random() * 25) }
+      { name: "Month 1", count: type === "prescriptions" ? 25 : 15 },
+      { name: "Month 2", count: type === "prescriptions" ? 18 : 12 },
+      { name: "Month 3", count: type === "prescriptions" ? 22 : 18 }
     ];
   }
 };
@@ -53,11 +53,15 @@ export const StatisticsCharts = () => {
   const prescriptionsData = generateMockData("prescriptions", prescriptionsTimeFrame);
   const teleconsultationsData = generateMockData("teleconsultations", teleconsultationsTimeFrame);
   
+  // Log the data to verify it's being generated
+  console.log("Prescriptions data:", prescriptionsData);
+  console.log("Teleconsultations data:", teleconsultationsData);
+  
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-      <Card>
+      <Card className="shadow-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-lg font-medium">Prescriptions</CardTitle>
+          <CardTitle className="text-lg font-medium text-primary">Prescriptions</CardTitle>
           <Select 
             value={prescriptionsTimeFrame} 
             onValueChange={(value) => setPrescriptionsTimeFrame(value as TimeFrame)}
@@ -72,15 +76,15 @@ export const StatisticsCharts = () => {
           </Select>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={prescriptionsData}
                 margin={{
-                  top: 5,
+                  top: 20,
                   right: 30,
                   left: 20,
-                  bottom: 5,
+                  bottom: 20,
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
@@ -95,9 +99,9 @@ export const StatisticsCharts = () => {
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="shadow-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-lg font-medium">Teleconsultations</CardTitle>
+          <CardTitle className="text-lg font-medium text-primary">Teleconsultations</CardTitle>
           <Select 
             value={teleconsultationsTimeFrame} 
             onValueChange={(value) => setTeleconsultationsTimeFrame(value as TimeFrame)}
@@ -112,15 +116,15 @@ export const StatisticsCharts = () => {
           </Select>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={teleconsultationsData}
                 margin={{
-                  top: 5,
+                  top: 20,
                   right: 30,
                   left: 20,
-                  bottom: 5,
+                  bottom: 20,
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
