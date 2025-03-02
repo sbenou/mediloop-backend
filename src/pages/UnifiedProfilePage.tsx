@@ -26,6 +26,9 @@ const UnifiedProfilePage = () => {
         mainContent.classList.remove('mr-[256px]');
       }
     }
+    
+    // Force a re-render to ensure the drawer displays properly
+    window.dispatchEvent(new Event('resize'));
   }, [isOpen]);
 
   const handleMarkRead = (id: string) => {
@@ -108,9 +111,11 @@ const UnifiedProfilePage = () => {
           {isOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
         </Button>
 
-        {/* Activity drawer - without overlay */}
-        <div className={`fixed inset-y-0 right-0 mt-16 w-[256px] border-l bg-white transition-transform duration-300 z-40 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-          <div className="p-4 h-full">
+        {/* Activity drawer - fixed position with proper z-index */}
+        <div 
+          className={`fixed inset-y-0 right-0 mt-16 w-[256px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        >
+          <div className="p-4 h-full overflow-y-auto">
             <ActivityFeed 
               activities={activities}
               onMarkRead={handleMarkRead}
