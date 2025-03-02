@@ -86,7 +86,7 @@ const UnifiedProfilePage = () => {
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetContent 
             side="right" 
-            className="w-[320px] p-4 border-l fixed inset-y-0 right-0 mt-16"
+            className="w-[320px] p-4 border-l fixed inset-y-0 right-0 mt-16 bg-white shadow-none"
           >
             <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
             <div className="space-y-4">
