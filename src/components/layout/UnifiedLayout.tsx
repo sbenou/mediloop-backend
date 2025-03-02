@@ -1,15 +1,12 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedSidebar from "../sidebar/UnifiedSidebar";
 import NotificationBell from "../NotificationBell";
 import UserMenu from "../UserMenu";
-import { ShoppingCart, Bell } from "lucide-react";
+import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { MainNavigation } from "./navigation/MainNavigation";
-import {
-  NavigationMenu,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu";
+import CartButton from "./navigation/CartButton";
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -17,6 +14,7 @@ interface UnifiedLayoutProps {
 
 const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
   const { isAuthenticated } = useAuth();
+  const [isCartOpen, setIsCartOpen] = useState(false);
   
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -37,9 +35,7 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
           
           <div className="flex items-center space-x-4">
             <NotificationBell />
-            <button className="relative p-2 text-primary hover:text-primary/80 transition-colors">
-              <ShoppingCart className="h-5 w-5" />
-            </button>
+            <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
             <UserMenu />
           </div>
         </header>
