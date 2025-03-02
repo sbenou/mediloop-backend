@@ -7,14 +7,17 @@ import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
+import { Advertisements } from "@/components/activity/Advertisements";
 import { mockActivities } from "@/components/activity/mockActivities";
 import { Activity } from "@/components/activity/ActivityItem";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const UnifiedProfilePage = () => {
   const { profile } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
 
   useEffect(() => {
     const mainContent = document.getElementById('main-content');
@@ -115,11 +118,29 @@ const UnifiedProfilePage = () => {
           className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         >
           <div className="p-4 h-full overflow-y-auto">
-            <ActivityFeed 
-              activities={activities}
-              onMarkRead={handleMarkRead}
-              onMarkAllRead={handleMarkAllRead}
-            />
+            <Tabs 
+              defaultValue="home" 
+              className="w-full" 
+              value={activeDrawerTab}
+              onValueChange={setActiveDrawerTab}
+            >
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="home">Home</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="home" className="mt-0">
+                <Advertisements />
+              </TabsContent>
+              
+              <TabsContent value="activity" className="mt-0">
+                <ActivityFeed 
+                  activities={activities}
+                  onMarkRead={handleMarkRead}
+                  onMarkAllRead={handleMarkAllRead}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
