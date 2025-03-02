@@ -12,12 +12,14 @@ import { mockActivities } from "@/components/activity/mockActivities";
 import { Activity } from "@/components/activity/ActivityItem";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CartButton from "@/components/layout/navigation/CartButton";
 
 const UnifiedProfilePage = () => {
   const { profile } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     const mainContent = document.getElementById('main-content');
@@ -62,9 +64,14 @@ const UnifiedProfilePage = () => {
           id="main-content" 
           className="flex-1 space-y-8 px-1 mx-0 transition-all duration-300"
         >
-          <div>
-            <h1 className="text-3xl font-bold">Welcome, {profile?.full_name || 'User'}</h1>
-            <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Welcome, {profile?.full_name || 'User'}</h1>
+              <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
+            </div>
+            <div>
+              <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
