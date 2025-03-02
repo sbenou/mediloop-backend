@@ -82,18 +82,15 @@ const UnifiedProfilePage = () => {
           {isOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
         </Button>
 
-        {/* Activity drawer - now positioned with fixed positioning */}
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetContent 
-            side="right" 
-            className="w-[320px] p-4 border-l fixed inset-y-0 right-0 mt-16 bg-white shadow-none"
-          >
+        {/* Activity drawer - without overlay */}
+        <div className={`fixed inset-y-0 right-0 mt-16 w-[320px] border-l bg-white transition-transform duration-300 z-40 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
             <div className="space-y-4">
               <p className="text-sm text-gray-500">No recent activity to display</p>
             </div>
-          </SheetContent>
-        </Sheet>
+          </div>
+        </div>
       </div>
     </UnifiedLayout>
   );
