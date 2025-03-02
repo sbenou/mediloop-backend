@@ -1,4 +1,3 @@
-
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
@@ -17,9 +16,9 @@ const UnifiedProfilePage = () => {
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
       if (isOpen) {
-        mainContent.classList.add('mr-[320px]');
+        mainContent.classList.add('mr-[280px]');
       } else {
-        mainContent.classList.remove('mr-[320px]');
+        mainContent.classList.remove('mr-[280px]');
       }
     }
   }, [isOpen]);
@@ -83,7 +82,7 @@ const UnifiedProfilePage = () => {
         </Button>
 
         {/* Activity drawer - without overlay */}
-        <div className={`fixed inset-y-0 right-0 mt-16 w-[320px] border-l bg-white transition-transform duration-300 z-40 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`fixed inset-y-0 right-0 mt-16 w-[280px] border-l bg-white transition-transform duration-300 z-40 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
             <div className="space-y-4">
