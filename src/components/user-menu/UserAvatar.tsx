@@ -20,7 +20,9 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
   const queryClient = useQueryClient();
 
   const handleFileSelect = () => {
-    fileInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,6 +31,10 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
 
     try {
       setIsUploading(true);
+      toast({
+        title: "Processing",
+        description: "Optimizing and uploading your avatar...",
+      });
       
       // Optimize image before upload
       const optimizedFile = await optimizeImage(file);
@@ -74,6 +80,10 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
       });
     } finally {
       setIsUploading(false);
+      // Clear the file input so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -120,7 +130,7 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
 
   return (
     <div className="relative group">
-      <Avatar className={`h-10 w-10 cursor-pointer ${squared ? 'rounded-md' : 'rounded-full'}`}>
+      <Avatar className={`h-10 w-10 ${squared ? 'rounded-md' : 'rounded-full'}`}>
         <AvatarImage 
           src={userProfile?.avatar_url || ''} 
           alt={userProfile?.full_name || 'Profile'} 
@@ -133,12 +143,15 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
 
       {canUpload && (
         <>
-          <div 
-            className={`absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity ${squared ? 'rounded-md' : 'rounded-full'}`}
+          <button 
+            type="button"
+            className={`absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${squared ? 'rounded-md' : 'rounded-full'}`}
             onClick={handleFileSelect}
+            disabled={isUploading}
+            aria-label="Upload avatar"
           >
             <Upload className="h-4 w-4 text-white" />
-          </div>
+          </button>
           <input
             type="file"
             ref={fileInputRef}

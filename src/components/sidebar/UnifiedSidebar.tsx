@@ -54,8 +54,8 @@ const UnifiedSidebar = () => {
       {/* Sidebar Header */}
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2">
-          <div className="bg-primary/10 p-2 rounded">
-            <FileText className="h-5 w-5 text-primary" />
+          <div className="relative">
+            <UserAvatar squared={true} canUpload={true} />
           </div>
           <div>
             <h3 className="font-semibold text-sm">Mediloop</h3>
