@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/use-toast";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { mockActivities } from "@/components/activity/mockActivities";
 import { Activity } from "@/components/activity/ActivityItem";
+import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 
 const UnifiedProfilePage = () => {
   const { profile } = useAuth();
@@ -96,6 +97,9 @@ const UnifiedProfilePage = () => {
               </div>
             </Card>
           </div>
+          
+          {/* Add the statistics charts below the stats cards */}
+          <StatisticsCharts />
         </div>
 
         <Button
