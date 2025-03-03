@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,7 +118,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         console.log('Redirecting to pharmacy dashboard...');
         navigate('/pharmacy/dashboard', { replace: true });
         return;
-      } else if (profile.role === 'user') {
+      } else if (profile.role === 'patient') {
         console.log('Redirecting to patient dashboard...');
         navigate('/patient-dashboard', { replace: true });
         return;

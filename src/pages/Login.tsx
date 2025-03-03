@@ -49,7 +49,7 @@ const Login = () => {
           } else if (profile.role === 'pharmacist') {
             console.log('Redirecting to pharmacy dashboard...');
             navigate('/pharmacy/dashboard', { replace: true });
-          } else if (profile.role === 'user') {
+          } else if (profile.role === 'patient') {
             console.log('Redirecting to patient dashboard...');
             navigate('/patient-dashboard', { replace: true });
           } else {

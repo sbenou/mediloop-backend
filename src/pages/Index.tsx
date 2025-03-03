@@ -1,3 +1,4 @@
+
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
@@ -22,7 +23,7 @@ const Index = () => {
   // Redirect authenticated users based on role
   useEffect(() => {
     if (isAuthenticated) {
-      if (profile?.role === 'user') {
+      if (profile?.role === 'patient') {
         navigate('/patient-dashboard');
       } else if (profile?.role === 'pharmacist') {
         navigate('/pharmacy/dashboard');
