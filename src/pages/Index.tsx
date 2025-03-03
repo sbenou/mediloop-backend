@@ -25,6 +25,10 @@ const Index = () => {
     if (isAuthenticated) {
       if (profile?.role === 'patient') {
         navigate('/patient-dashboard');
+      } else if (profile?.role === 'pharmacist') {
+        navigate('/pharmacy/dashboard');
+      } else if (profile?.role === 'superadmin') {
+        navigate('/superadmin/dashboard');
       } else {
         navigate('/dashboard');
       }

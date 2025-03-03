@@ -71,9 +71,14 @@ const PatientSidebarContent = () => {
 
   const isGroupExpanded = (groupName: string) => expandedGroups.includes(groupName);
 
-  const navigateToTab = (path: string, tab?: string) => {
-    console.log(`Navigate to: ${path}${tab ? `?tab=${tab}` : ''}`);
-    navigate(path + (tab ? `?tab=${tab}` : ''));
+  // Update to use patient-dashboard with view parameter
+  const navigateToView = (view: string, tab?: string) => {
+    console.log(`Navigate to patient-dashboard with view: ${view}${tab ? ` and tab: ${tab}` : ''}`);
+    if (tab) {
+      navigate(`/patient-dashboard?view=${view}&${view}Tab=${tab}`);
+    } else {
+      navigate(`/patient-dashboard?view=${view}`);
+    }
   };
 
   const handleLogout = async () => {
@@ -222,7 +227,7 @@ const PatientSidebarContent = () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/patient-dashboard')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
@@ -255,35 +260,35 @@ const PatientSidebarContent = () => {
                 {isGroupExpanded('profile') && (
                   <div className="pl-6 space-y-1 mt-1">
                     <SidebarMenuButton
-                      onClick={() => navigateToTab('/profile', 'personal')}
+                      onClick={() => navigateToView('profile', 'personal')}
                       className="w-full text-sm"
                     >
                       <User className="mr-2 h-4 w-4" />
                       Personal Information
                     </SidebarMenuButton>
                     <SidebarMenuButton
-                      onClick={() => navigateToTab('/profile', 'addresses')}
+                      onClick={() => navigateToView('profile', 'addresses')}
                       className="w-full text-sm"
                     >
                       <MapPin className="mr-2 h-4 w-4" />
                       Addresses
                     </SidebarMenuButton>
                     <SidebarMenuButton
-                      onClick={() => navigateToTab('/profile', 'pharmacy')}
+                      onClick={() => navigateToView('profile', 'pharmacy')}
                       className="w-full text-sm"
                     >
                       <Store className="mr-2 h-4 w-4" />
                       My Default Pharmacy
                     </SidebarMenuButton>
                     <SidebarMenuButton
-                      onClick={() => navigateToTab('/profile', 'doctor')}
+                      onClick={() => navigateToView('profile', 'doctor')}
                       className="w-full text-sm"
                     >
                       <UserRound className="mr-2 h-4 w-4" />
                       My Doctor
                     </SidebarMenuButton>
                     <SidebarMenuButton
-                      onClick={() => navigateToTab('/profile', 'nextofkin')}
+                      onClick={() => navigateToView('profile', 'nextofkin')}
                       className="w-full text-sm"
                     >
                       <Heart className="mr-2 h-4 w-4" />
@@ -315,14 +320,14 @@ const PatientSidebarContent = () => {
                 {isGroupExpanded('orders') && (
                   <div className="pl-6 space-y-1 mt-1">
                     <SidebarMenuButton
-                      onClick={() => navigateToTab('/my-orders', 'orders')}
+                      onClick={() => navigateToView('orders', 'orders')}
                       className="w-full text-sm"
                     >
                       <ShoppingBag className="mr-2 h-4 w-4" />
                       My Orders
                     </SidebarMenuButton>
                     <SidebarMenuButton
-                      onClick={() => navigateToTab('/my-orders', 'payments')}
+                      onClick={() => navigateToView('orders', 'payments')}
                       className="w-full text-sm"
                     >
                       <CreditCard className="mr-2 h-4 w-4" />
@@ -334,7 +339,7 @@ const PatientSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigateToTab('/my-prescriptions')}
+                  onClick={() => navigateToView('prescriptions')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
@@ -347,7 +352,7 @@ const PatientSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigateToTab('/teleconsultations')}
+                  onClick={() => navigateToView('teleconsultations')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
@@ -360,7 +365,7 @@ const PatientSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigate('/dashboard?view=settings')}
+                  onClick={() => navigateToView('settings')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
@@ -398,13 +403,13 @@ const PatientSidebarContent = () => {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                <DropdownMenuItem onClick={() => navigateToView('profile')}>
                   Account
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/billing')}>
+                <DropdownMenuItem onClick={() => navigateToView('billing')}>
                   Billing
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/dashboard?view=settings')}>
+                <DropdownMenuItem onClick={() => navigateToView('settings')}>
                   Settings
                 </DropdownMenuItem>
               </DropdownMenuGroup>
