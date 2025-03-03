@@ -14,7 +14,6 @@ import ResetPassword from "./pages/ResetPassword";
 import Products from "./pages/Products";
 import Services from "./pages/Services";
 import Profile from "./pages/Profile";
-import MyOrders from "./pages/MyOrders";
 import MyPrescriptions from "./pages/MyPrescriptions";
 import Settings from "./pages/Settings";
 import AdminSettings from "./pages/AdminSettings";
@@ -77,7 +76,10 @@ function App() {
                   <Route path="/products" element={<Products />} />
                   <Route path="/services" element={<Services />} />
                   <Route path="/profile" element={<Profile />} />
-                  <Route path="/my-orders" element={<MyOrders />} />
+                  
+                  {/* Redirect /my-orders to the patient dashboard with orders view */}
+                  <Route path="/my-orders" element={<Navigate to="/patient-dashboard?view=orders&ordersTab=orders" replace />} />
+                  
                   <Route path="/my-prescriptions" element={<MyPrescriptions />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/billing" element={<Billing />} />

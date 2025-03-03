@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -71,14 +70,9 @@ const PatientSidebarContent = () => {
 
   const isGroupExpanded = (groupName: string) => expandedGroups.includes(groupName);
 
-  // Update to use patient-dashboard with view parameter
   const navigateToView = (view: string, tab?: string) => {
     console.log(`Navigate to patient-dashboard with view: ${view}${tab ? ` and tab: ${tab}` : ''}`);
-    if (tab) {
-      navigate(`/patient-dashboard?view=${view}&${view}Tab=${tab}`);
-    } else {
-      navigate(`/patient-dashboard?view=${view}`);
-    }
+    navigate(`/patient-dashboard?view=${view}${tab ? `&${view}Tab=${tab}` : ''}`);
   };
 
   const handleLogout = async () => {
@@ -131,7 +125,6 @@ const PatientSidebarContent = () => {
     try {
       setIsUploading(true);
       
-      // Upload image to Supabase storage
       const fileExt = file.name.split('.').pop();
       const fileName = `logo-${Date.now()}.${fileExt}`;
       
@@ -144,16 +137,11 @@ const PatientSidebarContent = () => {
       
       if (error) throw error;
       
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('app_assets')
         .getPublicUrl(fileName);
       
       setLogoUrl(urlData.publicUrl);
-      
-      // Save in settings table or where appropriate
-      // For example:
-      // await supabase.from('app_settings').upsert({ key: 'logo_url', value: urlData.publicUrl });
       
       toast({
         title: "Upload successful",
@@ -362,7 +350,7 @@ const PatientSidebarContent = () => {
                 <UserAvatar userProfile={profile} />
                 <div className="overflow-hidden">
                   <p className="text-sm font-medium truncate">{profile?.full_name || 'sam testington'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{profile?.email || 'bencu004@hotmail.com'}</p>
+                  <p className="text-xs leading-none text-muted-foreground truncate">{profile?.email || 'bencu004@hotmail.com'}</p>
                 </div>
               </div>
             </DropdownMenuTrigger>
