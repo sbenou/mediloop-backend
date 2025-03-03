@@ -30,6 +30,7 @@ import Teleconsultations from "./pages/Teleconsultations";
 import Billing from "./pages/Billing";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
 import UnifiedProfilePage from "./pages/UnifiedProfilePage";
+import PatientDashboard from "./pages/PatientDashboard";
 
 // Pharmacy routes
 import DashboardPage from "./pages/pharmacy/DashboardPage";
@@ -69,6 +70,7 @@ function App() {
                   
                   {/* Patient routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/patient-dashboard" element={<PatientDashboard />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/login/verify" element={<OTPVerificationPage />} />
                   <Route path="/reset-password/*" element={<ResetPassword />} />
