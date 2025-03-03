@@ -12,7 +12,7 @@ import { mockActivities } from "@/components/activity/mockActivities";
 import { Activity } from "@/components/activity/ActivityItem";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 // Import settings components for settings view
@@ -21,12 +21,19 @@ import AccountDeletion from "@/components/settings/AccountDeletion";
 import AddressManagement from "@/components/settings/AddressManagement";
 import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
+import PersonalDetails from "@/components/settings/PersonalDetails";
+
+// Import pages for content views
+import MyPrescriptions from "@/pages/MyPrescriptions";
+import MyOrders from "@/pages/MyOrders";
+import FindDoctor from "@/pages/FindDoctor";
+import Teleconsultations from "@/pages/Teleconsultations";
+import CreatePrescription from "@/pages/CreatePrescription";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const view = searchParams.get('view');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get('view') || 'home';
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
@@ -70,8 +77,8 @@ const PatientDashboard = () => {
     });
   };
 
-  const handleSettingsClick = () => {
-    navigate('/dashboard?view=settings');
+  const handleViewChange = (newView: string) => {
+    setSearchParams({ view: newView });
   };
 
   // Render settings view when requested
@@ -82,6 +89,15 @@ const PatientDashboard = () => {
           <h1 className="text-3xl font-bold mb-8 text-left">Account Settings</h1>
           
           <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-left">Personal Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PersonalDetails />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-left">Password Management</CardTitle>
@@ -132,6 +148,195 @@ const PatientDashboard = () => {
     );
   }
 
+  // Render MyPrescriptions view
+  if (view === "prescriptions") {
+    return (
+      <UnifiedLayout>
+        <div className="pt-2 pb-6">
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => handleViewChange('home')}
+          >
+            ← Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold mb-6">My Prescriptions</h1>
+            <p className="text-muted-foreground mb-8">View and manage your prescriptions</p>
+            
+            {/* Placeholder content for prescriptions */}
+            <div className="bg-gray-100 rounded-lg p-8 text-center">
+              <p className="text-lg">No active prescriptions found</p>
+              <p className="text-muted-foreground mt-2">
+                Your prescriptions will appear here once you receive them from your doctor
+              </p>
+            </div>
+          </div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
+
+  // Render MyOrders view
+  if (view === "orders") {
+    return (
+      <UnifiedLayout>
+        <div className="pt-2 pb-6">
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => handleViewChange('home')}
+          >
+            ← Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold mb-6">My Orders</h1>
+            
+            <Tabs defaultValue="orders" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="orders">Orders</TabsTrigger>
+                <TabsTrigger value="payments">Payments</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="orders">
+                <div className="bg-gray-100 rounded-lg p-8 text-center">
+                  <p className="text-lg">No orders found</p>
+                  <p className="text-muted-foreground mt-2">
+                    Your order history will appear here once you make a purchase
+                  </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="payments">
+                <div className="bg-gray-100 rounded-lg p-8 text-center">
+                  <p className="text-lg">No payment records found</p>
+                  <p className="text-muted-foreground mt-2">
+                    Your payment history will appear here once you make a purchase
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
+
+  // Render CreatePrescription view
+  if (view === "create-prescription") {
+    return (
+      <UnifiedLayout>
+        <div className="pt-2 pb-6">
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => handleViewChange('home')}
+          >
+            ← Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">
+              Create Electronic Prescription
+            </h1>
+            {/* Import PrescriptionForm component instead of the whole page */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="text-center py-8">
+                <p className="text-lg">Prescription creation coming soon</p>
+                <p className="text-muted-foreground mt-2">
+                  This feature is currently under development
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
+
+  // Render FindDoctor view
+  if (view === "find-doctor") {
+    return (
+      <UnifiedLayout>
+        <div className="pt-2 pb-6">
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => handleViewChange('home')}
+          >
+            ← Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold mb-6">Find a Doctor</h1>
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="text-center py-8">
+                <p className="text-lg">Doctor search coming soon</p>
+                <p className="text-muted-foreground mt-2">
+                  This feature is currently under development
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
+
+  // Render SearchPharmacy view
+  if (view === "search-pharmacy") {
+    return (
+      <UnifiedLayout>
+        <div className="pt-2 pb-6">
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => handleViewChange('home')}
+          >
+            ← Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold mb-6">Find a Pharmacy</h1>
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="text-center py-8">
+                <p className="text-lg">Pharmacy search coming soon</p>
+                <p className="text-muted-foreground mt-2">
+                  This feature is currently under development
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
+
+  // Render Teleconsultations view
+  if (view === "teleconsultations") {
+    return (
+      <UnifiedLayout>
+        <div className="pt-2 pb-6">
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => handleViewChange('home')}
+          >
+            ← Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold mb-6">Teleconsultations</h1>
+            <p className="text-muted-foreground mb-8">Schedule and manage your video consultations with doctors</p>
+            
+            <div className="bg-gray-100 rounded-lg p-8 text-center">
+              <p className="text-lg">No scheduled teleconsultations</p>
+              <p className="text-muted-foreground mt-2">
+                Your upcoming teleconsultations will appear here once scheduled
+              </p>
+            </div>
+          </div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
+
   // Default dashboard view with UnifiedLayout
   return (
     <UnifiedLayout>
@@ -148,7 +353,7 @@ const PatientDashboard = () => {
             <div>
               <Button 
                 variant="outline" 
-                onClick={handleSettingsClick}
+                onClick={() => handleViewChange('settings')}
               >
                 Settings
               </Button>
@@ -201,42 +406,42 @@ const PatientDashboard = () => {
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => navigate('/my-prescriptions')}
+                  onClick={() => handleViewChange('prescriptions')}
                 >
                   View My Prescriptions
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => navigate('/my-orders')}
+                  onClick={() => handleViewChange('orders')}
                 >
                   Track My Orders
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => navigate('/create-prescription')}
+                  onClick={() => handleViewChange('create-prescription')}
                 >
                   Create New Prescription
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => navigate('/find-doctor')}
+                  onClick={() => handleViewChange('find-doctor')}
                 >
                   Find a Doctor
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => navigate('/search-pharmacy')}
+                  onClick={() => handleViewChange('search-pharmacy')}
                 >
                   Find a Pharmacy
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => navigate('/teleconsultations')}
+                  onClick={() => handleViewChange('teleconsultations')}
                 >
                   Book Teleconsultation
                 </Button>
