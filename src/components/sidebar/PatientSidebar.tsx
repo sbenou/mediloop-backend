@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -299,7 +300,7 @@ const PatientSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigateToView('orders')}
+                  onClick={() => navigateToView('orders', 'orders')}
                   className="w-full flex justify-between items-center"
                 >
                   <span className="flex items-center">
