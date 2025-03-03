@@ -24,12 +24,13 @@ const PatientDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get('view') || 'home';
   const ordersTab = searchParams.get('ordersTab') || 'orders';
+  const profileTab = searchParams.get('profileTab') || 'personal';
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
 
   useEffect(() => {
-    console.log("PatientDashboard page loaded with view:", view);
+    console.log("PatientDashboard page loaded with view:", view, "and ordersTab:", ordersTab);
     
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
@@ -41,7 +42,7 @@ const PatientDashboard = () => {
     }
     
     window.dispatchEvent(new Event('resize'));
-  }, [isOpen, view]);
+  }, [isOpen, view, ordersTab]);
 
   const handleMarkRead = (id: string) => {
     setActivities(prevActivities => 
@@ -65,13 +66,87 @@ const PatientDashboard = () => {
     });
   };
 
-  const handleViewChange = (newView: string) => {
-    setSearchParams({ view: newView });
+  const handleViewChange = (newView: string, tab?: string) => {
+    if (tab) {
+      setSearchParams({ view: newView, [`${newView}Tab`]: tab });
+    } else {
+      setSearchParams({ view: newView });
+    }
   };
 
+  // Tab change handlers
   const handleOrdersTabChange = (value: string) => {
     setSearchParams({ view: 'orders', ordersTab: value });
   };
+
+  const handleProfileTabChange = (value: string) => {
+    setSearchParams({ view: 'profile', profileTab: value });
+  };
+
+  // Render profile view when requested
+  if (view === "profile") {
+    return (
+      <UnifiedLayout>
+        <div>
+          <h1 className="text-3xl font-bold mb-6">My Profile</h1>
+          
+          <Tabs value={profileTab} onValueChange={handleProfileTabChange}>
+            <TabsList>
+              <TabsTrigger value="personal">Personal Info</TabsTrigger>
+              <TabsTrigger value="addresses">Addresses</TabsTrigger>
+              <TabsTrigger value="pharmacy">Default Pharmacy</TabsTrigger>
+              <TabsTrigger value="doctor">My Doctor</TabsTrigger>
+              <TabsTrigger value="nextofkin">Next of Kin</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="personal" className="mt-4">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Full Name</p>
+                    <p className="text-base">{profile?.full_name || 'No name provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="text-base">{profile?.email || 'No email provided'}</p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="addresses" className="mt-4">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">My Addresses</h2>
+                <p className="text-muted-foreground">No addresses found. Add your first address to get started.</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="pharmacy" className="mt-4">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Default Pharmacy</h2>
+                <p className="text-muted-foreground">No default pharmacy selected.</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="doctor" className="mt-4">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">My Doctor</h2>
+                <p className="text-muted-foreground">No doctor connection found.</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="nextofkin" className="mt-4">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Next of Kin</h2>
+                <p className="text-muted-foreground">No next of kin information provided.</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </UnifiedLayout>
+    );
+  }
 
   // Render settings view when requested
   if (view === "settings") {
@@ -209,8 +284,7 @@ const PatientDashboard = () => {
     );
   }
 
-  // Default dashboard view - this borrows the visual layout structure from UnifiedProfilePage
-  // but has its own patient-specific functionality and data
+  // Default dashboard view
   return (
     <UnifiedLayout>
       <div className="flex h-full relative font-sans">
@@ -227,7 +301,7 @@ const PatientDashboard = () => {
           
           <div className="flex flex-wrap gap-4">
             <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow" 
-                  onClick={() => handleViewChange('orders')}>
+                  onClick={() => handleViewChange('prescriptions')}>
               <div className="text-center">
                 <h3 className="text-base font-medium">Prescriptions</h3>
                 <p className="text-xs text-muted-foreground line-clamp-2">Total active prescriptions</p>
@@ -245,7 +319,7 @@ const PatientDashboard = () => {
             </Card>
             
             <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleViewChange('teleconsultations')}>
+                  onClick={() => handleViewChange('profile', 'doctor')}>
               <div className="text-center">
                 <h3 className="text-base font-medium">Doctors</h3>
                 <p className="text-xs text-muted-foreground line-clamp-2">Connected healthcare providers</p>

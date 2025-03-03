@@ -59,7 +59,7 @@ export const useAuth = () => {
         console.warn(`Warning: Pharmacist user accessing non-pharmacy route: ${currentPath}`);
       }
       
-      // Check if a patient is on a non-patient page - exclude unified-profile since it's just a UI template
+      // Check if a patient is on a non-patient page - exclude unified-profile and patient-dashboard routes
       if (userRole === 'patient' && 
           !currentPath.startsWith('/patient') && 
           currentPath !== '/login' &&

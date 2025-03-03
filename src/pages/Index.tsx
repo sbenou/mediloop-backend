@@ -24,6 +24,7 @@ const Index = () => {
   useEffect(() => {
     if (isAuthenticated) {
       if (profile?.role === 'patient') {
+        // Ensure we're always redirecting to the main patient dashboard without any view parameters
         navigate('/patient-dashboard');
       } else if (profile?.role === 'pharmacist') {
         navigate('/pharmacy/dashboard');
