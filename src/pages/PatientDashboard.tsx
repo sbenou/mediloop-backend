@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -13,6 +12,7 @@ import { Activity } from "@/components/activity/ActivityItem";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useLocation, useNavigate } from "react-router-dom";
 
 // Import settings components
 import PasswordChange from "@/components/settings/PasswordChange";
@@ -28,10 +28,22 @@ const PatientDashboard = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (location.pathname !== '/dashboard') {
+      navigate('/dashboard', { replace: true });
+    }
+    
+    const params = new URLSearchParams(location.search);
+    const viewParam = params.get('view');
+    if (viewParam) {
+      setCurrentView(viewParam);
+    }
+    
     console.log("PatientDashboard page loaded with view:", currentView);
-  }, [currentView]);
+  }, [location, navigate]);
 
   useEffect(() => {
     const mainContent = document.getElementById('main-content');
@@ -68,7 +80,6 @@ const PatientDashboard = () => {
     });
   };
 
-  // Render settings view
   if (currentView === "settings") {
     return (
       <UnifiedLayout>
@@ -142,7 +153,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render MyPrescriptions view
   if (currentView === "prescriptions") {
     return (
       <UnifiedLayout>
@@ -170,7 +180,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render MyOrders view
   if (currentView === "orders") {
     return (
       <UnifiedLayout>
@@ -215,7 +224,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render CreatePrescription view
   if (currentView === "create-prescription") {
     return (
       <UnifiedLayout>
@@ -245,7 +253,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render FindDoctor view
   if (currentView === "find-doctor") {
     return (
       <UnifiedLayout>
@@ -273,7 +280,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render SearchPharmacy view
   if (currentView === "search-pharmacy") {
     return (
       <UnifiedLayout>
@@ -301,7 +307,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render Teleconsultations view
   if (currentView === "teleconsultations") {
     return (
       <UnifiedLayout>
@@ -329,7 +334,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Default dashboard view with UnifiedLayout
   return (
     <UnifiedLayout>
       <div className="flex h-full relative font-sans">
