@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PasswordChange from "@/components/settings/PasswordChange";
 import AccountDeletion from "@/components/settings/AccountDeletion";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import PatientLayout from "@/components/layout/PatientLayout";
+import UnifiedLayout from "@/components/layout/UnifiedLayout";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
@@ -65,7 +65,7 @@ const PatientDashboard = () => {
   // Render settings view when requested
   if (view === "settings") {
     return (
-      <PatientLayout>
+      <UnifiedLayout>
         <div>
           <h1 className="text-3xl font-bold mb-8 text-left">Account Settings</h1>
           
@@ -89,13 +89,13 @@ const PatientDashboard = () => {
             </Card>
           </div>
         </div>
-      </PatientLayout>
+      </UnifiedLayout>
     );
   }
 
   // Default dashboard view
   return (
-    <PatientLayout>
+    <UnifiedLayout>
       <div className="flex h-full relative font-sans">
         <div 
           id="main-content" 
@@ -185,7 +185,7 @@ const PatientDashboard = () => {
           </div>
         </div>
       </div>
-    </PatientLayout>
+    </UnifiedLayout>
   );
 };
 
