@@ -1,4 +1,3 @@
-
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
@@ -17,15 +16,23 @@ import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   console.log('Index page - Rendering');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, profile } = useAuth();
   const navigate = useNavigate();
   
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users based on role
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      if (profile?.role === 'user') {
+        navigate('/patient-dashboard');
+      } else if (profile?.role === 'pharmacist') {
+        navigate('/pharmacy/dashboard');
+      } else if (profile?.role === 'superadmin') {
+        navigate('/superadmin/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, profile, navigate]);
 
   // Fetch statistics including new connection count
   const { data: stats } = useQuery({

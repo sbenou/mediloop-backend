@@ -68,6 +68,8 @@ export const LoginForm = () => {
           navigate('/superadmin/dashboard', { replace: true });
         } else if (profile?.role === 'pharmacist') {
           navigate('/pharmacy/dashboard', { replace: true });
+        } else if (profile?.role === 'user') {
+          navigate('/patient-dashboard', { replace: true });
         } else {
           navigate('/dashboard', { replace: true });
         }
