@@ -1,28 +1,70 @@
 
-import PatientLayout from "@/components/layout/PatientLayout";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { SidebarClose, SidebarOpen } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { ActivityFeed } from "@/components/activity/ActivityFeed";
+import { Advertisements } from "@/components/activity/Advertisements";
+import { mockActivities } from "@/components/activity/mockActivities";
+import { Activity } from "@/components/activity/ActivityItem";
+import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import PasswordChange from "@/components/settings/PasswordChange";
 import AccountDeletion from "@/components/settings/AccountDeletion";
-import { CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const Dashboard = () => {
   const { profile } = useAuth();
+  const [isOpen, setIsOpen] = useState(true);
+  const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
   const [searchParams] = useSearchParams();
   const view = searchParams.get('view');
 
-  // Log for debugging
   useEffect(() => {
-    console.log("Dashboard page loaded with view:", view);
-  }, [view]);
+    const mainContent = document.getElementById('main-content');
+    if (mainContent) {
+      if (isOpen) {
+        mainContent.classList.add('mr-[300px]');
+      } else {
+        mainContent.classList.remove('mr-[300px]');
+      }
+    }
+    
+    window.dispatchEvent(new Event('resize'));
+  }, [isOpen]);
+
+  const handleMarkRead = (id: string) => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => 
+        activity.id === id ? { ...activity, read: true } : activity
+      )
+    );
+    toast({
+      title: "Activity marked as read",
+      duration: 2000,
+    });
+  };
+
+  const handleMarkAllRead = () => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => ({ ...activity, read: true }))
+    );
+    toast({
+      title: "All activities marked as read",
+      duration: 2000,
+    });
+  };
 
   // Render settings view when requested
   if (view === "settings") {
     return (
-      <PatientLayout>
-        <div>
+      <UnifiedLayout>
+        <div className="px-6 py-4">
           <h1 className="text-3xl font-bold mb-8 text-left">Account Settings</h1>
           
           <div className="space-y-6">
@@ -45,56 +87,103 @@ const Dashboard = () => {
             </Card>
           </div>
         </div>
-      </PatientLayout>
+      </UnifiedLayout>
     );
   }
 
-  // Default dashboard view
   return (
-    <PatientLayout>
-      <div className="space-y-8">
-        <div className="text-center md:text-left">
-          <h1 className="text-3xl font-bold mb-2">Welcome, {profile?.full_name || 'sam testington'}</h1>
-          <p className="text-muted-foreground">
-            Here's an overview of your healthcare information
-          </p>
+    <UnifiedLayout>
+      {/* Apply consistent font-family to this page only */}
+      <div className="flex h-full relative font-sans">
+        <div 
+          id="main-content" 
+          className="flex-1 space-y-8 px-1 mx-0 transition-all duration-300"
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Welcome, {profile?.full_name || 'User'}</h1>
+              <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Prescriptions</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Total active prescriptions</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Orders</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Total orders placed</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Doctors</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Connected healthcare providers</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Teleconsultations</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Upcoming appointments</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+          </div>
+          
+          {/* Add the statistics charts below the stats cards */}
+          <StatisticsCharts />
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4">
-            <div className="text-center">
-              <h3 className="font-medium">Prescriptions</h3>
-              <p className="text-sm text-muted-foreground">Total active prescriptions</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="text-center">
-              <h3 className="font-medium">Orders</h3>
-              <p className="text-sm text-muted-foreground">Total orders placed</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="text-center">
-              <h3 className="font-medium">Doctors</h3>
-              <p className="text-sm text-muted-foreground">Connected healthcare providers</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="text-center">
-              <h3 className="font-medium">Teleconsultations</h3>
-              <p className="text-sm text-muted-foreground">Upcoming appointments</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
+
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed right-0 top-20 z-50"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
+        </Button>
+
+        <div 
+          className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        >
+          <div className="p-4 h-full overflow-y-auto">
+            <Tabs 
+              defaultValue="home" 
+              className="w-full" 
+              value={activeDrawerTab}
+              onValueChange={setActiveDrawerTab}
+            >
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="home">Home</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="home" className="mt-0">
+                <Advertisements />
+              </TabsContent>
+              
+              <TabsContent value="activity" className="mt-0">
+                <ActivityFeed 
+                  activities={activities}
+                  onMarkRead={handleMarkRead}
+                  onMarkAllRead={handleMarkAllRead}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </div>
-    </PatientLayout>
+    </UnifiedLayout>
   );
 };
 
