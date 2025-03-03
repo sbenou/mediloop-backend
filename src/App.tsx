@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { RecoilRoot } from "recoil";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
+import PatientDashboard from "./pages/PatientDashboard";
 import ResetPassword from "./pages/ResetPassword";
 import Products from "./pages/Products";
 import Services from "./pages/Services";
@@ -68,7 +68,7 @@ function App() {
                   <Route path="/" element={<Index />} />
                   
                   {/* Patient routes */}
-                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<PatientDashboard />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/login/verify" element={<OTPVerificationPage />} />
                   <Route path="/reset-password/*" element={<ResetPassword />} />
