@@ -129,6 +129,10 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         console.log('Redirecting to pharmacy dashboard...');
         navigate('/pharmacy/dashboard', { replace: true });
         return; // Early return to prevent onSuccess from being called
+      } else if (profile.role === 'patient') {
+        console.log('Redirecting to patient dashboard...');
+        navigate('/patient-dashboard', { replace: true });
+        return; // Early return to prevent onSuccess from being called
       } else {
         console.log('Redirecting to dashboard...');
         navigate('/dashboard', { replace: true });
