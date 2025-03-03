@@ -59,14 +59,6 @@ export const useAuth = () => {
         console.warn(`Warning: Pharmacist user accessing non-pharmacy route: ${currentPath}`);
       }
       
-      // Check if a patient is on a non-patient page
-      if (userRole === 'patient' && 
-          !currentPath.startsWith('/patient-dashboard') && 
-          currentPath !== '/login' &&
-          currentPath !== '/') {
-        console.warn(`Warning: Patient user accessing non-patient route: ${currentPath}`);
-      }
-      
       // Log the current role and path for debugging
       console.log(`Current user role: ${userRole}, Current path: ${currentPath}`);
     }

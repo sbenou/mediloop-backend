@@ -34,6 +34,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
     console.log('Starting login process...', { email, rememberMe });
 
     try {
+      // First, sign in with password - using session properties instead of expiresIn
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -51,8 +52,10 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
       console.log('Sign in successful:', signInData.user.id);
 
+      // If rememberMe is checked, update the session
       if (rememberMe && signInData.session) {
         console.log('Setting extended session duration due to Remember Me');
+        // We'll update the session cookie manually in the auth service
         const { error: sessionError } = await supabase.auth.updateUser({
           data: { rememberMe: true }
         });
@@ -62,6 +65,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         }
       }
 
+      // Get the session to confirm authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -76,14 +80,18 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
       console.log('Session confirmed:', session.user.id);
 
+      // IMPORTANT: Explicitly store session in all storage methods for all user types
       const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
       
+      // Store in localStorage
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
       console.log('Session explicitly stored in localStorage');
       
+      // Also store in sessionStorage for redundancy
       window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
       console.log('Session explicitly stored in sessionStorage');
       
+      // Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -95,6 +103,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         throw profileError;
       }
 
+      // Update global auth state
       setAuth({
         user: session.user,
         profile,
@@ -105,34 +114,34 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       console.log('Auth state updated successfully');
       console.log('User role:', profile.role);
 
+      // Show success message
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
 
+      // Redirect based on user role
       if (profile.role === 'superadmin') {
         console.log('Redirecting to superadmin dashboard...');
         navigate('/superadmin/dashboard', { replace: true });
-        return;
+        return; // Early return to prevent onSuccess from being called
       } else if (profile.role === 'pharmacist') {
         console.log('Redirecting to pharmacy dashboard...');
         navigate('/pharmacy/dashboard', { replace: true });
-        return;
-      } else if (profile.role === 'patient') {
-        console.log('Redirecting to patient dashboard...');
-        navigate('/patient-dashboard', { replace: true });
-        return;
+        return; // Early return to prevent onSuccess from being called
       } else {
-        console.log('Role not recognized, redirecting to dashboard...');
+        console.log('Redirecting to dashboard...');
         navigate('/dashboard', { replace: true });
-        return;
+        return; // Early return to prevent onSuccess from being called
       }
       
+      // This won't be called due to early returns
       onSuccess();
 
     } catch (error: any) {
       console.error('Login failed:', error);
       
+      // Reset auth state
       setAuth({
         user: null,
         profile: null,
@@ -140,6 +149,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         isLoading: false,
       });
 
+      // Show error message
       toast({
         variant: "destructive",
         title: "Login failed",

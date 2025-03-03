@@ -17,23 +17,15 @@ import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   console.log('Index page - Rendering');
-  const { isAuthenticated, profile } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
-  // Redirect authenticated users based on role
+  // Redirect authenticated users to dashboard
   useEffect(() => {
     if (isAuthenticated) {
-      if (profile?.role === 'patient') {
-        navigate('/patient-dashboard');
-      } else if (profile?.role === 'pharmacist') {
-        navigate('/pharmacy/dashboard');
-      } else if (profile?.role === 'superadmin') {
-        navigate('/superadmin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     }
-  }, [isAuthenticated, profile, navigate]);
+  }, [isAuthenticated, navigate]);
 
   // Fetch statistics including new connection count
   const { data: stats } = useQuery({
