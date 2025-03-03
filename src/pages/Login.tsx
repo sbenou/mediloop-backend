@@ -50,7 +50,7 @@ const Login = () => {
             console.log('Redirecting to pharmacy dashboard...');
             navigate('/pharmacy/dashboard', { replace: true });
           } else {
-            console.log('Redirecting to dashboard...');
+            console.log('Redirecting to patient dashboard...');
             navigate('/dashboard', { replace: true });
           }
         } catch (err) {

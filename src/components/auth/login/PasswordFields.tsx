@@ -130,7 +130,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         navigate('/pharmacy/dashboard', { replace: true });
         return; // Early return to prevent onSuccess from being called
       } else {
-        console.log('Redirecting to dashboard...');
+        console.log('Redirecting to patient dashboard...');
         navigate('/dashboard', { replace: true });
         return; // Early return to prevent onSuccess from being called
       }
