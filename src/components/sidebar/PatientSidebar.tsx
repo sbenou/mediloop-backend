@@ -30,6 +30,7 @@ import {
   ClipboardList,
   Home,
   Upload,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -288,15 +289,41 @@ const PatientSidebarContent = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigateToView('orders', 'orders')}
-                  className="w-full flex justify-between items-center"
+                  onClick={() => toggleGroup('orders')}
+                  className={cn(
+                    "w-full flex justify-between items-center",
+                    isGroupExpanded('orders') && "text-primary"
+                  )}
                 >
                   <span className="flex items-center">
                     <ShoppingBag className="mr-2 h-4 w-4" />
                     Orders
                   </span>
-                  <ChevronRight className="h-4 w-4 opacity-50" />
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      isGroupExpanded('orders') && "rotate-180"
+                    )}
+                  />
                 </SidebarMenuButton>
+                {isGroupExpanded('orders') && (
+                  <div className="pl-6 space-y-1 mt-1">
+                    <SidebarMenuButton
+                      onClick={() => navigateToView('orders', 'orders')}
+                      className="w-full text-sm"
+                    >
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      My Orders
+                    </SidebarMenuButton>
+                    <SidebarMenuButton
+                      onClick={() => navigateToView('orders', 'payments')}
+                      className="w-full text-sm"
+                    >
+                      <Receipt className="mr-2 h-4 w-4" />
+                      Payments
+                    </SidebarMenuButton>
+                  </div>
+                )}
               </SidebarMenuItem>
 
               <SidebarMenuItem>
