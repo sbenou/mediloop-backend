@@ -64,7 +64,7 @@ export const useAuth = () => {
           !currentPath.startsWith('/patient') && 
           currentPath !== '/login' &&
           currentPath !== '/patient-dashboard' &&
-          currentPath !== '/unified-profile') {  // Added unified-profile exception
+          currentPath !== '/unified-profile') {
         console.warn(`Warning: Patient user accessing non-patient route: ${currentPath}`);
       }
       

@@ -16,11 +16,14 @@ import PasswordChange from "@/components/settings/PasswordChange";
 import AccountDeletion from "@/components/settings/AccountDeletion";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
-  const [searchParams] = useSearchParams();
-  const view = searchParams.get('view');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get('view') || 'home';
+  const ordersTab = searchParams.get('ordersTab') || 'orders';
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
@@ -62,6 +65,14 @@ const PatientDashboard = () => {
     });
   };
 
+  const handleViewChange = (newView: string) => {
+    setSearchParams({ view: newView });
+  };
+
+  const handleOrdersTabChange = (value: string) => {
+    setSearchParams({ view: 'orders', ordersTab: value });
+  };
+
   // Render settings view when requested
   if (view === "settings") {
     return (
@@ -93,6 +104,111 @@ const PatientDashboard = () => {
     );
   }
 
+  // Render orders view when requested
+  if (view === "orders") {
+    return (
+      <UnifiedLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">My Orders</h1>
+            <p className="text-muted-foreground">
+              View and manage all your orders.
+            </p>
+          </div>
+
+          <Tabs value={ordersTab} onValueChange={handleOrdersTabChange}>
+            <TabsList>
+              <TabsTrigger value="orders">Orders</TabsTrigger>
+              <TabsTrigger value="payments">Payments</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="orders" className="mt-4">
+              <div className="bg-white shadow rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8">
+                        No orders found.
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="payments" className="mt-4">
+              <div className="bg-white shadow rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Payment ID</TableHead>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8">
+                        No payment records found.
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </UnifiedLayout>
+    );
+  }
+
+  // Render prescriptions view when requested
+  if (view === "prescriptions") {
+    return (
+      <UnifiedLayout>
+        <div>
+          <h1 className="text-3xl font-bold mb-6">My Prescriptions</h1>
+          <p className="text-muted-foreground mb-8">View and manage your prescriptions</p>
+          
+          <div className="bg-gray-100 rounded-lg p-8 text-center">
+            <p className="text-lg">No active prescriptions found</p>
+            <p className="text-muted-foreground mt-2">
+              Your prescriptions will appear here once you receive them from your doctor
+            </p>
+          </div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
+
+  // Render teleconsultations view when requested
+  if (view === "teleconsultations") {
+    return (
+      <UnifiedLayout>
+        <div>
+          <h1 className="text-3xl font-bold mb-6">Teleconsultations</h1>
+          <p className="text-muted-foreground mb-8">Schedule and manage your video consultations with doctors</p>
+          
+          <div className="bg-gray-100 rounded-lg p-8 text-center">
+            <p className="text-lg">No scheduled teleconsultations</p>
+            <p className="text-muted-foreground mt-2">
+              Your upcoming teleconsultations will appear here once scheduled
+            </p>
+          </div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
+
   // Default dashboard view - this borrows the visual layout structure from UnifiedProfilePage
   // but has its own patient-specific functionality and data
   return (
@@ -109,8 +225,9 @@ const PatientDashboard = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-white border rounded-lg shadow-sm p-6">
+          <div className="flex flex-wrap gap-4">
+            <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow" 
+                  onClick={() => handleViewChange('orders')}>
               <div className="text-center">
                 <h3 className="text-base font-medium">Prescriptions</h3>
                 <p className="text-xs text-muted-foreground line-clamp-2">Total active prescriptions</p>
@@ -118,7 +235,8 @@ const PatientDashboard = () => {
               </div>
             </Card>
             
-            <Card className="bg-white border rounded-lg shadow-sm p-6">
+            <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleViewChange('orders')}>
               <div className="text-center">
                 <h3 className="text-base font-medium">Orders</h3>
                 <p className="text-xs text-muted-foreground line-clamp-2">Total orders placed</p>
@@ -126,7 +244,8 @@ const PatientDashboard = () => {
               </div>
             </Card>
             
-            <Card className="bg-white border rounded-lg shadow-sm p-6">
+            <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleViewChange('teleconsultations')}>
               <div className="text-center">
                 <h3 className="text-base font-medium">Doctors</h3>
                 <p className="text-xs text-muted-foreground line-clamp-2">Connected healthcare providers</p>
@@ -134,7 +253,8 @@ const PatientDashboard = () => {
               </div>
             </Card>
             
-            <Card className="bg-white border rounded-lg shadow-sm p-6">
+            <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleViewChange('teleconsultations')}>
               <div className="text-center">
                 <h3 className="text-base font-medium">Teleconsultations</h3>
                 <p className="text-xs text-muted-foreground line-clamp-2">Upcoming appointments</p>
