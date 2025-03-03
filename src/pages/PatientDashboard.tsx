@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -86,6 +85,13 @@ const PatientDashboard = () => {
     return (
       <UnifiedLayout>
         <div>
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => handleViewChange('home')}
+          >
+            ← Back to Dashboard
+          </Button>
           <h1 className="text-3xl font-bold mb-8 text-left">Account Settings</h1>
           
           <div className="space-y-6">
@@ -353,7 +359,7 @@ const PatientDashboard = () => {
             <div>
               <Button 
                 variant="outline" 
-                onClick={() => handleViewChange('settings')}
+                onClick={() => setSearchParams({ view: 'settings' })}
               >
                 Settings
               </Button>
@@ -394,7 +400,6 @@ const PatientDashboard = () => {
             </Card>
           </div>
           
-          {/* Add the statistics charts below the stats cards */}
           <StatisticsCharts />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -406,42 +411,42 @@ const PatientDashboard = () => {
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => handleViewChange('prescriptions')}
+                  onClick={() => setSearchParams({ view: 'prescriptions' })}
                 >
                   View My Prescriptions
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => handleViewChange('orders')}
+                  onClick={() => setSearchParams({ view: 'orders' })}
                 >
                   Track My Orders
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => handleViewChange('create-prescription')}
+                  onClick={() => setSearchParams({ view: 'create-prescription' })}
                 >
                   Create New Prescription
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => handleViewChange('find-doctor')}
+                  onClick={() => setSearchParams({ view: 'find-doctor' })}
                 >
                   Find a Doctor
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => handleViewChange('search-pharmacy')}
+                  onClick={() => setSearchParams({ view: 'search-pharmacy' })}
                 >
                   Find a Pharmacy
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => handleViewChange('teleconsultations')}
+                  onClick={() => setSearchParams({ view: 'teleconsultations' })}
                 >
                   Book Teleconsultation
                 </Button>
