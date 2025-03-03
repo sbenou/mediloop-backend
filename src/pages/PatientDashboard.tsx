@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -11,10 +12,9 @@ import { mockActivities } from "@/components/activity/mockActivities";
 import { Activity } from "@/components/activity/ActivityItem";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSearchParams } from "react-router-dom";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-// Import settings components for settings view
+// Import settings components
 import PasswordChange from "@/components/settings/PasswordChange";
 import AccountDeletion from "@/components/settings/AccountDeletion";
 import AddressManagement from "@/components/settings/AddressManagement";
@@ -22,24 +22,16 @@ import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import PersonalDetails from "@/components/settings/PersonalDetails";
 
-// Import pages for content views
-import MyPrescriptions from "@/pages/MyPrescriptions";
-import MyOrders from "@/pages/MyOrders";
-import FindDoctor from "@/pages/FindDoctor";
-import Teleconsultations from "@/pages/Teleconsultations";
-import CreatePrescription from "@/pages/CreatePrescription";
-
 const PatientDashboard = () => {
   const { profile } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const view = searchParams.get('view') || 'home';
+  const [currentView, setCurrentView] = useState<string>('home');
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
 
   useEffect(() => {
-    console.log("PatientDashboard page loaded with view:", view);
-  }, [view]);
+    console.log("PatientDashboard page loaded with view:", currentView);
+  }, [currentView]);
 
   useEffect(() => {
     const mainContent = document.getElementById('main-content');
@@ -76,19 +68,15 @@ const PatientDashboard = () => {
     });
   };
 
-  const handleViewChange = (newView: string) => {
-    setSearchParams({ view: newView });
-  };
-
-  // Render settings view when requested
-  if (view === "settings") {
+  // Render settings view
+  if (currentView === "settings") {
     return (
       <UnifiedLayout>
         <div>
           <Button 
             variant="ghost" 
             className="mb-4"
-            onClick={() => handleViewChange('home')}
+            onClick={() => setCurrentView('home')}
           >
             ← Back to Dashboard
           </Button>
@@ -155,14 +143,14 @@ const PatientDashboard = () => {
   }
 
   // Render MyPrescriptions view
-  if (view === "prescriptions") {
+  if (currentView === "prescriptions") {
     return (
       <UnifiedLayout>
         <div className="pt-2 pb-6">
           <Button 
             variant="ghost" 
             className="mb-4"
-            onClick={() => handleViewChange('home')}
+            onClick={() => setCurrentView('home')}
           >
             ← Back to Dashboard
           </Button>
@@ -170,7 +158,6 @@ const PatientDashboard = () => {
             <h1 className="text-3xl font-bold mb-6">My Prescriptions</h1>
             <p className="text-muted-foreground mb-8">View and manage your prescriptions</p>
             
-            {/* Placeholder content for prescriptions */}
             <div className="bg-gray-100 rounded-lg p-8 text-center">
               <p className="text-lg">No active prescriptions found</p>
               <p className="text-muted-foreground mt-2">
@@ -184,14 +171,14 @@ const PatientDashboard = () => {
   }
 
   // Render MyOrders view
-  if (view === "orders") {
+  if (currentView === "orders") {
     return (
       <UnifiedLayout>
         <div className="pt-2 pb-6">
           <Button 
             variant="ghost" 
             className="mb-4"
-            onClick={() => handleViewChange('home')}
+            onClick={() => setCurrentView('home')}
           >
             ← Back to Dashboard
           </Button>
@@ -229,14 +216,14 @@ const PatientDashboard = () => {
   }
 
   // Render CreatePrescription view
-  if (view === "create-prescription") {
+  if (currentView === "create-prescription") {
     return (
       <UnifiedLayout>
         <div className="pt-2 pb-6">
           <Button 
             variant="ghost" 
             className="mb-4"
-            onClick={() => handleViewChange('home')}
+            onClick={() => setCurrentView('home')}
           >
             ← Back to Dashboard
           </Button>
@@ -244,7 +231,6 @@ const PatientDashboard = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-6">
               Create Electronic Prescription
             </h1>
-            {/* Import PrescriptionForm component instead of the whole page */}
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-center py-8">
                 <p className="text-lg">Prescription creation coming soon</p>
@@ -260,14 +246,14 @@ const PatientDashboard = () => {
   }
 
   // Render FindDoctor view
-  if (view === "find-doctor") {
+  if (currentView === "find-doctor") {
     return (
       <UnifiedLayout>
         <div className="pt-2 pb-6">
           <Button 
             variant="ghost" 
             className="mb-4"
-            onClick={() => handleViewChange('home')}
+            onClick={() => setCurrentView('home')}
           >
             ← Back to Dashboard
           </Button>
@@ -288,14 +274,14 @@ const PatientDashboard = () => {
   }
 
   // Render SearchPharmacy view
-  if (view === "search-pharmacy") {
+  if (currentView === "search-pharmacy") {
     return (
       <UnifiedLayout>
         <div className="pt-2 pb-6">
           <Button 
             variant="ghost" 
             className="mb-4"
-            onClick={() => handleViewChange('home')}
+            onClick={() => setCurrentView('home')}
           >
             ← Back to Dashboard
           </Button>
@@ -316,14 +302,14 @@ const PatientDashboard = () => {
   }
 
   // Render Teleconsultations view
-  if (view === "teleconsultations") {
+  if (currentView === "teleconsultations") {
     return (
       <UnifiedLayout>
         <div className="pt-2 pb-6">
           <Button 
             variant="ghost" 
             className="mb-4"
-            onClick={() => handleViewChange('home')}
+            onClick={() => setCurrentView('home')}
           >
             ← Back to Dashboard
           </Button>
@@ -359,7 +345,7 @@ const PatientDashboard = () => {
             <div>
               <Button 
                 variant="outline" 
-                onClick={() => setSearchParams({ view: 'settings' })}
+                onClick={() => setCurrentView('settings')}
               >
                 Settings
               </Button>
@@ -411,42 +397,42 @@ const PatientDashboard = () => {
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => setSearchParams({ view: 'prescriptions' })}
+                  onClick={() => setCurrentView('prescriptions')}
                 >
                   View My Prescriptions
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => setSearchParams({ view: 'orders' })}
+                  onClick={() => setCurrentView('orders')}
                 >
                   Track My Orders
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => setSearchParams({ view: 'create-prescription' })}
+                  onClick={() => setCurrentView('create-prescription')}
                 >
                   Create New Prescription
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => setSearchParams({ view: 'find-doctor' })}
+                  onClick={() => setCurrentView('find-doctor')}
                 >
                   Find a Doctor
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => setSearchParams({ view: 'search-pharmacy' })}
+                  onClick={() => setCurrentView('search-pharmacy')}
                 >
                   Find a Pharmacy
                 </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => setSearchParams({ view: 'teleconsultations' })}
+                  onClick={() => setCurrentView('teleconsultations')}
                 >
                   Book Teleconsultation
                 </Button>
