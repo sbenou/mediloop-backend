@@ -93,9 +93,10 @@ const PatientDashboard = () => {
     );
   }
 
-  // Default dashboard view
+  // Default dashboard view - using the same structure as UnifiedProfilePage
   return (
     <UnifiedLayout>
+      {/* Apply consistent font-family to this page only */}
       <div className="flex h-full relative font-sans">
         <div 
           id="main-content" 
