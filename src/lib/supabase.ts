@@ -9,7 +9,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create storage key based on project URL
 const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
 
-// Improved storage that works better across tabs with browser storage events
+// Enhanced storage that works better across tabs with browser storage events
 const crossTabStorage = {
   getItem: (key: string) => {
     try {
@@ -43,6 +43,16 @@ const crossTabStorage = {
       // Track when session was stored
       const timestamp = new Date().toISOString();
       window.localStorage.setItem(`${key}_timestamp`, timestamp);
+      
+      // Fire a custom event that can be listened for in other parts of the app
+      try {
+        const event = new CustomEvent('supabase:auth:token:update', { 
+          detail: { timestamp, userId: value?.user?.id } 
+        });
+        window.dispatchEvent(event);
+      } catch (eventError) {
+        console.error('Error dispatching custom event:', eventError);
+      }
       
       console.log(`Auth: Session stored at ${timestamp} for user: ${value?.user?.id || 'unknown'}`);
     } catch (e) {
@@ -109,12 +119,23 @@ if (authChannel) {
     if (event.data?.type === 'SIGNED_IN') {
       console.log('Auth: Received signin event from another tab');
       // Force refresh the session
-      await supabase.auth.refreshSession();
+      try {
+        await supabase.auth.refreshSession();
+        console.log('Auth: Session refreshed after signin event from another tab');
+      } catch (error) {
+        console.error('Auth: Error refreshing session after signin event:', error);
+      }
     } else if (event.data?.type === 'SIGNED_OUT') {
       console.log('Auth: Received signout event from another tab');
       // Clear local session
-      await supabase.auth.signOut({ scope: 'local' });
-      window.location.reload();
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+        console.log('Auth: Session cleared after signout event from another tab');
+        // Force reload to ensure UI is in sync
+        window.location.reload();
+      } catch (error) {
+        console.error('Auth: Error clearing session after signout event:', error);
+      }
     }
   };
 }
@@ -130,7 +151,18 @@ supabase.auth.onAuthStateChange((event, session) => {
     
     // Broadcast signin to other tabs
     if (authChannel) {
-      authChannel.postMessage({ type: 'SIGNED_IN', timestamp: Date.now() });
+      authChannel.postMessage({ type: 'SIGNED_IN', timestamp: Date.now(), userId: session.user.id });
+    }
+    
+    // Also dispatch a window storage event for older browsers without BroadcastChannel
+    try {
+      const loginEvent = { type: 'LOGIN', userId: session.user.id, timestamp: Date.now() };
+      localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
+      // Force the storage event by removing and setting again
+      localStorage.removeItem('last_auth_event');
+      localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
+    } catch (error) {
+      console.error('Error sending login event via localStorage:', error);
     }
   } else if (event === 'SIGNED_OUT') {
     console.log('Auth: User signed out, clearing storage');
@@ -139,6 +171,17 @@ supabase.auth.onAuthStateChange((event, session) => {
     // Broadcast signout to other tabs
     if (authChannel) {
       authChannel.postMessage({ type: 'SIGNED_OUT', timestamp: Date.now() });
+    }
+    
+    // Also dispatch a window storage event for older browsers without BroadcastChannel
+    try {
+      const logoutEvent = { type: 'LOGOUT', timestamp: Date.now() };
+      localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
+      // Force the storage event by removing and setting again
+      localStorage.removeItem('last_auth_event');
+      localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
+    } catch (error) {
+      console.error('Error sending logout event via localStorage:', error);
     }
   } else if (event === 'TOKEN_REFRESHED' && session) {
     console.log('Auth: Token refreshed, updating storage');
@@ -149,33 +192,41 @@ supabase.auth.onAuthStateChange((event, session) => {
   }
 });
 
-// Setup periodic session check to prevent expiration
+// Enhanced periodic session check to prevent expiration
 const setupSessionRefresh = () => {
-  // Check session every 4 minutes
+  // Check session every 30 seconds (reduced from 4 minutes)
   const interval = setInterval(async () => {
     try {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        // If session exists but expires in less than 5 minutes, refresh it
-        const expiresAt = data.session.expires_at || 0;
-        const now = Math.floor(Date.now() / 1000);
-        if (expiresAt - now < 300) {
-          console.log('Auth: Session expiring soon, refreshing token');
-          await supabase.auth.refreshSession();
+      // Only perform refresh when tab is visible to avoid unnecessary API calls
+      if (document.visibilityState === 'visible') {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          // If session exists but expires in less than 5 minutes, refresh it
+          const expiresAt = data.session.expires_at || 0;
+          const now = Math.floor(Date.now() / 1000);
+          if (expiresAt - now < 300) {
+            console.log('Auth: Session expiring soon, refreshing token');
+            await supabase.auth.refreshSession();
+            console.log('Auth: Session refreshed successfully');
+          }
         }
       }
     } catch (error) {
       console.error('Error in session refresh:', error);
     }
-  }, 240000); // 4 minutes
+  }, 30000); // 30 seconds
   
   // Clear interval on page unload
   window.addEventListener('beforeunload', () => {
     clearInterval(interval);
   });
+  
+  return interval;
 };
 
-// Initial session setup
+// Initial session setup with more frequent refresh
+let refreshInterval: number | null = null;
+
 (async () => {
   try {
     // Get current session state
@@ -198,8 +249,8 @@ const setupSessionRefresh = () => {
         }
       }
       
-      // Set up session refresh
-      setupSessionRefresh();
+      // Set up session refresh with increased frequency
+      refreshInterval = setupSessionRefresh();
     } else {
       console.log('Auth: No initial session found');
     }
@@ -211,7 +262,21 @@ const setupSessionRefresh = () => {
 // Safe method to get session from storage
 export const getSessionFromStorage = () => {
   try {
-    return crossTabStorage.getItem(STORAGE_KEY);
+    // Try sessionStorage first (faster)
+    const sessionData = sessionStorage.getItem(STORAGE_KEY);
+    if (sessionData) {
+      return JSON.parse(sessionData);
+    }
+    
+    // Then try localStorage
+    const localData = localStorage.getItem(STORAGE_KEY);
+    if (localData) {
+      // Also sync to sessionStorage for faster future access
+      sessionStorage.setItem(STORAGE_KEY, localData);
+      return JSON.parse(localData);
+    }
+    
+    return null;
   } catch (e) {
     console.error('Error getting session from storage:', e);
     return null;
@@ -228,6 +293,9 @@ const handleVisibilityChange = async () => {
         console.log('Auth: Session verification failed after tab visibility change:', error);
       } else {
         console.log('Auth: Session verified after tab visibility change');
+        
+        // Explicitly update storage to ensure it's there
+        crossTabStorage.setItem(STORAGE_KEY, data.session);
       }
     } catch (err) {
       console.error('Auth: Error during visibility session check:', err);
@@ -237,3 +305,6 @@ const handleVisibilityChange = async () => {
 
 // Add visibility change handler for session syncing
 document.addEventListener('visibilitychange', handleVisibilityChange);
+
+// Force a session sync on first load after a delay
+setTimeout(handleVisibilityChange, 1000);

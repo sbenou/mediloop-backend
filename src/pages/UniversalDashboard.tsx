@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
@@ -23,6 +23,7 @@ const UniversalDashboard = () => {
   const navigate = useNavigate();
   const view = searchParams.get('view') || 'home';
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const sessionCheckerRef = useRef<number | null>(null);
 
   // Function to verify session, separated for reuse
   const verifySession = useCallback(async () => {
@@ -81,6 +82,17 @@ const UniversalDashboard = () => {
     };
     
     checkAuthentication();
+    
+    // Start continuous session verification process
+    if (sessionCheckerRef.current) {
+      window.clearInterval(sessionCheckerRef.current);
+    }
+    
+    sessionCheckerRef.current = window.setInterval(async () => {
+      if (document.visibilityState === 'visible') {
+        await verifySession();
+      }
+    }, 5000); // Check every 5 seconds when tab is visible
     
     // Handle tab visibility changes with improved error handling
     const handleVisibilityChange = async () => {
@@ -143,6 +155,12 @@ const UniversalDashboard = () => {
       mounted = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('storage', handleStorageChange);
+      
+      // Clear interval on unmount
+      if (sessionCheckerRef.current) {
+        window.clearInterval(sessionCheckerRef.current);
+        sessionCheckerRef.current = null;
+      }
     };
   }, [isAuthenticated, isLoading, navigate, initialCheckDone, verifySession]);
 

@@ -9,27 +9,72 @@ import { UserMenuItems } from "./user-menu/UserMenuItems";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCallback, memo } from 'react';
+import { useCallback, memo, useState, useEffect } from 'react';
+import { supabase, getSessionFromStorage } from "@/lib/supabase";
 
 const UserMenu = memo(() => {
   const { isAuthenticated, isLoading, profile, user } = useAuth();
+  const [localLoading, setLocalLoading] = useState(true);
+  const [hasVisibleSession, setHasVisibleSession] = useState(false);
   const navigate = useNavigate();
+  
+  // Check for session on mount and visibility change
+  useEffect(() => {
+    const checkSession = async () => {
+      // First check local storage (fast)
+      const storedSession = getSessionFromStorage();
+      if (storedSession?.user) {
+        setHasVisibleSession(true);
+        setLocalLoading(false);
+        return;
+      }
+      
+      // If not in storage, check API (slower)
+      try {
+        const { data } = await supabase.auth.getSession();
+        setHasVisibleSession(!!data.session);
+      } catch (error) {
+        console.error("Error checking session in UserMenu:", error);
+      } finally {
+        setLocalLoading(false);
+      }
+    };
+    
+    checkSession();
+    
+    // Also check when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkSession();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Listen for custom auth token events
+    const handleTokenUpdate = () => {
+      checkSession();
+    };
+    
+    window.addEventListener('supabase:auth:token:update', handleTokenUpdate);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('supabase:auth:token:update', handleTokenUpdate);
+    };
+  }, []);
 
   const handleNavigateToLogin = useCallback(() => {
     navigate('/login', { replace: true });
   }, [navigate]);
 
-  // Show skeleton loader while checking initial auth state
-  if (user && isLoading) {
-    return (
-      <div className="h-10 w-10">
-        <Skeleton className="h-full w-full rounded-full" />
-      </div>
-    );
-  }
+  // Prevent flashing by showing skeleton only during real loading states
+  // and not during tab switches with a known session
+  const loadingState = isLoading || localLoading;
+  const shouldShowSkeleton = loadingState && !hasVisibleSession;
 
-  // Show skeleton while loading and no user data
-  if (isLoading && !user) {
+  // Show skeleton while loading and no visible session
+  if (shouldShowSkeleton) {
     return (
       <div className="h-10 w-10 rounded-full">
         <Skeleton className="h-full w-full rounded-full" />
@@ -38,7 +83,7 @@ const UserMenu = memo(() => {
   }
 
   // Show login button if not authenticated and not loading
-  if (!isAuthenticated && !isLoading) {
+  if (!isAuthenticated && !loadingState) {
     return (
       <button
         onClick={handleNavigateToLogin}
@@ -49,7 +94,7 @@ const UserMenu = memo(() => {
     );
   }
 
-  // Show user menu if authenticated
+  // Show user menu if authenticated or we have a visible session
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
