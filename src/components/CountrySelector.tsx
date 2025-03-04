@@ -101,8 +101,15 @@ const CountrySelector = () => {
     <>
       {open && (
         <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[99999]" 
-          style={{ pointerEvents: "all" }}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100000]" 
+          style={{ 
+            pointerEvents: "all",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0
+          }}
         />
       )}
       <Dialog 
@@ -111,7 +118,7 @@ const CountrySelector = () => {
         modal={true}
       >
         <DialogContent 
-          className="sm:max-w-md z-[100000]" 
+          className="sm:max-w-md z-[100001]" 
           forceMount
           onInteractOutside={(e) => {
             e.preventDefault();
