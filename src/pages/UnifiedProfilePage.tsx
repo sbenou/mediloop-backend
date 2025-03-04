@@ -56,7 +56,6 @@ const UnifiedProfilePage = () => {
 
   return (
     <UnifiedLayout>
-      {/* Apply consistent font-family to this page only */}
       <div className="flex h-full relative font-sans">
         <div 
           id="main-content" 
@@ -103,7 +102,6 @@ const UnifiedProfilePage = () => {
             </Card>
           </div>
           
-          {/* Add the statistics charts below the stats cards */}
           <StatisticsCharts />
         </div>
 
