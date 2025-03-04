@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -74,7 +73,6 @@ const PatientDashboard = () => {
     }
   };
 
-  // Tab change handlers
   const handleOrdersTabChange = (value: string) => {
     setSearchParams({ view: 'orders', ordersTab: value });
   };
@@ -83,7 +81,6 @@ const PatientDashboard = () => {
     setSearchParams({ view: 'profile', profileTab: value });
   };
 
-  // Render profile view when requested
   if (view === "profile") {
     return (
       <UnifiedLayout>
@@ -148,7 +145,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render settings view when requested
   if (view === "settings") {
     return (
       <UnifiedLayout>
@@ -179,7 +175,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render orders view when requested
   if (view === "orders") {
     return (
       <UnifiedLayout>
@@ -246,7 +241,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render prescriptions view when requested
   if (view === "prescriptions") {
     return (
       <UnifiedLayout>
@@ -265,7 +259,6 @@ const PatientDashboard = () => {
     );
   }
 
-  // Render teleconsultations view when requested
   if (view === "teleconsultations") {
     return (
       <UnifiedLayout>
@@ -284,13 +277,12 @@ const PatientDashboard = () => {
     );
   }
 
-  // Default dashboard view
   return (
     <UnifiedLayout>
       <div className="flex h-full relative font-sans">
         <div 
           id="main-content" 
-          className="flex-1 space-y-8 px-1 mx-0 transition-all duration-300"
+          className={`flex-1 space-y-8 px-1 mx-0 transition-all duration-300 ${isOpen ? 'mr-[300px]' : 'mr-0'}`}
         >
           <div className="flex justify-between items-center">
             <div>
@@ -337,7 +329,6 @@ const PatientDashboard = () => {
             </Card>
           </div>
           
-          {/* Add the statistics charts below the stats cards */}
           <StatisticsCharts />
         </div>
 

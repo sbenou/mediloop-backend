@@ -1,3 +1,4 @@
+
 import { memo, useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Upload, Building2 } from "lucide-react";
@@ -24,7 +25,7 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
   const isOrganization = userProfile?.full_name === 'Mediloop';
 
   // Prevent patients from changing the Mediloop avatar
-  const isPatient = user?.role === 'user';
+  const isPatient = user?.role === 'user' || user?.role === 'patient';
   const canModifyOrganizationAvatar = !isPatient;
   
   // Only allow upload if:
