@@ -9,11 +9,10 @@ import { PartnerSection } from "@/components/home/PartnerSection";
 import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import CountrySelector from "@/components/CountrySelector";
 
-// The Index page showcases the main landing page
 const Index = () => {
   useEffect(() => {
-    // Force window resize event to ensure charts and components render correctly
     window.dispatchEvent(new Event('resize'));
   }, []);
 
@@ -21,10 +20,11 @@ const Index = () => {
     <div className="flex flex-col min-h-screen">
       <Header />
       <div className="flex flex-col gap-20 pb-20">
+        <CountrySelector />
         <HeroSection />
         <FeaturesGrid />
         <GetStartedSteps />
-        <StatsSection /> {/* Moved before TestimonialsSection */}
+        <StatsSection />
         <TestimonialsSection />
         <PartnerSection />
         <DeliveryPersonSection />
