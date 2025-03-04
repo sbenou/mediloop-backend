@@ -23,11 +23,11 @@ const Index = () => {
       <div className="flex flex-col gap-20 pb-20">
         <HeroSection />
         <FeaturesGrid />
-        <StatsSection />
         <GetStartedSteps />
         <TestimonialsSection />
         <PartnerSection />
         <DeliveryPersonSection />
+        <StatsSection /> {/* Moved to bottom, just before Footer */}
       </div>
       <Footer />
     </div>
