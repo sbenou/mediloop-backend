@@ -1,11 +1,10 @@
 
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturesGrid } from "@/components/home/FeaturesGrid";
 import { StatsSection } from "@/components/home/StatsSection";
-import { GetStartedSteps } from "@/components/home/GetStartedSteps";
+import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { PartnerSection } from "@/components/home/PartnerSection";
 import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
@@ -17,12 +16,21 @@ const Index = () => {
     window.dispatchEvent(new Event('resize'));
   }, []);
 
+  // Mock statistics data for the stats section
+  const mockStats = {
+    ordersCount: 250000,
+    pharmaciesCount: 1200,
+    doctorsCount: 3500,
+    prescriptionsCount: 480000,
+    connectionsCount: 85000
+  };
+
   return (
     <UnifiedLayoutTemplate>
       <div className="flex flex-col gap-20 pb-20">
         <HeroSection />
         <FeaturesGrid />
-        <StatsSection />
+        <StatsSection stats={mockStats} />
         <GetStartedSteps />
         <TestimonialsSection />
         <PartnerSection />
