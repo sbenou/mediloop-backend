@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { toast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
   ProfileView,
@@ -97,7 +99,11 @@ const UniversalDashboard = () => {
 
   return (
     <UnifiedLayoutTemplate>
-      {renderView()}
+      <div className="h-full overflow-hidden">
+        <ScrollArea className="h-full w-full">
+          {renderView()}
+        </ScrollArea>
+      </div>
     </UnifiedLayoutTemplate>
   );
 };

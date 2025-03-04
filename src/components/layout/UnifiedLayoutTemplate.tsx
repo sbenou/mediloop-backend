@@ -77,7 +77,7 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
         <div className="flex flex-1 overflow-hidden relative">
           {/* Main content area */}
           <main 
-            className={`flex-1 p-6 overflow-auto transition-all duration-300 ${isDrawerOpen ? 'mr-[300px]' : 'mr-0'}`}
+            className={`flex-1 p-6 h-full transition-all duration-300 ${isDrawerOpen ? 'mr-[300px]' : 'mr-0'}`}
           >
             {children}
           </main>
