@@ -100,7 +100,7 @@ const UniversalDashboard = () => {
   return (
     <UnifiedLayoutTemplate>
       <div className="h-full overflow-hidden">
-        <ScrollArea className="h-full w-full">
+        <ScrollArea className="h-full w-full main-content-scroll">
           {renderView()}
         </ScrollArea>
       </div>
