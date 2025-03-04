@@ -6,6 +6,7 @@ import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { toast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/lib/supabase";
 
 import {
   ProfileView,
@@ -21,17 +22,57 @@ const UniversalDashboard = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const view = searchParams.get('view') || 'home';
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
+  // Handle initial auth check and tab focus restoration
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please login to access this page.",
-      });
-      navigate("/login");
-    }
-  }, [isAuthenticated, isLoading, navigate]);
+    const checkAuthentication = async () => {
+      if (!isAuthenticated && !isLoading) {
+        // Try to get the session directly from Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log("No valid session found on dashboard load");
+          toast({
+            variant: "destructive",
+            title: "Authentication required",
+            description: "Please login to access this page.",
+          });
+          navigate("/login");
+        }
+      }
+      
+      setInitialCheckDone(true);
+    };
+    
+    checkAuthentication();
+    
+    // Handle tab visibility changes
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log("Tab became visible, checking auth state");
+        // When tab becomes visible again, verify session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session && initialCheckDone) {
+          console.log("Session lost after tab switch");
+          // Only show toast if we've done the initial check and actually lost the session
+          toast({
+            variant: "destructive",
+            title: "Session expired",
+            description: "Your session has expired. Please login again.",
+          });
+          navigate("/login");
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, isLoading, navigate, initialCheckDone]);
 
   const hasPermissionForView = (view: string): boolean => {
     const commonViews = ['home', 'profile', 'settings'];
