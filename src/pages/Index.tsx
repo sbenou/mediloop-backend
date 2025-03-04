@@ -1,6 +1,5 @@
 
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturesGrid } from "@/components/home/FeaturesGrid";
 import { StatsSection } from "@/components/home/StatsSection";
@@ -18,22 +17,13 @@ const Index = () => {
     window.dispatchEvent(new Event('resize'));
   }, []);
 
-  // Mock statistics data for the stats section
-  const mockStats = {
-    ordersCount: 250000,
-    pharmaciesCount: 1200,
-    doctorsCount: 3500,
-    prescriptionsCount: 480000,
-    connectionsCount: 85000
-  };
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <div className="flex flex-col gap-20 pb-20">
         <HeroSection />
         <FeaturesGrid />
-        <StatsSection stats={mockStats} />
+        <StatsSection />
         <GetStartedSteps />
         <TestimonialsSection />
         <PartnerSection />
