@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,19 +36,11 @@ const UnifiedProfilePage = () => {
     );
   };
 
-  // Apply sidebar effect
-  useState(() => {
-    const mainContent = document.getElementById('main-content');
-    if (mainContent) {
-      if (isOpen) {
-        mainContent.classList.add('mr-[300px]');
-      } else {
-        mainContent.classList.remove('mr-[300px]');
-      }
-    }
-    
+  // Apply transition effect when drawer opens/closes
+  useEffect(() => {
+    // Force recalculation of chart dimensions when sidebar state changes
     window.dispatchEvent(new Event('resize'));
-  });
+  }, [isOpen]);
 
   // The UI template content
   return (
@@ -56,7 +48,7 @@ const UnifiedProfilePage = () => {
       <div className="flex h-full relative font-sans">
         <div 
           id="main-content" 
-          className="flex-1 space-y-8 px-1 mx-0 transition-all duration-300"
+          className={`flex-1 space-y-8 px-1 mx-0 transition-all duration-300 ${isOpen ? 'mr-[300px]' : 'mr-0'}`}
         >
           <div className="flex justify-between items-center">
             <div>
