@@ -55,7 +55,8 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
           { count: connectionsCount, error: connectionsError }
         ] = await Promise.all([
           supabase.from('orders').select('*', { count: 'exact', head: true }),
-          supabase.from('pharmacies').select('*', { count: 'exact', head: true }),
+          // Only count endorsed pharmacies (those who have paid for a subscription)
+          supabase.from('pharmacies').select('*', { count: 'exact', head: true }).eq('endorsed', true),
           supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'doctor'),
           supabase.from('prescriptions').select('*', { count: 'exact', head: true }),
           supabase.from('doctor_patient_connections').select('*', { count: 'exact', head: true }),

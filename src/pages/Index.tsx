@@ -24,10 +24,10 @@ const Index = () => {
         <HeroSection />
         <FeaturesGrid />
         <GetStartedSteps />
+        <StatsSection /> {/* Moved before TestimonialsSection */}
         <TestimonialsSection />
         <PartnerSection />
         <DeliveryPersonSection />
-        <StatsSection /> {/* Moved to bottom, just before Footer */}
       </div>
       <Footer />
     </div>

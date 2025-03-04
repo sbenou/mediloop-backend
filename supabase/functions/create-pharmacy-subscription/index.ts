@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from 'https://esm.sh/stripe@14.21.0'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
@@ -41,6 +42,18 @@ serve(async (req) => {
       throw new Error('Only pharmacists can subscribe to this plan')
     }
 
+    // Get pharmacy ID associated with this user
+    const { data: userPharmacy } = await supabaseClient
+      .from('user_pharmacies')
+      .select('pharmacy_id')
+      .eq('user_id', user.id)
+      .single()
+
+    const pharmacyId = userPharmacy?.pharmacy_id
+    if (!pharmacyId) {
+      throw new Error('No pharmacy associated with this user')
+    }
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     })
@@ -62,6 +75,18 @@ serve(async (req) => {
       })
 
       if (subscriptions.data.length > 0) {
+        // If already subscribed, make sure the pharmacy is marked as endorsed
+        const { data: updateResult, error: updateError } = await supabaseClient
+          .from('pharmacies')
+          .update({ endorsed: true })
+          .eq('id', pharmacyId)
+
+        if (updateError) {
+          console.error('Error updating pharmacy endorsed status:', updateError)
+        } else {
+          console.log('Pharmacy already has active subscription, endorsed status updated')
+        }
+
         throw new Error("Already subscribed to the Pharmacy Partner Plan")
       }
     }
@@ -77,8 +102,12 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/settings?subscription=success`,
+      success_url: `${req.headers.get('origin')}/settings?subscription=success&pharmacy_id=${pharmacyId}`,
       cancel_url: `${req.headers.get('origin')}/settings?subscription=cancelled`,
+      metadata: {
+        pharmacy_id: pharmacyId,
+        user_id: user.id
+      }
     })
 
     // Send confirmation email
@@ -92,7 +121,9 @@ serve(async (req) => {
         body: JSON.stringify({
           type: 'subscription',
           email: email,
-          details: {}
+          details: {
+            pharmacy_id: pharmacyId
+          }
         })
       });
     } catch (emailError) {
