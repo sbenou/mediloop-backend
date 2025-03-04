@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import UnifiedLayout from "@/components/layout/UnifiedLayout";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
@@ -44,7 +44,7 @@ const UnifiedProfilePage = () => {
 
   // The UI template content
   return (
-    <UnifiedLayout>
+    <UnifiedLayoutTemplate>
       <div className="flex h-full relative font-sans">
         <div 
           id="main-content" 
@@ -133,7 +133,7 @@ const UnifiedProfilePage = () => {
           </div>
         </div>
       </div>
-    </UnifiedLayout>
+    </UnifiedLayoutTemplate>
   );
 };
 
