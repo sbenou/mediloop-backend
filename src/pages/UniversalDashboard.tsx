@@ -1,16 +1,18 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { toast } from "@/components/ui/use-toast";
-import ProfileView from "@/components/dashboard/views/ProfileView";
-import SettingsView from "@/components/dashboard/views/SettingsView";
-import OrdersView from "@/components/dashboard/views/OrdersView";
-import PrescriptionsView from "@/components/dashboard/views/PrescriptionsView";
-import TeleconsultationsView from "@/components/dashboard/views/TeleconsultationsView";
-import HomeView from "@/components/dashboard/views/HomeView";
 import { Skeleton } from "@/components/ui/skeleton";
+
+import {
+  ProfileView,
+  SettingsView,
+  OrdersView,
+  PrescriptionsView,
+  TeleconsultationsView,
+  HomeView,
+} from "@/components/dashboard/views";
 
 const UniversalDashboard = () => {
   const { userRole, isAuthenticated, isLoading } = useAuth();
@@ -18,7 +20,6 @@ const UniversalDashboard = () => {
   const navigate = useNavigate();
   const view = searchParams.get('view') || 'home';
 
-  // Redirects user to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -30,14 +31,11 @@ const UniversalDashboard = () => {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  // Role-specific permission checks - can be expanded for new roles
   const hasPermissionForView = (view: string): boolean => {
-    // Common views accessible by all roles
     const commonViews = ['home', 'profile', 'settings'];
     
     if (commonViews.includes(view)) return true;
     
-    // Role-specific view permissions
     switch (userRole) {
       case 'patient':
         return ['orders', 'prescriptions', 'teleconsultations'].includes(view);
@@ -46,18 +44,16 @@ const UniversalDashboard = () => {
       case 'pharmacist':
         return ['inventory', 'orders', 'prescriptions'].includes(view);
       case 'superadmin':
-        // Superadmin can access everything
         return true;
       default:
         return false;
     }
   };
 
-  // If view is not allowed for current role, redirect to home
   useEffect(() => {
     if (!isLoading && isAuthenticated && !hasPermissionForView(view)) {
       toast({
-        variant: "destructive",  // Changed from "warning" to "destructive"
+        variant: "destructive",
         title: "Access restricted",
         description: "You don't have permission to access this view.",
       });
@@ -65,7 +61,6 @@ const UniversalDashboard = () => {
     }
   }, [view, userRole, isAuthenticated, isLoading, navigate]);
 
-  // Show loading state while checking auth
   if (isLoading) {
     return (
       <UnifiedLayout>
@@ -77,9 +72,7 @@ const UniversalDashboard = () => {
     );
   }
 
-  // Render the appropriate view based on the URL parameter
   const renderView = () => {
-    // Common parameters from URL that might be needed by multiple views
     const commonProps = {
       ordersTab: searchParams.get('ordersTab') || 'orders',
       profileTab: searchParams.get('profileTab') || 'personal',
