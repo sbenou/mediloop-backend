@@ -1,10 +1,13 @@
+
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FilterCategory } from "./filters/FilterCategory";
 import { Product, Subcategory } from "./product/types/product";
+import { Button } from "@/components/ui/button";
+import { FilterX } from "lucide-react";
 
 interface Category {
   id: string;
@@ -21,6 +24,7 @@ export const ProductFilters = ({
   onFilterChange: (filters: { type?: string; category?: string; subcategory?: string }) => void;
 }) => {
   console.log('User Role in ProductFilters:', userRole);
+  const [activeFilters, setActiveFilters] = useState<boolean>(false);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -59,11 +63,14 @@ export const ProductFilters = ({
 
   useEffect(() => {
     const handleFilterProducts = (event: CustomEvent<{ type: string; category?: string; subcategory?: string }>) => {
-      onFilterChange({
+      const filters = {
         type: event.detail.type,
         category: event.detail.category,
         subcategory: event.detail.subcategory
-      });
+      };
+      
+      setActiveFilters(!!filters.type || !!filters.category || !!filters.subcategory);
+      onFilterChange(filters);
     };
 
     window.addEventListener('filterProducts', handleFilterProducts as EventListener);
@@ -72,6 +79,17 @@ export const ProductFilters = ({
       window.removeEventListener('filterProducts', handleFilterProducts as EventListener);
     };
   }, [onFilterChange]);
+
+  const handleFilterChange = (filters: { type?: string; category?: string; subcategory?: string }) => {
+    setActiveFilters(!!filters.type || !!filters.category || !!filters.subcategory);
+    onFilterChange(filters);
+  };
+
+  const clearFilters = () => {
+    console.log('Clearing all filters');
+    setActiveFilters(false);
+    onFilterChange({});
+  };
 
   const getMedicationCategories = () => {
     if (!categories) return [];
@@ -99,7 +117,20 @@ export const ProductFilters = ({
 
   return (
     <div className="w-64 flex-shrink-0 border-r pr-4">
-      <h3 className="font-semibold mb-4">Filters</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold">Filters</h3>
+        {activeFilters && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearFilters}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <FilterX className="h-4 w-4 mr-1" />
+            Clear
+          </Button>
+        )}
+      </div>
       <ScrollArea className="h-[calc(100vh-200px)]">
         <Accordion type="multiple" className="w-full">
           <AccordionItem value="pharmacy">
@@ -112,7 +143,7 @@ export const ProductFilters = ({
                   name={category.name}
                   type="medication"
                   subcategories={category.subcategories}
-                  onFilterChange={onFilterChange}
+                  onFilterChange={handleFilterChange}
                 />
               ))}
             </AccordionContent>
@@ -127,7 +158,7 @@ export const ProductFilters = ({
                   name={category.name}
                   type="parapharmacy"
                   subcategories={category.subcategories}
-                  onFilterChange={onFilterChange}
+                  onFilterChange={handleFilterChange}
                 />
               ))}
             </AccordionContent>
