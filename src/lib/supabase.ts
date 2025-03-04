@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 import { safeQueryResult } from '@/types/user';
@@ -60,87 +59,67 @@ const cookieStorage = {
   }
 };
 
-// Use both localStorage and cookie storage for better compatibility
-const localStorage = {
+// Enhance our localStorage implementation to be more reliable
+const persistentStorage = {
   getItem: (key: string) => {
     try {
-      // First try to get from cookie for cross-browser compatibility
+      // First try cookies for cross-browser compatibility
       const cookieValue = cookieStorage.getItem(key);
       if (cookieValue) {
-        console.log(`Local storage: Found session in cookie for key ${key}`);
         return cookieValue;
       }
       
-      // Fallback to localStorage
+      // Then try localStorage
       const value = window.localStorage.getItem(key);
-      if (!value) {
-        // Check sessionStorage as a last resort
-        const sessionValue = window.sessionStorage.getItem(key);
-        if (sessionValue) {
-          console.log(`Local storage: Found session in sessionStorage for key ${key}`);
-          return JSON.parse(sessionValue);
+      if (value) {
+        const parsed = JSON.parse(value);
+        
+        // Check if session is expired
+        if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
+          persistentStorage.removeItem(key);
+          return null;
         }
         
-        console.log(`Local storage: No session found for key ${key}`);
-        return null;
+        return parsed;
       }
       
-      const parsed = JSON.parse(value);
-      
-      // Check if the stored session is expired
-      if (parsed.expires_at && parsed.expires_at < Date.now() / 1000) {
-        console.log(`Local storage: Session expired for key ${key}, removing`);
-        localStorage.removeItem(key);
-        return null;
+      // Finally check sessionStorage
+      const sessionValue = window.sessionStorage.getItem(key);
+      if (sessionValue) {
+        return JSON.parse(sessionValue);
       }
       
-      console.log(`Local storage: Found valid session for key ${key}`);
-      return parsed;
+      return null;
     } catch (e) {
-      console.error('Error reading auth from localStorage:', e);
+      console.error('Error reading auth data:', e);
       return null;
     }
   },
+  
   setItem: (key: string, value: any) => {
     try {
-      // Store in both cookie and localStorage for redundancy
+      // Store in multiple locations for redundancy
       cookieStorage.setItem(key, value);
-      
-      // Also store in localStorage
       window.localStorage.setItem(key, JSON.stringify(value));
-      
-      // Additionally store in sessionStorage for extra redundancy
       window.sessionStorage.setItem(key, JSON.stringify(value));
       
-      // Try to store session explicitly with timestamp for debugging
-      try {
-        window.localStorage.setItem(`${key}_timestamp`, JSON.stringify({
-          timestamp: new Date().toISOString(),
-          userId: value?.user?.id || 'unknown',
-          role: value?.user?.role || 'unknown'
-        }));
-      } catch (e) {
-        // Ignore this error as it's just for debugging
-      }
-      
-      // Log success for debugging
-      console.log(`Session stored successfully for key: ${key}`);
-      if (value?.user?.id) {
-        console.log(`Session stored for user: ${value.user.id}`);
-      }
+      // Store timestamp for debugging
+      const timestamp = new Date().toISOString();
+      window.localStorage.setItem(`${key}_timestamp`, timestamp);
+      console.log(`Session stored at ${timestamp} for user: ${value?.user?.id || 'unknown'}`);
     } catch (e) {
-      console.error('Error setting auth in localStorage:', e);
+      console.error('Error setting auth data:', e);
     }
   },
+  
   removeItem: (key: string) => {
     try {
       cookieStorage.removeItem(key);
       window.localStorage.removeItem(key);
       window.sessionStorage.removeItem(key);
       window.localStorage.removeItem(`${key}_timestamp`);
-      console.log(`Local storage: Session removed for key ${key}`);
     } catch (e) {
-      console.error('Error removing auth from localStorage:', e);
+      console.error('Error removing auth data:', e);
     }
   }
 };
@@ -150,7 +129,7 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: localStorage, // Use our combined storage implementation
+    storage: persistentStorage,
     storageKey: STORAGE_KEY,
     flowType: 'pkce'
   }
@@ -180,61 +159,57 @@ export async function fetchFromSupabase<T extends Record<string, any>>(
   }
 }
 
-// Log auth state changes for debugging
+// Improve session state logging
 supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN') {
-    console.log('User signed in:', session?.user?.id);
-    
-    // Explicitly store session again to ensure it's properly saved
-    if (session) {
-      localStorage.setItem(STORAGE_KEY, session);
-    }
-    
-    console.log('Session storage check after sign in:', localStorage.getItem(STORAGE_KEY) ? 'Session found' : 'No session found');
+  console.log(`Auth state changed: ${event} for user: ${session?.user?.id || 'none'}`);
+  
+  if (event === 'SIGNED_IN' && session) {
+    // Force store session to ensure it persists
+    persistentStorage.setItem(STORAGE_KEY, session);
+    console.log('Session stored after sign in');
   } else if (event === 'SIGNED_OUT') {
-    console.log('User signed out');
-    // Clear any remaining session data
-    localStorage.removeItem(STORAGE_KEY);
-    cookieStorage.removeItem(STORAGE_KEY);
-  } else if (event === 'TOKEN_REFRESHED') {
-    console.log('Token refreshed for user:', session?.user?.id);
-    
-    // Explicitly store refreshed session
-    if (session) {
-      localStorage.setItem(STORAGE_KEY, session);
-      console.log('Refreshed token stored in session storage');
-    }
+    console.log('User signed out, clearing storage');
+    persistentStorage.removeItem(STORAGE_KEY);
+  } else if (event === 'TOKEN_REFRESHED' && session) {
+    console.log('Token refreshed, updating storage');
+    persistentStorage.setItem(STORAGE_KEY, session);
+  } else if (event === 'USER_UPDATED' && session) {
+    console.log('User updated, updating storage');
+    persistentStorage.setItem(STORAGE_KEY, session);
   }
 });
 
-// Initial session check and potential refresh
-supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session) {
-    console.log('Initial session loaded:', session.user.id);
-    // Store the session explicitly to ensure it's saved
-    localStorage.setItem(STORAGE_KEY, session);
-    
-    // Verify token expiration and refresh if needed
-    const expiresAt = session?.expires_at || 0;
-    const now = Math.floor(Date.now() / 1000);
-    if (expiresAt - now < 600) { // Refresh if less than 10 minutes left
-      supabase.auth.refreshSession().then(({ data }) => {
+// Initial session check with better error handling
+(async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      console.log(`Initial session loaded for: ${session.user.id}`);
+      persistentStorage.setItem(STORAGE_KEY, session);
+      
+      // Check token expiration and refresh if needed
+      const expiresAt = session.expires_at || 0;
+      const now = Math.floor(Date.now() / 1000);
+      if (expiresAt - now < 600) { // Refresh if less than 10 minutes left
+        console.log('Session token expiring soon, refreshing...');
+        const { data } = await supabase.auth.refreshSession();
         if (data.session) {
-          console.log('Session refreshed during initial load');
-          // Store the refreshed session
-          localStorage.setItem(STORAGE_KEY, data.session);
+          console.log('Session refreshed successfully');
+          persistentStorage.setItem(STORAGE_KEY, data.session);
         }
-      });
+      }
+    } else {
+      console.log('No initial session found');
     }
-  } else {
-    console.log('No initial session found');
+  } catch (error) {
+    console.error('Error during initial session check:', error);
   }
-});
+})();
 
 // Safe method to get session from storage
 export const getSessionFromStorage = () => {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    return persistentStorage.getItem(STORAGE_KEY);
   } catch (e) {
     console.error('Error getting session from storage:', e);
     return null;

@@ -1,98 +1,34 @@
 
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturesGrid } from "@/components/home/FeaturesGrid";
-import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
-import { PartnerSection } from "@/components/home/PartnerSection";
 import { StatsSection } from "@/components/home/StatsSection";
+import { GetStartedSteps } from "@/components/home/GetStartedSteps";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
-import GetStartedSteps from "@/components/home/GetStartedSteps";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import CountrySelector from "@/components/CountrySelector";
-import { useAuth } from "@/hooks/auth/useAuth";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { PartnerSection } from "@/components/home/PartnerSection";
+import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
 
+// The Index page showcases the main landing page
 const Index = () => {
-  console.log('Index page - Rendering');
-  const { isAuthenticated, profile } = useAuth();
-  const navigate = useNavigate();
-  
-  // Redirect authenticated users based on role
   useEffect(() => {
-    if (isAuthenticated) {
-      if (profile?.role === 'patient') {
-        // Ensure we're always redirecting to the main patient dashboard without any view parameters
-        navigate('/patient-dashboard');
-      } else if (profile?.role === 'pharmacist') {
-        navigate('/pharmacy/dashboard');
-      } else if (profile?.role === 'superadmin') {
-        navigate('/superadmin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
-    }
-  }, [isAuthenticated, navigate, profile]);
+    // Force window resize event to ensure charts and components render correctly
+    window.dispatchEvent(new Event('resize'));
+  }, []);
 
-  // Fetch statistics including new connection count
-  const { data: stats } = useQuery({
-    queryKey: ['platform-stats'],
-    queryFn: async () => {
-      try {
-        const [
-          { count: ordersCount } = { count: 0 },
-          { count: pharmaciesCount } = { count: 0 },
-          { count: doctorsCount } = { count: 0 },
-          { count: prescriptionsCount } = { count: 0 },
-          { count: connectionsCount } = { count: 0 },
-        ] = await Promise.all([
-          supabase.from('orders').select('*', { count: 'exact', head: true }),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'pharmacist'),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'doctor'),
-          supabase.from('prescriptions').select('*', { count: 'exact', head: true }),
-          supabase.from('doctor_patient_connections').select('*', { count: 'exact', head: true }).eq('status', 'accepted'),
-        ]);
-
-        return {
-          ordersCount: ordersCount || 0,
-          pharmaciesCount: pharmaciesCount || 0,
-          doctorsCount: doctorsCount || 0,
-          prescriptionsCount: prescriptionsCount || 0,
-          connectionsCount: connectionsCount || 0,
-        };
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-        return {
-          ordersCount: 0,
-          pharmaciesCount: 0,
-          doctorsCount: 0,
-          prescriptionsCount: 0,
-          connectionsCount: 0,
-        };
-      }
-    },
-  });
-
-  // Regular home page content
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <CountrySelector />
-      
-      <main className="flex-1">
+    <UnifiedLayoutTemplate>
+      <div className="flex flex-col gap-20 pb-20">
         <HeroSection />
-        <GetStartedSteps />
         <FeaturesGrid />
+        <StatsSection />
+        <GetStartedSteps />
+        <TestimonialsSection />
         <PartnerSection />
         <DeliveryPersonSection />
-        <StatsSection stats={stats || { ordersCount: 0, pharmaciesCount: 0, doctorsCount: 0, prescriptionsCount: 0, connectionsCount: 0 }} />
-        <TestimonialsSection />
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </UnifiedLayoutTemplate>
   );
 };
 

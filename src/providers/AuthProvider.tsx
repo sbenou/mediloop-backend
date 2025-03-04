@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase, getSessionFromStorage } from '@/lib/supabase';
@@ -103,18 +102,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // Explicitly store the session to ensure it persists for all user types
       const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
       
-      // Store in localStorage for persistence
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-      
-      // Also store in sessionStorage for redundancy and for browsers that block localStorage
       window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
       
-      console.log('Session explicitly stored for user:', session.user.id);
-      console.log('Session storage check in updateAuthState:', 
-        window.sessionStorage.getItem(STORAGE_KEY) ? 'Session found in sessionStorage' : 'No session in sessionStorage');
+      console.log(`Session explicitly stored for user: ${session.user.id}`);
 
       setAuth(prev => ({
         ...prev,
@@ -170,31 +163,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth provider...');
         setAuth(prev => ({ ...prev, isLoading: true }));
         
-        // First check for an existing session in storage
         const storedSession = getSessionFromStorage();
         if (storedSession) {
-          console.log('Found session in storage, attempting to use it');
+          console.log('Found existing session in storage');
         }
         
-        // Then get the current session from Supabase
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Initial session check:', session?.user?.id || 'No session found');
         
         if (!mounted) return;
         
         if (session) {
-          // Ensure session is stored again for all user types
-          const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-          window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-          console.log('Session refreshed in storage during initialization');
-          console.log('Session storage check in initializeAuth:', 
-            window.sessionStorage.getItem(STORAGE_KEY) ? 'Session found in sessionStorage' : 'No session in sessionStorage');
-          
+          console.log(`Using session for user: ${session.user.id}`);
           await updateAuthState(session);
         } else {
+          console.log('No active session found, clearing auth state');
           setAuth({
             user: null,
             profile: null,
@@ -221,23 +206,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    console.log('Initializing auth provider');
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
-        console.log('Auth state changed:', { event, session: session?.user?.id });
+        console.log(`Auth state changed: ${event}, user: ${session?.user?.id || 'none'}`);
 
         if (event === 'SIGNED_IN' && session) {
-          // Ensure session is stored immediately on sign in for all user types
-          const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-          window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-          console.log('Session stored in storage during SIGNED_IN event');
-          console.log('Session storage check in SIGNED_IN:', 
-            window.sessionStorage.getItem(STORAGE_KEY) ? 'Session found in sessionStorage' : 'No session in sessionStorage');
-          
           await updateAuthState(session);
         } else if (event === 'SIGNED_OUT') {
           setAuth({
@@ -246,15 +222,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             permissions: [],
             isLoading: false,
           });
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          // Ensure refreshed token is stored properly in all storage types
-          const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-          window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-          console.log('Session stored in storage during TOKEN_REFRESHED event');
-          console.log('Session storage check in TOKEN_REFRESHED:', 
-            window.sessionStorage.getItem(STORAGE_KEY) ? 'Session found in sessionStorage' : 'No session in sessionStorage');
-          
+        } else if ((event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session) {
           await updateAuthState(session);
         }
       }
