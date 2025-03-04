@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { LocalCache } from "@/lib/cache";
 
 interface PlatformStats {
   ordersCount: number;
@@ -12,6 +13,8 @@ interface PlatformStats {
   prescriptionsCount: number;
   connectionsCount: number;
 }
+
+const STATS_CACHE_KEY = 'platform_stats';
 
 export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
   const { ref, inView } = useInView({
@@ -30,15 +33,26 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
         return;
       }
 
+      // Try to get stats from cache first
+      const cachedStats = LocalCache.get<PlatformStats>(STATS_CACHE_KEY);
+      if (cachedStats) {
+        console.log('Using cached platform stats');
+        setPlatformStats(cachedStats);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
+        console.log('Fetching platform stats from database...');
+        
         // Fetch real statistics from various tables
         const [
-          { count: ordersCount }, 
-          { count: pharmaciesCount }, 
-          { count: doctorsCount }, 
-          { count: prescriptionsCount },
-          { count: connectionsCount }
+          { count: ordersCount, error: ordersError }, 
+          { count: pharmaciesCount, error: pharmaciesError }, 
+          { count: doctorsCount, error: doctorsError }, 
+          { count: prescriptionsCount, error: prescriptionsError },
+          { count: connectionsCount, error: connectionsError }
         ] = await Promise.all([
           supabase.from('orders').select('*', { count: 'exact', head: true }),
           supabase.from('pharmacies').select('*', { count: 'exact', head: true }),
@@ -47,23 +61,35 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
           supabase.from('doctor_patient_connections').select('*', { count: 'exact', head: true }),
         ]);
 
-        setPlatformStats({
+        if (ordersError || pharmaciesError || doctorsError || prescriptionsError || connectionsError) {
+          throw new Error('Error fetching stats');
+        }
+
+        const fetchedStats = {
           ordersCount: ordersCount || 0,
           pharmaciesCount: pharmaciesCount || 0,
           doctorsCount: doctorsCount || 0,
           prescriptionsCount: prescriptionsCount || 0,
           connectionsCount: connectionsCount || 0
-        });
+        };
+        
+        console.log('Fetched stats:', fetchedStats);
+        
+        // Cache the results
+        LocalCache.set(STATS_CACHE_KEY, fetchedStats);
+        setPlatformStats(fetchedStats);
       } catch (error) {
         console.error('Error fetching stats:', error);
         // Fallback to mock data if database fetch fails
-        setPlatformStats({
+        const mockStats = {
           ordersCount: 250000,
           pharmaciesCount: 1200,
           doctorsCount: 3500,
           prescriptionsCount: 480000,
           connectionsCount: 85000
-        });
+        };
+        console.log('Using mock stats due to error:', mockStats);
+        setPlatformStats(mockStats);
       } finally {
         setLoading(false);
       }
