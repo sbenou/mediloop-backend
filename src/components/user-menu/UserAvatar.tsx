@@ -1,4 +1,3 @@
-
 import { memo, useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Upload, Building2 } from "lucide-react";
@@ -19,18 +18,17 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, permissions } = useAuth();
   
   // Detect if this is an organization avatar
   const isOrganization = userProfile?.full_name === 'Mediloop';
 
-  // Prevent patients from changing the Mediloop avatar
-  const isPatient = user?.role === 'user' || user?.role === 'patient';
-  const canModifyOrganizationAvatar = !isPatient;
+  // Check if user has permission to manage settings (superadmin)
+  const canModifyOrganizationAvatar = permissions.includes('manage_settings');
   
   // Only allow upload if:
   // 1. Upload is enabled via prop AND
-  // 2. Either it's not an organization avatar OR (it is an org avatar AND user can modify it)
+  // 2. Either it's not an organization avatar OR (it is an org avatar AND user has manage_settings permission)
   const allowUpload = canUpload && (!isOrganization || (isOrganization && canModifyOrganizationAvatar));
 
   const handleFileSelect = () => {
