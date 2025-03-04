@@ -21,6 +21,7 @@ import SearchPharmacy from "./pages/SearchPharmacy";
 import Signup from "./pages/Signup";
 import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
+import UnifiedProfilePage from "./pages/UnifiedProfilePage";
 
 // Pharmacy routes
 import PatientsPage from "./pages/pharmacy/PatientsPage";
@@ -32,7 +33,6 @@ import PrescriptionDetail from "./pages/pharmacy/PrescriptionDetail";
 // Legacy pages - these will eventually be replaced
 import Dashboard from "./pages/Dashboard";
 import PatientDashboard from "./pages/PatientDashboard";
-import UnifiedProfilePage from "./pages/UnifiedProfilePage";
 
 import './App.css';
 
@@ -61,6 +61,9 @@ function App() {
                   
                   {/* Universal Dashboard - the new central dashboard for all roles */}
                   <Route path="/dashboard" element={<UniversalDashboard />} />
+                  
+                  {/* UnifiedProfilePage - explicit route */}
+                  <Route path="/unified-profile" element={<UnifiedProfilePage />} />
                   
                   {/* Legacy routes that redirect to the universal dashboard */}
                   <Route path="/patient-dashboard" element={<Navigate to="/dashboard" replace />} />
