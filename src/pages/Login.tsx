@@ -42,20 +42,9 @@ const Login = () => {
             }
           }
           
-          // Redirect based on role
-          if (profile.role === 'superadmin') {
-            console.log('Redirecting to superadmin dashboard...');
-            navigate('/superadmin/dashboard', { replace: true });
-          } else if (profile.role === 'pharmacist') {
-            console.log('Redirecting to pharmacy dashboard...');
-            navigate('/pharmacy/dashboard', { replace: true });
-          } else if (profile.role === 'patient') {
-            console.log('Redirecting to patient dashboard...');
-            navigate('/patient-dashboard', { replace: true });
-          } else {
-            console.log('Redirecting to dashboard...');
-            navigate('/dashboard', { replace: true });
-          }
+          // UPDATED: Redirect all users to the universal dashboard
+          console.log('Redirecting to universal dashboard...');
+          navigate('/dashboard', { replace: true });
         } catch (err) {
           console.error('Error checking role:', err);
           navigate('/dashboard');

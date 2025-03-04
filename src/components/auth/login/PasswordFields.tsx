@@ -120,24 +120,11 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         description: "You have successfully signed in.",
       });
 
-      // Redirect based on user role
-      if (profile.role === 'superadmin') {
-        console.log('Redirecting to superadmin dashboard...');
-        navigate('/superadmin/dashboard', { replace: true });
-        return; // Early return to prevent onSuccess from being called
-      } else if (profile.role === 'pharmacist') {
-        console.log('Redirecting to pharmacy dashboard...');
-        navigate('/pharmacy/dashboard', { replace: true });
-        return; // Early return to prevent onSuccess from being called
-      } else if (profile.role === 'patient') {
-        console.log('Redirecting to patient dashboard...');
-        navigate('/patient-dashboard', { replace: true });
-        return; // Early return to prevent onSuccess from being called
-      } else {
-        console.log('Redirecting to dashboard...');
-        navigate('/dashboard', { replace: true });
-        return; // Early return to prevent onSuccess from being called
-      }
+      // UPDATED: Redirect all users to the universal dashboard
+      // Regardless of role, always redirect to the universal dashboard
+      console.log('Redirecting to universal dashboard...');
+      navigate('/dashboard', { replace: true });
+      return; // Early return to prevent onSuccess from being called
       
       // This won't be called due to early returns
       onSuccess();
