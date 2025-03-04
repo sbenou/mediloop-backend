@@ -24,52 +24,80 @@ const UniversalDashboard = () => {
   const view = searchParams.get('view') || 'home';
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
-  // Handle initial auth check and tab focus restoration
+  // Enhanced authentication check with session verification
   useEffect(() => {
+    let mounted = true;
+    
     const checkAuthentication = async () => {
       if (!isAuthenticated && !isLoading) {
-        // Try to get the session directly from Supabase
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          console.log("No valid session found on dashboard load");
-          toast({
-            variant: "destructive",
-            title: "Authentication required",
-            description: "Please login to access this page.",
-          });
-          navigate("/login");
+        try {
+          // Try to get the session directly from Supabase with explicit fetch
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error("Error checking session:", error);
+          }
+          
+          if (!session && mounted) {
+            console.log("No valid session found on dashboard load");
+            toast({
+              variant: "destructive",
+              title: "Authentication required",
+              description: "Please login to access this page.",
+            });
+            navigate("/login");
+            return;
+          }
+        } catch (error) {
+          console.error("Error in session check:", error);
+          if (mounted) {
+            navigate("/login");
+          }
         }
       }
       
-      setInitialCheckDone(true);
+      if (mounted) {
+        setInitialCheckDone(true);
+      }
     };
     
     checkAuthentication();
     
-    // Handle tab visibility changes
+    // Handle tab visibility changes with improved error handling
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && mounted) {
         console.log("Tab became visible, checking auth state");
-        // When tab becomes visible again, verify session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session && initialCheckDone) {
-          console.log("Session lost after tab switch");
-          // Only show toast if we've done the initial check and actually lost the session
-          toast({
-            variant: "destructive",
-            title: "Session expired",
-            description: "Your session has expired. Please login again.",
-          });
-          navigate("/login");
+        try {
+          // Force refresh the session when tab becomes visible
+          const { data, error } = await supabase.auth.refreshSession();
+          
+          if (error || !data.session) {
+            console.log("Session verification failed after tab switch:", error);
+            if (initialCheckDone && mounted) {
+              toast({
+                variant: "destructive",
+                title: "Session expired",
+                description: "Your session has expired. Please login again.",
+              });
+              navigate("/login");
+            }
+          } else {
+            console.log("Session successfully verified after tab switch");
+          }
+        } catch (error) {
+          console.error("Error during visibility session check:", error);
+          if (initialCheckDone && mounted) {
+            navigate("/login");
+          }
         }
       }
     };
     
+    // Add the visibility change listener
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
+      mounted = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isAuthenticated, isLoading, navigate, initialCheckDone]);

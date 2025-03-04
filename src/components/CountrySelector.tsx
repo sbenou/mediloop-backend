@@ -108,8 +108,8 @@ const CountrySelector = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={setOpen} modal={true}>
+      <DialogContent className="sm:max-w-md z-[100]">
         <DialogTitle>Select Your Country</DialogTitle>
         <DialogDescription>
           Please select your country to help us show relevant doctors and pharmacies in your area.

@@ -117,10 +117,10 @@
   background-color: rgba(0, 0, 0, 0.2);
 }
 
-/* Additional styles for the main content scrollbar - restored to original size/position */
+/* Additional styles for the main content scrollbar - properly positioned and sized */
 .main-content-scroll .scrollbar {
-  width: 4px !important; /* Reduced width from 8px to 4px */
-  right: 2px !important; /* Position closer to edge */
+  width: 4px !important; /* Proper width at 4px */
+  right: 2px !important; /* Positioned correctly 2px from edge */
 }
 
 .main-content-scroll .thumb {
