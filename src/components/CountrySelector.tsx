@@ -87,6 +87,39 @@ const CountrySelector = () => {
     checkUserAddress();
   }, [isAuthenticated, user, setUserLocation, userLocation]);
   
+  // Apply overlay styles when dialog is open
+  useEffect(() => {
+    if (open) {
+      // Add style to hide navigation trigger highlighting
+      const style = document.createElement('style');
+      style.id = 'country-selector-overlay-style';
+      style.innerHTML = `
+        .navigation-menu-trigger {
+          background-color: transparent !important;
+          color: rgba(0,0,0,0.5) !important;
+        }
+        [data-state="open"] .navigation-menu-trigger {
+          background-color: transparent !important;
+          color: rgba(0,0,0,0.5) !important;
+        }
+      `;
+      document.head.appendChild(style);
+    } else {
+      // Remove style when dialog is closed
+      const style = document.getElementById('country-selector-overlay-style');
+      if (style) {
+        document.head.removeChild(style);
+      }
+    }
+
+    return () => {
+      const style = document.getElementById('country-selector-overlay-style');
+      if (style) {
+        document.head.removeChild(style);
+      }
+    };
+  }, [open]);
+
   const handleSelectCountry = () => {
     console.log("CountrySelector: Selecting country:", selectedCountry);
     const country = AVAILABLE_COUNTRIES.find(c => c.code === selectedCountry);
@@ -101,7 +134,7 @@ const CountrySelector = () => {
     <>
       {open && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100000]" 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100000]" 
           style={{ 
             pointerEvents: "all",
             position: "fixed",
