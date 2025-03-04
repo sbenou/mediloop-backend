@@ -15,6 +15,7 @@ interface PlatformStats {
 }
 
 const STATS_CACHE_KEY = 'platform_stats';
+const STATS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
   const { ref, inView } = useInView({
@@ -33,9 +34,12 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
         return;
       }
 
-      // Try to get stats from cache first
+      // Check if cache is valid and not expired
       const cachedStats = LocalCache.get<PlatformStats>(STATS_CACHE_KEY);
-      if (cachedStats) {
+      const cacheTimestamp = LocalCache.get<number>(`${STATS_CACHE_KEY}_timestamp`);
+      const isCacheValid = cachedStats && cacheTimestamp && (Date.now() - cacheTimestamp < STATS_CACHE_DURATION);
+      
+      if (isCacheValid) {
         console.log('Using cached platform stats');
         setPlatformStats(cachedStats);
         setLoading(false);
@@ -76,15 +80,16 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
         
         console.log('Fetched stats:', fetchedStats);
         
-        // Cache the results
+        // Cache the results with a timestamp
         LocalCache.set(STATS_CACHE_KEY, fetchedStats);
+        LocalCache.set(`${STATS_CACHE_KEY}_timestamp`, Date.now());
         setPlatformStats(fetchedStats);
       } catch (error) {
         console.error('Error fetching stats:', error);
         // Fallback to mock data if database fetch fails
         const mockStats = {
           ordersCount: 250000,
-          pharmaciesCount: 1200,
+          pharmaciesCount: 0, // Show 0 endorsed pharmacies as fallback
           doctorsCount: 3500,
           prescriptionsCount: 480000,
           connectionsCount: 85000
