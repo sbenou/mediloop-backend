@@ -68,21 +68,22 @@ function App() {
                   <Route path="/" element={<Index />} />
                   
                   {/* Patient routes */}
-                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Navigate to="/patient-dashboard" replace />} />
                   <Route path="/patient-dashboard" element={<PatientDashboard />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/login/verify" element={<OTPVerificationPage />} />
                   <Route path="/reset-password/*" element={<ResetPassword />} />
                   <Route path="/products" element={<Products />} />
                   <Route path="/services" element={<Services />} />
-                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/profile" element={<Navigate to="/patient-dashboard?view=profile" replace />} />
                   
-                  {/* Redirect /my-orders to the patient dashboard with orders view */}
+                  {/* Redirect relevant routes to patient dashboard with appropriate view */}
                   <Route path="/my-orders" element={<Navigate to="/patient-dashboard?view=orders&ordersTab=orders" replace />} />
+                  <Route path="/my-prescriptions" element={<Navigate to="/patient-dashboard?view=prescriptions" replace />} />
+                  <Route path="/settings" element={<Navigate to="/patient-dashboard?view=settings" replace />} />
+                  <Route path="/billing" element={<Navigate to="/patient-dashboard?view=billing" replace />} />
+                  <Route path="/teleconsultations" element={<Navigate to="/patient-dashboard?view=teleconsultations" replace />} />
                   
-                  <Route path="/my-prescriptions" element={<MyPrescriptions />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/billing" element={<Billing />} />
                   <Route path="/become-partner" element={<BecomePartner />} />
                   <Route path="/become-transporter" element={<BecomeTransporter />} />
                   <Route path="/create-prescription" element={<CreatePrescription />} />
@@ -90,7 +91,6 @@ function App() {
                   <Route path="/find-doctor" element={<FindDoctor />} />
                   <Route path="/search-pharmacy" element={<SearchPharmacy />} />
                   <Route path="/signup" element={<Signup />} />
-                  <Route path="/teleconsultations" element={<Teleconsultations />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
                   
                   {/* Global admin route */}

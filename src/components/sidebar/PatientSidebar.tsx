@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -73,6 +74,7 @@ const PatientSidebarContent = () => {
 
   const navigateToView = (view: string, tab?: string) => {
     console.log(`Navigate to patient-dashboard with view: ${view}${tab ? ` and tab: ${tab}` : ''}`);
+    // Using navigate instead of direct link to prevent page refresh
     navigate(`/patient-dashboard?view=${view}${tab ? `&${view}Tab=${tab}` : ''}`);
   };
 
