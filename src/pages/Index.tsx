@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
+import { Link } from "react-router-dom";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturesGrid } from "@/components/home/FeaturesGrid";
 import { StatsSection } from "@/components/home/StatsSection";
@@ -26,7 +26,7 @@ const Index = () => {
   };
 
   return (
-    <UnifiedLayoutTemplate>
+    <div className="flex flex-col min-h-screen">
       <div className="flex flex-col gap-20 pb-20">
         <HeroSection />
         <FeaturesGrid />
@@ -36,7 +36,7 @@ const Index = () => {
         <PartnerSection />
         <DeliveryPersonSection />
       </div>
-    </UnifiedLayoutTemplate>
+    </div>
   );
 };
 
