@@ -12,12 +12,26 @@ import { mockActivities } from "@/components/activity/mockActivities";
 import { Activity } from "@/components/activity/ActivityItem";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 
 const UnifiedProfilePage = () => {
-  const { profile } = useAuth();
+  const { profile, isAuthenticated, isLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "Please login to access this page.",
+      });
+      navigate("/login");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   useEffect(() => {
     const mainContent = document.getElementById('main-content');
@@ -53,6 +67,17 @@ const UnifiedProfilePage = () => {
       duration: 2000,
     });
   };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <UnifiedLayout>
+        <div className="flex justify-center items-center h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
 
   return (
     <UnifiedLayout>
