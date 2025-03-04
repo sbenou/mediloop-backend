@@ -93,7 +93,7 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
       value: platformStats.prescriptionsCount
     },
     {
-      label: "Active Connections",
+      label: "Active\nConnections",
       value: platformStats.connectionsCount
     }
   ] : [];
@@ -118,8 +118,8 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
           ) : (
             statsItems.map((stat, index) => (
               <div key={index} className="text-center transform hover:scale-105 transition-transform">
-                <div className="text-2xl font-semibold text-primary mb-2">
-                  {stat.label}
+                <div className="text-2xl font-semibold text-primary mb-2 whitespace-pre-line h-14 flex items-center justify-center">
+                  {index === 0 ? `${stat.label.split(' ')[0]}\n${stat.label.split(' ')[1]}` : stat.label}
                 </div>
                 <div className="text-4xl font-bold text-[#7E69AB]">
                   {stat.value.toLocaleString()}
