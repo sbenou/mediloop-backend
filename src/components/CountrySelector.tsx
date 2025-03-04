@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -37,14 +36,12 @@ const CountrySelector = () => {
   const { isAuthenticated, user } = useAuth();
   const [mainAddress, setMainAddress] = useState<Address | null>(null);
   
-  // Check if user has a default address
   useEffect(() => {
     const checkUserAddress = async () => {
       console.log("CountrySelector: Checking user address");
       
       if (isAuthenticated && user) {
         console.log("CountrySelector: User is authenticated, checking for default address");
-        // Fetch user's main address
         const { data, error } = await supabase
           .from('addresses')
           .select('*')
@@ -56,14 +53,12 @@ const CountrySelector = () => {
           console.log("CountrySelector: Found default address:", data);
           setMainAddress(data);
           
-          // Set location based on country
           if (data.country === "Luxembourg" || data.country === "LU") {
             setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "LU")?.coordinates || userLocation);
           } else if (data.country === "France" || data.country === "FR") {
             setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "FR")?.coordinates || userLocation);
           }
 
-          // Don't show dialog if user has a default address
           return;
         } else {
           console.log("CountrySelector: No default address found or error:", error);
@@ -72,7 +67,6 @@ const CountrySelector = () => {
         console.log("CountrySelector: User is not authenticated");
       }
       
-      // Show dialog for anonymous users or authenticated users without a default address
       const savedCountry = localStorage.getItem('selectedCountry');
       if (savedCountry) {
         console.log("CountrySelector: Found saved country:", savedCountry);
@@ -83,16 +77,11 @@ const CountrySelector = () => {
         }
       } else {
         console.log("CountrySelector: No saved country, showing dialog");
-        // Force open the dialog after a short delay to ensure it's visible
         setTimeout(() => {
           setOpen(true);
         }, 100);
       }
     };
-    
-    // Clear country selection from localStorage for testing purposes
-    // Comment this out in production
-    // localStorage.removeItem('selectedCountry');
     
     checkUserAddress();
   }, [isAuthenticated, user, setUserLocation, userLocation]);
@@ -108,8 +97,22 @@ const CountrySelector = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen} modal={true}>
-      <DialogContent className="sm:max-w-md z-[100]">
+    <Dialog 
+      open={open} 
+      onOpenChange={setOpen} 
+      modal={true} 
+      defaultOpen={false}
+    >
+      <DialogContent 
+        className="sm:max-w-md z-[9999]" 
+        forceMount 
+        onInteractOutside={(e) => {
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+        }}
+      >
         <DialogTitle>Select Your Country</DialogTitle>
         <DialogDescription>
           Please select your country to help us show relevant doctors and pharmacies in your area.
