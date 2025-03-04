@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface UserAvatarProps {
   userProfile?: UserProfile | null;
@@ -17,9 +18,19 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   // Detect if this is an organization avatar
   const isOrganization = userProfile?.full_name === 'Mediloop';
+
+  // Prevent patients from changing the Mediloop avatar
+  const isPatient = user?.role === 'user';
+  const canModifyOrganizationAvatar = !isPatient;
+  
+  // Only allow upload if:
+  // 1. Upload is enabled via prop AND
+  // 2. Either it's not an organization avatar OR (it is an org avatar AND user can modify it)
+  const allowUpload = canUpload && (!isOrganization || (isOrganization && canModifyOrganizationAvatar));
 
   const handleFileSelect = () => {
     if (fileInputRef.current) {
@@ -169,7 +180,7 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
         </AvatarFallback>
       </Avatar>
 
-      {canUpload && (
+      {allowUpload && (
         <>
           <button 
             type="button"
