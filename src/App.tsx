@@ -1,3 +1,4 @@
+
 import { ProductSearch } from '@/components/ProductSearch';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -62,7 +63,7 @@ function App() {
                   {/* Universal Dashboard - the new central dashboard for all roles */}
                   <Route path="/dashboard" element={<UniversalDashboard />} />
                   
-                  {/* UnifiedProfilePage - explicit route */}
+                  {/* UnifiedProfilePage - UI template (no authentication) */}
                   <Route path="/unified-profile" element={<UnifiedProfilePage />} />
                   
                   {/* Legacy routes that redirect to the universal dashboard */}

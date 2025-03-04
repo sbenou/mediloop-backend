@@ -1,40 +1,43 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
-import PatientLayout from "@/components/layout/PatientLayout";
-import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { Advertisements } from "@/components/activity/Advertisements";
 import { mockActivities } from "@/components/activity/mockActivities";
 import { Activity } from "@/components/activity/ActivityItem";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
 
 const UnifiedProfilePage = () => {
-  const { profile, isAuthenticated, isLoading, userRole } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
-  const navigate = useNavigate();
+  
+  // Mock profile data for UI template
+  const mockProfile = {
+    full_name: "Demo User"
+  };
 
-  useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please login to access this page.",
-      });
-      navigate("/login");
-    }
-  }, [isAuthenticated, isLoading, navigate]);
+  // Handle UI interactions - purely for demonstration
+  const handleMarkRead = (id: string) => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => 
+        activity.id === id ? { ...activity, read: true } : activity
+      )
+    );
+  };
 
-  useEffect(() => {
+  const handleMarkAllRead = () => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => ({ ...activity, read: true }))
+    );
+  };
+
+  // Apply sidebar effect
+  useState(() => {
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
       if (isOpen) {
@@ -45,139 +48,101 @@ const UnifiedProfilePage = () => {
     }
     
     window.dispatchEvent(new Event('resize'));
-  }, [isOpen]);
+  });
 
-  const handleMarkRead = (id: string) => {
-    setActivities(prevActivities => 
-      prevActivities.map(activity => 
-        activity.id === id ? { ...activity, read: true } : activity
-      )
-    );
-    toast({
-      title: "Activity marked as read",
-      duration: 2000,
-    });
-  };
-
-  const handleMarkAllRead = () => {
-    setActivities(prevActivities => 
-      prevActivities.map(activity => ({ ...activity, read: true }))
-    );
-    toast({
-      title: "All activities marked as read",
-      duration: 2000,
-    });
-  };
-
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <UnifiedLayout>
-        <div className="flex justify-center items-center h-full">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  // The UI template content
+  return (
+    <UnifiedLayout>
+      <div className="flex h-full relative font-sans">
+        <div 
+          id="main-content" 
+          className="flex-1 space-y-8 px-1 mx-0 transition-all duration-300"
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Welcome, {mockProfile.full_name}</h1>
+              <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Prescriptions</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Total active prescriptions</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Orders</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Total orders placed</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Doctors</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Connected healthcare providers</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Teleconsultations</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Upcoming appointments</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+          </div>
+          
+          <StatisticsCharts />
         </div>
-      </UnifiedLayout>
-    );
-  }
 
-  // The main dashboard content that will be wrapped in different layouts
-  const dashboardContent = (
-    <div className="flex h-full relative font-sans">
-      <div 
-        id="main-content" 
-        className="flex-1 space-y-8 px-1 mx-0 transition-all duration-300"
-      >
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Welcome, {profile?.full_name || 'User'}</h1>
-            <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed right-0 top-20 z-50"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
+        </Button>
+
+        <div 
+          className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        >
+          <div className="p-4 h-full overflow-y-auto">
+            <Tabs 
+              defaultValue="home" 
+              className="w-full" 
+              value={activeDrawerTab}
+              onValueChange={setActiveDrawerTab}
+            >
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="home">Home</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="home" className="mt-0">
+                <Advertisements />
+              </TabsContent>
+              
+              <TabsContent value="activity" className="mt-0">
+                <ActivityFeed 
+                  activities={activities}
+                  onMarkRead={handleMarkRead}
+                  onMarkAllRead={handleMarkAllRead}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-white border rounded-lg shadow-sm p-6">
-            <div className="text-center">
-              <h3 className="text-base font-medium">Prescriptions</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">Total active prescriptions</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-          
-          <Card className="bg-white border rounded-lg shadow-sm p-6">
-            <div className="text-center">
-              <h3 className="text-base font-medium">Orders</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">Total orders placed</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-          
-          <Card className="bg-white border rounded-lg shadow-sm p-6">
-            <div className="text-center">
-              <h3 className="text-base font-medium">Doctors</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">Connected healthcare providers</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-          
-          <Card className="bg-white border rounded-lg shadow-sm p-6">
-            <div className="text-center">
-              <h3 className="text-base font-medium">Teleconsultations</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">Upcoming appointments</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-        </div>
-        
-        <StatisticsCharts />
       </div>
-
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed right-0 top-20 z-50"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
-      </Button>
-
-      <div 
-        className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
-      >
-        <div className="p-4 h-full overflow-y-auto">
-          <Tabs 
-            defaultValue="home" 
-            className="w-full" 
-            value={activeDrawerTab}
-            onValueChange={setActiveDrawerTab}
-          >
-            <TabsList className="grid grid-cols-2 mb-4">
-              <TabsTrigger value="home">Home</TabsTrigger>
-              <TabsTrigger value="activity">Activity</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="home" className="mt-0">
-              <Advertisements />
-            </TabsContent>
-            
-            <TabsContent value="activity" className="mt-0">
-              <ActivityFeed 
-                activities={activities}
-                onMarkRead={handleMarkRead}
-                onMarkAllRead={handleMarkAllRead}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-    </div>
+    </UnifiedLayout>
   );
-
-  // Use PatientLayout for patient users, and UnifiedLayout for other roles
-  if (userRole === 'patient') {
-    return <PatientLayout>{dashboardContent}</PatientLayout>;
-  }
-
-  return <UnifiedLayout>{dashboardContent}</UnifiedLayout>;
 };
 
 export default UnifiedProfilePage;
