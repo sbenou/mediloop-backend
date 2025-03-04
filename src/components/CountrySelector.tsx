@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -97,55 +98,62 @@ const CountrySelector = () => {
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={setOpen} 
-      modal={true} 
-      defaultOpen={false}
-    >
-      <DialogContent 
-        className="sm:max-w-md z-[9999]" 
-        forceMount 
-        onInteractOutside={(e) => {
-          e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          e.preventDefault();
-        }}
+    <>
+      {open && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[99999]" 
+          style={{ pointerEvents: "all" }}
+        />
+      )}
+      <Dialog 
+        open={open} 
+        onOpenChange={setOpen} 
+        modal={true}
       >
-        <DialogTitle>Select Your Country</DialogTitle>
-        <DialogDescription>
-          Please select your country to help us show relevant doctors and pharmacies in your area.
-        </DialogDescription>
-        
-        <RadioGroup 
-          value={selectedCountry} 
-          onValueChange={setSelectedCountry}
-          className="grid gap-4 my-4"
+        <DialogContent 
+          className="sm:max-w-md z-[100000]" 
+          forceMount
+          onInteractOutside={(e) => {
+            e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+          }}
         >
-          {AVAILABLE_COUNTRIES.map((country) => (
-            <div key={country.code} className="flex items-center space-x-3 border p-3 rounded-md">
-              <RadioGroupItem value={country.code} id={country.code} />
-              <Label htmlFor={country.code} className="flex items-center cursor-pointer">
-                <ReactCountryFlag 
-                  countryCode={country.code} 
-                  svg 
-                  className="mr-2" 
-                  style={{ width: '1.5em', height: '1.5em' }}
-                />
-                <span>{country.name}</span>
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
-        
-        <div className="flex justify-end mt-4">
-          <Button onClick={handleSelectCountry}>
-            Save
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <DialogTitle>Select Your Country</DialogTitle>
+          <DialogDescription>
+            Please select your country to help us show relevant doctors and pharmacies in your area.
+          </DialogDescription>
+          
+          <RadioGroup 
+            value={selectedCountry} 
+            onValueChange={setSelectedCountry}
+            className="grid gap-4 my-4"
+          >
+            {AVAILABLE_COUNTRIES.map((country) => (
+              <div key={country.code} className="flex items-center space-x-3 border p-3 rounded-md">
+                <RadioGroupItem value={country.code} id={country.code} />
+                <Label htmlFor={country.code} className="flex items-center cursor-pointer">
+                  <ReactCountryFlag 
+                    countryCode={country.code} 
+                    svg 
+                    className="mr-2" 
+                    style={{ width: '1.5em', height: '1.5em' }}
+                  />
+                  <span>{country.name}</span>
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+          
+          <div className="flex justify-end mt-4">
+            <Button onClick={handleSelectCountry}>
+              Save
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

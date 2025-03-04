@@ -118,9 +118,28 @@
 }
 
 /* Additional styles for the main content scrollbar - properly positioned and sized */
+.main-content-scroll::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.main-content-scroll::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.main-content-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  border-radius: 20px !important;
+  right: 2px !important;
+}
+
+.main-content-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Fixing ScrollArea component styling */
 .main-content-scroll .scrollbar {
-  width: 4px !important; /* Proper width at 4px */
-  right: 2px !important; /* Positioned correctly 2px from edge */
+  width: 4px !important;
+  right: 2px !important;
 }
 
 .main-content-scroll .thumb {
