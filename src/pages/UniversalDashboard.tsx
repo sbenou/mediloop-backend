@@ -57,7 +57,7 @@ const UniversalDashboard = () => {
   useEffect(() => {
     if (!isLoading && isAuthenticated && !hasPermissionForView(view)) {
       toast({
-        variant: "warning",
+        variant: "destructive",  // Changed from "warning" to "destructive"
         title: "Access restricted",
         description: "You don't have permission to access this view.",
       });
