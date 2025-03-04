@@ -1,7 +1,7 @@
 
 import { ReactNode, useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import UnifiedSidebar from "../sidebar/UnifiedSidebar";
+import DashboardSidebar from "../sidebar/DashboardSidebar";
 import NotificationBell from "../NotificationBell";
 import UserMenu from "../UserMenu";
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
@@ -19,7 +19,7 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Sidebar - Always show for unified layout */}
-      <UnifiedSidebar />
+      <DashboardSidebar />
       
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
