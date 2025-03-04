@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
-import UnifiedLayout from "@/components/layout/UnifiedLayout";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { toast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -63,12 +63,12 @@ const UniversalDashboard = () => {
 
   if (isLoading) {
     return (
-      <UnifiedLayout>
+      <UnifiedLayoutTemplate>
         <div className="space-y-4">
           <Skeleton className="h-12 w-2/3" />
           <Skeleton className="h-64 w-full" />
         </div>
-      </UnifiedLayout>
+      </UnifiedLayoutTemplate>
     );
   }
 
@@ -96,9 +96,9 @@ const UniversalDashboard = () => {
   };
 
   return (
-    <UnifiedLayout>
+    <UnifiedLayoutTemplate>
       {renderView()}
-    </UnifiedLayout>
+    </UnifiedLayoutTemplate>
   );
 };
 
