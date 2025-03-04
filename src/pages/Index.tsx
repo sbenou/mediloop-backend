@@ -8,6 +8,8 @@ import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { PartnerSection } from "@/components/home/PartnerSection";
 import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 // The Index page showcases the main landing page
 const Index = () => {
@@ -27,6 +29,7 @@ const Index = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <Header />
       <div className="flex flex-col gap-20 pb-20">
         <HeroSection />
         <FeaturesGrid />
@@ -36,6 +39,7 @@ const Index = () => {
         <PartnerSection />
         <DeliveryPersonSection />
       </div>
+      <Footer />
     </div>
   );
 };
