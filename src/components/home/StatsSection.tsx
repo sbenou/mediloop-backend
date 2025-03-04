@@ -109,19 +109,19 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
   // Create stats items array
   const statsItems = platformStats ? [
     {
-      label: t('home.stats.orders'),
+      label: t('home.stats.orders').split(' ').join('\n'),
       value: platformStats.ordersCount
     },
     {
-      label: t('home.stats.pharmacies'),
+      label: t('home.stats.pharmacies').split(' ').join('\n'),
       value: platformStats.pharmaciesCount
     },
     {
-      label: t('home.stats.providers'),
+      label: t('home.stats.providers').split(' ').join('\n'),
       value: platformStats.doctorsCount
     },
     {
-      label: t('home.stats.prescriptions'),
+      label: t('home.stats.prescriptions').split(' ').join('\n'),
       value: platformStats.prescriptionsCount
     },
     {
@@ -151,7 +151,7 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
             statsItems.map((stat, index) => (
               <div key={index} className="text-center transform hover:scale-105 transition-transform">
                 <div className="text-2xl font-semibold text-primary mb-2 whitespace-pre-line h-14 flex items-center justify-center">
-                  {index === 0 ? `${stat.label.split(' ')[0]}\n${stat.label.split(' ')[1]}` : stat.label}
+                  {stat.label}
                 </div>
                 <div className="text-4xl font-bold text-[#7E69AB]">
                   {stat.value.toLocaleString()}
