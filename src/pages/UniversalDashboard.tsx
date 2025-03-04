@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
@@ -24,35 +24,54 @@ const UniversalDashboard = () => {
   const view = searchParams.get('view') || 'home';
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
+  // Function to verify session, separated for reuse
+  const verifySession = useCallback(async () => {
+    try {
+      // First, try to get session from storage (faster)
+      const storageKey = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+      const storedSession = localStorage.getItem(storageKey) 
+        ? JSON.parse(localStorage.getItem(storageKey) || '{}')
+        : null;
+      
+      // Then verify with Supabase API
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Error checking session:", error);
+        return false;
+      }
+      
+      // If we have a session but it's not in storage, make sure to store it
+      if (session && !storedSession) {
+        console.log("Found session in API but not in storage, storing it now");
+        localStorage.setItem(storageKey, JSON.stringify(session));
+        sessionStorage.setItem(storageKey, JSON.stringify(session));
+      }
+      
+      return !!session;
+    } catch (err) {
+      console.error("Session verification error:", err);
+      return false;
+    }
+  }, []);
+
   // Enhanced authentication check with session verification
   useEffect(() => {
     let mounted = true;
     
     const checkAuthentication = async () => {
       if (!isAuthenticated && !isLoading) {
-        try {
-          // Try to get the session directly from Supabase with explicit fetch
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error("Error checking session:", error);
-          }
-          
-          if (!session && mounted) {
-            console.log("No valid session found on dashboard load");
-            toast({
-              variant: "destructive",
-              title: "Authentication required",
-              description: "Please login to access this page.",
-            });
-            navigate("/login");
-            return;
-          }
-        } catch (error) {
-          console.error("Error in session check:", error);
-          if (mounted) {
-            navigate("/login");
-          }
+        const hasValidSession = await verifySession();
+        
+        if (!hasValidSession && mounted) {
+          console.log("No valid session found on dashboard load");
+          toast({
+            variant: "destructive",
+            title: "Authentication required",
+            description: "Please login to access this page.",
+          });
+          navigate("/login");
+          return;
         }
       }
       
@@ -67,28 +86,20 @@ const UniversalDashboard = () => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible' && mounted) {
         console.log("Tab became visible, checking auth state");
-        try {
-          // Force refresh the session when tab becomes visible
-          const { data, error } = await supabase.auth.refreshSession();
-          
-          if (error || !data.session) {
-            console.log("Session verification failed after tab switch:", error);
-            if (initialCheckDone && mounted) {
-              toast({
-                variant: "destructive",
-                title: "Session expired",
-                description: "Your session has expired. Please login again.",
-              });
-              navigate("/login");
-            }
-          } else {
-            console.log("Session successfully verified after tab switch");
-          }
-        } catch (error) {
-          console.error("Error during visibility session check:", error);
+        const hasValidSession = await verifySession();
+        
+        if (!hasValidSession) {
+          console.log("Session verification failed after tab switch");
           if (initialCheckDone && mounted) {
+            toast({
+              variant: "destructive",
+              title: "Session expired",
+              description: "Your session has expired. Please login again.",
+            });
             navigate("/login");
           }
+        } else {
+          console.log("Session successfully verified after tab switch");
         }
       }
     };
@@ -96,11 +107,44 @@ const UniversalDashboard = () => {
     // Add the visibility change listener
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
+    // Listen for storage events for cross-tab authentication
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key) return;
+      
+      // Check for auth token changes
+      if (e.key.includes('auth-token')) {
+        console.log("Auth token changed in another tab");
+        // Force session verification
+        verifySession().then(hasSession => {
+          if (!hasSession && mounted && initialCheckDone) {
+            console.log("No valid session found after storage change");
+            navigate("/login");
+          }
+        });
+      }
+      
+      // Check for explicit logout events
+      if (e.key === 'last_auth_event') {
+        try {
+          const event = e.newValue ? JSON.parse(e.newValue) : null;
+          if (event?.type === 'LOGOUT' && mounted && initialCheckDone) {
+            console.log("Logout detected in another tab");
+            navigate("/login");
+          }
+        } catch (error) {
+          console.error("Error processing auth event:", error);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
       mounted = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, [isAuthenticated, isLoading, navigate, initialCheckDone]);
+  }, [isAuthenticated, isLoading, navigate, initialCheckDone, verifySession]);
 
   const hasPermissionForView = (view: string): boolean => {
     const commonViews = ['home', 'profile', 'settings'];
