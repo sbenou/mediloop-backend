@@ -44,12 +44,45 @@ export const UserMenuItems = () => {
       clearAllAuthStorage();
       
       // Enhanced cookie clearing - clear all cookies that might be related to authentication
-      document.cookie.split(';').forEach(cookie => {
+      // Get all cookies
+      const allCookies = document.cookie.split(';');
+      
+      // Clear each cookie with multiple domain/path combinations to ensure they're all removed
+      allCookies.forEach(cookie => {
         const name = cookie.trim().split('=')[0];
-        // Clear any potential auth-related cookies with different path and domain combinations
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+        if (!name) return;
+        
+        // Common paths that might have been set for auth cookies
+        const paths = ['/', '/login', '/auth', '/dashboard'];
+        
+        // Get the hostname parts for domain clearing
+        const hostParts = window.location.hostname.split('.');
+        const domains = [];
+        
+        // Add main domain
+        domains.push(window.location.hostname);
+        
+        // Add parent domain if exists (for subdomains)
+        if (hostParts.length > 2) {
+          domains.push(`.${hostParts.slice(-2).join('.')}`);
+        }
+        
+        // Add root domain with dot prefix
+        domains.push(`.${window.location.hostname}`);
+        
+        // Clear cookie with all path/domain combinations
+        paths.forEach(path => {
+          // Clear with no specific domain (current domain)
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; max-age=0; secure;`;
+          
+          // Clear with specific domains
+          domains.forEach(domain => {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; max-age=0; secure;`;
+          });
+          
+          // Also try with SameSite=None for cross-origin cookies
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=None; max-age=0; secure;`;
+        });
       });
       
       // Sign out from Supabase - this will clear the session on the server
