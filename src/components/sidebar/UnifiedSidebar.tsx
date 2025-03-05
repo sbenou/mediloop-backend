@@ -197,7 +197,7 @@ const UnifiedSidebar = () => {
         </nav>
       </div>
       
-      {/* User Profile - Now with dropdown menu */}
+      {/* User Profile - with dropdown menu aligned to the right */}
       <div className="border-t p-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -210,7 +210,7 @@ const UnifiedSidebar = () => {
               <ChevronDown className="h-4 w-4 opacity-50" />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" side="right" className="w-56">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-xs text-muted-foreground">{profile?.email || 'user@example.com'}</p>

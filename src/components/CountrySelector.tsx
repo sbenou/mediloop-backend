@@ -43,48 +43,77 @@ const CountrySelector = () => {
       
       if (isAuthenticated && user) {
         console.log("CountrySelector: User is authenticated, checking for default address");
-        const { data, error } = await supabase
-          .from('addresses')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('is_default', true)
-          .single();
-        
-        if (!error && data) {
-          console.log("CountrySelector: Found default address:", data);
-          setMainAddress(data);
+        try {
+          const { data, error } = await supabase
+            .from('addresses')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_default', true)
+            .single();
           
-          if (data.country === "Luxembourg" || data.country === "LU") {
-            setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "LU")?.coordinates || userLocation);
-          } else if (data.country === "France" || data.country === "FR") {
-            setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "FR")?.coordinates || userLocation);
-          }
+          if (!error && data) {
+            console.log("CountrySelector: Found default address:", data);
+            setMainAddress(data);
+            
+            if (data.country === "Luxembourg" || data.country === "LU") {
+              setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "LU")?.coordinates || userLocation);
+            } else if (data.country === "France" || data.country === "FR") {
+              setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "FR")?.coordinates || userLocation);
+            }
 
-          return;
-        } else {
-          console.log("CountrySelector: No default address found or error:", error);
+            return;
+          } else {
+            console.log("CountrySelector: No default address found or error:", error);
+          }
+        } catch (e) {
+          console.error("Error fetching address:", e);
         }
       } else {
         console.log("CountrySelector: User is not authenticated");
       }
       
-      const savedCountry = localStorage.getItem('selectedCountry');
-      if (savedCountry) {
-        console.log("CountrySelector: Found saved country:", savedCountry);
-        setSelectedCountry(savedCountry);
-        const country = AVAILABLE_COUNTRIES.find(c => c.code === savedCountry);
-        if (country) {
-          setUserLocation(country.coordinates);
+      // Check if there's a saved country in localStorage
+      try {
+        const savedCountry = localStorage.getItem('selectedCountry');
+        if (savedCountry) {
+          console.log("CountrySelector: Found saved country:", savedCountry);
+          setSelectedCountry(savedCountry);
+          const country = AVAILABLE_COUNTRIES.find(c => c.code === savedCountry);
+          if (country) {
+            setUserLocation(country.coordinates);
+          }
+          // Only return early if we've successfully used the saved country
+          return;
         }
-      } else {
-        console.log("CountrySelector: No saved country, showing dialog");
+      } catch (e) {
+        console.error("Error reading from localStorage:", e);
+      }
+      
+      // If we get here, we need to show the dialog
+      console.log("CountrySelector: No saved country or localStorage error, showing dialog");
+      setTimeout(() => {
+        setOpen(true);
+      }, 100);
+    };
+    
+    checkUserAddress();
+    
+    // Add an event listener to handle storage clear events
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === null) {
+        // This indicates a clear() operation was performed
+        console.log("CountrySelector: Storage clear detected");
         setTimeout(() => {
           setOpen(true);
         }, 100);
       }
     };
     
-    checkUserAddress();
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [isAuthenticated, user, setUserLocation, userLocation]);
   
   // Apply overlay styles when dialog is open
@@ -125,7 +154,11 @@ const CountrySelector = () => {
     const country = AVAILABLE_COUNTRIES.find(c => c.code === selectedCountry);
     if (country) {
       setUserLocation(country.coordinates);
-      localStorage.setItem('selectedCountry', selectedCountry);
+      try {
+        localStorage.setItem('selectedCountry', selectedCountry);
+      } catch (e) {
+        console.error("Error saving to localStorage:", e);
+      }
       setOpen(false);
     }
   };
