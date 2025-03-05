@@ -1,4 +1,3 @@
-
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Home, User, ShoppingBag, FileText, Settings, Calendar, CreditCard, Bell, LogOut, ChevronDown } from "lucide-react";
@@ -45,6 +44,13 @@ const UnifiedSidebar = () => {
         document.cookie = `${name}=; max-age=-1;`;
       });
       
+      // Also clear the selectedCountry from localStorage to force the CountrySelector to appear on next visit
+      try {
+        localStorage.removeItem('selectedCountry');
+      } catch (err) {
+        console.error("Error removing selectedCountry:", err);
+      }
+      
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
@@ -57,6 +63,7 @@ const UnifiedSidebar = () => {
         description: "You have been successfully logged out",
       });
       
+      // Force a hard redirect to ensure complete logout and fresh page load
       window.location.href = "/login";
     } catch (error) {
       console.error("Logout error:", error);
