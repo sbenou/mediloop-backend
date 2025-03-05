@@ -1,3 +1,4 @@
+
 import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 import { safeQueryResult } from '@/types/user';
@@ -8,36 +9,59 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create storage key based on project URL
 const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
 
-// Improved session storage with robust error handling and timestamp tracking
-const enhancedStorage = {
+// Cookie configuration
+const COOKIE_OPTIONS = {
+  name: STORAGE_KEY,
+  lifetime: 60 * 60 * 8, // 8 hours in seconds
+  domain: window.location.hostname,
+  path: '/',
+  sameSite: 'Lax'
+};
+
+// Hybrid storage implementation with cookies as primary and localStorage as fallback
+const hybridStorage = {
   getItem: (key: string) => {
     try {
-      // Try localStorage first (persistent across sessions)
-      const storedValue = window.localStorage.getItem(key);
-      if (storedValue) {
-        const parsed = JSON.parse(storedValue);
-        
-        // Check if session is expired
-        if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
-          console.log('Auth: Session expired, removing from storage');
-          enhancedStorage.removeItem(key);
-          return null;
-        }
-        
-        // Also sync to sessionStorage for faster access
+      // First try to get from cookies
+      const cookieValue = getCookie(key);
+      if (cookieValue) {
         try {
-          window.sessionStorage.setItem(key, storedValue);
-        } catch (syncError) {
-          console.error('Error syncing to sessionStorage:', syncError);
+          return JSON.parse(cookieValue);
+        } catch (e) {
+          console.error('Error parsing cookie value:', e);
         }
-        
-        return parsed;
       }
       
-      // If not in localStorage, try sessionStorage as fallback
+      // If not in cookies, try localStorage as fallback
+      const localValue = window.localStorage.getItem(key);
+      if (localValue) {
+        try {
+          const parsed = JSON.parse(localValue);
+          
+          // Check if session is expired
+          if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
+            console.log('Auth: Session expired, removing from storage');
+            hybridStorage.removeItem(key);
+            return null;
+          }
+          
+          // Also sync back to cookies for next time
+          setCookie(key, localValue, COOKIE_OPTIONS);
+          
+          return parsed;
+        } catch (e) {
+          console.error('Error parsing localStorage value:', e);
+        }
+      }
+      
+      // Try sessionStorage as last resort
       const sessionValue = window.sessionStorage.getItem(key);
       if (sessionValue) {
-        return JSON.parse(sessionValue);
+        try {
+          return JSON.parse(sessionValue);
+        } catch (e) {
+          console.error('Error parsing sessionStorage value:', e);
+        }
       }
       
       return null;
@@ -55,6 +79,9 @@ const enhancedStorage = {
       }
       
       const valueString = JSON.stringify(value);
+      
+      // Store in cookies as primary storage
+      setCookie(key, valueString, COOKIE_OPTIONS);
       
       // Store in localStorage for persistence across sessions
       window.localStorage.setItem(key, valueString);
@@ -83,7 +110,7 @@ const enhancedStorage = {
         console.error('Error dispatching custom event:', eventError);
       }
       
-      console.log(`Auth: Session stored at ${timestamp} for user: ${value?.user?.id || 'unknown'}`);
+      console.log(`Auth: Session stored in cookies and localStorage at ${timestamp} for user: ${value?.user?.id || 'unknown'}`);
     } catch (e) {
       console.error('Error setting auth data:', e);
       
@@ -103,7 +130,10 @@ const enhancedStorage = {
   
   removeItem: (key: string) => {
     try {
-      // Remove from all storage locations
+      // Remove from cookies
+      removeCookie(key);
+      
+      // Remove from all other storage locations
       window.localStorage.removeItem(key);
       window.sessionStorage.removeItem(key);
       window.localStorage.removeItem(`${key}_timestamp`);
@@ -119,19 +149,69 @@ const enhancedStorage = {
       });
       window.dispatchEvent(event);
       
-      console.log('Auth: Session removed from all storage');
+      console.log('Auth: Session removed from cookies and all other storage');
     } catch (e) {
       console.error('Error removing auth data:', e);
     }
   }
 };
 
+// Cookie utility functions
+function setCookie(name: string, value: string, options: any = {}) {
+  const cookieOptions = {
+    ...options,
+    expires: new Date(Date.now() + ((options.lifetime || 0) * 1000))
+  };
+  
+  let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+  
+  if (cookieOptions.expires) {
+    cookieString += `;expires=${cookieOptions.expires.toUTCString()}`;
+  }
+  
+  if (cookieOptions.path) {
+    cookieString += `;path=${cookieOptions.path}`;
+  }
+  
+  if (cookieOptions.domain) {
+    cookieString += `;domain=${cookieOptions.domain}`;
+  }
+  
+  if (cookieOptions.sameSite) {
+    cookieString += `;samesite=${cookieOptions.sameSite}`;
+  }
+  
+  if (cookieOptions.secure) {
+    cookieString += ';secure';
+  }
+  
+  document.cookie = cookieString;
+}
+
+function getCookie(name: string): string | null {
+  const cookies = document.cookie.split(';');
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i].trim();
+    const [cookieName, cookieValue] = cookie.split('=');
+    
+    if (decodeURIComponent(cookieName) === name) {
+      return decodeURIComponent(cookieValue);
+    }
+  }
+  return null;
+}
+
+function removeCookie(name: string) {
+  // To remove a cookie, set its expiration date to the past
+  document.cookie = `${encodeURIComponent(name)}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+}
+
 const supabaseOptions: SupabaseClientOptions<"public"> = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: enhancedStorage,
+    storage: hybridStorage,
     storageKey: STORAGE_KEY,
     flowType: 'pkce'
   }
@@ -222,8 +302,8 @@ supabase.auth.onAuthStateChange((event, session) => {
   console.log(`Auth: State changed: ${event} for user: ${session?.user?.id || 'none'}`);
   
   if (event === 'SIGNED_IN' && session) {
-    // Store session in our enhanced storage
-    enhancedStorage.setItem(STORAGE_KEY, session);
+    // Store session in our hybrid storage
+    hybridStorage.setItem(STORAGE_KEY, session);
     console.log('Auth: Session stored after sign in');
     
     // Broadcast signin to other tabs
@@ -256,7 +336,7 @@ supabase.auth.onAuthStateChange((event, session) => {
     }
   } else if (event === 'SIGNED_OUT') {
     console.log('Auth: User signed out, clearing storage');
-    enhancedStorage.removeItem(STORAGE_KEY);
+    hybridStorage.removeItem(STORAGE_KEY);
     
     // Broadcast signout to other tabs
     if (authChannel) {
@@ -282,7 +362,7 @@ supabase.auth.onAuthStateChange((event, session) => {
     }
   } else if ((event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session) {
     console.log(`Auth: ${event}, updating storage`);
-    enhancedStorage.setItem(STORAGE_KEY, session);
+    hybridStorage.setItem(STORAGE_KEY, session);
     
     // Broadcast update to other tabs
     if (authChannel) {
@@ -326,7 +406,7 @@ const setupSessionRefresh = () => {
             console.log('Auth: Session refreshed successfully');
             
             // Make sure it's stored properly
-            enhancedStorage.setItem(STORAGE_KEY, data.session);
+            hybridStorage.setItem(STORAGE_KEY, data.session);
           }
         }
       }
@@ -350,7 +430,7 @@ let refreshInterval: number | null = null;
 (async () => {
   try {
     // First try to get session from storage (faster)
-    const storedSession = enhancedStorage.getItem(STORAGE_KEY);
+    const storedSession = hybridStorage.getItem(STORAGE_KEY);
     
     if (storedSession) {
       console.log(`Auth: Found session in storage for: ${storedSession.user?.id || 'unknown'}`);
@@ -362,7 +442,7 @@ let refreshInterval: number | null = null;
     if (session) {
       console.log(`Auth: Initial session loaded for: ${session.user.id}`);
       // Make sure it's properly stored
-      enhancedStorage.setItem(STORAGE_KEY, session);
+      hybridStorage.setItem(STORAGE_KEY, session);
       
       // Check and refresh token if needed
       const expiresAt = session.expires_at || 0;
@@ -372,7 +452,7 @@ let refreshInterval: number | null = null;
         const { data } = await supabase.auth.refreshSession();
         if (data.session) {
           console.log('Auth: Session refreshed successfully');
-          enhancedStorage.setItem(STORAGE_KEY, data.session);
+          hybridStorage.setItem(STORAGE_KEY, data.session);
         }
       }
       
@@ -381,7 +461,7 @@ let refreshInterval: number | null = null;
     } else {
       console.log('Auth: No initial session found');
       // Clear any potentially stale session data
-      enhancedStorage.removeItem(STORAGE_KEY);
+      hybridStorage.removeItem(STORAGE_KEY);
     }
   } catch (error) {
     console.error('Error during initial session check:', error);
@@ -393,43 +473,8 @@ let refreshInterval: number | null = null;
 // Safe method to get session from storage with fallbacks
 export const getSessionFromStorage = () => {
   try {
-    // First try our enhanced storage (handles expiration checks)
-    const sessionData = enhancedStorage.getItem(STORAGE_KEY);
-    if (sessionData) {
-      return sessionData;
-    }
-    
-    // Fallback to direct sessionStorage check
-    const localData = localStorage.getItem(STORAGE_KEY);
-    if (localData) {
-      try {
-        const parsed = JSON.parse(localData);
-        
-        // Check for expiration
-        if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
-          console.log('Auth: Expired session found in fallback check, removing');
-          localStorage.removeItem(STORAGE_KEY);
-          sessionStorage.removeItem(STORAGE_KEY);
-          return null;
-        }
-        
-        return parsed;
-      } catch (e) {
-        console.error('Error parsing session data:', e);
-      }
-    }
-    
-    // Try backup locations as last resort
-    const backupData = localStorage.getItem(`${STORAGE_KEY}_backup`);
-    if (backupData) {
-      try {
-        return JSON.parse(backupData);
-      } catch (e) {
-        console.error('Error parsing backup session data:', e);
-      }
-    }
-    
-    return null;
+    // First try our hybrid storage (handles expiration checks)
+    return hybridStorage.getItem(STORAGE_KEY);
   } catch (e) {
     console.error('Error getting session from storage:', e);
     return null;
@@ -454,12 +499,12 @@ const handleVisibilityChange = async () => {
         console.log('Auth: Session verification failed after tab visibility change:', error);
         // Clear stale data
         if (!data.session) {
-          enhancedStorage.removeItem(STORAGE_KEY);
+          hybridStorage.removeItem(STORAGE_KEY);
         }
       } else {
         console.log('Auth: Session verified after tab visibility change');
         // Ensure session is stored correctly
-        enhancedStorage.setItem(STORAGE_KEY, data.session);
+        hybridStorage.setItem(STORAGE_KEY, data.session);
         
         // Notify other components in this tab
         window.dispatchEvent(new CustomEvent('supabase:auth:refreshed', { 
@@ -504,7 +549,7 @@ window.addEventListener('storage', (event) => {
         });
       } else if (eventData.type === 'SIGNED_OUT') {
         // Clear session and reload
-        enhancedStorage.removeItem(STORAGE_KEY);
+        hybridStorage.removeItem(STORAGE_KEY);
         window.location.reload();
       }
     } catch (error) {
@@ -523,4 +568,5 @@ setTimeout(handleVisibilityChange, 5000);
 export const getAuthChannel = () => authChannel;
 
 // Export the enhancedStorage for components that need direct access
-export const getEnhancedStorage = () => enhancedStorage;
+export const getEnhancedStorage = () => hybridStorage;
+
