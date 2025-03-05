@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { UserPlus, ShoppingBag } from "lucide-react";
@@ -8,10 +9,10 @@ export const HeroSection = () => {
   const { t } = useTranslation();
   
   return (
-    <section className="relative min-h-[600px] flex items-center bg-gradient-to-b from-primary/10 to-background px-4 py-16 md:py-24 animate-fade-in">
-      {/* Background image with overlay */}
+    <section className="relative min-h-[600px] flex items-center px-0 py-16 md:py-24 animate-fade-in w-full">
+      {/* Background image with overlay - now full width */}
       <div 
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 w-full"
         style={{
           backgroundImage: "url('https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?q=80&w=2091')",
           backgroundSize: 'cover',
@@ -22,7 +23,7 @@ export const HeroSection = () => {
       
       {/* Gradient overlay */}
       <div 
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 w-full"
         style={{
           background: 'linear-gradient(to right, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%)',
         }}

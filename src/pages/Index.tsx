@@ -13,8 +13,8 @@ export default function Index() {
   return (
     <>
       <Header />
+      <HeroSection />
       <div className="container mx-auto px-4">
-        <HeroSection />
         <FeaturesGrid />
         <StatsSection />
         <TestimonialsSection />
