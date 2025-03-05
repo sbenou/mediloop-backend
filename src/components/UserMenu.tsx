@@ -9,121 +9,60 @@ import { UserMenuItems } from "./user-menu/UserMenuItems";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCallback, memo, useState, useEffect, useRef } from 'react';
-import { supabase, getSessionFromStorage, getEnhancedStorage } from "@/lib/supabase";
+import { useCallback, memo, useState, useEffect } from 'react';
+import { supabase, getSessionFromStorage } from "@/lib/supabase";
 
 const UserMenu = memo(() => {
   const { isAuthenticated, isLoading, profile, user } = useAuth();
   const [localLoading, setLocalLoading] = useState(true);
   const [hasVisibleSession, setHasVisibleSession] = useState(false);
-  const checkTimeoutRef = useRef<number | null>(null);
   const navigate = useNavigate();
   
-  // Enhanced session check with caching and multiple fallbacks
-  const checkSession = useCallback(async (skipApi = false) => {
-    // Try getting from storage first (fastest)
-    const storageKey = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-    const storedSession = getSessionFromStorage();
-    
-    if (storedSession?.user) {
-      setHasVisibleSession(true);
-      setLocalLoading(false);
-      return true;
-    }
-    
-    // Skip API check if requested (for frequent checks)
-    if (skipApi) {
-      setHasVisibleSession(false);
-      setLocalLoading(false);
-      return false;
-    }
-    
-    // If not in storage or we need to verify, check API (slower)
-    try {
-      const { data } = await supabase.auth.getSession();
-      const hasSession = !!data.session;
-      
-      setHasVisibleSession(hasSession);
-      
-      // If we got a session from API but it's not in storage, store it
-      if (hasSession && !storedSession) {
-        getEnhancedStorage().setItem(storageKey, data.session);
+  // Check for session on mount and visibility change
+  useEffect(() => {
+    const checkSession = async () => {
+      // First check local storage (fast)
+      const storedSession = getSessionFromStorage();
+      if (storedSession?.user) {
+        setHasVisibleSession(true);
+        setLocalLoading(false);
+        return;
       }
       
-      return hasSession;
-    } catch (error) {
-      console.error("Error checking session in UserMenu:", error);
-      return false;
-    } finally {
-      setLocalLoading(false);
-    }
-  }, []);
-  
-  // Check for session on mount and set up listeners
-  useEffect(() => {
-    // Immediately check for a session, but don't block rendering
+      // If not in storage, check API (slower)
+      try {
+        const { data } = await supabase.auth.getSession();
+        setHasVisibleSession(!!data.session);
+      } catch (error) {
+        console.error("Error checking session in UserMenu:", error);
+      } finally {
+        setLocalLoading(false);
+      }
+    };
+    
     checkSession();
     
-    // Set up a periodic check when tab is visible
-    const checkInterval = window.setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        // Skip API call for frequent checks
-        checkSession(true);
-      }
-    }, 3000);
-    
-    // Check when tab becomes visible
+    // Also check when tab becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         checkSession();
       }
     };
     
-    // Handle auth-related events
-    const handleAuthEvent = () => {
-      // Clear any pending timeout to avoid race conditions
-      if (checkTimeoutRef.current) {
-        window.clearTimeout(checkTimeoutRef.current);
-      }
-      
-      // Add a small delay to allow storage to settle
-      checkTimeoutRef.current = window.setTimeout(() => {
-        checkSession();
-        checkTimeoutRef.current = null;
-      }, 100);
-    };
-    
-    // Set up event listeners
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('supabase:auth:update', handleAuthEvent);
-    window.addEventListener('supabase:auth:signed_in', handleAuthEvent);
-    window.addEventListener('supabase:auth:signed_out', handleAuthEvent);
-    window.addEventListener('supabase:auth:refreshed', handleAuthEvent);
     
-    // Storage events for cross-tab communication
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key?.includes('auth-token') || e.key === 'supabase_auth_event') {
-        handleAuthEvent();
-      }
+    // Listen for custom auth token events
+    const handleTokenUpdate = () => {
+      checkSession();
     };
     
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('supabase:auth:token:update', handleTokenUpdate);
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('supabase:auth:update', handleAuthEvent);
-      window.removeEventListener('supabase:auth:signed_in', handleAuthEvent);
-      window.removeEventListener('supabase:auth:signed_out', handleAuthEvent);
-      window.removeEventListener('supabase:auth:refreshed', handleAuthEvent);
-      window.removeEventListener('storage', handleStorageChange);
-      
-      if (checkTimeoutRef.current) {
-        window.clearTimeout(checkTimeoutRef.current);
-      }
-      
-      window.clearInterval(checkInterval);
+      window.removeEventListener('supabase:auth:token:update', handleTokenUpdate);
     };
-  }, [checkSession]);
+  }, []);
 
   const handleNavigateToLogin = useCallback(() => {
     navigate('/login', { replace: true });
