@@ -11,6 +11,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TeleconsultationStatus } from '@/types/supabase';
 
+// Define teleconsultation type
 interface Teleconsultation {
   id: string;
   patient_id: string;
@@ -44,6 +45,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
   useEffect(() => {
     fetchConsultations();
     
+    // Subscribe to real-time changes
     const channel = supabase
       .channel('teleconsultations-changes')
       .on('postgres_changes', {
@@ -75,6 +77,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
           doctor:profiles!doctor_id(full_name, email)
         `);
 
+      // Filter based on user role
       if (userRole === 'patient') {
         query = query.eq('patient_id', profile.id);
       } else if (userRole === 'doctor') {
@@ -85,6 +88,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
 
       if (error) throw error;
       
+      // Type assertion to ensure data matches our interface
       setConsultations(data as unknown as Teleconsultation[]);
     } catch (error) {
       console.error('Error fetching teleconsultations:', error);
@@ -103,6 +107,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
 
       if (error) throw error;
 
+      // Update local state
       setConsultations(prev => 
         prev.map(consultation => 
           consultation.id === id 
@@ -114,6 +119,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
       const consultation = consultations.find(c => c.id === id);
       if (!consultation) return;
 
+      // Create notification based on the status change
       let notificationData = {
         user_id: userRole === 'doctor' ? consultation.patient_id : consultation.doctor_id,
         title: '',
@@ -171,14 +177,16 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
     const startTime = new Date(consultation.start_time);
     const endTime = new Date(consultation.end_time);
     
-    const joinWindow = addMinutes(startTime, -5);
-
+    // Can join if consultation is confirmed and time is within 5 minutes before start to end time
+    const joinWindow = addMinutes(startTime, -5); // 5 minutes before start
+    
     return (
       consultation.status === 'confirmed' && 
       (isAfterOrEqual(now, joinWindow) && isBeforeOrEqual(now, endTime))
     );
   };
 
+  // Helper functions for time comparison
   const isAfterOrEqual = (date1: Date, date2: Date) => {
     return date1 >= date2;
   };
@@ -213,7 +221,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
     return (
       <Card>
         <CardContent className="pt-6 text-center">
-          <p className="text-muted-foreground">You have no teleconsultations.</p>
+          <p className="text-muted-foreground">{error}</p>
           <p className="mt-2">You might need to connect with a doctor first.</p>
           <Button 
             variant="outline" 
