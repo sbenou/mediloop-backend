@@ -31,7 +31,6 @@ const AVAILABLE_COUNTRIES: Country[] = [
 ];
 
 const CountrySelector = () => {
-  // Always force dialog open by default
   const [open, setOpen] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string>("LU");
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
@@ -39,23 +38,22 @@ const CountrySelector = () => {
   const [mainAddress, setMainAddress] = useState<Address | null>(null);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   
+  // Initialize the dialog as open and reset any saved country
   useEffect(() => {
-    console.log("CountrySelector: Component mounted, dialog initially set to open:", open);
-    
-    // Force dialog to always be open on initial mount
+    console.log("CountrySelector: Component mounted, initializing");
     setOpen(true);
     
-    // Force clearing the savedCountry on initial load to ensure dialog appears
+    // Try to clear any existing selection to force the dialog
     try {
       localStorage.removeItem('selectedCountry');
-      console.log("CountrySelector: Forced clearing of selectedCountry to ensure dialog appears");
+      console.log("CountrySelector: Cleared selectedCountry on mount");
     } catch (e) {
       console.error("Error clearing localStorage:", e);
     }
   }, []);
   
+  // Force dialog to remain open
   useEffect(() => {
-    // For debugging purposes
     if (!open) {
       console.log("CountrySelector: Dialog was closed, forcing it open again");
       setOpen(true);
@@ -100,7 +98,8 @@ const CountrySelector = () => {
         console.log("CountrySelector: User is not authenticated");
       }
       
-      // Check if user has previously selected a country
+      // Even if we've already determined not to show the dialog,
+      // still check localStorage to update the selected country
       try {
         const savedCountry = localStorage.getItem('selectedCountry');
         if (savedCountry) {
@@ -143,6 +142,7 @@ const CountrySelector = () => {
     };
   }, [isAuthenticated, user, setUserLocation, userLocation]);
   
+  // Apply style changes when dialog is open
   useEffect(() => {
     if (open) {
       const style = document.createElement('style');

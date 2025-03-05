@@ -21,9 +21,12 @@ const UserMenu = memo(() => {
   // Enhanced session check on mount and visibility change
   useEffect(() => {
     const checkSession = async () => {
+      console.log("UserMenu: Checking session");
+      
       // First check local storage (fastest)
       const storedSession = getSessionFromStorage();
       if (storedSession?.user) {
+        console.log("UserMenu: Found valid session in storage:", storedSession.user.id);
         setHasVisibleSession(true);
         setLocalLoading(false);
         return;
@@ -35,7 +38,8 @@ const UserMenu = memo(() => {
         if (error) {
           console.error("Error checking session in UserMenu:", error);
           setHasVisibleSession(false);
-        } else {
+        } else if (data.session) {
+          console.log("UserMenu: Found session via API:", data.session.user.id);
           setHasVisibleSession(!!data.session);
           
           // If we have a session from API but not in storage, store it
@@ -49,6 +53,9 @@ const UserMenu = memo(() => {
               console.error("Error storing session:", storageError);
             }
           }
+        } else {
+          console.log("UserMenu: No session found via API");
+          setHasVisibleSession(false);
         }
       } catch (error) {
         console.error("Error checking session in UserMenu:", error);
@@ -64,6 +71,7 @@ const UserMenu = memo(() => {
     // Also check when tab becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        console.log("UserMenu: Page became visible, checking session");
         // Reset localLoading but only if we don't already have a visible session
         if (!hasVisibleSession) {
           setLocalLoading(true);
@@ -76,6 +84,7 @@ const UserMenu = memo(() => {
     
     // Listen for custom auth token events
     const handleTokenUpdate = () => {
+      console.log("UserMenu: Auth token update event received");
       checkSession();
     };
     

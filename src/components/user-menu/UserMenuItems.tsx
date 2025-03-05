@@ -22,7 +22,7 @@ export const UserMenuItems = () => {
     try {
       console.log("Logout initiated from UserMenuItems");
       
-      // First, clear local auth state before API call
+      // First, clear all local auth state before API call
       setAuth({
         user: null,
         profile: null,
@@ -30,79 +30,22 @@ export const UserMenuItems = () => {
         permissions: [],
       });
       
-      // First, do a hard clear of all browser storage
+      // Clear country selection to force the country selector on next visit
       try {
-        localStorage.clear();
-        sessionStorage.clear();
+        localStorage.removeItem('selectedCountry');
       } catch (e) {
-        console.error("Error clearing storage:", e);
-      }
-      
-      // Broadcast logout event to other tabs BEFORE API call
-      try {
-        const logoutEvent = { type: 'LOGOUT', timestamp: Date.now() };
-        localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
-        // Force the storage event
-        localStorage.removeItem('last_auth_event');
-        localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
-      } catch (eventError) {
-        console.error('Error broadcasting logout event:', eventError);
+        console.error("Error removing selectedCountry:", e);
       }
       
       // Force clear all auth storage (localStorage, sessionStorage, and cookies)
       clearAllAuthStorage();
       
-      // Get all cookies and delete them with various techniques 
-      const allCookies = document.cookie.split(';');
-      const domain = window.location.hostname;
-      
-      // Clear each cookie with multiple approaches
-      allCookies.forEach(cookie => {
-        const name = cookie.trim().split('=')[0];
-        if (!name) return;
-        
-        // ENHANCED: Improved cookie clearing methods that work better with developer tools
-        
-        // Add document.cookie clears with all possible combinations
-        // Basic cookie clearing with multiple path/domain variations
-        ["/", "/login", "/dashboard", "", "/api", "/auth", null].forEach(path => {
-          // Try with path alone
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'};`;
-          
-          // Try with path and domain
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; domain=${domain};`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; domain=.${domain};`;
-          
-          // Try with root domain variations
-          if (domain.includes('.')) {
-            const rootDomain = domain.split('.').slice(-2).join('.');
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; domain=.${rootDomain};`;
-          }
-          
-          // Try with short max-age approach (most reliable for dev tools)
-          document.cookie = `${name}=; max-age=-1; path=${path || '/'};`;
-          document.cookie = `${name}=; max-age=-99999; path=${path || '/'};`;
-          
-          // Try with all SameSite variations
-          ["None", "Lax", "Strict"].forEach(sameSite => {
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; SameSite=${sameSite}; ${sameSite === 'None' ? 'Secure;' : ''} max-age=-1;`;
-          });
-        });
-        
-        // Try absolute expiration methods
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-        document.cookie = `${name}=; max-age=-1;`;
-        document.cookie = `${name}=; max-age=0;`;
-        
-        // Try with invalid value to force browser to delete
-        document.cookie = `${name}=invalid; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-      });
-      
-      // Also clear the selectedCountry from localStorage to force the CountrySelector to appear on next visit
+      // Broadcast logout event to other tabs
       try {
-        localStorage.removeItem('selectedCountry');
-      } catch (err) {
-        console.error("Error removing selectedCountry:", err);
+        const logoutEvent = { type: 'LOGOUT', timestamp: Date.now() };
+        localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
+      } catch (eventError) {
+        console.error('Error broadcasting logout event:', eventError);
       }
       
       // Sign out from Supabase - this will clear the session on the server
