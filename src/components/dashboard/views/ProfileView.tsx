@@ -2,18 +2,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PersonalDetails } from "@/components/settings/PersonalDetails";
-import { AddressManagement } from "@/components/settings/AddressManagement";
-import { PharmacySelection } from "@/components/settings/PharmacySelection";
-import { DoctorManagement } from "@/components/settings/DoctorManagement";
-import { NextOfKinManagement } from "@/components/settings/NextOfKinManagement";
+// Fixing import errors by using default imports instead of named imports
+import PersonalDetails from "@/components/settings/PersonalDetails";
+import AddressManagement from "@/components/settings/AddressManagement";
+import PharmacySelection from "@/components/settings/PharmacySelection";
+import DoctorManagement from "@/components/settings/DoctorManagement";
+import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
 
 interface ProfileViewProps {
   activeTab: string;
   userRole: string | null;
 }
 
-export const ProfileView = ({ activeTab, userRole }: ProfileViewProps) => {
+const ProfileView = ({ activeTab, userRole }: ProfileViewProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState(activeTab || "personal");
@@ -71,3 +72,6 @@ export const ProfileView = ({ activeTab, userRole }: ProfileViewProps) => {
     </div>
   );
 };
+
+// Make sure to export as default
+export default ProfileView;
