@@ -1,150 +1,143 @@
 
-import { useLocation, Link } from "react-router-dom";
+import { useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from "@/components/ui/sidebar";
+import { Home, Settings, FileText, Phone, Package, UserPlus, UserCircle } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Home, User, ShoppingBag, FileText, Settings, Calendar } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import UserAvatar from "../user-menu/UserAvatar";
+import SidebarUserMenu from "./SidebarUserMenu";
 
 const UnifiedSidebar = () => {
-  const { userRole, profile } = useAuth();
+  const { profile } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
 
-  // Handle logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/login";
-  };
+  const userRole = profile?.role || "user";
 
-  const isLinkActive = (path: string) => {
-    return location.pathname === path;
-  };
+  const routes = useMemo(() => {
+    const baseRoutes = [
+      {
+        name: "Home",
+        path: "/",
+        icon: Home,
+      },
+      {
+        name: "Products",
+        path: "/products",
+        icon: Package,
+      },
+      {
+        name: "Prescriptions",
+        path: "/my-prescriptions",
+        icon: FileText,
+      },
+      {
+        name: "Teleconsultations",
+        path: "/teleconsultations",
+        icon: Phone,
+      },
+      {
+        name: "Settings",
+        path: "/settings",
+        icon: Settings,
+      },
+    ];
 
-  const platformMenuItems = [
-    {
-      label: 'Dashboard',
-      icon: <Home className="w-5 h-5 mr-3" />,
-      path: '/dashboard',
-      active: isLinkActive('/dashboard')
-    },
-    {
-      label: 'Orders',
-      icon: <ShoppingBag className="w-5 h-5 mr-3" />,
-      path: '/my-orders',
-      active: isLinkActive('/my-orders')
-    },
-    {
-      label: 'Teleconsultations',
-      icon: <Calendar className="w-5 h-5 mr-3" />,
-      path: '/teleconsultations',
-      active: isLinkActive('/teleconsultations')
+    // If user is a pharmacist, add pharmacist-specific routes
+    if (userRole === "pharmacist") {
+      return [
+        {
+          name: "Dashboard",
+          path: "/pharmacy",
+          icon: Home,
+        },
+        {
+          name: "Orders",
+          path: "/pharmacy/orders",
+          icon: Package,
+        },
+        {
+          name: "Prescriptions",
+          path: "/pharmacy/prescriptions",
+          icon: FileText,
+        },
+        {
+          name: "Patients",
+          path: "/pharmacy/patients",
+          icon: UserPlus,
+        },
+        {
+          name: "Settings",
+          path: "/pharmacy/settings",
+          icon: Settings,
+        },
+      ];
     }
-  ];
-  
-  const adminMenuItems = [
-    {
-      label: 'Settings',
-      icon: <Settings className="w-5 h-5 mr-3" />,
-      path: '/settings',
-      active: isLinkActive('/settings')
+
+    // If user is a superadmin, add admin-specific routes
+    if (userRole === "superadmin") {
+      return [
+        {
+          name: "Dashboard",
+          path: "/superadmin",
+          icon: Home,
+        },
+        {
+          name: "Users",
+          path: "/superadmin/users",
+          icon: UserCircle,
+        },
+        {
+          name: "Products",
+          path: "/superadmin/products",
+          icon: Package,
+        },
+        {
+          name: "Settings",
+          path: "/superadmin/settings",
+          icon: Settings,
+        },
+      ];
     }
-  ];
+
+    // Default to base routes
+    return baseRoutes;
+  }, [userRole]);
 
   return (
-    <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
-      {/* Sidebar Header */}
-      <div className="p-4 border-b">
-        <div className="flex items-center space-x-2">
-          <div className="relative">
-            <UserAvatar 
-              userProfile={{
-                id: null,
-                full_name: 'Mediloop',
-                email: null,
-                avatar_url: null,
-                role: 'organization',
-                role_id: null,
-                date_of_birth: null,
-                city: null,
-                auth_method: null,
-                is_blocked: null,
-                doctor_stamp_url: null,
-                doctor_signature_url: null,
-                cns_card_front: null,
-                cns_card_back: null,
-                cns_number: null,
-                deleted_at: null,
-                created_at: null,
-                updated_at: null,
-                license_number: null
-              }} 
-              squared={true} 
-              canUpload={true} 
-            />
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm">Mediloop</h3>
-            <p className="text-xs text-muted-foreground">Healthcare Platform</p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Sidebar Sections */}
-      <div className="flex-1 overflow-auto py-4">
-        <div className="px-3 mb-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">Platform</p>
-        </div>
-        
-        <nav className="space-y-1 px-2">
-          {platformMenuItems.map((item, index) => (
-            <Link
-              key={index}
-              to={item.path}
-              className={`flex items-center px-3 py-2 rounded-md text-sm ${
-                item.active 
-                  ? 'bg-primary/10 text-primary font-medium' 
-                  : 'text-muted-foreground hover:bg-gray-100'
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
+    <Sidebar>
+      <SidebarRail />
+      <SidebarHeader className="h-16 flex items-center justify-center">
+        <img src="/logo.svg" alt="Logo" className="h-8" />
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {routes.map((route) => (
+            <SidebarMenuItem key={route.path}>
+              <SidebarMenuButton
+                tooltip={route.name}
+                isActive={location.pathname === route.path}
+                onClick={() => navigate(route.path)}
+              >
+                <route.icon className="h-5 w-5" />
+                <span>{route.name}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           ))}
-        </nav>
-        
-        {/* Admin Section */}
-        <div className="px-3 mb-2 mt-6">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">Admin</p>
-        </div>
-        
-        <nav className="space-y-1 px-2">
-          {adminMenuItems.map((item, index) => (
-            <Link
-              key={index}
-              to={item.path}
-              className={`flex items-center px-3 py-2 rounded-md text-sm ${
-                item.active 
-                  ? 'bg-primary/10 text-primary font-medium' 
-                  : 'text-muted-foreground hover:bg-gray-100'
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-      
-      {/* User Profile */}
-      <div className="border-t p-4">
-        <div className="flex items-center space-x-3">
-          <UserAvatar userProfile={profile} squared={true} canUpload={true} />
-          <div className="overflow-hidden">
-            <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
-            <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>
-          </div>
-        </div>
-      </div>
-    </aside>
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter className="pb-4 px-2">
+        <SidebarUserMenu />
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 
