@@ -80,6 +80,9 @@ export const UserMenuItems = () => {
         
         // Last resort - try absolute expiration without other attributes
         document.cookie = `${name}=; max-age=-1;`;
+        
+        // Direct cookie deletion without path/domain for manual clearing support
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
       });
       
       // Sign out from Supabase - this will clear the session on the server
