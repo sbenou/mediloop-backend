@@ -133,7 +133,7 @@ export const StatsSection = ({ stats }: { stats?: PlatformStats }) => {
   return (
     <section 
       ref={ref}
-      className={`py-16 bg-muted/50 transform transition-all duration-700 ${
+      className={`py-16 w-full bg-muted/50 transform transition-all duration-700 ${
         inView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
       }`}
     >
