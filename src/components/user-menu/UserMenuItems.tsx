@@ -43,50 +43,36 @@ export const UserMenuItems = () => {
       // Force clear all auth storage (localStorage, sessionStorage, and cookies)
       clearAllAuthStorage();
       
-      // Enhanced cookie clearing with more aggressive approach
-      // This is a more forceful approach to clearing cookies
+      // Enhanced cookie clearing with more aggressive approach using document.cookie
       const allCookies = document.cookie.split(';');
       
-      // Clear each cookie with multiple domain/path combinations to ensure they're all removed
+      // Clear each cookie with multiple domain/path combinations
       allCookies.forEach(cookie => {
         const name = cookie.trim().split('=')[0];
         if (!name) return;
         
-        // Common paths that might have been set for auth cookies
-        const paths = ['/', '/login', '/auth', '/dashboard', '/profile', '/api', ''];
+        // Clear with standard approach
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
         
-        // Get the hostname parts for domain clearing
-        const hostParts = window.location.hostname.split('.');
-        const domains = [];
+        // Additional clearing with explicit attributes that prevent persistence
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0;`;
         
-        // Add main domain
-        domains.push(window.location.hostname);
+        // Try with domain attribute
+        const domain = window.location.hostname;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain}; max-age=0;`;
         
-        // Add parent domain if exists (for subdomains)
-        if (hostParts.length > 2) {
-          domains.push(`.${hostParts.slice(-2).join('.')}`);
+        // Try with subdomain wildcards if applicable
+        if (domain.includes('.')) {
+          const rootDomain = domain.split('.').slice(-2).join('.');
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${rootDomain}; max-age=0;`;
         }
         
-        // Add root domain with dot prefix
-        domains.push(`.${window.location.hostname}`);
+        // Also try setting without secure flag for http connections
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0;`;
         
-        // Add empty domain (current domain only)
-        domains.push('');
-        
-        // Try all combinations of domains and paths
-        domains.forEach(domain => {
-          paths.forEach(path => {
-            // Try multiple expiration approaches
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0; secure;`;
-            document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1; secure;`;
-            
-            // Also try with SameSite=None for cross-origin cookies
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; SameSite=None; max-age=0; secure;`;
-          });
-        });
-        
-        // Last resort: try setting without path or domain
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
+        // Use HttpOnly attribute for security-sensitive cookies
+        // Note: This can only be set by the server, but we'll try anyway
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0; HttpOnly;`;
       });
       
       // Sign out from Supabase - this will clear the session on the server
