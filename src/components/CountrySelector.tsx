@@ -84,6 +84,13 @@ const CountrySelector = () => {
           }
           // Only return early if we've successfully used the saved country
           return;
+        } else {
+          // Force the dialog to open if no savedCountry found
+          console.log("CountrySelector: No saved country found, showing dialog");
+          setTimeout(() => {
+            setOpen(true);
+          }, 100);
+          return;
         }
       } catch (e) {
         console.error("Error reading from localStorage:", e);
@@ -108,6 +115,23 @@ const CountrySelector = () => {
         }, 100);
       }
     };
+
+    // Check if localStorage exists and is empty for selectedCountry
+    const checkLocalStorage = () => {
+      try {
+        const hasSelectedCountry = !!localStorage.getItem('selectedCountry');
+        if (!hasSelectedCountry) {
+          console.log("CountrySelector: No savedCountry in localStorage on init/check");
+          setOpen(true);
+        }
+      } catch (error) {
+        console.error("Error checking localStorage:", error);
+        setOpen(true);
+      }
+    };
+    
+    // Run an initial check
+    checkLocalStorage();
     
     window.addEventListener('storage', handleStorageChange);
     

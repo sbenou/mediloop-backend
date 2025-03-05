@@ -212,9 +212,9 @@ const UnifiedSidebar = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="right" className="w-56">
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-xs text-muted-foreground">{profile?.email || 'user@example.com'}</p>
-                <p className="text-xs text-muted-foreground capitalize">Role: {userRole || 'user'}</p>
+              <div className="flex flex-col space-y-1 items-center">
+                <p className="text-sm font-bold">{profile?.email || 'user@example.com'}</p>
+                <p className="text-xs font-bold capitalize">{userRole || 'Patient'}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

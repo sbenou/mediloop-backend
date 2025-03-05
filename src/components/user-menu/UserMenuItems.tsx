@@ -3,6 +3,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { useMemo } from "react";
@@ -104,6 +105,13 @@ export const UserMenuItems = () => {
       
       // Force a hard redirect to ensure complete logout and fresh page load
       window.location.href = "/";
+
+      // Also clear the selectedCountry from localStorage to force the CountrySelector to appear on next visit
+      try {
+        localStorage.removeItem('selectedCountry');
+      } catch (err) {
+        console.error("Error removing selectedCountry:", err);
+      }
     } catch (error) {
       console.error("Logout error:", error);
       toast({
@@ -130,6 +138,13 @@ export const UserMenuItems = () => {
     
     return (
       <>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1 items-center">
+            <p className="text-sm font-bold">{auth.profile?.email || 'user@example.com'}</p>
+            <p className="text-xs font-bold capitalize">{userRole || 'Patient'}</p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => navigate(`${routePrefix}/upgrade`)}>
             <CreditCard className="mr-2 h-4 w-4" />
@@ -164,7 +179,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole]);
+  }, [navigate, userRole, auth.profile]);
 
   return menuItems;
 };
