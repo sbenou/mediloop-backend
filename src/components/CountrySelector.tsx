@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -43,6 +44,14 @@ const CountrySelector = () => {
     
     // Force dialog to always be open on initial mount
     setOpen(true);
+    
+    // Force clearing the savedCountry on initial load to ensure dialog appears
+    try {
+      localStorage.removeItem('selectedCountry');
+      console.log("CountrySelector: Forced clearing of selectedCountry to ensure dialog appears");
+    } catch (e) {
+      console.error("Error clearing localStorage:", e);
+    }
   }, []);
   
   useEffect(() => {

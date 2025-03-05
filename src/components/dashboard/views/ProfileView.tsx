@@ -2,6 +2,14 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
+
+// Import the components for each section
+import PersonalDetails from "@/components/settings/PersonalDetails";
+import AddressManagement from "@/components/settings/AddressManagement";
+import PharmacySelection from "@/components/settings/PharmacySelection";
+import DoctorManagement from "@/components/settings/DoctorManagement";
+import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
 
 interface ProfileViewProps {
   activeTab: string;
@@ -10,6 +18,7 @@ interface ProfileViewProps {
 
 const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
 
   // Handle tab change
   const handleTabChange = (value: string) => {
@@ -57,27 +66,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
 
   const tabs = getTabs();
 
-  // Render tab content based on role and active tab
-  const renderTabContent = (tabId: string) => {
-    // Placeholder content for all tabs
-    return (
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">{tabs.find(tab => tab.id === tabId)?.label}</h2>
-        <p className="text-muted-foreground">
-          {userRole === 'patient' && tabId === 'personal' ? (
-            "Your personal information will be displayed here."
-          ) : userRole === 'doctor' && tabId === 'qualifications' ? (
-            "Your medical qualifications and certifications will be displayed here."
-          ) : tabId === 'addresses' ? (
-            "No addresses found. Add your first address to get started."
-          ) : (
-            `No ${tabId} information found.`
-          )}
-        </p>
-      </div>
-    );
-  };
-
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">My Profile</h1>
@@ -91,11 +79,81 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
           ))}
         </TabsList>
         
-        {tabs.map(tab => (
-          <TabsContent key={tab.id} value={tab.id} className="mt-4">
-            {renderTabContent(tab.id)}
+        {/* Personal Info Tab */}
+        <TabsContent value="personal" className="mt-4">
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
+            <PersonalDetails profile={profile} />
+          </div>
+        </TabsContent>
+        
+        {/* Addresses Tab */}
+        <TabsContent value="addresses" className="mt-4">
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">My Addresses</h2>
+            <AddressManagement />
+          </div>
+        </TabsContent>
+        
+        {/* Pharmacy Tab */}
+        <TabsContent value="pharmacy" className="mt-4">
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Default Pharmacy</h2>
+            <PharmacySelection />
+          </div>
+        </TabsContent>
+        
+        {/* Doctor Tab */}
+        <TabsContent value="doctor" className="mt-4">
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">My Doctor</h2>
+            <DoctorManagement />
+          </div>
+        </TabsContent>
+        
+        {/* Next of Kin Tab */}
+        <TabsContent value="nextofkin" className="mt-4">
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Next of Kin</h2>
+            <NextOfKinManagement />
+          </div>
+        </TabsContent>
+        
+        {/* Additional role-specific tabs */}
+        {userRole === 'doctor' && (
+          <>
+            <TabsContent value="qualifications" className="mt-4">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Qualifications</h2>
+                <p>Your medical qualifications and certifications will be displayed here.</p>
+              </div>
+            </TabsContent>
+            <TabsContent value="clinic" className="mt-4">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Clinic Details</h2>
+                <p>Your clinic information will be displayed here.</p>
+              </div>
+            </TabsContent>
+          </>
+        )}
+        
+        {userRole === 'pharmacist' && (
+          <TabsContent value="staff" className="mt-4">
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Staff Management</h2>
+              <p>Pharmacy staff management will be displayed here.</p>
+            </div>
           </TabsContent>
-        ))}
+        )}
+        
+        {userRole === 'superadmin' && (
+          <TabsContent value="admin" className="mt-4">
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Admin Settings</h2>
+              <p>Administrative settings will be displayed here.</p>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

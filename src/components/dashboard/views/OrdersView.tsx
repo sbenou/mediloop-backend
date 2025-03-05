@@ -26,13 +26,20 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   
   // Set correct view when navigating from sidebar
   useEffect(() => {
-    if (location.pathname === '/my-orders') {
-      const currentView = searchParams.get('view') || 'orders';
-      if (view !== currentView) {
-        handleTabChange(currentView);
+    // Check if we're on the orders page
+    if (location.pathname === '/my-orders' || 
+        (location.pathname === '/dashboard' && searchParams.get('view') === 'orders')) {
+      // Get the current tab from URL or from props
+      const currentTab = location.pathname === '/my-orders' 
+        ? searchParams.get('view') || 'orders'
+        : searchParams.get('ordersTab') || 'orders';
+      
+      // Set the tab if it's different from the current one
+      if (view !== currentTab) {
+        handleTabChange(currentTab);
       }
     }
-  }, [location.pathname, searchParams]);
+  }, [location.pathname, searchParams, activeTab]);
 
   // Get role-specific tabs configuration
   const getTabs = () => {
@@ -63,6 +70,14 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   };
 
   const tabs = getTabs();
+  
+  // Determine which tab should be active
+  const getActiveTab = () => {
+    if (location.pathname === '/my-orders') {
+      return searchParams.get('view') || 'orders';
+    }
+    return searchParams.get('ordersTab') || 'orders';
+  };
 
   // Render empty table state based on role and tab
   const renderEmptyState = (tabId: string) => {
@@ -103,6 +118,10 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     ];
   };
 
+  // Render the component with the correct active tab
+  const currentActiveTab = getActiveTab();
+  console.log("OrdersView: Current active tab:", currentActiveTab);
+
   return (
     <div className="space-y-6">
       <div>
@@ -119,7 +138,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
       </div>
 
       {/* Orders section with tabs */}
-      <Tabs value={view} onValueChange={handleTabChange}>
+      <Tabs value={currentActiveTab} onValueChange={handleTabChange}>
         <TabsList>
           {tabs.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>
