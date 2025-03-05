@@ -83,6 +83,7 @@ const OrdersPage = () => {
   }, []);
 
   const handleTabChange = (value: string) => {
+    console.log("OrdersPage: Tab changed to", value);
     setSearchParams({ tab: value });
   };
 

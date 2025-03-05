@@ -1,4 +1,3 @@
-
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
@@ -29,7 +28,6 @@ const UnifiedSidebar = () => {
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
-  // Set open states based on URL
   useEffect(() => {
     if (location.pathname.includes('/my-orders') || location.search.includes('view=orders')) {
       setIsOrdersOpen(true);
@@ -40,12 +38,10 @@ const UnifiedSidebar = () => {
     }
   }, [location.pathname, location.search]);
 
-  // Handle logout
   const handleLogout = async () => {
     try {
       console.log("Logout initiated from UnifiedSidebar");
       
-      // First, do a hard clear of all browser storage
       try {
         localStorage.clear();
         sessionStorage.clear();
@@ -53,10 +49,8 @@ const UnifiedSidebar = () => {
         console.error("Error clearing storage:", e);
       }
       
-      // Force clear all auth storage (localStorage, sessionStorage, and cookies)
       clearAllAuthStorage();
       
-      // Clear cookies with the same enhanced methods as in UserMenuItems
       const allCookies = document.cookie.split(';');
       const domain = window.location.hostname;
       
@@ -73,7 +67,6 @@ const UnifiedSidebar = () => {
         document.cookie = `${name}=; max-age=-1;`;
       });
       
-      // Also clear the selectedCountry from localStorage to force the CountrySelector to appear on next visit
       try {
         localStorage.removeItem('selectedCountry');
       } catch (err) {
@@ -92,7 +85,6 @@ const UnifiedSidebar = () => {
         description: "You have been successfully logged out",
       });
       
-      // Force a hard redirect to ensure complete logout and fresh page load
       window.location.href = "/login";
     } catch (error) {
       console.error("Logout error:", error);
@@ -152,15 +144,18 @@ const UnifiedSidebar = () => {
     {
       label: 'Orders',
       icon: <ShoppingBag className="w-4 h-4 mr-3" />,
-      path: '/my-orders?view=orders',
-      active: isSubPathActive('/my-orders?view=orders') || 
-             (location.pathname === '/my-orders' && (!location.search || location.search === ''))
+      path: '/dashboard?view=orders&ordersTab=orders',
+      active: (location.pathname === '/dashboard' && 
+             location.search.includes('view=orders') && 
+             (!location.search.includes('ordersTab=') || location.search.includes('ordersTab=orders')))
     },
     {
       label: 'Payments',
       icon: <Payment className="w-4 h-4 mr-3" />,
-      path: '/my-orders?view=payments',
-      active: isSubPathActive('/my-orders?view=payments')
+      path: '/dashboard?view=orders&ordersTab=payments',
+      active: (location.pathname === '/dashboard' && 
+             location.search.includes('view=orders') && 
+             location.search.includes('ordersTab=payments'))
     }
   ];
   
@@ -197,7 +192,6 @@ const UnifiedSidebar = () => {
     }
   ];
 
-  // Get the appropriate route prefix based on user role
   const getRoutePrefix = () => {
     if (userRole === 'superadmin') {
       return '/superadmin';
@@ -209,7 +203,6 @@ const UnifiedSidebar = () => {
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
-      {/* Sidebar Header */}
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2">
           <div className="relative">
@@ -246,7 +239,6 @@ const UnifiedSidebar = () => {
         </div>
       </div>
       
-      {/* Sidebar Sections */}
       <div className="flex-1 overflow-auto py-4">
         <div className="px-3 mb-2">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">Platform</p>
@@ -268,7 +260,6 @@ const UnifiedSidebar = () => {
             </Link>
           ))}
           
-          {/* Profile Collapsible Section */}
           <Collapsible 
             open={isProfileOpen} 
             onOpenChange={setIsProfileOpen}
@@ -303,13 +294,13 @@ const UnifiedSidebar = () => {
             </CollapsibleContent>
           </Collapsible>
           
-          {/* Orders Collapsible Section */}
           <Collapsible 
             open={isOrdersOpen} 
             onOpenChange={setIsOrdersOpen}
             className="w-full"
           >
             <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm ${
+              (location.pathname === '/dashboard' && location.search.includes('view=orders')) ||
               location.pathname.includes('/my-orders')
                 ? 'bg-primary/10 text-primary font-medium' 
                 : 'text-muted-foreground hover:bg-gray-100'
@@ -351,7 +342,6 @@ const UnifiedSidebar = () => {
           </Link>
         </nav>
         
-        {/* Admin Section */}
         <div className="px-3 mb-2 mt-6">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">Admin</p>
         </div>
@@ -374,7 +364,6 @@ const UnifiedSidebar = () => {
         </nav>
       </div>
       
-      {/* User Profile - with dropdown menu aligned to the right */}
       <div className="border-t p-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

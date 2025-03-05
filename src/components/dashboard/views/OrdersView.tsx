@@ -13,10 +13,20 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const view = searchParams.get('view') || 'orders';
+  
+  // Determine the current view based on location path and search params
+  const getCurrentView = () => {
+    if (location.pathname === '/my-orders') {
+      return searchParams.get('view') || 'orders';
+    }
+    return searchParams.get('ordersTab') || 'orders';
+  };
+  
+  const view = getCurrentView();
 
   // Handle tab change
   const handleTabChange = (value: string) => {
+    console.log("OrdersView: Tab changed to:", value);
     if (location.pathname === '/my-orders') {
       navigate(`/my-orders?view=${value}`);
     } else {
@@ -33,6 +43,8 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
       const currentTab = location.pathname === '/my-orders' 
         ? searchParams.get('view') || 'orders'
         : searchParams.get('ordersTab') || 'orders';
+      
+      console.log("OrdersView: Current tab from URL:", currentTab, "Active tab prop:", activeTab, "Current view:", view);
       
       // Set the tab if it's different from the current one
       if (view !== currentTab) {

@@ -1,47 +1,24 @@
 
-import PatientLayout from "@/components/layout/PatientLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from "react";
 import { useSearchParams } from "react-router-dom";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
+import OrdersView from "@/components/dashboard/views/OrdersView";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 const MyOrders = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'orders';
-
-  const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value });
-  };
+  const [searchParams] = useSearchParams();
+  const { userRole } = useAuth();
+  const activeTab = searchParams.get('view') || 'orders';
 
   return (
-    <PatientLayout>
-      <div>
-        <h1 className="text-3xl font-bold mb-6">My Orders</h1>
-        
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="orders">
-            <div className="bg-gray-100 rounded-lg p-8 text-center">
-              <p className="text-lg">No orders found</p>
-              <p className="text-muted-foreground mt-2">
-                Your order history will appear here once you make a purchase
-              </p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="payments">
-            <div className="bg-gray-100 rounded-lg p-8 text-center">
-              <p className="text-lg">No payment records found</p>
-              <p className="text-muted-foreground mt-2">
-                Your payment history will appear here once you make a purchase
-              </p>
-            </div>
-          </TabsContent>
-        </Tabs>
+    <UnifiedLayoutTemplate>
+      <div className="p-6">
+        <OrdersView 
+          activeTab={activeTab} 
+          userRole={userRole} 
+        />
       </div>
-    </PatientLayout>
+    </UnifiedLayoutTemplate>
   );
 };
 
