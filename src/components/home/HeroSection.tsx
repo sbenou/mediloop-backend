@@ -9,10 +9,10 @@ export const HeroSection = () => {
   const { t } = useTranslation();
   
   return (
-    <section className="relative min-h-[600px] flex items-center px-0 py-16 md:py-24 animate-fade-in w-full">
-      {/* Background image with overlay - now full width */}
+    <section className="relative min-h-[600px] flex items-center py-16 md:py-24 w-full overflow-hidden">
+      {/* Background image with overlay - full width on all screens */}
       <div 
-        className="absolute inset-0 z-0 w-full"
+        className="absolute inset-0 w-full h-full"
         style={{
           backgroundImage: "url('https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?q=80&w=2091')",
           backgroundSize: 'cover',
@@ -23,14 +23,14 @@ export const HeroSection = () => {
       
       {/* Gradient overlay */}
       <div 
-        className="absolute inset-0 z-0 w-full"
+        className="absolute inset-0 w-full h-full"
         style={{
           background: 'linear-gradient(to right, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%)',
         }}
       />
       
       {/* Content overlay */}
-      <div className="container mx-auto relative z-10">
+      <div className="container mx-auto relative z-10 px-4">
         <div className="flex flex-col items-center">
           <div className="text-center max-w-3xl mb-12">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
