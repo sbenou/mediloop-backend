@@ -43,40 +43,35 @@ export const UserMenuItems = () => {
       // Force clear all auth storage (localStorage, sessionStorage, and cookies)
       clearAllAuthStorage();
       
-      // Enhanced cookie clearing with more aggressive approach using document.cookie
+      // Get all cookies and delete them with various techniques 
       const allCookies = document.cookie.split(';');
+      const domain = window.location.hostname;
       
-      // Clear each cookie with multiple domain/path combinations
+      // Clear each cookie with multiple approaches
       allCookies.forEach(cookie => {
         const name = cookie.trim().split('=')[0];
         if (!name) return;
         
-        // Clear with standard approach
+        // Basic cookie clearing
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
         
-        // Additional clearing with explicit attributes that prevent persistence
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0;`;
-        
-        // Try with domain attribute
-        const domain = window.location.hostname;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain}; max-age=0;`;
-        
-        // Try with subdomain wildcards if applicable
-        if (domain.includes('.')) {
-          const rootDomain = domain.split('.').slice(-2).join('.');
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${rootDomain}; max-age=0;`;
-        }
-        
-        // Also try setting without secure flag for http connections
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0;`;
-        
-        // Use non-HttpOnly attribute to allow manual clearing
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0;`;
-        
-        // Add SameSite attribute variations
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=None; Secure; max-age=0;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; max-age=0;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict; max-age=0;`;
+        // Clear with explicit path options to cover all bases
+        ["/", "/login", "/dashboard", "", "/api", "/auth"].forEach(path => {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain};`;
+          
+          // Try with root domain and subdomain variations
+          if (domain.includes('.')) {
+            const rootDomain = domain.split('.').slice(-2).join('.');
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=.${rootDomain};`;
+          }
+          
+          // Add SameSite and max-age variations for different cookie types
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; max-age=0;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=None; Secure; max-age=0;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=Lax; max-age=0;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=Strict; max-age=0;`;
+        });
         
         // Last resort - try absolute expiration without other attributes
         document.cookie = `${name}=; max-age=-1;`;

@@ -23,6 +23,7 @@ const UniversalDashboard = () => {
   const navigate = useNavigate();
   const view = searchParams.get('view') || 'home';
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [localLoading, setLocalLoading] = useState(true);
   const sessionCheckerRef = useRef<number | null>(null);
 
   // Function to verify session, separated for reuse
@@ -34,7 +35,11 @@ const UniversalDashboard = () => {
         ? JSON.parse(localStorage.getItem(storageKey) || '{}')
         : null;
       
-      // Then verify with Supabase API
+      if (storedSession?.user) {
+        return true;
+      }
+      
+      // If not in storage, check API (slower)
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -78,6 +83,7 @@ const UniversalDashboard = () => {
       
       if (mounted) {
         setInitialCheckDone(true);
+        setLocalLoading(false);
       }
     };
     
@@ -98,6 +104,11 @@ const UniversalDashboard = () => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible' && mounted) {
         console.log("Tab became visible, checking auth state");
+        // Don't show loading state on tab switch if we already did the initial check
+        if (initialCheckDone) {
+          setLocalLoading(false);
+        }
+        
         const hasValidSession = await verifySession();
         
         if (!hasValidSession) {
@@ -112,6 +123,9 @@ const UniversalDashboard = () => {
           }
         } else {
           console.log("Session successfully verified after tab switch");
+          if (mounted) {
+            setLocalLoading(false);
+          }
         }
       }
     };
@@ -131,6 +145,8 @@ const UniversalDashboard = () => {
           if (!hasSession && mounted && initialCheckDone) {
             console.log("No valid session found after storage change");
             navigate("/login");
+          } else if (mounted) {
+            setLocalLoading(false);
           }
         });
       }
@@ -194,7 +210,9 @@ const UniversalDashboard = () => {
     }
   }, [view, userRole, isAuthenticated, isLoading, navigate]);
 
-  if (isLoading) {
+  // Only show skeleton if we're in the actual loading state
+  // This prevents skeleton from showing when just switching tabs
+  if (isLoading && localLoading && !initialCheckDone) {
     return (
       <UnifiedLayoutTemplate>
         <div className="space-y-4">

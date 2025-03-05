@@ -32,11 +32,26 @@ const Login = () => {
             // Store in localStorage to ensure persistence
             try {
               window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-              console.log('Session explicitly stored for all user types upon login success');
+              console.log('Session explicitly stored in localStorage upon login success');
               
               // Set in session storage too for redundancy
               window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
               console.log('Session also stored in sessionStorage for redundancy');
+              
+              // Broadcast the login event to other tabs
+              try {
+                const loginEvent = { 
+                  type: 'LOGIN', 
+                  userId: session.user.id, 
+                  timestamp: Date.now() 
+                };
+                localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
+                // Force the event to trigger
+                localStorage.removeItem('last_auth_event');
+                localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
+              } catch (eventError) {
+                console.error('Error broadcasting login event:', eventError);
+              }
             } catch (storageError) {
               console.error('Error storing session:', storageError);
             }

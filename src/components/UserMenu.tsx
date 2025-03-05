@@ -58,11 +58,16 @@ const UserMenu = memo(() => {
       }
     };
     
+    // Run initial check
     checkSession();
     
     // Also check when tab becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        // Reset localLoading but only if we don't already have a visible session
+        if (!hasVisibleSession) {
+          setLocalLoading(true);
+        }
         checkSession();
       }
     };
@@ -91,16 +96,15 @@ const UserMenu = memo(() => {
       window.removeEventListener('supabase:auth:token:update', handleTokenUpdate);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [hasVisibleSession]);
 
   const handleNavigateToLogin = useCallback(() => {
     navigate('/login', { replace: true });
   }, [navigate]);
 
-  // Prevent flashing by showing skeleton only during real loading states
-  // and not during tab switches with a known session
-  const loadingState = isLoading || localLoading;
-  const shouldShowSkeleton = loadingState && !hasVisibleSession;
+  // Only show skeleton if we're loading AND don't have a session
+  // This prevents the skeleton from showing when switching tabs with a valid session
+  const shouldShowSkeleton = isLoading && localLoading && !hasVisibleSession;
 
   // Show skeleton while loading and no visible session
   if (shouldShowSkeleton) {
@@ -112,7 +116,7 @@ const UserMenu = memo(() => {
   }
 
   // Show login button if not authenticated and not loading
-  if (!isAuthenticated && !loadingState) {
+  if (!isAuthenticated && !isLoading && !localLoading && !hasVisibleSession) {
     return (
       <button
         onClick={handleNavigateToLogin}
