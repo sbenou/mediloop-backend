@@ -21,6 +21,7 @@ const SidebarUserMenu = () => {
   const [auth, setAuth] = useRecoilState(authState);
   const { profile } = useAuth();
   const userRole = auth.profile?.role || 'user';
+  const userEmail = profile?.email || auth.user?.email || '';
 
   const handleLogout = async () => {
     try {
@@ -72,10 +73,13 @@ const SidebarUserMenu = () => {
       <DropdownMenuTrigger asChild>
         <button 
           type="button"
-          className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none w-full"
+          className="flex items-center space-x-3 hover:bg-gray-100 transition-colors p-2 rounded-md cursor-pointer outline-none w-full"
           aria-label="User menu"
         >
-          <UserAvatar userProfile={profile} />
+          <UserAvatar userProfile={profile} squared canUpload />
+          <span className="text-sm font-medium text-gray-700 truncate">
+            {userEmail}
+          </span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
