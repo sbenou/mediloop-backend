@@ -1,4 +1,3 @@
-
 // Find the export default function section and add this Debug button component nearby
 
 // At the bottom of the file, add this debug component
@@ -27,5 +26,16 @@ function SessionDebugButton() {
   );
 }
 
-// This will preserve the original export
-// Make sure the debug button is rendered somewhere appropriate in the component
+// Create the main Index component with a default export
+function Index() {
+  return (
+    <div>
+      <h1>Welcome to the application</h1>
+      {/* Add any other content that should be on the index page */}
+      <SessionDebugButton />
+    </div>
+  );
+}
+
+// Add the default export
+export default Index;
