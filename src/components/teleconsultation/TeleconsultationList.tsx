@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TeleconsultationStatus } from '@/types/supabase';
 
 // Define teleconsultation type
 interface Teleconsultation {
@@ -18,7 +19,7 @@ interface Teleconsultation {
   doctor_id: string;
   start_time: string;
   end_time: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: TeleconsultationStatus;
   reason: string;
   room_id?: string;
   patient?: {
@@ -98,7 +99,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: 'confirmed' | 'cancelled' | 'completed') => {
+  const handleStatusChange = async (id: string, newStatus: TeleconsultationStatus) => {
     try {
       const { error } = await supabase
         .from('teleconsultations')

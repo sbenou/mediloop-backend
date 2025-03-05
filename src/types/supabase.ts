@@ -6,6 +6,7 @@ import { Tables } from './database.types';
 export type ConnectionStatus = Database['public']['Enums']['connection_status'];
 export type OrderStatus = Database['public']['Enums']['order_status'];
 export type PrescriptionStatus = Database['public']['Enums']['prescription_status'];
+export type TeleconsultationStatus = Database['public']['Enums']['teleconsultation_status'];
 
 // Specific table type exports using the Tables helper type
 export type Address = Tables<'addresses'>
@@ -21,3 +22,4 @@ export type RolePermission = Tables<'role_permissions'>
 export type Subcategory = Tables<'subcategories'>
 export type UserPharmacy = Tables<'user_pharmacies'>
 export type Notification = Tables<'notifications'>
+export type Teleconsultation = Tables<'teleconsultations'>

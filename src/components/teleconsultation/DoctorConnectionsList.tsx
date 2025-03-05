@@ -46,7 +46,7 @@ const DoctorConnectionsList: React.FC<DoctorConnectionsListProps> = ({ onSelectD
           doctor:doctor_id(id, full_name, email, license_number)
         `)
         .eq('patient_id', profile.id)
-        .eq('status', 'approved');
+        .eq('status', 'accepted');
 
       if (error) throw error;
       

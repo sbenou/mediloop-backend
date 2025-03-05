@@ -571,6 +571,45 @@ export type Database = {
           },
         ]
       }
+      teleconsultations: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          end_time: string
+          id: string
+          patient_id: string
+          reason: string | null
+          room_id: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["teleconsultation_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          end_time: string
+          id?: string
+          patient_id: string
+          reason?: string | null
+          room_id?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["teleconsultation_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          end_time?: string
+          id?: string
+          patient_id?: string
+          reason?: string | null
+          room_id?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["teleconsultation_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_permissions: {
         Row: {
           created_at: string | null
@@ -725,6 +764,11 @@ export type Database = {
         | "delivered"
         | "cancelled"
       prescription_status: "draft" | "active" | "completed"
+      teleconsultation_status:
+        | "pending"
+        | "confirmed"
+        | "cancelled"
+        | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
