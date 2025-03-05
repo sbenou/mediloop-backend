@@ -52,32 +52,41 @@ export const UserMenuItems = () => {
         const name = cookie.trim().split('=')[0];
         if (!name) return;
         
-        // Basic cookie clearing
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        // ENHANCED: Improved cookie clearing methods that work better with developer tools
         
-        // Clear with explicit path options to cover all bases
-        ["/", "/login", "/dashboard", "", "/api", "/auth"].forEach(path => {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain};`;
+        // Add document.cookie clears with all possible combinations
+        // Basic cookie clearing with multiple path/domain variations
+        ["/", "/login", "/dashboard", "", "/api", "/auth", null].forEach(path => {
+          // Try with path alone
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'};`;
           
-          // Try with root domain and subdomain variations
+          // Try with path and domain
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; domain=${domain};`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; domain=.${domain};`;
+          
+          // Try with root domain variations
           if (domain.includes('.')) {
             const rootDomain = domain.split('.').slice(-2).join('.');
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=.${rootDomain};`;
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; domain=.${rootDomain};`;
           }
           
-          // Add SameSite and max-age variations for different cookie types
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; max-age=0;`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=None; Secure; max-age=0;`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=Lax; max-age=0;`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=Strict; max-age=0;`;
+          // Try with short max-age approach (most reliable for dev tools)
+          document.cookie = `${name}=; max-age=-1; path=${path || '/'};`;
+          document.cookie = `${name}=; max-age=-99999; path=${path || '/'};`;
+          
+          // Try with all SameSite variations
+          ["None", "Lax", "Strict"].forEach(sameSite => {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; SameSite=${sameSite}; ${sameSite === 'None' ? 'Secure;' : ''} max-age=-1;`;
+          });
         });
         
-        // Last resort - try absolute expiration without other attributes
-        document.cookie = `${name}=; max-age=-1;`;
-        
-        // Direct cookie deletion without path/domain for manual clearing support
+        // Try absolute expiration methods
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+        document.cookie = `${name}=; max-age=-1;`;
+        document.cookie = `${name}=; max-age=0;`;
+        
+        // Try with invalid value to force browser to delete
+        document.cookie = `${name}=invalid; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       });
       
       // Sign out from Supabase - this will clear the session on the server

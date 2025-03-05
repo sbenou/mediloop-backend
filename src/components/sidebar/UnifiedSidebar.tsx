@@ -1,9 +1,20 @@
 
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Home, User, ShoppingBag, FileText, Settings, Calendar } from "lucide-react";
+import { Home, User, ShoppingBag, FileText, Settings, Calendar, CreditCard, Bell, LogOut, ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "../user-menu/UserAvatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "@/components/ui/use-toast";
+import { clearAllAuthStorage } from "@/lib/supabase";
 
 const UnifiedSidebar = () => {
   const { userRole, profile } = useAuth();
@@ -11,8 +22,50 @@ const UnifiedSidebar = () => {
 
   // Handle logout
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/login";
+    try {
+      console.log("Logout initiated from UnifiedSidebar");
+      
+      // Force clear all auth storage (localStorage, sessionStorage, and cookies)
+      clearAllAuthStorage();
+      
+      // Clear cookies with the same enhanced methods as in UserMenuItems
+      const allCookies = document.cookie.split(';');
+      const domain = window.location.hostname;
+      
+      allCookies.forEach(cookie => {
+        const name = cookie.trim().split('=')[0];
+        if (!name) return;
+        
+        ["/", "/login", "/dashboard", "", "/api", "/auth", null].forEach(path => {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'};`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; domain=${domain};`;
+          document.cookie = `${name}=; max-age=-1; path=${path || '/'};`;
+        });
+        
+        document.cookie = `${name}=; max-age=-1;`;
+      });
+      
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.error("Supabase signOut error:", error);
+        throw error;
+      }
+      
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+      
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+      });
+    }
   };
 
   const isLinkActive = (path: string) => {
@@ -48,6 +101,16 @@ const UnifiedSidebar = () => {
       active: isLinkActive('/settings')
     }
   ];
+
+  // Get the appropriate route prefix based on user role
+  const getRoutePrefix = () => {
+    if (userRole === 'superadmin') {
+      return '/superadmin';
+    } else if (userRole === 'pharmacist') {
+      return '/pharmacy';
+    }
+    return '';
+  };
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -134,15 +197,51 @@ const UnifiedSidebar = () => {
         </nav>
       </div>
       
-      {/* User Profile */}
+      {/* User Profile - Now with dropdown menu */}
       <div className="border-t p-4">
-        <div className="flex items-center space-x-3">
-          <UserAvatar userProfile={profile} squared={true} canUpload={true} />
-          <div className="overflow-hidden">
-            <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
-            <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
+              <UserAvatar userProfile={profile} squared={true} canUpload={true} />
+              <div className="overflow-hidden flex-1">
+                <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
+                <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>
+              </div>
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-xs text-muted-foreground">{profile?.email || 'user@example.com'}</p>
+                <p className="text-xs text-muted-foreground capitalize">Role: {userRole || 'user'}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => window.location.href = `${getRoutePrefix()}/upgrade`}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Upgrade to Pro</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => window.location.href = `${getRoutePrefix()}/profile`}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Account</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = `${getRoutePrefix()}/billing`}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Billing</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );
