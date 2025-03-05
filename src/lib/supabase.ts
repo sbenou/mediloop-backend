@@ -189,11 +189,18 @@ const crossTabStorage = {
       }
     }
     
-    // Also try to clear cookies (limited to document.cookie accessible ones)
+    // Enhanced cookie clearing for auth cookies
     document.cookie.split(';').forEach(cookie => {
       const [name] = cookie.trim().split('=');
       if (name && (name.includes('supabase') || name.includes('sb-'))) {
+        // Clear with multiple path/domain combinations to ensure all cookies are removed
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+        
+        // Also try paths that might have been set
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/login;`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/auth;`;
       }
     });
     

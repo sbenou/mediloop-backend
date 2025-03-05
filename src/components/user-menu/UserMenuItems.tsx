@@ -43,6 +43,15 @@ export const UserMenuItems = () => {
       // Force clear all auth storage (localStorage, sessionStorage, and cookies)
       clearAllAuthStorage();
       
+      // Enhanced cookie clearing - clear all cookies that might be related to authentication
+      document.cookie.split(';').forEach(cookie => {
+        const name = cookie.trim().split('=')[0];
+        // Clear any potential auth-related cookies with different path and domain combinations
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+      });
+      
       // Sign out from Supabase - this will clear the session on the server
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
