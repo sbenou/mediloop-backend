@@ -31,15 +31,24 @@ const AVAILABLE_COUNTRIES: Country[] = [
 ];
 
 const CountrySelector = () => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true); // Initialize as true to show by default on first visit
   const [selectedCountry, setSelectedCountry] = useState<string>("LU");
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
   const { isAuthenticated, user } = useAuth();
   const [mainAddress, setMainAddress] = useState<Address | null>(null);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
+  
+  useEffect(() => {
+    // Force the dialog to open on first component mount
+    if (!initialCheckDone) {
+      setOpen(true);
+    }
+  }, [initialCheckDone]);
   
   useEffect(() => {
     const checkUserAddress = async () => {
       console.log("CountrySelector: Checking user address");
+      let shouldShowDialog = true;
       
       if (isAuthenticated && user) {
         console.log("CountrySelector: User is authenticated, checking for default address");
@@ -57,11 +66,11 @@ const CountrySelector = () => {
             
             if (data.country === "Luxembourg" || data.country === "LU") {
               setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "LU")?.coordinates || userLocation);
+              shouldShowDialog = false;
             } else if (data.country === "France" || data.country === "FR") {
               setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "FR")?.coordinates || userLocation);
+              shouldShowDialog = false;
             }
-
-            return;
           } else {
             console.log("CountrySelector: No default address found or error:", error);
           }
@@ -81,57 +90,32 @@ const CountrySelector = () => {
           const country = AVAILABLE_COUNTRIES.find(c => c.code === savedCountry);
           if (country) {
             setUserLocation(country.coordinates);
+            shouldShowDialog = false;
           }
-          // Only return early if we've successfully used the saved country
-          return;
-        } else {
-          // Force the dialog to open if no savedCountry found
-          console.log("CountrySelector: No saved country found, showing dialog");
-          setTimeout(() => {
-            setOpen(true);
-          }, 100);
-          return;
         }
       } catch (e) {
         console.error("Error reading from localStorage:", e);
+        // In case of localStorage error, ensure dialog is shown
+        shouldShowDialog = true;
       }
       
-      // If we get here, we need to show the dialog
-      console.log("CountrySelector: No saved country or localStorage error, showing dialog");
-      setTimeout(() => {
-        setOpen(true);
-      }, 100);
+      // Set open state based on our checks
+      setOpen(shouldShowDialog);
+      setInitialCheckDone(true);
     };
     
+    // Run check immediately
     checkUserAddress();
     
     // Add an event listener to handle storage clear events
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === null) {
-        // This indicates a clear() operation was performed
-        console.log("CountrySelector: Storage clear detected");
-        setTimeout(() => {
-          setOpen(true);
-        }, 100);
-      }
-    };
-
-    // Check if localStorage exists and is empty for selectedCountry
-    const checkLocalStorage = () => {
-      try {
-        const hasSelectedCountry = !!localStorage.getItem('selectedCountry');
-        if (!hasSelectedCountry) {
-          console.log("CountrySelector: No savedCountry in localStorage on init/check");
-          setOpen(true);
-        }
-      } catch (error) {
-        console.error("Error checking localStorage:", error);
+      console.log("CountrySelector: Storage event detected", e);
+      if (e.key === null || e.key === 'selectedCountry') {
+        // This indicates a clear() operation was performed or selectedCountry was modified
+        console.log("CountrySelector: Storage clear or selectedCountry change detected");
         setOpen(true);
       }
     };
-    
-    // Run an initial check
-    checkLocalStorage();
     
     window.addEventListener('storage', handleStorageChange);
     
