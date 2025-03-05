@@ -1,3 +1,4 @@
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCallback, memo, useState, useEffect, useRef } from 'react';
-import { supabase, getSessionFromStorage } from "@/lib/supabase";
+import { supabase, getSessionFromStorage, getEnhancedStorage } from "@/lib/supabase";
 
 const UserMenu = memo(() => {
   const { isAuthenticated, isLoading, profile, user } = useAuth();
@@ -18,9 +19,10 @@ const UserMenu = memo(() => {
   const checkTimeoutRef = useRef<number | null>(null);
   const navigate = useNavigate();
   
-  // Enhanced session check with cookie support and multiple fallbacks
+  // Enhanced session check with caching and multiple fallbacks
   const checkSession = useCallback(async (skipApi = false) => {
-    // Try getting from cookies/localStorage first (fastest)
+    // Try getting from storage first (fastest)
+    const storageKey = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
     const storedSession = getSessionFromStorage();
     
     if (storedSession?.user) {
@@ -36,12 +38,18 @@ const UserMenu = memo(() => {
       return false;
     }
     
-    // If not in storage, check API (slower)
+    // If not in storage or we need to verify, check API (slower)
     try {
       const { data } = await supabase.auth.getSession();
       const hasSession = !!data.session;
       
       setHasVisibleSession(hasSession);
+      
+      // If we got a session from API but it's not in storage, store it
+      if (hasSession && !storedSession) {
+        getEnhancedStorage().setItem(storageKey, data.session);
+      }
+      
       return hasSession;
     } catch (error) {
       console.error("Error checking session in UserMenu:", error);

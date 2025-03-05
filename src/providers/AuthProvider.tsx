@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase, getSessionFromStorage } from '@/lib/supabase';
@@ -103,7 +102,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      console.log(`Session available for user: ${session.user.id}`);
+      const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+      
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      
+      console.log(`Session explicitly stored for user: ${session.user.id}`);
 
       setAuth(prev => ({
         ...prev,
