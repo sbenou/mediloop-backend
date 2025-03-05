@@ -116,7 +116,10 @@ const UnifiedSidebar = () => {
     <Sidebar>
       <SidebarRail />
       <SidebarHeader className="h-16 flex items-center justify-center">
-        <img src="/logo.svg" alt="Logo" className="h-8" />
+        <div className="flex flex-col items-center">
+          <img src="/logo.svg" alt="Mediloop" className="h-8" />
+          <span className="text-xs font-medium mt-1">Mediloop</span>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
