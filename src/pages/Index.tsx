@@ -17,9 +17,9 @@ export default function Index() {
       <div className="container mx-auto px-4">
         <FeaturesGrid />
         <StatsSection />
-        <TestimonialsSection />
         <GetStartedSteps />
         <PartnerSection />
+        <TestimonialsSection />
       </div>
       <Footer />
     </>
