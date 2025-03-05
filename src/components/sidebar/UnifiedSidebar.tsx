@@ -10,8 +10,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
-import { Home, Settings, FileText, Phone, Package, UserPlus, UserCircle } from "lucide-react";
+import { Home, Settings, FileText, Phone, Package, UserPlus, UserCircle, ShoppingCart, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import SidebarUserMenu from "./SidebarUserMenu";
 
@@ -25,29 +26,44 @@ const UnifiedSidebar = () => {
   const routes = useMemo(() => {
     const baseRoutes = [
       {
-        name: "Home",
-        path: "/",
-        icon: Home,
+        section: "PLATFORM",
+        items: [
+          {
+            name: "Dashboard",
+            path: "/dashboard",
+            icon: LayoutDashboard,
+          },
+          {
+            name: "Products",
+            path: "/products",
+            icon: Package,
+          },
+          {
+            name: "Prescriptions",
+            path: "/my-prescriptions",
+            icon: FileText,
+          },
+          {
+            name: "Teleconsultations",
+            path: "/teleconsultations",
+            icon: Phone,
+          },
+          {
+            name: "Orders",
+            path: "/my-orders",
+            icon: ShoppingCart,
+          },
+        ],
       },
       {
-        name: "Products",
-        path: "/products",
-        icon: Package,
-      },
-      {
-        name: "Prescriptions",
-        path: "/my-prescriptions",
-        icon: FileText,
-      },
-      {
-        name: "Teleconsultations",
-        path: "/teleconsultations",
-        icon: Phone,
-      },
-      {
-        name: "Settings",
-        path: "/settings",
-        icon: Settings,
+        section: "ADMIN",
+        items: [
+          {
+            name: "Settings",
+            path: "/settings",
+            icon: Settings,
+          },
+        ],
       },
     ];
 
@@ -55,29 +71,39 @@ const UnifiedSidebar = () => {
     if (userRole === "pharmacist") {
       return [
         {
-          name: "Dashboard",
-          path: "/pharmacy",
-          icon: Home,
+          section: "PLATFORM",
+          items: [
+            {
+              name: "Dashboard",
+              path: "/pharmacy",
+              icon: LayoutDashboard,
+            },
+            {
+              name: "Orders",
+              path: "/pharmacy/orders",
+              icon: ShoppingCart,
+            },
+            {
+              name: "Prescriptions",
+              path: "/pharmacy/prescriptions",
+              icon: FileText,
+            },
+            {
+              name: "Patients",
+              path: "/pharmacy/patients",
+              icon: UserPlus,
+            },
+          ],
         },
         {
-          name: "Orders",
-          path: "/pharmacy/orders",
-          icon: Package,
-        },
-        {
-          name: "Prescriptions",
-          path: "/pharmacy/prescriptions",
-          icon: FileText,
-        },
-        {
-          name: "Patients",
-          path: "/pharmacy/patients",
-          icon: UserPlus,
-        },
-        {
-          name: "Settings",
-          path: "/pharmacy/settings",
-          icon: Settings,
+          section: "ADMIN",
+          items: [
+            {
+              name: "Settings",
+              path: "/pharmacy/settings",
+              icon: Settings,
+            },
+          ],
         },
       ];
     }
@@ -86,24 +112,34 @@ const UnifiedSidebar = () => {
     if (userRole === "superadmin") {
       return [
         {
-          name: "Dashboard",
-          path: "/superadmin",
-          icon: Home,
+          section: "PLATFORM",
+          items: [
+            {
+              name: "Dashboard",
+              path: "/superadmin",
+              icon: LayoutDashboard,
+            },
+            {
+              name: "Users",
+              path: "/superadmin/users",
+              icon: UserCircle,
+            },
+            {
+              name: "Products",
+              path: "/superadmin/products",
+              icon: Package,
+            },
+          ],
         },
         {
-          name: "Users",
-          path: "/superadmin/users",
-          icon: UserCircle,
-        },
-        {
-          name: "Products",
-          path: "/superadmin/products",
-          icon: Package,
-        },
-        {
-          name: "Settings",
-          path: "/superadmin/settings",
-          icon: Settings,
+          section: "ADMIN",
+          items: [
+            {
+              name: "Settings",
+              path: "/superadmin/settings",
+              icon: Settings,
+            },
+          ],
         },
       ];
     }
@@ -122,20 +158,25 @@ const UnifiedSidebar = () => {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMenu>
-          {routes.map((route) => (
-            <SidebarMenuItem key={route.path}>
-              <SidebarMenuButton
-                tooltip={route.name}
-                isActive={location.pathname === route.path}
-                onClick={() => navigate(route.path)}
-              >
-                <route.icon className="h-5 w-5" />
-                <span>{route.name}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+        {routes.map((section, index) => (
+          <div key={index} className="mb-6">
+            <SidebarGroupLabel className="px-2 mb-2">{section.section}</SidebarGroupLabel>
+            <SidebarMenu>
+              {section.items.map((route) => (
+                <SidebarMenuItem key={route.path}>
+                  <SidebarMenuButton
+                    tooltip={route.name}
+                    isActive={location.pathname === route.path}
+                    onClick={() => navigate(route.path)}
+                  >
+                    <route.icon className="h-5 w-5" />
+                    <span>{route.name}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </div>
+        ))}
       </SidebarContent>
       <SidebarFooter className="pb-4 px-2">
         <SidebarUserMenu />
