@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
+import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
+import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
 
 interface HomeViewProps {
   userRole: string | null;
@@ -178,6 +180,12 @@ const HomeView: React.FC<HomeViewProps> = ({ userRole }) => {
           </Card>
         ))}
       </div>
+      
+      {/* Health State Indicators for patient and doctor roles */}
+      <HealthStateIndicator userRole={userRole} />
+      
+      {/* Wearable Data Display for patient and doctor roles */}
+      <WearableDataDisplay userRole={userRole} />
       
       {/* Add statistics charts for all roles */}
       <StatisticsCharts />

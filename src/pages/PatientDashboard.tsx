@@ -16,7 +16,8 @@ import AccountDeletion from "@/components/settings/AccountDeletion";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
+import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
@@ -328,6 +329,10 @@ const PatientDashboard = () => {
               </div>
             </Card>
           </div>
+          
+          <HealthStateIndicator userRole="patient" />
+          
+          <WearableDataDisplay userRole="patient" />
           
           <StatisticsCharts />
         </div>
