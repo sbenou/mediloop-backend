@@ -98,6 +98,13 @@ export const UserMenuItems = () => {
         document.cookie = `${name}=invalid; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       });
       
+      // Also clear the selectedCountry from localStorage to force the CountrySelector to appear on next visit
+      try {
+        localStorage.removeItem('selectedCountry');
+      } catch (err) {
+        console.error("Error removing selectedCountry:", err);
+      }
+      
       // Sign out from Supabase - this will clear the session on the server
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
@@ -110,13 +117,6 @@ export const UserMenuItems = () => {
         title: "Logged out",
         description: "You have been successfully logged out",
       });
-      
-      // Also clear the selectedCountry from localStorage to force the CountrySelector to appear on next visit
-      try {
-        localStorage.removeItem('selectedCountry');
-      } catch (err) {
-        console.error("Error removing selectedCountry:", err);
-      }
       
       // Force a hard redirect to ensure complete logout and fresh page load
       window.location.href = "/login";

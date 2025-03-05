@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -31,26 +30,22 @@ const AVAILABLE_COUNTRIES: Country[] = [
 ];
 
 const CountrySelector = () => {
-  const [open, setOpen] = useState(true); // Initialize as true to show by default on first visit
+  const [open, setOpen] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string>("LU");
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
   const { isAuthenticated, user } = useAuth();
   const [mainAddress, setMainAddress] = useState<Address | null>(null);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   
-  // Force the dialog to open on first component mount
   useEffect(() => {
-    // Open the dialog if needed, even on first render
-    if (!initialCheckDone) {
-      console.log("CountrySelector: Initial component mount, ensuring dialog is shown");
-      setOpen(true);
-    }
-  }, [initialCheckDone]);
+    console.log("CountrySelector: Component mounted, dialog initially set to open");
+  }, []);
   
   useEffect(() => {
+    let shouldShowDialog = true;
+    
     const checkUserAddress = async () => {
-      console.log("CountrySelector: Checking user address");
-      let shouldShowDialog = true;
+      console.log("CountrySelector: Checking user address and country selection");
       
       if (isAuthenticated && user) {
         console.log("CountrySelector: User is authenticated, checking for default address");
@@ -83,7 +78,6 @@ const CountrySelector = () => {
         console.log("CountrySelector: User is not authenticated");
       }
       
-      // Check if there's a saved country in localStorage
       try {
         const savedCountry = localStorage.getItem('selectedCountry');
         if (savedCountry) {
@@ -96,29 +90,23 @@ const CountrySelector = () => {
           }
         } else {
           console.log("CountrySelector: No saved country found, dialog should appear");
-          // Force dialog to appear if no saved country
           shouldShowDialog = true;
         }
       } catch (e) {
         console.error("Error reading from localStorage:", e);
-        // In case of localStorage error, ensure dialog is shown
         shouldShowDialog = true;
       }
       
-      // Set open state based on our checks
       console.log("CountrySelector: Setting dialog open state to:", shouldShowDialog);
       setOpen(shouldShowDialog);
       setInitialCheckDone(true);
     };
     
-    // Run check immediately
     checkUserAddress();
     
-    // Add an event listener to handle storage clear events
     const handleStorageChange = (e: StorageEvent) => {
       console.log("CountrySelector: Storage event detected", e);
       if (e.key === null || e.key === 'selectedCountry') {
-        // This indicates a clear() operation was performed or selectedCountry was modified
         console.log("CountrySelector: Storage clear or selectedCountry change detected");
         setOpen(true);
       }
@@ -131,10 +119,8 @@ const CountrySelector = () => {
     };
   }, [isAuthenticated, user, setUserLocation, userLocation]);
   
-  // Apply overlay styles when dialog is open
   useEffect(() => {
     if (open) {
-      // Add style to hide navigation trigger highlighting
       const style = document.createElement('style');
       style.id = 'country-selector-overlay-style';
       style.innerHTML = `
@@ -149,7 +135,6 @@ const CountrySelector = () => {
       `;
       document.head.appendChild(style);
     } else {
-      // Remove style when dialog is closed
       const style = document.getElementById('country-selector-overlay-style');
       if (style) {
         document.head.removeChild(style);
