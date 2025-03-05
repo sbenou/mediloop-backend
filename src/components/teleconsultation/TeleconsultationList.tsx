@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, isPast, isToday, addMinutes } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -115,7 +116,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
           toast({
             title: "Late Cancellation",
             description: "Please try to cancel appointments at least 1 hour in advance in the future.",
-            variant: "warning"
+            variant: "default"  // Changed from "warning" to "default"
           });
         }
       }
