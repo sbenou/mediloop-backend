@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuGroup,
   DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { User, CreditCard, LogOut } from "lucide-react";
 import UserAvatar from "@/components/user-menu/UserAvatar";
@@ -68,7 +69,7 @@ const SidebarUserMenu = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenu.Trigger asChild>
+      <DropdownMenuTrigger asChild>
         <button 
           type="button"
           className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none w-full"
@@ -76,7 +77,7 @@ const SidebarUserMenu = () => {
         >
           <UserAvatar userProfile={profile} />
         </button>
-      </DropdownMenu.Trigger>
+      </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="center" 
         side="right"
