@@ -9,44 +9,23 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create storage key based on project URL
 const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
 
-// Cookie configuration
-const COOKIE_OPTIONS = {
-  name: STORAGE_KEY,
-  lifetime: 60 * 60 * 8, // 8 hours in seconds
-  domain: window.location.hostname,
-  path: '/',
-  sameSite: 'Lax'
-};
-
-// Hybrid storage implementation with cookies as primary and localStorage as fallback
-const hybridStorage = {
+// Enhanced persistent storage implementation with multiple fallbacks
+const persistentStorage = {
   getItem: (key: string) => {
     try {
-      // First try to get from cookies
-      const cookieValue = getCookie(key);
-      if (cookieValue) {
-        try {
-          return JSON.parse(cookieValue);
-        } catch (e) {
-          console.error('Error parsing cookie value:', e);
-        }
-      }
-      
-      // If not in cookies, try localStorage as fallback
-      const localValue = window.localStorage.getItem(key);
+      // First try localStorage (most persistent)
+      const localValue = localStorage.getItem(key);
       if (localValue) {
         try {
           const parsed = JSON.parse(localValue);
           
           // Check if session is expired
           if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
-            console.log('Auth: Session expired, removing from storage');
-            hybridStorage.removeItem(key);
+            console.log('Session expired in localStorage, removing');
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
             return null;
           }
-          
-          // Also sync back to cookies for next time
-          setCookie(key, localValue, COOKIE_OPTIONS);
           
           return parsed;
         } catch (e) {
@@ -54,11 +33,23 @@ const hybridStorage = {
         }
       }
       
-      // Try sessionStorage as last resort
-      const sessionValue = window.sessionStorage.getItem(key);
+      // Then try sessionStorage as fallback
+      const sessionValue = sessionStorage.getItem(key);
       if (sessionValue) {
         try {
-          return JSON.parse(sessionValue);
+          const parsed = JSON.parse(sessionValue);
+          
+          // Check if session is expired
+          if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
+            console.log('Session expired in sessionStorage, removing');
+            sessionStorage.removeItem(key);
+            return null;
+          }
+          
+          // Sync back to localStorage for persistence
+          localStorage.setItem(key, sessionValue);
+          
+          return parsed;
         } catch (e) {
           console.error('Error parsing sessionStorage value:', e);
         }
@@ -80,48 +71,28 @@ const hybridStorage = {
       
       const valueString = JSON.stringify(value);
       
-      // Store in cookies as primary storage
-      setCookie(key, valueString, COOKIE_OPTIONS);
+      // Store in localStorage for persistence across browser sessions
+      localStorage.setItem(key, valueString);
       
-      // Store in localStorage for persistence across sessions
-      window.localStorage.setItem(key, valueString);
+      // Also store in sessionStorage for faster access
+      sessionStorage.setItem(key, valueString);
       
-      // Store in sessionStorage for faster access
-      window.sessionStorage.setItem(key, valueString);
-      
-      // Track when session was stored
+      // Store a backup copy with a timestamp
       const timestamp = new Date().toISOString();
-      window.localStorage.setItem(`${key}_timestamp`, timestamp);
+      localStorage.setItem(`${key}_timestamp`, timestamp);
+      localStorage.setItem(`${key}_backup`, valueString);
       
-      // Store a duplicate copy with a backup key in case the original gets corrupted
-      window.localStorage.setItem(`${key}_backup`, valueString);
-      
-      // Fire a custom event that can be listened for in other parts of the app
-      try {
-        const event = new CustomEvent('supabase:auth:update', { 
-          detail: { 
-            timestamp, 
-            userId: value?.user?.id, 
-            type: 'session_updated' 
-          } 
-        });
-        window.dispatchEvent(event);
-      } catch (eventError) {
-        console.error('Error dispatching custom event:', eventError);
-      }
-      
-      console.log(`Auth: Session stored in cookies and localStorage at ${timestamp} for user: ${value?.user?.id || 'unknown'}`);
+      console.log(`Session stored at ${timestamp} for user: ${value?.user?.id || 'unknown'}`);
     } catch (e) {
       console.error('Error setting auth data:', e);
       
-      // Emergency fallback
+      // Emergency fallback - try to store a minimal version
       try {
-        console.log('Attempting emergency session storage');
-        const simpleValue = JSON.stringify({
+        const minimalValue = JSON.stringify({
           user: value?.user ? { id: value.user.id } : null,
           expires_at: value?.expires_at
         });
-        window.localStorage.setItem(`${key}_emergency`, simpleValue);
+        localStorage.setItem(`${key}_emergency`, minimalValue);
       } catch (backupError) {
         console.error('Emergency storage also failed:', backupError);
       }
@@ -130,88 +101,25 @@ const hybridStorage = {
   
   removeItem: (key: string) => {
     try {
-      // Remove from cookies
-      removeCookie(key);
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+      localStorage.removeItem(`${key}_timestamp`);
+      localStorage.removeItem(`${key}_backup`);
+      localStorage.removeItem(`${key}_emergency`);
       
-      // Remove from all other storage locations
-      window.localStorage.removeItem(key);
-      window.sessionStorage.removeItem(key);
-      window.localStorage.removeItem(`${key}_timestamp`);
-      window.localStorage.removeItem(`${key}_backup`);
-      window.localStorage.removeItem(`${key}_emergency`);
-      
-      // Fire a custom event to notify other components
-      const event = new CustomEvent('supabase:auth:update', { 
-        detail: { 
-          timestamp: new Date().toISOString(), 
-          type: 'session_removed' 
-        } 
-      });
-      window.dispatchEvent(event);
-      
-      console.log('Auth: Session removed from cookies and all other storage');
+      console.log('Session removed from all storage locations');
     } catch (e) {
       console.error('Error removing auth data:', e);
     }
   }
 };
 
-// Cookie utility functions
-function setCookie(name: string, value: string, options: any = {}) {
-  const cookieOptions = {
-    ...options,
-    expires: new Date(Date.now() + ((options.lifetime || 0) * 1000))
-  };
-  
-  let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
-  
-  if (cookieOptions.expires) {
-    cookieString += `;expires=${cookieOptions.expires.toUTCString()}`;
-  }
-  
-  if (cookieOptions.path) {
-    cookieString += `;path=${cookieOptions.path}`;
-  }
-  
-  if (cookieOptions.domain) {
-    cookieString += `;domain=${cookieOptions.domain}`;
-  }
-  
-  if (cookieOptions.sameSite) {
-    cookieString += `;samesite=${cookieOptions.sameSite}`;
-  }
-  
-  if (cookieOptions.secure) {
-    cookieString += ';secure';
-  }
-  
-  document.cookie = cookieString;
-}
-
-function getCookie(name: string): string | null {
-  const cookies = document.cookie.split(';');
-  for (let i = 0; i < cookies.length; i++) {
-    const cookie = cookies[i].trim();
-    const [cookieName, cookieValue] = cookie.split('=');
-    
-    if (decodeURIComponent(cookieName) === name) {
-      return decodeURIComponent(cookieValue);
-    }
-  }
-  return null;
-}
-
-function removeCookie(name: string) {
-  // To remove a cookie, set its expiration date to the past
-  document.cookie = `${encodeURIComponent(name)}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-}
-
 const supabaseOptions: SupabaseClientOptions<"public"> = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: hybridStorage,
+    storage: persistentStorage,
     storageKey: STORAGE_KEY,
     flowType: 'pkce'
   }
@@ -244,101 +152,66 @@ export async function fetchFromSupabase<T extends Record<string, any>>(
 // Check if BroadcastChannel is supported by the browser
 const isBroadcastChannelSupported = typeof BroadcastChannel !== 'undefined';
 
-// Broadcast channel for cross-tab communication about auth state
+// Broadcast channel for cross-tab communication
 const authChannel = isBroadcastChannelSupported 
   ? new BroadcastChannel('supabase_auth_channel') 
   : null;
 
-// Setup cross-tab auth state synchronization with retries and backoff
+// Setup cross-tab auth state synchronization
 if (authChannel) {
-  // Listen for auth state changes from other tabs
   authChannel.onmessage = async (event) => {
     if (event.data?.type === 'SIGNED_IN' || event.data?.type === 'SESSION_UPDATE') {
-      console.log('Auth: Received auth event from another tab:', event.data?.type);
-      // Force refresh the session
+      console.log('Received auth event from another tab:', event.data?.type);
       try {
         await supabase.auth.refreshSession();
-        console.log('Auth: Session refreshed after event from another tab');
+        console.log('Session refreshed after event from another tab');
       } catch (error) {
-        console.error('Auth: Error refreshing session after event:', error);
-        
-        // Retry with exponential backoff
-        const retry = async (attempt = 0, maxAttempts = 3) => {
-          if (attempt >= maxAttempts) return;
-          
-          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
-          console.log(`Auth: Retrying session refresh in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})`);
-          
-          setTimeout(async () => {
-            try {
-              await supabase.auth.refreshSession();
-              console.log('Auth: Session refreshed successfully on retry');
-            } catch (retryError) {
-              console.error(`Auth: Retry ${attempt + 1} failed:`, retryError);
-              retry(attempt + 1, maxAttempts);
-            }
-          }, delay);
-        };
-        
-        retry();
+        console.error('Error refreshing session after event:', error);
       }
     } else if (event.data?.type === 'SIGNED_OUT') {
-      console.log('Auth: Received signout event from another tab');
-      // Clear local session
+      console.log('Received signout event from another tab');
       try {
         await supabase.auth.signOut({ scope: 'local' });
-        console.log('Auth: Session cleared after signout event from another tab');
-        // Force reload to ensure UI is in sync
-        window.location.reload();
+        console.log('Session cleared after signout event from another tab');
       } catch (error) {
-        console.error('Auth: Error clearing session after signout event:', error);
+        console.error('Error clearing session after signout event:', error);
       }
     }
   };
 }
 
-// Improve session state synchronization with better error handling and retries
+// Improve session state synchronization
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log(`Auth: State changed: ${event} for user: ${session?.user?.id || 'none'}`);
+  console.log(`Auth state changed: ${event}`);
   
   if (event === 'SIGNED_IN' && session) {
-    // Store session in our hybrid storage
-    hybridStorage.setItem(STORAGE_KEY, session);
-    console.log('Auth: Session stored after sign in');
+    // Store session in our storage
+    persistentStorage.setItem(STORAGE_KEY, session);
     
-    // Broadcast signin to other tabs
+    // Broadcast sign in to other tabs
     if (authChannel) {
       authChannel.postMessage({ 
         type: 'SIGNED_IN', 
-        timestamp: Date.now(), 
+        timestamp: Date.now(),
         userId: session.user.id 
       });
     }
     
-    // Also dispatch window events for browsers without BroadcastChannel
+    // Also use localStorage events for browsers without BroadcastChannel
     try {
-      // Use both storage event and custom event for maximum compatibility
       const loginEvent = { 
         type: 'SIGNED_IN', 
         userId: session.user.id, 
         timestamp: Date.now() 
       };
-      
-      // Store in localStorage to trigger storage events in other tabs
       localStorage.setItem('supabase_auth_event', JSON.stringify(loginEvent));
-      
-      // Custom event for same-tab components
-      window.dispatchEvent(new CustomEvent('supabase:auth:signed_in', { 
-        detail: loginEvent 
-      }));
     } catch (error) {
       console.error('Error sending login event:', error);
     }
   } else if (event === 'SIGNED_OUT') {
-    console.log('Auth: User signed out, clearing storage');
-    hybridStorage.removeItem(STORAGE_KEY);
+    persistentStorage.removeItem(STORAGE_KEY);
     
-    // Broadcast signout to other tabs
+    // Broadcast sign out to other tabs
     if (authChannel) {
       authChannel.postMessage({ 
         type: 'SIGNED_OUT', 
@@ -346,23 +219,18 @@ supabase.auth.onAuthStateChange((event, session) => {
       });
     }
     
-    // Also dispatch window events for browsers without BroadcastChannel
+    // Also use localStorage for browsers without BroadcastChannel
     try {
       const logoutEvent = { 
         type: 'SIGNED_OUT', 
         timestamp: Date.now() 
       };
       localStorage.setItem('supabase_auth_event', JSON.stringify(logoutEvent));
-      
-      window.dispatchEvent(new CustomEvent('supabase:auth:signed_out', { 
-        detail: logoutEvent 
-      }));
     } catch (error) {
       console.error('Error sending logout event:', error);
     }
   } else if ((event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session) {
-    console.log(`Auth: ${event}, updating storage`);
-    hybridStorage.setItem(STORAGE_KEY, session);
+    persistentStorage.setItem(STORAGE_KEY, session);
     
     // Broadcast update to other tabs
     if (authChannel) {
@@ -372,28 +240,14 @@ supabase.auth.onAuthStateChange((event, session) => {
         userId: session.user.id
       });
     }
-    
-    // Custom event for same-tab components
-    try {
-      window.dispatchEvent(new CustomEvent('supabase:auth:updated', { 
-        detail: { 
-          type: event, 
-          userId: session.user.id, 
-          timestamp: Date.now() 
-        } 
-      }));
-    } catch (error) {
-      console.error('Error sending update event:', error);
-    }
   }
 });
 
-// Enhanced periodic session check to prevent expiration with better error handling
+// Periodic session check to prevent expiration
 const setupSessionRefresh = () => {
-  // Check session every 30 seconds (reduced from 4 minutes)
-  const interval = window.setInterval(async () => {
+  const interval = setInterval(async () => {
     try {
-      // Only perform refresh when tab is visible to avoid unnecessary API calls
+      // Only perform refresh when tab is visible
       if (document.visibilityState === 'visible') {
         const { data } = await supabase.auth.getSession();
         if (data.session) {
@@ -401,19 +255,19 @@ const setupSessionRefresh = () => {
           const expiresAt = data.session.expires_at || 0;
           const now = Math.floor(Date.now() / 1000);
           if (expiresAt - now < 300) {
-            console.log('Auth: Session expiring soon, refreshing token');
+            console.log('Session expiring soon, refreshing token');
             await supabase.auth.refreshSession();
-            console.log('Auth: Session refreshed successfully');
+            console.log('Session refreshed successfully');
             
             // Make sure it's stored properly
-            hybridStorage.setItem(STORAGE_KEY, data.session);
+            persistentStorage.setItem(STORAGE_KEY, data.session);
           }
         }
       }
     } catch (error) {
       console.error('Error in session refresh:', error);
     }
-  }, 30000); // 30 seconds
+  }, 60000); // Check every minute
   
   // Clear interval on page unload
   window.addEventListener('beforeunload', () => {
@@ -423,114 +277,38 @@ const setupSessionRefresh = () => {
   return interval;
 };
 
-// Initial session setup with more frequent refresh
-let refreshInterval: number | null = null;
-
-// Perform initial session check and setup
-(async () => {
-  try {
-    // First try to get session from storage (faster)
-    const storedSession = hybridStorage.getItem(STORAGE_KEY);
-    
-    if (storedSession) {
-      console.log(`Auth: Found session in storage for: ${storedSession.user?.id || 'unknown'}`);
-    }
-    
-    // Get current session state from API
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session) {
-      console.log(`Auth: Initial session loaded for: ${session.user.id}`);
-      // Make sure it's properly stored
-      hybridStorage.setItem(STORAGE_KEY, session);
-      
-      // Check and refresh token if needed
-      const expiresAt = session.expires_at || 0;
-      const now = Math.floor(Date.now() / 1000);
-      if (expiresAt - now < 600) { // Less than 10 minutes left
-        console.log('Auth: Session token expiring soon, refreshing...');
-        const { data } = await supabase.auth.refreshSession();
-        if (data.session) {
-          console.log('Auth: Session refreshed successfully');
-          hybridStorage.setItem(STORAGE_KEY, data.session);
-        }
-      }
-      
-      // Set up session refresh with increased frequency
-      refreshInterval = setupSessionRefresh();
-    } else {
-      console.log('Auth: No initial session found');
-      // Clear any potentially stale session data
-      hybridStorage.removeItem(STORAGE_KEY);
-    }
-  } catch (error) {
-    console.error('Error during initial session check:', error);
-    // Still set up refresh interval to retry automatically
-    refreshInterval = setupSessionRefresh();
-  }
-})();
+// Set up session refresh
+let refreshInterval = setupSessionRefresh();
 
 // Safe method to get session from storage with fallbacks
 export const getSessionFromStorage = () => {
   try {
-    // First try our hybrid storage (handles expiration checks)
-    return hybridStorage.getItem(STORAGE_KEY);
+    return persistentStorage.getItem(STORAGE_KEY);
   } catch (e) {
     console.error('Error getting session from storage:', e);
     return null;
   }
 };
 
-// Enhanced visibility change handler with error handling and retries
+// Handle visibility change to check and refresh session
 const handleVisibilityChange = async () => {
   if (document.visibilityState === 'visible') {
-    console.log('Auth: Tab became visible, checking session');
+    console.log('Tab became visible, checking session');
     
     try {
       // First check if we have a session in storage
       const storedSession = getSessionFromStorage();
-      if (storedSession?.user?.id) {
-        console.log(`Auth: Found stored session for user: ${storedSession.user.id}`);
-      }
       
-      // Verify with API and refresh if needed
-      const { data, error } = await supabase.auth.refreshSession();
-      if (error || !data.session) {
-        console.log('Auth: Session verification failed after tab visibility change:', error);
-        // Clear stale data
-        if (!data.session) {
-          hybridStorage.removeItem(STORAGE_KEY);
-        }
-      } else {
-        console.log('Auth: Session verified after tab visibility change');
-        // Ensure session is stored correctly
-        hybridStorage.setItem(STORAGE_KEY, data.session);
-        
-        // Notify other components in this tab
-        window.dispatchEvent(new CustomEvent('supabase:auth:refreshed', { 
-          detail: {
-            userId: data.session.user.id,
-            timestamp: Date.now()
-          }
-        }));
-      }
+      // Verify with API
+      await supabase.auth.refreshSession();
+      console.log('Session refreshed after tab visibility change');
     } catch (err) {
-      console.error('Auth: Error during visibility session check:', err);
-      
-      // Retry once after a delay
-      setTimeout(async () => {
-        try {
-          console.log('Auth: Retrying session check after error');
-          await supabase.auth.refreshSession();
-        } catch (retryErr) {
-          console.error('Auth: Retry also failed:', retryErr);
-        }
-      }, 2000);
+      console.error('Error during visibility session check:', err);
     }
   }
 };
 
-// Add visibility change handler for session syncing
+// Add visibility change handler
 document.addEventListener('visibilitychange', handleVisibilityChange);
 
 // Storage event listener for cross-tab communication
@@ -538,35 +316,22 @@ window.addEventListener('storage', (event) => {
   if (event.key === 'supabase_auth_event') {
     try {
       const eventData = JSON.parse(event.newValue || '{}');
-      console.log('Auth: Storage event received:', eventData.type);
+      console.log('Storage event received:', eventData.type);
       
       if (eventData.type === 'SIGNED_IN') {
         // Force session refresh
-        supabase.auth.refreshSession().then(() => {
-          console.log('Auth: Session refreshed after storage signin event');
-        }).catch(error => {
-          console.error('Auth: Error refreshing after storage event:', error);
+        supabase.auth.refreshSession().catch(error => {
+          console.error('Error refreshing after storage event:', error);
         });
       } else if (eventData.type === 'SIGNED_OUT') {
-        // Clear session and reload
-        hybridStorage.removeItem(STORAGE_KEY);
-        window.location.reload();
+        // Clear session
+        persistentStorage.removeItem(STORAGE_KEY);
       }
     } catch (error) {
-      console.error('Auth: Error processing storage event:', error);
+      console.error('Error processing storage event:', error);
     }
   }
 });
 
-// Force a session sync on first load
-setTimeout(handleVisibilityChange, 500);
-
-// Force another check 5 seconds after load (helps with race conditions)
-setTimeout(handleVisibilityChange, 5000);
-
-// Export the auth channel for components that need to use it directly
-export const getAuthChannel = () => authChannel;
-
-// Export the enhancedStorage for components that need direct access
-export const getEnhancedStorage = () => hybridStorage;
-
+// Force a session sync on load
+setTimeout(handleVisibilityChange, 1000);
