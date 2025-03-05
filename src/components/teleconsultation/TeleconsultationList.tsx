@@ -100,6 +100,26 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
 
   const handleStatusChange = async (id: string, newStatus: TeleconsultationStatus) => {
     try {
+      // Check cancellation time policy if this is a cancellation
+      if (newStatus === 'cancelled') {
+        const consultation = consultations.find(c => c.id === id);
+        if (!consultation) return;
+
+        const now = new Date();
+        const consultationStartTime = new Date(consultation.start_time);
+        const timeUntilConsultation = consultationStartTime.getTime() - now.getTime();
+        const oneHourInMs = 60 * 60 * 1000;
+
+        // If cancelling less than 1 hour before
+        if (timeUntilConsultation < oneHourInMs && timeUntilConsultation > 0) {
+          toast({
+            title: "Late Cancellation",
+            description: "Please try to cancel appointments at least 1 hour in advance in the future.",
+            variant: "warning"
+          });
+        }
+      }
+
       const { error } = await supabase
         .from('teleconsultations')
         .update({ status: newStatus })
@@ -134,6 +154,9 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
       } else if (newStatus === 'cancelled') {
         notificationData.title = 'Teleconsultation Cancelled';
         notificationData.message = `The teleconsultation on ${format(new Date(consultation.start_time), 'PPP')} at ${format(new Date(consultation.start_time), 'p')} has been cancelled.`;
+      } else if (newStatus === 'completed') {
+        notificationData.title = 'Teleconsultation Completed';
+        notificationData.message = `The teleconsultation on ${format(new Date(consultation.start_time), 'PPP')} has been marked as completed.`;
       }
 
       await supabase.from('notifications').insert(notificationData);
@@ -221,7 +244,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
     return (
       <Card>
         <CardContent className="pt-6 text-center">
-          <p className="text-muted-foreground">{error}</p>
+          <p className="text-muted-foreground">You have no teleconsultations.</p>
           <p className="mt-2">You might need to connect with a doctor first.</p>
           <Button 
             variant="outline" 

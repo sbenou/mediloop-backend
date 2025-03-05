@@ -5,8 +5,9 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useSearchParams } from "react-router-dom";
 import JitsiMeetingRoom from "@/components/teleconsultation/JitsiMeetingRoom";
 import TeleconsultationList from "@/components/teleconsultation/TeleconsultationList";
-import TeleconsultationScheduler from "@/components/teleconsultation/TeleconsultationScheduler";
 import DoctorConnectionsList from "@/components/teleconsultation/DoctorConnectionsList";
+import DoctorAvailabilityCalendar from "@/components/teleconsultation/DoctorAvailabilityCalendar";
+import TeleconsultationExplanation from "@/components/teleconsultation/TeleconsultationExplanation";
 
 interface TeleconsultationsViewProps {
   userRole: string | null;
@@ -36,8 +37,9 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
   const { profile } = useAuth();
   const [searchParams] = useSearchParams();
   const requestParam = searchParams.get('request');
+  const showHowItWorksParam = searchParams.get('howItWorks');
   
-  const [view, setView] = useState<'list' | 'scheduler' | 'meeting'>('list');
+  const [view, setView] = useState<'list' | 'scheduler' | 'meeting' | 'howItWorks'>('list');
   const [selectedDoctor, setSelectedDoctor] = useState<{ id: string; name: string } | null>(null);
   const [activeMeeting, setActiveMeeting] = useState<Teleconsultation | null>(null);
 
@@ -45,8 +47,10 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
   useEffect(() => {
     if (requestParam === 'new' && userRole === 'patient') {
       setView('scheduler');
+    } else if (showHowItWorksParam === 'true') {
+      setView('howItWorks');
     }
-  }, [requestParam, userRole]);
+  }, [requestParam, showHowItWorksParam, userRole]);
 
   const getViewTitle = () => {
     switch (userRole) {
@@ -96,6 +100,21 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
       );
     }
 
+    if (view === 'howItWorks') {
+      return (
+        <div>
+          <Button 
+            variant="outline" 
+            onClick={() => setView('list')} 
+            className="mb-4"
+          >
+            Back to Teleconsultations
+          </Button>
+          <TeleconsultationExplanation />
+        </div>
+      );
+    }
+
     if (view === 'scheduler') {
       return (
         <div>
@@ -108,10 +127,10 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
           </Button>
           
           {selectedDoctor ? (
-            <TeleconsultationScheduler
+            <DoctorAvailabilityCalendar
               doctorId={selectedDoctor.id}
               doctorName={selectedDoctor.name}
-              onScheduled={() => setView('list')}
+              onBookingConfirmed={() => setView('list')}
             />
           ) : (
             <DoctorConnectionsList onSelectDoctor={handleSelectDoctor} />
@@ -123,13 +142,23 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
     // Default view - list
     return (
       <div className="space-y-6">
+        <TeleconsultationExplanation />
+        
         {userRole === 'patient' && (
           <>
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Your Teleconsultations</h2>
-              <Button onClick={() => setView('scheduler')}>
-                Request New Consultation
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setView('howItWorks')}
+                >
+                  How It Works
+                </Button>
+                <Button onClick={() => setView('scheduler')}>
+                  Request New Consultation
+                </Button>
+              </div>
             </div>
           </>
         )}

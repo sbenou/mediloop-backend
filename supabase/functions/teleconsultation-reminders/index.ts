@@ -33,15 +33,16 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get current time and 30 minutes from now
+    // Get current time and various future time points
     const now = new Date();
+    const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000);
     const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
     const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-    // Fetch upcoming consultations within the next 30 minutes
-    const { data: upcomingConsultations, error: upcomingError } = await supabase
+    // Fetch upcoming consultations within the next 15 minutes (immediate reminder)
+    const { data: upcomingConsultations15Min, error: upcomingError15Min } = await supabase
       .from("teleconsultations")
       .select(`
         id,
@@ -54,10 +55,30 @@ serve(async (req) => {
       `)
       .eq("status", "confirmed")
       .gte("start_time", now.toISOString())
+      .lt("start_time", fifteenMinutesFromNow.toISOString());
+
+    if (upcomingError15Min) {
+      throw upcomingError15Min;
+    }
+
+    // Fetch upcoming consultations within the next 30 minutes
+    const { data: upcomingConsultations30Min, error: upcomingError30Min } = await supabase
+      .from("teleconsultations")
+      .select(`
+        id,
+        patient_id,
+        doctor_id,
+        start_time,
+        status,
+        patient:patient_id(full_name),
+        doctor:doctor_id(full_name)
+      `)
+      .eq("status", "confirmed")
+      .gte("start_time", fifteenMinutesFromNow.toISOString())
       .lt("start_time", thirtyMinutesFromNow.toISOString());
 
-    if (upcomingError) {
-      throw upcomingError;
+    if (upcomingError30Min) {
+      throw upcomingError30Min;
     }
 
     // Fetch consultations scheduled for today
@@ -103,8 +124,29 @@ serve(async (req) => {
     // Process all notifications
     const notifications = [];
 
+    // Process 15-minute reminders (immediate)
+    for (const consultation of upcomingConsultations15Min as TeleconsultationWithUsers[]) {
+      // Create notification for patient
+      notifications.push({
+        user_id: consultation.patient_id,
+        type: "teleconsultation_reminder",
+        title: "Teleconsultation Starting Soon",
+        message: `Your teleconsultation with Dr. ${consultation.doctor.full_name} is starting in less than 15 minutes. Please prepare to join.`,
+        link: "/dashboard?view=teleconsultations",
+      });
+
+      // Create notification for doctor
+      notifications.push({
+        user_id: consultation.doctor_id,
+        type: "teleconsultation_reminder",
+        title: "Teleconsultation Starting Soon",
+        message: `Your teleconsultation with ${consultation.patient.full_name} is starting in less than 15 minutes. Please prepare to join.`,
+        link: "/dashboard?view=teleconsultations",
+      });
+    }
+
     // Process 30-minute reminders
-    for (const consultation of upcomingConsultations as TeleconsultationWithUsers[]) {
+    for (const consultation of upcomingConsultations30Min as TeleconsultationWithUsers[]) {
       // Create notification for patient
       notifications.push({
         user_id: consultation.patient_id,
@@ -124,10 +166,14 @@ serve(async (req) => {
       });
     }
 
-    // Process today reminders (if not already notified in the 30-minute window)
+    // Process today reminders (if not already notified in the reminder windows)
     for (const consultation of todayConsultations as TeleconsultationWithUsers[]) {
-      const alreadyNotified = upcomingConsultations.some(c => c.id === consultation.id);
-      if (!alreadyNotified) {
+      const consultationStart = new Date(consultation.start_time);
+      const timeUntilStart = consultationStart.getTime() - now.getTime();
+      const thirtyMinutesInMs = 30 * 60 * 1000;
+
+      // Only send today reminder if it's more than 30 minutes away
+      if (timeUntilStart > thirtyMinutesInMs) {
         // Create notification for patient
         notifications.push({
           user_id: consultation.patient_id,
@@ -185,7 +231,8 @@ serve(async (req) => {
         success: true,
         message: "Teleconsultation reminders processed successfully",
         reminders_sent: notifications.length,
-        upcomingCount: upcomingConsultations.length,
+        fifteenMinCount: upcomingConsultations15Min.length,
+        thirtyMinCount: upcomingConsultations30Min.length,
         todayCount: todayConsultations.length,
         tomorrowCount: tomorrowConsultations.length,
       }),
