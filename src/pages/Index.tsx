@@ -16,10 +16,10 @@ export default function Index() {
       <HeroSection />
       <div className="container mx-auto px-4">
         <FeaturesGrid />
-        <StatsSection />
         <GetStartedSteps />
-        <PartnerSection />
+        <StatsSection />
         <TestimonialsSection />
+        <PartnerSection />
       </div>
       <Footer />
     </>
