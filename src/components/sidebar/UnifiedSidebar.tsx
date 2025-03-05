@@ -1,3 +1,4 @@
+
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
@@ -28,7 +29,9 @@ const UnifiedSidebar = () => {
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
+  // Only set the initial state based on URL path, but don't auto-close when navigating
   useEffect(() => {
+    // Only run this on first render to set initial states
     if (location.pathname.includes('/my-orders') || location.search.includes('view=orders')) {
       setIsOrdersOpen(true);
     }
@@ -36,7 +39,7 @@ const UnifiedSidebar = () => {
     if (location.pathname.includes('/profile') || location.search.includes('view=profile')) {
       setIsProfileOpen(true);
     }
-  }, [location.pathname, location.search]);
+  }, []); // Empty dependency array means this only runs once on mount
 
   const handleLogout = async () => {
     try {
@@ -262,7 +265,10 @@ const UnifiedSidebar = () => {
           
           <Collapsible 
             open={isProfileOpen} 
-            onOpenChange={setIsProfileOpen}
+            onOpenChange={(isOpen) => {
+              // Only respond to direct trigger clicks, not navigation
+              setIsProfileOpen(isOpen);
+            }}
             className="w-full"
           >
             <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm ${
@@ -286,6 +292,10 @@ const UnifiedSidebar = () => {
                       ? 'bg-primary/10 text-primary font-medium' 
                       : 'text-muted-foreground hover:bg-gray-100'
                   }`}
+                  onClick={(e) => {
+                    // Don't allow event to propagate and affect collapsible state
+                    e.stopPropagation();
+                  }}
                 >
                   {subItem.icon}
                   {subItem.label}
@@ -296,7 +306,10 @@ const UnifiedSidebar = () => {
           
           <Collapsible 
             open={isOrdersOpen} 
-            onOpenChange={setIsOrdersOpen}
+            onOpenChange={(isOpen) => {
+              // Only respond to direct trigger clicks, not navigation
+              setIsOrdersOpen(isOpen);
+            }}
             className="w-full"
           >
             <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm ${
@@ -321,6 +334,10 @@ const UnifiedSidebar = () => {
                       ? 'bg-primary/10 text-primary font-medium' 
                       : 'text-muted-foreground hover:bg-gray-100'
                   }`}
+                  onClick={(e) => {
+                    // Don't allow event to propagate and affect collapsible state
+                    e.stopPropagation();
+                  }}
                 >
                   {subItem.icon}
                   {subItem.label}
