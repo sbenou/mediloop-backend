@@ -1,3 +1,4 @@
+
 import { ProductSearch } from '@/components/ProductSearch';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -22,7 +23,6 @@ import Signup from "./pages/Signup";
 import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage";
 import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
 import UnifiedProfilePage from "./pages/UnifiedProfilePage";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Pharmacy routes
 import PatientsPage from "./pages/pharmacy/PatientsPage";
@@ -57,56 +57,54 @@ function App() {
           <CurrencyProvider>
             <CartProvider>
               <BrowserRouter>
-                <SidebarProvider>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    
-                    {/* Universal Dashboard - the new central dashboard for all roles */}
-                    <Route path="/dashboard" element={<UniversalDashboard />} />
-                    
-                    {/* UnifiedProfilePage - UI template (no authentication) */}
-                    <Route path="/unified-profile" element={<UnifiedProfilePage />} />
-                    
-                    {/* Legacy routes that redirect to the universal dashboard */}
-                    <Route path="/patient-dashboard" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/profile" element={<Navigate to="/dashboard?view=profile" replace />} />
-                    <Route path="/my-orders" element={<Navigate to="/dashboard?view=orders&ordersTab=orders" replace />} />
-                    <Route path="/my-prescriptions" element={<Navigate to="/dashboard?view=prescriptions" replace />} />
-                    <Route path="/settings" element={<Navigate to="/dashboard?view=settings" replace />} />
-                    <Route path="/billing" element={<Navigate to="/dashboard?view=billing" replace />} />
-                    <Route path="/teleconsultations" element={<Navigate to="/dashboard?view=teleconsultations" replace />} />
-                    
-                    {/* Authentication routes */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/login/verify" element={<OTPVerificationPage />} />
-                    <Route path="/reset-password/*" element={<ResetPassword />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
-                    
-                    {/* General routes */}
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/become-partner" element={<BecomePartner />} />
-                    <Route path="/become-transporter" element={<BecomeTransporter />} />
-                    <Route path="/create-prescription" element={<CreatePrescription />} />
-                    <Route path="/doctor-connections" element={<DoctorConnections />} />
-                    <Route path="/find-doctor" element={<FindDoctor />} />
-                    <Route path="/search-pharmacy" element={<SearchPharmacy />} />
-                    
-                    {/* Temporarily keep the old pharmacy routes until they're refactored */}
-                    <Route path="/pharmacy/patients" element={<PatientsPage />} />
-                    <Route path="/pharmacy/patients/:id" element={<PatientDetail />} />
-                    <Route path="/pharmacy/orders" element={<OrdersPage />} />
-                    <Route path="/pharmacy/prescriptions" element={<PrescriptionsPage />} />
-                    <Route path="/pharmacy/prescriptions/:id" element={<PrescriptionDetail />} />
-                    
-                    {/* Legacy pages - will be removed in the future */}
-                    <Route path="/legacy/dashboard" element={<Dashboard />} />
-                    <Route path="/legacy/patient-dashboard" element={<PatientDashboard />} />
-                    <Route path="/legacy/unified-profile" element={<UnifiedProfilePage />} />
-                  </Routes>
-                  <Toaster />
-                </SidebarProvider>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  
+                  {/* Universal Dashboard - the new central dashboard for all roles */}
+                  <Route path="/dashboard" element={<UniversalDashboard />} />
+                  
+                  {/* UnifiedProfilePage - UI template (no authentication) */}
+                  <Route path="/unified-profile" element={<UnifiedProfilePage />} />
+                  
+                  {/* Legacy routes that redirect to the universal dashboard */}
+                  <Route path="/patient-dashboard" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/profile" element={<Navigate to="/dashboard?view=profile" replace />} />
+                  <Route path="/my-orders" element={<Navigate to="/dashboard?view=orders&ordersTab=orders" replace />} />
+                  <Route path="/my-prescriptions" element={<Navigate to="/dashboard?view=prescriptions" replace />} />
+                  <Route path="/settings" element={<Navigate to="/dashboard?view=settings" replace />} />
+                  <Route path="/billing" element={<Navigate to="/dashboard?view=billing" replace />} />
+                  <Route path="/teleconsultations" element={<Navigate to="/dashboard?view=teleconsultations" replace />} />
+                  
+                  {/* Authentication routes */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/login/verify" element={<OTPVerificationPage />} />
+                  <Route path="/reset-password/*" element={<ResetPassword />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
+                  
+                  {/* General routes */}
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/services" element={<Services />} />
+                  <Route path="/become-partner" element={<BecomePartner />} />
+                  <Route path="/become-transporter" element={<BecomeTransporter />} />
+                  <Route path="/create-prescription" element={<CreatePrescription />} />
+                  <Route path="/doctor-connections" element={<DoctorConnections />} />
+                  <Route path="/find-doctor" element={<FindDoctor />} />
+                  <Route path="/search-pharmacy" element={<SearchPharmacy />} />
+                  
+                  {/* Temporarily keep the old pharmacy routes until they're refactored */}
+                  <Route path="/pharmacy/patients" element={<PatientsPage />} />
+                  <Route path="/pharmacy/patients/:id" element={<PatientDetail />} />
+                  <Route path="/pharmacy/orders" element={<OrdersPage />} />
+                  <Route path="/pharmacy/prescriptions" element={<PrescriptionsPage />} />
+                  <Route path="/pharmacy/prescriptions/:id" element={<PrescriptionDetail />} />
+                  
+                  {/* Legacy pages - will be removed in the future */}
+                  <Route path="/legacy/dashboard" element={<Dashboard />} />
+                  <Route path="/legacy/patient-dashboard" element={<PatientDashboard />} />
+                  <Route path="/legacy/unified-profile" element={<UnifiedProfilePage />} />
+                </Routes>
+                <Toaster />
               </BrowserRouter>
             </CartProvider>
           </CurrencyProvider>

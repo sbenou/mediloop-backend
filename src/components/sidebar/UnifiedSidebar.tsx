@@ -1,187 +1,150 @@
 
-import { useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  SidebarGroupLabel,
-} from "@/components/ui/sidebar";
-import { Home, Settings, FileText, Phone, Package, UserPlus, UserCircle, ShoppingCart, LayoutDashboard } from "lucide-react";
+import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
-import SidebarUserMenu from "./SidebarUserMenu";
+import { Home, User, ShoppingBag, FileText, Settings, Calendar } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import UserAvatar from "../user-menu/UserAvatar";
 
 const UnifiedSidebar = () => {
-  const { profile } = useAuth();
-  const navigate = useNavigate();
+  const { userRole, profile } = useAuth();
   const location = useLocation();
 
-  const userRole = profile?.role || "user";
+  // Handle logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  };
 
-  const routes = useMemo(() => {
-    const baseRoutes = [
-      {
-        section: "PLATFORM",
-        items: [
-          {
-            name: "Dashboard",
-            path: "/dashboard",
-            icon: LayoutDashboard,
-          },
-          {
-            name: "Products",
-            path: "/products",
-            icon: Package,
-          },
-          {
-            name: "Prescriptions",
-            path: "/my-prescriptions",
-            icon: FileText,
-          },
-          {
-            name: "Teleconsultations",
-            path: "/teleconsultations",
-            icon: Phone,
-          },
-          {
-            name: "Orders",
-            path: "/my-orders",
-            icon: ShoppingCart,
-          },
-        ],
-      },
-      {
-        section: "ADMIN",
-        items: [
-          {
-            name: "Settings",
-            path: "/settings",
-            icon: Settings,
-          },
-        ],
-      },
-    ];
+  const isLinkActive = (path: string) => {
+    return location.pathname === path;
+  };
 
-    // If user is a pharmacist, add pharmacist-specific routes
-    if (userRole === "pharmacist") {
-      return [
-        {
-          section: "PLATFORM",
-          items: [
-            {
-              name: "Dashboard",
-              path: "/pharmacy",
-              icon: LayoutDashboard,
-            },
-            {
-              name: "Orders",
-              path: "/pharmacy/orders",
-              icon: ShoppingCart,
-            },
-            {
-              name: "Prescriptions",
-              path: "/pharmacy/prescriptions",
-              icon: FileText,
-            },
-            {
-              name: "Patients",
-              path: "/pharmacy/patients",
-              icon: UserPlus,
-            },
-          ],
-        },
-        {
-          section: "ADMIN",
-          items: [
-            {
-              name: "Settings",
-              path: "/pharmacy/settings",
-              icon: Settings,
-            },
-          ],
-        },
-      ];
+  const platformMenuItems = [
+    {
+      label: 'Dashboard',
+      icon: <Home className="w-5 h-5 mr-3" />,
+      path: '/dashboard',
+      active: isLinkActive('/dashboard')
+    },
+    {
+      label: 'Orders',
+      icon: <ShoppingBag className="w-5 h-5 mr-3" />,
+      path: '/my-orders',
+      active: isLinkActive('/my-orders')
+    },
+    {
+      label: 'Teleconsultations',
+      icon: <Calendar className="w-5 h-5 mr-3" />,
+      path: '/teleconsultations',
+      active: isLinkActive('/teleconsultations')
     }
-
-    // If user is a superadmin, add admin-specific routes
-    if (userRole === "superadmin") {
-      return [
-        {
-          section: "PLATFORM",
-          items: [
-            {
-              name: "Dashboard",
-              path: "/superadmin",
-              icon: LayoutDashboard,
-            },
-            {
-              name: "Users",
-              path: "/superadmin/users",
-              icon: UserCircle,
-            },
-            {
-              name: "Products",
-              path: "/superadmin/products",
-              icon: Package,
-            },
-          ],
-        },
-        {
-          section: "ADMIN",
-          items: [
-            {
-              name: "Settings",
-              path: "/superadmin/settings",
-              icon: Settings,
-            },
-          ],
-        },
-      ];
+  ];
+  
+  const adminMenuItems = [
+    {
+      label: 'Settings',
+      icon: <Settings className="w-5 h-5 mr-3" />,
+      path: '/settings',
+      active: isLinkActive('/settings')
     }
-
-    // Default to base routes
-    return baseRoutes;
-  }, [userRole]);
+  ];
 
   return (
-    <Sidebar>
-      <SidebarRail />
-      <SidebarHeader className="h-16 flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <img src="/logo.svg" alt="Mediloop" className="h-8" />
-          <span className="text-xs font-medium mt-1">Mediloop</span>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        {routes.map((section, index) => (
-          <div key={index} className="mb-6">
-            <SidebarGroupLabel className="px-2 mb-2">{section.section}</SidebarGroupLabel>
-            <SidebarMenu>
-              {section.items.map((route) => (
-                <SidebarMenuItem key={route.path}>
-                  <SidebarMenuButton
-                    tooltip={route.name}
-                    isActive={location.pathname === route.path}
-                    onClick={() => navigate(route.path)}
-                  >
-                    <route.icon className="h-5 w-5" />
-                    <span>{route.name}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+    <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
+      {/* Sidebar Header */}
+      <div className="p-4 border-b">
+        <div className="flex items-center space-x-2">
+          <div className="relative">
+            <UserAvatar 
+              userProfile={{
+                id: null,
+                full_name: 'Mediloop',
+                email: null,
+                avatar_url: null,
+                role: 'organization',
+                role_id: null,
+                date_of_birth: null,
+                city: null,
+                auth_method: null,
+                is_blocked: null,
+                doctor_stamp_url: null,
+                doctor_signature_url: null,
+                cns_card_front: null,
+                cns_card_back: null,
+                cns_number: null,
+                deleted_at: null,
+                created_at: null,
+                updated_at: null,
+                license_number: null
+              }} 
+              squared={true} 
+              canUpload={true} 
+            />
           </div>
-        ))}
-      </SidebarContent>
-      <SidebarFooter className="pb-4 px-2">
-        <SidebarUserMenu />
-      </SidebarFooter>
-    </Sidebar>
+          <div>
+            <h3 className="font-semibold text-sm">Mediloop</h3>
+            <p className="text-xs text-muted-foreground">Healthcare Platform</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Sidebar Sections */}
+      <div className="flex-1 overflow-auto py-4">
+        <div className="px-3 mb-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">Platform</p>
+        </div>
+        
+        <nav className="space-y-1 px-2">
+          {platformMenuItems.map((item, index) => (
+            <Link
+              key={index}
+              to={item.path}
+              className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                item.active 
+                  ? 'bg-primary/10 text-primary font-medium' 
+                  : 'text-muted-foreground hover:bg-gray-100'
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        
+        {/* Admin Section */}
+        <div className="px-3 mb-2 mt-6">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">Admin</p>
+        </div>
+        
+        <nav className="space-y-1 px-2">
+          {adminMenuItems.map((item, index) => (
+            <Link
+              key={index}
+              to={item.path}
+              className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                item.active 
+                  ? 'bg-primary/10 text-primary font-medium' 
+                  : 'text-muted-foreground hover:bg-gray-100'
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+      
+      {/* User Profile */}
+      <div className="border-t p-4">
+        <div className="flex items-center space-x-3">
+          <UserAvatar userProfile={profile} squared={true} canUpload={true} />
+          <div className="overflow-hidden">
+            <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
+            <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>
+          </div>
+        </div>
+      </div>
+    </aside>
   );
 };
 
