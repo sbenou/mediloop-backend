@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 import { safeQueryResult } from '@/types/user';
@@ -9,7 +8,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create storage key based on project URL
 const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
 
-// Debug function to track storage events
+// Debug function to track storage operations
 const logStorageOperation = (action: string, key: string, success: boolean, error?: any) => {
   if (process.env.NODE_ENV === 'development') {
     console.log(
@@ -198,7 +197,7 @@ const crossTabStorage = {
       if (!name) return;
       
       // Common paths that might have been set for auth cookies
-      const paths = ['/', '/login', '/auth', '/dashboard', '/profile'];
+      const paths = ['/', '/login', '/auth', '/dashboard', '/profile', '/api', ''];
       
       // Get the hostname parts for domain clearing
       const hostParts = window.location.hostname.split('.');
@@ -215,15 +214,15 @@ const crossTabStorage = {
       // Add root domain with dot prefix
       domains.push(`.${window.location.hostname}`);
       
-      // Try clearing without domain specification first
-      paths.forEach(path => {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; max-age=0; secure;`;
-      });
+      // Add empty domain (current domain only)
+      domains.push('');
       
-      // Then try with specific domains
-      paths.forEach(path => {
-        domains.forEach(domain => {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; max-age=0; secure;`;
+      // Try clearing with all combinations of domain and path
+      domains.forEach(domain => {
+        paths.forEach(path => {
+          // Try multiple approaches to ensure cookie deletion
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0; secure;`;
+          document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1; secure;`;
         });
       });
       
@@ -231,6 +230,9 @@ const crossTabStorage = {
       paths.forEach(path => {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=None; max-age=0; secure;`;
       });
+      
+      // Last resort: try without path or domain specification
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
     });
     
     console.log('%cAll Supabase storage cleared manually', 'color: green; font-weight: bold');
