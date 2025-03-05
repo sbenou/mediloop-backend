@@ -195,7 +195,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 // Enhanced periodic session check to prevent expiration
 const setupSessionRefresh = () => {
   // Check session every 30 seconds (reduced from 4 minutes)
-  const interval = setInterval(async () => {
+  const interval = window.setInterval(async () => {
     try {
       // Only perform refresh when tab is visible to avoid unnecessary API calls
       if (document.visibilityState === 'visible') {
