@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -6,7 +5,7 @@ import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { toast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { supabase } from "@/lib/supabase";
+import { supabase, getSessionFromStorage } from "@/lib/supabase";
 
 import {
   ProfileView,
@@ -23,30 +22,24 @@ const UniversalDashboard = () => {
   const navigate = useNavigate();
   const view = searchParams.get('view') || 'home';
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [hasLocalSessionCheck, setHasLocalSessionCheck] = useState(false);
   const sessionCheckerRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
 
-  // Function to verify session, separated for reuse
-  const verifySession = useCallback(async () => {
+  const verifySession = useCallback(async (forceApiCheck = false) => {
     try {
-      // First, try to get session from storage (faster)
-      const storageKey = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-      const storedSession = localStorage.getItem(storageKey) 
-        ? JSON.parse(localStorage.getItem(storageKey) || '{}')
-        : null;
+      if (!forceApiCheck) {
+        const storedSession = getSessionFromStorage();
+        if (storedSession?.user) {
+          return true;
+        }
+      }
       
-      // Then verify with Supabase API
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
         console.error("Error checking session:", error);
         return false;
-      }
-      
-      // If we have a session but it's not in storage, make sure to store it
-      if (session && !storedSession) {
-        console.log("Found session in API but not in storage, storing it now");
-        localStorage.setItem(storageKey, JSON.stringify(session));
-        sessionStorage.setItem(storageKey, JSON.stringify(session));
       }
       
       return !!session;
@@ -56,90 +49,126 @@ const UniversalDashboard = () => {
     }
   }, []);
 
-  // Enhanced authentication check with session verification
   useEffect(() => {
-    let mounted = true;
+    const quickSessionCheck = async () => {
+      const storedSession = getSessionFromStorage();
+      setHasLocalSessionCheck(!!storedSession?.user);
+    };
+    
+    quickSessionCheck();
+  }, []);
+
+  useEffect(() => {
+    if (!mountedRef.current) return;
     
     const checkAuthentication = async () => {
-      if (!isAuthenticated && !isLoading) {
-        const hasValidSession = await verifySession();
-        
-        if (!hasValidSession && mounted) {
-          console.log("No valid session found on dashboard load");
-          toast({
-            variant: "destructive",
-            title: "Authentication required",
-            description: "Please login to access this page.",
-          });
-          navigate("/login");
-          return;
-        }
+      if (isAuthenticated && !isLoading) {
+        setInitialCheckDone(true);
+        return;
       }
       
-      if (mounted) {
+      if (isLoading) {
+        return;
+      }
+      
+      const hasValidSession = await verifySession();
+      
+      if (!hasValidSession && mountedRef.current) {
+        console.log("No valid session found on dashboard load");
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please login to access this page.",
+        });
+        navigate("/login");
+        return;
+      }
+      
+      if (mountedRef.current) {
         setInitialCheckDone(true);
       }
     };
     
     checkAuthentication();
     
-    // Start continuous session verification process
     if (sessionCheckerRef.current) {
       window.clearInterval(sessionCheckerRef.current);
     }
     
-    sessionCheckerRef.current = window.setInterval(async () => {
-      if (document.visibilityState === 'visible') {
-        await verifySession();
+    sessionCheckerRef.current = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && mountedRef.current) {
+        verifySession(false);
       }
-    }, 5000); // Check every 5 seconds when tab is visible
+    }, 5000);
     
-    // Handle tab visibility changes with improved error handling
+    const apiCheckerInterval = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && mountedRef.current) {
+        verifySession(true);
+      }
+    }, 30000);
+    
+    return () => {
+      mountedRef.current = false;
+      
+      if (sessionCheckerRef.current) {
+        window.clearInterval(sessionCheckerRef.current);
+        sessionCheckerRef.current = null;
+      }
+      
+      window.clearInterval(apiCheckerInterval);
+    };
+  }, [isAuthenticated, isLoading, navigate, verifySession]);
+
+  useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && mounted) {
+      if (document.visibilityState === 'visible' && mountedRef.current) {
         console.log("Tab became visible, checking auth state");
-        const hasValidSession = await verifySession();
+        const hasValidSession = await verifySession(true);
         
-        if (!hasValidSession) {
+        if (!hasValidSession && mountedRef.current && initialCheckDone) {
           console.log("Session verification failed after tab switch");
-          if (initialCheckDone && mounted) {
-            toast({
-              variant: "destructive",
-              title: "Session expired",
-              description: "Your session has expired. Please login again.",
-            });
-            navigate("/login");
-          }
-        } else {
-          console.log("Session successfully verified after tab switch");
+          toast({
+            variant: "destructive",
+            title: "Session expired",
+            description: "Your session has expired. Please login again.",
+          });
+          navigate("/login");
         }
       }
     };
     
-    // Add the visibility change listener
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // Listen for storage events for cross-tab authentication
+    const handleAuthUpdate = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log("Auth update event received:", customEvent.detail?.type);
+      
+      if (customEvent.detail?.type === 'session_removed' && mountedRef.current && initialCheckDone) {
+        navigate("/login");
+      }
+    };
+    
+    window.addEventListener('supabase:auth:update', handleAuthUpdate);
+    
     const handleStorageChange = (e: StorageEvent) => {
+      if (!mountedRef.current) return;
       if (!e.key) return;
       
-      // Check for auth token changes
       if (e.key.includes('auth-token')) {
         console.log("Auth token changed in another tab");
-        // Force session verification
-        verifySession().then(hasSession => {
-          if (!hasSession && mounted && initialCheckDone) {
-            console.log("No valid session found after storage change");
-            navigate("/login");
-          }
-        });
+        if (initialCheckDone) {
+          verifySession(true).then(hasSession => {
+            if (!hasSession && mountedRef.current) {
+              navigate("/login");
+            }
+          });
+        }
       }
       
-      // Check for explicit logout events
-      if (e.key === 'last_auth_event') {
+      if (e.key === 'supabase_auth_event') {
         try {
           const event = e.newValue ? JSON.parse(e.newValue) : null;
-          if (event?.type === 'LOGOUT' && mounted && initialCheckDone) {
+          if (event?.type === 'SIGNED_OUT' && mountedRef.current && initialCheckDone) {
             console.log("Logout detected in another tab");
             navigate("/login");
           }
@@ -152,17 +181,11 @@ const UniversalDashboard = () => {
     window.addEventListener('storage', handleStorageChange);
     
     return () => {
-      mounted = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('supabase:auth:update', handleAuthUpdate);
       window.removeEventListener('storage', handleStorageChange);
-      
-      // Clear interval on unmount
-      if (sessionCheckerRef.current) {
-        window.clearInterval(sessionCheckerRef.current);
-        sessionCheckerRef.current = null;
-      }
     };
-  }, [isAuthenticated, isLoading, navigate, initialCheckDone, verifySession]);
+  }, [initialCheckDone, navigate, verifySession]);
 
   const hasPermissionForView = (view: string): boolean => {
     const commonViews = ['home', 'profile', 'settings'];
@@ -194,7 +217,7 @@ const UniversalDashboard = () => {
     }
   }, [view, userRole, isAuthenticated, isLoading, navigate]);
 
-  if (isLoading) {
+  if (isLoading && !hasLocalSessionCheck) {
     return (
       <UnifiedLayoutTemplate>
         <div className="space-y-4">
