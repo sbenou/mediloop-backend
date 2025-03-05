@@ -37,6 +37,7 @@ const CountrySelector = () => {
   const { isAuthenticated, user } = useAuth();
   const [mainAddress, setMainAddress] = useState<Address | null>(null);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [selectionComplete, setSelectionComplete] = useState(false);
   
   // Initialize the dialog as open and reset any saved country
   useEffect(() => {
@@ -52,13 +53,13 @@ const CountrySelector = () => {
     }
   }, []);
   
-  // Force dialog to remain open
+  // Force dialog to remain open only if no selection has been made
   useEffect(() => {
-    if (!open) {
-      console.log("CountrySelector: Dialog was closed, forcing it open again");
+    if (!open && !selectionComplete) {
+      console.log("CountrySelector: Dialog was closed without selection, forcing it open again");
       setOpen(true);
     }
-  }, [open]);
+  }, [open, selectionComplete]);
   
   useEffect(() => {
     let shouldShowDialog = true;
@@ -84,9 +85,11 @@ const CountrySelector = () => {
             if (data.country === "Luxembourg" || data.country === "LU") {
               setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "LU")?.coordinates || userLocation);
               shouldShowDialog = false;
+              setSelectionComplete(true);
             } else if (data.country === "France" || data.country === "FR") {
               setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "FR")?.coordinates || userLocation);
               shouldShowDialog = false;
+              setSelectionComplete(true);
             }
           } else {
             console.log("CountrySelector: No default address found or error:", error);
@@ -109,19 +112,21 @@ const CountrySelector = () => {
           if (country) {
             setUserLocation(country.coordinates);
             shouldShowDialog = false;
+            setSelectionComplete(true);
           }
         } else {
           console.log("CountrySelector: No saved country found, dialog should appear");
           shouldShowDialog = true;
+          setSelectionComplete(false);
         }
       } catch (e) {
         console.error("Error reading from localStorage:", e);
         shouldShowDialog = true;
+        setSelectionComplete(false);
       }
       
       console.log("CountrySelector: Setting dialog open state to:", shouldShowDialog);
-      // Force dialog to stay open if no country selection has been made
-      setOpen(true);
+      setOpen(shouldShowDialog);
       setInitialCheckDone(true);
     };
     
@@ -131,7 +136,12 @@ const CountrySelector = () => {
       console.log("CountrySelector: Storage event detected", e);
       if (e.key === null || e.key === 'selectedCountry') {
         console.log("CountrySelector: Storage clear or selectedCountry change detected");
-        setOpen(true);
+        if (!localStorage.getItem('selectedCountry')) {
+          setOpen(true);
+          setSelectionComplete(false);
+        } else {
+          setSelectionComplete(true);
+        }
       }
     };
     
@@ -179,13 +189,13 @@ const CountrySelector = () => {
     if (country) {
       setUserLocation(country.coordinates);
       try {
-        localStorage.removeItem('selectedCountry'); // Clear first to force change event
         localStorage.setItem('selectedCountry', selectedCountry);
         console.log("CountrySelector: Country saved to localStorage");
+        setSelectionComplete(true);
+        setOpen(false); // Explicitly close the dialog
       } catch (e) {
         console.error("Error saving to localStorage:", e);
       }
-      setOpen(false);
     }
   };
 
@@ -211,14 +221,16 @@ const CountrySelector = () => {
         onOpenChange={(newOpenState) => {
           console.log("Dialog onOpenChange called with:", newOpenState);
           if (!newOpenState) {
-            // If trying to close without selection, keep it open
-            if (!localStorage.getItem('selectedCountry')) {
+            // Allow closing only if selection is complete
+            if (selectionComplete) {
+              setOpen(false);
+            } else {
               console.log("CountrySelector: Preventing dialog from closing, no country selected");
               setOpen(true);
-              return;
             }
+          } else {
+            setOpen(true);
           }
-          setOpen(newOpenState);
         }} 
         modal={true}
       >
