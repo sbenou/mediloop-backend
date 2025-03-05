@@ -1,6 +1,10 @@
+
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Home, User, ShoppingBag, FileText, Settings, Calendar, CreditCard, Bell, LogOut, ChevronDown } from "lucide-react";
+import { 
+  Home, User, ShoppingBag, FileText, Settings, Calendar, 
+  CreditCard, Bell, LogOut, ChevronDown, CreditCard as Payment 
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "../user-menu/UserAvatar";
 import {
@@ -14,10 +18,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { clearAllAuthStorage } from "@/lib/supabase";
+import { useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const UnifiedSidebar = () => {
   const { userRole, profile } = useAuth();
   const location = useLocation();
+  const [isOrdersOpen, setIsOrdersOpen] = useState(false);
 
   // Handle logout
   const handleLogout = async () => {
@@ -93,18 +100,6 @@ const UnifiedSidebar = () => {
       icon: <Home className="w-5 h-5 mr-3" />,
       path: '/dashboard',
       active: isLinkActive('/dashboard')
-    },
-    {
-      label: 'Orders',
-      icon: <ShoppingBag className="w-5 h-5 mr-3" />,
-      path: '/my-orders',
-      active: isLinkActive('/my-orders')
-    },
-    {
-      label: 'Teleconsultations',
-      icon: <Calendar className="w-5 h-5 mr-3" />,
-      path: '/teleconsultations',
-      active: isLinkActive('/teleconsultations')
     }
   ];
   
@@ -114,6 +109,21 @@ const UnifiedSidebar = () => {
       icon: <Settings className="w-5 h-5 mr-3" />,
       path: '/settings',
       active: isLinkActive('/settings')
+    }
+  ];
+
+  const ordersSubItems = [
+    {
+      label: 'Orders',
+      icon: <ShoppingBag className="w-4 h-4 mr-3" />,
+      path: '/my-orders',
+      active: isLinkActive('/my-orders')
+    },
+    {
+      label: 'Payments',
+      icon: <Payment className="w-4 h-4 mr-3" />,
+      path: '/my-orders?view=payments',
+      active: location.pathname === '/my-orders' && location.search.includes('view=payments')
     }
   ];
 
@@ -187,6 +197,53 @@ const UnifiedSidebar = () => {
               {item.label}
             </Link>
           ))}
+          
+          {/* Orders Collapsible Section */}
+          <Collapsible 
+            open={isOrdersOpen} 
+            onOpenChange={setIsOrdersOpen}
+            className="w-full"
+          >
+            <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm ${
+              location.pathname.includes('/my-orders')
+                ? 'bg-primary/10 text-primary font-medium' 
+                : 'text-muted-foreground hover:bg-gray-100'
+            }`}>
+              <div className="flex items-center">
+                <ShoppingBag className="w-5 h-5 mr-3" />
+                <span>Orders</span>
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isOrdersOpen ? 'transform rotate-180' : ''}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pl-5 space-y-1 mt-1">
+              {ordersSubItems.map((subItem, index) => (
+                <Link
+                  key={index}
+                  to={subItem.path}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                    subItem.active 
+                      ? 'bg-primary/10 text-primary font-medium' 
+                      : 'text-muted-foreground hover:bg-gray-100'
+                  }`}
+                >
+                  {subItem.icon}
+                  {subItem.label}
+                </Link>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
+          
+          <Link
+            to="/teleconsultations"
+            className={`flex items-center px-3 py-2 rounded-md text-sm ${
+              isLinkActive('/teleconsultations') 
+                ? 'bg-primary/10 text-primary font-medium' 
+                : 'text-muted-foreground hover:bg-gray-100'
+            }`}
+          >
+            <Calendar className="w-5 h-5 mr-3" />
+            Teleconsultations
+          </Link>
         </nav>
         
         {/* Admin Section */}
@@ -229,7 +286,7 @@ const UnifiedSidebar = () => {
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1 items-center">
                 <p className="text-sm font-normal">{profile?.email || 'user@example.com'}</p>
-                <p className="text-xs font-bold">{userRole === 'user' ? 'Patient' : userRole}</p>
+                <p className="text-xs font-medium">{userRole === 'user' ? 'Patient' : userRole}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

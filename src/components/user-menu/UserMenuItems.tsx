@@ -149,7 +149,7 @@ export const UserMenuItems = () => {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1 items-center">
             <p className="text-sm font-normal">{auth.profile?.email || 'user@example.com'}</p>
-            <p className="text-xs font-bold">{userRole === 'user' ? 'Patient' : userRole}</p>
+            <p className="text-xs font-medium">{userRole === 'user' ? 'Patient' : userRole}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -30,6 +31,7 @@ const AVAILABLE_COUNTRIES: Country[] = [
 ];
 
 const CountrySelector = () => {
+  // Always start with dialog open by default
   const [open, setOpen] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string>("LU");
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
@@ -38,15 +40,22 @@ const CountrySelector = () => {
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   
   useEffect(() => {
-    console.log("CountrySelector: Component mounted, dialog initially set to open");
-  }, []);
+    console.log("CountrySelector: Component mounted, dialog initially set to open:", open);
+  }, [open]);
   
   useEffect(() => {
+    // Force dialog to be open on initial mount
+    if (!initialCheckDone) {
+      setOpen(true);
+      console.log("CountrySelector: Forcing dialog open on initial mount");
+    }
+    
     let shouldShowDialog = true;
     
     const checkUserAddress = async () => {
       console.log("CountrySelector: Checking user address and country selection");
       
+      // Check if user has a default address
       if (isAuthenticated && user) {
         console.log("CountrySelector: User is authenticated, checking for default address");
         try {
@@ -78,6 +87,7 @@ const CountrySelector = () => {
         console.log("CountrySelector: User is not authenticated");
       }
       
+      // Check if user has previously selected a country
       try {
         const savedCountry = localStorage.getItem('selectedCountry');
         if (savedCountry) {
@@ -155,7 +165,9 @@ const CountrySelector = () => {
     if (country) {
       setUserLocation(country.coordinates);
       try {
+        localStorage.removeItem('selectedCountry'); // Clear first to force change event
         localStorage.setItem('selectedCountry', selectedCountry);
+        console.log("CountrySelector: Country saved to localStorage");
       } catch (e) {
         console.error("Error saving to localStorage:", e);
       }
