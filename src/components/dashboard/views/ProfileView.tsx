@@ -1,77 +1,104 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// Fixing import errors by using default imports instead of named imports
-import PersonalDetails from "@/components/settings/PersonalDetails";
-import AddressManagement from "@/components/settings/AddressManagement";
-import PharmacySelection from "@/components/settings/PharmacySelection";
-import DoctorManagement from "@/components/settings/DoctorManagement";
-import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileViewProps {
   activeTab: string;
   userRole: string | null;
 }
 
-const ProfileView = ({ activeTab, userRole }: ProfileViewProps) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
   const navigate = useNavigate();
-  const [currentTab, setCurrentTab] = useState(activeTab || "personal");
 
-  useEffect(() => {
-    if (activeTab !== currentTab) {
-      setCurrentTab(activeTab);
-    }
-  }, [activeTab]);
-
+  // Handle tab change
   const handleTabChange = (value: string) => {
-    setCurrentTab(value);
-    searchParams.set("profileTab", value);
-    setSearchParams(searchParams);
+    navigate(`/dashboard?view=profile&profileTab=${value}`);
+  };
+
+  // Get role-specific tabs configuration
+  const getTabs = () => {
+    // Common tabs for all users
+    const commonTabs = [
+      { id: 'personal', label: 'Personal Info' },
+      { id: 'addresses', label: 'Addresses' }
+    ];
+    
+    // Role-specific additional tabs
+    switch (userRole) {
+      case 'patient':
+        return [
+          ...commonTabs,
+          { id: 'pharmacy', label: 'Default Pharmacy' },
+          { id: 'doctor', label: 'My Doctor' },
+          { id: 'nextofkin', label: 'Next of Kin' }
+        ];
+      case 'doctor':
+        return [
+          ...commonTabs,
+          { id: 'qualifications', label: 'Qualifications' },
+          { id: 'clinic', label: 'Clinic Details' }
+        ];
+      case 'pharmacist':
+        return [
+          ...commonTabs,
+          { id: 'pharmacy', label: 'Pharmacy Details' },
+          { id: 'staff', label: 'Staff Management' }
+        ];
+      case 'superadmin':
+        return [
+          ...commonTabs,
+          { id: 'admin', label: 'Admin Settings' }
+        ];
+      default:
+        return commonTabs;
+    }
+  };
+
+  const tabs = getTabs();
+
+  // Render tab content based on role and active tab
+  const renderTabContent = (tabId: string) => {
+    // Placeholder content for all tabs
+    return (
+      <div className="bg-white shadow rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">{tabs.find(tab => tab.id === tabId)?.label}</h2>
+        <p className="text-muted-foreground">
+          {userRole === 'patient' && tabId === 'personal' ? (
+            "Your personal information will be displayed here."
+          ) : userRole === 'doctor' && tabId === 'qualifications' ? (
+            "Your medical qualifications and certifications will be displayed here."
+          ) : tabId === 'addresses' ? (
+            "No addresses found. Add your first address to get started."
+          ) : (
+            `No ${tabId} information found.`
+          )}
+        </p>
+      </div>
+    );
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
-        <p className="text-muted-foreground">
-          Manage your personal information and profile settings.
-        </p>
-      </div>
-
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
+    <div>
+      <h1 className="text-3xl font-bold mb-6">My Profile</h1>
+      
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
-          <TabsTrigger value="personal">Personal Details</TabsTrigger>
-          <TabsTrigger value="addresses">Addresses</TabsTrigger>
-          <TabsTrigger value="pharmacy">Pharmacy</TabsTrigger>
-          <TabsTrigger value="doctor">Doctor</TabsTrigger>
-          <TabsTrigger value="nextofkin">Next of Kin</TabsTrigger>
+          {tabs.map(tab => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
         
-        <TabsContent value="personal" className="space-y-4">
-          <PersonalDetails />
-        </TabsContent>
-        
-        <TabsContent value="addresses" className="space-y-4">
-          <AddressManagement />
-        </TabsContent>
-        
-        <TabsContent value="pharmacy" className="space-y-4">
-          <PharmacySelection />
-        </TabsContent>
-        
-        <TabsContent value="doctor" className="space-y-4">
-          <DoctorManagement />
-        </TabsContent>
-        
-        <TabsContent value="nextofkin" className="space-y-4">
-          <NextOfKinManagement />
-        </TabsContent>
+        {tabs.map(tab => (
+          <TabsContent key={tab.id} value={tab.id} className="mt-4">
+            {renderTabContent(tab.id)}
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
 };
 
-// Make sure to export as default
 export default ProfileView;

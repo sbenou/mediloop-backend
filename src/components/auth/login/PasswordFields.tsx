@@ -20,7 +20,7 @@ interface PasswordFieldsProps {
 export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordFieldsProps) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true); // Default to true
+  const [rememberMe, setRememberMe] = useState(true); // Default to true for better UX
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const setAuth = useSetRecoilState(authState);
@@ -34,7 +34,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
     console.log('Starting login process...', { email, rememberMe });
 
     try {
-      // Sign in with password
+      // First, sign in with password
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -52,32 +52,58 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
       console.log('Sign in successful:', signInData.user.id);
 
-      // Explicitly store session in local storage for better persistence
-      if (signInData.session) {
-        const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+      // If rememberMe is checked, update the session 
+      if (rememberMe && signInData.session) {
+        console.log('Setting extended session duration due to Remember Me');
+        // We'll update the session cookie manually
+        const { error: sessionError } = await supabase.auth.updateUser({
+          data: { rememberMe: true }
+        });
         
-        // Store in localStorage
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(signInData.session));
-          console.log('Session explicitly stored in localStorage');
-        } catch (storageError) {
-          console.error('Error saving to localStorage:', storageError);
-        }
-        
-        // Also store in sessionStorage for redundancy
-        try {
-          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(signInData.session));
-          console.log('Session explicitly stored in sessionStorage');
-        } catch (storageError) {
-          console.error('Error saving to sessionStorage:', storageError);
+        if (sessionError) {
+          console.error('Failed to update session preferences:', sessionError);
         }
       }
 
+      // Get the session to confirm authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session fetch error:', sessionError);
+        throw sessionError;
+      }
+
+      if (!session) {
+        console.error('No session after successful sign in');
+        throw new Error('Authentication failed - no session');
+      }
+
+      console.log('Session confirmed:', session.user.id);
+
+      // IMPORTANT: Explicitly store session in all storage methods
+      const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+      
+      // First store session data in localStorage for persistence across tabs
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        console.log('Session explicitly stored in localStorage');
+      } catch (storageError) {
+        console.error('Error saving to localStorage:', storageError);
+      }
+      
+      // Also store in sessionStorage for redundancy
+      try {
+        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        console.log('Session explicitly stored in sessionStorage');
+      } catch (storageError) {
+        console.error('Error saving to sessionStorage:', storageError);
+      }
+      
       // Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', signInData.user.id)
+        .eq('id', session.user.id)
         .single();
 
       if (profileError) {
@@ -87,7 +113,7 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
       // Update global auth state
       setAuth({
-        user: signInData.user,
+        user: session.user,
         profile,
         permissions: [],
         isLoading: false,
@@ -102,26 +128,29 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         description: "You have successfully signed in.",
       });
 
-      // Broadcast the login event using localStorage
+      // Broadcast the login event to other tabs using localStorage event
       try {
         const loginEvent = {
           type: 'LOGIN',
-          userId: signInData.user.id,
+          userId: session.user.id,
           timestamp: new Date().toISOString()
         };
-        localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
-        
+        window.localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
         // Remove and set again to trigger storage events
-        localStorage.removeItem('last_auth_event');
-        localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
+        window.localStorage.removeItem('last_auth_event');
+        window.localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
       } catch (eventError) {
         console.error('Error broadcasting login event:', eventError);
       }
 
-      // Redirect to dashboard
-      console.log('Redirecting to dashboard...');
+      // Redirect all users to the universal dashboard
+      console.log('Redirecting to universal dashboard...');
       navigate('/dashboard', { replace: true });
+      return; // Early return to prevent onSuccess from being called
       
+      // This won't be called due to early returns
+      onSuccess();
+
     } catch (error: any) {
       console.error('Login failed:', error);
       

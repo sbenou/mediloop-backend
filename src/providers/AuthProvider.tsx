@@ -162,17 +162,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('Initializing auth provider...');
         setAuth(prev => ({ ...prev, isLoading: true }));
         
-        // First try to get session from storage (faster)
         const storedSession = getSessionFromStorage();
         if (storedSession) {
           console.log('Found existing session in storage');
-          if (mounted) {
-            // Use the stored session while we validate with the API
-            updateAuthState(storedSession);
-          }
         }
         
-        // Then validate with API (might take longer)
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!mounted) return;
@@ -180,8 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session) {
           console.log(`Using session for user: ${session.user.id}`);
           await updateAuthState(session);
-        } else if (!storedSession) { 
-          // Only clear if we didn't find a session in storage
+        } else {
           console.log('No active session found, clearing auth state');
           setAuth({
             user: null,
@@ -231,20 +224,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Listen for storage events that might indicate auth changes in other tabs
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key && e.key.includes('auth-token') && mounted) {
-        console.log('Auth token changed in storage, refreshing auth state');
-        initializeAuth();
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      window.removeEventListener('storage', handleStorageChange);
     };
   }, [setAuth, updateAuthState]);
 

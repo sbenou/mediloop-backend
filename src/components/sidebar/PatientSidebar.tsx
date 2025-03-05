@@ -1,238 +1,429 @@
 
-import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarFooter, 
-  SidebarHeader, 
-  SidebarMenu, 
-  SidebarMenuButton, 
-  SidebarMenuItem, 
-  SidebarMenuSub, 
-  SidebarMenuSubButton,
+import { useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarGroupContent,
-  SidebarProvider, 
-  SidebarRail,
-  SidebarTrigger
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { 
-  ChevronDown, 
-  Home, 
-  User, 
-  Settings, 
-  LogOut, 
-  Pill,
-  CalendarClock,
-  ShoppingBag,
+import {
+  ChevronDown,
+  User,
   MapPin,
-  Building,
-  UserCircle,
-  Users
+  Store,
+  UserRound,
+  Heart,
+  ShoppingBag,
+  CreditCard,
+  FileText,
+  Calendar,
+  Settings,
+  ChevronRight,
+  LogOut,
+  ClipboardList,
+  Home,
+  Upload,
+  Receipt,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { supabase } from "@/lib/supabase";
+import UserAvatar from "../user-menu/UserAvatar";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuGroup
+} from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useRecoilState } from "recoil";
+import { authState } from "@/store/auth/atoms";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const PatientSidebar = () => {
-  const location = useLocation();
+const PatientSidebarContent = () => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { profile } = useAuth();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  
+  const location = useLocation();
+  const { profile, userRole } = useAuth();
+  const [auth, setAuth] = useRecoilState(authState);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const isSuperAdmin = userRole === 'superadmin';
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups((prev) =>
+      prev.includes(groupName)
+        ? prev.filter((name) => name !== groupName)
+        : [...prev, groupName]
+    );
+  };
+
+  const isGroupExpanded = (groupName: string) => expandedGroups.includes(groupName);
+
+  const navigateToView = (view: string, tab?: string) => {
+    console.log(`Navigate to patient-dashboard with view: ${view}${tab ? ` and tab: ${tab}` : ''}`);
+    // Using navigate instead of direct link to prevent page refresh
+    navigate(`/patient-dashboard?view=${view}${tab ? `&${view}Tab=${tab}` : ''}`);
+  };
+
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of the system"
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setAuth({
+        user: null,
+        profile: null,
+        isLoading: false,
+        permissions: [],
       });
-      navigate('/login');
+      
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+      
+      navigate("/");
     } catch (error) {
-      console.error("Error logging out:", error);
+      console.error("Logout error:", error);
       toast({
         variant: "destructive",
         title: "Logout failed",
-        description: "There was a problem logging you out"
+        description: "There was an error logging out. Please try again.",
       });
     }
   };
-  
+
+  const handleLogoClick = () => {
+    if (isSuperAdmin && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Image size should be less than 5MB",
+      });
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `logo-${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('app_assets')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (error) throw error;
+      
+      const { data: urlData } = supabase.storage
+        .from('app_assets')
+        .getPublicUrl(fileName);
+      
+      setLogoUrl(urlData.publicUrl);
+      
+      toast({
+        title: "Upload successful",
+        description: "App logo has been updated",
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "There was an error uploading the logo. Please try again.",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <SidebarProvider defaultOpen={true}>
-      <Sidebar>
-        <SidebarRail />
-        <SidebarHeader className="pb-0">
-          <Link to="/dashboard" className="flex items-center gap-2 py-2 px-1">
-            <img src="/favicon.ico" alt="Mediloop" className="w-6 h-6" />
-            <span className="text-lg font-semibold">Mediloop</span>
-          </Link>
-          <SidebarTrigger className="absolute right-2 top-3" />
-        </SidebarHeader>
-        
-        <SidebarContent>
-          {/* Main Section */}
-          <SidebarGroup>
-            <SidebarGroupLabel>Main</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === "/dashboard" && !location.search.includes("view=")}
-                  >
-                    <Link to="/dashboard">
-                      <Home className="h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
-                {/* Profile Collapsible */}
-                <SidebarMenuItem>
-                  <Collapsible 
-                    open={isProfileOpen} 
-                    onOpenChange={setIsProfileOpen}
-                    className="w-full"
-                  >
-                    <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-2 text-sm rounded-md hover:bg-sidebar-accent">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span>Profile</span>
-                      </div>
-                      <ChevronDown className={`h-4 w-4 transition-transform ${isProfileOpen ? "transform rotate-180" : ""}`} />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton 
-                            asChild 
-                            isActive={location.pathname === "/dashboard" && location.search.includes("view=profile") && location.search.includes("profileTab=personal")}
-                          >
-                            <Link to="/dashboard?view=profile&profileTab=personal">
-                              Personal Details
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton 
-                            asChild 
-                            isActive={location.pathname === "/dashboard" && location.search.includes("view=profile") && location.search.includes("profileTab=addresses")}
-                          >
-                            <Link to="/dashboard?view=profile&profileTab=addresses">
-                              Addresses
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton 
-                            asChild 
-                            isActive={location.pathname === "/dashboard" && location.search.includes("view=profile") && location.search.includes("profileTab=pharmacy")}
-                          >
-                            <Link to="/dashboard?view=profile&profileTab=pharmacy">
-                              Pharmacy
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton 
-                            asChild 
-                            isActive={location.pathname === "/dashboard" && location.search.includes("view=profile") && location.search.includes("profileTab=doctor")}
-                          >
-                            <Link to="/dashboard?view=profile&profileTab=doctor">
-                              Doctor
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton 
-                            asChild 
-                            isActive={location.pathname === "/dashboard" && location.search.includes("view=profile") && location.search.includes("profileTab=nextofkin")}
-                          >
-                            <Link to="/dashboard?view=profile&profileTab=nextofkin">
-                              Next of Kin
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </SidebarMenuItem>
-                
-                {/* Orders */}
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === "/dashboard" && location.search.includes("view=orders")}
-                  >
-                    <Link to="/dashboard?view=orders">
-                      <ShoppingBag className="h-4 w-4" />
-                      <span>Orders</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                {/* Prescriptions */}
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === "/dashboard" && location.search.includes("view=prescriptions")}
-                  >
-                    <Link to="/dashboard?view=prescriptions">
-                      <Pill className="h-4 w-4" />
-                      <span>Prescriptions</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                {/* Teleconsultations */}
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === "/dashboard" && location.search.includes("view=teleconsultations")}
-                  >
-                    <Link to="/dashboard?view=teleconsultations">
-                      <CalendarClock className="h-4 w-4" />
-                      <span>Teleconsultations</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                {/* Settings */}
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === "/dashboard" && location.search.includes("view=settings")}
-                  >
-                    <Link to="/dashboard?view=settings">
-                      <Settings className="h-4 w-4" />
-                      <span>Settings</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        
-        <SidebarFooter className="mt-auto">
-          <div className="px-3 py-2 flex flex-col">
-            <div className="text-xs text-muted-foreground mb-2">
-              Logged in as {profile?.role || 'patient'}
-            </div>
-            <button 
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 transition-colors"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </button>
+    <Sidebar>
+      <SidebarHeader className="p-4 border-b">
+        <div className="flex items-center space-x-3">
+          <div 
+            className={cn(
+              "bg-primary text-primary-foreground p-2 rounded-md overflow-hidden relative",
+              isSuperAdmin && "cursor-pointer hover:opacity-90 transition-opacity"
+            )}
+            onClick={handleLogoClick}
+          >
+            {logoUrl ? (
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={logoUrl} alt="Mediloop" />
+                <AvatarFallback>
+                  <FileText className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <FileText className="h-5 w-5" />
+            )}
+            
+            {isSuperAdmin && (
+              <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
+                <Upload className="h-3 w-3 text-white" />
+              </div>
+            )}
+            
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <div className="h-3 w-3 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+              </div>
+            )}
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileChange}
+            />
           </div>
-        </SidebarFooter>
-      </Sidebar>
+          <div>
+            <h3 className="font-semibold text-sm">Mediloop</h3>
+            <p className="text-xs text-muted-foreground">Healthcare Platform</p>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Platform</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/patient-dashboard')}
+                  className="w-full flex justify-between items-center"
+                >
+                  <span className="flex items-center">
+                    <Home className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-50" />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => toggleGroup('profile')}
+                  className={cn(
+                    "w-full flex justify-between items-center",
+                    isGroupExpanded('profile') && "text-primary"
+                  )}
+                >
+                  <span className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      isGroupExpanded('profile') && "rotate-180"
+                    )}
+                  />
+                </SidebarMenuButton>
+                {isGroupExpanded('profile') && (
+                  <div className="pl-6 space-y-1 mt-1">
+                    <SidebarMenuButton
+                      onClick={() => navigateToView('profile', 'personal')}
+                      className="w-full text-sm"
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      Personal Information
+                    </SidebarMenuButton>
+                    <SidebarMenuButton
+                      onClick={() => navigateToView('profile', 'addresses')}
+                      className="w-full text-sm"
+                    >
+                      <MapPin className="mr-2 h-4 w-4" />
+                      Addresses
+                    </SidebarMenuButton>
+                    <SidebarMenuButton
+                      onClick={() => navigateToView('profile', 'pharmacy')}
+                      className="w-full text-sm"
+                    >
+                      <Store className="mr-2 h-4 w-4" />
+                      My Default Pharmacy
+                    </SidebarMenuButton>
+                    <SidebarMenuButton
+                      onClick={() => navigateToView('profile', 'doctor')}
+                      className="w-full text-sm"
+                    >
+                      <UserRound className="mr-2 h-4 w-4" />
+                      My Doctor
+                    </SidebarMenuButton>
+                    <SidebarMenuButton
+                      onClick={() => navigateToView('profile', 'nextofkin')}
+                      className="w-full text-sm"
+                    >
+                      <Heart className="mr-2 h-4 w-4" />
+                      Next of Kin
+                    </SidebarMenuButton>
+                  </div>
+                )}
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => toggleGroup('orders')}
+                  className={cn(
+                    "w-full flex justify-between items-center",
+                    isGroupExpanded('orders') && "text-primary"
+                  )}
+                >
+                  <span className="flex items-center">
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    Orders
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      isGroupExpanded('orders') && "rotate-180"
+                    )}
+                  />
+                </SidebarMenuButton>
+                {isGroupExpanded('orders') && (
+                  <div className="pl-6 space-y-1 mt-1">
+                    <SidebarMenuButton
+                      onClick={() => navigateToView('orders', 'orders')}
+                      className="w-full text-sm"
+                    >
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      My Orders
+                    </SidebarMenuButton>
+                    <SidebarMenuButton
+                      onClick={() => navigateToView('orders', 'payments')}
+                      className="w-full text-sm"
+                    >
+                      <Receipt className="mr-2 h-4 w-4" />
+                      Payments
+                    </SidebarMenuButton>
+                  </div>
+                )}
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigateToView('prescriptions')}
+                  className="w-full flex justify-between items-center"
+                >
+                  <span className="flex items-center">
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    My Prescriptions
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-50" />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigateToView('teleconsultations')}
+                  className="w-full flex justify-between items-center"
+                >
+                  <span className="flex items-center">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Teleconsultations
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-50" />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigateToView('settings')}
+                  className="w-full flex justify-between items-center"
+                >
+                  <span className="flex items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-50" />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="border-t mt-auto p-4">
+        {profile && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center space-x-3 cursor-pointer">
+                <UserAvatar userProfile={profile} />
+                <div className="overflow-hidden">
+                  <p className="text-sm font-medium truncate">{profile?.full_name || 'sam testington'}</p>
+                  <p className="text-xs leading-none text-muted-foreground truncate">{profile?.email || 'bencu004@hotmail.com'}</p>
+                </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {profile?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => navigateToView('profile')}>
+                  Account
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigateToView('billing')}>
+                  Billing
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigateToView('settings')}>
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </SidebarFooter>
+    </Sidebar>
+  );
+};
+
+const PatientSidebar = () => {
+  return (
+    <SidebarProvider>
+      <PatientSidebarContent />
     </SidebarProvider>
   );
 };
