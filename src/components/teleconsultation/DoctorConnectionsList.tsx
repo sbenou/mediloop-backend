@@ -6,11 +6,12 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User, Calendar } from 'lucide-react';
+import { ConnectionStatus } from '@/types/supabase';
 
 interface DoctorConnection {
   id: string;
   doctor_id: string;
-  status: string;
+  status: ConnectionStatus;
   doctor: {
     id: string;
     full_name: string;
@@ -43,14 +44,15 @@ const DoctorConnectionsList: React.FC<DoctorConnectionsListProps> = ({ onSelectD
           id,
           doctor_id,
           status,
-          doctor:doctor_id(id, full_name, email, license_number)
+          doctor:profiles!doctor_id(id, full_name, email, license_number)
         `)
         .eq('patient_id', profile.id)
         .eq('status', 'accepted');
 
       if (error) throw error;
       
-      setConnections(data || []);
+      // Type assertion to ensure data matches our interface
+      setConnections(data as unknown as DoctorConnection[]);
     } catch (error) {
       console.error('Error fetching doctor connections:', error);
     } finally {

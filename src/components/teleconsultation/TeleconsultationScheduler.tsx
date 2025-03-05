@@ -1,13 +1,14 @@
 
-import React, { useState } from 'react';
-import { Calendar } from '@/components/ui/calendar';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, addDays, setHours, setMinutes, isAfter, isBefore, addMinutes } from 'date-fns';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { toast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import { format, addDays, addHours, isWeekend, isBefore } from 'date-fns';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/use-toast';
+import { TeleconsultationStatus } from '@/types/supabase';
 
 interface TeleconsultationSchedulerProps {
   doctorId: string;
@@ -15,61 +16,119 @@ interface TeleconsultationSchedulerProps {
   onScheduled: () => void;
 }
 
-const CONSULTATION_DURATION = 30; // in minutes
-const BUSINESS_HOURS_START = 9; // 9 AM
-const BUSINESS_HOURS_END = 17; // 5 PM
-
-type TimeSlot = {
-  hour: number;
-  minute: number;
-  formatted: string;
+// Define consult time slot interface
+interface TimeSlot {
+  label: string;
+  value: Date;
   disabled: boolean;
-};
+}
 
 const TeleconsultationScheduler: React.FC<TeleconsultationSchedulerProps> = ({ 
   doctorId, 
-  doctorName,
+  doctorName, 
   onScheduled 
 }) => {
   const { profile } = useAuth();
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [timeSlot, setTimeSlot] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
+  const [reason, setReason] = useState('');
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reason, setReason] = useState<string>('');
+  
+  const [existingConsultations, setExistingConsultations] = useState<{
+    start_time: string;
+    end_time: string;
+  }[]>([]);
 
-  // Generate time slots for the selected date
-  const generateTimeSlots = (): TimeSlot[] => {
+  // Fetch existing teleconsultations when date changes
+  useEffect(() => {
+    if (selectedDate) {
+      fetchExistingConsultations();
+    }
+  }, [selectedDate, doctorId]);
+
+  // Generate time slots when date or existing consultations change
+  useEffect(() => {
+    if (selectedDate) {
+      generateTimeSlots();
+    }
+  }, [selectedDate, existingConsultations]);
+
+  const fetchExistingConsultations = async () => {
+    if (!selectedDate || !doctorId) return;
+
+    try {
+      // Set start of day and end of day for query
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from('teleconsultations')
+        .select('start_time, end_time')
+        .eq('doctor_id', doctorId)
+        .eq('status', 'confirmed')
+        .gte('start_time', startOfDay.toISOString())
+        .lte('start_time', endOfDay.toISOString());
+
+      if (error) throw error;
+
+      setExistingConsultations(data || []);
+    } catch (error) {
+      console.error('Error fetching existing consultations:', error);
+    }
+  };
+
+  const generateTimeSlots = () => {
+    if (!selectedDate) return;
+
     const slots: TimeSlot[] = [];
     const now = new Date();
-    const isToday = date && date.toDateString() === now.toDateString();
-    
-    // Create slots from business hours start to end, in 30-minute increments
-    for (let hour = BUSINESS_HOURS_START; hour < BUSINESS_HOURS_END; hour++) {
-      for (let minute of [0, 30]) {
-        const slotTime = date ? setMinutes(setHours(new Date(date), hour), minute) : new Date();
+    const startHour = 9; // 9 AM
+    const endHour = 17; // 5 PM
+    const intervalMinutes = 30; // 30-minute intervals
+
+    // Create a set of booked time slots for quick lookup
+    const bookedSlots = new Set(
+      existingConsultations.map(consultation => 
+        new Date(consultation.start_time).toISOString()
+      )
+    );
+
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += intervalMinutes) {
+        const slotTime = new Date(selectedDate);
+        slotTime.setHours(hour, minute, 0, 0);
         
-        // Disable past time slots if the selected date is today
-        const disabled = isToday && isBefore(slotTime, now);
+        // Skip if the time slot is in the past
+        if (isBefore(slotTime, now)) {
+          continue;
+        }
+        
+        // Check if this slot conflicts with existing consultations
+        const isBooked = bookedSlots.has(slotTime.toISOString());
         
         slots.push({
-          hour,
-          minute,
-          formatted: format(slotTime, 'h:mm a'),
-          disabled
+          label: format(slotTime, 'h:mm a'),
+          value: slotTime,
+          disabled: isBooked
         });
       }
     }
-    
-    return slots;
+
+    setTimeSlots(slots);
+
+    // Reset selected time slot when date changes
+    setSelectedTimeSlot(null);
   };
 
-  const timeSlots = date ? generateTimeSlots() : [];
-
-  const handleScheduleConsultation = async () => {
-    if (!date || !timeSlot || !doctorId || !profile?.id) {
-      toast({ 
-        title: "Missing information", 
-        description: "Please select both date and time for your consultation.",
+  const handleSchedule = async () => {
+    if (!selectedDate || !selectedTimeSlot || !profile?.id || !doctorId) {
+      toast({
+        title: "Missing information",
+        description: "Please select a date, time, and provide a reason for the consultation.",
         variant: "destructive"
       });
       return;
@@ -77,77 +136,45 @@ const TeleconsultationScheduler: React.FC<TeleconsultationSchedulerProps> = ({
 
     setIsSubmitting(true);
 
-    // Parse the selected time
-    const [hourStr, minuteStr] = timeSlot.split(':');
-    const isPM = timeSlot.toLowerCase().includes('pm');
-    let hour = parseInt(hourStr);
-    if (isPM && hour < 12) hour += 12;
-    if (!isPM && hour === 12) hour = 0;
-    const minute = parseInt(minuteStr);
-
-    // Create the start time and end time (30 minutes later)
-    const startTime = setMinutes(setHours(new Date(date), hour), minute);
-    const endTime = addMinutes(startTime, CONSULTATION_DURATION);
-
     try {
-      // Check if the doctor already has a consultation at this time
-      const { data: existingConsultations, error: checkError } = await supabase
-        .from('teleconsultations')
-        .select('*')
-        .eq('doctor_id', doctorId)
-        .lt('start_time', endTime.toISOString())
-        .gt('end_time', startTime.toISOString());
+      // Calculate end time (30 minutes after start)
+      const endTime = addMinutes(selectedTimeSlot.value, 30);
 
-      if (checkError) throw checkError;
-
-      if (existingConsultations && existingConsultations.length > 0) {
-        toast({
-          title: "Time slot unavailable",
-          description: "The doctor already has a consultation scheduled during this time. Please select another time.",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Create the new consultation
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('teleconsultations')
         .insert({
           patient_id: profile.id,
           doctor_id: doctorId,
-          start_time: startTime.toISOString(),
+          start_time: selectedTimeSlot.value.toISOString(),
           end_time: endTime.toISOString(),
-          status: 'pending',
-          reason: reason || 'General consultation'
-        })
-        .select()
-        .single();
+          status: 'pending' as TeleconsultationStatus,
+          reason: reason.trim() || 'General consultation'
+        });
 
       if (error) throw error;
 
-      // Create a notification for the doctor
+      // Create notification for the doctor
       await supabase
         .from('notifications')
         .insert({
           user_id: doctorId,
-          type: 'teleconsultation_request',
           title: 'New Teleconsultation Request',
-          message: `${profile.full_name} has requested a teleconsultation on ${format(startTime, 'PPP')} at ${format(startTime, 'p')}`,
+          message: `${profile.full_name} has requested a teleconsultation on ${format(selectedTimeSlot.value, 'PPP')} at ${format(selectedTimeSlot.value, 'p')}.`,
+          type: 'teleconsultation_request',
           link: '/dashboard?view=teleconsultations'
         });
 
       toast({
-        title: "Consultation Requested",
-        description: `Your consultation with Dr. ${doctorName} has been requested for ${format(startTime, 'PPP')} at ${format(startTime, 'p')}. You will be notified when the doctor confirms.`
+        title: "Request sent",
+        description: `Your teleconsultation request with Dr. ${doctorName} has been sent successfully.`,
       });
 
       onScheduled();
     } catch (error) {
-      console.error('Error scheduling consultation:', error);
+      console.error('Error scheduling teleconsultation:', error);
       toast({
-        title: "Failed to schedule consultation",
-        description: "There was an error scheduling your consultation. Please try again.",
+        title: "Failed to schedule",
+        description: "There was an error scheduling your teleconsultation. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -155,69 +182,87 @@ const TeleconsultationScheduler: React.FC<TeleconsultationSchedulerProps> = ({
     }
   };
 
+  // Helper function to add minutes to a date
+  const addMinutes = (date: Date, minutes: number) => {
+    const result = new Date(date);
+    result.setMinutes(result.getMinutes() + minutes);
+    return result;
+  };
+
+  // Disable past dates and weekends
+  const disabledDays = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return isBefore(date, today) || isWeekend(date);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Schedule Teleconsultation</CardTitle>
-        <CardDescription>
-          Book a teleconsultation with Dr. {doctorName}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Select Date</label>
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={setDate}
-            disabled={(date) => 
-              date < new Date() || // Can't book in the past
-              date > addDays(new Date(), 30) // Can only book up to 30 days in advance
-            }
-            className="border rounded-md p-2"
-          />
-        </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Request Teleconsultation with Dr. {doctorName}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h3 className="text-lg font-medium mb-2">1. Select a date</h3>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              disabled={disabledDays}
+              className="rounded-md border"
+              defaultMonth={new Date()}
+              initialFocus
+            />
+          </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Select Time</label>
-          <Select onValueChange={setTimeSlot} value={timeSlot || undefined}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select time slot" />
-            </SelectTrigger>
-            <SelectContent>
-              {timeSlots.map((slot, index) => (
-                <SelectItem 
-                  key={index} 
-                  value={slot.formatted}
-                  disabled={slot.disabled}
-                >
-                  {slot.formatted}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          {selectedDate && (
+            <div>
+              <h3 className="text-lg font-medium mb-2">2. Select a time</h3>
+              {timeSlots.length > 0 ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                  {timeSlots.map((slot, index) => (
+                    <Button
+                      key={index}
+                      variant={selectedTimeSlot?.label === slot.label ? "default" : "outline"}
+                      disabled={slot.disabled}
+                      onClick={() => setSelectedTimeSlot(slot)}
+                      className="w-full"
+                    >
+                      {slot.label}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No available time slots for this date.</p>
+              )}
+            </div>
+          )}
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Reason for consultation</label>
-          <textarea 
-            className="w-full min-h-[100px] p-2 border rounded-md"
-            placeholder="Please briefly describe the reason for your consultation..."
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button 
-          onClick={handleScheduleConsultation} 
-          disabled={!date || !timeSlot || isSubmitting}
-          className="w-full"
-        >
-          {isSubmitting ? "Scheduling..." : "Request Consultation"}
-        </Button>
-      </CardFooter>
-    </Card>
+          {selectedTimeSlot && (
+            <div>
+              <h3 className="text-lg font-medium mb-2">3. Reason for consultation</h3>
+              <Textarea
+                placeholder="Please describe your symptoms or reason for the consultation"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+          )}
+
+          {selectedDate && selectedTimeSlot && (
+            <Button 
+              onClick={handleSchedule} 
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Request Appointment"}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

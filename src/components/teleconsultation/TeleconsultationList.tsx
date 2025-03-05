@@ -71,8 +71,8 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
         .from('teleconsultations')
         .select(`
           *,
-          patient:patient_id(full_name, email),
-          doctor:doctor_id(full_name, email)
+          patient:profiles!patient_id(full_name, email),
+          doctor:profiles!doctor_id(full_name, email)
         `);
 
       // Filter based on user role
@@ -86,7 +86,8 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
 
       if (error) throw error;
       
-      setConsultations(data || []);
+      // Type assertion to ensure data matches our interface
+      setConsultations(data as unknown as Teleconsultation[]);
     } catch (error) {
       console.error('Error fetching teleconsultations:', error);
       toast({
