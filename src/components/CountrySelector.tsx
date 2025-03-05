@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -31,7 +30,7 @@ const AVAILABLE_COUNTRIES: Country[] = [
 ];
 
 const CountrySelector = () => {
-  // Always start with dialog open by default
+  // Always force dialog open by default
   const [open, setOpen] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string>("LU");
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
@@ -41,15 +40,20 @@ const CountrySelector = () => {
   
   useEffect(() => {
     console.log("CountrySelector: Component mounted, dialog initially set to open:", open);
+    
+    // Force dialog to always be open on initial mount
+    setOpen(true);
+  }, []);
+  
+  useEffect(() => {
+    // For debugging purposes
+    if (!open) {
+      console.log("CountrySelector: Dialog was closed, forcing it open again");
+      setOpen(true);
+    }
   }, [open]);
   
   useEffect(() => {
-    // Force dialog to be open on initial mount
-    if (!initialCheckDone) {
-      setOpen(true);
-      console.log("CountrySelector: Forcing dialog open on initial mount");
-    }
-    
     let shouldShowDialog = true;
     
     const checkUserAddress = async () => {
@@ -108,7 +112,8 @@ const CountrySelector = () => {
       }
       
       console.log("CountrySelector: Setting dialog open state to:", shouldShowDialog);
-      setOpen(shouldShowDialog);
+      // Force dialog to stay open if no country selection has been made
+      setOpen(true);
       setInitialCheckDone(true);
     };
     
@@ -194,7 +199,18 @@ const CountrySelector = () => {
       )}
       <Dialog 
         open={open} 
-        onOpenChange={setOpen} 
+        onOpenChange={(newOpenState) => {
+          console.log("Dialog onOpenChange called with:", newOpenState);
+          if (!newOpenState) {
+            // If trying to close without selection, keep it open
+            if (!localStorage.getItem('selectedCountry')) {
+              console.log("CountrySelector: Preventing dialog from closing, no country selected");
+              setOpen(true);
+              return;
+            }
+          }
+          setOpen(newOpenState);
+        }} 
         modal={true}
       >
         <DialogContent 
@@ -202,9 +218,11 @@ const CountrySelector = () => {
           forceMount
           onInteractOutside={(e) => {
             e.preventDefault();
+            console.log("CountrySelector: Outside interaction prevented");
           }}
           onEscapeKeyDown={(e) => {
             e.preventDefault();
+            console.log("CountrySelector: Escape key prevented");
           }}
         >
           <DialogTitle>Select Your Country</DialogTitle>

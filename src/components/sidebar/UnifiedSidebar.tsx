@@ -1,9 +1,10 @@
 
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   Home, User, ShoppingBag, FileText, Settings, Calendar, 
-  CreditCard, Bell, LogOut, ChevronDown, CreditCard as Payment 
+  CreditCard, Bell, LogOut, ChevronDown, CreditCard as Payment,
+  UserCircle, MapPin, Store, Heart, Users
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -18,13 +19,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { clearAllAuthStorage } from "@/lib/supabase";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const UnifiedSidebar = () => {
   const { userRole, profile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  
+  // Set open states based on URL
+  useEffect(() => {
+    if (location.pathname.includes('/my-orders') || location.search.includes('view=orders')) {
+      setIsOrdersOpen(true);
+    }
+    
+    if (location.pathname.includes('/profile') || location.search.includes('view=profile')) {
+      setIsProfileOpen(true);
+    }
+  }, [location.pathname, location.search]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -94,6 +108,28 @@ const UnifiedSidebar = () => {
     return location.pathname === path;
   };
 
+  const isSubPathActive = (path: string) => {
+    if (path.includes('?')) {
+      const [basePath, queryString] = path.split('?');
+      const isBasePathMatch = location.pathname === basePath;
+      
+      if (!isBasePathMatch) return false;
+      
+      const searchParams = new URLSearchParams(queryString);
+      const currentSearchParams = new URLSearchParams(location.search);
+      
+      for (const [key, value] of searchParams.entries()) {
+        if (currentSearchParams.get(key) !== value) {
+          return false;
+        }
+      }
+      
+      return true;
+    }
+    
+    return location.pathname === path;
+  };
+
   const platformMenuItems = [
     {
       label: 'Dashboard',
@@ -116,14 +152,48 @@ const UnifiedSidebar = () => {
     {
       label: 'Orders',
       icon: <ShoppingBag className="w-4 h-4 mr-3" />,
-      path: '/my-orders',
-      active: isLinkActive('/my-orders')
+      path: '/my-orders?view=orders',
+      active: isSubPathActive('/my-orders?view=orders') || 
+             (location.pathname === '/my-orders' && (!location.search || location.search === ''))
     },
     {
       label: 'Payments',
       icon: <Payment className="w-4 h-4 mr-3" />,
       path: '/my-orders?view=payments',
-      active: location.pathname === '/my-orders' && location.search.includes('view=payments')
+      active: isSubPathActive('/my-orders?view=payments')
+    }
+  ];
+  
+  const profileSubItems = [
+    {
+      label: 'Personal Details',
+      icon: <UserCircle className="w-4 h-4 mr-3" />,
+      path: '/dashboard?view=profile&profileTab=personal',
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=personal')
+    },
+    {
+      label: 'Addresses',
+      icon: <MapPin className="w-4 h-4 mr-3" />,
+      path: '/dashboard?view=profile&profileTab=addresses',
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=addresses')
+    },
+    {
+      label: 'Pharmacy',
+      icon: <Store className="w-4 h-4 mr-3" />,
+      path: '/dashboard?view=profile&profileTab=pharmacy',
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=pharmacy')
+    },
+    {
+      label: 'My Doctor',
+      icon: <Heart className="w-4 h-4 mr-3" />,
+      path: '/dashboard?view=profile&profileTab=doctor',
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=doctor')
+    },
+    {
+      label: 'Next of Kin',
+      icon: <Users className="w-4 h-4 mr-3" />,
+      path: '/dashboard?view=profile&profileTab=nextofkin',
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=nextofkin')
     }
   ];
 
@@ -197,6 +267,41 @@ const UnifiedSidebar = () => {
               {item.label}
             </Link>
           ))}
+          
+          {/* Profile Collapsible Section */}
+          <Collapsible 
+            open={isProfileOpen} 
+            onOpenChange={setIsProfileOpen}
+            className="w-full"
+          >
+            <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm ${
+              location.search.includes('view=profile')
+                ? 'bg-primary/10 text-primary font-medium' 
+                : 'text-muted-foreground hover:bg-gray-100'
+            }`}>
+              <div className="flex items-center">
+                <User className="w-5 h-5 mr-3" />
+                <span>Profile</span>
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isProfileOpen ? 'transform rotate-180' : ''}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pl-5 space-y-1 mt-1">
+              {profileSubItems.map((subItem, index) => (
+                <Link
+                  key={index}
+                  to={subItem.path}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                    subItem.active 
+                      ? 'bg-primary/10 text-primary font-medium' 
+                      : 'text-muted-foreground hover:bg-gray-100'
+                  }`}
+                >
+                  {subItem.icon}
+                  {subItem.label}
+                </Link>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
           
           {/* Orders Collapsible Section */}
           <Collapsible 
