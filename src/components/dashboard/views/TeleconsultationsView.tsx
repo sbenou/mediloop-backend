@@ -1,7 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useSearchParams } from "react-router-dom";
 import JitsiMeetingRoom from "@/components/teleconsultation/JitsiMeetingRoom";
 import TeleconsultationList from "@/components/teleconsultation/TeleconsultationList";
 import TeleconsultationScheduler from "@/components/teleconsultation/TeleconsultationScheduler";
@@ -33,9 +34,19 @@ interface Teleconsultation {
 
 const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole }) => {
   const { profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const requestParam = searchParams.get('request');
+  
   const [view, setView] = useState<'list' | 'scheduler' | 'meeting'>('list');
   const [selectedDoctor, setSelectedDoctor] = useState<{ id: string; name: string } | null>(null);
   const [activeMeeting, setActiveMeeting] = useState<Teleconsultation | null>(null);
+
+  // Set initial view based on URL parameters
+  useEffect(() => {
+    if (requestParam === 'new' && userRole === 'patient') {
+      setView('scheduler');
+    }
+  }, [requestParam, userRole]);
 
   const getViewTitle = () => {
     switch (userRole) {
@@ -85,7 +96,7 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
       );
     }
 
-    if (view === 'scheduler' && selectedDoctor) {
+    if (view === 'scheduler') {
       return (
         <div>
           <Button 
@@ -95,11 +106,16 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
           >
             Back to Teleconsultations
           </Button>
-          <TeleconsultationScheduler
-            doctorId={selectedDoctor.id}
-            doctorName={selectedDoctor.name}
-            onScheduled={() => setView('list')}
-          />
+          
+          {selectedDoctor ? (
+            <TeleconsultationScheduler
+              doctorId={selectedDoctor.id}
+              doctorName={selectedDoctor.name}
+              onScheduled={() => setView('list')}
+            />
+          ) : (
+            <DoctorConnectionsList onSelectDoctor={handleSelectDoctor} />
+          )}
         </div>
       );
     }
@@ -115,16 +131,10 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
                 Request New Consultation
               </Button>
             </div>
-            
-            {view === 'scheduler' && (
-              <DoctorConnectionsList onSelectDoctor={handleSelectDoctor} />
-            )}
           </>
         )}
         
-        {view === 'list' && (
-          <TeleconsultationList onJoinMeeting={handleJoinMeeting} />
-        )}
+        <TeleconsultationList onJoinMeeting={handleJoinMeeting} />
       </div>
     );
   };

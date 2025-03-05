@@ -28,6 +28,7 @@ const DoctorConnectionsList: React.FC<DoctorConnectionsListProps> = ({ onSelectD
   const { profile } = useAuth();
   const [connections, setConnections] = useState<DoctorConnection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDoctorConnections();
@@ -37,6 +38,8 @@ const DoctorConnectionsList: React.FC<DoctorConnectionsListProps> = ({ onSelectD
     if (!profile?.id) return;
     
     setLoading(true);
+    setError(null);
+    
     try {
       const { data, error } = await supabase
         .from('doctor_patient_connections')
@@ -55,6 +58,7 @@ const DoctorConnectionsList: React.FC<DoctorConnectionsListProps> = ({ onSelectD
       setConnections(data as unknown as DoctorConnection[]);
     } catch (error) {
       console.error('Error fetching doctor connections:', error);
+      setError('Error fetching doctor connections');
     } finally {
       setLoading(false);
     }
@@ -67,6 +71,27 @@ const DoctorConnectionsList: React.FC<DoctorConnectionsListProps> = ({ onSelectD
         <Skeleton className="h-[150px] w-full" />
         <Skeleton className="h-[150px] w-full" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Error Loading Doctors</CardTitle>
+          <CardDescription>
+            {error}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <Button 
+            variant="outline" 
+            onClick={fetchDoctorConnections}
+          >
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 

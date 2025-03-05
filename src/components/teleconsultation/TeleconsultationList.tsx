@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, isPast, isToday, addMinutes } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -41,6 +40,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
   const [consultations, setConsultations] = useState<Teleconsultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConsultations();
@@ -66,6 +66,8 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
     if (!profile?.id) return;
     
     setLoading(true);
+    setError(null);
+    
     try {
       let query = supabase
         .from('teleconsultations')
@@ -90,11 +92,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
       setConsultations(data as unknown as Teleconsultation[]);
     } catch (error) {
       console.error('Error fetching teleconsultations:', error);
-      toast({
-        title: "Failed to load consultations",
-        description: "There was an error loading your teleconsultations.",
-        variant: "destructive"
-      });
+      setError('Failed to load your teleconsultations');
     } finally {
       setLoading(false);
     }
@@ -219,6 +217,24 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="pt-6 text-center">
+          <p className="text-muted-foreground">{error}</p>
+          <p className="mt-2">You might need to connect with a doctor first.</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => window.location.href = '/dashboard?view=profile&profileTab=doctor'}
+          >
+            Connect with Doctors
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
@@ -232,6 +248,15 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="text-muted-foreground">No upcoming teleconsultations found.</p>
+                {userRole === 'patient' && (
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => window.location.href = '/dashboard?view=teleconsultations&request=new'}
+                  >
+                    Request New Consultation
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
