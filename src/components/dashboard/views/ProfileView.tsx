@@ -83,7 +83,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
         <TabsContent value="personal" className="mt-4">
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
-            <PersonalDetails profile={profile} />
+            <PersonalDetails />
           </div>
         </TabsContent>
         
