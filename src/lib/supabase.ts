@@ -232,6 +232,9 @@ const crossTabStorage = {
           
           // Set to empty with immediate expiration
           document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1;`;
+          
+          // Create without HttpOnly to allow manual clearing
+          document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1;`;
         });
       });
       
@@ -252,6 +255,14 @@ const crossTabStorage = {
       
       // Try overwriting with value instead of deleting
       document.cookie = `${name}=deleted; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
+      
+      // Add specific handling for cookies that might be using these specific attributes
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+      document.cookie = `${name}=; max-age=0;`;
+      document.cookie = `${name}=; max-age=-1;`;
+      
+      // Attempt to directly overwrite the cookie value
+      document.cookie = `${name}=`;
     });
     
     console.log('%cAll Supabase storage cleared manually', 'color: green; font-weight: bold');
@@ -417,10 +428,10 @@ const setupSessionRefresh = () => {
     try {
       // Only perform refresh when tab is visible to avoid unnecessary API calls
       if (document.visibilityState === 'visible') {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
           // If session exists but expires in less than 5 minutes, refresh it
-          const expiresAt = data.session.expires_at || 0;
+          const expiresAt = session.expires_at || 0;
           const now = Math.floor(Date.now() / 1000);
           if (expiresAt - now < 300) {
             console.log('Auth: Session expiring soon, refreshing token');
@@ -684,6 +695,9 @@ export const clearAllAuthStorage = () => {
           
           // Set to empty with immediate expiration
           document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1;`;
+          
+          // Create without HttpOnly to allow manual clearing
+          document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1;`;
         });
       });
       
@@ -704,6 +718,14 @@ export const clearAllAuthStorage = () => {
       
       // Try overwriting with value instead of deleting
       document.cookie = `${name}=deleted; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
+      
+      // Add specific handling for cookies that might be using these specific attributes
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+      document.cookie = `${name}=; max-age=0;`;
+      document.cookie = `${name}=; max-age=-1;`;
+      
+      // Attempt to directly overwrite the cookie value
+      document.cookie = `${name}=`;
     });
     
     console.log('%cAll Supabase storage cleared manually', 'color: green; font-weight: bold');

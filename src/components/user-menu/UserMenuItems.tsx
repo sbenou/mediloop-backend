@@ -70,9 +70,16 @@ export const UserMenuItems = () => {
         // Also try setting without secure flag for http connections
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0;`;
         
-        // Use HttpOnly attribute for security-sensitive cookies
-        // Note: This can only be set by the server, but we'll try anyway
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0; HttpOnly;`;
+        // Use non-HttpOnly attribute to allow manual clearing
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0;`;
+        
+        // Add SameSite attribute variations
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=None; Secure; max-age=0;`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; max-age=0;`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict; max-age=0;`;
+        
+        // Last resort - try absolute expiration without other attributes
+        document.cookie = `${name}=; max-age=-1;`;
       });
       
       // Sign out from Supabase - this will clear the session on the server
