@@ -1,3 +1,4 @@
+
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Home, User, ShoppingBag, FileText, Settings, Calendar, CreditCard, Bell, LogOut, ChevronDown } from "lucide-react";
@@ -23,6 +24,14 @@ const UnifiedSidebar = () => {
   const handleLogout = async () => {
     try {
       console.log("Logout initiated from UnifiedSidebar");
+      
+      // First, do a hard clear of all browser storage
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {
+        console.error("Error clearing storage:", e);
+      }
       
       // Force clear all auth storage (localStorage, sessionStorage, and cookies)
       clearAllAuthStorage();
@@ -220,8 +229,8 @@ const UnifiedSidebar = () => {
           <DropdownMenuContent align="end" side="right" className="w-56">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1 items-center">
-                <p className="text-sm font-bold">{profile?.email || 'user@example.com'}</p>
-                <p className="text-xs font-bold capitalize">{userRole || 'Patient'}</p>
+                <p className="text-sm font-normal">{profile?.email || 'user@example.com'}</p>
+                <p className="text-xs font-bold">{userRole === 'user' ? 'Patient' : userRole}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

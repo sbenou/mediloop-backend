@@ -38,9 +38,11 @@ const CountrySelector = () => {
   const [mainAddress, setMainAddress] = useState<Address | null>(null);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   
+  // Force the dialog to open on first component mount
   useEffect(() => {
-    // Force the dialog to open on first component mount
+    // Open the dialog if needed, even on first render
     if (!initialCheckDone) {
+      console.log("CountrySelector: Initial component mount, ensuring dialog is shown");
       setOpen(true);
     }
   }, [initialCheckDone]);
@@ -92,6 +94,10 @@ const CountrySelector = () => {
             setUserLocation(country.coordinates);
             shouldShowDialog = false;
           }
+        } else {
+          console.log("CountrySelector: No saved country found, dialog should appear");
+          // Force dialog to appear if no saved country
+          shouldShowDialog = true;
         }
       } catch (e) {
         console.error("Error reading from localStorage:", e);
@@ -100,6 +106,7 @@ const CountrySelector = () => {
       }
       
       // Set open state based on our checks
+      console.log("CountrySelector: Setting dialog open state to:", shouldShowDialog);
       setOpen(shouldShowDialog);
       setInitialCheckDone(true);
     };

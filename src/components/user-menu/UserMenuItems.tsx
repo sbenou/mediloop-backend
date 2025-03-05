@@ -30,6 +30,14 @@ export const UserMenuItems = () => {
         permissions: [],
       });
       
+      // First, do a hard clear of all browser storage
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {
+        console.error("Error clearing storage:", e);
+      }
+      
       // Broadcast logout event to other tabs BEFORE API call
       try {
         const logoutEvent = { type: 'LOGOUT', timestamp: Date.now() };
@@ -103,15 +111,15 @@ export const UserMenuItems = () => {
         description: "You have been successfully logged out",
       });
       
-      // Force a hard redirect to ensure complete logout and fresh page load
-      window.location.href = "/";
-
       // Also clear the selectedCountry from localStorage to force the CountrySelector to appear on next visit
       try {
         localStorage.removeItem('selectedCountry');
       } catch (err) {
         console.error("Error removing selectedCountry:", err);
       }
+      
+      // Force a hard redirect to ensure complete logout and fresh page load
+      window.location.href = "/login";
     } catch (error) {
       console.error("Logout error:", error);
       toast({
@@ -140,8 +148,8 @@ export const UserMenuItems = () => {
       <>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1 items-center">
-            <p className="text-sm font-bold">{auth.profile?.email || 'user@example.com'}</p>
-            <p className="text-xs font-bold capitalize">{userRole || 'Patient'}</p>
+            <p className="text-sm font-normal">{auth.profile?.email || 'user@example.com'}</p>
+            <p className="text-xs font-bold">{userRole === 'user' ? 'Patient' : userRole}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -179,7 +187,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole, auth.profile]);
+  }, [navigate, userRole, auth.profile, setAuth]);
 
   return menuItems;
 };
