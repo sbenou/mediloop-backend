@@ -7,6 +7,7 @@ import UserMenu from "../UserMenu";
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { MainNavigation } from "./navigation/MainNavigation";
 import CartButton from "./navigation/CartButton";
+import { SidebarInset } from "@/components/ui/sidebar";
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -17,12 +18,12 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden group/sidebar-wrapper">
       {/* Sidebar - Always show for unified layout */}
       <UnifiedSidebar />
       
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <SidebarInset className="flex-1 flex flex-col overflow-hidden">
         {/* Apply a consistent font family to header */}
         <header className="h-16 border-b px-6 flex items-center justify-between font-sans">
           <div className="flex items-center space-x-4">
@@ -44,7 +45,7 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
         <main className="flex-1 overflow-auto p-6">
           {children}
         </main>
-      </div>
+      </SidebarInset>
     </div>
   );
 };
