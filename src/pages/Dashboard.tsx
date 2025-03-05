@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -11,6 +12,7 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const view = searchParams.get('view') || 'home';
   const ordersTab = searchParams.get('ordersTab') || 'orders';
+  const prescriptionsTab = searchParams.get('prescriptionsTab') || 'active';
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

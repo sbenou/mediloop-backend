@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   Home, User, ShoppingBag, FileText, Settings, Calendar, 
   CreditCard, Bell, LogOut, ChevronDown, CreditCard as Payment,
-  UserCircle, MapPin, Store, Heart, Users
+  UserCircle, MapPin, Store, Heart, Users, Pill
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -345,6 +345,22 @@ const UnifiedSidebar = () => {
               ))}
             </CollapsibleContent>
           </Collapsible>
+          
+          {/* Add Prescriptions link - visible for patients, doctors and pharmacists */}
+          {(userRole === 'patient' || userRole === 'doctor' || userRole === 'pharmacist') && (
+            <Link
+              to="/dashboard?view=prescriptions"
+              className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                (location.pathname === '/dashboard' && location.search.includes('view=prescriptions')) ||
+                location.pathname.includes('/my-prescriptions')
+                  ? 'bg-primary/10 text-primary font-medium' 
+                  : 'text-muted-foreground hover:bg-gray-100'
+              }`}
+            >
+              <Pill className="w-5 h-5 mr-3" />
+              Prescriptions
+            </Link>
+          )}
           
           <Link
             to="/teleconsultations"

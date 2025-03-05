@@ -227,6 +227,7 @@ const UniversalDashboard = () => {
     const commonProps = {
       ordersTab: searchParams.get('ordersTab') || 'orders',
       profileTab: searchParams.get('profileTab') || 'personal',
+      prescriptionsTab: searchParams.get('prescriptionsTab') || 'active',
     };
 
     switch (view) {
