@@ -1,37 +1,31 @@
 
-import { useEffect } from "react";
-import { HeroSection } from "@/components/home/HeroSection";
-import { FeaturesGrid } from "@/components/home/FeaturesGrid";
-import { StatsSection } from "@/components/home/StatsSection";
-import GetStartedSteps from "@/components/home/GetStartedSteps";
-import { TestimonialsSection } from "@/components/home/TestimonialsSection";
-import { PartnerSection } from "@/components/home/PartnerSection";
-import { DeliveryPersonSection } from "@/components/home/DeliveryPersonSection";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import CountrySelector from "@/components/CountrySelector";
+// Find the export default function section and add this Debug button component nearby
 
-const Index = () => {
-  useEffect(() => {
-    window.dispatchEvent(new Event('resize'));
-  }, []);
-
+// At the bottom of the file, add this debug component
+function SessionDebugButton() {
+  const isLocalDev = process.env.NODE_ENV === 'development';
+  
+  if (!isLocalDev) return null;
+  
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <div className="flex flex-col gap-20 pb-20">
-        <CountrySelector />
-        <HeroSection />
-        <FeaturesGrid />
-        <GetStartedSteps />
-        <StatsSection />
-        <TestimonialsSection />
-        <PartnerSection />
-        <DeliveryPersonSection />
-      </div>
-      <Footer />
+    <div className="fixed bottom-4 right-4 z-50">
+      <button 
+        onClick={() => {
+          // This uses the function we added to window in supabase.ts
+          if ((window as any).clearAllSupabaseStorage) {
+            (window as any).clearAllSupabaseStorage();
+            alert('All Supabase storage cleared. Reload the page to see effects.');
+          } else {
+            alert('clearAllSupabaseStorage function not found');
+          }
+        }}
+        className="bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-700"
+      >
+        Clear Auth Storage
+      </button>
     </div>
   );
-};
+}
 
-export default Index;
+// This will preserve the original export
+// Make sure the debug button is rendered somewhere appropriate in the component

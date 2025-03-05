@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
-import { supabase } from "@/lib/supabase";
+import { supabase, clearAllAuthStorage } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { User, CreditCard, Bell, LogOut } from "lucide-react";
 
@@ -20,20 +20,25 @@ export const UserMenuItems = () => {
   const handleLogout = async () => {
     try {
       console.log("Logout initiated from UserMenuItems");
-      const { error } = await supabase.auth.signOut();
+      
+      // First, sign out from Supabase - this will clear the session on the server
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
         console.error("Supabase signOut error:", error);
         throw error;
       }
       
-      // Clear auth state
+      // Clear auth state in application state
       setAuth({
         user: null,
         profile: null,
         isLoading: false,
         permissions: [],
       });
+      
+      // Force clear all auth storage (localStorage, sessionStorage, and cookies)
+      clearAllAuthStorage();
       
       toast({
         title: "Logged out",

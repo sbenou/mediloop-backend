@@ -9,24 +9,42 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create storage key based on project URL
 const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
 
+// Debug function to track storage events
+const logStorageOperation = (action: string, key: string, success: boolean, error?: any) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      `%cStorage ${action}%c: ${key} | %c${success ? 'Success' : 'Failed'}`,
+      'font-weight: bold; color: blue',
+      'color: black',
+      `color: ${success ? 'green' : 'red'}`
+    );
+    if (error) console.error('Error details:', error);
+  }
+};
+
 // Enhanced storage that works better across tabs with browser storage events
 const crossTabStorage = {
   getItem: (key: string) => {
     try {
       // First try localStorage for persistence
       const storedValue = window.localStorage.getItem(key);
+      
+      logStorageOperation('GET', key, !!storedValue);
+      
       if (!storedValue) return null;
       
       const parsed = JSON.parse(storedValue);
       
       // Check if session is expired
       if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
+        console.warn('Session has expired, removing from storage');
         crossTabStorage.removeItem(key);
         return null;
       }
       
       return parsed;
     } catch (e) {
+      logStorageOperation('GET', key, false, e);
       console.error('Error reading auth data:', e);
       return null;
     }
@@ -34,6 +52,12 @@ const crossTabStorage = {
   
   setItem: (key: string, value: any) => {
     try {
+      // Don't store null or undefined values
+      if (value === null || value === undefined) {
+        logStorageOperation('SET', key, false, 'Attempted to store null/undefined value');
+        return;
+      }
+      
       // Store in localStorage for cross-tab persistence
       window.localStorage.setItem(key, JSON.stringify(value));
       
@@ -54,8 +78,10 @@ const crossTabStorage = {
         console.error('Error dispatching custom event:', eventError);
       }
       
+      logStorageOperation('SET', key, true);
       console.log(`Auth: Session stored at ${timestamp} for user: ${value?.user?.id || 'unknown'}`);
     } catch (e) {
+      logStorageOperation('SET', key, false, e);
       console.error('Error setting auth data:', e);
     }
   },
@@ -65,10 +91,46 @@ const crossTabStorage = {
       window.localStorage.removeItem(key);
       window.sessionStorage.removeItem(key);
       window.localStorage.removeItem(`${key}_timestamp`);
+      logStorageOperation('REMOVE', key, true);
       console.log('Auth: Session removed from storage');
     } catch (e) {
+      logStorageOperation('REMOVE', key, false, e);
       console.error('Error removing auth data:', e);
     }
+  }
+};
+
+// Add a global method to help with debugging session storage
+(window as any).clearAllSupabaseStorage = () => {
+  try {
+    // Clear all storage related to Supabase
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('supabase') || key.includes('sb-'))) {
+        localStorage.removeItem(key);
+      }
+    }
+    
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && (key.includes('supabase') || key.includes('sb-'))) {
+        sessionStorage.removeItem(key);
+      }
+    }
+    
+    // Also try to clear cookies (limited to document.cookie accessible ones)
+    document.cookie.split(';').forEach(cookie => {
+      const [name] = cookie.trim().split('=');
+      if (name && (name.includes('supabase') || name.includes('sb-'))) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      }
+    });
+    
+    console.log('%cAll Supabase storage cleared manually', 'color: green; font-weight: bold');
+    return true;
+  } catch (e) {
+    console.error('Failed to clear Supabase storage:', e);
+    return false;
   }
 };
 
@@ -265,19 +327,23 @@ export const getSessionFromStorage = () => {
     // Try sessionStorage first (faster)
     const sessionData = sessionStorage.getItem(STORAGE_KEY);
     if (sessionData) {
+      logStorageOperation('READ', 'sessionStorage', true);
       return JSON.parse(sessionData);
     }
     
     // Then try localStorage
     const localData = localStorage.getItem(STORAGE_KEY);
     if (localData) {
+      logStorageOperation('READ', 'localStorage', true);
       // Also sync to sessionStorage for faster future access
       sessionStorage.setItem(STORAGE_KEY, localData);
       return JSON.parse(localData);
     }
     
+    logStorageOperation('READ', 'both storages', false, 'No session found');
     return null;
   } catch (e) {
+    logStorageOperation('READ', 'both storages', false, e);
     console.error('Error getting session from storage:', e);
     return null;
   }
@@ -308,3 +374,8 @@ document.addEventListener('visibilitychange', handleVisibilityChange);
 
 // Force a session sync on first load after a delay
 setTimeout(handleVisibilityChange, 1000);
+
+// Export a function to completely clear all auth storage
+export const clearAllAuthStorage = () => {
+  return (window as any).clearAllSupabaseStorage();
+};
