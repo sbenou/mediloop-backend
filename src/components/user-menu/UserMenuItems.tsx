@@ -21,15 +21,7 @@ export const UserMenuItems = () => {
     try {
       console.log("Logout initiated from UserMenuItems");
       
-      // First, sign out from Supabase - this will clear the session on the server
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
-      
-      if (error) {
-        console.error("Supabase signOut error:", error);
-        throw error;
-      }
-      
-      // Clear auth state in application state
+      // First, clear local auth state before API call
       setAuth({
         user: null,
         profile: null,
@@ -37,15 +29,34 @@ export const UserMenuItems = () => {
         permissions: [],
       });
       
+      // Broadcast logout event to other tabs BEFORE API call
+      try {
+        const logoutEvent = { type: 'LOGOUT', timestamp: Date.now() };
+        localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
+        // Force the storage event
+        localStorage.removeItem('last_auth_event');
+        localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
+      } catch (eventError) {
+        console.error('Error broadcasting logout event:', eventError);
+      }
+      
       // Force clear all auth storage (localStorage, sessionStorage, and cookies)
       clearAllAuthStorage();
+      
+      // Sign out from Supabase - this will clear the session on the server
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.error("Supabase signOut error:", error);
+        throw error;
+      }
       
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
       });
       
-      // Force a hard redirect to ensure complete logout
+      // Force a hard redirect to ensure complete logout and fresh page load
       window.location.href = "/";
     } catch (error) {
       console.error("Logout error:", error);

@@ -80,23 +80,41 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
 
       console.log('Session confirmed:', session.user.id);
 
-      // IMPORTANT: Explicitly store session in all storage methods
+      // IMPORTANT: Explicitly store session in all storage methods with multiple attempts
       const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
       
-      // First store session data in localStorage for persistence across tabs
+      // Store the session multiple ways for maximum compatibility
+      const sessionString = JSON.stringify(session);
+      
+      // First attempt: localStorage for persistence across tabs and page reloads
       try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        window.localStorage.setItem(STORAGE_KEY, sessionString);
         console.log('Session explicitly stored in localStorage');
       } catch (storageError) {
         console.error('Error saving to localStorage:', storageError);
       }
       
-      // Also store in sessionStorage for redundancy
+      // Second attempt: sessionStorage for redundancy
       try {
-        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        window.sessionStorage.setItem(STORAGE_KEY, sessionString);
         console.log('Session explicitly stored in sessionStorage');
       } catch (storageError) {
         console.error('Error saving to sessionStorage:', storageError);
+      }
+      
+      // Also, attempt to dispatch a custom event for listeners
+      try {
+        const event = new CustomEvent('supabase:auth:token:update', {
+          detail: {
+            timestamp: new Date().toISOString(),
+            userId: session.user.id,
+            expiresAt: session.expires_at
+          }
+        });
+        window.dispatchEvent(event);
+        console.log('Dispatched token update event');
+      } catch (eventError) {
+        console.error('Error dispatching token event:', eventError);
       }
       
       // Fetch user profile
@@ -146,11 +164,9 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       // Redirect all users to the universal dashboard
       console.log('Redirecting to universal dashboard...');
       navigate('/dashboard', { replace: true });
-      return; // Early return to prevent onSuccess from being called
       
-      // This won't be called due to early returns
-      onSuccess();
-
+      // This won't be called due to navigation above
+      // onSuccess();
     } catch (error: any) {
       console.error('Login failed:', error);
       

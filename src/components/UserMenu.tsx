@@ -18,10 +18,10 @@ const UserMenu = memo(() => {
   const [hasVisibleSession, setHasVisibleSession] = useState(false);
   const navigate = useNavigate();
   
-  // Check for session on mount and visibility change
+  // Enhanced session check on mount and visibility change
   useEffect(() => {
     const checkSession = async () => {
-      // First check local storage (fast)
+      // First check local storage (fastest)
       const storedSession = getSessionFromStorage();
       if (storedSession?.user) {
         setHasVisibleSession(true);
@@ -31,10 +31,28 @@ const UserMenu = memo(() => {
       
       // If not in storage, check API (slower)
       try {
-        const { data } = await supabase.auth.getSession();
-        setHasVisibleSession(!!data.session);
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error checking session in UserMenu:", error);
+          setHasVisibleSession(false);
+        } else {
+          setHasVisibleSession(!!data.session);
+          
+          // If we have a session from API but not in storage, store it
+          if (data.session && !storedSession) {
+            console.log("Session found in API but not in storage, storing it");
+            const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+            try {
+              window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data.session));
+              window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.session));
+            } catch (storageError) {
+              console.error("Error storing session:", storageError);
+            }
+          }
+        }
       } catch (error) {
         console.error("Error checking session in UserMenu:", error);
+        setHasVisibleSession(false);
       } finally {
         setLocalLoading(false);
       }
@@ -58,9 +76,20 @@ const UserMenu = memo(() => {
     
     window.addEventListener('supabase:auth:token:update', handleTokenUpdate);
     
+    // Listen for storage events (for cross-tab sync)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && (e.key.includes('auth-token') || e.key === 'last_auth_event')) {
+        console.log("Auth storage changed, rechecking session");
+        checkSession();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('supabase:auth:token:update', handleTokenUpdate);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 

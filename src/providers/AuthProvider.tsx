@@ -1,4 +1,5 @@
-import { useEffect, useCallback } from 'react';
+
+import { useEffect, useCallback, useRef } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase, getSessionFromStorage } from '@/lib/supabase';
 import { authState } from '@/store/auth/atoms';
@@ -7,6 +8,7 @@ import { toast } from '@/components/ui/use-toast';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
+  const sessionPollingRef = useRef<number | null>(null);
 
   const fetchUserPermissions = useCallback(async (roleId: string): Promise<string[]> => {
     try {
@@ -104,11 +106,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
       
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      // Ensure session is stored in both localStorage and sessionStorage for maximum persistence
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        console.log(`Session explicitly stored for user: ${session.user.id}`);
+      } catch (storageError) {
+        console.error('Error storing session in storage:', storageError);
+      }
       
-      console.log(`Session explicitly stored for user: ${session.user.id}`);
-
       setAuth(prev => ({
         ...prev,
         user: session.user,
@@ -158,6 +164,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [fetchAndSetProfile, setAuth]);
 
+  // Set up continuous session polling
+  useEffect(() => {
+    // Clear any existing interval first
+    if (sessionPollingRef.current) {
+      window.clearInterval(sessionPollingRef.current);
+    }
+    
+    // Poll every 30 seconds to ensure session is still valid
+    sessionPollingRef.current = window.setInterval(async () => {
+      try {
+        // Only poll when tab is visible
+        if (document.visibilityState === 'visible') {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Error polling session:', error);
+            return;
+          }
+          
+          if (session) {
+            // If we got a session, make sure it's stored correctly
+            const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+            try {
+              window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+              window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+            } catch (storageError) {
+              console.error('Error updating session in polling:', storageError);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error in session polling:', error);
+      }
+    }, 30000); // 30 seconds
+    
+    return () => {
+      if (sessionPollingRef.current) {
+        window.clearInterval(sessionPollingRef.current);
+        sessionPollingRef.current = null;
+      }
+    };
+  }, []);
+
   useEffect(() => {
     let mounted = true;
 
@@ -166,26 +215,84 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('Initializing auth provider...');
         setAuth(prev => ({ ...prev, isLoading: true }));
         
+        // First try to get session from storage (faster)
         const storedSession = getSessionFromStorage();
+        
         if (storedSession) {
-          console.log('Found existing session in storage');
+          console.log('Found existing session in storage, using it temporarily');
+          // Temporarily set auth state with stored session while we validate
+          if (mounted) {
+            setAuth(prev => ({
+              ...prev,
+              user: storedSession.user,
+              isLoading: true,
+            }));
+          }
         }
         
-        const { data: { session } } = await supabase.auth.getSession();
+        // Always get fresh session from API to validate
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session from API:', error);
+          throw error;
+        }
         
         if (!mounted) return;
         
         if (session) {
-          console.log(`Using session for user: ${session.user.id}`);
+          console.log(`Using API session for user: ${session.user.id}`);
           await updateAuthState(session);
+        } else if (storedSession?.user?.id) {
+          console.log('API returned no session but we have one in storage');
+          // Try to refresh the session
+          try {
+            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError) {
+              console.error('Error refreshing stored session:', refreshError);
+              if (mounted) {
+                setAuth({
+                  user: null,
+                  profile: null,
+                  permissions: [],
+                  isLoading: false,
+                });
+              }
+              return;
+            }
+            
+            if (refreshData.session) {
+              console.log('Successfully refreshed stored session');
+              if (mounted) {
+                await updateAuthState(refreshData.session);
+              }
+              return;
+            }
+          } catch (refreshErr) {
+            console.error('Exception during session refresh:', refreshErr);
+          }
+          
+          // If we reach here, we couldn't refresh the session
+          console.log('Could not refresh stored session, clearing auth state');
+          if (mounted) {
+            setAuth({
+              user: null,
+              profile: null,
+              permissions: [],
+              isLoading: false,
+            });
+          }
         } else {
           console.log('No active session found, clearing auth state');
-          setAuth({
-            user: null,
-            profile: null,
-            permissions: [],
-            isLoading: false,
-          });
+          if (mounted) {
+            setAuth({
+              user: null,
+              profile: null,
+              permissions: [],
+              isLoading: false,
+            });
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -208,6 +315,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initializeAuth();
 
+    // Listen for auth state changes from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
@@ -228,11 +336,159 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
+    // Listen for storage events from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key) return;
+      
+      // Check for auth token changes
+      if (e.key.includes('auth-token')) {
+        console.log("Auth token changed in another tab");
+        
+        // Get the session from storage and update state if needed
+        const storedSession = getSessionFromStorage();
+        
+        if (storedSession?.user?.id) {
+          console.log("Found valid session in storage after change");
+          updateAuthState(storedSession);
+        } else if (e.newValue === null) {
+          // Token was removed in another tab
+          console.log("Auth token was removed in another tab");
+          setAuth({
+            user: null,
+            profile: null,
+            permissions: [],
+            isLoading: false,
+          });
+        }
+      }
+      
+      // Check for explicit auth events
+      if (e.key === 'last_auth_event' && e.newValue) {
+        try {
+          const event = JSON.parse(e.newValue);
+          
+          if (event.type === 'LOGOUT') {
+            console.log("Logout detected in another tab");
+            setAuth({
+              user: null,
+              profile: null,
+              permissions: [],
+              isLoading: false,
+            });
+          } else if (event.type === 'LOGIN' && mounted) {
+            console.log("Login detected in another tab");
+            // Force refresh the session
+            supabase.auth.getSession().then(({ data }) => {
+              if (data.session) {
+                updateAuthState(data.session);
+              }
+            });
+          } else if (event.type === 'TOKEN_REFRESHED' && mounted) {
+            console.log("Token refresh detected in another tab");
+            // Get the latest session
+            supabase.auth.getSession().then(({ data }) => {
+              if (data.session) {
+                updateAuthState(data.session);
+              }
+            });
+          }
+        } catch (error) {
+          console.error("Error processing auth event:", error);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
+    // Listen for visibility changes
+    const handleVisibilityChange = async () => {
+      if (!mounted) return;
+      
+      if (document.visibilityState === 'visible') {
+        console.log("Tab became visible, checking auth state");
+        
+        try {
+          // Get current auth state
+          const currentUserState = getSessionFromStorage()?.user?.id;
+          
+          // Get fresh session from API
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error("Error getting session on visibility change:", error);
+            return;
+          }
+          
+          // If API session differs from our state, update it
+          const newUserState = session?.user?.id;
+          
+          if (currentUserState && !newUserState) {
+            console.log("Session expired while tab was hidden");
+            setAuth({
+              user: null,
+              profile: null,
+              permissions: [],
+              isLoading: false,
+            });
+            
+            toast({
+              variant: "destructive",
+              title: "Session expired",
+              description: "Your session has expired. Please login again.",
+            });
+          } else if (newUserState && (!currentUserState || currentUserState !== newUserState)) {
+            console.log("Session changed while tab was hidden");
+            updateAuthState(session);
+          } else if (newUserState && currentUserState === newUserState) {
+            // Same user, ensure the session is fully loaded
+            console.log("Same user, ensuring session is fully loaded");
+            
+            const { profile: cachedProfile } = await fetchAndSetProfile(newUserState);
+            if (!cachedProfile) {
+              // If profile couldn't be loaded, try refreshing the session
+              const { data: refreshData } = await supabase.auth.refreshSession();
+              if (refreshData.session) {
+                updateAuthState(refreshData.session);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error during visibility change auth check:", err);
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Clean up all listeners on unmount
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [setAuth, updateAuthState]);
+  }, [setAuth, updateAuthState, fetchAndSetProfile]);
+
+  // Listen for custom auth token update events
+  useEffect(() => {
+    const handleTokenUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      console.log('Received token update event:', customEvent.detail);
+      
+      // Force a session check
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          updateAuthState(data.session);
+        }
+      });
+    };
+    
+    window.addEventListener('supabase:auth:token:update', handleTokenUpdate);
+    
+    return () => {
+      window.removeEventListener('supabase:auth:token:update', handleTokenUpdate);
+    };
+  }, [updateAuthState]);
 
   return <>{children}</>;
 };

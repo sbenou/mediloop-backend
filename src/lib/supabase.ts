@@ -26,23 +26,59 @@ const logStorageOperation = (action: string, key: string, success: boolean, erro
 const crossTabStorage = {
   getItem: (key: string) => {
     try {
-      // First try localStorage for persistence
-      const storedValue = window.localStorage.getItem(key);
+      // Check both localStorage and sessionStorage in case one is corrupted
+      let storedValue = null;
       
-      logStorageOperation('GET', key, !!storedValue);
+      // First try localStorage (for persistence)
+      try {
+        storedValue = window.localStorage.getItem(key);
+        if (storedValue) {
+          logStorageOperation('GET', key + ' (localStorage)', true);
+        }
+      } catch (e) {
+        logStorageOperation('GET', key + ' (localStorage)', false, e);
+      }
       
-      if (!storedValue) return null;
+      // Then try sessionStorage as fallback
+      if (!storedValue) {
+        try {
+          storedValue = window.sessionStorage.getItem(key);
+          if (storedValue) {
+            // If found in sessionStorage but not localStorage, restore it to localStorage
+            logStorageOperation('GET', key + ' (sessionStorage)', true);
+            try {
+              window.localStorage.setItem(key, storedValue);
+              logStorageOperation('SYNC', key + ' (localStorage <- sessionStorage)', true);
+            } catch (syncError) {
+              logStorageOperation('SYNC', key + ' (localStorage <- sessionStorage)', false, syncError);
+            }
+          }
+        } catch (e) {
+          logStorageOperation('GET', key + ' (sessionStorage)', false, e);
+        }
+      }
       
-      const parsed = JSON.parse(storedValue);
-      
-      // Check if session is expired
-      if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
-        console.warn('Session has expired, removing from storage');
-        crossTabStorage.removeItem(key);
+      if (!storedValue) {
+        logStorageOperation('GET', key, false, 'No value found in any storage');
         return null;
       }
       
-      return parsed;
+      // Parse the stored session
+      try {
+        const parsed = JSON.parse(storedValue);
+        
+        // Check if session is expired
+        if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
+          console.warn('Session has expired, removing from storage');
+          crossTabStorage.removeItem(key);
+          return null;
+        }
+        
+        return parsed;
+      } catch (parseError) {
+        logStorageOperation('PARSE', key, false, parseError);
+        return null;
+      }
     } catch (e) {
       logStorageOperation('GET', key, false, e);
       console.error('Error reading auth data:', e);
@@ -58,27 +94,48 @@ const crossTabStorage = {
         return;
       }
       
+      const valueString = JSON.stringify(value);
+      
       // Store in localStorage for cross-tab persistence
-      window.localStorage.setItem(key, JSON.stringify(value));
+      try {
+        window.localStorage.setItem(key, valueString);
+        logStorageOperation('SET', key + ' (localStorage)', true);
+      } catch (e) {
+        logStorageOperation('SET', key + ' (localStorage)', false, e);
+        console.error('Error storing in localStorage:', e);
+      }
       
       // Also store in sessionStorage as backup
-      window.sessionStorage.setItem(key, JSON.stringify(value));
+      try {
+        window.sessionStorage.setItem(key, valueString);
+        logStorageOperation('SET', key + ' (sessionStorage)', true);
+      } catch (e) {
+        logStorageOperation('SET', key + ' (sessionStorage)', false, e);
+        console.error('Error storing in sessionStorage:', e);
+      }
       
       // Track when session was stored
       const timestamp = new Date().toISOString();
-      window.localStorage.setItem(`${key}_timestamp`, timestamp);
+      try {
+        window.localStorage.setItem(`${key}_timestamp`, timestamp);
+      } catch (e) {
+        console.error('Error storing timestamp:', e);
+      }
       
       // Fire a custom event that can be listened for in other parts of the app
       try {
         const event = new CustomEvent('supabase:auth:token:update', { 
-          detail: { timestamp, userId: value?.user?.id } 
+          detail: { 
+            timestamp, 
+            userId: value?.user?.id,
+            expiresAt: value?.expires_at
+          } 
         });
         window.dispatchEvent(event);
       } catch (eventError) {
         console.error('Error dispatching custom event:', eventError);
       }
       
-      logStorageOperation('SET', key, true);
       console.log(`Auth: Session stored at ${timestamp} for user: ${value?.user?.id || 'unknown'}`);
     } catch (e) {
       logStorageOperation('SET', key, false, e);
@@ -88,10 +145,24 @@ const crossTabStorage = {
   
   removeItem: (key: string) => {
     try {
-      window.localStorage.removeItem(key);
-      window.sessionStorage.removeItem(key);
-      window.localStorage.removeItem(`${key}_timestamp`);
-      logStorageOperation('REMOVE', key, true);
+      // Clear from localStorage
+      try {
+        window.localStorage.removeItem(key);
+        window.localStorage.removeItem(`${key}_timestamp`);
+        logStorageOperation('REMOVE', key + ' (localStorage)', true);
+      } catch (e) {
+        logStorageOperation('REMOVE', key + ' (localStorage)', false, e);
+      }
+      
+      // Clear from sessionStorage
+      try {
+        window.sessionStorage.removeItem(key);
+        window.sessionStorage.removeItem(`${key}_timestamp`);
+        logStorageOperation('REMOVE', key + ' (sessionStorage)', true);
+      } catch (e) {
+        logStorageOperation('REMOVE', key + ' (sessionStorage)', false, e);
+      }
+      
       console.log('Auth: Session removed from storage');
     } catch (e) {
       logStorageOperation('REMOVE', key, false, e);
@@ -198,6 +269,14 @@ if (authChannel) {
       } catch (error) {
         console.error('Auth: Error clearing session after signout event:', error);
       }
+    } else if (event.data?.type === 'SESSION_REFRESHED') {
+      console.log('Auth: Received session refresh event from another tab');
+      try {
+        // Just pull the latest session without forcing a refresh
+        await supabase.auth.getSession();
+      } catch (error) {
+        console.error('Auth: Error getting session after refresh event:', error);
+      }
     }
   };
 }
@@ -206,11 +285,13 @@ if (authChannel) {
 supabase.auth.onAuthStateChange((event, session) => {
   console.log(`Auth: State changed: ${event} for user: ${session?.user?.id || 'none'}`);
   
-  if (event === 'SIGNED_IN' && session) {
-    // Force store session to ensure it persists
+  // Force store the session on all auth events to ensure persistence
+  if (session) {
     crossTabStorage.setItem(STORAGE_KEY, session);
-    console.log('Auth: Session stored after sign in');
-    
+    console.log(`Auth: Session explicitly stored after ${event} event`);
+  }
+  
+  if (event === 'SIGNED_IN' && session) {
     // Broadcast signin to other tabs
     if (authChannel) {
       authChannel.postMessage({ type: 'SIGNED_IN', timestamp: Date.now(), userId: session.user.id });
@@ -246,17 +327,35 @@ supabase.auth.onAuthStateChange((event, session) => {
       console.error('Error sending logout event via localStorage:', error);
     }
   } else if (event === 'TOKEN_REFRESHED' && session) {
-    console.log('Auth: Token refreshed, updating storage');
-    crossTabStorage.setItem(STORAGE_KEY, session);
-  } else if (event === 'USER_UPDATED' && session) {
-    console.log('Auth: User updated, updating storage');
-    crossTabStorage.setItem(STORAGE_KEY, session);
+    // Broadcast token refresh to other tabs
+    if (authChannel) {
+      authChannel.postMessage({ 
+        type: 'SESSION_REFRESHED', 
+        timestamp: Date.now(), 
+        userId: session.user.id 
+      });
+    }
+    
+    // Also dispatch an event via localStorage for browsers without BroadcastChannel
+    try {
+      const refreshEvent = { 
+        type: 'TOKEN_REFRESHED',
+        userId: session.user.id,
+        timestamp: Date.now() 
+      };
+      localStorage.setItem('last_auth_event', JSON.stringify(refreshEvent));
+      // Force the storage event
+      localStorage.removeItem('last_auth_event');
+      localStorage.setItem('last_auth_event', JSON.stringify(refreshEvent));
+    } catch (error) {
+      console.error('Error sending refresh event via localStorage:', error);
+    }
   }
 });
 
-// Enhanced periodic session check to prevent expiration
+// Enhanced periodic session check with more aggressive refresh on visibility change
 const setupSessionRefresh = () => {
-  // Check session every 30 seconds (reduced from 4 minutes)
+  // Check session every 15 seconds when tab is visible
   const interval = window.setInterval(async () => {
     try {
       // Only perform refresh when tab is visible to avoid unnecessary API calls
@@ -276,7 +375,7 @@ const setupSessionRefresh = () => {
     } catch (error) {
       console.error('Error in session refresh:', error);
     }
-  }, 30000); // 30 seconds
+  }, 15000); // 15 seconds
   
   // Clear interval on page unload
   window.addEventListener('beforeunload', () => {
@@ -324,23 +423,50 @@ let refreshInterval: number | null = null;
 // Safe method to get session from storage
 export const getSessionFromStorage = () => {
   try {
-    // Try sessionStorage first (faster)
-    const sessionData = sessionStorage.getItem(STORAGE_KEY);
-    if (sessionData) {
-      logStorageOperation('READ', 'sessionStorage', true);
-      return JSON.parse(sessionData);
-    }
-    
-    // Then try localStorage
+    // Try localStorage first (more persistent)
     const localData = localStorage.getItem(STORAGE_KEY);
     if (localData) {
       logStorageOperation('READ', 'localStorage', true);
-      // Also sync to sessionStorage for faster future access
-      sessionStorage.setItem(STORAGE_KEY, localData);
-      return JSON.parse(localData);
+      try {
+        // Validate that the data is a valid session
+        const parsed = JSON.parse(localData);
+        if (parsed?.user?.id && parsed?.access_token) {
+          // Also sync to sessionStorage for redundancy
+          try {
+            sessionStorage.setItem(STORAGE_KEY, localData);
+          } catch (e) {
+            console.error('Error syncing to sessionStorage:', e);
+          }
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Error parsing localStorage session:', e);
+      }
     }
     
-    logStorageOperation('READ', 'both storages', false, 'No session found');
+    // Then try sessionStorage
+    const sessionData = sessionStorage.getItem(STORAGE_KEY);
+    if (sessionData) {
+      logStorageOperation('READ', 'sessionStorage', true);
+      try {
+        // Validate that the data is a valid session
+        const parsed = JSON.parse(sessionData);
+        if (parsed?.user?.id && parsed?.access_token) {
+          // Also sync back to localStorage for persistence
+          try {
+            localStorage.setItem(STORAGE_KEY, sessionData);
+            logStorageOperation('SYNC', 'localStorage <- sessionStorage', true);
+          } catch (e) {
+            console.error('Error syncing to localStorage:', e);
+          }
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Error parsing sessionStorage session:', e);
+      }
+    }
+    
+    logStorageOperation('READ', 'both storages', false, 'No valid session found');
     return null;
   } catch (e) {
     logStorageOperation('READ', 'both storages', false, e);
@@ -349,19 +475,39 @@ export const getSessionFromStorage = () => {
   }
 };
 
-// Function to sync session when tab becomes visible
+// Function to sync session when tab becomes visible (more aggressive)
 const handleVisibilityChange = async () => {
   if (document.visibilityState === 'visible') {
     console.log('Auth: Tab became visible, checking session');
     try {
-      const { data, error } = await supabase.auth.refreshSession();
-      if (error || !data.session) {
-        console.log('Auth: Session verification failed after tab visibility change:', error);
-      } else {
-        console.log('Auth: Session verified after tab visibility change');
+      // First check if we have a session in storage
+      const storedSession = getSessionFromStorage();
+      
+      if (storedSession) {
+        console.log('Auth: Found stored session, verifying with API');
+        // We have a session in storage, verify it with the API
+        const { data, error } = await supabase.auth.refreshSession();
         
-        // Explicitly update storage to ensure it's there
-        crossTabStorage.setItem(STORAGE_KEY, data.session);
+        if (error) {
+          console.error('Auth: Session refresh failed on visibility change:', error);
+          // Try to get current session without refreshing
+          const { data: currentData } = await supabase.auth.getSession();
+          if (currentData.session) {
+            console.log('Auth: Got current session after refresh failure');
+            crossTabStorage.setItem(STORAGE_KEY, currentData.session);
+          }
+        } else if (data.session) {
+          console.log('Auth: Session refreshed successfully on visibility change');
+          crossTabStorage.setItem(STORAGE_KEY, data.session);
+        }
+      } else {
+        console.log('Auth: No stored session found on visibility change');
+        // No session in storage, try to get current session
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          console.log('Auth: Found API session on visibility change');
+          crossTabStorage.setItem(STORAGE_KEY, data.session);
+        }
       }
     } catch (err) {
       console.error('Auth: Error during visibility session check:', err);
@@ -372,8 +518,52 @@ const handleVisibilityChange = async () => {
 // Add visibility change handler for session syncing
 document.addEventListener('visibilitychange', handleVisibilityChange);
 
+// New function to repair storage inconsistencies
+const repairStorageConsistency = () => {
+  try {
+    // First check localStorage
+    const localData = localStorage.getItem(STORAGE_KEY);
+    const sessionData = sessionStorage.getItem(STORAGE_KEY);
+    
+    if (localData && !sessionData) {
+      // Session in localStorage but not sessionStorage, sync to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY, localData);
+      console.log('Auth: Repaired missing sessionStorage data');
+    } else if (!localData && sessionData) {
+      // Session in sessionStorage but not localStorage, sync to localStorage
+      localStorage.setItem(STORAGE_KEY, sessionData);
+      console.log('Auth: Repaired missing localStorage data');
+    } else if (localData && sessionData && localData !== sessionData) {
+      // Both storages have different data, use the newer one
+      try {
+        const localParsed = JSON.parse(localData);
+        const sessionParsed = JSON.parse(sessionData);
+        
+        // Compare expiry times to determine which is newer
+        if ((localParsed.expires_at || 0) > (sessionParsed.expires_at || 0)) {
+          sessionStorage.setItem(STORAGE_KEY, localData);
+          console.log('Auth: Repaired inconsistent storage (used localStorage)');
+        } else {
+          localStorage.setItem(STORAGE_KEY, sessionData);
+          console.log('Auth: Repaired inconsistent storage (used sessionStorage)');
+        }
+      } catch (e) {
+        console.error('Error comparing storage data:', e);
+      }
+    }
+  } catch (e) {
+    console.error('Error repairing storage consistency:', e);
+  }
+};
+
+// Add the repair function to page load
+window.addEventListener('load', repairStorageConsistency);
+
+// Also run repair on first load
+repairStorageConsistency();
+
 // Force a session sync on first load after a delay
-setTimeout(handleVisibilityChange, 1000);
+setTimeout(handleVisibilityChange, 500);
 
 // Export a function to completely clear all auth storage
 export const clearAllAuthStorage = () => {
