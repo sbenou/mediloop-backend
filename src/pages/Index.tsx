@@ -6,16 +6,22 @@ import { StatsSection } from "@/components/home/StatsSection";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { PartnerSection } from "@/components/home/PartnerSection";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 export default function Index() {
   return (
-    <div className="container mx-auto px-4">
-      <HeroSection />
-      <FeaturesGrid />
-      <StatsSection />
-      <TestimonialsSection />
-      <GetStartedSteps />
-      <PartnerSection />
-    </div>
+    <>
+      <Header />
+      <div className="container mx-auto px-4">
+        <HeroSection />
+        <FeaturesGrid />
+        <StatsSection />
+        <TestimonialsSection />
+        <GetStartedSteps />
+        <PartnerSection />
+      </div>
+      <Footer />
+    </>
   );
 }
