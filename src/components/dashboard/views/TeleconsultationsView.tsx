@@ -1,12 +1,42 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/auth/useAuth";
+import JitsiMeetingRoom from "@/components/teleconsultation/JitsiMeetingRoom";
+import TeleconsultationList from "@/components/teleconsultation/TeleconsultationList";
+import TeleconsultationScheduler from "@/components/teleconsultation/TeleconsultationScheduler";
+import DoctorConnectionsList from "@/components/teleconsultation/DoctorConnectionsList";
 
 interface TeleconsultationsViewProps {
   userRole: string | null;
 }
 
+// Define teleconsultation type for the view
+interface Teleconsultation {
+  id: string;
+  patient_id: string;
+  doctor_id: string;
+  start_time: string;
+  end_time: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  reason: string;
+  room_id?: string;
+  patient?: {
+    full_name: string;
+    email: string;
+  };
+  doctor?: {
+    full_name: string;
+    email: string;
+  };
+}
+
 const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole }) => {
+  const { profile } = useAuth();
+  const [view, setView] = useState<'list' | 'scheduler' | 'meeting'>('list');
+  const [selectedDoctor, setSelectedDoctor] = useState<{ id: string; name: string } | null>(null);
+  const [activeMeeting, setActiveMeeting] = useState<Teleconsultation | null>(null);
+
   const getViewTitle = () => {
     switch (userRole) {
       case 'patient':
@@ -29,46 +59,86 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
     }
   };
 
-  const getEmptyStateMessage = () => {
-    switch (userRole) {
-      case 'patient':
-        return 'Your upcoming teleconsultations will appear here once scheduled';
-      case 'doctor':
-        return 'Your upcoming virtual appointments will appear here';
-      default:
-        return 'No teleconsultations found';
-    }
+  const handleSelectDoctor = (doctorId: string, doctorName: string) => {
+    setSelectedDoctor({ id: doctorId, name: doctorName });
+    setView('scheduler');
   };
 
-  const renderActionButton = () => {
-    if (userRole === 'patient') {
+  const handleJoinMeeting = (consultation: Teleconsultation) => {
+    setActiveMeeting(consultation);
+    setView('meeting');
+  };
+
+  const renderContent = () => {
+    if (view === 'meeting' && activeMeeting) {
       return (
-        <Button className="mt-4">
-          Find a Doctor
-        </Button>
-      );
-    } else if (userRole === 'doctor') {
-      return (
-        <Button className="mt-4">
-          Set Availability
-        </Button>
+        <JitsiMeetingRoom
+          roomName={`consultation-${activeMeeting.id}`}
+          consultationId={activeMeeting.id}
+          onClose={() => {
+            setView('list');
+            setActiveMeeting(null);
+          }}
+          patientName={activeMeeting.patient?.full_name}
+          doctorName={activeMeeting.doctor?.full_name}
+        />
       );
     }
-    return null;
+
+    if (view === 'scheduler' && selectedDoctor) {
+      return (
+        <div>
+          <Button 
+            variant="outline" 
+            onClick={() => setView('list')} 
+            className="mb-4"
+          >
+            Back to Teleconsultations
+          </Button>
+          <TeleconsultationScheduler
+            doctorId={selectedDoctor.id}
+            doctorName={selectedDoctor.name}
+            onScheduled={() => setView('list')}
+          />
+        </div>
+      );
+    }
+
+    // Default view - list
+    return (
+      <div className="space-y-6">
+        {userRole === 'patient' && (
+          <>
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Your Teleconsultations</h2>
+              <Button onClick={() => setView('scheduler')}>
+                Request New Consultation
+              </Button>
+            </div>
+            
+            {view === 'scheduler' && (
+              <DoctorConnectionsList onSelectDoctor={handleSelectDoctor} />
+            )}
+          </>
+        )}
+        
+        {view === 'list' && (
+          <TeleconsultationList onJoinMeeting={handleJoinMeeting} />
+        )}
+      </div>
+    );
   };
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">{getViewTitle()}</h1>
-      <p className="text-muted-foreground mb-8">{getViewDescription()}</p>
+      {view !== 'meeting' && (
+        <>
+          <h1 className="text-3xl font-bold mb-2">{getViewTitle()}</h1>
+          <p className="text-muted-foreground mb-6">{getViewDescription()}</p>
+        </>
+      )}
       
-      <div className="bg-gray-100 rounded-lg p-8 text-center">
-        <p className="text-lg">No scheduled {userRole === 'doctor' ? 'appointments' : 'teleconsultations'}</p>
-        <p className="text-muted-foreground mt-2">
-          {getEmptyStateMessage()}
-        </p>
-        {renderActionButton()}
-      </div>
+      {renderContent()}
     </div>
   );
 };
