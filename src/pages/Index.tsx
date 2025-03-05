@@ -1,7 +1,27 @@
 
-// Find the export default function section and add this Debug button component nearby
+import React from "react";
+import { HeroSection } from "@/components/home/HeroSection";
+import { FeaturesGrid } from "@/components/home/FeaturesGrid";
+import { StatsSection } from "@/components/home/StatsSection";
+import { TestimonialsSection } from "@/components/home/TestimonialsSection";
+import { GetStartedSteps } from "@/components/home/GetStartedSteps";
+import { PartnerSection } from "@/components/home/PartnerSection";
 
-// At the bottom of the file, add this debug component
+export default function Index() {
+  return (
+    <div className="container mx-auto px-4">
+      <HeroSection />
+      <FeaturesGrid />
+      <StatsSection />
+      <TestimonialsSection />
+      <GetStartedSteps />
+      <PartnerSection />
+      <SessionDebugButton />
+    </div>
+  );
+}
+
+// Debug button component for development environments
 function SessionDebugButton() {
   const isLocalDev = process.env.NODE_ENV === 'development';
   
@@ -26,6 +46,3 @@ function SessionDebugButton() {
     </div>
   );
 }
-
-// Export the function that was implemented previously
-export default SessionDebugButton;
