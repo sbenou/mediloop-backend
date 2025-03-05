@@ -4,6 +4,16 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { Home, User, ShoppingBag, FileText, Settings, Calendar } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "../user-menu/UserAvatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CreditCard, Bell, LogOut } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 const UnifiedSidebar = () => {
   const { userRole, profile } = useAuth();
@@ -136,13 +146,52 @@ const UnifiedSidebar = () => {
       
       {/* User Profile */}
       <div className="border-t p-4">
-        <div className="flex items-center space-x-3">
-          <UserAvatar userProfile={profile} squared={true} canUpload={true} />
-          <div className="overflow-hidden">
-            <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
-            <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center space-x-3 cursor-pointer">
+              <UserAvatar userProfile={profile} squared={true} canUpload={true} />
+              <div className="overflow-hidden">
+                <p className="text-sm font-medium truncate">{profile?.full_name || 'Patient'}</p>
+                <p className="text-xs text-muted-foreground truncate">{profile?.email || 'patient@example.com'}</p>
+              </div>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="end" 
+            sideOffset={5}
+            className="z-[9999] w-56 bg-white border rounded-md shadow-lg animate-in fade-in-0 zoom-in-95"
+          >
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => window.location.href = "/upgrade"}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Upgrade to Pro</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => window.location.href = "/profile"}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Account</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = "/billing"}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Billing</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = "/notifications"}>
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Notifications</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );
