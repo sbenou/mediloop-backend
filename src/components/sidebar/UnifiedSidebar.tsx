@@ -1,7 +1,7 @@
 
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Home, User, ShoppingBag, FileText, Settings, Calendar } from "lucide-react";
+import { Home, User, ShoppingBag, FileText, Settings, Calendar, MapPin, Building, Stethoscope, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "../user-menu/UserAvatar";
 import {
@@ -29,6 +29,13 @@ const UnifiedSidebar = () => {
     return location.pathname === path;
   };
 
+  const isProfileSubitemActive = (profileTab: string) => {
+    const searchParams = new URLSearchParams(location.search);
+    return location.pathname === '/dashboard' && 
+           searchParams.get('view') === 'profile' && 
+           searchParams.get('profileTab') === profileTab;
+  };
+
   const platformMenuItems = [
     {
       label: 'Dashboard',
@@ -47,6 +54,39 @@ const UnifiedSidebar = () => {
       icon: <Calendar className="w-5 h-5 mr-3" />,
       path: '/teleconsultations',
       active: isLinkActive('/teleconsultations')
+    }
+  ];
+  
+  const profileSubItems = [
+    {
+      label: 'Personal Details',
+      icon: <User className="w-4 h-4 mr-2" />,
+      path: '/dashboard?view=profile&profileTab=personal',
+      active: isProfileSubitemActive('personal')
+    },
+    {
+      label: 'Addresses',
+      icon: <MapPin className="w-4 h-4 mr-2" />,
+      path: '/dashboard?view=profile&profileTab=addresses',
+      active: isProfileSubitemActive('addresses')
+    },
+    {
+      label: 'Pharmacy',
+      icon: <Building className="w-4 h-4 mr-2" />,
+      path: '/dashboard?view=profile&profileTab=pharmacy',
+      active: isProfileSubitemActive('pharmacy')
+    },
+    {
+      label: 'Doctor',
+      icon: <Stethoscope className="w-4 h-4 mr-2" />,
+      path: '/dashboard?view=profile&profileTab=doctor',
+      active: isProfileSubitemActive('doctor')
+    },
+    {
+      label: 'Next of Kin',
+      icon: <Users className="w-4 h-4 mr-2" />,
+      path: '/dashboard?view=profile&profileTab=nextofkin',
+      active: isProfileSubitemActive('nextofkin')
     }
   ];
   
@@ -119,6 +159,44 @@ const UnifiedSidebar = () => {
               {item.label}
             </Link>
           ))}
+          
+          {/* Profile link with subitems */}
+          <div className="relative">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className={`flex items-center justify-between px-3 py-2 rounded-md text-sm cursor-pointer ${
+                  location.pathname === '/dashboard' && new URLSearchParams(location.search).get('view') === 'profile'
+                    ? 'bg-primary/10 text-primary font-medium' 
+                    : 'text-muted-foreground hover:bg-gray-100'
+                }`}>
+                  <div className="flex items-center">
+                    <User className="w-5 h-5 mr-3" />
+                    <span>Profile</span>
+                  </div>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                side="right" 
+                align="start" 
+                alignOffset={-5}
+                className="w-56 bg-white border rounded-md shadow-lg z-[9999]"
+              >
+                {profileSubItems.map((subItem, index) => (
+                  <DropdownMenuItem key={index} asChild>
+                    <Link
+                      to={subItem.path}
+                      className={`flex items-center ${
+                        subItem.active ? 'bg-primary/10 text-primary font-medium' : ''
+                      }`}
+                    >
+                      {subItem.icon}
+                      <span>{subItem.label}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </nav>
         
         {/* Admin Section */}
@@ -158,6 +236,7 @@ const UnifiedSidebar = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent 
             align="end" 
+            side="right"
             sideOffset={5}
             className="z-[9999] w-56 bg-white border rounded-md shadow-lg animate-in fade-in-0 zoom-in-95"
           >
