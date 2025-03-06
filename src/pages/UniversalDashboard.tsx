@@ -12,7 +12,7 @@ import {
   HomeView,
   PharmacyView
 } from "@/components/dashboard/views";
-import { UnifiedLayout } from "@/components/layout/UnifiedLayout";
+import UnifiedLayout from "@/components/layout/UnifiedLayout";
 
 const UniversalDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,6 +22,7 @@ const UniversalDashboard = () => {
   
   const currentView = searchParams.get("view") || "home";
   const ordersTab = searchParams.get("ordersTab") || "orders";
+  const profileTab = searchParams.get("profileTab") || "personal";
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -66,15 +67,15 @@ const UniversalDashboard = () => {
   const getContent = () => {
     switch (currentView) {
       case "profile":
-        return <ProfileView />;
+        return <ProfileView activeTab={profileTab} userRole={userRole} />;
       case "settings":
-        return <SettingsView />;
+        return <SettingsView userRole={userRole} />;
       case "orders":
-        return <OrdersView activeTab={ordersTab} />;
+        return <OrdersView activeTab={ordersTab} userRole={userRole} />;
       case "prescriptions":
-        return <PrescriptionsView />;
+        return <PrescriptionsView userRole={userRole} />;
       case "teleconsultations":
-        return <TeleconsultationsView />;
+        return <TeleconsultationsView userRole={userRole} />;
       case "pharmacy":
         return <PharmacyView userRole={userRole} />;
       case "home":
