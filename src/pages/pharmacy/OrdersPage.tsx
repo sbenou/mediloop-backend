@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import PharmacistLayoutOld from "@/components/layout/PharmacistLayoutOld";
+import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -88,10 +88,10 @@ const OrdersPage = () => {
   };
 
   return (
-    <PharmacistLayoutOld>
+    <PharmacistLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders (Legacy)</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
           <p className="text-muted-foreground">
             View and manage all pharmacy orders.
           </p>
@@ -170,7 +170,7 @@ const OrdersPage = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </PharmacistLayoutOld>
+    </PharmacistLayout>
   );
 };
 

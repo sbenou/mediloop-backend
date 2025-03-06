@@ -15,8 +15,6 @@ import {
   PrescriptionsView,
   TeleconsultationsView,
   HomeView,
-  PharmacyInventoryView,
-  PharmacyPatientsView,
 } from "@/components/dashboard/views";
 
 const UniversalDashboard = () => {
@@ -193,7 +191,7 @@ const UniversalDashboard = () => {
       case 'doctor':
         return ['patients', 'appointments', 'prescriptions'].includes(view);
       case 'pharmacist':
-        return ['inventory', 'patients', 'orders', 'prescriptions'].includes(view);
+        return ['inventory', 'orders', 'prescriptions'].includes(view);
       case 'superadmin':
         return true;
       default:
@@ -243,16 +241,6 @@ const UniversalDashboard = () => {
         return <PrescriptionsView userRole={userRole} />;
       case 'teleconsultations':
         return <TeleconsultationsView userRole={userRole} />;
-      case 'inventory':
-        if (userRole === 'pharmacist') {
-          return <PharmacyInventoryView />;
-        }
-        return <HomeView userRole={userRole} />;
-      case 'patients':
-        if (userRole === 'pharmacist' || userRole === 'doctor') {
-          return <PharmacyPatientsView />;
-        }
-        return <HomeView userRole={userRole} />;
       case 'home':
       default:
         return <HomeView userRole={userRole} />;

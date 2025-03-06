@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -60,17 +61,24 @@ const PharmacistSidebar = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
+  // Simulate connection status check
   useEffect(() => {
     const checkConnectionStatus = () => {
+      // In a real app, this would check if the pharmacist is online/available
+      // For demo, we'll just use navigator.onLine as a basic check
       setIsConnected(navigator.onLine);
     };
 
+    // Initial check
     checkConnectionStatus();
 
+    // Setup event listeners for online/offline status
     window.addEventListener('online', () => setIsConnected(true));
     window.addEventListener('offline', () => setIsConnected(false));
 
+    // For demo purposes, occasionally toggle the connection status randomly
     const intervalId = setInterval(() => {
+      // 90% chance to stay connected, 10% chance to disconnect
       if (Math.random() > 0.9) {
         setIsConnected(prev => !prev);
       }
@@ -119,6 +127,7 @@ const PharmacistSidebar = () => {
         description: "Logged out successfully from pharmacy portal",
       });
       
+      // Force redirect to home page
       window.location.href = "/";
     } catch (error) {
       console.error("Logout error:", error);
@@ -133,6 +142,7 @@ const PharmacistSidebar = () => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Logo upload logic would go here
   };
 
   const handlePharmacyLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,6 +150,8 @@ const PharmacistSidebar = () => {
     if (!file) return;
 
     try {
+      // In a real implementation, we would upload to Supabase storage here
+      // For now, create a temporary URL to display the image
       const objectUrl = URL.createObjectURL(file);
       setPharmacyLogo(objectUrl);
       
@@ -188,7 +200,7 @@ const PharmacistSidebar = () => {
             </div>
             <div>
               <h3 className="font-semibold text-sm">Mediloop</h3>
-              <p className="text-xs text-muted-foreground">Pharmacy Portal (Legacy)</p>
+              <p className="text-xs text-muted-foreground">Pharmacy Portal</p>
             </div>
           </div>
         </SidebarHeader>
@@ -203,7 +215,7 @@ const PharmacistSidebar = () => {
                     onClick={() => toggleGroup('patients')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      (isGroupExpanded('patients') || isActiveRoute('/pharmacy-old/patients')) && "text-primary"
+                      (isGroupExpanded('patients') || isActiveRoute('/pharmacy/patients')) && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
@@ -220,10 +232,10 @@ const PharmacistSidebar = () => {
                   {isGroupExpanded('patients') && (
                     <div className="pl-6 space-y-1 mt-1">
                       <SidebarMenuButton
-                        onClick={() => navigate('/pharmacy-old/patients')}
+                        onClick={() => navigate('/pharmacy/patients')}
                         className={cn(
                           "w-full text-sm",
-                          isActiveRoute('/pharmacy-old/patients') && "text-primary"
+                          isActiveRoute('/pharmacy/patients') && "text-primary"
                         )}
                       >
                         <Users className="mr-2 h-4 w-4" />
@@ -238,7 +250,7 @@ const PharmacistSidebar = () => {
                     onClick={() => toggleGroup('orders')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      (isGroupExpanded('orders') || isActiveRoute('/pharmacy-old/orders')) && "text-primary"
+                      (isGroupExpanded('orders') || isActiveRoute('/pharmacy/orders')) && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
@@ -255,20 +267,20 @@ const PharmacistSidebar = () => {
                   {isGroupExpanded('orders') && (
                     <div className="pl-6 space-y-1 mt-1">
                       <SidebarMenuButton
-                        onClick={() => navigate('/pharmacy-old/orders?tab=all')}
+                        onClick={() => navigate('/pharmacy/orders?tab=all')}
                         className={cn(
                           "w-full text-sm",
-                          (isActiveRoute('/pharmacy-old/orders') && !location.search.includes('tab=payments')) && "text-primary"
+                          (isActiveRoute('/pharmacy/orders') && !location.search.includes('tab=payments')) && "text-primary"
                         )}
                       >
                         <ShoppingBag className="mr-2 h-4 w-4" />
                         All Orders
                       </SidebarMenuButton>
                       <SidebarMenuButton
-                        onClick={() => navigate('/pharmacy-old/orders?tab=payments')}
+                        onClick={() => navigate('/pharmacy/orders?tab=payments')}
                         className={cn(
                           "w-full text-sm",
-                          (isActiveRoute('/pharmacy-old/orders') && location.search.includes('tab=payments')) && "text-primary"
+                          (isActiveRoute('/pharmacy/orders') && location.search.includes('tab=payments')) && "text-primary"
                         )}
                       >
                         <CreditCard className="mr-2 h-4 w-4" />
@@ -280,10 +292,10 @@ const PharmacistSidebar = () => {
 
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => navigate('/pharmacy-old/prescriptions')}
+                    onClick={() => navigate('/pharmacy/prescriptions')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      isActiveRoute('/pharmacy-old/prescriptions') && "text-primary"
+                      isActiveRoute('/pharmacy/prescriptions') && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
@@ -401,6 +413,7 @@ const PharmacistSidebar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           
+          {/* Hidden input for pharmacy logo upload */}
           <input 
             type="file" 
             ref={logoInputRef} 

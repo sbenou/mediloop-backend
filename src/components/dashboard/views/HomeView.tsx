@@ -1,183 +1,193 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Package, FileText, Users, ShoppingBag, Clock, PieChart } from "lucide-react";
-import StatisticsCharts from "../StatisticsCharts";
-import WearableDataDisplay from "../WearableDataDisplay";
-import HealthStateIndicator from "../HealthStateIndicator";
+import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
+import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
+import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
 
 interface HomeViewProps {
   userRole: string | null;
 }
 
-const HomeView = ({ userRole }: HomeViewProps) => {
+const HomeView: React.FC<HomeViewProps> = ({ userRole }) => {
+  const { profile } = useAuth();
   const navigate = useNavigate();
-  const [, setSearchParams] = useSearchParams();
 
   const handleViewChange = (view: string, tab?: string) => {
     if (tab) {
-      setSearchParams({ view, [`${view}Tab`]: tab });
+      navigate(`/dashboard?view=${view}&${view}Tab=${tab}`);
     } else {
-      setSearchParams({ view });
+      navigate(`/dashboard?view=${view}`);
     }
   };
 
-  if (userRole === 'pharmacist') {
-    return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold">Pharmacy Dashboard</h1>
-          <p className="text-muted-foreground">Monitor your pharmacy's performance and operations</p>
-        </div>
+  // Role-specific greeting and card data
+  const getRoleSpecificContent = () => {
+    switch (userRole) {
+      case 'patient':
+        return {
+          greeting: "Here's an overview of your healthcare information",
+          cards: [
+            {
+              title: "Prescriptions",
+              description: "Total active prescriptions",
+              count: 0,
+              onClick: () => handleViewChange('prescriptions')
+            },
+            {
+              title: "Orders",
+              description: "Total orders placed",
+              count: 0,
+              onClick: () => handleViewChange('orders')
+            },
+            {
+              title: "Doctors",
+              description: "Connected healthcare providers",
+              count: 0,
+              onClick: () => handleViewChange('profile', 'doctor')
+            },
+            {
+              title: "Teleconsultations",
+              description: "Upcoming appointments",
+              count: 0,
+              onClick: () => handleViewChange('teleconsultations')
+            }
+          ]
+        };
+      case 'doctor':
+        return {
+          greeting: "Here's an overview of your practice",
+          cards: [
+            {
+              title: "Patients",
+              description: "Total active patients",
+              count: 0,
+              onClick: () => handleViewChange('patients')
+            },
+            {
+              title: "Appointments",
+              description: "Scheduled appointments",
+              count: 0,
+              onClick: () => handleViewChange('appointments')
+            },
+            {
+              title: "Prescriptions",
+              description: "Prescriptions written",
+              count: 0,
+              onClick: () => handleViewChange('prescriptions')
+            },
+            {
+              title: "Revenue",
+              description: "Monthly earnings",
+              count: 0,
+              onClick: () => handleViewChange('billing')
+            }
+          ]
+        };
+      case 'pharmacist':
+        return {
+          greeting: "Here's an overview of your pharmacy operations",
+          cards: [
+            {
+              title: "Inventory",
+              description: "Products in stock",
+              count: 0,
+              onClick: () => handleViewChange('inventory')
+            },
+            {
+              title: "Orders",
+              description: "Pending orders",
+              count: 0,
+              onClick: () => handleViewChange('orders')
+            },
+            {
+              title: "Prescriptions",
+              description: "Active prescriptions",
+              count: 0,
+              onClick: () => handleViewChange('prescriptions')
+            },
+            {
+              title: "Revenue",
+              description: "Daily sales",
+              count: 0,
+              onClick: () => handleViewChange('revenue')
+            }
+          ]
+        };
+      case 'superadmin':
+        return {
+          greeting: "Platform administration overview",
+          cards: [
+            {
+              title: "Users",
+              description: "Registered users",
+              count: 0,
+              onClick: () => handleViewChange('users')
+            },
+            {
+              title: "Pharmacies",
+              description: "Active pharmacies",
+              count: 0,
+              onClick: () => handleViewChange('pharmacies')
+            },
+            {
+              title: "Doctors",
+              description: "Verified doctors",
+              count: 0,
+              onClick: () => handleViewChange('doctors')
+            },
+            {
+              title: "Support",
+              description: "Open tickets",
+              count: 0,
+              onClick: () => handleViewChange('support')
+            }
+          ]
+        };
+      default:
+        return {
+          greeting: "Welcome to your dashboard",
+          cards: []
+        };
+    }
+  };
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => handleViewChange('inventory')}
-          >
-            <div className="flex flex-col items-center">
-              <Package className="h-8 w-8 text-primary mb-2" />
-              <h3 className="text-lg font-medium">Inventory</h3>
-              <p className="text-xs text-muted-foreground mt-1">Total Products</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => handleViewChange('prescriptions')}
-          >
-            <div className="flex flex-col items-center">
-              <FileText className="h-8 w-8 text-primary mb-2" />
-              <h3 className="text-lg font-medium">Prescriptions</h3>
-              <p className="text-xs text-muted-foreground mt-1">Pending Fulfillment</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => handleViewChange('patients')}
-          >
-            <div className="flex flex-col items-center">
-              <Users className="h-8 w-8 text-primary mb-2" />
-              <h3 className="text-lg font-medium">Patients</h3>
-              <p className="text-xs text-muted-foreground mt-1">Registered Patients</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => handleViewChange('orders')}
-          >
-            <div className="flex flex-col items-center">
-              <ShoppingBag className="h-8 w-8 text-primary mb-2" />
-              <h3 className="text-lg font-medium">Orders</h3>
-              <p className="text-xs text-muted-foreground mt-1">Pending Delivery</p>
-              <p className="text-4xl font-bold mt-2">0</p>
-            </div>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-medium mb-4">Recent Activities</h3>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm">No recent activities</p>
-                  <p className="text-xs text-muted-foreground">Your recent activities will appear here</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="text-lg font-medium mb-4">Analytics Overview</h3>
-            <div className="h-40 flex items-center justify-center">
-              <PieChart className="h-8 w-8 text-muted-foreground" />
-              <p className="ml-3 text-muted-foreground">No analytics data available</p>
-            </div>
-          </Card>
-        </div>
-
-        <StatisticsCharts />
-      </div>
-    );
-  }
-
-  // Default to patient dashboard for other roles
+  const content = getRoleSpecificContent();
+  
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Welcome to Your Dashboard</h1>
-        <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
+      <div className="text-center md:text-left">
+        <h1 className="text-3xl font-bold mb-2">Welcome, {profile?.full_name || 'User'}</h1>
+        <p className="text-muted-foreground">
+          {content.greeting}
+        </p>
       </div>
-          
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card 
-          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => handleViewChange('prescriptions')}
-        >
-          <div className="flex flex-col items-center">
-            <FileText className="h-8 w-8 text-primary mb-2" />
-            <h3 className="text-lg font-medium">Prescriptions</h3>
-            <p className="text-xs text-muted-foreground mt-1">Active Prescriptions</p>
-            <p className="text-4xl font-bold mt-2">0</p>
-          </div>
-        </Card>
-              
-        <Card 
-          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => handleViewChange('orders')}
-        >
-          <div className="flex flex-col items-center">
-            <ShoppingBag className="h-8 w-8 text-primary mb-2" />
-            <h3 className="text-lg font-medium">Orders</h3>
-            <p className="text-xs text-muted-foreground mt-1">Total Orders</p>
-            <p className="text-4xl font-bold mt-2">0</p>
-          </div>
-        </Card>
-              
-        {userRole === 'patient' && (
-          <>
-            <Card 
-              className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleViewChange('profile', 'doctor')}
-            >
-              <div className="flex flex-col items-center">
-                <Users className="h-8 w-8 text-primary mb-2" />
-                <h3 className="text-lg font-medium">Doctors</h3>
-                <p className="text-xs text-muted-foreground mt-1">Connected Providers</p>
-                <p className="text-4xl font-bold mt-2">0</p>
-              </div>
-            </Card>
-                  
-            <Card 
-              className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleViewChange('teleconsultations')}
-            >
-              <div className="flex flex-col items-center">
-                <Clock className="h-8 w-8 text-primary mb-2" />
-                <h3 className="text-lg font-medium">Teleconsultations</h3>
-                <p className="text-xs text-muted-foreground mt-1">Upcoming Appointments</p>
-                <p className="text-4xl font-bold mt-2">0</p>
-              </div>
-            </Card>
-          </>
-        )}
+        {content.cards.map((card, index) => (
+          <Card
+            key={index}
+            className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={card.onClick}
+          >
+            <div className="text-center">
+              <h3 className="text-base font-medium">{card.title}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2">{card.description}</p>
+              <p className="text-4xl font-bold mt-2">{card.count}</p>
+            </div>
+          </Card>
+        ))}
       </div>
       
-      {userRole === 'patient' && (
-        <>
-          <HealthStateIndicator userRole={userRole} />
-          <WearableDataDisplay userRole={userRole} />
-        </>
-      )}
+      {/* Health State Indicators for patient and doctor roles */}
+      <HealthStateIndicator userRole={userRole} />
       
+      {/* Wearable Data Display for patient and doctor roles */}
+      <WearableDataDisplay userRole={userRole} />
+      
+      {/* Add statistics charts for all roles */}
       <StatisticsCharts />
     </div>
   );
