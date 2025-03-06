@@ -34,6 +34,7 @@ import PrescriptionDetail from "./pages/pharmacy/PrescriptionDetail";
 // Legacy pages - these will eventually be replaced
 import Dashboard from "./pages/Dashboard";
 import PatientDashboard from "./pages/PatientDashboard";
+import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
 
 import './App.css';
 
@@ -92,17 +93,25 @@ function App() {
                   <Route path="/find-doctor" element={<FindDoctor />} />
                   <Route path="/search-pharmacy" element={<SearchPharmacy />} />
                   
-                  {/* Temporarily keep the old pharmacy routes until they're refactored */}
-                  <Route path="/pharmacy/patients" element={<PatientsPage />} />
-                  <Route path="/pharmacy/patients/:id" element={<PatientDetail />} />
-                  <Route path="/pharmacy/orders" element={<OrdersPage />} />
-                  <Route path="/pharmacy/prescriptions" element={<PrescriptionsPage />} />
-                  <Route path="/pharmacy/prescriptions/:id" element={<PrescriptionDetail />} />
+                  {/* Pharmacy routes - legacy version */}
+                  <Route path="/pharmacy-old/patients" element={<PatientsPage />} />
+                  <Route path="/pharmacy-old/patients/:id" element={<PatientDetail />} />
+                  <Route path="/pharmacy-old/orders" element={<OrdersPage />} />
+                  <Route path="/pharmacy-old/prescriptions" element={<PrescriptionsPage />} />
+                  <Route path="/pharmacy-old/prescriptions/:id" element={<PrescriptionDetail />} />
+                  
+                  {/* Pharmacy routes - new version (using UniversalDashboard) */}
+                  <Route path="/pharmacy/dashboard" element={<UniversalDashboard />} />
+                  <Route path="/pharmacy/patients" element={<Navigate to="/dashboard?view=patients" replace />} />
+                  <Route path="/pharmacy/orders" element={<Navigate to="/dashboard?view=orders" replace />} />
+                  <Route path="/pharmacy/prescriptions" element={<Navigate to="/dashboard?view=prescriptions" replace />} />
+                  <Route path="/pharmacy/inventory" element={<Navigate to="/dashboard?view=inventory" replace />} />
                   
                   {/* Legacy pages - will be removed in the future */}
                   <Route path="/legacy/dashboard" element={<Dashboard />} />
                   <Route path="/legacy/patient-dashboard" element={<PatientDashboard />} />
                   <Route path="/legacy/unified-profile" element={<UnifiedProfilePage />} />
+                  <Route path="/legacy/pharmacy-dashboard" element={<PharmacyDashboard />} />
                 </Routes>
                 <Toaster />
               </BrowserRouter>
