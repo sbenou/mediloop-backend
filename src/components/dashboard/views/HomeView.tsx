@@ -3,7 +3,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Package, FileText, Users, ShoppingBag, Clock, PieChart } from "lucide-react";
-import StatisticsCharts from "../StatisticsCharts";
+import { StatisticsCharts } from "../StatisticsCharts";
 import WearableDataDisplay from "../WearableDataDisplay";
 import HealthStateIndicator from "../HealthStateIndicator";
 
