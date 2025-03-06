@@ -35,7 +35,7 @@ import { useNavigate } from 'react-router-dom';
 import PharmacyDashboard from './pages/pharmacy/PharmacyDashboard';
 
 function AppContent() {
-  const { isAuthenticated, userRole, isLoading } = useAuth();
+  const { isAuthenticated, userRole, isLoading, initialCheckDone } = useAuth();
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -83,17 +83,21 @@ function AppContent() {
       );
     }
 
-    // Only show loading for authenticated routes
-    if (isLoading) {
+    // If initial check is not done yet and we're not on a public page, show a nice loading indicator
+    if (isLoading && !initialCheckDone) {
       return (
-        <div className="h-screen flex items-center justify-center">
-          <p className="text-lg">Loading authentication...</p>
+        <div className="flex h-screen items-center justify-center bg-white">
+          <div className="text-center space-y-4">
+            <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+            <p className="text-lg font-medium text-gray-700">Loading authentication...</p>
+            <p className="text-sm text-gray-500">Please wait while we get things ready</p>
+          </div>
         </div>
       );
     }
 
-    if (!isAuthenticated) {
-      // If not authenticated and not on a public page, redirect to login
+    if (!isAuthenticated && initialCheckDone) {
+      // If not authenticated and initial check is done, redirect to login
       console.log("User not authenticated, redirecting to login");
       return <Navigate to="/login" replace />;
     }

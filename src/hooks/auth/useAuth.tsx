@@ -1,6 +1,6 @@
 
 import { useRecoilValue } from 'recoil';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { 
   isAuthenticatedSelector, 
   userRoleSelector, 
@@ -11,6 +11,9 @@ import { authState } from '@/store/auth/atoms';
 import { supabase, getSessionFromStorage } from '@/lib/supabase';
 
 export const useAuth = () => {
+  // Local state to track if initial auth check has completed
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
+  
   // Get all state values first
   const auth = useRecoilValue(authState);
   const isAuthenticated = useRecoilValue(isAuthenticatedSelector);
@@ -44,15 +47,36 @@ export const useAuth = () => {
     }
   }, [isAuthenticated, isLoading]);
 
+  // Run initial auth check and update local state when done
+  useEffect(() => {
+    const runInitialCheck = async () => {
+      try {
+        // Check if we have a session
+        const { data } = await supabase.auth.getSession();
+        console.log("Initial auth check complete:", data.session ? "Session found" : "No session");
+      } catch (err) {
+        console.error("Error during initial auth check:", err);
+      } finally {
+        // Mark initial check as done regardless of result
+        setInitialCheckDone(true);
+      }
+    };
+    
+    if (!initialCheckDone) {
+      runInitialCheck();
+    }
+  }, [initialCheckDone]);
+
   // Debug logging for auth state changes
   useEffect(() => {
     console.log("Auth state changed:", {
       isAuthenticated,
       isLoading,
       userRole,
-      hasProfile: !!auth.profile
+      hasProfile: !!auth.profile,
+      initialCheckDone
     });
-  }, [isAuthenticated, isLoading, userRole, auth.profile]);
+  }, [isAuthenticated, isLoading, userRole, auth.profile, initialCheckDone]);
 
   // Debug checks for route mismatches based on role
   useEffect(() => {
@@ -98,13 +122,15 @@ export const useAuth = () => {
     hasPermission: (permission: string) => isLoading || permissions.includes(permission),
   }), [auth.profile, auth.user, isLoading, permissions]);
 
+  // Return augmented values to include initialCheckDone for more accurate loading states
   return {
     isAuthenticated,
     userRole,
     permissions,
-    isLoading,
+    isLoading: isLoading && !initialCheckDone, // Only consider loading if recoil is loading AND initial check isn't done
     hasPermission: memoizedValues.hasPermission,
     user: memoizedValues.user,
     profile: memoizedValues.profile,
+    initialCheckDone
   };
 };
