@@ -27,17 +27,32 @@ export const useAuth = () => {
         const storedSession = getSessionFromStorage();
         
         if (!storedSession) {
+          console.log("Authentication check: No session found in storage");
           // If not in storage, check from Supabase
           const { data } = await supabase.auth.getSession();
           if (!data.session) {
             console.warn('Auth state claims user is authenticated but no session exists');
+          } else {
+            console.log("Authentication check: Session found via API but not in storage");
           }
+        } else {
+          console.log("Authentication check: Valid session found in storage");
         }
       };
       
       checkSessionExists();
     }
   }, [isAuthenticated, isLoading]);
+
+  // Debug logging for auth state changes
+  useEffect(() => {
+    console.log("Auth state changed:", {
+      isAuthenticated,
+      isLoading,
+      userRole,
+      hasProfile: !!auth.profile
+    });
+  }, [isAuthenticated, isLoading, userRole, auth.profile]);
 
   // Debug checks for route mismatches based on role
   useEffect(() => {
@@ -55,7 +70,9 @@ export const useAuth = () => {
       // Check if a pharmacist is on a non-pharmacy page
       if (userRole === 'pharmacist' && 
           !currentPath.startsWith('/pharmacy') && 
-          currentPath !== '/login') {
+          currentPath !== '/login' &&
+          currentPath !== '/dashboard' && 
+          !currentPath.startsWith('/legacy')) {
         console.warn(`Warning: Pharmacist user accessing non-pharmacy route: ${currentPath}`);
       }
       
@@ -64,7 +81,8 @@ export const useAuth = () => {
           !currentPath.startsWith('/patient') && 
           currentPath !== '/login' &&
           currentPath !== '/patient-dashboard' &&
-          currentPath !== '/unified-profile') {
+          currentPath !== '/unified-profile' &&
+          currentPath !== '/dashboard') {
         console.warn(`Warning: Patient user accessing non-patient route: ${currentPath}`);
       }
       

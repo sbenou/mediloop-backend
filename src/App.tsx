@@ -73,15 +73,28 @@ function AppContent() {
   };
 
   const renderView = () => {
+    // For public routes like the home page, don't show loading
+    if (location.pathname === '/' || location.pathname.startsWith('/login')) {
+      return (
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      );
+    }
+
+    // Only show loading for authenticated routes
     if (isLoading) {
       return (
         <div className="h-screen flex items-center justify-center">
-          <p className="text-lg">Loading...</p>
+          <p className="text-lg">Loading authentication...</p>
         </div>
       );
     }
 
     if (!isAuthenticated) {
+      // If not authenticated and not on a public page, redirect to login
+      console.log("User not authenticated, redirecting to login");
       return <Navigate to="/login" replace />;
     }
 
@@ -113,11 +126,10 @@ function AppContent() {
           </>
         )}
 
-        {/* Superadmin routes would go here */}
+        <Route path="/legacy/pharmacy-dashboard" element={<PharmacyDashboard />} />
 
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/legacy/pharmacy-dashboard" element={<PharmacyDashboard />} />
       </Routes>
     );
   };

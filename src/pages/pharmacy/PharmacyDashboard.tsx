@@ -24,6 +24,7 @@ const PharmacyDashboard = () => {
         description: "Please login to access the pharmacy dashboard.",
       });
       navigate("/login");
+      return;
     }
 
     if (!isLoading && isAuthenticated && profile?.role !== "pharmacist") {
@@ -34,23 +35,30 @@ const PharmacyDashboard = () => {
         description: "You don't have permission to access the pharmacy dashboard.",
       });
       navigate("/dashboard");
+      return;
     }
   }, [isLoading, isAuthenticated, profile, navigate]);
 
-  // Show an immediate loading state when authentication is in progress
+  // Show an improved loading state when authentication is in progress
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
+        <div className="text-center">
+          <p className="text-lg mb-2">Loading authentication...</p>
+          <p className="text-sm text-gray-500">Please wait while we verify your credentials</p>
+        </div>
       </div>
     );
   }
 
-  // Also show loading if authentication has completed but the user isn't authenticated as a pharmacist
+  // If not loaded or not authenticated as a pharmacist, show a loading state
   if (!isAuthenticated || (profile && profile.role !== "pharmacist")) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p>Checking permissions...</p>
+        <div className="text-center">
+          <p className="text-lg mb-2">Checking permissions...</p>
+          <p className="text-sm text-gray-500">This page is only accessible to pharmacists</p>
+        </div>
       </div>
     );
   }
