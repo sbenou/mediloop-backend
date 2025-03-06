@@ -116,7 +116,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
           toast({
             title: "Late Cancellation",
             description: "Please try to cancel appointments at least 1 hour in advance in the future.",
-            variant: "default"  // Changed from "warning" to "default"
+            variant: "default"
           });
         }
       }
@@ -140,27 +140,48 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
       const consultation = consultations.find(c => c.id === id);
       if (!consultation) return;
 
-      // Create notification based on the status change
-      let notificationData = {
-        user_id: userRole === 'doctor' ? consultation.patient_id : consultation.doctor_id,
-        title: '',
-        message: '',
-        type: 'teleconsultation_update',
-        link: '/dashboard?view=teleconsultations'
-      };
+      // Create notifications for both doctor and patient
+      const notificationTime = format(new Date(consultation.start_time), 'PPP');
+      const notificationTimeWithHour = `${format(new Date(consultation.start_time), 'PPP')} at ${format(new Date(consultation.start_time), 'p')}`;
+      
+      // Generate notification data based on status
+      let title = '';
+      let patientMessage = '';
+      let doctorMessage = '';
 
       if (newStatus === 'confirmed') {
-        notificationData.title = 'Teleconsultation Confirmed';
-        notificationData.message = `Your teleconsultation on ${format(new Date(consultation.start_time), 'PPP')} at ${format(new Date(consultation.start_time), 'p')} has been confirmed.`;
+        title = 'Teleconsultation Confirmed';
+        patientMessage = `Your teleconsultation with Dr. ${consultation.doctor?.full_name} on ${notificationTimeWithHour} has been confirmed.`;
+        doctorMessage = `Your teleconsultation with ${consultation.patient?.full_name} on ${notificationTimeWithHour} has been confirmed.`;
       } else if (newStatus === 'cancelled') {
-        notificationData.title = 'Teleconsultation Cancelled';
-        notificationData.message = `The teleconsultation on ${format(new Date(consultation.start_time), 'PPP')} at ${format(new Date(consultation.start_time), 'p')} has been cancelled.`;
+        title = 'Teleconsultation Cancelled';
+        patientMessage = `The teleconsultation with Dr. ${consultation.doctor?.full_name} on ${notificationTimeWithHour} has been cancelled.`;
+        doctorMessage = `The teleconsultation with ${consultation.patient?.full_name} on ${notificationTimeWithHour} has been cancelled.`;
       } else if (newStatus === 'completed') {
-        notificationData.title = 'Teleconsultation Completed';
-        notificationData.message = `The teleconsultation on ${format(new Date(consultation.start_time), 'PPP')} has been marked as completed.`;
+        title = 'Teleconsultation Completed';
+        patientMessage = `Your teleconsultation with Dr. ${consultation.doctor?.full_name} on ${notificationTime} has been marked as completed.`;
+        doctorMessage = `Your teleconsultation with ${consultation.patient?.full_name} on ${notificationTime} has been marked as completed.`;
       }
 
-      await supabase.from('notifications').insert(notificationData);
+      // Create notifications for both doctor and patient
+      const notificationsToInsert = [
+        {
+          user_id: consultation.patient_id,
+          title,
+          message: patientMessage,
+          type: 'teleconsultation_update',
+          link: '/dashboard?view=teleconsultations'
+        },
+        {
+          user_id: consultation.doctor_id,
+          title,
+          message: doctorMessage, 
+          type: 'teleconsultation_update',
+          link: '/dashboard?view=teleconsultations'
+        }
+      ];
+
+      await supabase.from('notifications').insert(notificationsToInsert);
 
       toast({
         title: `Consultation ${newStatus}`,
