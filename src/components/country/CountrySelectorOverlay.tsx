@@ -10,7 +10,7 @@ const CountrySelectorOverlay = ({ open }: CountrySelectorOverlayProps) => {
   
   return (
     <div 
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100000]" 
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100000]" 
       style={{ 
         pointerEvents: "all",
         position: "fixed",
