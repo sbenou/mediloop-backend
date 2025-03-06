@@ -10,7 +10,14 @@ const PharmacyDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("PharmacyDashboard: Component mounted", { 
+      isLoading, 
+      isAuthenticated, 
+      role: profile?.role 
+    });
+
     if (!isLoading && !isAuthenticated) {
+      console.log("PharmacyDashboard: User not authenticated, redirecting to login");
       toast({
         variant: "destructive",
         title: "Authentication required",
@@ -20,6 +27,7 @@ const PharmacyDashboard = () => {
     }
 
     if (!isLoading && isAuthenticated && profile?.role !== "pharmacist") {
+      console.log("PharmacyDashboard: User not a pharmacist, redirecting to dashboard");
       toast({
         variant: "destructive",
         title: "Access denied",
@@ -29,10 +37,20 @@ const PharmacyDashboard = () => {
     }
   }, [isLoading, isAuthenticated, profile, navigate]);
 
+  // Show an immediate loading state when authentication is in progress
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Also show loading if authentication has completed but the user isn't authenticated as a pharmacist
+  if (!isAuthenticated || (profile && profile.role !== "pharmacist")) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Checking permissions...</p>
       </div>
     );
   }

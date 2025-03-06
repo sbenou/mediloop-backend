@@ -10,27 +10,17 @@ import { Search, Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-interface PharmacistLayoutProps {
+interface PharmacistLayoutOldProps {
   children: React.ReactNode;
 }
 
-const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
+const PharmacistLayoutOld = ({ children }: PharmacistLayoutOldProps) => {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
-    // Check if user is authenticated
-    if (!isLoading && !isAuthenticated) {
-      navigate("/login", { replace: true });
-    }
-
-    // Check if user has the pharmacist role
-    if (!isLoading && isAuthenticated && profile && profile.role !== "pharmacist") {
-      navigate("/dashboard", { replace: true });
-    }
-
     // Handle window resize for mobile detection
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -38,6 +28,28 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Check if user is authenticated and has pharmacist role
+  useEffect(() => {
+    if (!isLoading) {
+      console.log("PharmacistLayoutOld: Auth state loaded", { 
+        isAuthenticated, 
+        role: profile?.role 
+      });
+      
+      if (!isAuthenticated) {
+        console.log("PharmacistLayoutOld: User not authenticated, redirecting to login");
+        navigate("/login", { replace: true });
+        return;
+      }
+      
+      if (isAuthenticated && profile && profile.role !== "pharmacist") {
+        console.log("PharmacistLayoutOld: User not a pharmacist, redirecting to dashboard");
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+    }
   }, [isAuthenticated, isLoading, navigate, profile]);
 
   // Show loading state
@@ -45,6 +57,15 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // If not authenticated or not a pharmacist (but still loading), show loading
+  if (!isAuthenticated || (profile && profile.role !== "pharmacist")) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Checking permissions...</p>
       </div>
     );
   }
@@ -98,4 +119,4 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   );
 };
 
-export default PharmacistLayout;
+export default PharmacistLayoutOld;

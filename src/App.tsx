@@ -1,124 +1,139 @@
+import React, { useEffect, useState } from 'react';
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+  useLocation,
+} from 'react-router-dom';
+import { RecoilRoot } from 'recoil';
+import { useAuth } from '@/hooks/auth/useAuth';
+import {
+  ProfileView,
+  SettingsView,
+  OrdersView,
+  PrescriptionsView,
+  TeleconsultationsView,
+  HomeView,
+  PharmacyInventoryView,
+  PharmacyPatientsView,
+} from '@/components/dashboard/views';
+import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { clearAllAuthStorage } from '@/lib/supabase';
+import { toast } from "@/components/ui/use-toast"
+import { useNavigate } from 'react-router-dom';
+import PharmacyDashboard from './pages/pharmacy/PharmacyDashboard';
 
-import { ProductSearch } from '@/components/ProductSearch';
-import { CartProvider } from '@/contexts/CartContext';
-import { CurrencyProvider } from '@/contexts/CurrencyContext';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import AuthProvider from '@/providers/AuthProvider';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from "@/components/ui/toaster";
-import { RecoilRoot } from "recoil";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import UniversalDashboard from "./pages/UniversalDashboard";
-import ResetPassword from "./pages/ResetPassword";
-import Products from "./pages/Products";
-import Services from "./pages/Services";
-import BecomePartner from "./pages/BecomePartner";
-import BecomeTransporter from "./pages/BecomeTransporter";
-import CreatePrescription from "./pages/CreatePrescription";
-import DoctorConnections from "./pages/DoctorConnections";
-import FindDoctor from "./pages/FindDoctor";
-import SearchPharmacy from "./pages/SearchPharmacy";
-import Signup from "./pages/Signup";
-import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage";
-import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
-import UnifiedProfilePage from "./pages/UnifiedProfilePage";
+function AppContent() {
+  const { isAuthenticated, userRole, isLoading } = useAuth();
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
+  const navigate = useNavigate();
 
-// Pharmacy routes
-import PatientsPage from "./pages/pharmacy/PatientsPage";
-import PatientDetail from "./pages/pharmacy/PatientDetail";
-import OrdersPage from "./pages/pharmacy/OrdersPage";
-import PrescriptionsPage from "./pages/pharmacy/PrescriptionsPage";
-import PrescriptionDetail from "./pages/pharmacy/PrescriptionDetail";
+  const handleLogout = () => {
+    setShowLogoutConfirmation(true);
+  };
 
-// Legacy pages - these will eventually be replaced
-import Dashboard from "./pages/Dashboard";
-import PatientDashboard from "./pages/PatientDashboard";
-import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
+  const confirmLogout = async () => {
+    setShowLogoutConfirmation(false);
+    try {
+      await clearAllAuthStorage();
+      toast({
+        title: "Logged out successfully.",
+        description: "You have been logged out."
+      });
+      navigate('/login');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout failed.",
+        description: "There was an error logging you out. Please try again."
+      });
+    }
+  };
 
-import './App.css';
+  const cancelLogout = () => {
+    setShowLogoutConfirmation(false);
+  };
 
-// Log the current environment
-console.log('Current environment:', import.meta.env.MODE);
+  const renderView = () => {
+    if (isLoading) {
+      return <p>Loading...</p>;
+    }
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+    if (!isAuthenticated) {
+      return <Navigate to="/login" replace />;
+    }
+
+    let initialView = 'home';
+    if (userRole === 'patient') {
+      initialView = 'prescriptions';
+    } else if (userRole === 'pharmacist') {
+      initialView = 'inventory';
+    }
+
+    return (
+      <Routes>
+        <Route path="/" element={<Navigate to={`/dashboard?view=${initialView}`} replace />} />
+        <Route path="/dashboard" element={<HomeView userRole={userRole} />} />
+        <Route path="/profile" element={<ProfileView />} />
+        <Route path="/settings" element={<SettingsView />} />
+        <Route path="/orders" element={<OrdersView />} />
+        <Route path="/prescriptions" element={<PrescriptionsView />} />
+        <Route path="/teleconsultations" element={<TeleconsultationsView />} />
+
+        {userRole === 'pharmacist' && (
+          <>
+            <Route path="/pharmacy/inventory" element={<PharmacyInventoryView />} />
+            <Route path="/pharmacy/patients" element={<PharmacyPatientsView />} />
+          </>
+        )}
+
+        {/* Superadmin routes would go here */}
+
+        {/* Fallback route */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/legacy/pharmacy-dashboard" element={<PharmacyDashboard />} />
+      </Routes>
+    );
+  };
+
+  return (
+    <>
+      {renderView()}
+
+      {/* Logout Confirmation Sheet */}
+      <Sheet open={showLogoutConfirmation} onOpenChange={setShowLogoutConfirmation}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Confirm Logout</SheetTitle>
+            <SheetDescription>
+              Are you sure you want to log out?
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid gap-4">
+            <Button onClick={confirmLogout}>Confirm Logout</Button>
+            <Button variant="secondary" onClick={cancelLogout}>Cancel</Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}
 
 function App() {
   return (
     <RecoilRoot>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <CurrencyProvider>
-            <CartProvider>
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  
-                  {/* Universal Dashboard - the new central dashboard for all roles */}
-                  <Route path="/dashboard" element={<UniversalDashboard />} />
-                  
-                  {/* UnifiedProfilePage - UI template (no authentication) */}
-                  <Route path="/unified-profile" element={<UnifiedProfilePage />} />
-                  
-                  {/* Legacy routes that redirect to the universal dashboard */}
-                  <Route path="/patient-dashboard" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/profile" element={<Navigate to="/dashboard?view=profile" replace />} />
-                  <Route path="/my-orders" element={<Navigate to="/dashboard?view=orders&ordersTab=orders" replace />} />
-                  <Route path="/my-prescriptions" element={<Navigate to="/dashboard?view=prescriptions" replace />} />
-                  <Route path="/settings" element={<Navigate to="/dashboard?view=settings" replace />} />
-                  <Route path="/billing" element={<Navigate to="/dashboard?view=billing" replace />} />
-                  <Route path="/teleconsultations" element={<Navigate to="/dashboard?view=teleconsultations" replace />} />
-                  
-                  {/* Authentication routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/login/verify" element={<OTPVerificationPage />} />
-                  <Route path="/reset-password/*" element={<ResetPassword />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
-                  
-                  {/* General routes */}
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/services" element={<Services />} />
-                  <Route path="/become-partner" element={<BecomePartner />} />
-                  <Route path="/become-transporter" element={<BecomeTransporter />} />
-                  <Route path="/create-prescription" element={<CreatePrescription />} />
-                  <Route path="/doctor-connections" element={<DoctorConnections />} />
-                  <Route path="/find-doctor" element={<FindDoctor />} />
-                  <Route path="/search-pharmacy" element={<SearchPharmacy />} />
-                  
-                  {/* Pharmacy routes - legacy version */}
-                  <Route path="/pharmacy-old/patients" element={<PatientsPage />} />
-                  <Route path="/pharmacy-old/patients/:id" element={<PatientDetail />} />
-                  <Route path="/pharmacy-old/orders" element={<OrdersPage />} />
-                  <Route path="/pharmacy-old/prescriptions" element={<PrescriptionsPage />} />
-                  <Route path="/pharmacy-old/prescriptions/:id" element={<PrescriptionDetail />} />
-                  
-                  {/* Pharmacy routes - new version (using UniversalDashboard) */}
-                  <Route path="/pharmacy/dashboard" element={<UniversalDashboard />} />
-                  <Route path="/pharmacy/patients" element={<Navigate to="/dashboard?view=patients" replace />} />
-                  <Route path="/pharmacy/orders" element={<Navigate to="/dashboard?view=orders" replace />} />
-                  <Route path="/pharmacy/prescriptions" element={<Navigate to="/dashboard?view=prescriptions" replace />} />
-                  <Route path="/pharmacy/inventory" element={<Navigate to="/dashboard?view=inventory" replace />} />
-                  
-                  {/* Legacy pages - will be removed in the future */}
-                  <Route path="/legacy/dashboard" element={<Dashboard />} />
-                  <Route path="/legacy/patient-dashboard" element={<PatientDashboard />} />
-                  <Route path="/legacy/unified-profile" element={<UnifiedProfilePage />} />
-                  <Route path="/legacy/pharmacy-dashboard" element={<PharmacyDashboard />} />
-                </Routes>
-                <Toaster />
-              </BrowserRouter>
-            </CartProvider>
-          </CurrencyProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <Router>
+        <AppContent />
+      </Router>
     </RecoilRoot>
   );
 }
