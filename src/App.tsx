@@ -74,7 +74,11 @@ function AppContent() {
 
   const renderView = () => {
     if (isLoading) {
-      return <p>Loading...</p>;
+      return (
+        <div className="h-screen flex items-center justify-center">
+          <p className="text-lg">Loading...</p>
+        </div>
+      );
     }
 
     if (!isAuthenticated) {
