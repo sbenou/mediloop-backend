@@ -73,12 +73,13 @@ function AppContent() {
   };
 
   const renderView = () => {
-    // For public routes like the home page, don't show loading
-    if (location.pathname === '/' || location.pathname.startsWith('/login')) {
+    // For public routes like login, don't show loading or check authentication
+    if (location.pathname === '/login' || location.pathname === '/signup') {
       return (
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/login" element={<div>Login Page</div>} />
+          <Route path="/signup" element={<div>Signup Page</div>} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       );
     }
@@ -131,6 +132,10 @@ function AppContent() {
         )}
 
         <Route path="/legacy/pharmacy-dashboard" element={<PharmacyDashboard />} />
+        
+        {/* Public routes */}
+        <Route path="/login" element={<div>Login Page</div>} />
+        <Route path="/signup" element={<div>Signup Page</div>} />
 
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
