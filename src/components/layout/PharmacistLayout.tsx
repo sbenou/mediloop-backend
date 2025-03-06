@@ -14,15 +14,8 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   const location = useLocation();
 
   // Check if user is authenticated and has pharmacist role
-  if (!isLoading && !isAuthenticated) {
-    console.log("PharmacistLayout: User not authenticated, redirecting to login");
+  if (!isLoading && (!isAuthenticated || (profile && profile.role !== "pharmacist"))) {
     navigate("/login", { replace: true });
-    return null;
-  }
-
-  if (!isLoading && isAuthenticated && profile && profile.role !== "pharmacist") {
-    console.log("PharmacistLayout: User not a pharmacist, redirecting to dashboard");
-    navigate("/dashboard", { replace: true });
     return null;
   }
 
