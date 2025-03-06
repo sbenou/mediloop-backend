@@ -142,7 +142,7 @@ const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole 
     // Default view - list
     return (
       <div className="space-y-6">
-        <TeleconsultationExplanation />
+        {/* Removed TeleconsultationExplanation from here to avoid redundancy */}
         
         {userRole === 'patient' && (
           <>
