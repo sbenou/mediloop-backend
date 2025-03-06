@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   BrowserRouter as Router,
@@ -5,6 +6,7 @@ import {
   Routes,
   Navigate,
   useLocation,
+  useSearchParams,
 } from 'react-router-dom';
 import { RecoilRoot } from 'recoil';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -36,6 +38,13 @@ function AppContent() {
   const { isAuthenticated, userRole, isLoading } = useAuth();
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Get the active tabs from URL params
+  const getActiveTab = (paramName: string, defaultTab: string) => {
+    return searchParams.get(paramName) || defaultTab;
+  };
 
   const handleLogout = () => {
     setShowLogoutConfirmation(true);
@@ -79,15 +88,19 @@ function AppContent() {
       initialView = 'inventory';
     }
 
+    // Get active tabs for components that need them
+    const profileTab = getActiveTab('profileTab', 'personal');
+    const ordersTab = getActiveTab('ordersTab', 'orders');
+
     return (
       <Routes>
         <Route path="/" element={<Navigate to={`/dashboard?view=${initialView}`} replace />} />
         <Route path="/dashboard" element={<HomeView userRole={userRole} />} />
-        <Route path="/profile" element={<ProfileView />} />
-        <Route path="/settings" element={<SettingsView />} />
-        <Route path="/orders" element={<OrdersView />} />
-        <Route path="/prescriptions" element={<PrescriptionsView />} />
-        <Route path="/teleconsultations" element={<TeleconsultationsView />} />
+        <Route path="/profile" element={<ProfileView activeTab={profileTab} userRole={userRole} />} />
+        <Route path="/settings" element={<SettingsView userRole={userRole} />} />
+        <Route path="/orders" element={<OrdersView activeTab={ordersTab} userRole={userRole} />} />
+        <Route path="/prescriptions" element={<PrescriptionsView userRole={userRole} />} />
+        <Route path="/teleconsultations" element={<TeleconsultationsView userRole={userRole} />} />
 
         {userRole === 'pharmacist' && (
           <>
