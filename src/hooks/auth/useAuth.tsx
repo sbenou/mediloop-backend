@@ -48,14 +48,16 @@ export const useAuth = () => {
       if (userRole === 'superadmin' && 
           !currentPath.startsWith('/superadmin') && 
           !currentPath.startsWith('/admin-settings') &&
-          currentPath !== '/login') {
+          currentPath !== '/login' &&
+          currentPath !== '/dashboard') {
         console.warn(`Warning: Superadmin user accessing non-superadmin route: ${currentPath}`);
       }
       
       // Check if a pharmacist is on a non-pharmacy page
       if (userRole === 'pharmacist' && 
           !currentPath.startsWith('/pharmacy') && 
-          currentPath !== '/login') {
+          currentPath !== '/login' &&
+          currentPath !== '/dashboard') {
         console.warn(`Warning: Pharmacist user accessing non-pharmacy route: ${currentPath}`);
       }
       
@@ -64,7 +66,8 @@ export const useAuth = () => {
           !currentPath.startsWith('/patient') && 
           currentPath !== '/login' &&
           currentPath !== '/patient-dashboard' &&
-          currentPath !== '/unified-profile') {
+          currentPath !== '/unified-profile' &&
+          currentPath !== '/dashboard') {
         console.warn(`Warning: Patient user accessing non-patient route: ${currentPath}`);
       }
       

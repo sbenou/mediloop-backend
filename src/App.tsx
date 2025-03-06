@@ -1,4 +1,3 @@
-
 import { ProductSearch } from '@/components/ProductSearch';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -25,6 +24,7 @@ import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler
 import UnifiedProfilePage from "./pages/UnifiedProfilePage";
 
 // Pharmacy routes
+import PharmacyDashboardOld from "./pages/pharmacy/PharmacyDashboardOld";
 import PatientsPage from "./pages/pharmacy/PatientsPage";
 import PatientDetail from "./pages/pharmacy/PatientDetail";
 import OrdersPage from "./pages/pharmacy/OrdersPage";
@@ -92,12 +92,19 @@ function App() {
                   <Route path="/find-doctor" element={<FindDoctor />} />
                   <Route path="/search-pharmacy" element={<SearchPharmacy />} />
                   
-                  {/* Temporarily keep the old pharmacy routes until they're refactored */}
-                  <Route path="/pharmacy/patients" element={<PatientsPage />} />
-                  <Route path="/pharmacy/patients/:id" element={<PatientDetail />} />
-                  <Route path="/pharmacy/orders" element={<OrdersPage />} />
-                  <Route path="/pharmacy/prescriptions" element={<PrescriptionsPage />} />
-                  <Route path="/pharmacy/prescriptions/:id" element={<PrescriptionDetail />} />
+                  {/* Pharmacy routes */}
+                  <Route path="/pharmacy">
+                    {/* Include both old and new dashboard */}
+                    <Route path="dashboard-old" element={<PharmacyDashboardOld />} />
+                    <Route path="dashboard" element={<Navigate to="/dashboard?view=pharmacy" replace />} />
+                    
+                    {/* Keep existing pharmacy pages */}
+                    <Route path="patients" element={<PatientsPage />} />
+                    <Route path="patients/:id" element={<PatientDetail />} />
+                    <Route path="orders" element={<OrdersPage />} />
+                    <Route path="prescriptions" element={<PrescriptionsPage />} />
+                    <Route path="prescriptions/:id" element={<PrescriptionDetail />} />
+                  </Route>
                   
                   {/* Legacy pages - will be removed in the future */}
                   <Route path="/legacy/dashboard" element={<Dashboard />} />

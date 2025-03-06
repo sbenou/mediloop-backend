@@ -5,3 +5,4 @@ export { default as OrdersView } from './OrdersView';
 export { default as PrescriptionsView } from './PrescriptionsView';
 export { default as TeleconsultationsView } from './TeleconsultationsView';
 export { default as HomeView } from './HomeView';
+export { default as PharmacyView } from './PharmacyView';
