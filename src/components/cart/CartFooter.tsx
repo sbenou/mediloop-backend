@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useCart } from "@/contexts/CartContext";
 
-export default function CartFooter({ className }: { className?: string }) {
+const CartFooter = ({ className }: { className?: string }) => {
   const { state } = useCart();
   const { currency, convertPrice } = useCurrency();
   const navigate = useNavigate();
@@ -62,4 +62,6 @@ export default function CartFooter({ className }: { className?: string }) {
       </div>
     </div>
   );
-}
+};
+
+export default CartFooter;

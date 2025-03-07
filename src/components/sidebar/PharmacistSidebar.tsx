@@ -112,10 +112,26 @@ const PharmacistSidebar = () => {
       </div>
       
       <div className="p-4 border-t flex items-center">
-        <div className="cursor-pointer">
+        <div className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
           <UserAvatar 
             userProfile={profile} 
             canUpload={true} 
+          />
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file && profile?.id) {
+                // Handle file upload logic
+                toast({
+                  title: "Profile picture",
+                  description: "Your profile picture is being updated",
+                });
+              }
+            }}
           />
         </div>
         <div className="ml-3">
