@@ -5,13 +5,14 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useCart } from "@/contexts/CartContext";
 
 export default function CartFooter({ className }: { className?: string }) {
-  const { items, total } = useCart();
-  const { formatCurrency } = useCurrency();
+  const { state } = useCart();
+  const { currency, convertPrice } = useCurrency();
   const navigate = useNavigate();
   const location = useLocation();
   
   const isProductsPage = location.pathname === "/products";
-  const hasItems = items.length > 0;
+  const hasItems = state.items.length > 0;
+  const total = state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handleStartShopping = () => {
     navigate("/products");
@@ -38,7 +39,7 @@ export default function CartFooter({ className }: { className?: string }) {
     <div className={`p-4 border-t ${className}`}>
       <div className="flex justify-between mb-4">
         <span className="font-medium">Total</span>
-        <span className="font-bold">{formatCurrency(total)}</span>
+        <span className="font-bold">{currency.symbol}{convertPrice(total).toFixed(2)}</span>
       </div>
       
       <div className="space-y-2">

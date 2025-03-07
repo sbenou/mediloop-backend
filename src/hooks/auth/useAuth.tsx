@@ -1,6 +1,6 @@
 
 import { useRecoilValue } from 'recoil';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState, useCallback } from 'react';
 import { 
   isAuthenticatedSelector, 
   userRoleSelector, 
@@ -9,6 +9,7 @@ import {
 } from '@/store/auth/selectors';
 import { authState } from '@/store/auth/atoms';
 import { supabase, getSessionFromStorage } from '@/lib/supabase';
+import { toast } from '@/components/ui/use-toast';
 
 export const useAuth = () => {
   // Get all state values first
@@ -17,6 +18,53 @@ export const useAuth = () => {
   const userRole = useRecoilValue(userRoleSelector);
   const permissions = useRecoilValue(userPermissionsSelector);
   const isLoading = useRecoilValue(isLoadingSelector);
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
+  
+  // Better session recovery for tab switching and session expiry
+  const refreshSession = useCallback(async () => {
+    if (isRefreshingSession) return;
+    
+    try {
+      setIsRefreshingSession(true);
+      console.log('Attempting to refresh session...');
+      
+      // Check in storage first
+      const storedSession = getSessionFromStorage();
+      
+      if (!storedSession) {
+        // Try to get from Supabase
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error fetching session:', error);
+          return null;
+        }
+        
+        if (!data.session) {
+          // Try to refresh
+          console.log('No session found, attempting refresh...');
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError || !refreshData.session) {
+            console.warn('Unable to refresh session:', refreshError);
+            return null;
+          }
+          
+          console.log('Session refreshed successfully');
+          return refreshData.session;
+        }
+        
+        return data.session;
+      }
+      
+      return storedSession;
+    } catch (err) {
+      console.error('Session refresh error:', err);
+      return null;
+    } finally {
+      setIsRefreshingSession(false);
+    }
+  }, [isRefreshingSession]);
   
   // Extra check to ensure we have a session when auth claims we're authenticated
   useEffect(() => {
@@ -32,13 +80,12 @@ export const useAuth = () => {
           if (!data.session) {
             console.warn('Auth state claims user is authenticated but no session exists');
             // Try to refresh the session
-            try {
-              const { data: refreshData } = await supabase.auth.refreshSession();
-              if (!refreshData.session) {
-                console.warn('Unable to refresh session');
-              }
-            } catch (err) {
-              console.error('Error refreshing session:', err);
+            const session = await refreshSession();
+            
+            if (!session) {
+              console.warn('Unable to recover session after tab switch');
+              // Don't automatically sign out - let the user see the UI first
+              // and handle auth errors if they try to access protected resources
             }
           }
         }
@@ -46,7 +93,32 @@ export const useAuth = () => {
       
       checkSessionExists();
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, refreshSession]);
+  
+  // Handle tab visibility change to check session
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && isAuthenticated) {
+        console.log('Tab became visible, verifying session...');
+        const session = await refreshSession();
+        
+        if (!session && isAuthenticated) {
+          console.warn('Session verification failed on tab visibility change');
+          // Optionally inform the user their session might be expired
+          toast({
+            title: "Session Status",
+            description: "Your session may have expired. Please refresh the page if you encounter any issues.",
+            duration: 5000,
+          });
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, refreshSession]);
 
   // Debug checks for route mismatches based on role
   useEffect(() => {
@@ -100,5 +172,6 @@ export const useAuth = () => {
     hasPermission: memoizedValues.hasPermission,
     user: memoizedValues.user,
     profile: memoizedValues.profile,
+    refreshSession,
   };
 };

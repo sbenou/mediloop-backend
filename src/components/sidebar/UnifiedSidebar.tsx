@@ -1,4 +1,3 @@
-
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
@@ -30,9 +29,7 @@ const UnifiedSidebar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Only set the initial state based on URL path, but don't auto-close when navigating
   useEffect(() => {
-    // Only run this on first render to set initial states
     if (location.pathname.includes('/my-orders') || location.search.includes('view=orders')) {
       setIsOrdersOpen(true);
     }
@@ -40,7 +37,7 @@ const UnifiedSidebar = () => {
     if (location.pathname.includes('/profile') || location.search.includes('view=profile')) {
       setIsProfileOpen(true);
     }
-  }, []); // Empty dependency array means this only runs once on mount
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -214,7 +211,6 @@ const UnifiedSidebar = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Handle avatar upload logic here
     console.log("Avatar file selected:", file.name);
     toast({
       title: "Avatar update",
@@ -252,7 +248,6 @@ const UnifiedSidebar = () => {
                 updated_at: null,
                 license_number: null
               }} 
-              squared={true} 
               canUpload={true} 
             />
           </div>
@@ -287,7 +282,6 @@ const UnifiedSidebar = () => {
           <Collapsible 
             open={isProfileOpen} 
             onOpenChange={(isOpen) => {
-              // Only respond to direct trigger clicks, not navigation
               setIsProfileOpen(isOpen);
             }}
             className="w-full"
@@ -314,7 +308,6 @@ const UnifiedSidebar = () => {
                       : 'text-muted-foreground hover:bg-gray-100'
                   }`}
                   onClick={(e) => {
-                    // Don't allow event to propagate and affect collapsible state
                     e.stopPropagation();
                   }}
                 >
@@ -328,7 +321,6 @@ const UnifiedSidebar = () => {
           <Collapsible 
             open={isOrdersOpen} 
             onOpenChange={(isOpen) => {
-              // Only respond to direct trigger clicks, not navigation
               setIsOrdersOpen(isOpen);
             }}
             className="w-full"
@@ -356,7 +348,6 @@ const UnifiedSidebar = () => {
                       : 'text-muted-foreground hover:bg-gray-100'
                   }`}
                   onClick={(e) => {
-                    // Don't allow event to propagate and affect collapsible state
                     e.stopPropagation();
                   }}
                 >
@@ -367,7 +358,6 @@ const UnifiedSidebar = () => {
             </CollapsibleContent>
           </Collapsible>
           
-          {/* Add Prescriptions link - visible for patients, doctors and pharmacists */}
           {(userRole === 'patient' || userRole === 'doctor' || userRole === 'pharmacist') && (
             <Link
               to="/dashboard?view=prescriptions"
@@ -383,7 +373,6 @@ const UnifiedSidebar = () => {
             </Link>
           )}
           
-          {/* Only show teleconsultations for non-pharmacist users */}
           {userRole !== 'pharmacist' && (
             <Link
               to="/teleconsultations"
@@ -425,9 +414,8 @@ const UnifiedSidebar = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
-              {/* Make only the avatar clickable for upload and not for dropdown toggle */}
               <div onClick={handleAvatarClick} className="cursor-pointer">
-                <UserAvatar userProfile={profile} squared={true} canUpload={true} />
+                <UserAvatar userProfile={profile} canUpload={true} />
                 <input
                   type="file"
                   ref={fileInputRef}

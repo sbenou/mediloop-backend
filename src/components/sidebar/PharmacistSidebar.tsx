@@ -11,7 +11,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import UserAvatar from "@/components/user-menu/UserAvatar";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 
@@ -26,68 +26,9 @@ const PharmacistSidebar = () => {
     await supabase.auth.signOut();
     navigate("/login", { replace: true });
   };
-  
-  const handleAvatarClick = () => {
-    // Trigger file input click when avatar is clicked
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-  
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    try {
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(`${profile?.id}-${Date.now()}`, file, {
-          upsert: true,
-        });
-        
-      if (error) {
-        throw error;
-      }
-      
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(data.path);
-        
-      // Update profile with new avatar URL
-      await supabase
-        .from('profiles')
-        .update({ avatar_url: urlData.publicUrl })
-        .eq('id', profile?.id);
-        
-      toast({
-        title: "Avatar updated",
-        description: "Your profile picture has been updated successfully.",
-      });
-      
-      // Force a page refresh to update the avatar
-      window.location.reload();
-      
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-      toast({
-        variant: "destructive",
-        title: "Upload failed",
-        description: "There was an error uploading your profile picture.",
-      });
-    }
-  };
 
   const navigateToPharmacySection = (section: string) => {
     setSearchParams({ view: 'pharmacy', section });
-  };
-  
-  const getInitials = () => {
-    if (!profile?.full_name) return "U";
-    return profile.full_name
-      .split(" ")
-      .map(name => name.charAt(0))
-      .join("")
-      .toUpperCase();
   };
 
   return (
@@ -171,17 +112,10 @@ const PharmacistSidebar = () => {
       </div>
       
       <div className="p-4 border-t flex items-center">
-        <div className="cursor-pointer" onClick={handleAvatarClick}>
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "User"} />
-            <AvatarFallback>{getInitials()}</AvatarFallback>
-          </Avatar>
-          <Input 
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
+        <div className="cursor-pointer">
+          <UserAvatar 
+            userProfile={profile} 
+            canUpload={true} 
           />
         </div>
         <div className="ml-3">

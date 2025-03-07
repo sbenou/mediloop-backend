@@ -1,3 +1,4 @@
+
 import { useCart } from "@/contexts/CartContext";
 import { ScrollArea } from "./ui/scroll-area";
 import { useState } from "react";
@@ -6,7 +7,7 @@ import { toast } from "./ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { CartItem } from "./cart/CartItem";
 import { CartEmpty } from "./cart/CartEmpty";
-import { CartFooter } from "./cart/CartFooter";
+import CartFooter from "./cart/CartFooter";
 import { useAuth } from "@/hooks/auth/useAuth";
 
 export const CartPreview = ({ onClose }: { onClose: () => void }) => {
@@ -94,12 +95,7 @@ export const CartPreview = ({ onClose }: { onClose: () => void }) => {
       </ScrollArea>
       
       <CartFooter
-        total={total}
-        comment={comment}
-        onCommentChange={setComment}
-        onCheckout={handleCheckout}
-        onClose={onClose}
-        isProcessing={isProcessing}
+        className="mt-4"
       />
     </div>
   );

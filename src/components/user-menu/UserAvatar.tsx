@@ -9,9 +9,10 @@ interface UserAvatarProps {
   userProfile: UserProfile | null;
   size?: "sm" | "md" | "lg";
   canUpload?: boolean;
+  squared?: boolean; // Add the squared property
 }
 
-const UserAvatar = ({ userProfile, size = "md", canUpload = false }: UserAvatarProps) => {
+const UserAvatar = ({ userProfile, size = "md", canUpload = false, squared = false }: UserAvatarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const getSize = () => {
@@ -84,14 +85,14 @@ const UserAvatar = ({ userProfile, size = "md", canUpload = false }: UserAvatarP
   return (
     <>
       <Avatar 
-        className={`${getSize()} ${canUpload ? 'cursor-pointer hover:opacity-80' : ''}`}
+        className={`${getSize()} ${canUpload ? 'cursor-pointer hover:opacity-80' : ''} ${squared ? 'rounded-md' : 'rounded-full'}`}
         onClick={canUpload ? handleAvatarClick : undefined}
       >
         <AvatarImage 
           src={userProfile?.avatar_url || undefined} 
           alt={userProfile?.full_name || "User"} 
         />
-        <AvatarFallback>{getInitials()}</AvatarFallback>
+        <AvatarFallback className={squared ? 'rounded-md' : 'rounded-full'}>{getInitials()}</AvatarFallback>
       </Avatar>
       
       {canUpload && (
