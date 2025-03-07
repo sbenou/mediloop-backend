@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 import { safeQueryResult } from '@/types/user';
@@ -488,61 +487,6 @@ let refreshInterval: number | null = null;
     console.error('Error during initial session check:', error);
   }
 })();
-
-// Safe method to get session from storage
-export const getSessionFromStorage = () => {
-  try {
-    // Try localStorage first (more persistent)
-    const localData = localStorage.getItem(STORAGE_KEY);
-    if (localData) {
-      logStorageOperation('READ', 'localStorage', true);
-      try {
-        // Validate that the data is a valid session
-        const parsed = JSON.parse(localData);
-        if (parsed?.user?.id && parsed?.access_token) {
-          // Also sync to sessionStorage for redundancy
-          try {
-            sessionStorage.setItem(STORAGE_KEY, localData);
-          } catch (e) {
-            console.error('Error syncing to sessionStorage:', e);
-          }
-          return parsed;
-        }
-      } catch (e) {
-        console.error('Error parsing localStorage session:', e);
-      }
-    }
-    
-    // Then try sessionStorage
-    const sessionData = sessionStorage.getItem(STORAGE_KEY);
-    if (sessionData) {
-      logStorageOperation('READ', 'sessionStorage', true);
-      try {
-        // Validate that the data is a valid session
-        const parsed = JSON.parse(sessionData);
-        if (parsed?.user?.id && parsed?.access_token) {
-          // Also sync back to localStorage for persistence
-          try {
-            localStorage.setItem(STORAGE_KEY, sessionData);
-            logStorageOperation('SYNC', 'localStorage <- sessionStorage', true);
-          } catch (e) {
-            console.error('Error syncing to localStorage:', e);
-          }
-          return parsed;
-        }
-      } catch (e) {
-        console.error('Error parsing sessionStorage session:', e);
-      }
-    }
-    
-    logStorageOperation('READ', 'both storages', false, 'No valid session found');
-    return null;
-  } catch (e) {
-    logStorageOperation('READ', 'both storages', false, e);
-    console.error('Error getting session from storage:', e);
-    return null;
-  }
-};
 
 // Function to sync session when tab becomes visible (more aggressive)
 const handleVisibilityChange = async () => {

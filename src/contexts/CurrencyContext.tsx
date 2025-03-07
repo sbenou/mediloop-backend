@@ -1,90 +1,71 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 
-type Currency = {
-  code: string;
-  name: string;
-  symbol: string;
-  rate?: number;
-};
+export interface CurrencyContextType {
+  currency: string;
+  setCurrency: (currency: string) => void;
+  formatCurrency: (amount: number) => string;
+  convertCurrency: (amount: number, fromCurrency: string, toCurrency: string) => number;
+}
 
-type CurrencyContextType = {
-  currency: Currency;
-  setCurrency: (currency: Currency) => void;
-  currencies: Currency[];
-  convertPrice: (price: number) => number;
-};
+const CurrencyContext = createContext<CurrencyContextType>({
+  currency: 'EUR',
+  setCurrency: () => {},
+  formatCurrency: () => '',
+  convertCurrency: () => 0,
+});
 
-const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
+export const useCurrency = () => useContext(CurrencyContext);
 
-export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currencies, setCurrencies] = useState<Currency[]>([
-    { code: 'eur', name: 'Euro', symbol: '€', rate: 1 },
-    { code: 'usd', name: 'US Dollar', symbol: '$', rate: 1.1 }, // Approximate rate until API data loads
-  ]);
-  const [currency, setCurrency] = useState<Currency>(currencies[0]); // EUR is now the default
+interface CurrencyProviderProps {
+  children: React.ReactNode;
+}
+
+export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
+  const [currency, setCurrency] = useState('EUR');
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCurrencies = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-currencies');
-        
-        if (error) {
-          console.error('Error fetching currencies:', error);
-          return;
-        }
-
-        if (data.currencies) {
-          setCurrencies(data.currencies);
-          // Try to load saved currency preference
-          const savedCurrency = localStorage.getItem('preferredCurrency');
-          if (savedCurrency) {
-            const parsed = JSON.parse(savedCurrency);
-            const found = data.currencies.find(c => c.code === parsed.code);
-            if (found) {
-              setCurrency(found);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch currencies:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCurrencies();
+    // For now, use hardcoded exchange rates
+    // In a real app, you would fetch these from an API
+    setExchangeRates({
+      EUR: 1,
+      USD: 1.09,
+      GBP: 0.85,
+    });
+    setIsLoading(false);
   }, []);
 
-  const handleSetCurrency = (newCurrency: Currency) => {
-    setCurrency(newCurrency);
-    localStorage.setItem('preferredCurrency', JSON.stringify(newCurrency));
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
   };
 
-  const convertPrice = (priceInUSD: number): number => {
-    if (!currency.rate) return priceInUSD;
-    return Number((priceInUSD * currency.rate).toFixed(2));
+  const convertCurrency = (amount: number, fromCurrency: string, toCurrency: string): number => {
+    if (isLoading || !exchangeRates[fromCurrency] || !exchangeRates[toCurrency]) {
+      return amount;
+    }
+
+    // Convert to base currency (EUR) first, then to target currency
+    const amountInEUR = amount / exchangeRates[fromCurrency];
+    return amountInEUR * exchangeRates[toCurrency];
   };
 
   return (
-    <CurrencyContext.Provider 
-      value={{ 
-        currency, 
-        setCurrency: handleSetCurrency, 
-        currencies,
-        convertPrice
+    <CurrencyContext.Provider
+      value={{
+        currency,
+        setCurrency,
+        formatCurrency,
+        convertCurrency,
       }}
     >
       {children}
     </CurrencyContext.Provider>
   );
-}
-
-export function useCurrency() {
-  const context = useContext(CurrencyContext);
-  if (context === undefined) {
-    throw new Error('useCurrency must be used within a CurrencyProvider');
-  }
-  return context;
-}
+};
