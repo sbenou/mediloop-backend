@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export interface UserAvatarProps {
   userProfile: UserProfile | null;
   canUpload?: boolean;
-  squared?: boolean; // Add squared prop type
+  squared?: boolean;
 }
 
 const UserAvatar = ({ userProfile, canUpload = false, squared = false }: UserAvatarProps) => {
