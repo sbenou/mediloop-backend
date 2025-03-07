@@ -458,11 +458,11 @@ const UnifiedSidebar = () => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => window.location.href = `${getRoutePrefix()}/profile`}>
+              <DropdownMenuItem onClick={() => navigate(`/dashboard?view=profile&profileTab=personal`)}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Account</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.location.href = `${getRoutePrefix()}/billing`}>
+              <DropdownMenuItem onClick={() => navigate(`/dashboard?view=orders&ordersTab=payments`)}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 <span>Billing</span>
               </DropdownMenuItem>
