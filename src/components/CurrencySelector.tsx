@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,7 +22,7 @@ export function CurrencySelector() {
         {currencies.map((curr) => (
           <DropdownMenuItem
             key={curr.code}
-            onClick={() => setCurrency(curr)}
+            onClick={() => setCurrency(curr.code)}
             className="cursor-pointer"
           >
             {curr.name} ({curr.symbol})
