@@ -8,7 +8,7 @@ export interface UserAvatarProps {
   userProfile: UserProfile | null;
   canUpload?: boolean;
   squared?: boolean;
-  onAvatarClick?: () => void;
+  onAvatarClick?: (e: React.MouseEvent) => void;
 }
 
 const UserAvatar = ({ 
@@ -31,7 +31,7 @@ const UserAvatar = ({
   const handleAvatarClick = (e: React.MouseEvent) => {
     if (onAvatarClick) {
       e.stopPropagation(); // Prevent event bubbling
-      onAvatarClick();
+      onAvatarClick(e);
     }
   };
   

@@ -395,7 +395,7 @@ const UnifiedSidebar = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
-              <div onClick={handleAvatarClick} className="cursor-pointer">
+              <div>
                 <UserAvatar userProfile={profile} canUpload={true} onAvatarClick={handleAvatarClick} />
                 <input
                   type="file"
@@ -412,6 +412,7 @@ const UnifiedSidebar = () => {
               <ChevronDown className="h-4 w-4 opacity-50" />
             </div>
           </DropdownMenuTrigger>
+          
           <DropdownMenuContent align="end" side="right" className="w-56">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1 items-center">
