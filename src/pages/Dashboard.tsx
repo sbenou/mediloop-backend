@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import PatientDashboard from "@/pages/PatientDashboard";
@@ -10,12 +10,20 @@ const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const view = searchParams.get('view') || 'home';
   const ordersTab = searchParams.get('ordersTab') || 'orders';
   const prescriptionsTab = searchParams.get('prescriptionsTab') || 'active';
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading) {
+      setIsInitialLoad(false);
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    // Only redirect if we're sure the user is not authenticated (after initial load)
+    if (!isInitialLoad && !isAuthenticated) {
       toast({
         variant: "destructive",
         title: "Authentication required",
@@ -23,7 +31,7 @@ const Dashboard = () => {
       });
       navigate("/login");
     }
-  }, [isLoading, isAuthenticated, navigate]);
+  }, [isLoading, isAuthenticated, navigate, isInitialLoad]);
 
   // For very specific user roles, provide a dedicated dashboard
   if (userRole === 'patient' && !view) {

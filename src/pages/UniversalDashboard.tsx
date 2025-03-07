@@ -14,12 +14,14 @@ import TeleconsultationsView from "@/components/dashboard/views/Teleconsultation
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const UniversalDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, userRole, isLoading } = useAuth();
+  const { isAuthenticated, userRole, isLoading, profile } = useAuth();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const currentView = searchParams.get("view") || "home";
   const ordersTab = searchParams.get("ordersTab") || "orders";
@@ -33,12 +35,20 @@ const UniversalDashboard = () => {
     }
   }, [userRole, searchParams, setSearchParams]);
   
+  // Track initial load to avoid flashing loading state during navigation
+  useEffect(() => {
+    if (!isLoading) {
+      setIsInitialLoad(false);
+    }
+  }, [isLoading]);
+  
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    // Only redirect if we're sure the user is not authenticated (after initial load)
+    if (!isInitialLoad && !isAuthenticated) {
       navigate("/login");
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isInitialLoad, navigate]);
   
   const getContent = () => {
     // For pharmacists, always show the pharmacy view regardless of the URL parameter
@@ -66,8 +76,23 @@ const UniversalDashboard = () => {
     }
   };
   
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  // Show loading skeleton only on initial load, not during navigation
+  if (isInitialLoad && isLoading) {
+    return (
+      <UnifiedLayoutTemplate>
+        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-64 w-full" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          </div>
+        </div>
+      </UnifiedLayoutTemplate>
+    );
   }
   
   // Use the UnifiedLayoutTemplate for all roles
