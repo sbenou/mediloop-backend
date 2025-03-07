@@ -41,7 +41,7 @@ const UnifiedSidebar = () => {
     if (location.pathname.includes('/profile') || location.search.includes('view=profile')) {
       setIsProfileOpen(true);
     }
-  }, []);
+  }, [location]);
 
   const handleLogout = async () => {
     try {
@@ -90,7 +90,8 @@ const UnifiedSidebar = () => {
         description: "You have been successfully logged out",
       });
       
-      window.location.href = "/login";
+      // Use navigate instead of directly setting window.location
+      navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
       toast({
@@ -132,7 +133,7 @@ const UnifiedSidebar = () => {
       label: 'Dashboard',
       icon: <Home className="w-5 h-5 mr-3" />,
       path: '/dashboard',
-      active: isLinkActive('/dashboard')
+      active: isLinkActive('/dashboard') && !location.search.includes('view=')
     }
   ];
   
@@ -197,13 +198,53 @@ const UnifiedSidebar = () => {
     }
   ];
 
-  const getRoutePrefix = () => {
-    if (userRole === 'superadmin') {
-      return '/superadmin';
-    } else if (userRole === 'pharmacist') {
-      return '/dashboard?view=pharmacy&section=';
+  // Special navigation handler for all roles, with special handling for pharmacist
+  const navigateToLink = (path: string) => {
+    if (userRole === 'pharmacist') {
+      // For pharmacists, transform the navigation to use the pharmacy view structure
+      if (path.includes('view=profile')) {
+        // Extract the profile tab if present
+        const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
+        navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${profileTab}`);
+        return;
+      } else if (path.includes('view=orders')) {
+        // Extract the orders tab if present
+        const ordersTab = new URLSearchParams(path.split('?')[1]).get('ordersTab') || 'orders';
+        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${ordersTab}`);
+        return;
+      } else if (path.includes('view=prescriptions')) {
+        navigate('/dashboard?view=pharmacy&section=prescriptions');
+        return;
+      } else if (path === '/settings') {
+        navigate('/dashboard?view=pharmacy&section=settings');
+        return;
+      }
     }
-    return '';
+    
+    // Default navigation for other roles
+    navigate(path);
+  };
+
+  const isPharmacistLinkActive = (sectionPath: string) => {
+    if (userRole !== 'pharmacist') return false;
+    
+    // Check if the section parameter matches
+    return location.search.includes(`section=${sectionPath}`);
+  };
+
+  const isPharmacistSubTabActive = (sectionPath: string, tabParam: string, tabValue: string) => {
+    if (userRole !== 'pharmacist') return false;
+    
+    // Check if both section and tab parameters match
+    return location.search.includes(`section=${sectionPath}`) && 
+           location.search.includes(`${tabParam}=${tabValue}`);
+  };
+
+  const getUserInitials = () => {
+    if (!profile?.full_name) return '';
+    const names = profile.full_name.split(' ');
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
   };
 
   const handleAvatarClick = (e: React.MouseEvent) => {
@@ -223,41 +264,6 @@ const UnifiedSidebar = () => {
     
     // Here you would typically upload the file to your storage
     // This is a placeholder for the actual implementation
-  };
-
-  const getUserInitials = () => {
-    if (!profile?.full_name) return '';
-    const names = profile.full_name.split(' ');
-    if (names.length === 1) return names[0].charAt(0).toUpperCase();
-    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
-  };
-
-  const handlePharmacistNavigation = (section: string) => {
-    navigate(`/dashboard?view=pharmacy&section=${section}`);
-  };
-
-  // Special navigation handler for pharmacist role
-  const navigateToLink = (path: string) => {
-    if (userRole === 'pharmacist') {
-      // For pharmacists, transform the navigation to use the pharmacy view structure
-      if (path.includes('view=profile')) {
-        // Extract the profile tab if present
-        const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
-        navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${profileTab}`);
-        return;
-      } else if (path.includes('view=orders')) {
-        // Extract the orders tab if present
-        const ordersTab = new URLSearchParams(path.split('?')[1]).get('ordersTab') || 'orders';
-        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${ordersTab}`);
-        return;
-      } else if (path.includes('view=prescriptions')) {
-        navigate('/dashboard?view=pharmacy&section=prescriptions');
-        return;
-      }
-    }
-    
-    // Default navigation for other roles
-    navigate(path);
   };
 
   return (
@@ -283,10 +289,10 @@ const UnifiedSidebar = () => {
         
         <nav className="space-y-1 px-2">
           {platformMenuItems.map((item, index) => (
-            <Link
+            <div
               key={index}
-              to={item.path}
-              className={`flex items-center px-3 py-2 rounded-md text-sm ${
+              onClick={() => navigateToLink(item.path)}
+              className={`flex items-center px-3 py-2 rounded-md text-sm cursor-pointer ${
                 item.active 
                   ? 'bg-primary/10 text-primary font-medium' 
                   : 'text-muted-foreground hover:bg-gray-100'
@@ -294,7 +300,7 @@ const UnifiedSidebar = () => {
             >
               {item.icon}
               {item.label}
-            </Link>
+            </div>
           ))}
           
           {/* Profile section with special handling for pharmacists */}
@@ -305,7 +311,7 @@ const UnifiedSidebar = () => {
             }}
             className="w-full"
           >
-            <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm ${
+            <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm cursor-pointer ${
               location.search.includes('view=profile') || 
               (userRole === 'pharmacist' && location.search.includes('section=profile'))
                 ? 'bg-primary/10 text-primary font-medium' 
@@ -346,7 +352,7 @@ const UnifiedSidebar = () => {
             }}
             className="w-full"
           >
-            <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm ${
+            <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm cursor-pointer ${
               (location.pathname === '/dashboard' && location.search.includes('view=orders')) ||
               (userRole === 'pharmacist' && location.search.includes('section=orders')) ||
               location.pathname.includes('/my-orders')
@@ -416,9 +422,9 @@ const UnifiedSidebar = () => {
           )}
           
           {userRole !== 'pharmacist' && (
-            <Link
-              to="/dashboard?view=teleconsultations"
-              className={`flex items-center px-3 py-2 rounded-md text-sm ${
+            <div
+              onClick={() => navigateToLink('/dashboard?view=teleconsultations')}
+              className={`flex items-center px-3 py-2 rounded-md text-sm cursor-pointer ${
                 (location.pathname === '/dashboard' && location.search.includes('view=teleconsultations')) ||
                 location.pathname.includes('/teleconsultations')
                   ? 'bg-primary/10 text-primary font-medium' 
@@ -427,7 +433,7 @@ const UnifiedSidebar = () => {
             >
               <Calendar className="w-5 h-5 mr-3" />
               Teleconsultations
-            </Link>
+            </div>
           )}
         </nav>
         
@@ -437,18 +443,18 @@ const UnifiedSidebar = () => {
         
         <nav className="space-y-1 px-2">
           {adminMenuItems.map((item, index) => (
-            <Link
+            <div
               key={index}
-              to={item.path}
-              className={`flex items-center px-3 py-2 rounded-md text-sm ${
-                item.active 
+              onClick={() => navigateToLink(item.path)}
+              className={`flex items-center px-3 py-2 rounded-md text-sm cursor-pointer ${
+                item.active || (userRole === 'pharmacist' && location.search.includes('section=settings'))
                   ? 'bg-primary/10 text-primary font-medium' 
                   : 'text-muted-foreground hover:bg-gray-100'
               }`}
             >
               {item.icon}
               {item.label}
-            </Link>
+            </div>
           ))}
         </nav>
       </div>
@@ -496,15 +502,23 @@ const UnifiedSidebar = () => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => userRole === 'pharmacist' ? 
-                navigate(`/dashboard?view=pharmacy&section=profile&profileTab=personal`) :
-                navigate(`/dashboard?view=profile&profileTab=personal`)}>
+              <DropdownMenuItem onClick={() => {
+                if (userRole === 'pharmacist') {
+                  navigate('/dashboard?view=pharmacy&section=profile&profileTab=personal');
+                } else {
+                  navigate('/dashboard?view=profile&profileTab=personal');
+                }
+              }}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Account</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => userRole === 'pharmacist' ? 
-                navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=payments`) :
-                navigate(`/dashboard?view=orders&ordersTab=payments`)}>
+              <DropdownMenuItem onClick={() => {
+                if (userRole === 'pharmacist') {
+                  navigate('/dashboard?view=pharmacy&section=orders&ordersTab=payments');
+                } else {
+                  navigate('/dashboard?view=orders&ordersTab=payments');
+                }
+              }}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 <span>Billing</span>
               </DropdownMenuItem>

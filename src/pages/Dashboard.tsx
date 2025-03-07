@@ -35,6 +35,7 @@ const Dashboard = () => {
 
   // For pharmacist role, ensure they see their dedicated view
   if (userRole === 'pharmacist' && (!view || view !== 'pharmacy')) {
+    // Change to use navigate instead of replacing directly for better state consistency
     navigate("/dashboard?view=pharmacy&section=dashboard", { replace: true });
     return null;
   }
