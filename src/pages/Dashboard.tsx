@@ -14,6 +14,7 @@ const Dashboard = () => {
   const view = searchParams.get('view') || 'home';
   const ordersTab = searchParams.get('ordersTab') || 'orders';
   const prescriptionsTab = searchParams.get('prescriptionsTab') || 'active';
+  const section = searchParams.get('section');
 
   useEffect(() => {
     if (!isLoading) {
@@ -34,9 +35,16 @@ const Dashboard = () => {
   }, [isLoading, isAuthenticated, navigate, isInitialLoad]);
 
   // For pharmacist role, ensure they see their dedicated view
-  if (userRole === 'pharmacist' && (!view || view !== 'pharmacy')) {
-    // Change to use navigate instead of replacing directly for better state consistency
-    navigate("/dashboard?view=pharmacy&section=dashboard", { replace: true });
+  useEffect(() => {
+    if (userRole === 'pharmacist') {
+      if (!view || view !== 'pharmacy' || !section) {
+        navigate("/dashboard?view=pharmacy&section=dashboard", { replace: true });
+      }
+    }
+  }, [userRole, view, section, navigate]);
+
+  // Don't render anything during the redirect for pharmacists
+  if (userRole === 'pharmacist' && (!view || view !== 'pharmacy' || !section)) {
     return null;
   }
 

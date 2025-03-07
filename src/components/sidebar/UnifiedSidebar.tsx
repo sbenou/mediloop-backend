@@ -102,6 +102,24 @@ const UnifiedSidebar = () => {
     }
   };
 
+  // Improved function to check if a link is active for pharmacists 
+  const isPharmacistSectionActive = (sectionName: string) => {
+    if (userRole !== 'pharmacist') return false;
+    
+    const section = searchParams.get('section');
+    return section === sectionName;
+  };
+
+  // Improved function to check if a link is active for pharmacists with tab
+  const isPharmacistTabActive = (sectionName: string, tabParam: string, tabValue: string) => {
+    if (userRole !== 'pharmacist') return false;
+    
+    const section = searchParams.get('section');
+    const tab = searchParams.get(tabParam);
+    
+    return section === sectionName && tab === tabValue;
+  };
+
   const isLinkActive = (path: string) => {
     return location.pathname === path;
   };
@@ -142,7 +160,7 @@ const UnifiedSidebar = () => {
       label: 'Settings',
       icon: <Settings className="w-5 h-5 mr-3" />,
       path: '/settings',
-      active: isLinkActive('/settings')
+      active: isLinkActive('/settings') || isPharmacistSectionActive('settings')
     }
   ];
 
@@ -153,7 +171,8 @@ const UnifiedSidebar = () => {
       path: '/dashboard?view=orders&ordersTab=orders',
       active: (location.pathname === '/dashboard' && 
              location.search.includes('view=orders') && 
-             (!location.search.includes('ordersTab=') || location.search.includes('ordersTab=orders')))
+             (!location.search.includes('ordersTab=') || location.search.includes('ordersTab=orders'))) ||
+             isPharmacistTabActive('orders', 'ordersTab', 'orders')
     },
     {
       label: 'Payments',
@@ -161,7 +180,8 @@ const UnifiedSidebar = () => {
       path: '/dashboard?view=orders&ordersTab=payments',
       active: (location.pathname === '/dashboard' && 
              location.search.includes('view=orders') && 
-             location.search.includes('ordersTab=payments'))
+             location.search.includes('ordersTab=payments')) ||
+             isPharmacistTabActive('orders', 'ordersTab', 'payments')
     }
   ];
   
@@ -170,74 +190,74 @@ const UnifiedSidebar = () => {
       label: 'Personal Details',
       icon: <UserCircle className="w-4 h-4 mr-3" />,
       path: '/dashboard?view=profile&profileTab=personal',
-      active: location.search.includes('view=profile') && location.search.includes('profileTab=personal')
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=personal') ||
+              isPharmacistTabActive('profile', 'profileTab', 'personal')
     },
     {
       label: 'Addresses',
       icon: <MapPin className="w-4 h-4 mr-3" />,
       path: '/dashboard?view=profile&profileTab=addresses',
-      active: location.search.includes('view=profile') && location.search.includes('profileTab=addresses')
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=addresses') ||
+              isPharmacistTabActive('profile', 'profileTab', 'addresses')
     },
     {
       label: 'Pharmacy',
       icon: <Store className="w-4 h-4 mr-3" />,
       path: '/dashboard?view=profile&profileTab=pharmacy',
-      active: location.search.includes('view=profile') && location.search.includes('profileTab=pharmacy')
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=pharmacy') ||
+              isPharmacistTabActive('profile', 'profileTab', 'pharmacy')
     },
     {
       label: 'My Doctor',
       icon: <Heart className="w-4 h-4 mr-3" />,
       path: '/dashboard?view=profile&profileTab=doctor',
-      active: location.search.includes('view=profile') && location.search.includes('profileTab=doctor')
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=doctor') ||
+              isPharmacistTabActive('profile', 'profileTab', 'doctor')
     },
     {
       label: 'Next of Kin',
       icon: <Users className="w-4 h-4 mr-3" />,
       path: '/dashboard?view=profile&profileTab=nextofkin',
-      active: location.search.includes('view=profile') && location.search.includes('profileTab=nextofkin')
+      active: location.search.includes('view=profile') && location.search.includes('profileTab=nextofkin') ||
+              isPharmacistTabActive('profile', 'profileTab', 'nextofkin')
     }
   ];
 
-  // Special navigation handler for all roles, with special handling for pharmacist
+  // Comprehensive navigation handler for all roles
   const navigateToLink = (path: string) => {
     if (userRole === 'pharmacist') {
       // For pharmacists, transform the navigation to use the pharmacy view structure
-      if (path.includes('view=profile')) {
-        // Extract the profile tab if present
+      if (path === '/dashboard') {
+        // Dashboard
+        navigate('/dashboard?view=pharmacy&section=dashboard');
+        return;
+      } else if (path === '/settings') {
+        // Settings
+        navigate('/dashboard?view=pharmacy&section=settings');
+        return;
+      } else if (path.includes('view=profile')) {
+        // Profile pages
         const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
         navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${profileTab}`);
         return;
       } else if (path.includes('view=orders')) {
-        // Extract the orders tab if present
+        // Orders pages
         const ordersTab = new URLSearchParams(path.split('?')[1]).get('ordersTab') || 'orders';
         navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${ordersTab}`);
         return;
       } else if (path.includes('view=prescriptions')) {
+        // Prescriptions
         navigate('/dashboard?view=pharmacy&section=prescriptions');
         return;
-      } else if (path === '/settings') {
-        navigate('/dashboard?view=pharmacy&section=settings');
+      } else if (path.includes('view=patients') || path.includes('section=patients')) {
+        // Patients
+        navigate('/dashboard?view=pharmacy&section=patients');
         return;
       }
     }
     
     // Default navigation for other roles
     navigate(path);
-  };
-
-  const isPharmacistLinkActive = (sectionPath: string) => {
-    if (userRole !== 'pharmacist') return false;
-    
-    // Check if the section parameter matches
-    return location.search.includes(`section=${sectionPath}`);
-  };
-
-  const isPharmacistSubTabActive = (sectionPath: string, tabParam: string, tabValue: string) => {
-    if (userRole !== 'pharmacist') return false;
-    
-    // Check if both section and tab parameters match
-    return location.search.includes(`section=${sectionPath}`) && 
-           location.search.includes(`${tabParam}=${tabValue}`);
   };
 
   const getUserInitials = () => {
@@ -293,7 +313,8 @@ const UnifiedSidebar = () => {
               key={index}
               onClick={() => navigateToLink(item.path)}
               className={`flex items-center px-3 py-2 rounded-md text-sm cursor-pointer ${
-                item.active 
+                item.active || 
+                (userRole === 'pharmacist' && isPharmacistSectionActive('dashboard'))
                   ? 'bg-primary/10 text-primary font-medium' 
                   : 'text-muted-foreground hover:bg-gray-100'
               }`}
@@ -313,7 +334,7 @@ const UnifiedSidebar = () => {
           >
             <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm cursor-pointer ${
               location.search.includes('view=profile') || 
-              (userRole === 'pharmacist' && location.search.includes('section=profile'))
+              (userRole === 'pharmacist' && isPharmacistSectionActive('profile'))
                 ? 'bg-primary/10 text-primary font-medium' 
                 : 'text-muted-foreground hover:bg-gray-100'
             }`}>
@@ -329,10 +350,7 @@ const UnifiedSidebar = () => {
                   key={index}
                   onClick={() => navigateToLink(subItem.path)}
                   className={`flex items-center px-3 py-2 rounded-md text-sm cursor-pointer ${
-                    subItem.active || 
-                    (userRole === 'pharmacist' && 
-                     location.search.includes('section=profile') && 
-                     location.search.includes(`profileTab=${subItem.path.split('profileTab=')[1]}`))
+                    subItem.active
                       ? 'bg-primary/10 text-primary font-medium' 
                       : 'text-muted-foreground hover:bg-gray-100'
                   }`}
@@ -354,7 +372,7 @@ const UnifiedSidebar = () => {
           >
             <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm cursor-pointer ${
               (location.pathname === '/dashboard' && location.search.includes('view=orders')) ||
-              (userRole === 'pharmacist' && location.search.includes('section=orders')) ||
+              (userRole === 'pharmacist' && isPharmacistSectionActive('orders')) ||
               location.pathname.includes('/my-orders')
                 ? 'bg-primary/10 text-primary font-medium' 
                 : 'text-muted-foreground hover:bg-gray-100'
@@ -371,10 +389,7 @@ const UnifiedSidebar = () => {
                   key={index}
                   onClick={() => navigateToLink(subItem.path)}
                   className={`flex items-center px-3 py-2 rounded-md text-sm cursor-pointer ${
-                    subItem.active || 
-                    (userRole === 'pharmacist' && 
-                     location.search.includes('section=orders') && 
-                     location.search.includes(`ordersTab=${subItem.path.split('ordersTab=')[1]}`))
+                    subItem.active
                       ? 'bg-primary/10 text-primary font-medium' 
                       : 'text-muted-foreground hover:bg-gray-100'
                   }`}
@@ -394,7 +409,7 @@ const UnifiedSidebar = () => {
               className={`flex items-center px-3 py-2 rounded-md text-sm cursor-pointer ${
                 (location.pathname === '/dashboard' && 
                   (location.search.includes('view=prescriptions') || 
-                   (userRole === 'pharmacist' && location.search.includes('view=pharmacy') && location.search.includes('section=prescriptions')))) ||
+                   (userRole === 'pharmacist' && isPharmacistSectionActive('prescriptions')))) ||
                 location.pathname.includes('/my-prescriptions')
                   ? 'bg-primary/10 text-primary font-medium' 
                   : 'text-muted-foreground hover:bg-gray-100'
@@ -447,7 +462,7 @@ const UnifiedSidebar = () => {
               key={index}
               onClick={() => navigateToLink(item.path)}
               className={`flex items-center px-3 py-2 rounded-md text-sm cursor-pointer ${
-                item.active || (userRole === 'pharmacist' && location.search.includes('section=settings'))
+                item.active
                   ? 'bg-primary/10 text-primary font-medium' 
                   : 'text-muted-foreground hover:bg-gray-100'
               }`}
@@ -504,9 +519,9 @@ const UnifiedSidebar = () => {
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => {
                 if (userRole === 'pharmacist') {
-                  navigate('/dashboard?view=pharmacy&section=profile&profileTab=personal');
+                  navigateToLink('/dashboard?view=profile&profileTab=personal');
                 } else {
-                  navigate('/dashboard?view=profile&profileTab=personal');
+                  navigateToLink('/dashboard?view=profile&profileTab=personal');
                 }
               }}>
                 <User className="mr-2 h-4 w-4" />
@@ -514,9 +529,9 @@ const UnifiedSidebar = () => {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => {
                 if (userRole === 'pharmacist') {
-                  navigate('/dashboard?view=pharmacy&section=orders&ordersTab=payments');
+                  navigateToLink('/dashboard?view=orders&ordersTab=payments');
                 } else {
-                  navigate('/dashboard?view=orders&ordersTab=payments');
+                  navigateToLink('/dashboard?view=orders&ordersTab=payments');
                 }
               }}>
                 <CreditCard className="mr-2 h-4 w-4" />
