@@ -31,6 +31,15 @@ export const useAuth = () => {
           const { data } = await supabase.auth.getSession();
           if (!data.session) {
             console.warn('Auth state claims user is authenticated but no session exists');
+            // Try to refresh the session
+            try {
+              const { data: refreshData } = await supabase.auth.refreshSession();
+              if (!refreshData.session) {
+                console.warn('Unable to refresh session');
+              }
+            } catch (err) {
+              console.error('Error refreshing session:', err);
+            }
           }
         }
       };

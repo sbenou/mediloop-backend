@@ -9,7 +9,7 @@ import { UserMenuItems } from "./user-menu/UserMenuItems";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCallback, memo, useState, useEffect } from 'react';
+import { useCallback, memo, useState, useEffect, useRef } from 'react';
 import { supabase, getSessionFromStorage } from "@/lib/supabase";
 
 const UserMenu = memo(() => {

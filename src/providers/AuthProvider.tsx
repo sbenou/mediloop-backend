@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/use-toast';
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setAuth = useSetRecoilState(authState);
   const sessionPollingRef = useRef<number | null>(null);
+  const lastSessionCheckRef = useRef<number>(0);
 
   const fetchUserPermissions = useCallback(async (roleId: string): Promise<string[]> => {
     try {
@@ -164,6 +165,85 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [fetchAndSetProfile, setAuth]);
 
+  // Enhanced visibility change handler
+  const handleVisibilityChange = useCallback(async () => {
+    if (document.visibilityState === 'visible') {
+      // Avoid spamming multiple session checks in rapid succession
+      const now = Date.now();
+      if (now - lastSessionCheckRef.current < 2000) {
+        console.log('Skipping redundant session check within 2 seconds');
+        return;
+      }
+      
+      lastSessionCheckRef.current = now;
+      console.log("Tab became visible, checking auth state");
+      
+      try {
+        // Get stored session from localStorage/sessionStorage
+        const storedSession = getSessionFromStorage();
+        const currentUserState = storedSession?.user?.id;
+        
+        // Always get fresh session from API
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session on visibility change:", error);
+          return;
+        }
+        
+        const newUserState = session?.user?.id;
+        
+        // If stored user doesn't match API session user
+        if (currentUserState && !newUserState) {
+          console.log("Session expired while tab was hidden");
+          setAuth({
+            user: null,
+            profile: null,
+            permissions: [],
+            isLoading: false,
+          });
+          
+          toast({
+            variant: "destructive",
+            title: "Session expired",
+            description: "Your session has expired. Please login again.",
+          });
+        } else if (newUserState && (!currentUserState || currentUserState !== newUserState)) {
+          console.log("Session changed while tab was hidden");
+          await updateAuthState(session);
+        } else if (newUserState && currentUserState === newUserState) {
+          // Same user, ensure the session is fully loaded and fresh
+          console.log("Same user, ensuring session is fully loaded");
+          
+          // Store the fresh session anyway to update expiry
+          if (session) {
+            const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+            try {
+              window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+              window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+              console.log("Updated session storage with fresh session");
+            } catch (storageError) {
+              console.error('Error updating session:', storageError);
+            }
+          }
+          
+          // Check if we already have the user's profile loaded
+          const { profile: cachedProfile } = await fetchAndSetProfile(newUserState);
+          if (!cachedProfile) {
+            // If profile couldn't be loaded, try refreshing the session
+            console.log("Profile couldn't be loaded, refreshing session");
+            const { data: refreshData } = await supabase.auth.refreshSession();
+            if (refreshData.session) {
+              await updateAuthState(refreshData.session);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error during visibility change auth check:", err);
+      }
+    }
+  }, [setAuth, updateAuthState, fetchAndSetProfile]);
+
   // Set up continuous session polling
   useEffect(() => {
     // Clear any existing interval first
@@ -171,7 +251,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       window.clearInterval(sessionPollingRef.current);
     }
     
-    // Poll every 30 seconds to ensure session is still valid
+    // Poll every 15 seconds to ensure session is still valid
     sessionPollingRef.current = window.setInterval(async () => {
       try {
         // Only poll when tab is visible
@@ -197,7 +277,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error('Error in session polling:', error);
       }
-    }, 30000); // 30 seconds
+    }, 15000); // 15 seconds
     
     return () => {
       if (sessionPollingRef.current) {
@@ -319,7 +399,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
-        console.log(`Auth state changed: ${event}, user: ${session?.user?.id || 'none'}`);
+        console.log(`Auth state changed: ${event} for user: ${session?.user?.id || 'none'}`);
 
         if (event === 'SIGNED_IN' && session) {
           await updateAuthState(session);
@@ -399,65 +479,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
     
     window.addEventListener('storage', handleStorageChange);
-
-    // Listen for visibility changes
-    const handleVisibilityChange = async () => {
-      if (!mounted) return;
-      
-      if (document.visibilityState === 'visible') {
-        console.log("Tab became visible, checking auth state");
-        
-        try {
-          // Get current auth state
-          const currentUserState = getSessionFromStorage()?.user?.id;
-          
-          // Get fresh session from API
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error("Error getting session on visibility change:", error);
-            return;
-          }
-          
-          // If API session differs from our state, update it
-          const newUserState = session?.user?.id;
-          
-          if (currentUserState && !newUserState) {
-            console.log("Session expired while tab was hidden");
-            setAuth({
-              user: null,
-              profile: null,
-              permissions: [],
-              isLoading: false,
-            });
-            
-            toast({
-              variant: "destructive",
-              title: "Session expired",
-              description: "Your session has expired. Please login again.",
-            });
-          } else if (newUserState && (!currentUserState || currentUserState !== newUserState)) {
-            console.log("Session changed while tab was hidden");
-            updateAuthState(session);
-          } else if (newUserState && currentUserState === newUserState) {
-            // Same user, ensure the session is fully loaded
-            console.log("Same user, ensuring session is fully loaded");
-            
-            const { profile: cachedProfile } = await fetchAndSetProfile(newUserState);
-            if (!cachedProfile) {
-              // If profile couldn't be loaded, try refreshing the session
-              const { data: refreshData } = await supabase.auth.refreshSession();
-              if (refreshData.session) {
-                updateAuthState(refreshData.session);
-              }
-            }
-          }
-        } catch (err) {
-          console.error("Error during visibility change auth check:", err);
-        }
-      }
-    };
     
+    // Enhanced visibility change listener
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Clean up all listeners on unmount
@@ -467,7 +490,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       window.removeEventListener('storage', handleStorageChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [setAuth, updateAuthState, fetchAndSetProfile]);
+  }, [setAuth, updateAuthState, fetchAndSetProfile, handleVisibilityChange]);
 
   // Listen for custom auth token update events
   useEffect(() => {

@@ -1,77 +1,64 @@
 
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { useCart } from "@/contexts/CartContext";
 
-interface CartFooterProps {
-  total: number;
-  comment: string;
-  onCommentChange: (comment: string) => void;
-  onCheckout: () => void;
-  onClose: () => void;
-  isProcessing: boolean;
-}
-
-export const CartFooter = ({
-  total,
-  comment,
-  onCommentChange,
-  onCheckout,
-  onClose,
-  isProcessing,
-}: CartFooterProps) => {
+export default function CartFooter({ className }: { className?: string }) {
+  const { items, total } = useCart();
+  const { formatCurrency } = useCurrency();
   const navigate = useNavigate();
   const location = useLocation();
-  const isProductsPage = location.pathname === '/products';
   
+  const isProductsPage = location.pathname === "/products";
+  const hasItems = items.length > 0;
+
   const handleStartShopping = () => {
-    navigate('/products');
-    onClose();
+    navigate("/products");
   };
-  
+
+  const handleCheckout = () => {
+    navigate("/checkout");
+  };
+
+  if (!hasItems) {
+    return (
+      <div className={`p-4 border-t ${className}`}>
+        <Button 
+          onClick={handleStartShopping} 
+          className="w-full"
+        >
+          Start Shopping
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4 border-t pt-4 mt-4">
-      <Textarea
-        placeholder="Add a comment to your order..."
-        value={comment}
-        onChange={(e) => onCommentChange(e.target.value)}
-        className="min-h-[100px]"
-      />
-      
+    <div className={`p-4 border-t ${className}`}>
       <div className="flex justify-between mb-4">
         <span className="font-medium">Total</span>
-        <span className="font-medium">${total.toFixed(2)}</span>
+        <span className="font-bold">{formatCurrency(total)}</span>
       </div>
       
-      <div className="space-y-2 pb-4">
+      <div className="space-y-2">
         <Button 
-          className="w-full" 
-          onClick={onCheckout}
-          disabled={isProcessing}
+          onClick={handleCheckout} 
+          className="w-full"
         >
-          {isProcessing ? "Processing..." : "Proceed to Checkout"}
+          Checkout
         </Button>
         
         {!isProductsPage && (
           <Button 
+            onClick={handleStartShopping} 
             variant="outline" 
             className="w-full"
-            onClick={handleStartShopping}
           >
             Start Shopping
-          </Button>
-        )}
-        
-        {isProductsPage && (
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={onClose}
-          >
-            Keep Shopping
           </Button>
         )}
       </div>
     </div>
   );
-};
+}

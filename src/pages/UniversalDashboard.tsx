@@ -8,7 +8,6 @@ import {
   SettingsView, 
   OrdersView, 
   PrescriptionsView,
-  TeleconsultationsView,
   HomeView,
   PharmacyView
 } from "@/components/dashboard/views";
@@ -50,7 +49,6 @@ const UniversalDashboard = () => {
         ...commonTabs,
         { value: "orders", label: "Orders" },
         { value: "prescriptions", label: "Prescriptions" },
-        { value: "teleconsultations", label: "Teleconsultations" },
       ];
     }
     
@@ -79,12 +77,6 @@ const UniversalDashboard = () => {
         return <OrdersView activeTab={ordersTab} userRole={userRole} />;
       case "prescriptions":
         return <PrescriptionsView userRole={userRole} />;
-      case "teleconsultations":
-        // Only show teleconsultations to non-pharmacist users
-        if (userRole !== "pharmacist") {
-          return <TeleconsultationsView userRole={userRole} />;
-        }
-        return <HomeView userRole={userRole} />;
       case "pharmacy":
         return <PharmacyView userRole={userRole} section={pharmacySection} />;
       case "home":
