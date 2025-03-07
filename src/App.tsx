@@ -96,13 +96,13 @@ function App() {
                   <Route path="/pharmacy">
                     {/* Include both old and new dashboard */}
                     <Route path="dashboard-old" element={<PharmacyDashboardOld />} />
-                    <Route path="dashboard" element={<Navigate to="/dashboard?view=pharmacy" replace />} />
+                    <Route path="dashboard" element={<Navigate to="/dashboard?view=pharmacy&section=dashboard" replace />} />
+                    <Route path="patients" element={<Navigate to="/dashboard?view=pharmacy&section=patients" replace />} />
+                    <Route path="orders" element={<Navigate to="/dashboard?view=pharmacy&section=orders" replace />} />
+                    <Route path="prescriptions" element={<Navigate to="/dashboard?view=pharmacy&section=prescriptions" replace />} />
                     
-                    {/* Keep existing pharmacy pages */}
-                    <Route path="patients" element={<PatientsPage />} />
+                    {/* Keep existing pharmacy pages for backward compatibility */}
                     <Route path="patients/:id" element={<PatientDetail />} />
-                    <Route path="orders" element={<OrdersPage />} />
-                    <Route path="prescriptions" element={<PrescriptionsPage />} />
                     <Route path="prescriptions/:id" element={<PrescriptionDetail />} />
                   </Route>
                   

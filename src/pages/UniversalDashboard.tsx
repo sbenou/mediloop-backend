@@ -70,8 +70,7 @@ const UniversalDashboard = () => {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  // For pharmacists, use the UnifiedLayoutTemplate which includes the right-side drawer
-  // For others, use the UnifiedLayoutTemplate as well to ensure consistent layout for all roles
+  // Use the UnifiedLayoutTemplate for all roles
   return (
     <UnifiedLayoutTemplate>
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">

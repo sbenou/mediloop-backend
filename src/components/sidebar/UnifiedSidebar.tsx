@@ -3,7 +3,8 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   Home, User, ShoppingBag, FileText, Settings, Calendar, 
   CreditCard, Bell, LogOut, ChevronDown, CreditCard as Payment,
-  UserCircle, MapPin, Store, Heart, Users, Pill, SquareUser
+  UserCircle, MapPin, Store, Heart, Users, Pill, SquareUser,
+  FileIcon
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -226,9 +227,9 @@ const UnifiedSidebar = () => {
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2">
-          <Avatar className="h-10 w-10 rounded-md bg-primary/10">
-            <AvatarFallback className="rounded-md text-primary">
-              <SquareUser className="h-6 w-6" />
+          <Avatar className="h-10 w-10 rounded-md bg-[#9b87f5]">
+            <AvatarFallback className="rounded-md text-white">
+              <FileIcon className="h-6 w-6" />
             </AvatarFallback>
           </Avatar>
           <div>
