@@ -13,6 +13,7 @@ import {
 } from "@/components/dashboard/views";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const UniversalDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -96,8 +97,10 @@ const UniversalDashboard = () => {
   if (userRole === "pharmacist") {
     return (
       <UnifiedLayoutTemplate>
-        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl">
-          {getContent()}
+        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+          <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+            {getContent()}
+          </ScrollArea>
         </div>
       </UnifiedLayoutTemplate>
     );
@@ -115,10 +118,16 @@ const UniversalDashboard = () => {
                 </TabsTrigger>
               ))}
             </TabsList>
-            <div>{getContent()}</div>
+            <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+              {getContent()}
+            </ScrollArea>
           </Tabs>
         )}
-        {tabs.length === 0 && getContent()}
+        {tabs.length === 0 && (
+          <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+            {getContent()}
+          </ScrollArea>
+        )}
       </div>
     </UnifiedLayout>
   );

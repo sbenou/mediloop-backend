@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PharmacistLayoutProps {
   children: React.ReactNode;
@@ -90,8 +91,10 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-6">
-          {children}
+        <main className="flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll">
+          <ScrollArea className="h-full w-full">
+            {children}
+          </ScrollArea>
         </main>
       </div>
     </div>

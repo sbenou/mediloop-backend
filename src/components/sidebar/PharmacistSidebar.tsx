@@ -37,7 +37,7 @@ const PharmacistSidebar = () => {
         <h2 className="text-xl font-bold">Pharmacy Panel</h2>
       </div>
       
-      <div className="flex-1 overflow-auto py-4">
+      <div className="flex-1 overflow-auto py-4 hover-scroll">
         <nav className="space-y-1 px-2">
           <button
             onClick={() => navigateToPharmacySection("dashboard")}

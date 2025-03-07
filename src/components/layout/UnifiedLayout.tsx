@@ -7,6 +7,7 @@ import UserMenu from "../UserMenu";
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { MainNavigation } from "./navigation/MainNavigation";
 import CartButton from "./navigation/CartButton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -40,8 +41,8 @@ const UnifiedLayout = ({ children }: UnifiedLayoutProps) => {
           </div>
         </header>
         
-        {/* Main content */}
-        <main className="flex-1 overflow-auto p-6">
+        {/* Main content with hover scroll */}
+        <main className="flex-1 overflow-auto p-6 hover-scroll main-content-scroll">
           {children}
         </main>
       </div>
