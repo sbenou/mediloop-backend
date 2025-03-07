@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   Home, User, ShoppingBag, FileText, Settings, Calendar, 
   CreditCard, Bell, LogOut, ChevronDown, CreditCard as Payment,
-  UserCircle, MapPin, Store, Heart, Users, Pill
+  UserCircle, MapPin, Store, Heart, Users, Pill, SquareUser
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { clearAllAuthStorage } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
@@ -225,32 +226,11 @@ const UnifiedSidebar = () => {
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2">
-          <div className="relative">
-            <UserAvatar 
-              userProfile={{
-                id: null,
-                full_name: 'Mediloop',
-                email: null,
-                avatar_url: null,
-                role: 'organization',
-                role_id: null,
-                date_of_birth: null,
-                city: null,
-                auth_method: null,
-                is_blocked: null,
-                doctor_stamp_url: null,
-                doctor_signature_url: null,
-                cns_card_front: null,
-                cns_card_back: null,
-                cns_number: null,
-                deleted_at: null,
-                created_at: null,
-                updated_at: null,
-                license_number: null
-              }} 
-              canUpload={true} 
-            />
-          </div>
+          <Avatar className="h-10 w-10 rounded-md bg-primary/10">
+            <AvatarFallback className="rounded-md text-primary">
+              <SquareUser className="h-6 w-6" />
+            </AvatarFallback>
+          </Avatar>
           <div>
             <h3 className="font-semibold text-sm">Mediloop</h3>
             <p className="text-xs text-muted-foreground">Healthcare Platform</p>

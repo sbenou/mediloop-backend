@@ -36,30 +36,32 @@ const UserAvatar = ({
   };
   
   return (
-    <Avatar 
-      className={`h-10 w-10 ${squared ? 'rounded-md' : 'rounded-full'} relative bg-muted`}
-      onClick={handleAvatarClick}
-    >
-      {isLoading && <Skeleton className="h-full w-full absolute inset-0" />}
-      
-      <AvatarImage
-        src={userProfile?.avatar_url || ""}
-        alt={userProfile?.full_name || "User"}
-        onLoad={() => setIsLoading(false)}
-        onError={() => setIsLoading(false)}
-        className="object-cover"
-      />
-      
-      {!isLoading && (
-        <AvatarFallback className={`text-primary bg-primary/10 ${squared ? 'rounded-md' : 'rounded-full'}`}>
-          {getInitials()}
-        </AvatarFallback>
-      )}
+    <div className="relative">
+      <Avatar 
+        className={`h-10 w-10 ${squared ? 'rounded-md' : 'rounded-full'} relative bg-muted`}
+        onClick={handleAvatarClick}
+      >
+        {isLoading && <Skeleton className="h-full w-full absolute inset-0" />}
+        
+        <AvatarImage
+          src={userProfile?.avatar_url || ""}
+          alt={userProfile?.full_name || "User"}
+          onLoad={() => setIsLoading(false)}
+          onError={() => setIsLoading(false)}
+          className="object-cover"
+        />
+        
+        {!isLoading && (
+          <AvatarFallback className={`text-primary bg-primary/10 ${squared ? 'rounded-md' : 'rounded-full'}`}>
+            {getInitials()}
+          </AvatarFallback>
+        )}
+      </Avatar>
       
       {canUpload && (
         <div className="absolute bottom-0 right-0 h-3 w-3 bg-primary rounded-full border-2 border-white" />
       )}
-    </Avatar>
+    </div>
   );
 };
 

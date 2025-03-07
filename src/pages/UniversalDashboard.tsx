@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   ProfileView, 
@@ -40,35 +39,6 @@ const UniversalDashboard = () => {
     }
   }, [isAuthenticated, isLoading, navigate]);
   
-  const handleTabChange = (value: string) => {
-    setSearchParams({ view: value });
-  };
-  
-  // This function determines which tabs are displayed based on the user's role
-  const getRoleTabs = () => {
-    const commonTabs = [
-      { value: "home", label: "Home" },
-      { value: "profile", label: "Profile" },
-      { value: "settings", label: "Settings" },
-    ];
-    
-    if (userRole === "patient") {
-      return [
-        ...commonTabs,
-        { value: "orders", label: "Orders" },
-        { value: "prescriptions", label: "Prescriptions" },
-      ];
-    }
-    
-    // Pharmacist doesn't get tabs in the UI - they get the pharmacy dashboard directly
-    if (userRole === "pharmacist") {
-      return [];
-    }
-    
-    // Default tabs for other roles or fallback
-    return commonTabs;
-  };
-  
   const getContent = () => {
     // For pharmacists, always show the pharmacy view regardless of the URL parameter
     if (userRole === "pharmacist") {
@@ -97,46 +67,16 @@ const UniversalDashboard = () => {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  const tabs = getRoleTabs();
-  
   // For pharmacists, use the UnifiedLayoutTemplate which includes the right-side drawer
-  // For others, use the normal UnifiedLayout
-  if (userRole === "pharmacist") {
-    return (
-      <UnifiedLayoutTemplate>
-        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-          <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-            {getContent()}
-          </ScrollArea>
-        </div>
-      </UnifiedLayoutTemplate>
-    );
-  }
-  
+  // For others, use the UnifiedLayoutTemplate as well to ensure consistent layout for all roles
   return (
-    <UnifiedLayout>
-      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl">
-        {tabs.length > 0 && (
-          <Tabs value={currentView} onValueChange={handleTabChange}>
-            <TabsList className="mb-8">
-              {tabs.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value}>
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-              {getContent()}
-            </ScrollArea>
-          </Tabs>
-        )}
-        {tabs.length === 0 && (
-          <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-            {getContent()}
-          </ScrollArea>
-        )}
+    <UnifiedLayoutTemplate>
+      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+        <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+          {getContent()}
+        </ScrollArea>
       </div>
-    </UnifiedLayout>
+    </UnifiedLayoutTemplate>
   );
 };
 

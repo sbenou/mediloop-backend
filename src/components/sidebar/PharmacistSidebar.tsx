@@ -172,7 +172,7 @@ const PharmacistSidebar = () => {
       </div>
       
       <div className="p-4 border-t flex items-center">
-        <div className="cursor-pointer" onClick={handleAvatarClick}>
+        <div onClick={handleAvatarClick} className="cursor-pointer">
           <UserAvatar 
             userProfile={profile} 
             canUpload={true} 
@@ -186,7 +186,7 @@ const PharmacistSidebar = () => {
             onChange={handleFileUpload}
           />
         </div>
-        <div className="ml-3">
+        <div className="ml-3 cursor-pointer">
           <p className="text-sm font-medium">{profile?.full_name || "User"}</p>
           <p className="text-xs text-gray-500">{profile?.email || ""}</p>
         </div>
