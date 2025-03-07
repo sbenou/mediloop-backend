@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,18 +8,21 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import Webcam from 'react-webcam';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface AvatarUploadProps {
   currentAvatarUrl: string | null;
   onAvatarUpdate: (url: string) => void;
+  label?: string;
 }
 
-const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) => {
+const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo" }: AvatarUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const { userRole } = useAuth();
 
   const uploadAvatar = async (file: File) => {
     try {
@@ -30,9 +34,10 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) =
       if (!userId) throw new Error('User not authenticated');
 
       const filePath = `${userId}/${crypto.randomUUID()}`;
+      const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 'avatars';
       
       const { error: uploadError, data } = await supabase.storage
-        .from('avatars')
+        .from(bucketName)
         .upload(filePath, optimizedFile, {
           upsert: true,
           contentType: 'image/jpeg'
@@ -41,12 +46,14 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) =
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+        .from(bucketName)
         .getPublicUrl(filePath);
 
+      const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'avatar_url';
+      
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ [fieldToUpdate]: publicUrl })
         .eq('id', userId);
 
       if (updateError) throw updateError;
@@ -59,14 +66,14 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) =
 
       toast({
         title: "Success",
-        description: "Avatar updated successfully",
+        description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : 'Avatar'} updated successfully`,
       });
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      console.error('Error uploading image:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to upload avatar",
+        description: `Failed to upload ${userRole === 'pharmacist' ? 'pharmacy logo' : 'avatar'}`,
       });
     } finally {
       setIsUploading(false);
@@ -154,7 +161,7 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate }: AvatarUploadProps) =
               disabled={isUploading}
             >
               <Upload className="mr-2 h-4 w-4" />
-              Upload Photo
+              Upload {userRole === 'pharmacist' ? 'Logo' : 'Photo'}
             </Button>
             <Button
               type="button"

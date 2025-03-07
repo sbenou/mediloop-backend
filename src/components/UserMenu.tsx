@@ -16,6 +16,7 @@ const UserMenu = memo(() => {
   const { isAuthenticated, isLoading, profile, user } = useAuth();
   const [localLoading, setLocalLoading] = useState(true);
   const [hasVisibleSession, setHasVisibleSession] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   
   // Enhanced session check on mount and visibility change
@@ -111,6 +112,11 @@ const UserMenu = memo(() => {
     navigate('/login', { replace: true });
   }, [navigate]);
 
+  const handleNavigateToSettings = useCallback(() => {
+    navigate('/settings?tab=profile');
+    setMenuOpen(false);
+  }, [navigate]);
+
   // Only show skeleton if we're loading AND don't have a session
   // This prevents the skeleton from showing when switching tabs with a valid session
   const shouldShowSkeleton = isLoading && localLoading && !hasVisibleSession;
@@ -138,16 +144,22 @@ const UserMenu = memo(() => {
 
   // Show user menu if authenticated or we have a visible session
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button 
-          type="button"
-          className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer outline-none"
-          aria-label="User menu"
-        >
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+      <div className="flex items-center space-x-2">
+        {/* Avatar is outside the trigger so it can be clicked separately */}
+        <div onClick={handleNavigateToSettings} className="cursor-pointer">
           <UserAvatar userProfile={profile} />
-        </button>
-      </DropdownMenuTrigger>
+        </div>
+        <DropdownMenuTrigger asChild>
+          <button 
+            type="button"
+            className="flex items-center space-x-1 hover:opacity-80 transition-opacity cursor-pointer outline-none text-sm"
+            aria-label="User menu"
+          >
+            <span className="font-medium">{profile?.full_name || 'User'}</span>
+          </button>
+        </DropdownMenuTrigger>
+      </div>
       <DropdownMenuContent 
         align="end" 
         sideOffset={5}

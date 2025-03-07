@@ -1,5 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface CartFooterProps {
   total: number;
@@ -18,6 +20,15 @@ export const CartFooter = ({
   onClose,
   isProcessing,
 }: CartFooterProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isProductsPage = location.pathname === '/products';
+  
+  const handleStartShopping = () => {
+    navigate('/products');
+    onClose();
+  };
+  
   return (
     <div className="space-y-4 border-t pt-4 mt-4">
       <Textarea
@@ -40,13 +51,24 @@ export const CartFooter = ({
         >
           {isProcessing ? "Processing..." : "Proceed to Checkout"}
         </Button>
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={onClose}
-        >
-          Keep Shopping
-        </Button>
+        
+        {!isProductsPage ? (
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={handleStartShopping}
+          >
+            Start Shopping
+          </Button>
+        ) : (
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={onClose}
+          >
+            Keep Shopping
+          </Button>
+        )}
       </div>
     </div>
   );

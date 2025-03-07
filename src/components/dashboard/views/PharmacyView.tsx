@@ -1,28 +1,75 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { usePharmacyDashboardStats } from "@/hooks/admin/useDashboardStats";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Users, 
-  ShoppingBag, 
-  FileText
+import {
+  Users,
+  ShoppingBag,
+  FileText,
+  ArrowRight,
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 interface PharmacyViewProps {
   userRole: string | null;
+}
+
+interface Patient {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  created_at: string;
 }
 
 const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole }) => {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const { data: stats, isLoading, error } = usePharmacyDashboardStats();
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoadingPatients, setIsLoadingPatients] = useState(true);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, created_at')
+          .eq('role', 'patient')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setPatients(data || []);
+      } catch (error) {
+        console.error('Error fetching patients:', error);
+      } finally {
+        setIsLoadingPatients(false);
+      }
+    };
+
+    fetchPatients();
+  }, []);
 
   const navigateToPharmacyPage = (path: string) => {
     navigate(`/pharmacy/${path}`);
+  };
+
+  const viewPatient = (patientId: string) => {
+    navigate(`/pharmacy/patients/${patientId}`);
+  };
+
+  // Split full name into first and last name
+  const getNameParts = (fullName: string) => {
+    const parts = fullName ? fullName.split(' ') : ['', ''];
+    const lastName = parts.length > 1 ? parts.pop() || '' : '';
+    const firstName = parts.join(' ');
+    return { firstName, lastName };
   };
 
   return (
@@ -93,6 +140,77 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole }) => {
             )}
           </div>
         </Card>
+      </div>
+      
+      {/* Patients Table */}
+      <div className="bg-white border rounded-lg shadow-sm p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Recent Patients</h2>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigateToPharmacyPage('patients')}
+          >
+            View All
+          </Button>
+        </div>
+        
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[80px]">Avatar</TableHead>
+                <TableHead>First Name</TableHead>
+                <TableHead>Last Name</TableHead>
+                <TableHead>Date Added</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoadingPatients ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    <Skeleton className="h-8 w-full mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : patients.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    No patients found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                patients.slice(0, 5).map((patient) => {
+                  const { firstName, lastName } = getNameParts(patient.full_name || '');
+                  return (
+                    <TableRow key={patient.id}>
+                      <TableCell className="font-medium">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={patient.avatar_url || undefined} alt={patient.full_name || 'Patient'} />
+                          <AvatarFallback>{firstName.charAt(0)}{lastName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell>{firstName}</TableCell>
+                      <TableCell>{lastName}</TableCell>
+                      <TableCell>{new Date(patient.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => viewPatient(patient.id)}
+                          className="text-primary"
+                        >
+                          View
+                          <ArrowRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       
       {/* Add statistics charts */}
