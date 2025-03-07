@@ -24,6 +24,7 @@ const UniversalDashboard = () => {
   const currentView = searchParams.get("view") || "home";
   const ordersTab = searchParams.get("ordersTab") || "orders";
   const profileTab = searchParams.get("profileTab") || "personal";
+  const pharmacySection = searchParams.get("section") || "dashboard";
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -65,7 +66,7 @@ const UniversalDashboard = () => {
   const getContent = () => {
     // For pharmacists, always show the pharmacy view regardless of the URL parameter
     if (userRole === "pharmacist") {
-      return <PharmacyView userRole={userRole} />;
+      return <PharmacyView userRole={userRole} section={pharmacySection} />;
     }
     
     // For other roles, show the view based on the URL parameter
@@ -85,7 +86,7 @@ const UniversalDashboard = () => {
         }
         return <HomeView userRole={userRole} />;
       case "pharmacy":
-        return <PharmacyView userRole={userRole} />;
+        return <PharmacyView userRole={userRole} section={pharmacySection} />;
       case "home":
       default:
         return <HomeView userRole={userRole} />;

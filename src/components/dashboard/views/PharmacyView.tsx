@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabase";
 
 interface PharmacyViewProps {
   userRole: string | null;
+  section?: string;
 }
 
 interface Patient {
@@ -28,9 +29,10 @@ interface Patient {
   created_at: string;
 }
 
-const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole }) => {
+const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashboard" }) => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: stats, isLoading, error } = usePharmacyDashboardStats();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
@@ -58,12 +60,12 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole }) => {
 
   const navigateToPharmacyPage = (path: string) => {
     // Navigate within the new dashboard structure
-    navigate(`/dashboard?view=pharmacy&section=${path}`);
+    setSearchParams({ view: 'pharmacy', section: path });
   };
 
   const viewPatient = (patientId: string) => {
     // Navigate within the new dashboard structure
-    navigate(`/dashboard?view=pharmacy&section=patients&id=${patientId}`);
+    setSearchParams({ view: 'pharmacy', section: 'patients', id: patientId });
   };
 
   // Split full name into first and last name
@@ -74,6 +76,80 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole }) => {
     return { firstName, lastName };
   };
 
+  // Render patients section
+  if (section === "patients") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Patients</h1>
+          <p className="text-muted-foreground">
+            Manage all patients that have prescriptions in your pharmacy.
+          </p>
+        </div>
+        
+        <div className="bg-white border rounded-lg shadow-sm p-6">
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">Avatar</TableHead>
+                  <TableHead>First Name</TableHead>
+                  <TableHead>Last Name</TableHead>
+                  <TableHead>Date Added</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoadingPatients ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      <Skeleton className="h-8 w-full mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : patients.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      No patients found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  patients.map((patient) => {
+                    const { firstName, lastName } = getNameParts(patient.full_name || '');
+                    return (
+                      <TableRow key={patient.id}>
+                        <TableCell className="font-medium">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={patient.avatar_url || undefined} alt={patient.full_name || 'Patient'} />
+                            <AvatarFallback>{firstName.charAt(0)}{lastName.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                        </TableCell>
+                        <TableCell>{firstName}</TableCell>
+                        <TableCell>{lastName}</TableCell>
+                        <TableCell>{new Date(patient.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => viewPatient(patient.id)}
+                            className="text-primary"
+                          >
+                            View
+                            <ArrowRight className="ml-1 h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default dashboard view
   return (
     <div className="space-y-6">
       <div>

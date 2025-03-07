@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -50,6 +50,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const PharmacistSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { profile } = useAuth();
   const [auth, setAuth] = useRecoilState(authState);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
@@ -58,6 +59,8 @@ const PharmacistSidebar = () => {
   const [isConnected, setIsConnected] = useState<boolean>(true); // Default to connected
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const dropdownTriggerRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkConnectionStatus = () => {
@@ -92,8 +95,8 @@ const PharmacistSidebar = () => {
 
   const isGroupExpanded = (groupName: string) => expandedGroups.includes(groupName);
   
-  const isActiveRoute = (path: string) => {
-    return location.pathname.startsWith(path);
+  const isActiveRoute = (section: string) => {
+    return searchParams.get('section') === section;
   };
 
   const handleLogout = async () => {
@@ -167,13 +170,19 @@ const PharmacistSidebar = () => {
     });
   };
 
+  const navigateToSection = (section: string, tab?: string) => {
+    const params: Record<string, string> = { view: 'pharmacy', section };
+    if (tab) params.tab = tab;
+    setSearchParams(params);
+  };
+
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar>
         <SidebarHeader className="p-4 border-b">
           <div className="flex items-center space-x-3">
             <div 
-              className="bg-primary text-primary-foreground p-2 rounded-md"
+              className="bg-primary text-primary-foreground p-2 rounded-md cursor-pointer"
               onClick={() => logoInputRef.current?.click()}
             >
               <FileText className="h-5 w-5" />
@@ -199,10 +208,10 @@ const PharmacistSidebar = () => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => navigate('/dashboard?view=pharmacy&section=patients')}
+                    onClick={() => navigateToSection('patients')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      (isActiveRoute('/pharmacy/patients') || location.search.includes('section=patients')) && "text-primary"
+                      isActiveRoute('patients') && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
@@ -218,7 +227,7 @@ const PharmacistSidebar = () => {
                     onClick={() => toggleGroup('orders')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      (isGroupExpanded('orders') || isActiveRoute('/pharmacy/orders') || location.search.includes('section=orders')) && "text-primary"
+                      (isGroupExpanded('orders') || isActiveRoute('orders')) && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
@@ -235,20 +244,20 @@ const PharmacistSidebar = () => {
                   {isGroupExpanded('orders') && (
                     <div className="pl-6 space-y-1 mt-1">
                       <SidebarMenuButton
-                        onClick={() => navigate('/dashboard?view=pharmacy&section=orders&tab=all')}
+                        onClick={() => navigateToSection('orders', 'all')}
                         className={cn(
                           "w-full text-sm",
-                          (isActiveRoute('/pharmacy/orders') && !location.search.includes('tab=payments')) && "text-primary"
+                          (isActiveRoute('orders') && searchParams.get('tab') !== 'payments') && "text-primary"
                         )}
                       >
                         <ShoppingBag className="mr-2 h-4 w-4" />
                         All Orders
                       </SidebarMenuButton>
                       <SidebarMenuButton
-                        onClick={() => navigate('/dashboard?view=pharmacy&section=orders&tab=payments')}
+                        onClick={() => navigateToSection('orders', 'payments')}
                         className={cn(
                           "w-full text-sm",
-                          (isActiveRoute('/pharmacy/orders') && location.search.includes('tab=payments')) && "text-primary"
+                          (isActiveRoute('orders') && searchParams.get('tab') === 'payments') && "text-primary"
                         )}
                       >
                         <CreditCard className="mr-2 h-4 w-4" />
@@ -260,10 +269,10 @@ const PharmacistSidebar = () => {
 
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => navigate('/dashboard?view=pharmacy&section=prescriptions')}
+                    onClick={() => navigateToSection('prescriptions')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      (isActiveRoute('/pharmacy/prescriptions') || location.search.includes('section=prescriptions')) && "text-primary"
+                      isActiveRoute('prescriptions') && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
@@ -281,11 +290,18 @@ const PharmacistSidebar = () => {
         <SidebarFooter className="border-t mt-auto p-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 rounded-md p-2 transition-colors">
-                <div className="relative" onClick={(e) => {
-                  e.stopPropagation();
-                  logoInputRef.current?.click();
-                }}>
+              <div 
+                className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 rounded-md p-2 transition-colors" 
+                ref={dropdownTriggerRef}
+              >
+                <div 
+                  className="relative" 
+                  ref={avatarRef}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    logoInputRef.current?.click();
+                  }}
+                >
                   <div className="bg-secondary p-2 rounded-md">
                     {pharmacyLogo ? (
                       <img 
