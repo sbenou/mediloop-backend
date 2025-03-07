@@ -5,10 +5,10 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import CartItem from './cart/CartItem';
+import { CartItem } from './cart/CartItem';
 import CartFooter from './cart/CartFooter';
 
-const CartPreview = () => {
+const CartPreview = ({ onClose }: { onClose?: () => void }) => {
   const { state } = useCart();
   
   return (
@@ -41,7 +41,7 @@ const CartPreview = () => {
           <p className="text-sm text-muted-foreground mb-6">
             Looks like you haven't added any items to your cart yet.
           </p>
-          <Button>Start Shopping</Button>
+          <Button onClick={onClose}>Start Shopping</Button>
         </div>
       )}
     </div>

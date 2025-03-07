@@ -22,7 +22,7 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart } = useCart();
-  const { currency, convertPrice } = useCurrency();
+  const { formatCurrency, convertPrice } = useCurrency();
   const [imageError, setImageError] = useState(false);
 
   const handleAddToCart = () => {
@@ -65,7 +65,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     return `${placeholderImages[index]}?w=400&q=80`;
   };
 
-  const displayPrice = `${currency.symbol}${convertPrice(product.price).toFixed(2)}`;
+  const displayPrice = formatCurrency(convertPrice(product.price));
 
   return (
     <Card className="overflow-hidden flex flex-col">

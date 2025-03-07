@@ -1,4 +1,3 @@
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCallback, memo, useState, useEffect, useRef } from 'react';
-import { supabase, getSessionFromStorage } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import { getSessionFromStorage } from "@/lib/supabase";
 
 const UserMenu = memo(() => {
   const { isAuthenticated, isLoading, profile, user } = useAuth();
@@ -19,12 +19,10 @@ const UserMenu = memo(() => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   
-  // Enhanced session check on mount and visibility change
   useEffect(() => {
     const checkSession = async () => {
       console.log("UserMenu: Checking session");
       
-      // First check local storage (fastest)
       const storedSession = getSessionFromStorage();
       if (storedSession?.user) {
         console.log("UserMenu: Found valid session in storage:", storedSession.user.id);
@@ -33,7 +31,6 @@ const UserMenu = memo(() => {
         return;
       }
       
-      // If not in storage, check API (slower)
       try {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
@@ -43,7 +40,6 @@ const UserMenu = memo(() => {
           console.log("UserMenu: Found session via API:", data.session.user.id);
           setHasVisibleSession(!!data.session);
           
-          // If we have a session from API but not in storage, store it
           if (data.session && !storedSession) {
             console.log("Session found in API but not in storage, storing it");
             const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
@@ -66,14 +62,11 @@ const UserMenu = memo(() => {
       }
     };
     
-    // Run initial check
     checkSession();
     
-    // Also check when tab becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         console.log("UserMenu: Page became visible, checking session");
-        // Reset localLoading but only if we don't already have a visible session
         if (!hasVisibleSession) {
           setLocalLoading(true);
         }
@@ -83,7 +76,6 @@ const UserMenu = memo(() => {
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // Listen for custom auth token events
     const handleTokenUpdate = () => {
       console.log("UserMenu: Auth token update event received");
       checkSession();
@@ -91,7 +83,6 @@ const UserMenu = memo(() => {
     
     window.addEventListener('supabase:auth:token:update', handleTokenUpdate);
     
-    // Listen for storage events (for cross-tab sync)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key && (e.key.includes('auth-token') || e.key === 'last_auth_event')) {
         console.log("Auth storage changed, rechecking session");
@@ -117,11 +108,8 @@ const UserMenu = memo(() => {
     setMenuOpen(false);
   }, [navigate]);
 
-  // Only show skeleton if we're loading AND don't have a session
-  // This prevents the skeleton from showing when switching tabs with a valid session
   const shouldShowSkeleton = isLoading && localLoading && !hasVisibleSession;
 
-  // Show skeleton while loading and no visible session
   if (shouldShowSkeleton) {
     return (
       <div className="h-10 w-10 rounded-full">
@@ -130,7 +118,6 @@ const UserMenu = memo(() => {
     );
   }
 
-  // Show login button if not authenticated and not loading
   if (!isAuthenticated && !isLoading && !localLoading && !hasVisibleSession) {
     return (
       <button
@@ -142,11 +129,9 @@ const UserMenu = memo(() => {
     );
   }
 
-  // Show user menu if authenticated or we have a visible session
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <div className="flex items-center space-x-2">
-        {/* Avatar can be clicked separately for upload */}
         <div>
           <UserAvatar userProfile={profile} canUpload={true} />
         </div>

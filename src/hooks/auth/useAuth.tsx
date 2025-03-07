@@ -8,7 +8,8 @@ import {
   isLoadingSelector 
 } from '@/store/auth/selectors';
 import { authState } from '@/store/auth/atoms';
-import { supabase, getSessionFromStorage } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { getSessionFromStorage } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 
 export const useAuth = () => {

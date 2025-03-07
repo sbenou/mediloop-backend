@@ -7,7 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { CartPreview } from "@/components/CartPreview";
+import CartPreview from "@/components/CartPreview";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/auth/useAuth";
 

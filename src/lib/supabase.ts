@@ -8,6 +8,53 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create storage key based on project URL
 const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
 
+// Helper function to get session from storage
+export const getSessionFromStorage = () => {
+  try {
+    // Check both localStorage and sessionStorage in case one is corrupted
+    let storedValue = null;
+    
+    // First try localStorage (for persistence)
+    try {
+      storedValue = window.localStorage.getItem(STORAGE_KEY);
+    } catch (e) {
+      console.error('Error reading from localStorage:', e);
+    }
+    
+    // Then try sessionStorage as fallback
+    if (!storedValue) {
+      try {
+        storedValue = window.sessionStorage.getItem(STORAGE_KEY);
+      } catch (e) {
+        console.error('Error reading from sessionStorage:', e);
+      }
+    }
+    
+    if (!storedValue) {
+      return null;
+    }
+    
+    // Parse the stored session
+    try {
+      const parsed = JSON.parse(storedValue);
+      
+      // Check if session is expired
+      if (parsed.expires_at && parsed.expires_at < Math.floor(Date.now() / 1000)) {
+        console.warn('Session has expired, removing from storage');
+        return null;
+      }
+      
+      return parsed;
+    } catch (parseError) {
+      console.error('Error parsing stored session:', parseError);
+      return null;
+    }
+  } catch (e) {
+    console.error('Error reading auth data:', e);
+    return null;
+  }
+};
+
 // Debug function to track storage operations
 const logStorageOperation = (action: string, key: string, success: boolean, error?: any) => {
   if (process.env.NODE_ENV === 'development') {
