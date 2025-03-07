@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -46,8 +45,6 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Card, CardHeader } from "@/components/ui/card";
-import UserMenuItems from "@/components/user-menu/UserMenuItems";
 
 const PharmacistSidebar = () => {
   const navigate = useNavigate();
@@ -61,24 +58,17 @@ const PharmacistSidebar = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  // Simulate connection status check
   useEffect(() => {
     const checkConnectionStatus = () => {
-      // In a real app, this would check if the pharmacist is online/available
-      // For demo, we'll just use navigator.onLine as a basic check
       setIsConnected(navigator.onLine);
     };
 
-    // Initial check
     checkConnectionStatus();
 
-    // Setup event listeners for online/offline status
     window.addEventListener('online', () => setIsConnected(true));
     window.addEventListener('offline', () => setIsConnected(false));
 
-    // For demo purposes, occasionally toggle the connection status randomly
     const intervalId = setInterval(() => {
-      // 90% chance to stay connected, 10% chance to disconnect
       if (Math.random() > 0.9) {
         setIsConnected(prev => !prev);
       }
@@ -127,7 +117,6 @@ const PharmacistSidebar = () => {
         description: "Logged out successfully from pharmacy portal",
       });
       
-      // Force redirect to home page
       window.location.href = "/";
     } catch (error) {
       console.error("Logout error:", error);
@@ -142,7 +131,6 @@ const PharmacistSidebar = () => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Logo upload logic would go here
   };
 
   const handlePharmacyLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,8 +138,6 @@ const PharmacistSidebar = () => {
     if (!file) return;
 
     try {
-      // In a real implementation, we would upload to Supabase storage here
-      // For now, create a temporary URL to display the image
       const objectUrl = URL.createObjectURL(file);
       setPharmacyLogo(objectUrl);
       
@@ -187,15 +173,15 @@ const PharmacistSidebar = () => {
           <div className="flex items-center space-x-3">
             <div 
               className="bg-primary text-primary-foreground p-2 rounded-md"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => logoInputRef.current?.click()}
             >
               <FileText className="h-5 w-5" />
               <input 
                 type="file" 
-                ref={fileInputRef} 
+                ref={logoInputRef} 
                 className="hidden" 
                 accept="image/*"
-                onChange={handleFileChange}
+                onChange={handlePharmacyLogoChange}
               />
             </div>
             <div>
@@ -212,37 +198,18 @@ const PharmacistSidebar = () => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => toggleGroup('patients')}
+                    onClick={() => navigate('/pharmacy/patients')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      (isGroupExpanded('patients') || isActiveRoute('/pharmacy/patients')) && "text-primary"
+                      isActiveRoute('/pharmacy/patients') && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
                       <Users className="mr-2 h-4 w-4" />
                       Patients
                     </span>
-                    <ChevronDown
-                      className={cn(
-                        "h-4 w-4 transition-transform",
-                        isGroupExpanded('patients') && "rotate-180"
-                      )}
-                    />
+                    <ChevronRight className="h-4 w-4 opacity-50" />
                   </SidebarMenuButton>
-                  {isGroupExpanded('patients') && (
-                    <div className="pl-6 space-y-1 mt-1">
-                      <SidebarMenuButton
-                        onClick={() => navigate('/pharmacy/patients')}
-                        className={cn(
-                          "w-full text-sm",
-                          isActiveRoute('/pharmacy/patients') && "text-primary"
-                        )}
-                      >
-                        <Users className="mr-2 h-4 w-4" />
-                        All Patients
-                      </SidebarMenuButton>
-                    </div>
-                  )}
                 </SidebarMenuItem>
 
                 <SidebarMenuItem>
@@ -314,7 +281,10 @@ const PharmacistSidebar = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 rounded-md p-2 transition-colors">
-                <div className="relative">
+                <div className="relative" onClick={(e) => {
+                  e.stopPropagation();
+                  logoInputRef.current?.click();
+                }}>
                   <div className="bg-secondary p-2 rounded-md">
                     {pharmacyLogo ? (
                       <img 
@@ -413,7 +383,6 @@ const PharmacistSidebar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           
-          {/* Hidden input for pharmacy logo upload */}
           <input 
             type="file" 
             ref={logoInputRef} 

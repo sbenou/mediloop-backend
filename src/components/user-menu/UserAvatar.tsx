@@ -2,7 +2,6 @@ import { memo, useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Upload, Building2 } from "lucide-react";
 import { UserProfile } from "@/types/user";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { useQueryClient } from '@tanstack/react-query';
@@ -163,7 +162,7 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
   };
 
   return (
-    <div className="relative group">
+    <div className="relative group" onClick={allowUpload ? handleFileSelect : undefined}>
       <Avatar className={`h-10 w-10 ${squared ? 'rounded-md' : 'rounded-full'}`}>
         <AvatarImage 
           src={userProfile?.avatar_url || ''} 
@@ -181,15 +180,11 @@ const UserAvatar = memo(({ userProfile, squared = false, canUpload = false }: Us
 
       {allowUpload && (
         <>
-          <button 
-            type="button"
+          <div
             className={`absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${squared ? 'rounded-md' : 'rounded-full'}`}
-            onClick={handleFileSelect}
-            disabled={isUploading}
-            aria-label="Upload avatar"
           >
             <Upload className="h-4 w-4 text-white" />
-          </button>
+          </div>
           <input
             type="file"
             ref={fileInputRef}

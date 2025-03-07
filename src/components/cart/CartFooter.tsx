@@ -52,7 +52,7 @@ export const CartFooter = ({
           {isProcessing ? "Processing..." : "Proceed to Checkout"}
         </Button>
         
-        {!isProductsPage ? (
+        {!isProductsPage && (
           <Button 
             variant="outline" 
             className="w-full"
@@ -60,7 +60,9 @@ export const CartFooter = ({
           >
             Start Shopping
           </Button>
-        ) : (
+        )}
+        
+        {isProductsPage && (
           <Button 
             variant="outline" 
             className="w-full"

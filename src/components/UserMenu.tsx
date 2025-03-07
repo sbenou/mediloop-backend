@@ -146,9 +146,9 @@ const UserMenu = memo(() => {
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <div className="flex items-center space-x-2">
-        {/* Avatar is outside the trigger so it can be clicked separately */}
-        <div onClick={handleNavigateToSettings} className="cursor-pointer">
-          <UserAvatar userProfile={profile} />
+        {/* Avatar can be clicked separately for upload */}
+        <div>
+          <UserAvatar userProfile={profile} canUpload={true} />
         </div>
         <DropdownMenuTrigger asChild>
           <button 
