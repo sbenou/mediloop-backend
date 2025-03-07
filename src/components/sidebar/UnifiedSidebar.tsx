@@ -223,6 +223,13 @@ const UnifiedSidebar = () => {
     // This is a placeholder for the actual implementation
   };
 
+  const getUserInitials = () => {
+    if (!profile?.full_name) return '';
+    const names = profile.full_name.split(' ');
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+  };
+
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <div className="p-4 border-b">
@@ -354,6 +361,22 @@ const UnifiedSidebar = () => {
             </Link>
           )}
           
+          {userRole === 'pharmacist' && (
+            <Link
+              to="/dashboard?view=pharmacy&section=patients"
+              className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                (location.pathname === '/dashboard' && 
+                location.search.includes('view=pharmacy') && 
+                location.search.includes('section=patients'))
+                  ? 'bg-primary/10 text-primary font-medium' 
+                  : 'text-muted-foreground hover:bg-gray-100'
+              }`}
+            >
+              <Users className="w-5 h-5 mr-3" />
+              Patients
+            </Link>
+          )}
+          
           {userRole !== 'pharmacist' && (
             <Link
               to="/dashboard?view=teleconsultations"
@@ -397,7 +420,12 @@ const UnifiedSidebar = () => {
           <DropdownMenuTrigger asChild>
             <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
               <div>
-                <UserAvatar userProfile={profile} canUpload={true} onAvatarClick={handleAvatarClick} />
+                <UserAvatar 
+                  userProfile={profile} 
+                  canUpload={true} 
+                  onAvatarClick={handleAvatarClick} 
+                  fallbackText={getUserInitials()} 
+                />
                 <input
                   type="file"
                   ref={fileInputRef}
