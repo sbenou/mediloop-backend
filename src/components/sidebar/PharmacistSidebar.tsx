@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -198,10 +199,10 @@ const PharmacistSidebar = () => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => navigate('/pharmacy/patients')}
+                    onClick={() => navigate('/dashboard?view=pharmacy&section=patients')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      isActiveRoute('/pharmacy/patients') && "text-primary"
+                      (isActiveRoute('/pharmacy/patients') || location.search.includes('section=patients')) && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
@@ -217,7 +218,7 @@ const PharmacistSidebar = () => {
                     onClick={() => toggleGroup('orders')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      (isGroupExpanded('orders') || isActiveRoute('/pharmacy/orders')) && "text-primary"
+                      (isGroupExpanded('orders') || isActiveRoute('/pharmacy/orders') || location.search.includes('section=orders')) && "text-primary"
                     )}
                   >
                     <span className="flex items-center">
@@ -234,7 +235,7 @@ const PharmacistSidebar = () => {
                   {isGroupExpanded('orders') && (
                     <div className="pl-6 space-y-1 mt-1">
                       <SidebarMenuButton
-                        onClick={() => navigate('/pharmacy/orders?tab=all')}
+                        onClick={() => navigate('/dashboard?view=pharmacy&section=orders&tab=all')}
                         className={cn(
                           "w-full text-sm",
                           (isActiveRoute('/pharmacy/orders') && !location.search.includes('tab=payments')) && "text-primary"
@@ -244,7 +245,7 @@ const PharmacistSidebar = () => {
                         All Orders
                       </SidebarMenuButton>
                       <SidebarMenuButton
-                        onClick={() => navigate('/pharmacy/orders?tab=payments')}
+                        onClick={() => navigate('/dashboard?view=pharmacy&section=orders&tab=payments')}
                         className={cn(
                           "w-full text-sm",
                           (isActiveRoute('/pharmacy/orders') && location.search.includes('tab=payments')) && "text-primary"
@@ -259,10 +260,10 @@ const PharmacistSidebar = () => {
 
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => navigate('/pharmacy/prescriptions')}
+                    onClick={() => navigate('/dashboard?view=pharmacy&section=prescriptions')}
                     className={cn(
                       "w-full flex justify-between items-center",
-                      isActiveRoute('/pharmacy/prescriptions') && "text-primary"
+                      (isActiveRoute('/pharmacy/prescriptions') || location.search.includes('section=prescriptions')) && "text-primary"
                     )}
                   >
                     <span className="flex items-center">

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { clearAllAuthStorage } from "@/lib/supabase";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const UnifiedSidebar = () => {
@@ -28,6 +28,7 @@ const UnifiedSidebar = () => {
   const navigate = useNavigate();
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Only set the initial state based on URL path, but don't auto-close when navigating
   useEffect(() => {
@@ -204,6 +205,26 @@ const UnifiedSidebar = () => {
     return '';
   };
 
+  const handleAvatarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Handle avatar upload logic here
+    console.log("Avatar file selected:", file.name);
+    toast({
+      title: "Avatar update",
+      description: "Profile image update started",
+    });
+    
+    // Here you would typically upload the file to your storage
+    // This is a placeholder for the actual implementation
+  };
+
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <div className="p-4 border-b">
@@ -362,17 +383,20 @@ const UnifiedSidebar = () => {
             </Link>
           )}
           
-          <Link
-            to="/teleconsultations"
-            className={`flex items-center px-3 py-2 rounded-md text-sm ${
-              isLinkActive('/teleconsultations') 
-                ? 'bg-primary/10 text-primary font-medium' 
-                : 'text-muted-foreground hover:bg-gray-100'
-            }`}
-          >
-            <Calendar className="w-5 h-5 mr-3" />
-            Teleconsultations
-          </Link>
+          {/* Only show teleconsultations for non-pharmacist users */}
+          {userRole !== 'pharmacist' && (
+            <Link
+              to="/teleconsultations"
+              className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                isLinkActive('/teleconsultations') 
+                  ? 'bg-primary/10 text-primary font-medium' 
+                  : 'text-muted-foreground hover:bg-gray-100'
+              }`}
+            >
+              <Calendar className="w-5 h-5 mr-3" />
+              Teleconsultations
+            </Link>
+          )}
         </nav>
         
         <div className="px-3 mb-2 mt-6">
@@ -401,7 +425,17 @@ const UnifiedSidebar = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
-              <UserAvatar userProfile={profile} squared={true} canUpload={true} />
+              {/* Make only the avatar clickable for upload and not for dropdown toggle */}
+              <div onClick={handleAvatarClick} className="cursor-pointer">
+                <UserAvatar userProfile={profile} squared={true} canUpload={true} />
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+              </div>
               <div className="overflow-hidden flex-1">
                 <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
                 <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>

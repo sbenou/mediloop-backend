@@ -57,11 +57,13 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole }) => {
   }, []);
 
   const navigateToPharmacyPage = (path: string) => {
-    navigate(`/pharmacy/${path}`);
+    // Navigate within the new dashboard structure
+    navigate(`/dashboard?view=pharmacy&section=${path}`);
   };
 
   const viewPatient = (patientId: string) => {
-    navigate(`/pharmacy/patients/${patientId}`);
+    // Navigate within the new dashboard structure
+    navigate(`/dashboard?view=pharmacy&section=patients&id=${patientId}`);
   };
 
   // Split full name into first and last name

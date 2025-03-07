@@ -79,7 +79,11 @@ const UniversalDashboard = () => {
       case "prescriptions":
         return <PrescriptionsView userRole={userRole} />;
       case "teleconsultations":
-        return <TeleconsultationsView userRole={userRole} />;
+        // Only show teleconsultations to non-pharmacist users
+        if (userRole !== "pharmacist") {
+          return <TeleconsultationsView userRole={userRole} />;
+        }
+        return <HomeView userRole={userRole} />;
       case "pharmacy":
         return <PharmacyView userRole={userRole} />;
       case "home":
