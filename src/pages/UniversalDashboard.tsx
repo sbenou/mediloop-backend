@@ -28,12 +28,27 @@ const UniversalDashboard = () => {
   const profileTab = searchParams.get("profileTab") || "personal";
   const pharmacySection = searchParams.get("section") || "dashboard";
   
+  // Console logging for debugging
+  useEffect(() => {
+    console.log("UniversalDashboard render:", { 
+      userRole, 
+      currentView, 
+      pharmacySection,
+      searchParams: Object.fromEntries(searchParams.entries()) 
+    });
+  }, [userRole, currentView, pharmacySection, searchParams]);
+  
   // Make sure we have a default section for pharmacists
   useEffect(() => {
-    if (userRole === "pharmacist" && !searchParams.get("section") && !searchParams.get("view")) {
-      setSearchParams({ view: 'pharmacy', section: 'dashboard' });
+    if (userRole === "pharmacist" && !isInitialLoad) {
+      console.log("Checking pharmacist params:", { currentView, pharmacySection });
+      
+      if (currentView !== 'pharmacy' || !pharmacySection) {
+        console.log("Setting default pharmacist params");
+        setSearchParams({ view: 'pharmacy', section: 'dashboard' });
+      }
     }
-  }, [userRole, searchParams, setSearchParams]);
+  }, [userRole, searchParams, setSearchParams, currentView, pharmacySection, isInitialLoad]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
@@ -53,6 +68,7 @@ const UniversalDashboard = () => {
   const getContent = () => {
     // For pharmacists, always show the pharmacy view regardless of the URL parameter
     if (userRole === "pharmacist") {
+      console.log("Rendering PharmacyView with section:", pharmacySection);
       return <PharmacyView userRole={userRole} section={pharmacySection} />;
     }
     

@@ -63,40 +63,43 @@ export const useSidebarNavigation = (userRole: string) => {
     return location.pathname === path;
   };
 
-  // Comprehensive navigation handler for all roles
+  // Fixed navigation handler for all roles
   const navigateToLink = (path: string) => {
+    console.log(`navigateToLink called with path: ${path}`);
+    
     if (userRole === 'pharmacist') {
       // For pharmacists, transform the navigation to use the pharmacy view structure
       if (path === '/dashboard') {
-        // Dashboard
+        console.log('Navigating to pharmacy dashboard');
         navigate('/dashboard?view=pharmacy&section=dashboard');
         return;
       } else if (path === '/settings') {
-        // Settings
+        console.log('Navigating to pharmacy settings');
         navigate('/dashboard?view=pharmacy&section=settings');
         return;
       } else if (path.includes('view=profile')) {
-        // Profile pages
+        console.log('Navigating to pharmacy profile');
         const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
         navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${profileTab}`);
         return;
       } else if (path.includes('view=orders')) {
-        // Orders pages
+        console.log('Navigating to pharmacy orders');
         const ordersTab = new URLSearchParams(path.split('?')[1]).get('ordersTab') || 'orders';
         navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${ordersTab}`);
         return;
       } else if (path.includes('view=prescriptions')) {
-        // Prescriptions
+        console.log('Navigating to pharmacy prescriptions');
         navigate('/dashboard?view=pharmacy&section=prescriptions');
         return;
-      } else if (path.includes('view=patients') || path.includes('section=patients')) {
-        // Patients
-        navigate('/dashboard?view=pharmacy&section=patients');
+      } else if (path.includes('/dashboard?view=pharmacy&section=')) {
+        console.log('Already properly formatted pharmacy path:', path);
+        navigate(path);
         return;
       }
     }
     
     // Default navigation for other roles
+    console.log(`Standard navigation to: ${path}`);
     navigate(path);
   };
 

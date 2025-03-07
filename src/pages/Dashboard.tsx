@@ -36,15 +36,26 @@ const Dashboard = () => {
 
   // For pharmacist role, ensure they see their dedicated view
   useEffect(() => {
-    if (userRole === 'pharmacist') {
-      if (!view || view !== 'pharmacy' || !section) {
+    if (userRole === 'pharmacist' && !isInitialLoad) {
+      console.log("Checking pharmacist view:", { view, section });
+      
+      if (view !== 'pharmacy' || !section) {
+        console.log("Redirecting pharmacist to proper dashboard view");
         navigate("/dashboard?view=pharmacy&section=dashboard", { replace: true });
       }
     }
-  }, [userRole, view, section, navigate]);
+  }, [userRole, view, section, navigate, isInitialLoad]);
+
+  // Debug logging
+  useEffect(() => {
+    if (!isInitialLoad) {
+      console.log("Dashboard rendering with:", { userRole, view, section });
+    }
+  }, [userRole, view, section, isInitialLoad]);
 
   // Don't render anything during the redirect for pharmacists
   if (userRole === 'pharmacist' && (!view || view !== 'pharmacy' || !section)) {
+    console.log("Returning null due to pending redirect");
     return null;
   }
 
