@@ -4,6 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
+import { usePharmacyDashboardStats } from "@/hooks/admin/useDashboardStats";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Users, 
+  ShoppingBag, 
+  FileText
+} from "lucide-react";
 
 interface PharmacyViewProps {
   userRole: string | null;
@@ -12,77 +19,80 @@ interface PharmacyViewProps {
 const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole }) => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const { data: stats, isLoading, error } = usePharmacyDashboardStats();
 
-  const handleViewChange = (view: string, tab?: string) => {
-    if (tab) {
-      navigate(`/dashboard?view=${view}&${view}Tab=${tab}`);
-    } else {
-      navigate(`/dashboard?view=${view}`);
-    }
-  };
-  
   const navigateToPharmacyPage = (path: string) => {
     navigate(`/pharmacy/${path}`);
   };
 
-  // Pharmacy-specific card data
-  const getPharmacyContent = () => {
-    return {
-      greeting: "Here's an overview of your pharmacy operations",
-      cards: [
-        {
-          title: "Patients",
-          description: "Manage patient information",
-          count: 0,
-          onClick: () => navigateToPharmacyPage('patients')
-        },
-        {
-          title: "Orders",
-          description: "Manage orders and payments",
-          count: 0,
-          onClick: () => navigateToPharmacyPage('orders')
-        },
-        {
-          title: "Prescriptions",
-          description: "View and process prescriptions",
-          count: 0,
-          onClick: () => navigateToPharmacyPage('prescriptions')
-        },
-        {
-          title: "Inventory",
-          description: "Manage your product inventory",
-          count: 0,
-          onClick: () => handleViewChange('inventory')
-        }
-      ]
-    };
-  };
-
-  const content = getPharmacyContent();
-  
   return (
-    <div className="space-y-8">
-      <div className="text-center md:text-left">
-        <h1 className="text-3xl font-bold mb-2">Welcome, {profile?.full_name || 'Pharmacist'}</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Pharmacy Dashboard</h1>
         <p className="text-muted-foreground">
-          {content.greeting}
+          Welcome back, {profile?.full_name || 'Pharmacy Staff'}!
         </p>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {content.cards.map((card, index) => (
-          <Card
-            key={index}
-            className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={card.onClick}
-          >
-            <div className="text-center">
-              <h3 className="text-base font-medium">{card.title}</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">{card.description}</p>
-              <p className="text-4xl font-bold mt-2">{card.count}</p>
-            </div>
-          </Card>
-        ))}
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => navigateToPharmacyPage('patients')}>
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium">Active Patients</h3>
+            <Users className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="pt-2">
+            {isLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <div className="text-2xl font-bold">+{stats?.total_patients || 0}</div>
+            )}
+          </div>
+        </Card>
+        
+        <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => navigateToPharmacyPage('orders')}>
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium">Pending Orders</h3>
+            <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="pt-2">
+            {isLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <div className="text-2xl font-bold">+{stats?.pending_orders || 0}</div>
+            )}
+          </div>
+        </Card>
+        
+        <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => navigateToPharmacyPage('prescriptions')}>
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium">Prescriptions</h3>
+            <FileText className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="pt-2">
+            {isLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <div className="text-2xl font-bold">+{stats?.total_prescriptions || 0}</div>
+            )}
+          </div>
+        </Card>
+        
+        <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow">
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium">Monthly Revenue</h3>
+            <span className="text-muted-foreground">€</span>
+          </div>
+          <div className="pt-2">
+            {isLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <div className="text-2xl font-bold">€{stats?.monthly_revenue?.toLocaleString() || 0}</div>
+            )}
+          </div>
+        </Card>
       </div>
       
       {/* Add statistics charts */}

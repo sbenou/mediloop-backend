@@ -13,6 +13,7 @@ import {
   PharmacyView
 } from "@/components/dashboard/views";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 
 const UniversalDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -52,12 +53,9 @@ const UniversalDashboard = () => {
       ];
     }
     
+    // Pharmacist doesn't get tabs in the UI - they get the pharmacy dashboard directly
     if (userRole === "pharmacist") {
-      return [
-        ...commonTabs,
-        { value: "pharmacy", label: "Pharmacy Dashboard" },
-        { value: "inventory", label: "Inventory" },
-      ];
+      return [];
     }
     
     // Default tabs for other roles or fallback
@@ -65,6 +63,12 @@ const UniversalDashboard = () => {
   };
   
   const getContent = () => {
+    // For pharmacists, always show the pharmacy view regardless of the URL parameter
+    if (userRole === "pharmacist") {
+      return <PharmacyView userRole={userRole} />;
+    }
+    
+    // For other roles, show the view based on the URL parameter
     switch (currentView) {
       case "profile":
         return <ProfileView activeTab={profileTab} userRole={userRole} />;
@@ -90,19 +94,34 @@ const UniversalDashboard = () => {
   
   const tabs = getRoleTabs();
   
+  // For pharmacists, use the UnifiedLayoutTemplate which includes the right-side drawer
+  // For others, use the normal UnifiedLayout
+  if (userRole === "pharmacist") {
+    return (
+      <UnifiedLayoutTemplate>
+        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl">
+          {getContent()}
+        </div>
+      </UnifiedLayoutTemplate>
+    );
+  }
+  
   return (
     <UnifiedLayout>
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl">
-        <Tabs value={currentView} onValueChange={handleTabChange}>
-          <TabsList className="mb-8">
-            {tabs.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <div>{getContent()}</div>
-        </Tabs>
+        {tabs.length > 0 && (
+          <Tabs value={currentView} onValueChange={handleTabChange}>
+            <TabsList className="mb-8">
+              {tabs.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <div>{getContent()}</div>
+          </Tabs>
+        )}
+        {tabs.length === 0 && getContent()}
       </div>
     </UnifiedLayout>
   );
