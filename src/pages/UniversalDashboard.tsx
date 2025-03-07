@@ -10,6 +10,7 @@ import {
   HomeView,
   PharmacyView
 } from "@/components/dashboard/views";
+import TeleconsultationsView from "@/components/dashboard/views/TeleconsultationsView";
 import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -57,6 +58,8 @@ const UniversalDashboard = () => {
         return <PrescriptionsView userRole={userRole} />;
       case "pharmacy":
         return <PharmacyView userRole={userRole} section={pharmacySection} />;
+      case "teleconsultations":
+        return <TeleconsultationsView userRole={userRole} />;
       case "home":
       default:
         return <HomeView userRole={userRole} />;

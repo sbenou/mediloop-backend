@@ -355,9 +355,10 @@ const UnifiedSidebar = () => {
           
           {userRole !== 'pharmacist' && (
             <Link
-              to="/teleconsultations"
+              to="/dashboard?view=teleconsultations"
               className={`flex items-center px-3 py-2 rounded-md text-sm ${
-                isLinkActive('/teleconsultations') 
+                (location.pathname === '/dashboard' && location.search.includes('view=teleconsultations')) ||
+                location.pathname.includes('/teleconsultations')
                   ? 'bg-primary/10 text-primary font-medium' 
                   : 'text-muted-foreground hover:bg-gray-100'
               }`}
@@ -395,7 +396,7 @@ const UnifiedSidebar = () => {
           <DropdownMenuTrigger asChild>
             <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
               <div onClick={handleAvatarClick} className="cursor-pointer">
-                <UserAvatar userProfile={profile} canUpload={true} />
+                <UserAvatar userProfile={profile} canUpload={true} onAvatarClick={handleAvatarClick} />
                 <input
                   type="file"
                   ref={fileInputRef}
