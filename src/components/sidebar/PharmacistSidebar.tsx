@@ -9,10 +9,11 @@ import {
   LayoutDashboard,
   Settings,
   LogOut,
+  SquareUser
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "@/components/user-menu/UserAvatar";
-import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 
 const PharmacistSidebar = () => {
@@ -31,9 +32,68 @@ const PharmacistSidebar = () => {
     setSearchParams({ view: 'pharmacy', section });
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && profile?.id) {
+      try {
+        toast({
+          title: "Uploading photo",
+          description: "Your profile picture is being updated...",
+        });
+
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (!userId) return;
+
+        const filePath = `${userId}/${crypto.randomUUID()}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, file, {
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', userId);
+
+        toast({
+          title: "Success",
+          description: "Profile picture updated successfully",
+        });
+
+        // Force reload to show new avatar
+        window.location.reload();
+      } catch (error) {
+        console.error('Error uploading avatar:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to update profile picture",
+        });
+      }
+    }
+  };
+
   return (
     <div className="h-full w-64 bg-white border-r flex flex-col">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b flex items-center">
+        {/* Mediloop squared avatar at the top */}
+        <Avatar className="h-10 w-10 rounded-md mr-3 bg-primary/10">
+          <AvatarFallback className="rounded-md text-primary">
+            <SquareUser className="h-6 w-6" />
+          </AvatarFallback>
+        </Avatar>
         <h2 className="text-xl font-bold">Pharmacy Panel</h2>
       </div>
       
@@ -112,26 +172,18 @@ const PharmacistSidebar = () => {
       </div>
       
       <div className="p-4 border-t flex items-center">
-        <div className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+        <div className="cursor-pointer" onClick={handleAvatarClick}>
           <UserAvatar 
             userProfile={profile} 
             canUpload={true} 
+            onAvatarClick={handleAvatarClick}
           />
           <input
             type="file"
             ref={fileInputRef}
             className="hidden"
             accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file && profile?.id) {
-                // Handle file upload logic
-                toast({
-                  title: "Profile picture",
-                  description: "Your profile picture is being updated",
-                });
-              }
-            }}
+            onChange={handleFileUpload}
           />
         </div>
         <div className="ml-3">

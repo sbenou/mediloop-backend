@@ -8,9 +8,15 @@ export interface UserAvatarProps {
   userProfile: UserProfile | null;
   canUpload?: boolean;
   squared?: boolean;
+  onAvatarClick?: () => void;
 }
 
-const UserAvatar = ({ userProfile, canUpload = false, squared = false }: UserAvatarProps) => {
+const UserAvatar = ({ 
+  userProfile, 
+  canUpload = false, 
+  squared = false,
+  onAvatarClick
+}: UserAvatarProps) => {
   const [isLoading, setIsLoading] = useState(true);
   
   // Generate initials from the name
@@ -22,8 +28,18 @@ const UserAvatar = ({ userProfile, canUpload = false, squared = false }: UserAva
     return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
   };
   
+  const handleAvatarClick = (e: React.MouseEvent) => {
+    if (onAvatarClick) {
+      e.stopPropagation(); // Prevent event bubbling
+      onAvatarClick();
+    }
+  };
+  
   return (
-    <Avatar className={`h-10 w-10 ${squared ? 'rounded-md' : 'rounded-full'} relative bg-muted`}>
+    <Avatar 
+      className={`h-10 w-10 ${squared ? 'rounded-md' : 'rounded-full'} relative bg-muted`}
+      onClick={handleAvatarClick}
+    >
       {isLoading && <Skeleton className="h-full w-full absolute inset-0" />}
       
       <AvatarImage

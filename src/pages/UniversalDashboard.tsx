@@ -26,6 +26,13 @@ const UniversalDashboard = () => {
   const profileTab = searchParams.get("profileTab") || "personal";
   const pharmacySection = searchParams.get("section") || "dashboard";
   
+  // Make sure we have a default section for pharmacists
+  useEffect(() => {
+    if (userRole === "pharmacist" && !searchParams.get("section") && !searchParams.get("view")) {
+      setSearchParams({ view: 'pharmacy', section: 'dashboard' });
+    }
+  }, [userRole, searchParams, setSearchParams]);
+  
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

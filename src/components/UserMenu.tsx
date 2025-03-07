@@ -1,3 +1,4 @@
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,7 @@ const UserMenu = memo(() => {
   const [hasVisibleSession, setHasVisibleSession] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
     const checkSession = async () => {
@@ -108,6 +110,48 @@ const UserMenu = memo(() => {
     setMenuOpen(false);
   }, [navigate]);
 
+  const handleAvatarClick = () => {
+    // Trigger file input click when avatar is clicked
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && profile?.id) {
+      // Handle file upload logic similar to AvatarUpload component
+      try {
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (!userId) return;
+
+        const filePath = `${userId}/${crypto.randomUUID()}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, file, {
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', userId);
+
+        // Force reload profile data
+        window.location.reload();
+      } catch (error) {
+        console.error('Error uploading avatar:', error);
+      }
+    }
+  };
+
   const shouldShowSkeleton = isLoading && localLoading && !hasVisibleSession;
 
   if (shouldShowSkeleton) {
@@ -133,7 +177,18 @@ const UserMenu = memo(() => {
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <div className="flex items-center space-x-2">
         <div>
-          <UserAvatar userProfile={profile} canUpload={true} />
+          <UserAvatar 
+            userProfile={profile} 
+            canUpload={true} 
+            onAvatarClick={handleAvatarClick}
+          />
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileChange}
+          />
         </div>
         <DropdownMenuTrigger asChild>
           <button 
