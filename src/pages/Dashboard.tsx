@@ -33,6 +33,12 @@ const Dashboard = () => {
     }
   }, [isLoading, isAuthenticated, navigate, isInitialLoad]);
 
+  // For pharmacist role, ensure they see their dedicated view
+  if (userRole === 'pharmacist' && (!view || view !== 'pharmacy')) {
+    navigate("/dashboard?view=pharmacy&section=dashboard", { replace: true });
+    return null;
+  }
+
   // For very specific user roles, provide a dedicated dashboard
   if (userRole === 'patient' && !view) {
     return <PatientDashboard />;
