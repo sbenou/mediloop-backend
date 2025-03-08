@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+import PrescriptionsView from "./PrescriptionsView";
 
 interface PharmacyViewProps {
   userRole: string | null;
@@ -75,6 +76,22 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
     const firstName = parts.join(' ');
     return { firstName, lastName };
   };
+
+  // Render prescriptions section
+  if (section === "prescriptions") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Pharmacy Prescriptions</h1>
+          <p className="text-muted-foreground">
+            View and manage all prescriptions sent to your pharmacy.
+          </p>
+        </div>
+        
+        <PrescriptionsView userRole="pharmacist" />
+      </div>
+    );
+  }
 
   // Render patients section
   if (section === "patients") {
