@@ -18,9 +18,11 @@ const SidebarItem = ({ icon, label, isActive, onClick }: SidebarItemProps) => {
           : 'text-muted-foreground hover:bg-gray-100'
       }`}
     >
-      <div className="flex items-center">
-        {icon}
-        <span className="ml-3">{label}</span>
+      <div className="flex items-center w-full">
+        <span className="flex items-center justify-center w-5 h-5 mr-3">
+          {icon}
+        </span>
+        <span>{label}</span>
       </div>
     </div>
   );

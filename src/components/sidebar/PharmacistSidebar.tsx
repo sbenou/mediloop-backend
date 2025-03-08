@@ -100,35 +100,35 @@ const PharmacistSidebar = () => {
       <div className="flex-1 overflow-auto py-4 hover-scroll">
         <nav className="space-y-1 px-2">
           <SidebarItem
-            icon={<LayoutDashboard className="mr-3 h-5 w-5" />}
+            icon={<LayoutDashboard className="h-5 w-5" />}
             label="Dashboard"
             isActive={currentSection === "dashboard"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=dashboard')}
           />
           
           <SidebarItem
-            icon={<Users className="mr-3 h-5 w-5" />}
+            icon={<Users className="h-5 w-5" />}
             label="Patients"
             isActive={currentSection === "patients"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=patients')}
           />
           
           <SidebarItem
-            icon={<ShoppingBag className="mr-3 h-5 w-5" />}
+            icon={<ShoppingBag className="h-5 w-5" />}
             label="Orders"
             isActive={currentSection === "orders"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=orders')}
           />
           
           <SidebarItem
-            icon={<FileText className="mr-3 h-5 w-5" />}
+            icon={<FileText className="h-5 w-5" />}
             label="Prescriptions"
             isActive={currentSection === "prescriptions"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=prescriptions')}
           />
           
           <SidebarItem
-            icon={<UserCircle className="mr-3 h-5 w-5" />}
+            icon={<UserCircle className="h-5 w-5" />}
             label="Profile"
             isActive={currentSection === "profile"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=profile')}
@@ -138,14 +138,14 @@ const PharmacistSidebar = () => {
       
       <div className="p-4 border-t">
         <SidebarItem
-          icon={<Settings className="mr-3 h-5 w-5" />}
+          icon={<Settings className="h-5 w-5" />}
           label="Settings"
           isActive={currentSection === "settings"}
           onClick={() => navigateToLink('/dashboard?view=pharmacy&section=settings')}
         />
         
         <SidebarItem
-          icon={<LogOut className="mr-3 h-5 w-5" />}
+          icon={<LogOut className="h-5 w-5" />}
           label="Logout"
           isActive={false}
           onClick={handleLogout}
