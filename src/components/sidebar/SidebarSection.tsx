@@ -9,7 +9,7 @@ interface SidebarSectionProps {
 const SidebarSection = ({ title, children }: SidebarSectionProps) => {
   return (
     <>
-      <div className="px-3 mb-2">
+      <div className="px-3 mb-2 mt-6">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">{title}</p>
       </div>
       <nav className="space-y-1 px-2">
