@@ -4,12 +4,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import { CartItem } from './cart/CartItem';
 import CartFooter from './cart/CartFooter';
+import { useNavigate } from 'react-router-dom';
 
 const CartPreview = ({ onClose }: { onClose?: () => void }) => {
   const { state } = useCart();
+  const navigate = useNavigate();
+  
+  const handleStartShopping = () => {
+    if (onClose) {
+      onClose();
+    }
+    navigate('/products');
+  };
   
   return (
     <div className="flex flex-col h-full">
@@ -41,7 +49,7 @@ const CartPreview = ({ onClose }: { onClose?: () => void }) => {
           <p className="text-sm text-muted-foreground mb-6">
             Looks like you haven't added any items to your cart yet.
           </p>
-          <Button onClick={onClose}>Start Shopping</Button>
+          <Button onClick={handleStartShopping}>Start Shopping</Button>
         </div>
       )}
     </div>
