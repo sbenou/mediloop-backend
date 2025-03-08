@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+
 import { useRef } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import {
@@ -16,6 +16,7 @@ import UserAvatar from "@/components/user-menu/UserAvatar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const PharmacistSidebar = () => {
   const { profile } = useAuth();

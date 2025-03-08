@@ -100,7 +100,7 @@ export const useSidebarNavigation = (userRole: string) => {
     
     // Default navigation for other roles
     console.log(`Standard navigation to: ${path}`);
-    navigate(path, { replace: false });
+    navigate(path);
   };
 
   return {
