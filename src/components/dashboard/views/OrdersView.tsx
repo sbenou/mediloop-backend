@@ -127,16 +127,21 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   const currentActiveTab = getActiveTab();
   console.log("OrdersView: Current active tab:", currentActiveTab);
 
+  // Display header only for non-pharmacist role
+  const showHeader = userRole !== 'pharmacist';
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-        <p className="text-muted-foreground">
-          {userRole === 'patient' 
-            ? "View and manage your orders and payments." 
-            : "Manage customer orders and process them efficiently."}
-        </p>
-      </div>
+      {showHeader && (
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+          <p className="text-muted-foreground">
+            {userRole === 'patient' 
+              ? "View and manage your orders and payments." 
+              : "Manage customer orders and process them efficiently."}
+          </p>
+        </div>
+      )}
 
       {/* Orders section with tabs */}
       <Tabs defaultValue={currentActiveTab} value={currentActiveTab} onValueChange={handleTabChange}>

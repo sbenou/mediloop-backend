@@ -74,11 +74,6 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
   if (section === "prescriptions") {
     return (
       <div className="space-y-6">
-        <SectionHeader 
-          title="Pharmacy Prescriptions" 
-          subtitle="View and manage all prescriptions sent to your pharmacy."
-        />
-        
         <PrescriptionsView userRole="pharmacist" />
       </div>
     );
@@ -88,11 +83,6 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
   if (section === "orders") {
     return (
       <div className="space-y-6">
-        <SectionHeader 
-          title="Pharmacy Orders" 
-          subtitle="Manage customer orders and deliveries."
-        />
-        
         <OrdersView userRole="pharmacist" activeTab={ordersTab} />
       </div>
     );
@@ -102,11 +92,6 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
   if (section === "profile") {
     return (
       <div className="space-y-6">
-        <SectionHeader 
-          title="Pharmacy Profile" 
-          subtitle="Manage your pharmacy profile information."
-        />
-        
         <ProfileView userRole="pharmacist" activeTab={profileTab} />
       </div>
     );
@@ -116,11 +101,6 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
   if (section === "settings") {
     return (
       <div className="space-y-6">
-        <SectionHeader 
-          title="Pharmacy Settings" 
-          subtitle="Configure your pharmacy settings and preferences."
-        />
-        
         <SettingsView userRole="pharmacist" />
       </div>
     );
