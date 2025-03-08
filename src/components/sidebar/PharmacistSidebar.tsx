@@ -1,4 +1,3 @@
-
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useRef } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -21,19 +20,14 @@ import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 const PharmacistSidebar = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentSection = searchParams.get("section") || "dashboard";
-  const { navigateToLink } = useSidebarNavigation('pharmacist');
+  const { navigateToLink, isPharmacistSectionActive } = useSidebarNavigation('pharmacist');
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login", { replace: true });
-  };
-
-  const navigateToPharmacySection = (section: string) => {
-    console.log(`Navigating to pharmacy section: ${section}`);
-    setSearchParams({ view: 'pharmacy', section });
   };
 
   const handleAvatarClick = () => {
@@ -104,7 +98,7 @@ const PharmacistSidebar = () => {
       <div className="flex-1 overflow-auto py-4 hover-scroll">
         <nav className="space-y-1 px-2">
           <button
-            onClick={() => navigateToPharmacySection("dashboard")}
+            onClick={() => navigateToLink('/dashboard?view=pharmacy&section=dashboard')}
             className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
               currentSection === "dashboard" 
                 ? "bg-primary text-white" 
@@ -116,7 +110,7 @@ const PharmacistSidebar = () => {
           </button>
           
           <button
-            onClick={() => navigateToPharmacySection("patients")}
+            onClick={() => navigateToLink('/dashboard?view=pharmacy&section=patients')}
             className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
               currentSection === "patients" 
                 ? "bg-primary text-white" 
@@ -128,7 +122,7 @@ const PharmacistSidebar = () => {
           </button>
           
           <button
-            onClick={() => navigateToPharmacySection("orders")}
+            onClick={() => navigateToLink('/dashboard?view=pharmacy&section=orders')}
             className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
               currentSection === "orders" 
                 ? "bg-primary text-white" 
@@ -140,7 +134,7 @@ const PharmacistSidebar = () => {
           </button>
           
           <button
-            onClick={() => navigateToPharmacySection("prescriptions")}
+            onClick={() => navigateToLink('/dashboard?view=pharmacy&section=prescriptions')}
             className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
               currentSection === "prescriptions" 
                 ? "bg-primary text-white" 
@@ -152,7 +146,7 @@ const PharmacistSidebar = () => {
           </button>
           
           <button
-            onClick={() => navigateToPharmacySection("profile")}
+            onClick={() => navigateToLink('/dashboard?view=pharmacy&section=profile')}
             className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
               currentSection === "profile" 
                 ? "bg-primary text-white" 
@@ -167,7 +161,7 @@ const PharmacistSidebar = () => {
       
       <div className="p-4 border-t">
         <button
-          onClick={() => navigateToPharmacySection("settings")}
+          onClick={() => navigateToLink('/dashboard?view=pharmacy&section=settings')}
           className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
             currentSection === "settings" 
               ? "bg-primary text-white" 

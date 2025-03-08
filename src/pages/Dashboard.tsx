@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -41,7 +42,7 @@ const Dashboard = () => {
         setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, view, section, navigate, isInitialLoad, isAuthenticated, setSearchParams]);
+  }, [userRole, view, section, setSearchParams, isInitialLoad, isAuthenticated]);
 
   // Debug logging
   useEffect(() => {
