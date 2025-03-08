@@ -92,6 +92,7 @@ const OrdersPage = () => {
     if (tab === 'payments') {
       return (
         <div className="bg-white shadow rounded-lg">
+          <h2 className="text-xl font-semibold p-4 border-b">Payment Records</h2>
           <Table>
             <TableHeader>
               <TableRow>
@@ -116,6 +117,7 @@ const OrdersPage = () => {
 
     return (
       <div className="bg-white shadow rounded-lg">
+        <h2 className="text-xl font-semibold p-4 border-b">All Orders</h2>
         <Table>
           <TableHeader>
             <TableRow>

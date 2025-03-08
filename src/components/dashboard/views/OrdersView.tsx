@@ -156,6 +156,16 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
         {tabs.map(tab => (
           <TabsContent key={tab.id} value={tab.id} className="mt-4">
             <div className="bg-white shadow rounded-lg">
+              <h2 className="text-xl font-semibold p-4 border-b">
+                {tab.id === 'payments' ? 'Payment Records' : 
+                 tab.id === 'pending' ? 'Pending Orders' :
+                 tab.id === 'processing' ? 'Processing Orders' :
+                 tab.id === 'completed' ? 'Completed Orders' :
+                 tab.id === 'cancelled' ? 'Cancelled Orders' :
+                 tab.id === 'all' ? 'All Orders' :
+                 tab.id === 'issues' ? 'Orders with Issues' :
+                 tab.id === 'analytics' ? 'Order Analytics' : 'Orders'}
+              </h2>
               <Table>
                 <TableHeader>
                   <TableRow>
