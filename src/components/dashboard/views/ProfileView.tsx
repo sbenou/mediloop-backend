@@ -30,7 +30,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
     // Common tabs for all users
     const commonTabs = [
       { id: 'personal', label: 'Personal Info' },
-      { id: 'addresses', label: 'Addresses' }
+      { id: 'addresses', label: 'Addresses' },
+      { id: 'nextofkin', label: 'Next of Kin' }
     ];
     
     // Role-specific additional tabs
@@ -39,8 +40,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
         return [
           ...commonTabs,
           { id: 'pharmacy', label: 'Default Pharmacy' },
-          { id: 'doctor', label: 'My Doctor' },
-          { id: 'nextofkin', label: 'Next of Kin' }
+          { id: 'doctor', label: 'My Doctor' }
         ];
       case 'doctor':
         return [
@@ -49,11 +49,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
           { id: 'clinic', label: 'Clinic Details' }
         ];
       case 'pharmacist':
-        return [
-          ...commonTabs,
-          { id: 'pharmacy', label: 'Pharmacy Details' },
-          { id: 'staff', label: 'Staff Management' }
-        ];
+        return commonTabs;
       case 'superadmin':
         return [
           ...commonTabs,
@@ -95,21 +91,25 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
           </div>
         </TabsContent>
         
-        {/* Pharmacy Tab */}
-        <TabsContent value="pharmacy" className="mt-4">
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Default Pharmacy</h2>
-            <PharmacySelection />
-          </div>
-        </TabsContent>
+        {/* Pharmacy Tab - Only for patients */}
+        {userRole === 'patient' && (
+          <TabsContent value="pharmacy" className="mt-4">
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Default Pharmacy</h2>
+              <PharmacySelection />
+            </div>
+          </TabsContent>
+        )}
         
-        {/* Doctor Tab */}
-        <TabsContent value="doctor" className="mt-4">
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">My Doctor</h2>
-            <DoctorManagement />
-          </div>
-        </TabsContent>
+        {/* Doctor Tab - Only for patients */}
+        {userRole === 'patient' && (
+          <TabsContent value="doctor" className="mt-4">
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">My Doctor</h2>
+              <DoctorManagement />
+            </div>
+          </TabsContent>
+        )}
         
         {/* Next of Kin Tab */}
         <TabsContent value="nextofkin" className="mt-4">
@@ -135,15 +135,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
               </div>
             </TabsContent>
           </>
-        )}
-        
-        {userRole === 'pharmacist' && (
-          <TabsContent value="staff" className="mt-4">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Staff Management</h2>
-              <p>Pharmacy staff management will be displayed here.</p>
-            </div>
-          </TabsContent>
         )}
         
         {userRole === 'superadmin' && (
