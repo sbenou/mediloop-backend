@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -39,7 +38,7 @@ const Dashboard = () => {
       
       if (view !== 'pharmacy' || !section) {
         console.log("Redirecting pharmacist to proper dashboard view");
-        setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
+        setSearchParams({ view: 'pharmacy', section: 'dashboard' });
       }
     }
   }, [userRole, view, section, setSearchParams, isInitialLoad, isAuthenticated]);

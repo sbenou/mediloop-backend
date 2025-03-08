@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import SidebarItem from "./SidebarItem";
 
 const PharmacistSidebar = () => {
   const { profile } = useAuth();
@@ -98,88 +99,57 @@ const PharmacistSidebar = () => {
       
       <div className="flex-1 overflow-auto py-4 hover-scroll">
         <nav className="space-y-1 px-2">
-          <button
+          <SidebarItem
+            icon={<LayoutDashboard className="mr-3 h-5 w-5" />}
+            label="Dashboard"
+            isActive={currentSection === "dashboard"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=dashboard')}
-            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
-              currentSection === "dashboard" 
-                ? "bg-primary text-white" 
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <LayoutDashboard className="mr-3 h-5 w-5" />
-            Dashboard
-          </button>
+          />
           
-          <button
+          <SidebarItem
+            icon={<Users className="mr-3 h-5 w-5" />}
+            label="Patients"
+            isActive={currentSection === "patients"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=patients')}
-            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
-              currentSection === "patients" 
-                ? "bg-primary text-white" 
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <Users className="mr-3 h-5 w-5" />
-            Patients
-          </button>
+          />
           
-          <button
+          <SidebarItem
+            icon={<ShoppingBag className="mr-3 h-5 w-5" />}
+            label="Orders"
+            isActive={currentSection === "orders"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=orders')}
-            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
-              currentSection === "orders" 
-                ? "bg-primary text-white" 
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <ShoppingBag className="mr-3 h-5 w-5" />
-            Orders
-          </button>
+          />
           
-          <button
+          <SidebarItem
+            icon={<FileText className="mr-3 h-5 w-5" />}
+            label="Prescriptions"
+            isActive={currentSection === "prescriptions"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=prescriptions')}
-            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
-              currentSection === "prescriptions" 
-                ? "bg-primary text-white" 
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <FileText className="mr-3 h-5 w-5" />
-            Prescriptions
-          </button>
+          />
           
-          <button
+          <SidebarItem
+            icon={<UserCircle className="mr-3 h-5 w-5" />}
+            label="Profile"
+            isActive={currentSection === "profile"}
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=profile')}
-            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
-              currentSection === "profile" 
-                ? "bg-primary text-white" 
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <UserCircle className="mr-3 h-5 w-5" />
-            Profile
-          </button>
+          />
         </nav>
       </div>
       
       <div className="p-4 border-t">
-        <button
+        <SidebarItem
+          icon={<Settings className="mr-3 h-5 w-5" />}
+          label="Settings"
+          isActive={currentSection === "settings"}
           onClick={() => navigateToLink('/dashboard?view=pharmacy&section=settings')}
-          className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
-            currentSection === "settings" 
-              ? "bg-primary text-white" 
-              : "text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          <Settings className="mr-3 h-5 w-5" />
-          Settings
-        </button>
+        />
         
-        <button
+        <SidebarItem
+          icon={<LogOut className="mr-3 h-5 w-5" />}
+          label="Logout"
+          isActive={false}
           onClick={handleLogout}
-          className="flex items-center px-2 py-2 mt-2 text-sm text-gray-700 rounded-md w-full hover:bg-gray-100 text-left"
-        >
-          <LogOut className="mr-3 h-5 w-5" />
-          Logout
-        </button>
+        />
       </div>
       
       <div className="p-4 border-t flex items-center">
