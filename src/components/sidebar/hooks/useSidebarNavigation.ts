@@ -10,39 +10,49 @@ export const useSidebarNavigation = (userRole: string) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   useEffect(() => {
-    if (location.pathname.includes('/my-orders') || location.search.includes('view=orders') || 
+    // Set initial expansion state based on the URL
+    if (location.pathname.includes('/my-orders') || 
+        location.search.includes('view=orders') || 
         location.search.includes('section=orders')) {
       setIsOrdersOpen(true);
     }
     
-    if (location.pathname.includes('/profile') || location.search.includes('view=profile') || 
+    if (location.pathname.includes('/profile') || 
+        location.search.includes('view=profile') || 
         location.search.includes('section=profile')) {
       setIsProfileOpen(true);
     }
   }, [location]);
 
-  // Improved function to check if a link is active for pharmacists 
+  // Function to check if a pharmacy section is active
   const isPharmacistSectionActive = (sectionName: string) => {
     if (userRole !== 'pharmacist') return false;
     
+    // For pharmacist views, check the section parameter
     const section = searchParams.get('section');
-    return section === sectionName;
+    const isPharmacyView = location.search.includes('view=pharmacy');
+    
+    return isPharmacyView && section === sectionName;
   };
 
-  // Improved function to check if a link is active for pharmacists with tab
+  // Function to check if a pharmacy tab is active
   const isPharmacistTabActive = (sectionName: string, tabParam: string, tabValue: string) => {
     if (userRole !== 'pharmacist') return false;
     
+    // For pharmacist views, check both section and tab parameters
     const section = searchParams.get('section');
     const tab = searchParams.get(tabParam);
+    const isPharmacyView = location.search.includes('view=pharmacy');
     
-    return section === sectionName && tab === tabValue;
+    return isPharmacyView && section === sectionName && tab === tabValue;
   };
 
+  // Check if a specific link is active
   const isLinkActive = (path: string) => {
     return location.pathname === path;
   };
 
+  // Check if a path with query parameters is active
   const isSubPathActive = (path: string) => {
     if (path.includes('?')) {
       const [basePath, queryString] = path.split('?');
@@ -50,10 +60,10 @@ export const useSidebarNavigation = (userRole: string) => {
       
       if (!isBasePathMatch) return false;
       
-      const searchParams = new URLSearchParams(queryString);
+      const pathSearchParams = new URLSearchParams(queryString);
       const currentSearchParams = new URLSearchParams(location.search);
       
-      for (const [key, value] of searchParams.entries()) {
+      for (const [key, value] of pathSearchParams.entries()) {
         if (currentSearchParams.get(key) !== value) {
           return false;
         }
@@ -65,19 +75,19 @@ export const useSidebarNavigation = (userRole: string) => {
     return location.pathname === path;
   };
 
-  // Improved navigation handler for all roles
+  // Navigate to a link with special handling for pharmacist role
   const navigateToLink = (path: string) => {
     console.log(`navigateToLink called with path: ${path}`);
     
     if (userRole === 'pharmacist') {
-      // First check if the path is already properly formatted for pharmacy view
+      // If the path is already properly formatted for pharmacy view, use it directly
       if (path.includes('/dashboard?view=pharmacy&section=')) {
-        console.log('Already properly formatted pharmacy path:', path);
+        console.log('Using properly formatted pharmacy path:', path);
         navigate(path);
         return;
       }
       
-      // For pharmacists, transform the navigation to use the pharmacy view structure
+      // Transform regular paths to pharmacy view structure for pharmacists
       if (path === '/dashboard') {
         console.log('Navigating to pharmacy dashboard');
         navigate('/dashboard?view=pharmacy&section=dashboard');
