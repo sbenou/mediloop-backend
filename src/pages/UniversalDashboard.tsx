@@ -11,7 +11,6 @@ import {
   PharmacyView
 } from "@/components/dashboard/views";
 import TeleconsultationsView from "@/components/dashboard/views/TeleconsultationsView";
-import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,10 +45,10 @@ const UniversalDashboard = () => {
       
       if (currentView !== 'pharmacy' || !pharmacySection) {
         console.log("Setting default pharmacist params");
-        setSearchParams({ view: 'pharmacy', section: 'dashboard' });
+        setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, searchParams, setSearchParams, currentView, pharmacySection, isInitialLoad, isAuthenticated]);
+  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isAuthenticated]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
