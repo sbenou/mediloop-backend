@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   Home, User, ShoppingBag, Settings, Calendar, 
@@ -38,7 +37,8 @@ const UnifiedSidebar = () => {
   const {
     fileInputRef,
     getUserInitials,
-    handleAvatarClick
+    handleAvatarClick,
+    handleFileChange
   } = useSidebarUserProfile(profile);
 
   // Platform menu items
@@ -83,7 +83,7 @@ const UnifiedSidebar = () => {
     }
   ];
   
-  // Profile subItems
+  // Profile subItems - filter out Pharmacy and My Doctor for pharmacist users
   const profileSubItems = [
     {
       label: 'Personal Details',
@@ -100,20 +100,6 @@ const UnifiedSidebar = () => {
               isPharmacistTabActive('profile', 'profileTab', 'addresses')
     },
     {
-      label: 'Pharmacy',
-      icon: <Store className="w-4 h-4 mr-3" />,
-      path: '/dashboard?view=profile&profileTab=pharmacy',
-      active: location.search.includes('view=profile') && location.search.includes('profileTab=pharmacy') ||
-              isPharmacistTabActive('profile', 'profileTab', 'pharmacy')
-    },
-    {
-      label: 'My Doctor',
-      icon: <Heart className="w-4 h-4 mr-3" />,
-      path: '/dashboard?view=profile&profileTab=doctor',
-      active: location.search.includes('view=profile') && location.search.includes('profileTab=doctor') ||
-              isPharmacistTabActive('profile', 'profileTab', 'doctor')
-    },
-    {
       label: 'Next of Kin',
       icon: <Users className="w-4 h-4 mr-3" />,
       path: '/dashboard?view=profile&profileTab=nextofkin',
@@ -122,16 +108,9 @@ const UnifiedSidebar = () => {
     }
   ];
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    console.log("Avatar file selected:", file.name);
-    toast({
-      title: "Avatar update",
-      description: "Profile image update started",
-    });
-  };
+  const filteredProfileSubItems = userRole === 'pharmacist' 
+    ? profileSubItems.filter(item => !['Pharmacy', 'My Doctor'].includes(item.label)) 
+    : profileSubItems;
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -158,7 +137,7 @@ const UnifiedSidebar = () => {
                      (userRole === 'pharmacist' && isPharmacistSectionActive('profile'))}
             onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
           >
-            {profileSubItems.map((subItem, index) => (
+            {filteredProfileSubItems.map((subItem, index) => (
               <SidebarSubItem
                 key={index}
                 icon={subItem.icon}
@@ -261,6 +240,7 @@ const UnifiedSidebar = () => {
           }
         }}
         navigateToUpgrade={() => navigate('/upgrade')}
+        handleFileChange={handleFileChange}
       />
     </aside>
   );
