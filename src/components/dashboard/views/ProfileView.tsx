@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -24,6 +24,21 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
   const handleTabChange = (value: string) => {
     navigate(`/dashboard?view=profile&profileTab=${value}`);
   };
+
+  // Ensure the active tab matches the URL
+  useEffect(() => {
+    // This ensures the tab state is synchronized with the URL parameter
+    const tabsElement = document.querySelector('[role="tablist"]');
+    if (tabsElement) {
+      const activeTabButton = tabsElement.querySelector(`[data-state="active"]`);
+      if (!activeTabButton || activeTabButton.getAttribute('value') !== activeTab) {
+        const targetButton = tabsElement.querySelector(`[value="${activeTab}"]`);
+        if (targetButton) {
+          (targetButton as HTMLElement).click();
+        }
+      }
+    }
+  }, [activeTab]);
 
   // Get role-specific tabs configuration
   const getTabs = () => {
