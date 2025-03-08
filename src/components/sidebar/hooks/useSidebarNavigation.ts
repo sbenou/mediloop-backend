@@ -68,6 +68,13 @@ export const useSidebarNavigation = (userRole: string) => {
     console.log(`navigateToLink called with path: ${path}`);
     
     if (userRole === 'pharmacist') {
+      // Check if the path is already properly formatted for pharmacy view
+      if (path.includes('/dashboard?view=pharmacy&section=')) {
+        console.log('Already properly formatted pharmacy path:', path);
+        navigate(path);
+        return;
+      }
+      
       // For pharmacists, transform the navigation to use the pharmacy view structure
       if (path === '/dashboard') {
         console.log('Navigating to pharmacy dashboard');
@@ -90,10 +97,6 @@ export const useSidebarNavigation = (userRole: string) => {
       } else if (path.includes('view=prescriptions')) {
         console.log('Navigating to pharmacy prescriptions');
         navigate('/dashboard?view=pharmacy&section=prescriptions');
-        return;
-      } else if (path.includes('/dashboard?view=pharmacy&section=')) {
-        console.log('Already properly formatted pharmacy path:', path);
-        navigate(path);
         return;
       }
     }
