@@ -19,7 +19,7 @@ const SidebarItem = ({ icon, label, isActive, onClick }: SidebarItemProps) => {
       }`}
     >
       <div className="flex items-center w-full">
-        <div className="mr-3">
+        <div className="w-5 h-5 flex items-center justify-center mr-3">
           {icon}
         </div>
         <span>{label}</span>
