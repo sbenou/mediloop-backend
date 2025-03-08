@@ -77,7 +77,7 @@ export const useSidebarNavigation = (userRole: string) => {
 
   // Navigate to a link with special handling for pharmacist role
   const navigateToLink = (path: string) => {
-    console.log(`navigateToLink called with path: ${path}`);
+    console.log(`navigateToLink called with path: ${path}, userRole: ${userRole}`);
     
     if (userRole === 'pharmacist') {
       // If the path is already properly formatted for pharmacy view, use it directly
@@ -106,11 +106,11 @@ export const useSidebarNavigation = (userRole: string) => {
         const ordersTab = new URLSearchParams(path.split('?')[1]).get('ordersTab') || 'orders';
         navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${ordersTab}`);
         return;
-      } else if (path.includes('view=prescriptions')) {
+      } else if (path.includes('view=prescriptions') || path === '/dashboard?view=prescriptions') {
         console.log('Navigating to pharmacy prescriptions');
         navigate('/dashboard?view=pharmacy&section=prescriptions');
         return;
-      } else if (path.includes('view=patients')) {
+      } else if (path.includes('view=patients') || path === '/dashboard?view=patients') {
         console.log('Navigating to pharmacy patients');
         navigate('/dashboard?view=pharmacy&section=patients');
         return;

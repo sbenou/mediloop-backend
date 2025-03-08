@@ -43,7 +43,9 @@ const PharmacistSidebar = () => {
   // Navigate specifically for pharmacy views
   const navigateToPharmacyView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
-    navigateToLink(`/dashboard?view=pharmacy&section=${section}${tab && tabParam ? `&${tabParam}=${tab}` : ''}`);
+    const path = `/dashboard?view=pharmacy&section=${section}${tab && tabParam ? `&${tabParam}=${tab}` : ''}`;
+    console.log('PharmacistSidebar navigating to:', path);
+    navigateToLink(path);
   };
 
   return (
