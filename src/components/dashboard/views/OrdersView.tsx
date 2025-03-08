@@ -81,6 +81,12 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     if (location.pathname === '/my-orders') {
       return searchParams.get('view') || 'orders';
     }
+
+    // If pharmacist role, use the activeTab prop or default to first tab (pending)
+    if (userRole === 'pharmacist') {
+      return activeTab || 'pending';
+    }
+    
     return activeTab || tabs[0].id;
   };
 
