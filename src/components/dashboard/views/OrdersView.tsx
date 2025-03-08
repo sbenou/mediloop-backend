@@ -45,13 +45,8 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
         : searchParams.get('ordersTab') || 'orders';
       
       console.log("OrdersView: Current tab from URL:", currentTab, "Active tab prop:", activeTab, "Current view:", view);
-      
-      // Set the tab if it's different from the current one
-      if (view !== currentTab) {
-        handleTabChange(currentTab);
-      }
     }
-  }, [location.pathname, searchParams, activeTab]);
+  }, [location.pathname, searchParams, activeTab, view]);
 
   // Get role-specific tabs configuration
   const getTabs = () => {
@@ -130,6 +125,34 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     ];
   };
 
+  // Get page title based on tab and role
+  const getPageTitle = () => {
+    if (userRole === 'pharmacist') {
+      const currentTab = getActiveTab();
+      if (currentTab === 'payments') {
+        return 'Payment Records';
+      }
+      return 'Pharmacy Orders';
+    }
+    
+    return userRole === 'patient' ? 'My Orders' : 'Orders Management';
+  };
+
+  // Get page description based on tab and role
+  const getPageDescription = () => {
+    if (userRole === 'pharmacist') {
+      const currentTab = getActiveTab();
+      if (currentTab === 'payments') {
+        return 'Manage payment records for all orders.';
+      }
+      return 'Manage customer orders and deliveries.';
+    }
+    
+    return userRole === 'patient' 
+      ? 'View and manage all your orders.' 
+      : 'Administrative order management across the platform.';
+  };
+
   // Render the component with the correct active tab
   const currentActiveTab = getActiveTab();
   console.log("OrdersView: Current active tab:", currentActiveTab);
@@ -138,19 +161,15 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          {userRole === 'patient' ? 'My Orders' : 
-           userRole === 'pharmacist' ? 'Pharmacy Orders' :
-           'Orders Management'}
+          {getPageTitle()}
         </h1>
         <p className="text-muted-foreground">
-          {userRole === 'patient' ? 'View and manage all your orders.' :
-           userRole === 'pharmacist' ? 'Manage customer orders and deliveries.' :
-           'Administrative order management across the platform.'}
+          {getPageDescription()}
         </p>
       </div>
 
       {/* Orders section with tabs */}
-      <Tabs value={currentActiveTab} onValueChange={handleTabChange}>
+      <Tabs defaultValue={currentActiveTab} value={currentActiveTab} onValueChange={handleTabChange}>
         <TabsList>
           {tabs.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>
