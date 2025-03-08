@@ -19,8 +19,10 @@ const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps)
       }`}
     >
       <div className="flex items-center">
-        {icon}
-        <span className="ml-3">{label}</span>
+        <div className="mr-3">
+          {icon}
+        </div>
+        <span>{label}</span>
       </div>
     </div>
   );
