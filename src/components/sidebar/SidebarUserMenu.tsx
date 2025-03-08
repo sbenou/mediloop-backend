@@ -53,7 +53,7 @@ const SidebarUserMenu = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
-            {/* Avatar container with stopPropagation to prevent dropdown trigger */}
+            {/* Avatar container - completely separated from the dropdown trigger */}
             <div 
               onClick={(e) => {
                 e.stopPropagation();
@@ -72,6 +72,7 @@ const SidebarUserMenu = ({
                 isSquare={userRole === 'pharmacist'}
               />
             </div>
+            {/* Text info container - this is part of the dropdown trigger */}
             <div className="overflow-hidden flex-1">
               <p className="text-sm font-medium truncate">{displayName}</p>
               <p className="text-xs text-muted-foreground truncate">{secondaryText}</p>

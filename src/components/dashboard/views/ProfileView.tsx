@@ -66,7 +66,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
     <div>
       <h1 className="text-3xl font-bold mb-6">My Profile</h1>
       
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
+      <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           {tabs.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>
