@@ -36,7 +36,7 @@ const Dashboard = () => {
 
   // For pharmacist role, ensure they see their dedicated view
   useEffect(() => {
-    if (userRole === 'pharmacist' && !isInitialLoad) {
+    if (userRole === 'pharmacist' && !isInitialLoad && isAuthenticated) {
       console.log("Checking pharmacist view:", { view, section });
       
       if (view !== 'pharmacy' || !section) {
@@ -44,7 +44,7 @@ const Dashboard = () => {
         navigate("/dashboard?view=pharmacy&section=dashboard", { replace: true });
       }
     }
-  }, [userRole, view, section, navigate, isInitialLoad]);
+  }, [userRole, view, section, navigate, isInitialLoad, isAuthenticated]);
 
   // Debug logging
   useEffect(() => {

@@ -34,13 +34,14 @@ const UniversalDashboard = () => {
       userRole, 
       currentView, 
       pharmacySection,
-      searchParams: Object.fromEntries(searchParams.entries()) 
+      searchParams: Object.fromEntries(searchParams.entries()),
+      location: location.pathname + location.search
     });
-  }, [userRole, currentView, pharmacySection, searchParams]);
+  }, [userRole, currentView, pharmacySection, searchParams, location]);
   
   // Make sure we have a default section for pharmacists
   useEffect(() => {
-    if (userRole === "pharmacist" && !isInitialLoad) {
+    if (userRole === "pharmacist" && !isInitialLoad && isAuthenticated) {
       console.log("Checking pharmacist params:", { currentView, pharmacySection });
       
       if (currentView !== 'pharmacy' || !pharmacySection) {
@@ -48,7 +49,7 @@ const UniversalDashboard = () => {
         setSearchParams({ view: 'pharmacy', section: 'dashboard' });
       }
     }
-  }, [userRole, searchParams, setSearchParams, currentView, pharmacySection, isInitialLoad]);
+  }, [userRole, searchParams, setSearchParams, currentView, pharmacySection, isInitialLoad, isAuthenticated]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {

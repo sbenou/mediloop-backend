@@ -71,29 +71,29 @@ export const useSidebarNavigation = (userRole: string) => {
       // For pharmacists, transform the navigation to use the pharmacy view structure
       if (path === '/dashboard') {
         console.log('Navigating to pharmacy dashboard');
-        navigate('/dashboard?view=pharmacy&section=dashboard');
+        navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
         return;
       } else if (path === '/settings') {
         console.log('Navigating to pharmacy settings');
-        navigate('/dashboard?view=pharmacy&section=settings');
+        navigate('/dashboard?view=pharmacy&section=settings', { replace: true });
         return;
       } else if (path.includes('view=profile')) {
         console.log('Navigating to pharmacy profile');
         const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
-        navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${profileTab}`);
+        navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${profileTab}`, { replace: true });
         return;
       } else if (path.includes('view=orders')) {
         console.log('Navigating to pharmacy orders');
         const ordersTab = new URLSearchParams(path.split('?')[1]).get('ordersTab') || 'orders';
-        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${ordersTab}`);
+        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${ordersTab}`, { replace: true });
         return;
       } else if (path.includes('view=prescriptions')) {
         console.log('Navigating to pharmacy prescriptions');
-        navigate('/dashboard?view=pharmacy&section=prescriptions');
+        navigate('/dashboard?view=pharmacy&section=prescriptions', { replace: true });
         return;
       } else if (path.includes('/dashboard?view=pharmacy&section=')) {
         console.log('Already properly formatted pharmacy path:', path);
-        navigate(path);
+        navigate(path, { replace: true });
         return;
       }
     }
