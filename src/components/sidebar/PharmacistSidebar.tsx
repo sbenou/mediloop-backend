@@ -9,12 +9,14 @@ import {
   LayoutDashboard,
   Settings,
   LogOut,
-  SquareUser
+  SquareUser,
+  UserCircle
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import UserAvatar from "@/components/user-menu/UserAvatar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
+import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 
 const PharmacistSidebar = () => {
   const { profile } = useAuth();
@@ -22,6 +24,7 @@ const PharmacistSidebar = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentSection = searchParams.get("section") || "dashboard";
+  const { navigateToLink } = useSidebarNavigation('pharmacist');
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -29,6 +32,7 @@ const PharmacistSidebar = () => {
   };
 
   const navigateToPharmacySection = (section: string) => {
+    console.log(`Navigating to pharmacy section: ${section}`);
     setSearchParams({ view: 'pharmacy', section });
   };
 
@@ -101,7 +105,7 @@ const PharmacistSidebar = () => {
         <nav className="space-y-1 px-2">
           <button
             onClick={() => navigateToPharmacySection("dashboard")}
-            className={`flex items-center px-2 py-2 text-sm rounded-md w-full ${
+            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
               currentSection === "dashboard" 
                 ? "bg-primary text-white" 
                 : "text-gray-700 hover:bg-gray-100"
@@ -113,7 +117,7 @@ const PharmacistSidebar = () => {
           
           <button
             onClick={() => navigateToPharmacySection("patients")}
-            className={`flex items-center px-2 py-2 text-sm rounded-md w-full ${
+            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
               currentSection === "patients" 
                 ? "bg-primary text-white" 
                 : "text-gray-700 hover:bg-gray-100"
@@ -125,7 +129,7 @@ const PharmacistSidebar = () => {
           
           <button
             onClick={() => navigateToPharmacySection("orders")}
-            className={`flex items-center px-2 py-2 text-sm rounded-md w-full ${
+            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
               currentSection === "orders" 
                 ? "bg-primary text-white" 
                 : "text-gray-700 hover:bg-gray-100"
@@ -137,7 +141,7 @@ const PharmacistSidebar = () => {
           
           <button
             onClick={() => navigateToPharmacySection("prescriptions")}
-            className={`flex items-center px-2 py-2 text-sm rounded-md w-full ${
+            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
               currentSection === "prescriptions" 
                 ? "bg-primary text-white" 
                 : "text-gray-700 hover:bg-gray-100"
@@ -146,13 +150,25 @@ const PharmacistSidebar = () => {
             <FileText className="mr-3 h-5 w-5" />
             Prescriptions
           </button>
+          
+          <button
+            onClick={() => navigateToPharmacySection("profile")}
+            className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
+              currentSection === "profile" 
+                ? "bg-primary text-white" 
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <UserCircle className="mr-3 h-5 w-5" />
+            Profile
+          </button>
         </nav>
       </div>
       
       <div className="p-4 border-t">
         <button
           onClick={() => navigateToPharmacySection("settings")}
-          className={`flex items-center px-2 py-2 text-sm rounded-md w-full ${
+          className={`flex items-center px-2 py-2 text-sm rounded-md w-full text-left ${
             currentSection === "settings" 
               ? "bg-primary text-white" 
               : "text-gray-700 hover:bg-gray-100"
@@ -164,7 +180,7 @@ const PharmacistSidebar = () => {
         
         <button
           onClick={handleLogout}
-          className="flex items-center px-2 py-2 mt-2 text-sm text-gray-700 rounded-md w-full hover:bg-gray-100"
+          className="flex items-center px-2 py-2 mt-2 text-sm text-gray-700 rounded-md w-full hover:bg-gray-100 text-left"
         >
           <LogOut className="mr-3 h-5 w-5" />
           Logout

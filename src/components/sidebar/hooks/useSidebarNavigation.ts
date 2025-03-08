@@ -63,7 +63,7 @@ export const useSidebarNavigation = (userRole: string) => {
     return location.pathname === path;
   };
 
-  // Fixed navigation handler for all roles
+  // Improved navigation handler for all roles
   const navigateToLink = (path: string) => {
     console.log(`navigateToLink called with path: ${path}`);
     

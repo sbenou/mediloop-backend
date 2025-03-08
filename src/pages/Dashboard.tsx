@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -9,11 +8,9 @@ import UniversalDashboard from "@/pages/UniversalDashboard";
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const view = searchParams.get('view') || 'home';
-  const ordersTab = searchParams.get('ordersTab') || 'orders';
-  const prescriptionsTab = searchParams.get('prescriptionsTab') || 'active';
   const section = searchParams.get('section');
 
   useEffect(() => {
@@ -41,10 +38,10 @@ const Dashboard = () => {
       
       if (view !== 'pharmacy' || !section) {
         console.log("Redirecting pharmacist to proper dashboard view");
-        navigate("/dashboard?view=pharmacy&section=dashboard", { replace: true });
+        setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, view, section, navigate, isInitialLoad, isAuthenticated]);
+  }, [userRole, view, section, navigate, isInitialLoad, isAuthenticated, setSearchParams]);
 
   // Debug logging
   useEffect(() => {
@@ -52,12 +49,6 @@ const Dashboard = () => {
       console.log("Dashboard rendering with:", { userRole, view, section });
     }
   }, [userRole, view, section, isInitialLoad]);
-
-  // Don't render anything during the redirect for pharmacists
-  if (userRole === 'pharmacist' && (!view || view !== 'pharmacy' || !section)) {
-    console.log("Returning null due to pending redirect");
-    return null;
-  }
 
   // For very specific user roles, provide a dedicated dashboard
   if (userRole === 'patient' && !view) {
