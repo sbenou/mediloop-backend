@@ -10,11 +10,13 @@ export const useSidebarNavigation = (userRole: string) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   useEffect(() => {
-    if (location.pathname.includes('/my-orders') || location.search.includes('view=orders')) {
+    if (location.pathname.includes('/my-orders') || location.search.includes('view=orders') || 
+        location.search.includes('section=orders')) {
       setIsOrdersOpen(true);
     }
     
-    if (location.pathname.includes('/profile') || location.search.includes('view=profile')) {
+    if (location.pathname.includes('/profile') || location.search.includes('view=profile') || 
+        location.search.includes('section=profile')) {
       setIsProfileOpen(true);
     }
   }, [location]);

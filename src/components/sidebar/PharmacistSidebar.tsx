@@ -18,6 +18,8 @@ import { toast } from "@/components/ui/use-toast";
 import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
+import SidebarCollapsibleItem from "./SidebarCollapsibleItem";
+import SidebarSubItem from "./SidebarSubItem";
 
 const PharmacistSidebar = () => {
   const { profile } = useAuth();
@@ -25,7 +27,18 @@ const PharmacistSidebar = () => {
   const [searchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentSection = searchParams.get("section") || "dashboard";
-  const { navigateToLink, isPharmacistSectionActive } = useSidebarNavigation('pharmacist');
+  const profileTab = searchParams.get("profileTab") || "personal";
+  const ordersTab = searchParams.get("ordersTab") || "orders";
+  
+  const { 
+    navigateToLink, 
+    isPharmacistSectionActive, 
+    isPharmacistTabActive,
+    isProfileOpen,
+    setIsProfileOpen,
+    isOrdersOpen,
+    setIsOrdersOpen
+  } = useSidebarNavigation('pharmacist');
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -113,12 +126,27 @@ const PharmacistSidebar = () => {
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=patients')}
           />
           
-          <SidebarItem
+          {/* Orders with collapsible subitems */}
+          <SidebarCollapsibleItem
             icon={<ShoppingBag className="h-5 w-5" />}
             label="Orders"
+            isOpen={isOrdersOpen}
             isActive={currentSection === "orders"}
-            onClick={() => navigateToLink('/dashboard?view=pharmacy&section=orders')}
-          />
+            onOpenChange={setIsOrdersOpen}
+          >
+            <SidebarSubItem
+              icon={<ShoppingBag className="h-4 w-4" />}
+              label="All Orders"
+              isActive={currentSection === "orders" && ordersTab === "orders"}
+              onClick={() => navigateToLink('/dashboard?view=pharmacy&section=orders&ordersTab=orders')}
+            />
+            <SidebarSubItem
+              icon={<ShoppingBag className="h-4 w-4" />}
+              label="Pending"
+              isActive={currentSection === "orders" && ordersTab === "pending"}
+              onClick={() => navigateToLink('/dashboard?view=pharmacy&section=orders&ordersTab=pending')}
+            />
+          </SidebarCollapsibleItem>
           
           <SidebarItem
             icon={<FileText className="h-5 w-5" />}
@@ -127,12 +155,27 @@ const PharmacistSidebar = () => {
             onClick={() => navigateToLink('/dashboard?view=pharmacy&section=prescriptions')}
           />
           
-          <SidebarItem
+          {/* Profile with collapsible subitems */}
+          <SidebarCollapsibleItem
             icon={<UserCircle className="h-5 w-5" />}
             label="Profile"
+            isOpen={isProfileOpen}
             isActive={currentSection === "profile"}
-            onClick={() => navigateToLink('/dashboard?view=pharmacy&section=profile')}
-          />
+            onOpenChange={setIsProfileOpen}
+          >
+            <SidebarSubItem
+              icon={<UserCircle className="h-4 w-4" />}
+              label="Personal Info"
+              isActive={currentSection === "profile" && profileTab === "personal"}
+              onClick={() => navigateToLink('/dashboard?view=pharmacy&section=profile&profileTab=personal')}
+            />
+            <SidebarSubItem
+              icon={<UserCircle className="h-4 w-4" />}
+              label="Security"
+              isActive={currentSection === "profile" && profileTab === "security"}
+              onClick={() => navigateToLink('/dashboard?view=pharmacy&section=profile&profileTab=security')}
+            />
+          </SidebarCollapsibleItem>
         </nav>
       </div>
       
