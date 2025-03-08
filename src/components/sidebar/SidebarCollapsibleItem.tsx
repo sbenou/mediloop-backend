@@ -32,7 +32,7 @@ const SidebarCollapsibleItem = ({
           : 'text-muted-foreground hover:bg-gray-100'
       }`}>
         <div className="flex items-center">
-          <div className="w-5 h-5 flex items-center justify-center mr-3">
+          <div className="flex items-center mr-3">
             {icon}
           </div>
           <span>{label}</span>
