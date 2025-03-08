@@ -83,7 +83,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     if (location.pathname === '/my-orders') {
       return searchParams.get('view') || 'orders';
     }
-    return searchParams.get('ordersTab') || 'orders';
+    return searchParams.get('ordersTab') || tabs[0].id;
   };
 
   // Render empty table state based on role and tab

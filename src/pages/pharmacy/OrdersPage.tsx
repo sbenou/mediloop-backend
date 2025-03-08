@@ -87,6 +87,17 @@ const OrdersPage = () => {
     setSearchParams({ tab: value });
   };
 
+  // Get page title and description based on the current tab
+  const getPageTitle = () => {
+    return tab === 'payments' ? 'Payment Records' : 'Orders';
+  };
+
+  const getPageDescription = () => {
+    return tab === 'payments' 
+      ? 'View and manage payment details for all orders.'
+      : 'View and manage all pharmacy orders.';
+  };
+
   // Determine content based on tab
   const renderTabContent = () => {
     if (tab === 'payments') {
@@ -163,12 +174,10 @@ const OrdersPage = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {tab === 'payments' ? 'Payment Records' : 'Orders'}
+            {getPageTitle()}
           </h1>
           <p className="text-muted-foreground">
-            {tab === 'payments' 
-              ? 'View and manage payment details for all orders.'
-              : 'View and manage all pharmacy orders.'}
+            {getPageDescription()}
           </p>
         </div>
 
