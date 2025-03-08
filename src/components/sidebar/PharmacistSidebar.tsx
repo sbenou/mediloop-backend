@@ -3,7 +3,8 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
   User, Users, ShoppingBag, Settings, 
-  LayoutDashboard, FileText, UserCircle, LogOut
+  LayoutDashboard, FileText, UserCircle, LogOut,
+  MapPin
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -110,10 +111,16 @@ const PharmacistSidebar = () => {
               onClick={() => navigateToPharmacyView('profile', 'personal', 'profileTab')}
             />
             <SidebarSubItem
-              icon={<UserCircle className="w-4 h-4 mr-3" />}
-              label="Security"
-              isActive={isPharmacistTabActive('profile', 'profileTab', 'security')}
-              onClick={() => navigateToPharmacyView('profile', 'security', 'profileTab')}
+              icon={<MapPin className="w-4 h-4 mr-3" />}
+              label="Addresses"
+              isActive={isPharmacistTabActive('profile', 'profileTab', 'addresses')}
+              onClick={() => navigateToPharmacyView('profile', 'addresses', 'profileTab')}
+            />
+            <SidebarSubItem
+              icon={<Users className="w-4 h-4 mr-3" />}
+              label="Next of Kin"
+              isActive={isPharmacistTabActive('profile', 'profileTab', 'nextofkin')}
+              onClick={() => navigateToPharmacyView('profile', 'nextofkin', 'profileTab')}
             />
           </SidebarCollapsibleItem>
           

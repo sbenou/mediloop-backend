@@ -7,9 +7,16 @@ interface UserAvatarProps {
   canUpload?: boolean;
   onAvatarClick?: (e: React.MouseEvent) => void;
   fallbackText?: string;
+  isSquare?: boolean;
 }
 
-const UserAvatar = ({ userProfile, canUpload = false, onAvatarClick, fallbackText }: UserAvatarProps) => {
+const UserAvatar = ({ 
+  userProfile, 
+  canUpload = false, 
+  onAvatarClick, 
+  fallbackText,
+  isSquare = false
+}: UserAvatarProps) => {
   // Get the initials if no fallbackText is provided
   const getInitials = () => {
     if (fallbackText) return fallbackText;
@@ -23,14 +30,15 @@ const UserAvatar = ({ userProfile, canUpload = false, onAvatarClick, fallbackTex
 
   return (
     <Avatar 
-      className={`h-10 w-10 ${canUpload ? 'cursor-pointer' : ''}`} 
+      className={`h-10 w-10 ${isSquare ? 'rounded-md' : 'rounded-full'} ${canUpload ? 'cursor-pointer' : ''}`} 
       onClick={canUpload && onAvatarClick ? onAvatarClick : undefined}
     >
       <AvatarImage 
         src={userProfile?.avatar_url || undefined} 
         alt={userProfile?.full_name || 'User'} 
+        className={isSquare ? 'rounded-md' : 'rounded-full'}
       />
-      <AvatarFallback className="bg-primary/10 text-primary font-medium">
+      <AvatarFallback className={`bg-primary/10 text-primary font-medium ${isSquare ? 'rounded-md' : 'rounded-full'}`}>
         {getInitials()}
       </AvatarFallback>
     </Avatar>

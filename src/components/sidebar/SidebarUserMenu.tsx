@@ -41,12 +41,13 @@ const SidebarUserMenu = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
-            <div>
+            <div onClick={handleAvatarClick}>
               <UserAvatar 
                 userProfile={profile} 
                 canUpload={true} 
                 onAvatarClick={handleAvatarClick} 
                 fallbackText={getUserInitials()} 
+                isSquare={userRole === 'pharmacist'}
               />
               <input
                 type="file"
@@ -62,7 +63,7 @@ const SidebarUserMenu = ({
                 }}
               />
             </div>
-            <div className="overflow-hidden flex-1">
+            <div className="overflow-hidden flex-1" onClick={(e) => e.stopPropagation()}>
               <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
               <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>
             </div>
