@@ -79,6 +79,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+        <p className="text-muted-foreground">
+          Your personal information should be kept up to date to ensure the best service experience.
+        </p>
+      </div>
+      
       <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           {tabs.map(tab => (

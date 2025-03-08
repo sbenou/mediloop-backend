@@ -131,8 +131,17 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+        <p className="text-muted-foreground">
+          {userRole === 'patient' 
+            ? "View and manage your orders and payments." 
+            : "Manage customer orders and process them efficiently."}
+        </p>
+      </div>
+
       {/* Orders section with tabs */}
-      <Tabs defaultValue={currentActiveTab} value={currentActiveTab} onValueChange={handleTabChange}>
+      <Tabs defaultValue={currentActiveTab || tabs[0].id} value={currentActiveTab || tabs[0].id} onValueChange={handleTabChange}>
         <TabsList>
           {tabs.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>
