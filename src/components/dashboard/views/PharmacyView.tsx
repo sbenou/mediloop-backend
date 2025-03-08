@@ -17,6 +17,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import PrescriptionsView from "./PrescriptionsView";
+import OrdersView from "./OrdersView";
+import ProfileView from "./ProfileView";
+import SettingsView from "./SettingsView";
 
 interface PharmacyViewProps {
   userRole: string | null;
@@ -37,6 +40,10 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
   const { data: stats, isLoading, error } = usePharmacyDashboardStats();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
+  
+  // Get tab parameter for sections that need it
+  const profileTab = searchParams.get("profileTab") || "personal";
+  const ordersTab = searchParams.get("ordersTab") || "pending";
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -89,6 +96,54 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
         </div>
         
         <PrescriptionsView userRole="pharmacist" />
+      </div>
+    );
+  }
+
+  // Render orders section
+  if (section === "orders") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Pharmacy Orders</h1>
+          <p className="text-muted-foreground">
+            Manage customer orders and deliveries.
+          </p>
+        </div>
+        
+        <OrdersView userRole="pharmacist" activeTab={ordersTab} />
+      </div>
+    );
+  }
+
+  // Render profile section
+  if (section === "profile") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Pharmacy Profile</h1>
+          <p className="text-muted-foreground">
+            Manage your pharmacy profile information.
+          </p>
+        </div>
+        
+        <ProfileView userRole="pharmacist" activeTab={profileTab} />
+      </div>
+    );
+  }
+
+  // Render settings section
+  if (section === "settings") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Pharmacy Settings</h1>
+          <p className="text-muted-foreground">
+            Configure your pharmacy settings and preferences.
+          </p>
+        </div>
+        
+        <SettingsView userRole="pharmacist" />
       </div>
     );
   }
