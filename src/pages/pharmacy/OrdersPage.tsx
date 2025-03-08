@@ -172,14 +172,12 @@ const OrdersPage = () => {
   return (
     <PharmacistLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {getPageTitle()}
-          </h1>
-          <p className="text-muted-foreground">
-            {getPageDescription()}
-          </p>
-        </div>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {getPageTitle()}
+        </h1>
+        <p className="text-muted-foreground">
+          {getPageDescription()}
+        </p>
 
         <Tabs defaultValue={tab} value={tab} onValueChange={handleTabChange}>
           <TabsList>

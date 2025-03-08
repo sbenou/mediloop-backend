@@ -125,49 +125,12 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     ];
   };
 
-  // Get page title based on tab and role
-  const getPageTitle = () => {
-    if (userRole === 'pharmacist') {
-      const currentTab = getActiveTab();
-      if (currentTab === 'payments') {
-        return 'Payment Records';
-      }
-      return 'Pharmacy Orders';
-    }
-    
-    return userRole === 'patient' ? 'My Orders' : 'Orders Management';
-  };
-
-  // Get page description based on tab and role
-  const getPageDescription = () => {
-    if (userRole === 'pharmacist') {
-      const currentTab = getActiveTab();
-      if (currentTab === 'payments') {
-        return 'Manage payment records for all orders.';
-      }
-      return 'Manage customer orders and deliveries.';
-    }
-    
-    return userRole === 'patient' 
-      ? 'View and manage all your orders.' 
-      : 'Administrative order management across the platform.';
-  };
-
   // Render the component with the correct active tab
   const currentActiveTab = getActiveTab();
   console.log("OrdersView: Current active tab:", currentActiveTab);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {getPageTitle()}
-        </h1>
-        <p className="text-muted-foreground">
-          {getPageDescription()}
-        </p>
-      </div>
-
       {/* Orders section with tabs */}
       <Tabs defaultValue={currentActiveTab} value={currentActiveTab} onValueChange={handleTabChange}>
         <TabsList>
