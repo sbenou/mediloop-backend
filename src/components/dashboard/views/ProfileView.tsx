@@ -24,9 +24,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
   // Handle tab change
   const handleTabChange = (value: string) => {
     console.log("ProfileView: Tab changed to:", value);
-    if (location.pathname === '/dashboard') {
-      navigate(`/dashboard?view=profile&profileTab=${value}`);
-    }
+    navigate(`/dashboard?view=profile&profileTab=${value}`);
   };
 
   // Get role-specific tabs configuration
