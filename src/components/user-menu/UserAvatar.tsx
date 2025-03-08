@@ -21,6 +21,17 @@ const UserAvatar = ({
   const getInitials = () => {
     if (fallbackText) return fallbackText;
     
+    // For pharmacists, use pharmacy name initials if available
+    if (userProfile?.role === 'pharmacist') {
+      const pharmacyName = userProfile?.pharmacy_name || '';
+      if (pharmacyName) {
+        const names = pharmacyName.split(' ');
+        if (names.length === 1) return names[0].charAt(0).toUpperCase();
+        return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+      }
+    }
+    
+    // Default to user's name initials
     if (!userProfile?.full_name) return '';
     
     const names = userProfile.full_name.split(' ');
@@ -34,8 +45,8 @@ const UserAvatar = ({
       onClick={canUpload && onAvatarClick ? onAvatarClick : undefined}
     >
       <AvatarImage 
-        src={userProfile?.avatar_url || undefined} 
-        alt={userProfile?.full_name || 'User'} 
+        src={userProfile?.role === 'pharmacist' ? userProfile?.pharmacy_logo_url : userProfile?.avatar_url} 
+        alt={userProfile?.role === 'pharmacist' ? userProfile?.pharmacy_name || 'Pharmacy' : userProfile?.full_name || 'User'} 
         className={isSquare ? 'rounded-md' : 'rounded-full'}
       />
       <AvatarFallback className={`bg-primary/10 text-primary font-medium ${isSquare ? 'rounded-md' : 'rounded-full'}`}>

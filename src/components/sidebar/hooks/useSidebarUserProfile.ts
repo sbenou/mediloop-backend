@@ -12,6 +12,14 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
   const { userRole } = useAuth();
 
   const getUserInitials = () => {
+    // For pharmacists, use pharmacy name if available
+    if (userRole === 'pharmacist' && profile?.pharmacy_name) {
+      const pharmacyNames = profile.pharmacy_name.split(' ');
+      if (pharmacyNames.length === 1) return pharmacyNames[0].charAt(0).toUpperCase();
+      return (pharmacyNames[0].charAt(0) + pharmacyNames[pharmacyNames.length - 1].charAt(0)).toUpperCase();
+    }
+    
+    // Default to user initials
     if (!profile?.full_name) return '';
     const names = profile.full_name.split(' ');
     if (names.length === 1) return names[0].charAt(0).toUpperCase();

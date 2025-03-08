@@ -2,8 +2,8 @@
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
-  User, Users, ShoppingBag, Settings, 
-  LayoutDashboard, FileText, UserCircle, LogOut,
+  Users, ShoppingBag, Settings, 
+  LayoutDashboard, FileText, UserCircle, 
   MapPin
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
@@ -38,7 +38,8 @@ const PharmacistSidebar = () => {
   const {
     fileInputRef,
     getUserInitials,
-    handleAvatarClick
+    handleAvatarClick,
+    handleFileChange
   } = useSidebarUserProfile(profile);
 
   // Navigate specifically for pharmacy views
@@ -98,7 +99,7 @@ const PharmacistSidebar = () => {
           />
           
           <SidebarCollapsibleItem 
-            icon={<User className="w-5 h-5 mr-3" />}
+            icon={<UserCircle className="w-5 h-5 mr-3" />}
             label="Profile"
             isOpen={isProfileOpen}
             isActive={isPharmacistSectionActive('profile')}
@@ -143,6 +144,7 @@ const PharmacistSidebar = () => {
         navigateToProfile={() => navigateToPharmacyView('profile', 'personal', 'profileTab')}
         navigateToBilling={() => navigateToPharmacyView('orders', 'payments', 'ordersTab')}
         navigateToUpgrade={() => navigate('/upgrade')}
+        handleFileChange={handleFileChange}
       />
     </aside>
   );

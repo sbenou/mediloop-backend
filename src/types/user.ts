@@ -27,6 +27,9 @@ export interface UserProfile {
   created_at: string | null;
   updated_at: string | null;
   license_number: string | null;
+  // Adding pharmacy-specific fields
+  pharmacy_name?: string | null;
+  pharmacy_logo_url?: string | null;
 }
 
 export interface AuthUser {

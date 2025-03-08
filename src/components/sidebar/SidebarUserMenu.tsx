@@ -23,6 +23,7 @@ interface SidebarUserMenuProps {
   navigateToProfile: () => void;
   navigateToBilling: () => void;
   navigateToUpgrade: () => void;
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
 const SidebarUserMenu = ({
@@ -34,38 +35,42 @@ const SidebarUserMenu = ({
   handleLogout,
   navigateToProfile,
   navigateToBilling,
-  navigateToUpgrade
+  navigateToUpgrade,
+  handleFileChange
 }: SidebarUserMenuProps) => {
+  // Determine display name based on user role
+  const displayName = userRole === 'pharmacist' 
+    ? profile?.pharmacy_name || 'Pharmacy' 
+    : profile?.full_name || 'User';
+  
+  // Determine email or secondary text
+  const secondaryText = userRole === 'pharmacist'
+    ? 'Pharmacy Account'
+    : profile?.email || 'user@example.com';
+
   return (
     <div className="border-t p-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
-            <div onClick={handleAvatarClick}>
+            <div onClick={(e) => {
+              e.stopPropagation();
+              handleAvatarClick(e);
+            }}>
               <UserAvatar 
                 userProfile={profile} 
                 canUpload={true} 
-                onAvatarClick={handleAvatarClick} 
+                onAvatarClick={(e) => {
+                  e.stopPropagation();
+                  handleAvatarClick(e);
+                }} 
                 fallbackText={getUserInitials()} 
                 isSquare={userRole === 'pharmacist'}
               />
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={(e) => {
-                  // Handle file change
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  
-                  console.log("Avatar file selected:", file.name);
-                }}
-              />
             </div>
-            <div className="overflow-hidden flex-1" onClick={(e) => e.stopPropagation()}>
-              <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
-              <p className="text-xs text-muted-foreground truncate">{profile?.email || 'user@example.com'}</p>
+            <div className="overflow-hidden flex-1">
+              <p className="text-sm font-medium truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{secondaryText}</p>
             </div>
             <ChevronDown className="h-4 w-4 opacity-50" />
           </div>
@@ -103,6 +108,13 @@ const SidebarUserMenu = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileChange}
+      />
     </div>
   );
 };
