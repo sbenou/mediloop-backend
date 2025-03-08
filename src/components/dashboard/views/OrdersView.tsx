@@ -36,10 +36,8 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   
   // Set correct view when navigating from sidebar
   useEffect(() => {
-    // Check if we're on the orders page
     if (location.pathname === '/my-orders' || 
         (location.pathname === '/dashboard' && searchParams.get('view') === 'orders')) {
-      // Get the current tab from URL or from props
       const currentTab = location.pathname === '/my-orders' 
         ? searchParams.get('view') || 'orders'
         : searchParams.get('ordersTab') || 'orders';
@@ -78,12 +76,12 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   const tabs = getTabs();
   
-  // Determine which tab should be active
+  // Determine which tab should be active or use the first tab as default
   const getActiveTab = () => {
     if (location.pathname === '/my-orders') {
       return searchParams.get('view') || 'orders';
     }
-    return searchParams.get('ordersTab') || tabs[0].id;
+    return activeTab || tabs[0].id;
   };
 
   // Render empty table state based on role and tab
@@ -141,7 +139,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
       </div>
 
       {/* Orders section with tabs */}
-      <Tabs defaultValue={currentActiveTab || tabs[0].id} value={currentActiveTab || tabs[0].id} onValueChange={handleTabChange}>
+      <Tabs defaultValue={currentActiveTab} value={currentActiveTab} onValueChange={handleTabChange}>
         <TabsList>
           {tabs.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>

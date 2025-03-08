@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 
 // Import the components for each section
@@ -19,26 +19,15 @@ interface ProfileViewProps {
 const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Handle tab change
   const handleTabChange = (value: string) => {
-    navigate(`/dashboard?view=profile&profileTab=${value}`);
-  };
-
-  // Ensure the active tab matches the URL
-  useEffect(() => {
-    // This ensures the tab state is synchronized with the URL parameter
-    const tabsElement = document.querySelector('[role="tablist"]');
-    if (tabsElement) {
-      const activeTabButton = tabsElement.querySelector(`[data-state="active"]`);
-      if (!activeTabButton || activeTabButton.getAttribute('value') !== activeTab) {
-        const targetButton = tabsElement.querySelector(`[value="${activeTab}"]`);
-        if (targetButton) {
-          (targetButton as HTMLElement).click();
-        }
-      }
+    console.log("ProfileView: Tab changed to:", value);
+    if (location.pathname === '/dashboard') {
+      navigate(`/dashboard?view=profile&profileTab=${value}`);
     }
-  }, [activeTab]);
+  };
 
   // Get role-specific tabs configuration
   const getTabs = () => {
@@ -77,6 +66,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
 
   const tabs = getTabs();
 
+  // Determine which tab should be active or use the first tab as default
+  const currentActiveTab = activeTab || tabs[0].id;
+
   return (
     <div className="space-y-6">
       <div>
@@ -86,7 +78,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
         </p>
       </div>
       
-      <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange}>
+      <Tabs defaultValue={currentActiveTab} value={currentActiveTab} onValueChange={handleTabChange}>
         <TabsList>
           {tabs.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>
