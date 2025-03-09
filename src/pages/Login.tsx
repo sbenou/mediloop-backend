@@ -1,5 +1,5 @@
 
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -85,7 +85,9 @@ const Login = () => {
 
   // If user is already authenticated, prevent showing the login page
   if (isAuthenticated) {
-    return null; // Instead of returning Navigate, we handle the redirect in the useEffect hook
+    // Explicitly redirect to dashboard here to avoid blank page
+    navigate('/dashboard', { replace: true });
+    return null;
   }
 
   // Show login form

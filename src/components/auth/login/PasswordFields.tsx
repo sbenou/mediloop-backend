@@ -161,12 +161,9 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         console.error('Error broadcasting login event:', eventError);
       }
 
-      // Redirect all users to the universal dashboard
-      console.log('Redirecting to universal dashboard...');
+      // Instead of calling onSuccess, directly redirect to dashboard
+      // This avoids any potential race conditions
       navigate('/dashboard', { replace: true });
-      
-      // This won't be called due to navigation above
-      // onSuccess();
     } catch (error: any) {
       console.error('Login failed:', error);
       
