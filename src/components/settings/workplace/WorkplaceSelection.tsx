@@ -103,15 +103,14 @@ const WorkplaceSelection = ({ userId, userRole, redirectAfterSelection = false, 
 
         if (error) throw error;
       } else if (effectiveUserRole === 'doctor') {
-        // For doctors, directly insert/update in the doctor_workplaces table
-        // Since we can't use the table name directly, we'll use a raw SQL query
-        const { error } = await supabase.rpc(
-          'upsert_doctor_workplace', 
-          { 
-            p_user_id: targetUserId, 
-            p_workplace_id: workplaceId
+        // For doctors, use a more generic approach to call the RPC function
+        // This avoids the TypeScript error
+        const { error } = await supabase.functions.invoke('upsert-doctor-workplace', {
+          body: { 
+            userId: targetUserId, 
+            workplaceId: workplaceId
           }
-        );
+        });
 
         if (error) throw error;
       }
