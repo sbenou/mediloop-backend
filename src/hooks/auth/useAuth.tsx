@@ -163,7 +163,8 @@ export const useAuth = () => {
     profile: auth.profile,
     user: auth.user,
     hasPermission: (permission: string) => isLoading || permissions.includes(permission),
-  }), [auth.profile, auth.user, isLoading, permissions]);
+    isPharmacist: userRole === 'pharmacist',
+  }), [auth.profile, auth.user, isLoading, permissions, userRole]);
 
   return {
     isAuthenticated,
@@ -174,5 +175,6 @@ export const useAuth = () => {
     user: memoizedValues.user,
     profile: memoizedValues.profile,
     refreshSession,
+    isPharmacist: memoizedValues.isPharmacist
   };
 };

@@ -11,7 +11,7 @@ import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { supabase, clearAllAuthStorage } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { User, CreditCard, Bell, LogOut } from "lucide-react";
+import { User, CreditCard, Bell, LogOut, Store } from "lucide-react";
 
 export const UserMenuItems = () => {
   const navigate = useNavigate();
@@ -104,6 +104,12 @@ export const UserMenuItems = () => {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          {userRole === 'pharmacist' && (
+            <DropdownMenuItem onClick={() => navigate(`/pharmacy/profile`)}>
+              <Store className="mr-2 h-4 w-4" />
+              <span>Pharmacy Profile</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => {
             console.log(`Navigating to profile route: ${routePrefix}/profile`);
             navigate(`${routePrefix}/profile`);

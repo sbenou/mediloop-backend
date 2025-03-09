@@ -36,3 +36,11 @@ export const isLoadingSelector = selector({
     return auth.isLoading;
   },
 });
+
+export const isPharmacistSelector = selector({
+  key: 'isPharmacist',
+  get: ({ get }) => {
+    const auth = get(authState);
+    return auth.profile?.role === 'pharmacist';
+  },
+});
