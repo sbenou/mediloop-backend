@@ -103,13 +103,11 @@ const WorkplaceSelection = ({ userId, userRole, redirectAfterSelection = false, 
 
         if (error) throw error;
       } else if (effectiveUserRole === 'doctor') {
-        // For doctors, we would store their workplace selection
-        // This is a placeholder - implement the actual doctor workplace association
-        const { error } = await supabase
-          .from('doctor_workplaces') // You might need to create this table
-          .upsert([
-            { user_id: targetUserId, workplace_id: workplaceId }
-          ]);
+        // For doctors, use a custom query since we don't have TypeScript definition for doctor_workplaces yet
+        const { error } = await supabase.rpc('upsert_doctor_workplace', {
+          p_user_id: targetUserId,
+          p_workplace_id: workplaceId
+        });
 
         if (error) throw error;
       }

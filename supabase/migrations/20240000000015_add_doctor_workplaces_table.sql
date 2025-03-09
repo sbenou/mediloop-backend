@@ -34,3 +34,18 @@ CREATE POLICY "Users can delete their own workplace selection"
     FOR DELETE
     TO authenticated
     USING (auth.uid() = user_id);
+
+-- Create stored procedure to upsert doctor workplace
+CREATE OR REPLACE FUNCTION public.upsert_doctor_workplace(p_user_id UUID, p_workplace_id UUID)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    INSERT INTO public.doctor_workplaces (user_id, workplace_id)
+    VALUES (p_user_id, p_workplace_id)
+    ON CONFLICT (user_id) 
+    DO UPDATE SET 
+        workplace_id = p_workplace_id;
+END;
+$$;

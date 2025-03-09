@@ -23,3 +23,10 @@ export type Subcategory = Tables<'subcategories'>
 export type UserPharmacy = Tables<'user_pharmacies'>
 export type Notification = Tables<'notifications'>
 export type Teleconsultation = Tables<'teleconsultations'>
+
+// Define a custom type for doctor workplace since it's not in the generated types yet
+export interface DoctorWorkplace {
+  user_id: string;
+  workplace_id: string;
+  created_at: string;
+}
