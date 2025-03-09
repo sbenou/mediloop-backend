@@ -1,14 +1,25 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfile } from "@/types/user";
+import { cn } from "@/lib/utils";
 
 export interface UserAvatarProps {
   userProfile: UserProfile;
   fallbackText?: string;
   size?: "sm" | "md" | "lg" | "xl";
+  canUpload?: boolean;
+  onAvatarClick?: (e: React.MouseEvent) => void;
+  isSquare?: boolean;
 }
 
-const UserAvatar = ({ userProfile, fallbackText, size = "md" }: UserAvatarProps) => {
+const UserAvatar = ({ 
+  userProfile, 
+  fallbackText, 
+  size = "md", 
+  canUpload = false,
+  onAvatarClick,
+  isSquare = false
+}: UserAvatarProps) => {
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
     md: "h-10 w-10 text-sm",
@@ -16,10 +27,14 @@ const UserAvatar = ({ userProfile, fallbackText, size = "md" }: UserAvatarProps)
     xl: "h-20 w-20 text-xl"
   };
 
-  const avatarClass = sizeClasses[size] || sizeClasses.md;
+  const avatarClass = cn(
+    sizeClasses[size] || sizeClasses.md,
+    isSquare ? "rounded-md" : "rounded-full",
+    canUpload && "cursor-pointer hover:opacity-80 transition-opacity"
+  );
   
   const initials = fallbackText || 
-    (userProfile.full_name ? 
+    (userProfile?.full_name ? 
       userProfile.full_name.split(' ')
         .map(name => name[0])
         .join('')
@@ -27,10 +42,21 @@ const UserAvatar = ({ userProfile, fallbackText, size = "md" }: UserAvatarProps)
         .substring(0, 2) : 
       "U");
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (canUpload && onAvatarClick) {
+      onAvatarClick(e);
+    }
+  };
+
   return (
-    <Avatar className={avatarClass}>
-      <AvatarImage src={userProfile.avatar_url || undefined} alt={userProfile.full_name || "User"} />
-      <AvatarFallback>{initials}</AvatarFallback>
+    <Avatar className={avatarClass} onClick={handleClick}>
+      <AvatarImage 
+        src={userProfile?.avatar_url || undefined} 
+        alt={userProfile?.full_name || "User"} 
+      />
+      <AvatarFallback className={isSquare ? "rounded-md" : "rounded-full"}>
+        {initials}
+      </AvatarFallback>
     </Avatar>
   );
 };
