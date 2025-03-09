@@ -132,7 +132,8 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
       const completeProfile = profile ? {
         ...profile,
         pharmacy_name: profile.pharmacy_name || null,
-        pharmacy_logo_url: profile.pharmacy_logo_url || null
+        pharmacy_logo_url: profile.pharmacy_logo_url || null,
+        is_active: !profile.is_blocked
       } : null;
 
       // Update global auth state

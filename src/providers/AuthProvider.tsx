@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase, getSessionFromStorage } from '@/lib/supabase';
@@ -71,17 +70,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { profile: null, permissions: [] };
       }
 
-      const safeProfile = safeQueryResult<UserProfile>(profile);
-      if (!safeProfile) {
+      if (!profile) {
         console.error('No profile found for user:', userId);
         return { profile: null, permissions: [] };
       }
 
       // Ensure pharmacy fields exist
       const completeProfile: UserProfile = {
-        ...safeProfile,
-        pharmacy_name: safeProfile.pharmacy_name || null,
-        pharmacy_logo_url: safeProfile.pharmacy_logo_url || null
+        ...profile,
+        pharmacy_name: profile.pharmacy_name || null,
+        pharmacy_logo_url: profile.pharmacy_logo_url || null,
+        is_active: !profile.is_blocked
       };
 
       const permissions = completeProfile.role_id 
@@ -99,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Error in fetchAndSetProfile:', error);
       return { profile: null, permissions: [] };
     }
-  }, [fetchUserPermissions]);
+  }, [fetchUserPermissions, setAuth]);
 
   const updateAuthState = useCallback(async (session: any | null) => {
     if (!session?.user) {

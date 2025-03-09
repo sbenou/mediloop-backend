@@ -27,9 +27,11 @@ export interface UserProfile {
   created_at: string | null;
   updated_at: string | null;
   license_number: string | null;
-  // Adding pharmacy-specific fields
+  // Pharmacy-specific fields
   pharmacy_name: string | null;
   pharmacy_logo_url: string | null;
+  // Add a derived field for PharmacyTeam.tsx to handle is_active references
+  is_active?: boolean;
 }
 
 export interface AuthUser {

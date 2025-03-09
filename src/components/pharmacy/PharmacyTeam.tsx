@@ -122,21 +122,21 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         
       if (profilesError) throw profilesError;
       
-      if (profiles) {
-        const members: TeamMember[] = profiles.map(profile => ({
+      if (profiles && profiles.length > 0) {
+        const teamMembers = profiles.map(profile => ({
           id: profile.id,
-          user_id: profile.id,
-          full_name: profile.full_name || 'Unknown',
-          email: profile.email || 'No email',
+          name: profile.full_name || 'No Name',
+          email: profile.email || 'No Email',
           avatar_url: profile.avatar_url,
-          role: profile.role || 'pharmacy_user',
+          role: profile.role || 'staff',
           is_active: !profile.is_blocked,
+          joined_date: new Date().toISOString(),
           pharmacy_name: profile.pharmacy_name || null,
           pharmacy_logo_url: profile.pharmacy_logo_url || null
         }));
-        
-        setTeamMembers(members);
-        setFilteredStaff(members);
+        setTeamMembers(teamMembers);
+      } else {
+        setTeamMembers([]);
       }
     } catch (error) {
       console.error('Error fetching team members:', error);
@@ -651,16 +651,16 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                   <div className="relative">
                     <UserAvatar 
                       userProfile={{
-                        id: member.profile.id,
-                        avatar_url: member.profile.avatar_url,
-                        full_name: member.profile.full_name,
-                        role: member.profile.role,
+                        id: member.id,
+                        avatar_url: member.avatar_url,
+                        full_name: member.name,
+                        role: member.role,
                         role_id: null,
-                        email: member.profile.email,
+                        email: member.email,
                         date_of_birth: null,
                         city: null,
                         auth_method: null,
-                        is_blocked: !member.profile.is_active,
+                        is_blocked: !member.is_active,
                         doctor_stamp_url: null,
                         doctor_signature_url: null,
                         cns_card_front: null,
@@ -670,8 +670,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         created_at: null,
                         updated_at: null,
                         license_number: null,
-                        pharmacy_name: member.profile.pharmacy_name,
-                        pharmacy_logo_url: member.profile.pharmacy_logo_url
+                        pharmacy_name: member.pharmacy_name,
+                        pharmacy_logo_url: member.pharmacy_logo_url,
+                        is_active: member.is_active
                       }}
                     />
                   </div>

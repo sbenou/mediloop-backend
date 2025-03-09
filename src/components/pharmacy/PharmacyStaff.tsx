@@ -70,6 +70,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
       if (!pharmacyUsers || pharmacyUsers.length === 0) {
         setStaffMembers([]);
         setFilteredStaff([]);
+        setLoading(false);
         return;
       }
       
@@ -87,7 +88,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
         
       if (profilesError) throw profilesError;
       
-      if (profiles) {
+      if (profiles && profiles.length > 0) {
         const members: StaffMember[] = profiles.map(profile => ({
           id: profile.id,
           full_name: profile.full_name || 'Unknown',
@@ -102,6 +103,9 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
         
         setStaffMembers(members);
         setFilteredStaff(members);
+      } else {
+        setStaffMembers([]);
+        setFilteredStaff([]);
       }
     } catch (error) {
       console.error('Error fetching staff members:', error);
@@ -232,7 +236,8 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                           updated_at: null,
                           license_number: null,
                           pharmacy_name: staff.pharmacy_name,
-                          pharmacy_logo_url: staff.pharmacy_logo_url
+                          pharmacy_logo_url: staff.pharmacy_logo_url,
+                          is_active: staff.is_active
                         }}
                       />
                       <div>
@@ -305,7 +310,8 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                   updated_at: null,
                   license_number: null,
                   pharmacy_name: selectedUser.pharmacy_name,
-                  pharmacy_logo_url: selectedUser.pharmacy_logo_url
+                  pharmacy_logo_url: selectedUser.pharmacy_logo_url,
+                  is_active: selectedUser.is_active
                 }}
               />
               <h3 className="mt-2 text-lg font-semibold">{selectedUser.full_name}</h3>

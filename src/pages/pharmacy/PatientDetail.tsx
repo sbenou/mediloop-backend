@@ -105,7 +105,8 @@ const PatientDetail = () => {
         updated_at: null,
         license_number: null,
         pharmacy_name: patientData.pharmacy_name,
-        pharmacy_logo_url: patientData.pharmacy_logo_url
+        pharmacy_logo_url: patientData.pharmacy_logo_url,
+        is_active: patientData.is_blocked !== true
       };
       
       setPatient(completeProfile);
