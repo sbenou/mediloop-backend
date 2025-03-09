@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 
 // Import the components for each section
@@ -18,13 +18,16 @@ interface ProfileViewProps {
 
 const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Handle tab change
   const handleTabChange = (value: string) => {
     console.log("ProfileView: Tab changed to:", value);
-    navigate(`/dashboard?view=profile&profileTab=${value}`);
+    if (location.pathname === '/dashboard') {
+      navigate(`/dashboard?view=profile&profileTab=${value}`);
+    }
   };
 
   // Get role-specific tabs configuration

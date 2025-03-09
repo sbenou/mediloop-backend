@@ -163,6 +163,13 @@ const OrdersPage = () => {
   return (
     <PharmacistLayout>
       <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+          <p className="text-muted-foreground">
+            View and manage all pharmacy orders and payments.
+          </p>
+        </div>
+        
         <Tabs defaultValue={tab} value={tab} onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="all">All Orders</TabsTrigger>
