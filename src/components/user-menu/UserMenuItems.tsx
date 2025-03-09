@@ -1,4 +1,3 @@
-
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -109,17 +108,6 @@ export const UserMenuItems = () => {
       isUserPharmacist
     );
     
-    // The link will always be included in the markup for pharmacists
-    const pharmacyProfileLink = (
-      <DropdownMenuItem onClick={() => {
-        console.log('Navigating to pharmacy profile from UserMenuItems');
-        navigate('/pharmacy/profile');
-      }}>
-        <Store className="mr-2 h-4 w-4" />
-        <span>Pharmacy Profile</span>
-      </DropdownMenuItem>
-    );
-    
     return (
       <>
         <DropdownMenuLabel className="font-normal">
@@ -134,12 +122,21 @@ export const UserMenuItems = () => {
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Upgrade to Pro</span>
           </DropdownMenuItem>
+          
+          {/* Explicitly add Pharmacy Profile link right after Upgrade to Pro */}
+          {(userRole === 'pharmacist' || isPharmacist || isUserPharmacist) && (
+            <DropdownMenuItem onClick={() => {
+              console.log('Navigating to pharmacy profile from UserMenuItems');
+              navigate('/pharmacy/profile');
+            }} className="pharmacy-profile-link">
+              <Store className="mr-2 h-4 w-4" />
+              <span>Pharmacy Profile</span>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
+        
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {/* ALWAYS show pharmacy profile for any user with pharmacist role */}
-          {isUserPharmacist && pharmacyProfileLink}
-          
           <DropdownMenuItem onClick={() => {
             console.log(`Navigating to profile route: ${routePrefix}/profile`);
             navigate(`${routePrefix}/profile`);

@@ -42,8 +42,11 @@ export const RoleDebugger = () => {
       if (shouldShowPharmacyLink) {
         console.log("Pharmacist detected - Pharmacy Profile link SHOULD be visible");
         try {
-          const pharmacyLinkEl = document.querySelector('.pharmacy-profile-link');
-          console.log("Pharmacy link element found:", !!pharmacyLinkEl);
+          setTimeout(() => {
+            const pharmacyLinkEl = document.querySelector('.pharmacy-profile-link');
+            console.log("Pharmacy link element found after delay:", !!pharmacyLinkEl);
+            console.log("Full dropdown menu items:", document.querySelectorAll('[class*="dropdown-menu"]').length);
+          }, 2000); // Check after a delay to allow rendering
         } catch (e) {
           console.error("Error checking for pharmacy link:", e);
         }
