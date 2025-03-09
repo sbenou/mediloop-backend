@@ -164,9 +164,13 @@ const OrdersPage = () => {
     <PharmacistLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {tab === 'payments' ? 'Payment Records' : 'Orders Management'}
+          </h1>
           <p className="text-muted-foreground">
-            View and manage all pharmacy orders and payments.
+            {tab === 'payments' 
+              ? 'View and manage all pharmacy payment records.' 
+              : 'View and manage all pharmacy orders.'}
           </p>
         </div>
         

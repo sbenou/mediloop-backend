@@ -148,18 +148,36 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   const currentActiveTab = getActiveTab();
   console.log("OrdersView: Current active tab:", currentActiveTab);
 
-  // Display header for all roles
+  // Get view-specific header text
+  const getHeaderText = () => {
+    if (currentActiveTab === 'payments') {
+      return "Payment Records";
+    }
+    return "Orders Management";
+  };
+
+  // Get view-specific description text
+  const getDescriptionText = () => {
+    if (currentActiveTab === 'payments') {
+      return userRole === 'patient' 
+        ? "View your payment history and transaction details." 
+        : "Manage payment records and transaction history.";
+    }
+    return userRole === 'patient' 
+      ? "View and track your orders and delivery status." 
+      : "Manage customer orders and process them efficiently.";
+  };
+
+  // Should headers be displayed based on role and view
   const showHeader = true;
 
   return (
     <div className="space-y-6">
       {showHeader && (
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{getHeaderText()}</h1>
           <p className="text-muted-foreground">
-            {userRole === 'patient' 
-              ? "View and manage your orders and payments." 
-              : "Manage customer orders and process them efficiently."}
+            {getDescriptionText()}
           </p>
         </div>
       )}
