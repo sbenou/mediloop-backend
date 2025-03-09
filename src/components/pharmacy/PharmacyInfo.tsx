@@ -5,7 +5,13 @@ import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Phone, Mail, MapPin, Edit, Save } from 'lucide-react';
+import { Phone, Mail, MapPin, Edit, Save, MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PharmacyInfoProps {
   pharmacy: {
@@ -177,13 +183,6 @@ const PharmacyInfo: React.FC<PharmacyInfoProps> = ({ pharmacy }) => {
           <p className="text-sm">{pharmacy.email}</p>
         </div>
       )}
-      
-      <div className="pt-2">
-        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit Information
-        </Button>
-      </div>
     </div>
   );
 };

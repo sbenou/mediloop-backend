@@ -6,12 +6,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Image, Upload, Clock, MapPin, Users, UserCog, AlertTriangle, Store } from "lucide-react";
+import { Image, Upload, Clock, MapPin, Users, UserCog, AlertTriangle, Store, Edit, MoreVertical } from 'lucide-react';
 import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import PharmacyTeam from "@/components/pharmacy/PharmacyTeam";
 import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PharmacyData {
   id: string;
@@ -32,6 +38,8 @@ const PharmacyProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [isEditingHours, setIsEditingHours] = useState(false);
 
   useEffect(() => {
     fetchPharmacyData();
@@ -270,29 +278,63 @@ const PharmacyProfile = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center">
-                <Users className="mr-2 h-5 w-5" />
-                Pharmacy Information
-              </CardTitle>
-              <CardDescription>
-                Contact details and address
-              </CardDescription>
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center">
+                  <Users className="mr-2 h-5 w-5" />
+                  Pharmacy Information
+                </CardTitle>
+                <CardDescription>
+                  Contact details and address
+                </CardDescription>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsEditingInfo(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Information
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent>
-              <PharmacyInfo pharmacy={pharmacyData} />
+              {isEditingInfo ? (
+                <PharmacyInfo pharmacy={pharmacyData} />
+              ) : (
+                <PharmacyInfo pharmacy={pharmacyData} />
+              )}
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center">
-                <Clock className="mr-2 h-5 w-5" />
-                Opening Hours
-              </CardTitle>
-              <CardDescription>
-                When your pharmacy is open
-              </CardDescription>
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center">
+                  <Clock className="mr-2 h-5 w-5" />
+                  Opening Hours
+                </CardTitle>
+                <CardDescription>
+                  When your pharmacy is open
+                </CardDescription>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsEditingHours(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Hours
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent>
               <PharmacyHours hours={pharmacyData.hours} pharmacyId={pharmacyData.id} />
