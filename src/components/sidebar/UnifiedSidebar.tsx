@@ -41,7 +41,11 @@ const UnifiedSidebar = () => {
     handleFileChange
   } = useSidebarUserProfile(profile);
 
-  // Platform menu items
+  const navigateToPharmacyProfile = () => {
+    console.log('Navigating to pharmacy profile from UnifiedSidebar');
+    navigate('/pharmacy/profile');
+  };
+
   const platformMenuItems = [
     {
       label: 'Dashboard',
@@ -51,7 +55,6 @@ const UnifiedSidebar = () => {
     }
   ];
   
-  // Admin menu items
   const adminMenuItems = [
     {
       label: 'Settings',
@@ -61,7 +64,6 @@ const UnifiedSidebar = () => {
     }
   ];
 
-  // Orders subItems
   const ordersSubItems = [
     {
       label: 'Orders',
@@ -83,7 +85,6 @@ const UnifiedSidebar = () => {
     }
   ];
   
-  // Profile subItems - filter out Pharmacy and My Doctor for pharmacist users
   const profileSubItems = [
     {
       label: 'Personal Details',
@@ -128,7 +129,6 @@ const UnifiedSidebar = () => {
             />
           ))}
           
-          {/* Profile section with special handling for pharmacists */}
           <SidebarCollapsibleItem 
             icon={<User className="w-5 h-5 mr-3" />}
             label="Profile"
@@ -148,7 +148,6 @@ const UnifiedSidebar = () => {
             ))}
           </SidebarCollapsibleItem>
           
-          {/* Orders section with special handling for pharmacists */}
           <SidebarCollapsibleItem 
             icon={<ShoppingBag className="w-5 h-5 mr-3" />}
             label="Orders"
@@ -240,6 +239,7 @@ const UnifiedSidebar = () => {
           }
         }}
         navigateToUpgrade={() => navigate('/upgrade')}
+        navigateToPharmacyProfile={userRole === 'pharmacist' ? navigateToPharmacyProfile : undefined}
         handleFileChange={handleFileChange}
       />
     </aside>

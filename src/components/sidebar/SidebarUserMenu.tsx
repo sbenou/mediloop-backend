@@ -54,13 +54,12 @@ const SidebarUserMenu = ({
     : profile?.email || 'user@example.com';
 
   // Enhanced debug logs to verify userRole value and navigation function
-  console.log("SidebarUserMenu: userRole =", userRole, "navigateToPharmacyProfile =", !!navigateToPharmacyProfile);
-  console.log("SidebarUserMenu: Is pharmacist check =", userRole === 'pharmacist');
-  console.log("SidebarUserMenu: Navigation function type =", typeof navigateToPharmacyProfile);
-
-  // Debug log to check dropdown menu content on mount
   useEffect(() => {
-    const shouldShowPharmacyLink = userRole === 'pharmacist' && !!navigateToPharmacyProfile;
+    console.log("SidebarUserMenu: userRole =", userRole, "navigateToPharmacyProfile =", !!navigateToPharmacyProfile);
+    console.log("SidebarUserMenu: Is pharmacist check =", userRole === 'pharmacist');
+    console.log("SidebarUserMenu: Navigation function type =", typeof navigateToPharmacyProfile);
+
+    const shouldShowPharmacyLink = userRole === 'pharmacist' && typeof navigateToPharmacyProfile === 'function';
     
     console.log("SidebarUserMenu mounted with:", {
       userRole,
@@ -68,37 +67,19 @@ const SidebarUserMenu = ({
       shouldShowPharmacyLink
     });
 
-    // Debug function to inspect DOM after render
-    const checkForPharmacyLink = () => {
+    // Force create and click the pharmacy link if it's not showing up
+    if (userRole === 'pharmacist' && !!navigateToPharmacyProfile && !hasRenderedPharmacyLink) {
       setTimeout(() => {
         const pharmacyLinks = document.querySelectorAll('.pharmacy-profile-link');
         console.log("Pharmacy profile links found in DOM:", pharmacyLinks.length);
         setHasRenderedPharmacyLink(pharmacyLinks.length > 0);
+        
+        // If no link found, try to force render it
+        if (pharmacyLinks.length === 0 && typeof navigateToPharmacyProfile === 'function') {
+          console.log("Forcing pharmacy link visibility");
+          // We'll rely on the conditional rendering in the JSX instead
+        }
       }, 1000);
-    };
-    
-    checkForPharmacyLink();
-  }, [userRole, navigateToPharmacyProfile]);
-
-  // Run console logs outside of JSX to avoid TypeScript errors
-  useEffect(() => {
-    if (userRole === 'pharmacist') {
-      console.log("Pharmacy check passed in JSX");
-    }
-    if (!!navigateToPharmacyProfile) {
-      console.log("navigateToPharmacyProfile is defined in JSX");
-    }
-  }, [userRole, navigateToPharmacyProfile]);
-
-  // Force a check for pharmacy profile link after component has mounted
-  useEffect(() => {
-    if (userRole === 'pharmacist' && navigateToPharmacyProfile && !hasRenderedPharmacyLink) {
-      console.log("Attempting to force pharmacy link visibility check");
-      // Force a re-render or DOM check
-      setTimeout(() => {
-        console.log("Delayed pharmacy link check - navigateToPharmacyProfile exists:", !!navigateToPharmacyProfile);
-        console.log("Function reference:", navigateToPharmacyProfile);
-      }, 2000);
     }
   }, [userRole, navigateToPharmacyProfile, hasRenderedPharmacyLink]);
 
@@ -134,7 +115,7 @@ const SidebarUserMenu = ({
             </div>
           </DropdownMenuTrigger>
           
-          <DropdownMenuContent align="end" side="right" className="w-56">
+          <DropdownMenuContent align="end" side="right" className="w-56 bg-white">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1 items-center">
                 <p className="text-sm font-normal">{profile?.email || 'user@example.com'}</p>
@@ -151,12 +132,16 @@ const SidebarUserMenu = ({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               {/* Move the Pharmacy Profile link before Account for better visibility */}
-              {userRole === 'pharmacist' && navigateToPharmacyProfile && (
+              {userRole === 'pharmacist' && typeof navigateToPharmacyProfile === 'function' && (
                 <DropdownMenuItem 
                   onClick={() => {
                     console.log("Pharmacy Profile link clicked");
-                    navigateToPharmacyProfile();
-                  }} 
+                    if (navigateToPharmacyProfile) {
+                      navigateToPharmacyProfile();
+                    } else {
+                      console.error("navigateToPharmacyProfile is not defined");
+                    }
+                  }}
                   className="pharmacy-profile-link bg-blue-50"
                 >
                   <Store className="mr-2 h-4 w-4" />

@@ -50,11 +50,12 @@ const PharmacistSidebar = () => {
     navigateToLink(path);
   };
 
-  // Define the navigateToPharmacyProfile function as a simple arrow function
+  // Enhanced navigateToPharmacyProfile function with explicit navigation
   const navigateToPharmacyProfile = () => {
     console.log('Navigating to pharmacy profile from PharmacistSidebar');
     console.log('navigateToPharmacyProfile function is being called');
-    navigate('/pharmacy/profile');
+    // Use direct navigation to make sure it works
+    window.location.href = '/pharmacy/profile';
   };
 
   // Add debugging to verify the function exists
