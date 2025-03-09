@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { RefObject, useEffect } from "react";
+import { RefObject, useEffect, useState } from "react";
 
 interface SidebarUserMenuProps {
   profile: UserProfile | null;
@@ -40,6 +40,9 @@ const SidebarUserMenu = ({
   navigateToPharmacyProfile,
   handleFileChange
 }: SidebarUserMenuProps) => {
+  // State to track if the pharmacy link has been rendered
+  const [hasRenderedPharmacyLink, setHasRenderedPharmacyLink] = useState(false);
+  
   // Determine display name based on user role
   const displayName = userRole === 'pharmacist' 
     ? profile?.pharmacy_name || 'Pharmacy' 
@@ -57,10 +60,12 @@ const SidebarUserMenu = ({
 
   // Debug log to check dropdown menu content on mount
   useEffect(() => {
+    const shouldShowPharmacyLink = userRole === 'pharmacist' && !!navigateToPharmacyProfile;
+    
     console.log("SidebarUserMenu mounted with:", {
       userRole,
       hasPharmacyProfileFn: !!navigateToPharmacyProfile,
-      shouldShowPharmacyLink: userRole === 'pharmacist' && !!navigateToPharmacyProfile
+      shouldShowPharmacyLink
     });
 
     // Debug function to inspect DOM after render
@@ -68,6 +73,7 @@ const SidebarUserMenu = ({
       setTimeout(() => {
         const pharmacyLinks = document.querySelectorAll('.pharmacy-profile-link');
         console.log("Pharmacy profile links found in DOM:", pharmacyLinks.length);
+        setHasRenderedPharmacyLink(pharmacyLinks.length > 0);
       }, 1000);
     };
     
@@ -83,6 +89,18 @@ const SidebarUserMenu = ({
       console.log("navigateToPharmacyProfile is defined in JSX");
     }
   }, [userRole, navigateToPharmacyProfile]);
+
+  // Force a check for pharmacy profile link after component has mounted
+  useEffect(() => {
+    if (userRole === 'pharmacist' && navigateToPharmacyProfile && !hasRenderedPharmacyLink) {
+      console.log("Attempting to force pharmacy link visibility check");
+      // Force a re-render or DOM check
+      setTimeout(() => {
+        console.log("Delayed pharmacy link check - navigateToPharmacyProfile exists:", !!navigateToPharmacyProfile);
+        console.log("Function reference:", navigateToPharmacyProfile);
+      }, 2000);
+    }
+  }, [userRole, navigateToPharmacyProfile, hasRenderedPharmacyLink]);
 
   return (
     <div className="border-t p-4">
@@ -137,7 +155,7 @@ const SidebarUserMenu = ({
                 <DropdownMenuItem 
                   onClick={() => {
                     console.log("Pharmacy Profile link clicked");
-                    if (navigateToPharmacyProfile) navigateToPharmacyProfile();
+                    navigateToPharmacyProfile();
                   }} 
                   className="pharmacy-profile-link bg-blue-50"
                 >
