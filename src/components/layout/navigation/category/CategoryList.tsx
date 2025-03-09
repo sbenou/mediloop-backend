@@ -2,6 +2,8 @@
 import { useTranslation } from 'react-i18next';
 import { SubcategoryItem } from './SubcategoryItem';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from 'react';
 
 interface CategoryListProps {
   selectedType: 'pharmacy' | 'parapharmacy' | null;
@@ -21,6 +23,24 @@ export const CategoryList = ({
   getUniqueDescriptions
 }: CategoryListProps) => {
   const { t } = useTranslation();
+  const [isLoading, setIsLoading] = useState(true);
+  const [filteredCategories, setFilteredCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (selectedType) {
+      setIsLoading(true);
+      // Simulate async loading with a small delay
+      const timer = setTimeout(() => {
+        setFilteredCategories(getUniqueCategories(categories, selectedType));
+        setIsLoading(false);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setFilteredCategories([]);
+      setIsLoading(false);
+    }
+  }, [selectedType, categories, getUniqueCategories]);
 
   if (!selectedType) {
     return (
@@ -30,8 +50,9 @@ export const CategoryList = ({
     );
   }
 
-  const filteredCategories = getUniqueCategories(categories, selectedType);
-  console.log('Filtered categories:', filteredCategories);
+  if (isLoading) {
+    return <LoadingSkeletons />;
+  }
 
   if (!filteredCategories || filteredCategories.length === 0) {
     return (
@@ -69,5 +90,26 @@ export const CategoryList = ({
         })}
       </div>
     </ScrollArea>
+  );
+};
+
+// Loading skeleton component for categories and subcategories
+const LoadingSkeletons = () => {
+  return (
+    <div className="space-y-4 pr-4 p-2">
+      {[1, 2, 3].map((index) => (
+        <div key={index} className="space-y-2">
+          <Skeleton className="h-6 w-4/5 rounded-md mb-2" />
+          <div className="pl-4 space-y-2">
+            {[1, 2, 3].map((subIndex) => (
+              <Skeleton 
+                key={`${index}-${subIndex}`} 
+                className="h-4 w-3/4 rounded-md" 
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 };
