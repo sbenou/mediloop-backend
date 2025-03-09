@@ -12,11 +12,17 @@ import { authState } from "@/store/auth/atoms";
 import { supabase, clearAllAuthStorage } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { User, CreditCard, Bell, LogOut, Store } from "lucide-react";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 export const UserMenuItems = () => {
   const navigate = useNavigate();
   const [auth, setAuth] = useRecoilState(authState);
+  const { isPharmacist } = useAuth();
   const userRole = auth.profile?.role || 'user';
+
+  console.log('UserMenuItems rendering with userRole:', userRole);
+  console.log('UserMenuItems isPharmacist check:', isPharmacist);
+  console.log('UserMenuItems profile data:', auth.profile);
 
   const handleLogout = async () => {
     try {
@@ -90,7 +96,7 @@ export const UserMenuItems = () => {
     // Enhanced debugging
     console.log('Current user role in UserMenuItems:', userRole);
     console.log('Profile data:', auth.profile);
-    console.log('Is pharmacist check:', userRole === 'pharmacist');
+    console.log('Is pharmacist check:', userRole === 'pharmacist', isPharmacist);
     
     return (
       <>
@@ -109,10 +115,10 @@ export const UserMenuItems = () => {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {/* Always add pharmacy profile for pharmacists */}
-          {userRole === 'pharmacist' && (
+          {/* Always show pharmacy profile for pharmacists */}
+          {(userRole === 'pharmacist' || isPharmacist) && (
             <DropdownMenuItem onClick={() => {
-              console.log('Navigating to pharmacy profile');
+              console.log('Navigating to pharmacy profile from UserMenuItems');
               navigate('/pharmacy/profile');
             }}>
               <Store className="mr-2 h-4 w-4" />
@@ -145,7 +151,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole, auth.profile, setAuth]);
+  }, [navigate, userRole, auth.profile, setAuth, isPharmacist]);
 
   return menuItems;
 };

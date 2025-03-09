@@ -1,4 +1,3 @@
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +15,7 @@ import { getSessionFromStorage } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 
 const UserMenu = memo(() => {
-  const { isAuthenticated, isLoading, profile, user, userRole } = useAuth();
+  const { isAuthenticated, isLoading, profile, user, userRole, isPharmacist } = useAuth();
   const [localLoading, setLocalLoading] = useState(true);
   const [hasVisibleSession, setHasVisibleSession] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -103,13 +102,14 @@ const UserMenu = memo(() => {
     };
   }, [hasVisibleSession]);
 
-  // Log user role on mount
   useEffect(() => {
     if (profile) {
       console.log("UserMenu: Current user role:", userRole);
+      console.log("UserMenu: Is pharmacist:", isPharmacist);
       console.log("UserMenu: Profile data:", profile);
+      console.log("UserMenu: Direct role check:", profile.role === 'pharmacist');
     }
-  }, [profile, userRole]);
+  }, [profile, userRole, isPharmacist]);
 
   const handleNavigateToLogin = useCallback(() => {
     navigate('/login', { replace: true });
@@ -195,6 +195,13 @@ const UserMenu = memo(() => {
     );
   }
 
+  console.log("UserMenu rendering with:", {
+    isAuthenticated,
+    userRole,
+    isPharmacist,
+    profileRole: profile?.role
+  });
+
   return (
     <>
       <RoleDebugger />
@@ -219,6 +226,7 @@ const UserMenu = memo(() => {
               aria-label="User menu"
             >
               <span className="font-medium">{profile?.full_name || 'User'}</span>
+              <span className="text-xs text-gray-500">({profile?.role || 'unknown role'})</span>
             </button>
           </DropdownMenuTrigger>
         </div>

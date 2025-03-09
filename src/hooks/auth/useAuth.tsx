@@ -1,4 +1,3 @@
-
 import { useRecoilValue } from 'recoil';
 import { useMemo, useEffect, useState, useCallback } from 'react';
 import { 
@@ -20,7 +19,8 @@ export const useAuth = () => {
   const userRole = useRecoilValue(userRoleSelector);
   const permissions = useRecoilValue(userPermissionsSelector);
   const isLoading = useRecoilValue(isLoadingSelector);
-  const isPharmacist = useRecoilValue(isPharmacistSelector);
+  const isPharmacistFromSelector = useRecoilValue(isPharmacistSelector);
+  const isPharmacist = auth.profile?.role === 'pharmacist' || isPharmacistFromSelector;
   const [isRefreshingSession, setIsRefreshingSession] = useState(false);
   
   // Better session recovery for tab switching and session expiry
@@ -129,8 +129,10 @@ export const useAuth = () => {
       const currentPath = window.location.pathname;
       
       // Debug log for pharmacy role
-      if (userRole === 'pharmacist') {
+      if (userRole === 'pharmacist' || auth.profile?.role === 'pharmacist') {
         console.log('User has pharmacist role - should see pharmacy profile link');
+        console.log('Direct check:', auth.profile?.role === 'pharmacist');
+        console.log('Selector check:', isPharmacistFromSelector);
       }
       
       // Check if a superadmin is on a non-superadmin page
@@ -161,17 +163,17 @@ export const useAuth = () => {
       }
       
       // Log the current role and path for debugging
-      console.log(`Current user role: ${userRole}, Current path: ${currentPath}`);
+      console.log(`Current user role: ${userRole}, Current path: ${currentPath}, Is pharmacist: ${isPharmacist}`);
     }
-  }, [isAuthenticated, isLoading, userRole]);
+  }, [isAuthenticated, isLoading, userRole, auth.profile, isPharmacist, isPharmacistFromSelector]);
 
   // Memoize all values together to prevent unnecessary re-renders
   const memoizedValues = useMemo(() => ({
     profile: auth.profile,
     user: auth.user,
     hasPermission: (permission: string) => isLoading || permissions.includes(permission),
-    isPharmacist: userRole === 'pharmacist',
-  }), [auth.profile, auth.user, isLoading, permissions, userRole]);
+    isPharmacist: auth.profile?.role === 'pharmacist',
+  }), [auth.profile, auth.user, isLoading, permissions]);
 
   return {
     isAuthenticated,
@@ -182,6 +184,6 @@ export const useAuth = () => {
     user: memoizedValues.user,
     profile: memoizedValues.profile,
     refreshSession,
-    isPharmacist: userRole === 'pharmacist' // Ensure this is directly taken from userRole
+    isPharmacist: auth.profile?.role === 'pharmacist' // Make sure we're directly checking the profile role
   };
 };
