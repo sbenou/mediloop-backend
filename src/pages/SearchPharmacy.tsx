@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -12,22 +11,20 @@ import PharmacySelection from '@/components/settings/pharmacy/PharmacySelection'
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const SearchPharmacy = () => {
   const [search, setSearch] = useState('');
   const [isMapView, setIsMapView] = useState(false);
   const navigate = useNavigate();
   
-  // Get default coordinates for Luxembourg
   const { data: coordinates } = useQuery({
     queryKey: ['geo-coordinates'],
     queryFn: async () => {
-      // Default coordinates for Luxembourg
       return { lat: 49.8153, lon: 6.1296 };
     },
   });
   
-  // Use default coordinates if query hasn't returned yet
   const currentCoordinates = coordinates || { lat: 49.8153, lon: 6.1296 };
   
   const { pharmacies, isLoading } = usePharmacySearch(currentCoordinates);
@@ -39,7 +36,6 @@ const SearchPharmacy = () => {
   const isPharmacistSignup = locationState.isNewSignup && locationState.userRole === 'pharmacist';
   const isPharmacist = profile?.role === 'pharmacist' || isPharmacistSignup;
 
-  // Check if the pharmacist already has a pharmacy assigned
   const { data: pharmacyAssignment, isLoading: checkingPharmacy } = useQuery({
     queryKey: ['pharmacistPharmacy', profile?.id],
     enabled: !!profile?.id && profile?.role === 'pharmacist',
@@ -55,26 +51,21 @@ const SearchPharmacy = () => {
     },
   });
 
-  // Redirect to pharmacy profile if the pharmacist already has a pharmacy assigned
   useEffect(() => {
     if (profile?.role === 'pharmacist' && pharmacyAssignment?.pharmacy_id) {
       navigate('/pharmacy/profile');
     }
   }, [profile, pharmacyAssignment, navigate]);
 
-  // Toggle map/list view
   const toggleView = () => {
     setIsMapView(prev => !prev);
   };
 
-  // Handle search submission
   const searchPharmacy = (searchTerm: string) => {
     setSearch(searchTerm);
-    // In a real implementation, this would filter pharmacies or trigger a new search
     console.log("Searching for pharmacies near:", searchTerm);
   };
 
-  // Handle pharmacy selection
   const handleSelectPharmacy = (pharmacyId: string) => {
     setSelectedPharmacyId(pharmacyId);
   };
@@ -87,7 +78,6 @@ const SearchPharmacy = () => {
     navigate('/pharmacy/profile');
   };
 
-  // If this is a pharmacist during signup or a logged-in pharmacist without a pharmacy, show the pharmacy selection component
   if (isPharmacist && (!pharmacyAssignment?.pharmacy_id || isPharmacistSignup)) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -115,7 +105,6 @@ const SearchPharmacy = () => {
     );
   }
 
-  // Regular pharmacy search for patients
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
