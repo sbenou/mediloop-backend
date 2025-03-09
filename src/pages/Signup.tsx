@@ -4,11 +4,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignupForm } from "@/components/signup/SignupForm";
 import PharmacySelection from "@/components/settings/pharmacy/PharmacySelection";
+import WorkplaceSelection from "@/components/settings/workplace/WorkplaceSelection";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 const Signup = () => {
-  const [step, setStep] = useState<'form' | 'pharmacy'>('form');
+  const [step, setStep] = useState<'form' | 'workplace'>('form');
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -19,17 +20,35 @@ const Signup = () => {
     setUserId(newUserId);
     setUserRole(role);
     
-    if (role === 'pharmacist') {
-      setStep('pharmacy');
+    if (role === 'pharmacist' || role === 'doctor') {
+      setStep('workplace');
     } else {
-      // For non-pharmacist users, redirect to home
+      // For other users, redirect to home
       navigate('/', { replace: true });
     }
   };
 
-  const handlePharmacySelectionComplete = () => {
-    // Go to home page after pharmacy selection
+  const handleWorkplaceSelectionComplete = () => {
+    // Go to home page after workplace selection
     navigate('/', { replace: true });
+  };
+
+  const getWorkplaceTitle = () => {
+    if (userRole === 'pharmacist') {
+      return "Select Your Pharmacy";
+    } else if (userRole === 'doctor') {
+      return "Select Your Workplace";
+    }
+    return "Select Your Workplace";
+  };
+
+  const getWorkplaceDescription = () => {
+    if (userRole === 'pharmacist') {
+      return "As a pharmacist, please select the pharmacy you work at";
+    } else if (userRole === 'doctor') {
+      return "As a doctor, please select your workplace";
+    }
+    return "Please select your workplace";
   };
 
   return (
@@ -66,18 +85,19 @@ const Signup = () => {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <CardTitle className="text-2xl font-bold">Select Your Pharmacy</CardTitle>
+                <CardTitle className="text-2xl font-bold">{getWorkplaceTitle()}</CardTitle>
               </div>
               <CardDescription>
-                As a pharmacist, please select the pharmacy you work at
+                {getWorkplaceDescription()}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {userId && (
-                <PharmacySelection 
+              {userId && userRole && (
+                <WorkplaceSelection 
                   userId={userId}
+                  userRole={userRole}
                   redirectAfterSelection={true}
-                  onComplete={handlePharmacySelectionComplete}
+                  onComplete={handleWorkplaceSelectionComplete}
                 />
               )}
             </CardContent>
