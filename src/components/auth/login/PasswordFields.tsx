@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { useToast } from "@/components/ui/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,12 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { AuthRole } from '@/types/auth';
 import { useMutation } from '@tanstack/react-query';
 import { Icons } from '@/components/ui/icons';
-
-interface PasswordFieldsProps {
-  email: string;
-  onSuccess: () => Promise<void> | void;
-  onForgotPassword: () => void;
-}
+import { User, Session } from '@supabase/supabase-js';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -35,21 +31,27 @@ const formSchema = z.object({
   fullName: z.string().min(2, {
     message: "Full name must be at least 2 characters."
   }),
-  role: z.enum([AuthRole.PATIENT, AuthRole.DOCTOR, AuthRole.PHARMACIST], {
+  role: z.enum([
+    AuthRole.PATIENT,
+    AuthRole.DOCTOR,
+    AuthRole.PHARMACIST
+  ], {
     required_error: "Please select a role."
   })
 });
 
-const PasswordFields: React.FC<PasswordFieldsProps> = ({ email, onSuccess, onForgotPassword }) => {
+type FormValues = z.infer<typeof formSchema>;
+
+const PasswordFields = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-
-  const form = useForm({
+  
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: email || "",
+      email: "",
       password: "",
       confirmPassword: "",
       fullName: "",
@@ -58,7 +60,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({ email, onSuccess, onFor
   });
 
   const mutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
+    mutationFn: async (values: FormValues) => {
       setIsLoading(true);
       const { email, password, fullName, role } = values;
       
@@ -96,9 +98,6 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({ email, onSuccess, onFor
         description: "You have successfully registered. Please check your email to verify your account."
       });
       navigate(`/auth/verify-otp?type=email&email=${data.user?.email}`);
-      if (onSuccess) {
-        onSuccess();
-      }
     },
     onError: (error: Error) => {
       setIsLoading(false);
@@ -110,7 +109,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({ email, onSuccess, onFor
     }
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: FormValues) => {
     mutation.mutate(values);
   };
 
@@ -121,29 +120,29 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({ email, onSuccess, onFor
         .select('*')
         .eq('id', user.id)
         .single();
-
+      
       if (profileError && profileError.code !== 'PGRST116') {
         console.error("Error checking profile:", profileError);
         throw new Error("Failed to check existing profile");
       }
-
+      
       const fullName = searchParams.get('name');
       const role = searchParams.get('role');
-
+      
       const profileData = {
         id: user.id,
         role: role || 'patient',
         full_name: fullName || '',
         email: user.email,
         pharmacy_name: null,
-        pharmacy_logo_url: null,
+        pharmacy_logo_url: null
       };
-
+      
       if (!existingProfile) {
         const { error: insertError } = await supabase
           .from('profiles')
           .insert([profileData]);
-
+          
         if (insertError) {
           console.error("Error creating profile:", insertError);
           throw new Error("Failed to create profile");
@@ -248,9 +247,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({ email, onSuccess, onFor
               )}
             />
             <Button disabled={isLoading}>
-              {isLoading && (
-                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
               Create Account
             </Button>
           </form>

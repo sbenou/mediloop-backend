@@ -16,7 +16,7 @@ import Login from '@/pages/Login';
 import { OTPVerificationPage } from '@/components/auth/login/OTPVerificationPage';
 import ResetPassword from '@/pages/ResetPassword';
 import Signup from '@/pages/Signup';
-import { EmailConfirmationHandler } from '@/components/auth/EmailConfirmationHandler';
+import EmailConfirmationHandler from '@/components/auth/EmailConfirmationHandler';
 import Products from '@/pages/Products';
 import Services from '@/pages/Services';
 import BecomePartner from '@/pages/BecomePartner';

@@ -1,125 +1,51 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/hooks/auth/useAuth";
-import { 
-  ProfileView, 
-  SettingsView, 
-  OrdersView, 
-  PrescriptionsView,
-  HomeView,
-  PharmacyView
-} from "@/components/dashboard/views";
-import TeleconsultationsView from "@/components/dashboard/views/TeleconsultationsView";
-import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/hooks/auth/useAuth';
+import HomeView from '@/components/dashboard/views/HomeView';
+import ProfileView from '@/components/dashboard/views/ProfileView';
+import OrdersView from '@/components/dashboard/views/OrdersView';
+import PrescriptionsView from '@/components/dashboard/views/PrescriptionsView';
+import SettingsView from '@/components/dashboard/views/SettingsView';
+import TeleconsultationsView from '@/components/dashboard/views/TeleconsultationsView';
+import PharmacyView from '@/components/dashboard/views/PharmacyView';
+import { DashboardSidebar } from '@/components/sidebar/DashboardSidebar';
 
 const UniversalDashboard = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { isAuthenticated, userRole, isLoading, profile } = useAuth();
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [searchParams] = useSearchParams();
+  const { profile } = useAuth();
   
-  const currentView = searchParams.get("view") || "home";
-  const ordersTab = searchParams.get("ordersTab") || "orders";
-  const profileTab = searchParams.get("profileTab") || "personal";
-  const pharmacySection = searchParams.get("section") || "dashboard";
-  
-  // Console logging for debugging
-  useEffect(() => {
-    console.log("UniversalDashboard render:", { 
-      userRole, 
-      currentView, 
-      pharmacySection,
-      searchParams: Object.fromEntries(searchParams.entries()),
-      location: location.pathname + location.search
-    });
-  }, [userRole, currentView, pharmacySection, searchParams, location]);
-  
-  // Make sure we have a default section for pharmacists
-  useEffect(() => {
-    if (userRole === "pharmacist" && !isInitialLoad && isAuthenticated) {
-      console.log("Checking pharmacist params:", { currentView, pharmacySection });
-      
-      if (currentView !== 'pharmacy' || !pharmacySection) {
-        console.log("Setting default pharmacist params");
-        setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
-      }
-    }
-  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isAuthenticated]);
-  
-  // Track initial load to avoid flashing loading state during navigation
-  useEffect(() => {
-    if (!isLoading) {
-      setIsInitialLoad(false);
-    }
-  }, [isLoading]);
-  
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    // Only redirect if we're sure the user is not authenticated (after initial load)
-    if (!isInitialLoad && !isAuthenticated) {
-      navigate("/login");
-    }
-  }, [isAuthenticated, isInitialLoad, navigate]);
-  
-  const getContent = () => {
-    // For pharmacists, always show the pharmacy view regardless of the URL parameter
-    if (userRole === "pharmacist") {
-      console.log("Rendering PharmacyView with section:", pharmacySection);
-      return <PharmacyView userRole={userRole} section={pharmacySection} />;
-    }
-    
-    // For other roles, show the view based on the URL parameter
+  const currentView = searchParams.get('view') || 'home';
+  const role = profile?.role || null;
+
+  const renderView = () => {
     switch (currentView) {
-      case "profile":
-        return <ProfileView activeTab={profileTab} userRole={userRole} />;
-      case "settings":
-        return <SettingsView userRole={userRole} />;
-      case "orders":
-        return <OrdersView activeTab={ordersTab} userRole={userRole} />;
-      case "prescriptions":
-        return <PrescriptionsView userRole={userRole} />;
-      case "pharmacy":
-        return <PharmacyView userRole={userRole} section={pharmacySection} />;
-      case "teleconsultations":
-        return <TeleconsultationsView userRole={userRole} />;
-      case "home":
+      case 'home':
+        return <HomeView userRole={role} />;
+      case 'profile':
+        return <ProfileView />;
+      case 'orders':
+        return <OrdersView />;
+      case 'prescriptions':
+        return <PrescriptionsView />;
+      case 'settings':
+        return <SettingsView />;
+      case 'teleconsultations':
+        return <TeleconsultationsView />;
+      case 'pharmacy':
+        return <PharmacyView />;
       default:
-        return <HomeView userRole={userRole} />;
+        return <HomeView userRole={role} />;
     }
   };
-  
-  // Show loading skeleton only on initial load, not during navigation
-  if (isInitialLoad && isLoading) {
-    return (
-      <UnifiedLayoutTemplate>
-        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-          <div className="space-y-4">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-64 w-full" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          </div>
-        </div>
-      </UnifiedLayoutTemplate>
-    );
-  }
-  
-  // Use the UnifiedLayoutTemplate for all roles
+
   return (
-    <UnifiedLayoutTemplate>
-      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-        <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-          {getContent()}
-        </ScrollArea>
-      </div>
-    </UnifiedLayoutTemplate>
+    <div className="flex h-screen bg-gray-100">
+      <DashboardSidebar />
+      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        {renderView()}
+      </main>
+    </div>
   );
 };
 

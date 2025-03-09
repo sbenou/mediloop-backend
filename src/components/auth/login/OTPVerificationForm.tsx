@@ -67,7 +67,7 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, onSucc
         render={({ slots }) => (
           <InputOTPGroup>
             {slots.map((slot, index) => (
-              <InputOTPSlot key={index} {...slot} />
+              <InputOTPSlot key={index} {...slot} index={index} />
             ))}
           </InputOTPGroup>
         )}

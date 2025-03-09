@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useState,
@@ -217,11 +216,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Extract the permission_id property from each item or use an empty array if no data
-      // Using optional chaining and nullish coalescing to safely handle the data
       const permissions = data 
         ? data.map(item => item.permission_id || '') 
         : [];
-        
+      
       setAuthState(prevState => ({ ...prevState, permissions }));
     } catch (error) {
       console.error('Error in loadPermissions:', error);
