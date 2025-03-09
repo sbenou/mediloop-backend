@@ -23,6 +23,9 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayPro
     number: profile.cns_number
   }); // Debug log
 
+  // Determine which avatar URL to use based on role
+  const avatarUrl = userRole === 'pharmacist' ? profile.pharmacy_logo_url : profile.avatar_url;
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -30,7 +33,7 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayPro
           <div className="flex flex-col space-y-6">
             <div>
               <AvatarUpload
-                currentAvatarUrl={userRole === 'pharmacist' ? profile.pharmacy_logo_url : profile.avatar_url}
+                currentAvatarUrl={avatarUrl}
                 onAvatarUpdate={(url) => {
                   // Profile will be automatically updated through React Query invalidation
                 }}

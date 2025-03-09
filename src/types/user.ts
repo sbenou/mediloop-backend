@@ -28,8 +28,8 @@ export interface UserProfile {
   updated_at: string | null;
   license_number: string | null;
   // Adding pharmacy-specific fields
-  pharmacy_name?: string | null;
-  pharmacy_logo_url?: string | null;
+  pharmacy_name: string | null;
+  pharmacy_logo_url: string | null;
 }
 
 export interface AuthUser {
