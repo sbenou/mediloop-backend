@@ -68,6 +68,8 @@ const PharmacySelection = ({ userId, redirectAfterSelection = false, onComplete 
       const targetUserId = effectiveUserId || session?.user?.id;
       if (!targetUserId) throw new Error('No user ID available');
 
+      console.log("Setting pharmacy for user:", targetUserId, "pharmacy:", pharmacyId);
+
       const { error } = await supabase
         .from('user_pharmacies')
         .upsert([
@@ -87,7 +89,7 @@ const PharmacySelection = ({ userId, redirectAfterSelection = false, onComplete 
       if (onComplete) {
         onComplete();
       } else if (redirectAfterSelection || isPharmacistSignup) {
-        navigate('/');
+        navigate('/', { replace: true });
       }
     },
     onError: (error) => {
@@ -106,6 +108,7 @@ const PharmacySelection = ({ userId, redirectAfterSelection = false, onComplete 
 
   const handleConfirmSelection = () => {
     if (selectedPharmacyId) {
+      console.log("Confirming pharmacy selection:", selectedPharmacyId);
       setPharmacyMutation.mutate(selectedPharmacyId);
     } else {
       toast({
@@ -117,14 +120,8 @@ const PharmacySelection = ({ userId, redirectAfterSelection = false, onComplete 
   };
 
   return (
-    <Card className="mx-auto">
-      <CardHeader>
-        <CardTitle>Select Your Pharmacy</CardTitle>
-        <CardDescription>
-          Please select the pharmacy you work at from the list below.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      <div className="space-y-4">
         {isLoading ? (
           <div className="text-center py-8">Loading pharmacies...</div>
         ) : (
@@ -152,8 +149,8 @@ const PharmacySelection = ({ userId, redirectAfterSelection = false, onComplete 
             )}
           </div>
         )}
-      </CardContent>
-      <CardFooter className="justify-between">
+      </div>
+      <div className="flex justify-between">
         <Button variant="outline" onClick={() => {
           if (onComplete) onComplete();
           else navigate('/');
@@ -166,8 +163,8 @@ const PharmacySelection = ({ userId, redirectAfterSelection = false, onComplete 
         >
           {setPharmacyMutation.isPending ? "Saving..." : "Confirm Selection"}
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };
 

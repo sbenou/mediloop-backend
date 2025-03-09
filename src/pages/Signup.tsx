@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignupForm } from "@/components/signup/SignupForm";
 import PharmacySelection from "@/components/settings/pharmacy/PharmacySelection";
@@ -11,20 +11,25 @@ const Signup = () => {
   const [step, setStep] = useState<'form' | 'pharmacy'>('form');
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // This function is called when the initial registration is complete
   const handleRegistrationComplete = (newUserId: string, role: string) => {
     console.log("Registration complete for user:", newUserId, "with role:", role);
+    setUserId(newUserId);
+    setUserRole(role);
+    
     if (role === 'pharmacist') {
-      setUserId(newUserId);
-      setUserRole(role);
       setStep('pharmacy');
+    } else {
+      // For non-pharmacist users, redirect to home
+      navigate('/', { replace: true });
     }
   };
 
   const handlePharmacySelectionComplete = () => {
     // Go to home page after pharmacy selection
-    window.location.href = '/';
+    navigate('/', { replace: true });
   };
 
   return (
@@ -68,10 +73,13 @@ const Signup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <PharmacySelection 
-                userId={userId || undefined}
-                onComplete={handlePharmacySelectionComplete}
-              />
+              {userId && (
+                <PharmacySelection 
+                  userId={userId}
+                  redirectAfterSelection={true}
+                  onComplete={handlePharmacySelectionComplete}
+                />
+              )}
             </CardContent>
           </>
         )}
