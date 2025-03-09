@@ -89,6 +89,7 @@ export const UserMenuItems = () => {
     
     // Check the role and log it to help with debugging
     console.log('Current user role in UserMenuItems:', userRole);
+    console.log('Profile data:', auth.profile);
     
     return (
       <>
@@ -107,7 +108,8 @@ export const UserMenuItems = () => {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {userRole === 'pharmacist' && (
+          {userRole === 'pharmacist' ? (
+            // Force render this for all pharmacist users
             <DropdownMenuItem onClick={() => {
               console.log('Navigating to pharmacy profile');
               navigate('/pharmacy/profile');
@@ -115,7 +117,7 @@ export const UserMenuItems = () => {
               <Store className="mr-2 h-4 w-4" />
               <span>Pharmacy Profile</span>
             </DropdownMenuItem>
-          )}
+          ) : null}
           <DropdownMenuItem onClick={() => {
             console.log(`Navigating to profile route: ${routePrefix}/profile`);
             navigate(`${routePrefix}/profile`);
