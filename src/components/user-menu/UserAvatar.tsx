@@ -12,7 +12,6 @@ export interface UserAvatarProps {
   canUpload?: boolean;
   onAvatarClick?: (e: React.MouseEvent) => void;
   isSquare?: boolean;
-  isPharmacyAvatar?: boolean; // New prop to distinguish pharmacy avatars
 }
 
 const UserAvatar = ({ 
@@ -21,8 +20,7 @@ const UserAvatar = ({
   size = "md", 
   canUpload = false,
   onAvatarClick,
-  isSquare = false,
-  isPharmacyAvatar = false // Default to false (user avatar)
+  isSquare = false
 }: UserAvatarProps) => {
   const globalAvatarUrl = useRecoilValue(userAvatarState);
   
@@ -54,8 +52,8 @@ const UserAvatar = ({
     }
   };
 
-  // Use global avatar URL from Recoil only for user avatars, not pharmacy avatars
-  const avatarUrl = !isPharmacyAvatar && userProfile?.id && globalAvatarUrl && userProfile.id === globalAvatarUrl.split('/').slice(-2)[0]
+  // Use global avatar URL from Recoil if we're displaying the current user's avatar
+  const avatarUrl = userProfile?.id && globalAvatarUrl && userProfile.id === globalAvatarUrl.split('/').slice(-2)[0]
     ? globalAvatarUrl
     : userProfile?.avatar_url;
 

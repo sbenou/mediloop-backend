@@ -9,8 +9,6 @@ import { toast } from '@/components/ui/use-toast';
 import Webcam from 'react-webcam';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useRecoilState } from 'recoil';
-import { userAvatarState, pharmacyAvatarState } from '@/store/user/atoms';
 
 interface AvatarUploadProps {
   currentAvatarUrl: string | null;
@@ -25,8 +23,6 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { userRole } = useAuth();
-  const [userAvatarUrl, setUserAvatarUrl] = useRecoilState(userAvatarState);
-  const [pharmacyAvatarUrl, setPharmacyAvatarUrl] = useRecoilState(pharmacyAvatarState);
 
   const uploadAvatar = async (file: File) => {
     try {
@@ -61,13 +57,6 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
         .eq('id', userId);
 
       if (updateError) throw updateError;
-
-      // Update the appropriate state based on user role
-      if (userRole === 'pharmacist') {
-        setPharmacyAvatarUrl(publicUrl);
-      } else {
-        setUserAvatarUrl(publicUrl);
-      }
 
       // Update the UI immediately
       onAvatarUpdate(publicUrl);

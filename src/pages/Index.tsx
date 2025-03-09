@@ -10,7 +10,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CountrySelector from "@/components/CountrySelector";
 
-const Index = () => {
+export default function Index() {
   // Reset the country selection to force the dialog to appear
   useEffect(() => {
     try {
@@ -39,6 +39,4 @@ const Index = () => {
       <Footer />
     </>
   );
-};
-
-export default Index;
+}

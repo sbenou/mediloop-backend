@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useRef } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
-import { useSearchParams } from "react-router-dom";
 
 /**
  * A debugging component that logs user role information to help diagnose
@@ -12,7 +11,6 @@ import { useSearchParams } from "react-router-dom";
 export const RoleDebugger = () => {
   const { userRole, isPharmacist, isAuthenticated, profile } = useAuth();
   const [auth] = useRecoilState(authState);
-  const [searchParams] = useSearchParams();
   const hasLoggedRef = useRef(false);
   
   useEffect(() => {
@@ -21,8 +19,6 @@ export const RoleDebugger = () => {
       hasLoggedRef.current = true;
       
       console.log("============= ROLE DEBUGGER INFO =============");
-      console.log("Current URL:", window.location.href);
-      console.log("Search params:", Object.fromEntries(searchParams.entries()));
       console.log("Is authenticated:", isAuthenticated);
       console.log("User role from hook:", userRole);
       console.log("Is pharmacist from hook:", isPharmacist);
@@ -30,8 +26,7 @@ export const RoleDebugger = () => {
       console.log("Auth state from recoil:", auth);
       console.log("Raw profile role:", auth.profile?.role);
       console.log("Direct pharmacist check:", auth.profile?.role === 'pharmacist');
-      console.log("Is on dashboard:", window.location.pathname.includes('/dashboard'));
-      console.log("Is pharmacy view in URL:", searchParams.get('view') === 'pharmacy');
+      console.log("Is on pharmacy route:", window.location.pathname.includes('/pharmacy'));
       
       // Simulation of UserMenuItems logic
       const shouldShowPharmacyLink = auth.profile?.role === 'pharmacist' || isPharmacist;
@@ -40,11 +35,26 @@ export const RoleDebugger = () => {
       // Check if the role is actually a string
       console.log("Role type:", typeof auth.profile?.role);
       console.log("Role strict equality check:", auth.profile?.role === 'pharmacist');
+      console.log("Role loose equality check:", auth.profile?.role == 'pharmacist');
       console.log("Role toLowerCase check:", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'pharmacist' : false);
+      
+      // Force navigation attempt if user is a pharmacist but link isn't showing
+      if (shouldShowPharmacyLink) {
+        console.log("Pharmacist detected - Pharmacy Profile link SHOULD be visible");
+        try {
+          setTimeout(() => {
+            const pharmacyLinkEl = document.querySelector('.pharmacy-profile-link');
+            console.log("Pharmacy link element found after delay:", !!pharmacyLinkEl);
+            console.log("Full dropdown menu items:", document.querySelectorAll('[class*="dropdown-menu"]').length);
+          }, 2000); // Check after a delay to allow rendering
+        } catch (e) {
+          console.error("Error checking for pharmacy link:", e);
+        }
+      }
       
       console.log("=============================================");
     }
-  }, [isAuthenticated, userRole, isPharmacist, profile, auth, searchParams]);
+  }, [isAuthenticated, userRole, isPharmacist, profile, auth]);
   
   // This component doesn't render anything visible
   return null;

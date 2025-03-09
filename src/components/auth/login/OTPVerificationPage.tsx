@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import OTPVerificationForm from "./OTPVerificationForm";
+import { OTPVerificationForm } from "./OTPVerificationForm";
 import { ErrorBoundary } from "react-error-boundary";
 import { useToast } from "@/hooks/use-toast";
 

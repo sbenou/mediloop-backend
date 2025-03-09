@@ -1,4 +1,3 @@
-
 import { useRecoilValue } from 'recoil';
 import { useMemo, useEffect, useState, useCallback } from 'react';
 import { 
@@ -142,7 +141,6 @@ export const useAuth = () => {
   useEffect(() => {
     if (isAuthenticated && !isLoading && userRole) {
       const currentPath = window.location.pathname;
-      const currentSearch = window.location.search;
       
       // Debug log for pharmacy role - expand for more detail
       if (userRole === 'pharmacist' || auth.profile?.role === 'pharmacist') {
@@ -151,12 +149,6 @@ export const useAuth = () => {
         console.log('Selector check:', isPharmacistFromSelector);
         console.log('Combined check:', isPharmacist);
         console.log('Full auth profile:', auth.profile);
-        
-        // Check if pharmacist should be redirected to pharmacy view
-        if (currentPath === '/dashboard' && !currentSearch.includes('view=pharmacy')) {
-          console.warn('Pharmacist on dashboard without pharmacy view! Current URL:', 
-            window.location.href);
-        }
       }
       
       // Check if a superadmin is on a non-superadmin page
@@ -211,5 +203,3 @@ export const useAuth = () => {
     isPharmacist
   };
 };
-
-export default useAuth;

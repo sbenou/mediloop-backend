@@ -1,5 +1,0 @@
-
--- Add pharmacy_logo_url column to profiles table
-ALTER TABLE public.profiles 
-ADD COLUMN IF NOT EXISTS pharmacy_logo_url TEXT,
-ADD COLUMN IF NOT EXISTS pharmacy_name TEXT;

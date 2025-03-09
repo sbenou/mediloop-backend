@@ -1,27 +1,34 @@
-
-import React, { useState } from 'react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
+import { useSetRecoilState } from 'recoil';
+import { authState } from '@/store/auth/atoms';
 
-// Define props interface
-export interface OTPVerificationFormProps {
+interface OTPVerificationFormProps {
   email: string;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
-const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, onSuccess }) => {
-  const [otp, setOTP] = useState('');
+export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormProps) => {
+  const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const setAuth = useSetRecoilState(authState);
 
-  const handleVerify = async () => {
-    if (!otp || otp.length < 6) {
+  const handleVerification = async () => {
+    if (!email || otp.length !== 6) {
       toast({
         variant: "destructive",
-        title: "Invalid code",
-        description: "Please enter the full verification code.",
+        title: "Verification failed",
+        description: "Please enter a valid 6-digit verification code.",
       });
       return;
     }
@@ -29,29 +36,60 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, onSucc
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      console.log("Verifying OTP for:", email);
+      const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: 'email',
+        type: 'email'
       });
 
-      if (error) {
-        throw error;
+      if (error) throw error;
+
+      if (data?.user) {
+        console.log("OTP verification successful, fetching user profile");
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        setAuth({
+          user: data.user,
+          profile,
+          isLoading: false,
+          permissions: [],
+        });
+
+        toast({
+          title: "Success",
+          description: "Email verified successfully!",
+        });
+
+        // Clean up localStorage
+        localStorage.removeItem('otp_email');
+        localStorage.removeItem('otp_email_expiry');
+
+        if (onSuccess) {
+          onSuccess();
+        }
+        
+        console.log("Redirecting to home page");
+        navigate('/', { replace: true });
       }
-
-      toast({
-        title: "Verification successful",
-        description: "You have successfully verified your email.",
-      });
-
-      // Call the onSuccess callback
-      onSuccess();
     } catch (error: any) {
-      console.error('Verification error:', error);
+      console.error("OTP verification failed:", error);
+      let description = "Failed to verify email. Please try again.";
+      
+      if (error.message?.includes('Invalid')) {
+        description = "Invalid verification code. Please check and try again.";
+      } else if (error.message?.includes('expired')) {
+        description = "Verification code has expired. Please request a new one.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Verification failed",
-        description: error.message || "Failed to verify the code. Please try again.",
+        description,
       });
     } finally {
       setIsLoading(false);
@@ -60,63 +98,31 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, onSucc
 
   return (
     <div className="space-y-6">
-      <InputOTP 
-        maxLength={6}
-        value={otp}
-        onChange={setOTP}
-        render={({ slots }) => (
-          <InputOTPGroup>
-            {slots.map((slot, index) => (
-              <InputOTPSlot key={index} {...slot} index={index} />
+      <div className="flex justify-center">
+        <InputOTP
+          maxLength={6}
+          value={otp}
+          onChange={setOtp}
+          disabled={isLoading}
+        >
+          <InputOTPGroup className="gap-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <InputOTPSlot 
+                key={i} 
+                index={i}
+                className="w-10 h-10 text-center border-2"
+              />
             ))}
           </InputOTPGroup>
-        )}
-      />
-      
-      <Button 
-        className="w-full" 
-        onClick={handleVerify}
-        disabled={isLoading || otp.length < 6}
+        </InputOTP>
+      </div>
+      <Button
+        className="w-full"
+        onClick={handleVerification}
+        disabled={isLoading}
       >
         {isLoading ? "Verifying..." : "Verify Email"}
       </Button>
-      
-      <p className="text-sm text-muted-foreground text-center">
-        Didn't receive a code? 
-        <Button 
-          variant="link" 
-          className="px-2 py-0 h-auto"
-          disabled={isLoading}
-          onClick={async () => {
-            try {
-              setIsLoading(true);
-              const { error } = await supabase.auth.signInWithOtp({
-                email,
-                options: {
-                  shouldCreateUser: false,
-                }
-              });
-              if (error) throw error;
-              toast({
-                title: "Code resent",
-                description: `A new verification code has been sent to ${email}`,
-              });
-            } catch (error: any) {
-              toast({
-                variant: "destructive",
-                title: "Failed to resend code",
-                description: error.message || "Something went wrong. Please try again.",
-              });
-            } finally {
-              setIsLoading(false);
-            }
-          }}
-        >
-          Resend
-        </Button>
-      </p>
     </div>
   );
 };
-
-export default OTPVerificationForm;

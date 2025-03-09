@@ -1,19 +1,139 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from "react";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { SidebarClose, SidebarOpen } from "lucide-react";
+import { ActivityFeed } from "@/components/activity/ActivityFeed";
+import { Advertisements } from "@/components/activity/Advertisements";
+import { mockActivities } from "@/components/activity/mockActivities";
+import { Activity } from "@/components/activity/ActivityItem";
+import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const UnifiedProfilePage = () => {
+  const [isOpen, setIsOpen] = useState(true);
+  const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
+  
+  // Mock profile data for UI template
+  const mockProfile = {
+    full_name: "Demo User"
+  };
+
+  // Handle UI interactions - purely for demonstration
+  const handleMarkRead = (id: string) => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => 
+        activity.id === id ? { ...activity, read: true } : activity
+      )
+    );
+  };
+
+  const handleMarkAllRead = () => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => ({ ...activity, read: true }))
+    );
+  };
+
+  // Apply transition effect when drawer opens/closes
+  useEffect(() => {
+    // Force recalculation of chart dimensions when sidebar state changes
+    window.dispatchEvent(new Event('resize'));
+  }, [isOpen]);
+
+  // The UI template content
   return (
-    <div className="container mx-auto p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Unified Profile</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>This is a placeholder for the unified profile page.</p>
-        </CardContent>
-      </Card>
-    </div>
+    <UnifiedLayoutTemplate>
+      <div className="flex h-full relative font-sans">
+        <div 
+          id="main-content" 
+          className={`flex-1 space-y-8 px-1 mx-0 transition-all duration-300 ${isOpen ? 'mr-[300px]' : 'mr-0'}`}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Welcome, {mockProfile.full_name}</h1>
+              <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Prescriptions</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Total active prescriptions</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Orders</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Total orders placed</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Doctors</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Connected healthcare providers</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border rounded-lg shadow-sm p-6">
+              <div className="text-center">
+                <h3 className="text-base font-medium">Teleconsultations</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">Upcoming appointments</p>
+                <p className="text-4xl font-bold mt-2">0</p>
+              </div>
+            </Card>
+          </div>
+          
+          <StatisticsCharts />
+        </div>
+
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed right-0 top-20 z-50"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
+        </Button>
+
+        <div 
+          className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        >
+          <div className="p-4 h-full overflow-y-auto">
+            <Tabs 
+              defaultValue="home" 
+              className="w-full" 
+              value={activeDrawerTab}
+              onValueChange={setActiveDrawerTab}
+            >
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="home">Home</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="home" className="mt-0">
+                <Advertisements />
+              </TabsContent>
+              
+              <TabsContent value="activity" className="mt-0">
+                <ActivityFeed 
+                  activities={activities}
+                  onMarkRead={handleMarkRead}
+                  onMarkAllRead={handleMarkAllRead}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
+    </UnifiedLayoutTemplate>
   );
 };
 

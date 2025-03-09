@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { ProfileForm } from "./profile/ProfileForm";
-import ProfileDisplay from "./profile/ProfileDisplay";
+import { ProfileDisplay } from "./profile/ProfileDisplay";
 import { DefaultAddress } from "./profile/DefaultAddress";
 import { toast } from "@/components/ui/use-toast";
 import CNSCardScanner from "./CNSCardScanner";
@@ -106,7 +106,7 @@ const PersonalDetails = () => {
         />
       ) : (
         <>
-          <ProfileDisplay 
+          <ProfileDisplay
             profile={profile}
             onEdit={() => setIsEditing(true)}
             onScanCNS={() => setIsScanning(true)}

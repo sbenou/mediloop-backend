@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, user, profile, isPharmacist } = useAuth();
+  const { isAuthenticated, isLoading, user, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,7 +22,6 @@ const Login = () => {
           }
           
           console.log('User role found:', profile.role);
-          console.log('Is pharmacist check:', isPharmacist, profile.role === 'pharmacist');
 
           // Force session storage on successful login for ALL user types
           const { data: { session } } = await supabase.auth.getSession();
@@ -58,19 +57,9 @@ const Login = () => {
             }
           }
           
-          // Enhanced pharmacist detection with multiple checks
-          const isUserPharmacist = 
-            profile.role === 'pharmacist' || 
-            isPharmacist;
-          
-          // Always use the unified dashboard with the appropriate view parameter
-          if (isUserPharmacist) {
-            console.log('Redirecting pharmacist to pharmacy dashboard view');
-            navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
-          } else {
-            console.log('Redirecting to universal dashboard');
-            navigate('/dashboard', { replace: true });
-          }
+          // UPDATED: Redirect all users to the universal dashboard
+          console.log('Redirecting to universal dashboard...');
+          navigate('/dashboard', { replace: true });
         } catch (err) {
           console.error('Error checking role:', err);
           navigate('/dashboard');
@@ -79,7 +68,7 @@ const Login = () => {
     };
     
     checkUserRole();
-  }, [isAuthenticated, user, profile, navigate, isPharmacist]);
+  }, [isAuthenticated, user, profile, navigate]);
 
   // Show loading state
   if (isLoading) {
@@ -96,14 +85,8 @@ const Login = () => {
 
   // If user is already authenticated, prevent showing the login page
   if (isAuthenticated) {
-    // Enhanced pharmacist detection with multiple checks
-    const isUserPharmacist = profile?.role === 'pharmacist' || isPharmacist;
-    
-    if (isUserPharmacist) {
-      navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
-    } else {
-      navigate('/dashboard', { replace: true });
-    }
+    // Explicitly redirect to dashboard here to avoid blank page
+    navigate('/dashboard', { replace: true });
     return null;
   }
 

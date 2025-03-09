@@ -1,78 +1,80 @@
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/auth/useAuth";
-import { User, Camera } from "lucide-react";
-import { UserProfile } from "@/types/user";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tables } from "@/integrations/supabase/types";
+import AvatarUpload from "./AvatarUpload";
+import CNSCardDisplay from "../CNSCardDisplay";
 
 interface ProfileDisplayProps {
-  profile?: UserProfile;
-  onEdit?: () => void;
-  onScanCNS?: () => void;
+  profile: Tables<"profiles"> | null;
+  onEdit: () => void;
+  onScanCNS: () => void;
 }
 
-const ProfileDisplay = ({ profile, onEdit, onScanCNS }: ProfileDisplayProps) => {
-  const { user, profile: userProfile } = useAuth();
-  
-  // Use passed profile if available, otherwise use from auth context
-  const displayProfile = profile || userProfile;
+export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayProps) {
+  if (!profile) return null;
 
-  const profileImage = displayProfile?.role === 'pharmacist' ? 
-    displayProfile?.pharmacy_logo_url || displayProfile?.avatar_url : 
-    displayProfile?.avatar_url;
+  console.log('Profile Display - CNS card data:', {
+    front: profile.cns_card_front,
+    back: profile.cns_card_back,
+    number: profile.cns_number
+  }); // Debug log
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>
-            View your profile information here.
-          </CardDescription>
-        </div>
-        {onEdit && (
-          <Button variant="outline" onClick={onEdit}>
-            Edit Profile
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-12 w-12">
-            {profileImage ? (
-              <AvatarImage src={profileImage} alt="Profile" />
-            ) : (
-              <AvatarFallback>
-                <User className="h-6 w-6" />
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <div className="space-y-1">
-            <p className="text-sm font-medium leading-none">
-              {displayProfile?.full_name || "No Name"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {user?.email || displayProfile?.email || "No Email"}
-            </p>
+      <CardContent className="pt-6">
+        <div className="flex flex-col space-y-6">
+          <div className="flex flex-col space-y-6">
+            <div>
+              <AvatarUpload
+                currentAvatarUrl={profile.avatar_url}
+                onAvatarUpdate={(url) => {
+                  // Profile will be automatically updated through React Query invalidation
+                }}
+              />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold">{profile.full_name}</h2>
+                <p className="text-muted-foreground">{profile.email}</p>
+              </div>
+
+              <div className="space-y-2">
+                <div>
+                  <span className="font-medium">Date of Birth:</span>{" "}
+                  {profile.date_of_birth
+                    ? new Date(profile.date_of_birth).toLocaleDateString()
+                    : "Not set"}
+                </div>
+                <div>
+                  <span className="font-medium">CNS Number:</span>{" "}
+                  {profile.cns_number || "Not set"}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button onClick={onEdit}>
+                  Edit Profile
+                </Button>
+                <Button variant="outline" onClick={onScanCNS}>
+                  Scan CNS Card
+                </Button>
+              </div>
+            </div>
           </div>
+
+          {profile.cns_card_front && (
+            <div>
+              <span className="font-medium block mb-2">CNS Card:</span>
+              <CNSCardDisplay
+                frontImage={profile.cns_card_front}
+                backImage={profile.cns_card_back || ''}
+                cardNumber={profile.cns_number || ''}
+              />
+            </div>
+          )}
         </div>
-        
-        {displayProfile?.role === 'patient' && onScanCNS && (
-          <Button variant="outline" onClick={onScanCNS} className="mt-4">
-            <Camera className="mr-2 h-4 w-4" />
-            Scan CNS Card
-          </Button>
-        )}
       </CardContent>
     </Card>
   );
-};
-
-export default ProfileDisplay;
+}

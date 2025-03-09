@@ -100,7 +100,6 @@ const SidebarUserMenu = ({
             }}
             fallbackText={getUserInitials()} 
             isSquare={userRole === 'pharmacist'}
-            isPharmacyAvatar={userRole === 'pharmacist'} // Specify pharmacy avatar
           />
         </div>
         
