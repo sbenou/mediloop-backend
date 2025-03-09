@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -7,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Image, Upload, Clock, MapPin, Users, UserCog, AlertTriangle } from "lucide-react";
+import { Image, Upload, Clock, MapPin, Users, UserCog, AlertTriangle, Store } from "lucide-react";
 import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
@@ -50,7 +49,6 @@ const PharmacyProfile = () => {
       setError(null);
       console.log("Fetching pharmacy data for user:", profile.id);
 
-      // Fetch the pharmacy associated with this pharmacist
       const { data: pharmacyRelation, error: relationError } = await supabase
         .from('user_pharmacies')
         .select('pharmacy_id')
@@ -73,7 +71,6 @@ const PharmacyProfile = () => {
 
       console.log("Found pharmacy relation:", pharmacyRelation);
 
-      // Now fetch the pharmacy details
       const { data: pharmacy, error: pharmacyError } = await supabase
         .from('pharmacies')
         .select('*')
@@ -96,7 +93,6 @@ const PharmacyProfile = () => {
 
       console.log("Fetched pharmacy data:", pharmacy);
 
-      // Check if logo_url exists
       const { data: pharmacyMetadata, error: metadataError } = await supabase
         .from('pharmacy_metadata')
         .select('logo_url')
@@ -147,7 +143,6 @@ const PharmacyProfile = () => {
         .from('pharmacy-images')
         .getPublicUrl(filePath);
 
-      // Create or update pharmacy metadata with the logo URL
       const { error: metadataError } = await supabase
         .from('pharmacy_metadata')
         .upsert({ 
@@ -157,7 +152,6 @@ const PharmacyProfile = () => {
 
       if (metadataError) throw metadataError;
 
-      // Update local state
       setPharmacyData({
         ...pharmacyData,
         logo_url: publicUrl
@@ -183,7 +177,6 @@ const PharmacyProfile = () => {
     setActiveTab(value);
   };
 
-  // Render loading state
   if (isLoading) {
     return (
       <PharmacistLayout>
@@ -197,7 +190,6 @@ const PharmacyProfile = () => {
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <PharmacistLayout>
@@ -215,7 +207,6 @@ const PharmacyProfile = () => {
     );
   }
 
-  // Render no pharmacy state
   if (!pharmacyData) {
     return (
       <PharmacistLayout>
@@ -242,7 +233,6 @@ const PharmacyProfile = () => {
           </p>
         </div>
 
-        {/* Pharmacy Image Section */}
         <div 
           onClick={handleImageClick}
           className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
@@ -278,9 +268,7 @@ const PharmacyProfile = () => {
           />
         </div>
 
-        {/* Pharmacy Information Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Pharmacy Details Card */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center">
@@ -296,7 +284,6 @@ const PharmacyProfile = () => {
             </CardContent>
           </Card>
 
-          {/* Opening Hours */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center">
@@ -312,7 +299,6 @@ const PharmacyProfile = () => {
             </CardContent>
           </Card>
 
-          {/* Location Map */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center">
@@ -329,7 +315,6 @@ const PharmacyProfile = () => {
           </Card>
         </div>
 
-        {/* Team and Staff Management Tabs */}
         <Tabs defaultValue="team" value={activeTab} onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="team" className="flex items-center">
