@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,8 @@ interface StaffMember {
   role: string;
   is_active: boolean;
   joined_at: string;
+  pharmacy_name: string | null;
+  pharmacy_logo_url: string | null;
 }
 
 const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
@@ -97,6 +98,8 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
           role: profile.role || 'pharmacy_user',
           is_active: !profile.is_blocked,
           joined_at: userIdsWithDates[profile.id] || 'Unknown',
+          pharmacy_name: profile.pharmacy_name || null,
+          pharmacy_logo_url: profile.pharmacy_logo_url || null
         }));
         
         setStaffMembers(members);

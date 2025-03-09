@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -53,9 +54,16 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           .eq('id', data.user.id)
           .single();
 
+        // Add missing pharmacy fields to ensure it matches UserProfile type
+        const completeProfile = profile ? {
+          ...profile,
+          pharmacy_name: profile.pharmacy_name || null,
+          pharmacy_logo_url: profile.pharmacy_logo_url || null
+        } : null;
+
         setAuth({
           user: data.user,
-          profile,
+          profile: completeProfile,
           isLoading: false,
           permissions: [],
         });

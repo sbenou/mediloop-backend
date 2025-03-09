@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,8 @@ interface TeamMember {
   avatar_url: string | null;
   role: string;
   is_active: boolean;
+  pharmacy_name: string | null;
+  pharmacy_logo_url: string | null;
 }
 
 // Define relationship options for the Next of Kin dropdown
@@ -115,7 +116,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, role, is_blocked')
+        .select('id, full_name, email, avatar_url, role, is_blocked, pharmacy_name, pharmacy_logo_url')
         .in('id', userIds);
         
       if (profilesError) throw profilesError;
@@ -129,6 +130,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
           avatar_url: profile.avatar_url,
           role: profile.role || 'pharmacy_user',
           is_active: !profile.is_blocked,
+          pharmacy_name: profile.pharmacy_name || null,
+          pharmacy_logo_url: profile.pharmacy_logo_url || null
         }));
         
         setTeamMembers(members);
@@ -302,6 +305,24 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       });
     }
   };
+
+  const mappedTeamMembers = useMemo(() => {
+    return teamMembers.map(member => {
+      const completeProfile: UserProfile = {
+        ...member,
+        pharmacy_name: member.pharmacy_name || null,
+        pharmacy_logo_url: member.pharmacy_logo_url || null
+      };
+      
+      return {
+        id: member.id,
+        name: member.full_name || 'Unknown',
+        email: member.email || 'No email',
+        role: member.role || 'staff',
+        profile: completeProfile
+      };
+    });
+  }, [teamMembers]);
 
   return (
     <div className="space-y-6">
@@ -603,23 +624,23 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {teamMembers.map(member => (
-            <Card key={member.user_id} className="overflow-hidden">
+          {mappedTeamMembers.map(member => (
+            <Card key={member.id} className="overflow-hidden">
               <CardContent className="p-0">
                 <div className="bg-gray-100 pt-6 pb-4 px-4 flex flex-col items-center">
                   <div className="relative">
                     <UserAvatar 
                       userProfile={{
-                        id: member.user_id,
-                        avatar_url: member.avatar_url,
-                        full_name: member.full_name,
-                        role: member.role,
+                        id: member.profile.id,
+                        avatar_url: member.profile.avatar_url,
+                        full_name: member.profile.full_name,
+                        role: member.profile.role,
                         role_id: null,
-                        email: member.email,
+                        email: member.profile.email,
                         date_of_birth: null,
                         city: null,
                         auth_method: null,
-                        is_blocked: !member.is_active,
+                        is_blocked: !member.profile.is_active,
                         doctor_stamp_url: null,
                         doctor_signature_url: null,
                         cns_card_front: null,
@@ -632,7 +653,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                       }}
                     />
                   </div>
-                  <h3 className="font-medium text-center mt-2 truncate w-full">{member.full_name}</h3>
+                  <h3 className="font-medium text-center mt-2 truncate w-full">{member.name}</h3>
                   <p className="text-sm text-gray-500 truncate w-full text-center">
                     {member.role === 'pharmacist' ? 'Pharmacist' : 'Staff Member'}
                   </p>
@@ -644,17 +665,17 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                   </div>
                   <div className="mt-4 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs ${member.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {member.is_active ? 'Active' : 'Inactive'}
+                      <span className={`px-2 py-1 rounded-full text-xs ${member.profile.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {member.profile.is_active ? 'Active' : 'Inactive'}
                       </span>
                       <Switch 
-                        checked={member.is_active} 
-                        onCheckedChange={() => handleToggleActive(member.user_id, member.is_active)}
-                        className={member.is_active ? "bg-green-500" : "bg-gray-400"}
+                        checked={member.profile.is_active} 
+                        onCheckedChange={() => handleToggleActive(member.profile.id, member.profile.is_active)}
+                        className={member.profile.is_active ? "bg-green-500" : "bg-gray-400"}
                       />
                     </div>
                     <Button variant="ghost" size="sm" asChild>
-                      <a href={`/pharmacy/staff/${member.user_id}`}>View Profile</a>
+                      <a href={`/pharmacy/staff/${member.profile.id}`}>View Profile</a>
                     </Button>
                   </div>
                 </div>

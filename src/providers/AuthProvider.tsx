@@ -59,7 +59,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           doctor_signature_url,
           deleted_at,
           created_at,
-          updated_at
+          updated_at,
+          pharmacy_name,
+          pharmacy_logo_url
         `)
         .eq('id', userId)
         .maybeSingle();
@@ -75,17 +77,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { profile: null, permissions: [] };
       }
 
-      const permissions = safeProfile.role_id 
-        ? await fetchUserPermissions(safeProfile.role_id)
+      // Ensure pharmacy fields exist
+      const completeProfile: UserProfile = {
+        ...safeProfile,
+        pharmacy_name: safeProfile.pharmacy_name || null,
+        pharmacy_logo_url: safeProfile.pharmacy_logo_url || null
+      };
+
+      const permissions = completeProfile.role_id 
+        ? await fetchUserPermissions(completeProfile.role_id)
         : [];
 
       console.log('Profile and permissions fetched:', { 
-        profileId: safeProfile.id, 
-        role: safeProfile.role,
+        profileId: completeProfile.id, 
+        role: completeProfile.role,
         permissionsCount: permissions.length 
       });
 
-      return { profile: safeProfile, permissions };
+      return { profile: completeProfile, permissions };
     } catch (error) {
       console.error('Error in fetchAndSetProfile:', error);
       return { profile: null, permissions: [] };
