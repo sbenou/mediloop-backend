@@ -3,7 +3,7 @@ import type { Database } from '@/integrations/supabase/types';
 import { safeQueryResult } from '@/types/user';
 
 const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaHtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
 // Create storage key based on project URL
 const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
@@ -73,6 +73,44 @@ export const clearAllAuthStorage = () => {
     } catch (e) {
       console.error('Error clearing sessionStorage:', e);
     }
+    
+    // Enhanced cookie clearing - get all cookies
+    const allCookies = document.cookie.split(';');
+      
+    // Clear each cookie with multiple domain/path combinations to ensure they're removable manually
+    allCookies.forEach(cookie => {
+      const name = cookie.trim().split('=')[0];
+      if (!name) return;
+      
+      // Common paths that might have been set for auth cookies
+      const paths = ['/', '/login', '/auth', '/dashboard', '/profile', '/api', ''];
+      
+      // Get the hostname parts for domain clearing
+      const hostParts = window.location.hostname.split('.');
+      const domains = [];
+      
+      // Add main domain
+      domains.push(window.location.hostname);
+      
+      // Add parent domain if exists (for subdomains)
+      if (hostParts.length > 2) {
+        domains.push(`.${hostParts.slice(-2).join('.')}`);
+      }
+      
+      // Add root domain with dot prefix
+      domains.push(`.${window.location.hostname}`);
+      
+      // Add empty domain (current domain only)
+      domains.push('');
+      
+      // Try clearing with all combinations of domain and path
+      domains.forEach(domain => {
+        paths.forEach(path => {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0;`;
+        });
+      });
+    });
     
     console.log('Auth: All session storage cleared');
     return true;
@@ -246,105 +284,7 @@ const crossTabStorage = {
 
 // Add a global method to help with debugging session storage
 (window as any).clearAllSupabaseStorage = () => {
-  try {
-    // Clear all storage related to Supabase
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const key = localStorage.key(i);
-      if (key && (key.includes('supabase') || key.includes('sb-'))) {
-        localStorage.removeItem(key);
-      }
-    }
-    
-    for (let i = sessionStorage.length - 1; i >= 0; i--) {
-      const key = sessionStorage.key(i);
-      if (key && (key.includes('supabase') || key.includes('sb-'))) {
-        sessionStorage.removeItem(key);
-      }
-    }
-    
-    // Enhanced cookie clearing - get all cookies
-    const allCookies = document.cookie.split(';');
-      
-    // Clear each cookie with multiple domain/path combinations to ensure they're removable manually
-    allCookies.forEach(cookie => {
-      const name = cookie.trim().split('=')[0];
-      if (!name) return;
-      
-      // Common paths that might have been set for auth cookies
-      const paths = ['/', '/login', '/auth', '/dashboard', '/profile', '/api', ''];
-      
-      // Get the hostname parts for domain clearing
-      const hostParts = window.location.hostname.split('.');
-      const domains = [];
-      
-      // Add main domain
-      domains.push(window.location.hostname);
-      
-      // Add parent domain if exists (for subdomains)
-      if (hostParts.length > 2) {
-        domains.push(`.${hostParts.slice(-2).join('.')}`);
-      }
-      
-      // Add root domain with dot prefix
-      domains.push(`.${window.location.hostname}`);
-      
-      // Add empty domain (current domain only)
-      domains.push('');
-      
-      // Try clearing with all combinations of domain and path
-      domains.forEach(domain => {
-        paths.forEach(path => {
-          // Multiple approaches to ensure cookie deletion
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0;`;
-          
-          // Use different timestamp formats
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0;`;
-          
-          // Try with and without secure flag
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0; secure;`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0;`;
-          
-          // Set to empty with immediate expiration
-          document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1;`;
-          
-          // Create without HttpOnly to allow manual clearing
-          document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1;`;
-        });
-      });
-      
-      // For SameSite=None cookies
-      paths.forEach(path => {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=None; max-age=0; secure;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=None; max-age=0;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=Lax; max-age=0;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=Strict; max-age=0;`;
-      });
-      
-      // Last resort: try without path or domain specification
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
-      
-      // Try setting to an explicitly empty value
-      document.cookie = `${name}=""; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
-      document.cookie = `${name}=''; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
-      
-      // Try overwriting with value instead of deleting
-      document.cookie = `${name}=deleted; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
-      
-      // Add specific handling for cookies that might be using these specific attributes
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-      document.cookie = `${name}=; max-age=0;`;
-      document.cookie = `${name}=; max-age=-1;`;
-      
-      // Attempt to directly overwrite the cookie value
-      document.cookie = `${name}=`;
-    });
-    
-    console.log('%cAll Supabase storage cleared manually', 'color: green; font-weight: bold');
-    return true;
-  } catch (e) {
-    console.error('Failed to clear Supabase storage:', e);
-    return false;
-  }
+  return clearAllAuthStorage();
 };
 
 const supabaseOptions: SupabaseClientOptions<"public"> = {
@@ -651,106 +591,3 @@ repairStorageConsistency();
 
 // Force a session sync on first load after a delay
 setTimeout(handleVisibilityChange, 500);
-
-// Export a function to completely clear all auth storage
-export const clearAllAuthStorage = () => {
-  try {
-    // Clear all storage related to Supabase
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const key = localStorage.key(i);
-      if (key && (key.includes('supabase') || key.includes('sb-'))) {
-        localStorage.removeItem(key);
-      }
-    }
-    
-    for (let i = sessionStorage.length - 1; i >= 0; i--) {
-      const key = sessionStorage.key(i);
-      if (key && (key.includes('supabase') || key.includes('sb-'))) {
-        sessionStorage.removeItem(key);
-      }
-    }
-    
-    // Enhanced cookie clearing - get all cookies
-    const allCookies = document.cookie.split(';');
-      
-    // Clear each cookie with multiple domain/path combinations to ensure they're removable manually
-    allCookies.forEach(cookie => {
-      const name = cookie.trim().split('=')[0];
-      if (!name) return;
-      
-      // Common paths that might have been set for auth cookies
-      const paths = ['/', '/login', '/auth', '/dashboard', '/profile', '/api', ''];
-      
-      // Get the hostname parts for domain clearing
-      const hostParts = window.location.hostname.split('.');
-      const domains = [];
-      
-      // Add main domain
-      domains.push(window.location.hostname);
-      
-      // Add parent domain if exists (for subdomains)
-      if (hostParts.length > 2) {
-        domains.push(`.${hostParts.slice(-2).join('.')}`);
-      }
-      
-      // Add root domain with dot prefix
-      domains.push(`.${window.location.hostname}`);
-      
-      // Add empty domain (current domain only)
-      domains.push('');
-      
-      // Try clearing with all combinations of domain and path
-      domains.forEach(domain => {
-        paths.forEach(path => {
-          // Multiple approaches to ensure cookie deletion
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0;`;
-          
-          // Use different timestamp formats
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0;`;
-          
-          // Try with and without secure flag
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0; secure;`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}${domain ? `; domain=${domain}` : ''}; max-age=0;`;
-          
-          // Set to empty with immediate expiration
-          document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1;`;
-          
-          // Create without HttpOnly to allow manual clearing
-          document.cookie = `${name}=; path=${path}${domain ? `; domain=${domain}` : ''}; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=-1;`;
-        });
-      });
-      
-      // For SameSite=None cookies
-      paths.forEach(path => {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=None; max-age=0; secure;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=None; max-age=0;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=Lax; max-age=0;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; SameSite=Strict; max-age=0;`;
-      });
-      
-      // Last resort: try without path or domain specification
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
-      
-      // Try setting to an explicitly empty value
-      document.cookie = `${name}=""; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
-      document.cookie = `${name}=''; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
-      
-      // Try overwriting with value instead of deleting
-      document.cookie = `${name}=deleted; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;`;
-      
-      // Add specific handling for cookies that might be using these specific attributes
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-      document.cookie = `${name}=; max-age=0;`;
-      document.cookie = `${name}=; max-age=-1;`;
-      
-      // Attempt to directly overwrite the cookie value
-      document.cookie = `${name}=`;
-    });
-    
-    console.log('%cAll Supabase storage cleared manually', 'color: green; font-weight: bold');
-    return true;
-  } catch (e) {
-    console.error('Failed to clear Supabase storage:', e);
-    return false;
-  }
-};

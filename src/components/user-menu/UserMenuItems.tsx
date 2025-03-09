@@ -1,3 +1,4 @@
+
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -124,7 +125,7 @@ export const UserMenuItems = () => {
           </DropdownMenuItem>
           
           {/* Explicitly add Pharmacy Profile link right after Upgrade to Pro */}
-          {isUserPharmacist && (
+          {(userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist') && (
             <DropdownMenuItem onClick={() => {
               console.log('Navigating to pharmacy profile from UserMenuItems');
               navigate('/pharmacy/profile');
