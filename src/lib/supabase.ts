@@ -1,9 +1,10 @@
+
 import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 import { safeQueryResult } from '@/types/user';
 
 const supabaseUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaHtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
 // Create storage key based on project URL
 const STORAGE_KEY = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
@@ -58,20 +59,19 @@ export const getSessionFromStorage = () => {
 // Utility to clear all auth storage
 export const clearAllAuthStorage = () => {
   try {
-    // Clear localStorage
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(`${STORAGE_KEY}_timestamp`);
-    } catch (e) {
-      console.error('Error clearing localStorage:', e);
+    // Clear all storage related to Supabase
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('supabase') || key.includes('sb-'))) {
+        localStorage.removeItem(key);
+      }
     }
     
-    // Clear sessionStorage
-    try {
-      sessionStorage.removeItem(STORAGE_KEY);
-      sessionStorage.removeItem(`${STORAGE_KEY}_timestamp`);
-    } catch (e) {
-      console.error('Error clearing sessionStorage:', e);
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key && (key.includes('supabase') || key.includes('sb-'))) {
+        sessionStorage.removeItem(key);
+      }
     }
     
     // Enhanced cookie clearing - get all cookies
