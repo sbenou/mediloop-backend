@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -137,20 +138,36 @@ const PharmacyProfile = () => {
     try {
       setIsUploading(true);
       
-      const filePath = `pharmacies/${pharmacyData.id}/${crypto.randomUUID()}`;
+      // Create a unique file path
+      const fileExt = file.name.split('.').pop();
+      const filePath = `pharmacies/${pharmacyData.id}/${crypto.randomUUID()}.${fileExt}`;
       
-      const { error: uploadError } = await supabase.storage
+      // Check if storage bucket exists, if not it will be created via RLS policies
+      console.log("Uploading to pharmacy-images bucket:", filePath);
+      
+      // Upload the file
+      const { error: uploadError, data } = await supabase.storage
         .from('pharmacy-images')
         .upload(filePath, file, {
           upsert: true,
+          contentType: file.type
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
 
+      console.log("Upload successful, getting public URL");
+      
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('pharmacy-images')
         .getPublicUrl(filePath);
 
+      console.log("Public URL obtained:", publicUrl);
+
+      // Update pharmacy metadata with new logo URL
       const { error: metadataError } = await supabase
         .from('pharmacy_metadata')
         .upsert({ 
@@ -158,8 +175,14 @@ const PharmacyProfile = () => {
           logo_url: publicUrl
         });
 
-      if (metadataError) throw metadataError;
+      if (metadataError) {
+        console.error('Metadata update error:', metadataError);
+        throw new Error(`Metadata update failed: ${metadataError.message}`);
+      }
 
+      console.log("Pharmacy metadata updated successfully");
+
+      // Update local state
       setPharmacyData({
         ...pharmacyData,
         logo_url: publicUrl
@@ -174,7 +197,7 @@ const PharmacyProfile = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update pharmacy image",
+        description: error instanceof Error ? error.message : "Failed to update pharmacy image",
       });
     } finally {
       setIsUploading(false);
