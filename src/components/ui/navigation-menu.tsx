@@ -66,14 +66,16 @@ const NavigationMenuContent = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Content>
 >(({ className, ...props }, ref) => (
-  <NavigationMenuPrimitive.Content
-    ref={ref}
-    className={cn(
-      "data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out md:absolute md:w-auto z-20 bg-popover rounded-md border shadow-md",
-      className
-    )}
-    {...props}
-  />
+  <NavigationMenuPrimitive.Portal>
+    <NavigationMenuPrimitive.Content
+      ref={ref}
+      className={cn(
+        "data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out md:absolute md:w-auto z-50 bg-popover rounded-md border shadow-md",
+        className
+      )}
+      {...props}
+    />
+  </NavigationMenuPrimitive.Portal>
 ))
 NavigationMenuContent.displayName = NavigationMenuPrimitive.Content.displayName
 

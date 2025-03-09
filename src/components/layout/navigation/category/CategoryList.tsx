@@ -25,7 +25,7 @@ export const CategoryList = ({
   if (!selectedType) {
     return (
       <div className="text-sm text-muted-foreground p-2">
-        {t('common.navigation.selectCategory')}
+        {t('common.navigation.selectCategory', 'Select a category')}
       </div>
     );
   }
@@ -36,7 +36,7 @@ export const CategoryList = ({
   if (!filteredCategories || filteredCategories.length === 0) {
     return (
       <div className="text-sm text-muted-foreground p-2">
-        {t('common.navigation.noCategoriesFound')}
+        {t('common.navigation.noCategoriesFound', 'No categories found')}
       </div>
     );
   }
