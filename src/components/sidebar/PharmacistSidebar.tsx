@@ -50,6 +50,12 @@ const PharmacistSidebar = () => {
     navigateToLink(path);
   };
 
+  // Add this console log to help debug pharmacy profile navigation
+  const navigateToPharmacyProfile = () => {
+    console.log('Navigating to pharmacy profile from PharmacistSidebar');
+    navigate('/pharmacy/profile');
+  };
+
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <SidebarBrand />
@@ -144,7 +150,7 @@ const PharmacistSidebar = () => {
         navigateToProfile={() => navigateToPharmacyView('profile', 'personal', 'profileTab')}
         navigateToBilling={() => navigateToPharmacyView('orders', 'payments', 'ordersTab')}
         navigateToUpgrade={() => navigate('/upgrade')}
-        navigateToPharmacyProfile={() => navigate('/pharmacy/profile')}
+        navigateToPharmacyProfile={navigateToPharmacyProfile}
         handleFileChange={handleFileChange}
       />
     </aside>

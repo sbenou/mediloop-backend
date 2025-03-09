@@ -50,6 +50,9 @@ const SidebarUserMenu = ({
     ? 'Pharmacy Account'
     : profile?.email || 'user@example.com';
 
+  // Debug log to verify userRole value and navigation function
+  console.log("SidebarUserMenu: userRole =", userRole, "navigateToPharmacyProfile =", !!navigateToPharmacyProfile);
+
   return (
     <div className="border-t p-4">
       <div className="flex items-center space-x-3">
@@ -99,7 +102,7 @@ const SidebarUserMenu = ({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               {userRole === 'pharmacist' && navigateToPharmacyProfile && (
-                <DropdownMenuItem onClick={navigateToPharmacyProfile}>
+                <DropdownMenuItem onClick={navigateToPharmacyProfile} className="pharmacy-profile-link">
                   <Store className="mr-2 h-4 w-4" />
                   <span>Pharmacy Profile</span>
                 </DropdownMenuItem>
