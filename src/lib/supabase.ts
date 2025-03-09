@@ -55,6 +55,33 @@ export const getSessionFromStorage = () => {
   }
 };
 
+// Utility to clear all auth storage
+export const clearAllAuthStorage = () => {
+  try {
+    // Clear localStorage
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(`${STORAGE_KEY}_timestamp`);
+    } catch (e) {
+      console.error('Error clearing localStorage:', e);
+    }
+    
+    // Clear sessionStorage
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(`${STORAGE_KEY}_timestamp`);
+    } catch (e) {
+      console.error('Error clearing sessionStorage:', e);
+    }
+    
+    console.log('Auth: All session storage cleared');
+    return true;
+  } catch (e) {
+    console.error('Error clearing auth storage:', e);
+    return false;
+  }
+};
+
 // Debug function to track storage operations
 const logStorageOperation = (action: string, key: string, success: boolean, error?: any) => {
   if (process.env.NODE_ENV === 'development') {
@@ -325,7 +352,7 @@ const supabaseOptions: SupabaseClientOptions<"public"> = {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: crossTabStorage,
+    storage: localStorage, // Use native localStorage for compatibility
     storageKey: STORAGE_KEY,
     flowType: 'pkce'
   }

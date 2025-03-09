@@ -124,7 +124,7 @@ export const UserMenuItems = () => {
           </DropdownMenuItem>
           
           {/* Explicitly add Pharmacy Profile link right after Upgrade to Pro */}
-          {(userRole === 'pharmacist' || isPharmacist || isUserPharmacist) && (
+          {isUserPharmacist && (
             <DropdownMenuItem onClick={() => {
               console.log('Navigating to pharmacy profile from UserMenuItems');
               navigate('/pharmacy/profile');
