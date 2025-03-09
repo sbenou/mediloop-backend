@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -15,6 +14,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
+import { UserProfile } from '@/types/user';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -77,7 +77,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
     try {
       setLoading(true);
       
-      // Get all user IDs associated with this pharmacy
       const { data: pharmacyUsers, error: pharmacyError } = await supabase
         .from('user_pharmacies')
         .select('user_id')
@@ -92,7 +91,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       
       const userIds = pharmacyUsers.map(pu => pu.user_id);
       
-      // Get profiles for these users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, email, avatar_url, role, is_blocked')
@@ -158,7 +156,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // 1. Create user in auth system
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -175,7 +172,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
       const userId = authData.user.id;
 
-      // 2. Create profile entry
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -187,7 +183,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
       if (profileError) throw profileError;
 
-      // 3. Associate with pharmacy
       const { error: pharmacyAssocError } = await supabase
         .from('user_pharmacies')
         .insert({
@@ -197,7 +192,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
       if (pharmacyAssocError) throw pharmacyAssocError;
 
-      // 4. Add address
       const { error: addressError } = await supabase
         .from('addresses')
         .insert({
@@ -212,7 +206,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
       if (addressError) throw addressError;
 
-      // 5. Add next of kin
       const { error: nextOfKinError } = await supabase
         .from('next_of_kin')
         .insert({
@@ -520,6 +513,22 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         id: member.user_id,
                         avatar_url: member.avatar_url,
                         full_name: member.full_name,
+                        role: member.role,
+                        role_id: null,
+                        email: member.email,
+                        date_of_birth: null,
+                        city: null,
+                        auth_method: null,
+                        is_blocked: !member.is_active,
+                        doctor_stamp_url: null,
+                        doctor_signature_url: null,
+                        cns_card_front: null,
+                        cns_card_back: null,
+                        cns_number: null,
+                        deleted_at: null,
+                        created_at: null,
+                        updated_at: null,
+                        license_number: null
                       }}
                       size="lg"
                       fallbackText={member.full_name.substring(0, 2).toUpperCase()}

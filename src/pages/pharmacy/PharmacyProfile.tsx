@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -14,11 +13,22 @@ import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import PharmacyTeam from "@/components/pharmacy/PharmacyTeam";
 import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
 
+interface PharmacyData {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  phone: string | null;
+  hours: string | null;
+  logo_url?: string | null;
+}
+
 const PharmacyProfile = () => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState("info");
   const [isUploading, setIsUploading] = useState(false);
-  const [pharmacyData, setPharmacyData] = useState<any>(null);
+  const [pharmacyData, setPharmacyData] = useState<PharmacyData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -53,7 +63,24 @@ const PharmacyProfile = () => {
         return;
       }
 
-      setPharmacyData(pharmacy);
+      // Check if logo_url exists
+      const { data: pharmacyMetadata, error: metadataError } = await supabase
+        .from('pharmacy_metadata')
+        .select('logo_url')
+        .eq('pharmacy_id', pharmacy.id)
+        .maybeSingle();
+
+      if (!metadataError && pharmacyMetadata) {
+        setPharmacyData({
+          ...pharmacy,
+          logo_url: pharmacyMetadata.logo_url
+        });
+      } else {
+        setPharmacyData({
+          ...pharmacy,
+          logo_url: null
+        });
+      }
     } catch (error) {
       console.error('Error fetching pharmacy data:', error);
     }
@@ -86,13 +113,15 @@ const PharmacyProfile = () => {
         .from('pharmacy-images')
         .getPublicUrl(filePath);
 
-      // Update pharmacy info with new logo
-      const { error: updateError } = await supabase
-        .from('pharmacies')
-        .update({ logo_url: publicUrl })
-        .eq('id', pharmacyData.id);
+      // Create or update pharmacy metadata with the logo URL
+      const { error: metadataError } = await supabase
+        .from('pharmacy_metadata')
+        .upsert({ 
+          pharmacy_id: pharmacyData.id,
+          logo_url: publicUrl
+        });
 
-      if (updateError) throw updateError;
+      if (metadataError) throw metadataError;
 
       // Update local state
       setPharmacyData({
@@ -145,7 +174,7 @@ const PharmacyProfile = () => {
           onClick={handleImageClick}
           className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
         >
-          {pharmacyData.logo_url ? (
+          {pharmacyData?.logo_url ? (
             <div className="w-full h-full relative">
               <img 
                 src={pharmacyData.logo_url} 

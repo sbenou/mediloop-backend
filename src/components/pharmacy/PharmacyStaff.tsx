@@ -11,6 +11,7 @@ import UserAvatar from '@/components/user-menu/UserAvatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { UserProfile } from '@/types/user';
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -217,6 +218,22 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                           id: staff.id,
                           avatar_url: staff.avatar_url,
                           full_name: staff.full_name,
+                          role: staff.role,
+                          role_id: null,
+                          email: staff.email,
+                          date_of_birth: null,
+                          city: null,
+                          auth_method: null,
+                          is_blocked: !staff.is_active,
+                          doctor_stamp_url: null,
+                          doctor_signature_url: null,
+                          cns_card_front: null,
+                          cns_card_back: null,
+                          cns_number: null,
+                          deleted_at: null,
+                          created_at: null,
+                          updated_at: null,
+                          license_number: null
                         }}
                         size="sm"
                         fallbackText={staff.full_name.substring(0, 2).toUpperCase()}
@@ -275,6 +292,22 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                   id: selectedUser.id,
                   avatar_url: selectedUser.avatar_url,
                   full_name: selectedUser.full_name,
+                  role: selectedUser.role,
+                  role_id: null,
+                  email: selectedUser.email,
+                  date_of_birth: null,
+                  city: null,
+                  auth_method: null,
+                  is_blocked: !selectedUser.is_active,
+                  doctor_stamp_url: null,
+                  doctor_signature_url: null,
+                  cns_card_front: null,
+                  cns_card_back: null,
+                  cns_number: null,
+                  deleted_at: null,
+                  created_at: null,
+                  updated_at: null,
+                  license_number: null
                 }}
                 size="xl"
                 fallbackText={selectedUser.full_name.substring(0, 2).toUpperCase()}
