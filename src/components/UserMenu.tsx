@@ -1,3 +1,4 @@
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,8 @@ import { useCallback, memo, useState, useEffect, useRef } from 'react';
 import { supabase } from "@/lib/supabase";
 import { getSessionFromStorage } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
+import { useRecoilState } from "recoil";
+import { userAvatarState } from "@/store/user/atoms";
 
 const UserMenu = memo(() => {
   const { isAuthenticated, isLoading, profile, user, userRole, isPharmacist } = useAuth();
@@ -21,6 +24,14 @@ const UserMenu = memo(() => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = useRecoilState(userAvatarState);
+  
+  // Set initial avatar URL from profile
+  useEffect(() => {
+    if (profile?.avatar_url && !avatarUrl) {
+      setAvatarUrl(profile.avatar_url);
+    }
+  }, [profile?.avatar_url, setAvatarUrl, avatarUrl]);
   
   useEffect(() => {
     const checkSession = async () => {
@@ -157,12 +168,13 @@ const UserMenu = memo(() => {
           .update({ avatar_url: publicUrl })
           .eq('id', userId);
 
+        // Update Recoil state
+        setAvatarUrl(publicUrl);
+
         toast({
           title: "Success",
           description: "Profile picture updated successfully",
         });
-
-        window.location.reload();
       } catch (error) {
         console.error('Error uploading avatar:', error);
         toast({
@@ -208,7 +220,10 @@ const UserMenu = memo(() => {
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <div className="flex items-center space-x-2">
           <UserAvatar 
-            userProfile={profile} 
+            userProfile={profile ? {
+              ...profile,
+              avatar_url: avatarUrl || profile.avatar_url
+            } : undefined} 
             canUpload={true} 
             onAvatarClick={handleAvatarClick}
           />

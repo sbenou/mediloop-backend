@@ -2,9 +2,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfile } from "@/types/user";
 import { cn } from "@/lib/utils";
+import { useRecoilValue } from "recoil";
+import { userAvatarState } from "@/store/user/atoms";
 
 export interface UserAvatarProps {
-  userProfile: UserProfile;
+  userProfile?: UserProfile;
   fallbackText?: string;
   size?: "sm" | "md" | "lg" | "xl";
   canUpload?: boolean;
@@ -20,6 +22,8 @@ const UserAvatar = ({
   onAvatarClick,
   isSquare = false
 }: UserAvatarProps) => {
+  const globalAvatarUrl = useRecoilValue(userAvatarState);
+  
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
     md: "h-10 w-10 text-sm",
@@ -48,10 +52,15 @@ const UserAvatar = ({
     }
   };
 
+  // Use global avatar URL from Recoil if we're displaying the current user's avatar
+  const avatarUrl = userProfile?.id && globalAvatarUrl && userProfile.id === globalAvatarUrl.split('/').slice(-2)[0]
+    ? globalAvatarUrl
+    : userProfile?.avatar_url;
+
   return (
     <Avatar className={avatarClass} onClick={handleClick}>
       <AvatarImage 
-        src={userProfile?.avatar_url || undefined} 
+        src={avatarUrl || undefined} 
         alt={userProfile?.full_name || "User"} 
       />
       <AvatarFallback className={isSquare ? "rounded-md" : "rounded-full"}>

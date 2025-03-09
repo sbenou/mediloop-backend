@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -14,6 +15,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
+import { fetchAddressFromPostcode } from '@/services/address-service';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -28,6 +30,26 @@ interface TeamMember {
   role: string;
   is_active: boolean;
 }
+
+// Define relationship options for the Next of Kin dropdown
+const relationOptions = [
+  { value: 'spouse', label: 'Spouse' },
+  { value: 'husband', label: 'Husband' },
+  { value: 'wife', label: 'Wife' },
+  { value: 'mother', label: 'Mother' },
+  { value: 'father', label: 'Father' },
+  { value: 'sister', label: 'Sister' },
+  { value: 'brother', label: 'Brother' },
+  { value: 'sibling', label: 'Sibling' },
+  { value: 'friend', label: 'Friend' },
+  { value: 'colleague', label: 'Work Colleague' },
+  { value: 'neighbor', label: 'Neighbor' },
+  { value: 'partner', label: 'Partner' },
+  { value: 'son', label: 'Son' },
+  { value: 'daughter', label: 'Daughter' },
+  { value: 'grandparent', label: 'Grandparent' },
+  { value: 'other', label: 'Other' },
+];
 
 const formSchema = z.object({
   full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -49,6 +71,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   const [loading, setLoading] = useState(true);
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState("personal");
+  const [isAddressLoading, setIsAddressLoading] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,7 +86,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       country: "",
       next_of_kin_name: "",
       next_of_kin_phone: "",
-      next_of_kin_relation: "",
+      next_of_kin_relation: "other",
       next_of_kin_address: "",
     },
   });
@@ -150,6 +173,48 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         title: "Error",
         description: "Failed to update user status",
       });
+    }
+  };
+
+  const lookupAddress = async () => {
+    const postcode = form.getValues('postal_code');
+    if (!postcode || postcode.length < 3) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid postal code",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsAddressLoading(true);
+    try {
+      const addressData = await fetchAddressFromPostcode(postcode);
+      if (addressData && addressData.address) {
+        form.setValue('street', addressData.address.street || '');
+        form.setValue('city', addressData.address.city || '');
+        form.setValue('country', addressData.address.country || '');
+        
+        toast({
+          title: "Address Found",
+          description: "Address details have been filled automatically"
+        });
+      } else {
+        toast({
+          title: "Address Not Found",
+          description: "We couldn't find an address with this postal code. Please enter manually.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      toast({
+        title: "Error",
+        description: "Failed to lookup address information",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAddressLoading(false);
     }
   };
 
@@ -329,14 +394,51 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                       )}
                     />
                     
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={() => setCurrentTab("address")}>
+                    <div className="flex justify-between space-x-2 pt-4">
+                      <Button type="button" variant="outline" onClick={() => setAddUserOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="button" onClick={() => setCurrentTab("address")}>
                         Next
                       </Button>
                     </div>
                   </TabsContent>
                   
                   <TabsContent value="address" className="space-y-4">
+                    <div className="flex space-x-2">
+                      <FormField
+                        control={form.control}
+                        name="postal_code"
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Postal Code</FormLabel>
+                            <div className="flex space-x-2">
+                              <FormControl>
+                                <Input placeholder="10001" {...field} />
+                              </FormControl>
+                              <Button 
+                                type="button" 
+                                onClick={lookupAddress}
+                                disabled={isAddressLoading}
+                                variant="outline"
+                                size="icon"
+                              >
+                                {isAddressLoading ? (
+                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                  </svg>
+                                )}
+                              </Button>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
                     <FormField
                       control={form.control}
                       name="street"
@@ -368,12 +470,12 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                       
                       <FormField
                         control={form.control}
-                        name="postal_code"
+                        name="country"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Postal Code</FormLabel>
+                            <FormLabel>Country</FormLabel>
                             <FormControl>
-                              <Input placeholder="10001" {...field} />
+                              <Input placeholder="United States" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -381,27 +483,18 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                       />
                     </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="country"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <Input placeholder="United States" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="flex justify-between space-x-2">
-                      <Button type="button" variant="outline" onClick={() => setCurrentTab("personal")}>
-                        Previous
+                    <div className="flex justify-between space-x-2 pt-4">
+                      <Button type="button" variant="outline" onClick={() => setAddUserOpen(false)}>
+                        Cancel
                       </Button>
-                      <Button type="button" variant="outline" onClick={() => setCurrentTab("nextofkin")}>
-                        Next
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button type="button" variant="outline" onClick={() => setCurrentTab("personal")}>
+                          Previous
+                        </Button>
+                        <Button type="button" onClick={() => setCurrentTab("nextofkin")}>
+                          Next
+                        </Button>
+                      </div>
                     </div>
                   </TabsContent>
                   
@@ -441,7 +534,16 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         <FormItem>
                           <FormLabel>Relation</FormLabel>
                           <FormControl>
-                            <Input placeholder="Spouse" {...field} />
+                            <select 
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              {...field}
+                            >
+                              {relationOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -462,24 +564,23 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                       )}
                     />
                     
-                    <div className="flex justify-between space-x-2">
-                      <Button type="button" variant="outline" onClick={() => setCurrentTab("address")}>
-                        Previous
+                    <div className="flex justify-between space-x-2 pt-4">
+                      <Button type="button" variant="outline" onClick={() => setAddUserOpen(false)}>
+                        Cancel
                       </Button>
-                      <Button type="submit">
-                        Create User
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button type="button" variant="outline" onClick={() => setCurrentTab("address")}>
+                          Previous
+                        </Button>
+                        <Button type="submit">
+                          Create User
+                        </Button>
+                      </div>
                     </div>
                   </TabsContent>
                 </Tabs>
               </form>
             </Form>
-            
-            <DialogFooter className="mt-6">
-              <Button variant="outline" onClick={() => setAddUserOpen(false)}>
-                Cancel
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -530,13 +631,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         license_number: null
                       }}
                     />
-                    <div className="absolute -bottom-1 -right-1">
-                      <Switch 
-                        checked={member.is_active} 
-                        onCheckedChange={() => handleToggleActive(member.user_id, member.is_active)}
-                        className={member.is_active ? "bg-green-500" : "bg-gray-400"}
-                      />
-                    </div>
                   </div>
                   <h3 className="font-medium text-center mt-2 truncate w-full">{member.full_name}</h3>
                   <p className="text-sm text-gray-500 truncate w-full text-center">
@@ -548,10 +642,17 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                     <Mail className="h-4 w-4 text-gray-400 mr-2" />
                     <p className="text-sm truncate">{member.email}</p>
                   </div>
-                  <div className="mt-4 flex justify-between">
-                    <span className={`px-2 py-1 rounded-full text-xs ${member.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {member.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                  <div className="mt-4 flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 rounded-full text-xs ${member.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {member.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                      <Switch 
+                        checked={member.is_active} 
+                        onCheckedChange={() => handleToggleActive(member.user_id, member.is_active)}
+                        className={member.is_active ? "bg-green-500" : "bg-gray-400"}
+                      />
+                    </div>
                     <Button variant="ghost" size="sm" asChild>
                       <a href={`/pharmacy/staff/${member.user_id}`}>View Profile</a>
                     </Button>
