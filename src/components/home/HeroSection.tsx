@@ -1,12 +1,11 @@
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { UserPlus, ShoppingBag } from "lucide-react";
-import { useTranslation } from "react-i18next";
 
 export const HeroSection = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   
   return (
     <section className="relative min-h-[600px] flex items-center py-16 md:py-24 w-full overflow-hidden">
@@ -34,10 +33,10 @@ export const HeroSection = () => {
         <div className="flex flex-col items-center">
           <div className="text-center max-w-3xl mb-12">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
-              {t('home.hero.title')}
+              Your Health, Your Way
             </h1>
             <p className="text-lg md:text-xl text-[#1A1F2C] font-medium mb-8">
-              {t('home.hero.subtitle')}
+              Access healthcare services, manage prescriptions, and connect with professionals all in one place.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button 
