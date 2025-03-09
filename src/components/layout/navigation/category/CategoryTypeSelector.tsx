@@ -2,7 +2,7 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Triangle } from "lucide-react";
 
 interface CategoryTypeSelectorProps {
   selectedType: 'pharmacy' | 'parapharmacy' | null;
@@ -67,7 +67,7 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   return (
     <div className="border-r pr-4 pb-4 w-[400px] h-[calc(100vh-4rem)] overflow-hidden relative">
       <div>
-        <div className="flex items-center">
+        <div className="flex items-center relative">
           <button
             onClick={() => {
               setImageLoaded(false);
@@ -83,12 +83,15 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
             {t('common.navigation.pharmacy')}
           </button>
           {selectedType === 'pharmacy' && (
-            <div className="absolute right-0 z-10 flex items-center justify-center h-full pointer-events-none">
-              <ChevronRight className="h-5 w-5 text-primary animate-pulse" />
+            <div className="absolute right-[-10px] z-10 flex items-center justify-center h-full pointer-events-none">
+              <div className="relative h-5 w-5 rotate-180">
+                <Triangle className="h-5 w-5 text-white absolute top-0 left-0" />
+                <Triangle className="h-5 w-5 text-primary stroke-[3] fill-none absolute top-0 left-0" />
+              </div>
             </div>
           )}
         </div>
-        <div className="flex items-center mt-2">
+        <div className="flex items-center mt-2 relative">
           <button
             onClick={() => {
               setImageLoaded(false);
@@ -104,8 +107,11 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
             {t('common.navigation.parapharmacy')}
           </button>
           {selectedType === 'parapharmacy' && (
-            <div className="absolute right-0 z-10 flex items-center justify-center h-full pointer-events-none">
-              <ChevronRight className="h-5 w-5 text-primary animate-pulse" />
+            <div className="absolute right-[-10px] z-10 flex items-center justify-center h-full pointer-events-none">
+              <div className="relative h-5 w-5 rotate-180">
+                <Triangle className="h-5 w-5 text-white absolute top-0 left-0" />
+                <Triangle className="h-5 w-5 text-primary stroke-[3] fill-none absolute top-0 left-0" />
+              </div>
             </div>
           )}
         </div>
