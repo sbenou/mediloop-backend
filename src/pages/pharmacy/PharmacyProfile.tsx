@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -6,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Image, Upload, Clock, MapPin, Users, UserCog } from "lucide-react";
+import { Image, Upload, Clock, MapPin, Users, UserCog, AlertTriangle } from "lucide-react";
 import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
@@ -29,39 +30,71 @@ const PharmacyProfile = () => {
   const [activeTab, setActiveTab] = useState("info");
   const [isUploading, setIsUploading] = useState(false);
   const [pharmacyData, setPharmacyData] = useState<PharmacyData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchPharmacyData();
-  }, [profile]);
+  }, [profile?.id]);
 
   const fetchPharmacyData = async () => {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      setIsLoading(false);
+      setError("User profile not loaded");
+      return;
+    }
 
     try {
+      setIsLoading(true);
+      setError(null);
+      console.log("Fetching pharmacy data for user:", profile.id);
+
       // Fetch the pharmacy associated with this pharmacist
       const { data: pharmacyRelation, error: relationError } = await supabase
         .from('user_pharmacies')
         .select('pharmacy_id')
         .eq('user_id', profile.id)
-        .single();
+        .maybeSingle();
 
-      if (relationError || !pharmacyRelation) {
+      if (relationError) {
         console.error('Error fetching pharmacy relation:', relationError);
+        setError("Failed to fetch pharmacy relationship");
+        setIsLoading(false);
         return;
       }
+
+      if (!pharmacyRelation || !pharmacyRelation.pharmacy_id) {
+        console.log("No pharmacy associated with this user:", profile.id);
+        setError("No pharmacy associated with your account");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Found pharmacy relation:", pharmacyRelation);
 
       // Now fetch the pharmacy details
       const { data: pharmacy, error: pharmacyError } = await supabase
         .from('pharmacies')
         .select('*')
         .eq('id', pharmacyRelation.pharmacy_id)
-        .single();
+        .maybeSingle();
 
       if (pharmacyError) {
         console.error('Error fetching pharmacy:', pharmacyError);
+        setError("Failed to fetch pharmacy details");
+        setIsLoading(false);
         return;
       }
+
+      if (!pharmacy) {
+        console.log("Pharmacy not found for ID:", pharmacyRelation.pharmacy_id);
+        setError("Pharmacy not found");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Fetched pharmacy data:", pharmacy);
 
       // Check if logo_url exists
       const { data: pharmacyMetadata, error: metadataError } = await supabase
@@ -70,19 +103,20 @@ const PharmacyProfile = () => {
         .eq('pharmacy_id', pharmacy.id)
         .maybeSingle();
 
-      if (!metadataError && pharmacyMetadata) {
-        setPharmacyData({
-          ...pharmacy,
-          logo_url: pharmacyMetadata.logo_url
-        });
-      } else {
-        setPharmacyData({
-          ...pharmacy,
-          logo_url: null
-        });
+      if (metadataError) {
+        console.error('Error fetching pharmacy metadata:', metadataError);
       }
+
+      setPharmacyData({
+        ...pharmacy,
+        logo_url: pharmacyMetadata?.logo_url || null
+      });
+      
+      setIsLoading(false);
     } catch (error) {
       console.error('Error fetching pharmacy data:', error);
+      setError("An unexpected error occurred");
+      setIsLoading(false);
     }
   };
 
@@ -149,11 +183,50 @@ const PharmacyProfile = () => {
     setActiveTab(value);
   };
 
+  // Render loading state
+  if (isLoading) {
+    return (
+      <PharmacistLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <p className="text-muted-foreground">Loading pharmacy information...</p>
+          </div>
+        </div>
+      </PharmacistLayout>
+    );
+  }
+
+  // Render error state
+  if (error) {
+    return (
+      <PharmacistLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center space-y-4 max-w-md text-center px-4">
+            <AlertTriangle className="h-12 w-12 text-amber-500" />
+            <h2 className="text-xl font-semibold">Pharmacy Data Unavailable</h2>
+            <p className="text-muted-foreground">{error}</p>
+            <Button onClick={fetchPharmacyData} variant="outline">
+              Retry
+            </Button>
+          </div>
+        </div>
+      </PharmacistLayout>
+    );
+  }
+
+  // Render no pharmacy state
   if (!pharmacyData) {
     return (
       <PharmacistLayout>
         <div className="flex items-center justify-center h-64">
-          <p>Loading pharmacy information...</p>
+          <div className="flex flex-col items-center space-y-4 max-w-md text-center px-4">
+            <Store className="h-12 w-12 text-muted-foreground" />
+            <h2 className="text-xl font-semibold">No Pharmacy Found</h2>
+            <p className="text-muted-foreground">
+              There is no pharmacy associated with your account. Please contact an administrator.
+            </p>
+          </div>
         </div>
       </PharmacistLayout>
     );
