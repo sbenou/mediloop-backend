@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase, getSessionFromStorage } from '@/lib/supabase';
@@ -72,6 +73,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (!profile) {
         console.error('No profile found for user:', userId);
+        return { profile: null, permissions: [] };
+      }
+
+      // Handle error types and ensure complete profile
+      if ('error' in profile) {
+        console.error('Error in profile:', profile.error);
         return { profile: null, permissions: [] };
       }
 

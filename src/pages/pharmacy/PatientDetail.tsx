@@ -18,6 +18,7 @@ interface PatientData {
   // Include other relevant fields from the profiles table
   pharmacy_name: string | null;
   pharmacy_logo_url: string | null;
+  is_blocked: boolean | null;
 }
 
 const PatientDetail = () => {
@@ -69,6 +70,7 @@ const PatientDetail = () => {
         avatar_url: data.avatar_url,
         pharmacy_name: data.pharmacy_name || null,
         pharmacy_logo_url: data.pharmacy_logo_url || null,
+        is_blocked: data.is_blocked || false,
         // Map other relevant fields from the profiles table
       };
 
@@ -94,7 +96,7 @@ const PatientDetail = () => {
         date_of_birth: null,
         city: null,
         auth_method: null,
-        is_blocked: null,
+        is_blocked: patientData.is_blocked,
         doctor_stamp_url: null,
         doctor_signature_url: null,
         cns_card_front: null,
@@ -106,7 +108,7 @@ const PatientDetail = () => {
         license_number: null,
         pharmacy_name: patientData.pharmacy_name,
         pharmacy_logo_url: patientData.pharmacy_logo_url,
-        is_active: patientData.is_blocked !== true
+        is_active: !patientData.is_blocked
       };
       
       setPatient(completeProfile);

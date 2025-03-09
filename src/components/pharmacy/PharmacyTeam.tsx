@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -115,27 +116,35 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       
       const userIds = pharmacyUsers.map(pu => pu.user_id);
       
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url, role, is_blocked, pharmacy_name, pharmacy_logo_url')
-        .in('id', userIds);
+      // Check if there was an error with the request
+      try {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, avatar_url, role, is_blocked, pharmacy_name, pharmacy_logo_url')
+          .in('id', userIds);
+          
+        if (profilesError) throw profilesError;
         
-      if (profilesError) throw profilesError;
-      
-      if (profiles && profiles.length > 0) {
-        const teamMembers = profiles.map(profile => ({
-          id: profile.id,
-          name: profile.full_name || 'No Name',
-          email: profile.email || 'No Email',
-          avatar_url: profile.avatar_url,
-          role: profile.role || 'staff',
-          is_active: !profile.is_blocked,
-          joined_date: new Date().toISOString(),
-          pharmacy_name: profile.pharmacy_name || null,
-          pharmacy_logo_url: profile.pharmacy_logo_url || null
-        }));
-        setTeamMembers(teamMembers);
-      } else {
+        if (profiles && profiles.length > 0) {
+          const members: TeamMember[] = profiles.map(profile => ({
+            id: profile.id,
+            user_id: profile.id,
+            full_name: profile.full_name || 'No Name',
+            email: profile.email || 'No Email',
+            avatar_url: profile.avatar_url,
+            role: profile.role || 'staff',
+            is_active: !profile.is_blocked,
+            pharmacy_name: profile.pharmacy_name || null,
+            pharmacy_logo_url: profile.pharmacy_logo_url || null
+          }));
+          
+          setTeamMembers(members);
+        } else {
+          setTeamMembers([]);
+        }
+      } catch (error: any) {
+        console.error('Error fetching profiles:', error);
+        // Handle the error gracefully - initialize with empty array
         setTeamMembers([]);
       }
     } catch (error) {
@@ -145,6 +154,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         title: "Error",
         description: "Failed to load pharmacy team members",
       });
+      setTeamMembers([]);
     } finally {
       setLoading(false);
     }
@@ -331,15 +341,20 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         updated_at: null,
         license_number: null,
         pharmacy_name: member.pharmacy_name,
-        pharmacy_logo_url: member.pharmacy_logo_url
+        pharmacy_logo_url: member.pharmacy_logo_url,
+        is_active: member.is_active
       };
       
       return {
         id: member.id,
-        name: member.full_name || 'Unknown',
-        email: member.email || 'No email',
+        name: member.full_name,
+        email: member.email,
         role: member.role || 'staff',
-        profile: completeProfile
+        profile: completeProfile,
+        avatar_url: member.avatar_url,
+        is_active: member.is_active,
+        pharmacy_name: member.pharmacy_name,
+        pharmacy_logo_url: member.pharmacy_logo_url
       };
     });
   }, [teamMembers]);

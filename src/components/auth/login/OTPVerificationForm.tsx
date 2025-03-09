@@ -54,7 +54,7 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           .eq('id', data.user.id)
           .single();
 
-        // Add missing pharmacy fields to ensure it matches UserProfile type
+        // Ensure profile has all required fields from UserProfile interface
         const completeProfile = profile ? {
           ...profile,
           pharmacy_name: profile.pharmacy_name || null,

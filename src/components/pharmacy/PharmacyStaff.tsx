@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -10,6 +11,7 @@ import UserAvatar from '@/components/user-menu/UserAvatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { UserProfile } from '@/types/user';
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -81,29 +83,35 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
       
       const userIds = pharmacyUsers.map(pu => pu.user_id);
       
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url, role, is_blocked, pharmacy_name, pharmacy_logo_url')
-        .in('id', userIds);
+      try {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, avatar_url, role, is_blocked, pharmacy_name, pharmacy_logo_url')
+          .in('id', userIds);
+          
+        if (profilesError) throw profilesError;
         
-      if (profilesError) throw profilesError;
-      
-      if (profiles && profiles.length > 0) {
-        const members: StaffMember[] = profiles.map(profile => ({
-          id: profile.id,
-          full_name: profile.full_name || 'Unknown',
-          email: profile.email || 'No email',
-          avatar_url: profile.avatar_url,
-          role: profile.role || 'pharmacy_user',
-          is_active: !profile.is_blocked,
-          joined_at: userIdsWithDates[profile.id] || 'Unknown',
-          pharmacy_name: profile.pharmacy_name || null,
-          pharmacy_logo_url: profile.pharmacy_logo_url || null
-        }));
-        
-        setStaffMembers(members);
-        setFilteredStaff(members);
-      } else {
+        if (profiles && profiles.length > 0) {
+          const members: StaffMember[] = profiles.map(profile => ({
+            id: profile.id,
+            full_name: profile.full_name || 'Unknown',
+            email: profile.email || 'No email',
+            avatar_url: profile.avatar_url,
+            role: profile.role || 'pharmacy_user',
+            is_active: !profile.is_blocked,
+            joined_at: userIdsWithDates[profile.id] || 'Unknown',
+            pharmacy_name: profile.pharmacy_name || null,
+            pharmacy_logo_url: profile.pharmacy_logo_url || null
+          }));
+          
+          setStaffMembers(members);
+          setFilteredStaff(members);
+        } else {
+          setStaffMembers([]);
+          setFilteredStaff([]);
+        }
+      } catch (error) {
+        console.error('Error processing profiles:', error);
         setStaffMembers([]);
         setFilteredStaff([]);
       }
