@@ -1,150 +1,121 @@
 
-import { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useToast } from "@/components/ui/use-toast"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { useMutation } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/lib/supabase';
-import { AuthError, User } from '@supabase/supabase-js';
-import { useAuth } from '@/hooks/auth/useAuth';
 
-const formSchema = z.object({
-  otp: z.string()
-    .min(6, { message: "OTP must be at least 6 characters." })
-    .max(6, { message: "OTP must be at most 6 characters." }),
-});
+// Define props interface
+interface OTPVerificationFormProps {
+  email: string;
+  onSuccess: () => void;
+}
 
-const OTPVerificationForm = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, onSuccess }) => {
+  const [otp, setOTP] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { refreshSession } = useAuth();
-  const [role, setRole] = useState<string | null>(null);
-  const [fullName, setFullName] = useState<string | null>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      otp: "",
-    },
-  });
+  const handleVerify = async () => {
+    if (!otp || otp.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Invalid code",
+        description: "Please enter the full verification code.",
+      });
+      return;
+    }
 
-  const { mutate: verifyOTP, isPending } = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const email = searchParams.get('email');
-      if (!email) throw new Error('Email not found in query parameters');
+    setIsLoading(true);
 
-      const { data, error } = await supabase.auth.verifyOtp({
+    try {
+      const { error } = await supabase.auth.verifyOtp({
         email,
-        token: values.otp,
+        token: otp,
         type: 'email',
       });
 
       if (error) {
-        console.error('OTP verification error:', error);
         throw error;
       }
-
-      if (!data.session) {
-        throw new Error('No session found after OTP verification');
-      }
-
-      return { user: data.user!, session: data.session };
-    },
-    onSuccess: async (data) => {
-      const { user, session } = data;
-      await createProfileIfNeeded(user);
-      await refreshSession();
 
       toast({
         title: "Verification successful",
         description: "You have successfully verified your email.",
       });
 
-      navigate('/dashboard');
-    },
-    onError: (error) => {
+      // Call the onSuccess callback
+      onSuccess();
+    } catch (error: any) {
+      console.error('Verification error:', error);
       toast({
         variant: "destructive",
         title: "Verification failed",
-        description: error.message || "Failed to verify OTP.",
+        description: error.message || "Failed to verify the code. Please try again.",
       });
-    },
-  });
-
-  const createProfileIfNeeded = async (user: User) => {
-    try {
-      const { data: existingProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError && profileError.message !== 'No rows found') {
-        console.error('Error checking profile existence:', profileError);
-        return;
-      }
-
-      if (!existingProfile) {
-        const profileData = {
-          id: user.id,
-          role: role || 'patient',
-          full_name: fullName || '',
-          email: user.email,
-          pharmacy_name: null,  // Initialize with null
-          pharmacy_logo_url: null,  // Initialize with null
-        };
-
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([profileData]);
-
-        if (insertError) {
-          console.error('Error creating profile:', insertError);
-        }
-      }
-    } catch (error) {
-      console.error('Error creating profile:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    verifyOTP(values);
-  };
-
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-        <FormField
-          control={form.control}
-          name="otp"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>OTP</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter OTP" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={isPending}>
-          {isPending ? "Verifying..." : "Verify OTP"}
+    <div className="space-y-6">
+      <InputOTP 
+        maxLength={6}
+        value={otp}
+        onChange={setOTP}
+        render={({ slots }) => (
+          <InputOTPGroup>
+            {slots.map((slot, index) => (
+              <InputOTPSlot key={index} {...slot} />
+            ))}
+          </InputOTPGroup>
+        )}
+      />
+      
+      <Button 
+        className="w-full" 
+        onClick={handleVerify}
+        disabled={isLoading || otp.length < 6}
+      >
+        {isLoading ? "Verifying..." : "Verify Email"}
+      </Button>
+      
+      <p className="text-sm text-muted-foreground text-center">
+        Didn't receive a code? 
+        <Button 
+          variant="link" 
+          className="px-2 py-0 h-auto"
+          disabled={isLoading}
+          onClick={async () => {
+            try {
+              setIsLoading(true);
+              const { error } = await supabase.auth.signInWithOtp({
+                email,
+                options: {
+                  shouldCreateUser: false,
+                }
+              });
+              if (error) throw error;
+              toast({
+                title: "Code resent",
+                description: `A new verification code has been sent to ${email}`,
+              });
+            } catch (error: any) {
+              toast({
+                variant: "destructive",
+                title: "Failed to resend code",
+                description: error.message || "Something went wrong. Please try again.",
+              });
+            } finally {
+              setIsLoading(false);
+            }
+          }}
+        >
+          Resend
         </Button>
-      </form>
-    </Form>
+      </p>
+    </div>
   );
 };
 

@@ -2,19 +2,11 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate } from 'react-router-dom';
-import { useSearchParams } from 'react-router-dom';
-import { useToast } from "@/components/ui/use-toast"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useToast } from "@/hooks/use-toast";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -23,94 +15,103 @@ import { supabase } from '@/lib/supabase';
 import { AuthRole } from '@/types/auth';
 import { useMutation } from '@tanstack/react-query';
 import { Icons } from '@/components/ui/icons';
-import { AuthError, User, Session } from '@supabase/supabase-js';
+
+interface PasswordFieldsProps {
+  email: string;
+  onSuccess: () => Promise<void> | void;
+  onForgotPassword: () => void;
+}
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
-  confirmPassword: z.string().min(8, { message: "Password must be at least 8 characters." }),
-  fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
-  role: z.enum([AuthRole.PATIENT, AuthRole.DOCTOR, AuthRole.PHARMACIST], {
-    required_error: "Please select a role.",
+  email: z.string().email({
+    message: "Please enter a valid email address."
   }),
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters."
+  }),
+  confirmPassword: z.string().min(8, {
+    message: "Password must be at least 8 characters."
+  }),
+  fullName: z.string().min(2, {
+    message: "Full name must be at least 2 characters."
+  }),
+  role: z.enum([AuthRole.PATIENT, AuthRole.DOCTOR, AuthRole.PHARMACIST], {
+    required_error: "Please select a role."
+  })
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-const PasswordFields = () => {
+const PasswordFields: React.FC<PasswordFieldsProps> = ({ email, onSuccess, onForgotPassword }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      email: email || "",
       password: "",
       confirmPassword: "",
       fullName: "",
-      role: AuthRole.PATIENT,
-    },
+      role: AuthRole.PATIENT
+    }
   });
 
-  const { mutate: signUpMutate } = useMutation<
-    { user: User | null; session: Session | null },
-    Error,
-    FormValues
-  >({
-    mutationFn: async (values: FormValues) => {
+  const mutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
       setIsLoading(true);
       const { email, password, fullName, role } = values;
-
+      
       if (password !== values.confirmPassword) {
         throw new Error("Passwords do not match");
       }
-
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
         password: password,
         options: {
           data: {
             full_name: fullName,
-            role: role,
-          },
-        },
+            role: role
+          }
+        }
       });
-
+      
       if (authError) {
         console.error("Authentication error:", authError);
         throw new Error(authError.message || "Authentication failed");
       }
-
+      
       if (!authData.user) {
         throw new Error("User not found after signup");
       }
-
+      
       await createProfileIfNeeded(authData.user);
-
-      return { user: authData.user, session: authData.session };
+      return authData;
     },
     onSuccess: (data) => {
       setIsLoading(false);
       toast({
         title: "Registration Successful",
-        description: "You have successfully registered. Please check your email to verify your account.",
+        description: "You have successfully registered. Please check your email to verify your account."
       });
       navigate(`/auth/verify-otp?type=email&email=${data.user?.email}`);
+      if (onSuccess) {
+        onSuccess();
+      }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Registration Failed",
-        description: error.message || "An error occurred during registration.",
+        description: error.message || "An error occurred during registration."
       });
-    },
+    }
   });
 
-  const onSubmit = (values: FormValues) => {
-    signUpMutate(values);
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    mutation.mutate(values);
   };
 
   const createProfileIfNeeded = async (user: User) => {
@@ -134,8 +135,8 @@ const PasswordFields = () => {
         role: role || 'patient',
         full_name: fullName || '',
         email: user.email,
-        pharmacy_name: null,  // Initialize with null
-        pharmacy_logo_url: null,  // Initialize with null
+        pharmacy_name: null,
+        pharmacy_logo_url: null,
       };
 
       if (!existingProfile) {
