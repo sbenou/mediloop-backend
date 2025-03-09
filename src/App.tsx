@@ -1,4 +1,3 @@
-
 import { ProductSearch } from '@/components/ProductSearch';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -50,10 +49,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <RecoilRoot>
-        <AuthProvider>
-          <CurrencyProvider>
-            <CartProvider>
-              <BrowserRouter>
+        <BrowserRouter>
+          <AuthProvider>
+            <CurrencyProvider>
+              <CartProvider>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   
@@ -112,10 +111,10 @@ function App() {
                   <Route path="/legacy/unified-profile" element={<UnifiedProfilePage />} />
                 </Routes>
                 <Toaster />
-              </BrowserRouter>
-            </CartProvider>
-          </CurrencyProvider>
-        </AuthProvider>
+              </CartProvider>
+            </CurrencyProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </RecoilRoot>
     </QueryClientProvider>
   );
