@@ -87,9 +87,10 @@ export const UserMenuItems = () => {
   const menuItems = useMemo(() => {
     const routePrefix = getRoutePrefix();
     
-    // Check the role and log it to help with debugging
+    // Enhanced debugging
     console.log('Current user role in UserMenuItems:', userRole);
     console.log('Profile data:', auth.profile);
+    console.log('Is pharmacist check:', userRole === 'pharmacist');
     
     return (
       <>
@@ -108,8 +109,8 @@ export const UserMenuItems = () => {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {userRole === 'pharmacist' ? (
-            // Force render this for all pharmacist users
+          {/* Always add pharmacy profile for pharmacists */}
+          {userRole === 'pharmacist' && (
             <DropdownMenuItem onClick={() => {
               console.log('Navigating to pharmacy profile');
               navigate('/pharmacy/profile');
@@ -117,7 +118,7 @@ export const UserMenuItems = () => {
               <Store className="mr-2 h-4 w-4" />
               <span>Pharmacy Profile</span>
             </DropdownMenuItem>
-          ) : null}
+          )}
           <DropdownMenuItem onClick={() => {
             console.log(`Navigating to profile route: ${routePrefix}/profile`);
             navigate(`${routePrefix}/profile`);

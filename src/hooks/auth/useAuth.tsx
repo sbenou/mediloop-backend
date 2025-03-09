@@ -1,10 +1,12 @@
+
 import { useRecoilValue } from 'recoil';
 import { useMemo, useEffect, useState, useCallback } from 'react';
 import { 
   isAuthenticatedSelector, 
   userRoleSelector, 
   userPermissionsSelector,
-  isLoadingSelector 
+  isLoadingSelector,
+  isPharmacistSelector
 } from '@/store/auth/selectors';
 import { authState } from '@/store/auth/atoms';
 import { supabase } from '@/lib/supabase';
@@ -18,6 +20,7 @@ export const useAuth = () => {
   const userRole = useRecoilValue(userRoleSelector);
   const permissions = useRecoilValue(userPermissionsSelector);
   const isLoading = useRecoilValue(isLoadingSelector);
+  const isPharmacist = useRecoilValue(isPharmacistSelector);
   const [isRefreshingSession, setIsRefreshingSession] = useState(false);
   
   // Better session recovery for tab switching and session expiry
@@ -125,6 +128,11 @@ export const useAuth = () => {
     if (isAuthenticated && !isLoading && userRole) {
       const currentPath = window.location.pathname;
       
+      // Debug log for pharmacy role
+      if (userRole === 'pharmacist') {
+        console.log('User has pharmacist role - should see pharmacy profile link');
+      }
+      
       // Check if a superadmin is on a non-superadmin page
       if (userRole === 'superadmin' && 
           !currentPath.startsWith('/superadmin') && 
@@ -174,6 +182,6 @@ export const useAuth = () => {
     user: memoizedValues.user,
     profile: memoizedValues.profile,
     refreshSession,
-    isPharmacist: memoizedValues.isPharmacist
+    isPharmacist: userRole === 'pharmacist' // Ensure this is directly taken from userRole
   };
 };

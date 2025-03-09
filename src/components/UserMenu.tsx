@@ -1,3 +1,4 @@
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -5,6 +6,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import UserAvatar from "./user-menu/UserAvatar";
 import { UserMenuItems } from "./user-menu/UserMenuItems";
+import RoleDebugger from "./user-menu/RoleDebugger";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,7 +16,7 @@ import { getSessionFromStorage } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 
 const UserMenu = memo(() => {
-  const { isAuthenticated, isLoading, profile, user } = useAuth();
+  const { isAuthenticated, isLoading, profile, user, userRole } = useAuth();
   const [localLoading, setLocalLoading] = useState(true);
   const [hasVisibleSession, setHasVisibleSession] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -101,6 +103,14 @@ const UserMenu = memo(() => {
     };
   }, [hasVisibleSession]);
 
+  // Log user role on mount
+  useEffect(() => {
+    if (profile) {
+      console.log("UserMenu: Current user role:", userRole);
+      console.log("UserMenu: Profile data:", profile);
+    }
+  }, [profile, userRole]);
+
   const handleNavigateToLogin = useCallback(() => {
     navigate('/login', { replace: true });
   }, [navigate]);
@@ -186,38 +196,41 @@ const UserMenu = memo(() => {
   }
 
   return (
-    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-      <div className="flex items-center space-x-2">
-        <UserAvatar 
-          userProfile={profile} 
-          canUpload={true} 
-          onAvatarClick={handleAvatarClick}
-        />
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={handleFileChange}
-        />
-        <DropdownMenuTrigger asChild>
-          <button 
-            type="button"
-            className="flex items-center space-x-1 hover:opacity-80 transition-opacity cursor-pointer outline-none text-sm"
-            aria-label="User menu"
-          >
-            <span className="font-medium">{profile?.full_name || 'User'}</span>
-          </button>
-        </DropdownMenuTrigger>
-      </div>
-      <DropdownMenuContent 
-        align="end" 
-        sideOffset={5}
-        className="z-[9999] w-56 bg-white border rounded-md shadow-lg animate-in fade-in-0 zoom-in-95"
-      >
-        <UserMenuItems />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <RoleDebugger />
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <div className="flex items-center space-x-2">
+          <UserAvatar 
+            userProfile={profile} 
+            canUpload={true} 
+            onAvatarClick={handleAvatarClick}
+          />
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileChange}
+          />
+          <DropdownMenuTrigger asChild>
+            <button 
+              type="button"
+              className="flex items-center space-x-1 hover:opacity-80 transition-opacity cursor-pointer outline-none text-sm"
+              aria-label="User menu"
+            >
+              <span className="font-medium">{profile?.full_name || 'User'}</span>
+            </button>
+          </DropdownMenuTrigger>
+        </div>
+        <DropdownMenuContent 
+          align="end" 
+          sideOffset={5}
+          className="z-[9999] w-56 bg-white border rounded-md shadow-lg animate-in fade-in-0 zoom-in-95"
+        >
+          <UserMenuItems />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 });
 
