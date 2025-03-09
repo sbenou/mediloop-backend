@@ -1,4 +1,3 @@
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,12 +25,11 @@ const UserMenu = memo(() => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useRecoilState(userAvatarState);
   
-  // Set initial avatar URL from profile
   useEffect(() => {
-    if (profile?.avatar_url && !avatarUrl) {
+    if (profile?.avatar_url && !avatarUrl && userRole !== 'pharmacist') {
       setAvatarUrl(profile.avatar_url);
     }
-  }, [profile?.avatar_url, setAvatarUrl, avatarUrl]);
+  }, [profile?.avatar_url, setAvatarUrl, avatarUrl, userRole]);
   
   useEffect(() => {
     const checkSession = async () => {
@@ -226,6 +224,7 @@ const UserMenu = memo(() => {
             } : undefined} 
             canUpload={true} 
             onAvatarClick={handleAvatarClick}
+            isPharmacyAvatar={false}
           />
           <input
             type="file"

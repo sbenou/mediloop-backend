@@ -5,11 +5,15 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useRecoilState } from "recoil";
+import { userAvatarState, pharmacyAvatarState } from "@/store/user/atoms";
 
 export const useSidebarUserProfile = (profile: UserProfile | null) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { userRole } = useAuth();
+  const [userAvatarUrl, setUserAvatarUrl] = useRecoilState(userAvatarState);
+  const [pharmacyAvatarUrl, setPharmacyAvatarUrl] = useRecoilState(pharmacyAvatarState);
 
   const getUserInitials = () => {
     // For pharmacists, use pharmacy name if available
@@ -67,6 +71,13 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
         .eq('id', userId);
 
       if (updateError) throw updateError;
+
+      // Update the appropriate state based on user role
+      if (userRole === 'pharmacist') {
+        setPharmacyAvatarUrl(publicUrl);
+      } else {
+        setUserAvatarUrl(publicUrl);
+      }
 
       // Invalidate the profile query to refresh the data
       await queryClient.invalidateQueries({ queryKey: ['profile'] });

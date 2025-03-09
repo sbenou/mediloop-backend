@@ -1,8 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
 import AvatarUpload from "./AvatarUpload";
 import CNSCardDisplay from "../CNSCardDisplay";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface ProfileDisplayProps {
   profile: Tables<"profiles"> | null;
@@ -11,6 +13,8 @@ interface ProfileDisplayProps {
 }
 
 export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayProps) {
+  const { userRole } = useAuth();
+  
   if (!profile) return null;
 
   console.log('Profile Display - CNS card data:', {
@@ -26,7 +30,7 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayPro
           <div className="flex flex-col space-y-6">
             <div>
               <AvatarUpload
-                currentAvatarUrl={profile.avatar_url}
+                currentAvatarUrl={userRole === 'pharmacist' ? profile.pharmacy_logo_url : profile.avatar_url}
                 onAvatarUpdate={(url) => {
                   // Profile will be automatically updated through React Query invalidation
                 }}
