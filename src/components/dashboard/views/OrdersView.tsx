@@ -19,7 +19,15 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     if (location.pathname === '/my-orders') {
       return searchParams.get('view') || 'orders';
     }
-    return searchParams.get('ordersTab') || 'orders';
+    return searchParams.get('ordersTab') || getDefaultTab();
+  };
+  
+  // Get default tab based on user role
+  const getDefaultTab = () => {
+    if (userRole === 'pharmacist') {
+      return 'pending';
+    }
+    return 'orders';
   };
   
   const view = getCurrentView();
@@ -29,6 +37,8 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     console.log("OrdersView: Tab changed to:", value);
     if (location.pathname === '/my-orders') {
       navigate(`/my-orders?view=${value}`);
+    } else if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
+      navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${value}`);
     } else {
       navigate(`/dashboard?view=orders&ordersTab=${value}`);
     }
@@ -40,7 +50,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
         (location.pathname === '/dashboard' && searchParams.get('view') === 'orders')) {
       const currentTab = location.pathname === '/my-orders' 
         ? searchParams.get('view') || 'orders'
-        : searchParams.get('ordersTab') || 'orders';
+        : searchParams.get('ordersTab') || getDefaultTab();
       
       console.log("OrdersView: Current tab from URL:", currentTab, "Active tab prop:", activeTab, "Current view:", view);
     }
@@ -82,6 +92,11 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
       return searchParams.get('view') || 'orders';
     }
 
+    // For pharmacy section in dashboard
+    if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
+      return searchParams.get('ordersTab') || 'pending';
+    }
+    
     // If pharmacist role, use the activeTab prop or default to first tab (pending)
     if (userRole === 'pharmacist') {
       return activeTab || 'pending';
