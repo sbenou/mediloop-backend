@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PasswordFields } from "./login/PasswordFields";
+import PasswordFields from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";

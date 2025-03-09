@@ -2,39 +2,10 @@ import { ProductSearch } from '@/components/ProductSearch';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import AuthProvider from '@/providers/AuthProvider';
+import { AuthProvider } from '@/providers/AuthProvider';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { RecoilRoot } from "recoil";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import UniversalDashboard from "./pages/UniversalDashboard";
-import ResetPassword from "./pages/ResetPassword";
-import Products from "./pages/Products";
-import Services from "./pages/Services";
-import BecomePartner from "./pages/BecomePartner";
-import BecomeTransporter from "./pages/BecomeTransporter";
-import CreatePrescription from "./pages/CreatePrescription";
-import DoctorConnections from "./pages/DoctorConnections";
-import FindDoctor from "./pages/FindDoctor";
-import SearchPharmacy from "./pages/SearchPharmacy";
-import Signup from "./pages/Signup";
-import { OTPVerificationPage } from "@/components/auth/login/OTPVerificationPage";
-import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler";
-import UnifiedProfilePage from "./pages/UnifiedProfilePage";
-
-// Pharmacy routes
-import PharmacyDashboardOld from "./pages/pharmacy/PharmacyDashboardOld";
-import PatientsPage from "./pages/pharmacy/PatientsPage";
-import PatientDetail from "./pages/pharmacy/PatientDetail";
-import OrdersPage from "./pages/pharmacy/OrdersPage";
-import PrescriptionsPage from "./pages/pharmacy/PrescriptionsPage";
-import PrescriptionDetail from "./pages/pharmacy/PrescriptionDetail";
-import PharmacyProfile from "./pages/pharmacy/PharmacyProfile";
-
-// Legacy pages - these will eventually be replaced
-import Dashboard from "./pages/Dashboard";
-import PatientDashboard from "./pages/PatientDashboard";
 
 import './App.css';
 

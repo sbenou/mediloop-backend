@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import UserAvatar from "@/components/user-menu/UserAvatar";
+import { UserProfile } from "@/types/user";
 
 interface TeamMember {
   id: string;
@@ -39,6 +40,19 @@ interface TeamMember {
   joined_date: string;
   pharmacy_name: string | null;
   pharmacy_logo_url: string | null;
+  role_id: string | null;
+  date_of_birth: string | null;
+  city: string | null;
+  auth_method: string | null;
+  doctor_stamp_url: string | null;
+  doctor_signature_url: string | null;
+  cns_card_front: string | null;
+  cns_card_back: string | null;
+  cns_number: string | null;
+  deleted_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  license_number: string | null;
 }
 
 interface PharmacyTeamProps {
@@ -73,7 +87,20 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
             role,
             is_blocked,
             pharmacy_name,
-            pharmacy_logo_url
+            pharmacy_logo_url,
+            role_id,
+            date_of_birth,
+            city,
+            auth_method,
+            doctor_stamp_url,
+            doctor_signature_url,
+            cns_card_front,
+            cns_card_back,
+            cns_number,
+            deleted_at,
+            created_at,
+            updated_at,
+            license_number
           )
         `)
         .eq('pharmacy_id', pharmacyId);
@@ -90,7 +117,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       }
 
       if (data && data.length > 0) {
-        // Transform the data to match TeamMember interface
         const teamMembers: TeamMember[] = data
           .filter(item => item.profiles && typeof item.profiles === 'object')
           .map(item => {
@@ -103,10 +129,23 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
               avatar_url: profile.avatar_url || null,
               role: profile.role || '',
               is_blocked: profile.is_blocked || false,
-              is_active: true, // Default to active
-              joined_date: new Date().toISOString(), // Default date
+              is_active: true,
+              joined_date: new Date().toISOString(),
               pharmacy_name: profile.pharmacy_name || null,
-              pharmacy_logo_url: profile.pharmacy_logo_url || null
+              pharmacy_logo_url: profile.pharmacy_logo_url || null,
+              role_id: profile.role_id || null,
+              date_of_birth: profile.date_of_birth || null,
+              city: profile.city || null,
+              auth_method: profile.auth_method || null,
+              doctor_stamp_url: profile.doctor_stamp_url || null,
+              doctor_signature_url: profile.doctor_signature_url || null,
+              cns_card_front: profile.cns_card_front || null,
+              cns_card_back: profile.cns_card_back || null,
+              cns_number: profile.cns_number || null,
+              deleted_at: profile.deleted_at || null,
+              created_at: profile.created_at || null,
+              updated_at: profile.updated_at || null,
+              license_number: profile.license_number || null
             };
           });
         
@@ -128,7 +167,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   const handleAddMember = async () => {
     setIsAddingMember(true);
     try {
-      // 1. Check if the email exists in the profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -154,7 +192,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         return;
       }
 
-      // 2. Check if the user is already part of the pharmacy team
       const { data: existingRelation, error: relationError } = await supabase
         .from('user_pharmacies')
         .select('*')
@@ -181,7 +218,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         return;
       }
 
-      // 3. Add the user to the pharmacy team
       const { error: insertError } = await supabase
         .from('user_pharmacies')
         .insert([{ user_id: profileData.id, pharmacy_id: pharmacyId }]);
@@ -201,7 +237,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         description: "User added to the pharmacy team successfully",
       });
 
-      fetchPharmacyUsers(); // Refresh the team members list
+      fetchPharmacyUsers();
     } catch (error) {
       console.error('Error adding member:', error);
       toast({
@@ -211,7 +247,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       });
     } finally {
       setIsAddingMember(false);
-      setNewMemberEmail(''); // Clear the input field
+      setNewMemberEmail('');
     }
   };
 
@@ -244,7 +280,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         description: "User blocked successfully",
       });
 
-      fetchPharmacyUsers(); // Refresh the team members list
+      fetchPharmacyUsers();
     } catch (error) {
       console.error('Error blocking user:', error);
       toast({
@@ -280,7 +316,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         description: "User unblocked successfully",
       });
 
-      fetchPharmacyUsers(); // Refresh the team members list
+      fetchPharmacyUsers();
     } catch (error) {
       console.error('Error unblocking user:', error);
       toast({
@@ -314,7 +350,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         description: "User removed from the pharmacy team successfully",
       });
 
-      fetchPharmacyUsers(); // Refresh the team members list
+      fetchPharmacyUsers();
     } catch (error) {
       console.error('Error removing member:', error);
       toast({

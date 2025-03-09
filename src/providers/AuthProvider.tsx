@@ -206,7 +206,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('role_permissions')
-        .select('permission')
+        .select('*')
         .eq('role_id', roleId);
 
       if (error) {
@@ -215,7 +215,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const permissions = data ? data.map(item => item.permission) : [];
+      // Extract the permission property from each item or use an empty array if no data
+      const permissions = data ? data.map(item => item.permission_name || item.permission || '') : [];
       setAuthState(prevState => ({ ...prevState, permissions }));
     } catch (error) {
       console.error('Error in loadPermissions:', error);

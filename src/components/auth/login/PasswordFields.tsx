@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +23,7 @@ import { supabase } from '@/lib/supabase';
 import { AuthRole } from '@/types/auth';
 import { useMutation } from '@tanstack/react-query';
 import { Icons } from '@/components/ui/icons';
+import { AuthError, User, Session } from '@supabase/supabase-js';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -35,13 +35,15 @@ const formSchema = z.object({
   }),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const PasswordFields = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
@@ -52,8 +54,12 @@ const PasswordFields = () => {
     },
   });
 
-  const mutation = useMutation(
-    async (values: z.infer<typeof formSchema>) => {
+  const { mutate: signUpMutate } = useMutation<
+    { user: User | null; session: Session | null },
+    Error,
+    FormValues
+  >({
+    mutationFn: async (values: FormValues) => {
       setIsLoading(true);
       const { email, password, fullName, role } = values;
 
@@ -83,33 +89,31 @@ const PasswordFields = () => {
 
       await createProfileIfNeeded(authData.user);
 
-      return authData;
+      return { user: authData.user, session: authData.session };
     },
-    {
-      onSuccess: (data) => {
-        setIsLoading(false);
-        toast({
-          title: "Registration Successful",
-          description: "You have successfully registered. Please check your email to verify your account.",
-        });
-        navigate(`/auth/verify-otp?type=email&email=${data.user?.email}`);
-      },
-      onError: (error: any) => {
-        setIsLoading(false);
-        toast({
-          variant: "destructive",
-          title: "Registration Failed",
-          description: error.message || "An error occurred during registration.",
-        });
-      },
-    }
-  );
+    onSuccess: (data) => {
+      setIsLoading(false);
+      toast({
+        title: "Registration Successful",
+        description: "You have successfully registered. Please check your email to verify your account.",
+      });
+      navigate(`/auth/verify-otp?type=email&email=${data.user?.email}`);
+    },
+    onError: (error) => {
+      setIsLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: error.message || "An error occurred during registration.",
+      });
+    },
+  });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutation.mutate(values);
+  const onSubmit = (values: FormValues) => {
+    signUpMutate(values);
   };
 
-  const createProfileIfNeeded = async (user: any) => {
+  const createProfileIfNeeded = async (user: User) => {
     try {
       const { data: existingProfile, error: profileError } = await supabase
         .from('profiles')
