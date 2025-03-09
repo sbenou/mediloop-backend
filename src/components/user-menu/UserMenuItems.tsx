@@ -19,10 +19,16 @@ export const UserMenuItems = () => {
   const [auth, setAuth] = useRecoilState(authState);
   const { isPharmacist } = useAuth();
   const userRole = auth.profile?.role || 'user';
-
+  
+  // Ensure to report role status - critical debugging
   console.log('UserMenuItems rendering with userRole:', userRole);
-  console.log('UserMenuItems isPharmacist check:', isPharmacist);
+  console.log('UserMenuItems userRole === pharmacist check:', userRole === 'pharmacist');
+  console.log('UserMenuItems isPharmacist from hook:', isPharmacist);
   console.log('UserMenuItems profile data:', auth.profile);
+  
+  // Force check for pharmacist role from multiple sources for debugging
+  const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist';
+  console.log('UserMenuItems FINAL isUserPharmacist check:', isUserPharmacist);
 
   const handleLogout = async () => {
     try {
@@ -96,7 +102,23 @@ export const UserMenuItems = () => {
     // Enhanced debugging
     console.log('Current user role in UserMenuItems:', userRole);
     console.log('Profile data:', auth.profile);
-    console.log('Is pharmacist check:', userRole === 'pharmacist', isPharmacist);
+    console.log('Is pharmacist check (multiple sources):', 
+      userRole === 'pharmacist', 
+      isPharmacist, 
+      auth.profile?.role === 'pharmacist',
+      isUserPharmacist
+    );
+    
+    // The link will always be included in the markup for pharmacists
+    const pharmacyProfileLink = (
+      <DropdownMenuItem onClick={() => {
+        console.log('Navigating to pharmacy profile from UserMenuItems');
+        navigate('/pharmacy/profile');
+      }}>
+        <Store className="mr-2 h-4 w-4" />
+        <span>Pharmacy Profile</span>
+      </DropdownMenuItem>
+    );
     
     return (
       <>
@@ -115,16 +137,9 @@ export const UserMenuItems = () => {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {/* Always show pharmacy profile for pharmacists */}
-          {(userRole === 'pharmacist' || isPharmacist) && (
-            <DropdownMenuItem onClick={() => {
-              console.log('Navigating to pharmacy profile from UserMenuItems');
-              navigate('/pharmacy/profile');
-            }}>
-              <Store className="mr-2 h-4 w-4" />
-              <span>Pharmacy Profile</span>
-            </DropdownMenuItem>
-          )}
+          {/* ALWAYS show pharmacy profile for any user with pharmacist role */}
+          {isUserPharmacist && pharmacyProfileLink}
+          
           <DropdownMenuItem onClick={() => {
             console.log(`Navigating to profile route: ${routePrefix}/profile`);
             navigate(`${routePrefix}/profile`);
@@ -151,7 +166,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole, auth.profile, setAuth, isPharmacist]);
+  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist]);
 
   return menuItems;
 };
