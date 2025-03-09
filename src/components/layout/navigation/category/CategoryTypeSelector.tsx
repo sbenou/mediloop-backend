@@ -1,6 +1,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CategoryTypeSelectorProps {
   selectedType: 'pharmacy' | 'parapharmacy' | null;
@@ -13,6 +14,29 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
 
   const handleImageLoad = () => {
     setImageLoaded(true);
+  };
+
+  const renderImage = () => {
+    if (!selectedType) return null;
+
+    const imageUrl = selectedType === 'pharmacy' 
+      ? "https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
+      : "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae";
+
+    return (
+      <>
+        {!imageLoaded && <Skeleton className="w-full h-[200px] rounded-md" />}
+        <img
+          src={imageUrl}
+          alt={selectedType === 'pharmacy' ? "Pharmacy" : "Parapharmacy"}
+          onLoad={handleImageLoad}
+          className={`w-full h-auto max-h-full object-cover rounded-md transition-opacity duration-300 ${
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          loading="eager"
+        />
+      </>
+    );
   };
 
   return (
@@ -47,27 +71,8 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
       </div>
       
       {selectedType && (
-        <div className="h-[calc(100%-80px)] overflow-hidden pt-4">
-          {selectedType === 'pharmacy' && (
-            <img
-              src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88"
-              alt="Pharmacy"
-              onLoad={handleImageLoad}
-              className={`w-full h-auto max-h-full object-cover rounded-md transition-opacity duration-300 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-          )}
-          {selectedType === 'parapharmacy' && (
-            <img
-              src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae"
-              alt="Parapharmacy"
-              onLoad={handleImageLoad}
-              className={`w-full h-auto max-h-full object-cover rounded-md transition-opacity duration-300 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-          )}
+        <div className="h-[calc(100%-80px)] overflow-hidden pt-4 relative">
+          {renderImage()}
         </div>
       )}
     </div>
