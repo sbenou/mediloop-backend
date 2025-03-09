@@ -87,6 +87,9 @@ export const UserMenuItems = () => {
   const menuItems = useMemo(() => {
     const routePrefix = getRoutePrefix();
     
+    // Check the role and log it to help with debugging
+    console.log('Current user role in UserMenuItems:', userRole);
+    
     return (
       <>
         <DropdownMenuLabel className="font-normal">
@@ -105,7 +108,10 @@ export const UserMenuItems = () => {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           {userRole === 'pharmacist' && (
-            <DropdownMenuItem onClick={() => navigate(`/pharmacy/profile`)}>
+            <DropdownMenuItem onClick={() => {
+              console.log('Navigating to pharmacy profile');
+              navigate('/pharmacy/profile');
+            }}>
               <Store className="mr-2 h-4 w-4" />
               <span>Pharmacy Profile</span>
             </DropdownMenuItem>
