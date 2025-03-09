@@ -74,6 +74,16 @@ const SidebarUserMenu = ({
     checkForPharmacyLink();
   }, [userRole, navigateToPharmacyProfile]);
 
+  // Run console logs outside of JSX to avoid TypeScript errors
+  useEffect(() => {
+    if (userRole === 'pharmacist') {
+      console.log("Pharmacy check passed in JSX");
+    }
+    if (!!navigateToPharmacyProfile) {
+      console.log("navigateToPharmacyProfile is defined in JSX");
+    }
+  }, [userRole, navigateToPharmacyProfile]);
+
   return (
     <div className="border-t p-4">
       <div className="flex items-center space-x-3">
@@ -122,10 +132,6 @@ const SidebarUserMenu = ({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              {/* Add a forced debug output directly in the JSX to see if this block is evaluated */}
-              {userRole === 'pharmacist' && console.log("Pharmacy check passed in JSX")}
-              {!!navigateToPharmacyProfile && console.log("navigateToPharmacyProfile is defined in JSX")}
-              
               {/* Move the Pharmacy Profile link before Account for better visibility */}
               {userRole === 'pharmacist' && navigateToPharmacyProfile && (
                 <DropdownMenuItem 
