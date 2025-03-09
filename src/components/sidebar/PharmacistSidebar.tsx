@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
-  MapPin
+  MapPin, Store
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -144,6 +144,7 @@ const PharmacistSidebar = () => {
         navigateToProfile={() => navigateToPharmacyView('profile', 'personal', 'profileTab')}
         navigateToBilling={() => navigateToPharmacyView('orders', 'payments', 'ordersTab')}
         navigateToUpgrade={() => navigate('/upgrade')}
+        navigateToPharmacyProfile={() => navigate('/pharmacy/profile')}
         handleFileChange={handleFileChange}
       />
     </aside>

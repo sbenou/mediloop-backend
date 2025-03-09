@@ -1,6 +1,6 @@
 
 import { UserProfile } from "@/types/user";
-import { ChevronDown, CreditCard, LogOut, User } from "lucide-react";
+import { ChevronDown, CreditCard, LogOut, User, Store } from "lucide-react";
 import UserAvatar from "../user-menu/UserAvatar";
 import {
   DropdownMenu,
@@ -23,6 +23,7 @@ interface SidebarUserMenuProps {
   navigateToProfile: () => void;
   navigateToBilling: () => void;
   navigateToUpgrade: () => void;
+  navigateToPharmacyProfile?: () => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
@@ -36,6 +37,7 @@ const SidebarUserMenu = ({
   navigateToProfile,
   navigateToBilling,
   navigateToUpgrade,
+  navigateToPharmacyProfile,
   handleFileChange
 }: SidebarUserMenuProps) => {
   // Determine display name based on user role
@@ -96,6 +98,12 @@ const SidebarUserMenu = ({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              {userRole === 'pharmacist' && navigateToPharmacyProfile && (
+                <DropdownMenuItem onClick={navigateToPharmacyProfile}>
+                  <Store className="mr-2 h-4 w-4" />
+                  <span>Pharmacy Profile</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={navigateToProfile}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Account</span>

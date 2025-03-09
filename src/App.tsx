@@ -1,3 +1,4 @@
+
 import { ProductSearch } from '@/components/ProductSearch';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -30,6 +31,7 @@ import PatientDetail from "./pages/pharmacy/PatientDetail";
 import OrdersPage from "./pages/pharmacy/OrdersPage";
 import PrescriptionsPage from "./pages/pharmacy/PrescriptionsPage";
 import PrescriptionDetail from "./pages/pharmacy/PrescriptionDetail";
+import PharmacyProfile from "./pages/pharmacy/PharmacyProfile";
 
 // Legacy pages - these will eventually be replaced
 import Dashboard from "./pages/Dashboard";
@@ -100,10 +102,13 @@ function App() {
                     <Route path="patients" element={<Navigate to="/dashboard?view=pharmacy&section=patients" replace />} />
                     <Route path="orders" element={<Navigate to="/dashboard?view=pharmacy&section=orders" replace />} />
                     <Route path="prescriptions" element={<Navigate to="/dashboard?view=pharmacy&section=prescriptions" replace />} />
+                    <Route path="profile" element={<PharmacyProfile />} />
                     
                     {/* Keep existing pharmacy pages for backward compatibility */}
                     <Route path="patients/:id" element={<PatientDetail />} />
                     <Route path="prescriptions/:id" element={<PrescriptionDetail />} />
+                    <Route path="staff/:id" element={<PatientDetail />} />
+                    <Route path="staff/:id/edit" element={<PatientDetail />} />
                   </Route>
                   
                   {/* Legacy pages - will be removed in the future */}
