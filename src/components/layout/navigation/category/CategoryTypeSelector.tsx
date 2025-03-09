@@ -2,6 +2,7 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChevronRight } from "lucide-react";
 
 interface CategoryTypeSelectorProps {
   selectedType: 'pharmacy' | 'parapharmacy' | null;
@@ -64,36 +65,50 @@ export const CategoryTypeSelector = ({ selectedType, setSelectedType }: Category
   };
 
   return (
-    <div className="border-r pr-4 pb-4 w-[400px] h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="border-r pr-4 pb-4 w-[400px] h-[calc(100vh-4rem)] overflow-hidden relative">
       <div>
-        <button
-          onClick={() => {
-            setImageLoaded(false);
-            setIsImageLoading(true);
-            setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy');
-          }}
-          className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
-            selectedType === 'pharmacy' 
-              ? 'bg-primary text-primary-foreground' 
-              : 'hover:bg-accent'
-          }`}
-        >
-          {t('common.navigation.pharmacy')}
-        </button>
-        <button
-          onClick={() => {
-            setImageLoaded(false);
-            setIsImageLoading(true);
-            setSelectedType(selectedType === 'parapharmacy' ? null : 'parapharmacy');
-          }}
-          className={`block w-full text-left px-3 py-2 rounded-md transition-colors mt-2 ${
-            selectedType === 'parapharmacy' 
-              ? 'bg-primary text-primary-foreground' 
-              : 'hover:bg-accent'
-          }`}
-        >
-          {t('common.navigation.parapharmacy')}
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={() => {
+              setImageLoaded(false);
+              setIsImageLoading(true);
+              setSelectedType(selectedType === 'pharmacy' ? null : 'pharmacy');
+            }}
+            className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
+              selectedType === 'pharmacy' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'hover:bg-accent'
+            }`}
+          >
+            {t('common.navigation.pharmacy')}
+          </button>
+          {selectedType === 'pharmacy' && (
+            <div className="absolute right-0 z-10 flex items-center justify-center h-full pointer-events-none">
+              <ChevronRight className="h-5 w-5 text-primary animate-pulse" />
+            </div>
+          )}
+        </div>
+        <div className="flex items-center mt-2">
+          <button
+            onClick={() => {
+              setImageLoaded(false);
+              setIsImageLoading(true);
+              setSelectedType(selectedType === 'parapharmacy' ? null : 'parapharmacy');
+            }}
+            className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
+              selectedType === 'parapharmacy' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'hover:bg-accent'
+            }`}
+          >
+            {t('common.navigation.parapharmacy')}
+          </button>
+          {selectedType === 'parapharmacy' && (
+            <div className="absolute right-0 z-10 flex items-center justify-center h-full pointer-events-none">
+              <ChevronRight className="h-5 w-5 text-primary animate-pulse" />
+            </div>
+          )}
+        </div>
       </div>
       
       {selectedType && (
