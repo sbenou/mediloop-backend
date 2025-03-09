@@ -14,7 +14,6 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
-import { UserProfile } from '@/types/user';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -530,8 +529,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         updated_at: null,
                         license_number: null
                       }}
-                      size="lg"
-                      fallbackText={member.full_name.substring(0, 2).toUpperCase()}
                     />
                     <div className="absolute -bottom-1 -right-1">
                       <Switch 

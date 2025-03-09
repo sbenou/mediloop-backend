@@ -11,7 +11,6 @@ import UserAvatar from '@/components/user-menu/UserAvatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { UserProfile } from '@/types/user';
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -235,8 +234,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                           updated_at: null,
                           license_number: null
                         }}
-                        size="sm"
-                        fallbackText={staff.full_name.substring(0, 2).toUpperCase()}
                       />
                       <div>
                         <p className="font-medium">{staff.full_name}</p>
@@ -309,8 +306,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                   updated_at: null,
                   license_number: null
                 }}
-                size="xl"
-                fallbackText={selectedUser.full_name.substring(0, 2).toUpperCase()}
               />
               <h3 className="mt-2 text-lg font-semibold">{selectedUser.full_name}</h3>
               <p className="text-sm text-muted-foreground">{selectedUser.email}</p>

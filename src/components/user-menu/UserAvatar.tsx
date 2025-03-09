@@ -2,56 +2,35 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfile } from "@/types/user";
 
-interface UserAvatarProps {
-  userProfile: UserProfile | null;
-  canUpload?: boolean;
-  onAvatarClick?: (e: React.MouseEvent) => void;
+export interface UserAvatarProps {
+  userProfile: UserProfile;
   fallbackText?: string;
-  isSquare?: boolean;
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
-const UserAvatar = ({ 
-  userProfile, 
-  canUpload = false, 
-  onAvatarClick, 
-  fallbackText,
-  isSquare = false
-}: UserAvatarProps) => {
-  // Get the initials if no fallbackText is provided
-  const getInitials = () => {
-    if (fallbackText) return fallbackText;
-    
-    // For pharmacists, use pharmacy name initials if available
-    if (userProfile?.role === 'pharmacist') {
-      const pharmacyName = userProfile?.pharmacy_name || '';
-      if (pharmacyName) {
-        const names = pharmacyName.split(' ');
-        if (names.length === 1) return names[0].charAt(0).toUpperCase();
-        return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
-      }
-    }
-    
-    // Default to user's name initials
-    if (!userProfile?.full_name) return '';
-    
-    const names = userProfile.full_name.split(' ');
-    if (names.length === 1) return names[0].charAt(0).toUpperCase();
-    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+const UserAvatar = ({ userProfile, fallbackText, size = "md" }: UserAvatarProps) => {
+  const sizeClasses = {
+    sm: "h-8 w-8 text-xs",
+    md: "h-10 w-10 text-sm",
+    lg: "h-16 w-16 text-lg",
+    xl: "h-20 w-20 text-xl"
   };
 
+  const avatarClass = sizeClasses[size] || sizeClasses.md;
+  
+  const initials = fallbackText || 
+    (userProfile.full_name ? 
+      userProfile.full_name.split(' ')
+        .map(name => name[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2) : 
+      "U");
+
   return (
-    <Avatar 
-      className={`h-10 w-10 ${isSquare ? 'rounded-md' : 'rounded-full'} ${canUpload ? 'cursor-pointer' : ''}`} 
-      onClick={canUpload && onAvatarClick ? onAvatarClick : undefined}
-    >
-      <AvatarImage 
-        src={userProfile?.role === 'pharmacist' ? userProfile?.pharmacy_logo_url : userProfile?.avatar_url} 
-        alt={userProfile?.role === 'pharmacist' ? userProfile?.pharmacy_name || 'Pharmacy' : userProfile?.full_name || 'User'} 
-        className={isSquare ? 'rounded-md' : 'rounded-full'}
-      />
-      <AvatarFallback className={`bg-primary/10 text-primary font-medium ${isSquare ? 'rounded-md' : 'rounded-full'}`}>
-        {getInitials()}
-      </AvatarFallback>
+    <Avatar className={avatarClass}>
+      <AvatarImage src={userProfile.avatar_url || undefined} alt={userProfile.full_name || "User"} />
+      <AvatarFallback>{initials}</AvatarFallback>
     </Avatar>
   );
 };
