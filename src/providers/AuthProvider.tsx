@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useState,
@@ -68,12 +69,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else if (event === 'SIGNED_IN') {
           if (session) {
             await loadProfileData(session.user);
-            // Redirect based on role
-            if (authState.profile?.role === 'pharmacist') {
-              navigate('/dashboard?view=pharmacy');
-            } else {
-              navigate('/dashboard');
-            }
+            // Redirect will be handled by the Login component instead
+            // This prevents multiple redirects
           }
         } else if (event === 'SIGNED_OUT') {
           setAuthState({ user: null, profile: null, isLoading: false, permissions: [] });

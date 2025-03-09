@@ -57,9 +57,14 @@ const Login = () => {
             }
           }
           
-          // UPDATED: Redirect all users to the universal dashboard
-          console.log('Redirecting to universal dashboard...');
-          navigate('/dashboard', { replace: true });
+          // Always redirect to the universal dashboard with the correct view parameter
+          if (profile.role === 'pharmacist') {
+            console.log('Redirecting pharmacist to universal dashboard with pharmacy view');
+            navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
+          } else {
+            console.log('Redirecting to universal dashboard');
+            navigate('/dashboard', { replace: true });
+          }
         } catch (err) {
           console.error('Error checking role:', err);
           navigate('/dashboard');
@@ -85,8 +90,11 @@ const Login = () => {
 
   // If user is already authenticated, prevent showing the login page
   if (isAuthenticated) {
-    // Explicitly redirect to dashboard here to avoid blank page
-    navigate('/dashboard', { replace: true });
+    if (profile?.role === 'pharmacist') {
+      navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
+    } else {
+      navigate('/dashboard', { replace: true });
+    }
     return null;
   }
 

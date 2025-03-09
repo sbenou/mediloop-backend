@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -6,7 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 import UniversalDashboard from "@/pages/UniversalDashboard";
 
 const Dashboard = () => {
-  const { isAuthenticated, isLoading, userRole } = useAuth();
+  const { isAuthenticated, isLoading, userRole, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -33,29 +34,24 @@ const Dashboard = () => {
 
   // For pharmacist role, ensure they see their dedicated view
   useEffect(() => {
-    if (userRole === 'pharmacist' && !isInitialLoad && isAuthenticated) {
-      console.log("Checking pharmacist view:", { view, section });
+    if (!isInitialLoad && isAuthenticated && profile?.role === 'pharmacist') {
+      console.log("Checking pharmacist view:", { view, section, userRole: profile.role });
       
-      if (view !== 'pharmacy' || !section) {
+      if (view !== 'pharmacy') {
         console.log("Redirecting pharmacist to proper dashboard view");
         setSearchParams({ view: 'pharmacy', section: 'dashboard' });
       }
     }
-  }, [userRole, view, section, setSearchParams, isInitialLoad, isAuthenticated]);
+  }, [profile, view, section, setSearchParams, isInitialLoad, isAuthenticated]);
 
   // Debug logging
   useEffect(() => {
     if (!isInitialLoad) {
-      console.log("Dashboard rendering with:", { userRole, view, section });
+      console.log("Dashboard rendering with:", { userRole, view, section, profileRole: profile?.role });
     }
-  }, [userRole, view, section, isInitialLoad]);
+  }, [userRole, view, section, isInitialLoad, profile]);
 
-  // For very specific user roles, provide a dedicated dashboard
-  if (userRole === 'patient' && !view) {
-    return <PatientDashboard />;
-  }
-
-  // Otherwise, use the universal dashboard
+  // Use universal dashboard for all user types
   return <UniversalDashboard />;
 };
 
