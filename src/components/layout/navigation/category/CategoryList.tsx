@@ -25,19 +25,37 @@ export const CategoryList = ({
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [filteredCategories, setFilteredCategories] = useState<any[]>([]);
+  const [visibleCategories, setVisibleCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedType) {
       setIsLoading(true);
+      setVisibleCategories([]);
+      
       // Simulate async loading with a small delay
       const timer = setTimeout(() => {
-        setFilteredCategories(getUniqueCategories(categories, selectedType));
+        const filtered = getUniqueCategories(categories, selectedType);
+        setFilteredCategories(filtered);
         setIsLoading(false);
+        
+        // Start the sequential animation for categories
+        if (filtered.length > 0) {
+          const showCategoriesSequentially = async () => {
+            for (let i = 0; i < filtered.length; i++) {
+              // Add a small delay before showing each category
+              await new Promise(resolve => setTimeout(resolve, 100));
+              setVisibleCategories(prev => [...prev, filtered[i].id]);
+            }
+          };
+          
+          showCategoriesSequentially();
+        }
       }, 300);
       
       return () => clearTimeout(timer);
     } else {
       setFilteredCategories([]);
+      setVisibleCategories([]);
       setIsLoading(false);
     }
   }, [selectedType, categories, getUniqueCategories]);
@@ -67,13 +85,18 @@ export const CategoryList = ({
       <div className="space-y-4 pr-4">
         {filteredCategories.map((category) => {
           console.log('Category:', category.name, 'Subcategories:', category.subcategories);
+          const isVisible = visibleCategories.includes(category.id);
+          
           return (
-            <div key={category.id} className="space-y-2">
+            <div 
+              key={category.id} 
+              className={`space-y-2 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+            >
               <h3 className="font-medium text-sm px-3 py-2">
                 {t(`categories.${selectedType}.${category.name.toLowerCase().replace(/ /g, '_')}`, { defaultValue: category.name })}
               </h3>
               <div className="pl-4 space-y-1">
-                {Array.isArray(category.subcategories) && category.subcategories.map((subcategory: any) => (
+                {Array.isArray(category.subcategories) && category.subcategories.map((subcategory: any, index: number) => (
                   <SubcategoryItem
                     key={subcategory.id}
                     subcategory={subcategory}
@@ -82,6 +105,8 @@ export const CategoryList = ({
                     handleSubcategoryClick={handleSubcategoryClick}
                     handleDescriptionClick={handleDescriptionClick}
                     getUniqueDescriptions={getUniqueDescriptions}
+                    animationDelay={index * 50} // Add a delay based on the index
+                    isVisible={isVisible}
                   />
                 ))}
               </div>

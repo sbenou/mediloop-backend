@@ -10,6 +10,8 @@ interface SubcategoryItemProps {
   handleSubcategoryClick: (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => void;
   handleDescriptionClick: (type: string, categoryId: string, subcategoryId: string, event: React.MouseEvent) => void;
   getUniqueDescriptions?: (subcategory: any) => string[];
+  animationDelay?: number;
+  isVisible?: boolean;
 }
 
 export const SubcategoryItem = ({ 
@@ -18,11 +20,14 @@ export const SubcategoryItem = ({
   categoryId,
   handleSubcategoryClick,
   handleDescriptionClick,
-  getUniqueDescriptions
+  getUniqueDescriptions,
+  animationDelay = 0,
+  isVisible = true
 }: SubcategoryItemProps) => {
   const { t } = useTranslation();
   const [descriptions, setDescriptions] = useState<string[]>([]);
   const [isLoadingDescriptions, setIsLoadingDescriptions] = useState(false);
+  const [isSubcategoryVisible, setIsSubcategoryVisible] = useState(false);
 
   useEffect(() => {
     if (subcategory && getUniqueDescriptions) {
@@ -37,6 +42,19 @@ export const SubcategoryItem = ({
     }
   }, [subcategory, getUniqueDescriptions]);
 
+  useEffect(() => {
+    // Only start the subcategory animation after the parent category is visible
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        setIsSubcategoryVisible(true);
+      }, animationDelay);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setIsSubcategoryVisible(false);
+    }
+  }, [isVisible, animationDelay]);
+
   if (!subcategory) {
     console.log('No subcategory data provided');
     return null;
@@ -49,7 +67,7 @@ export const SubcategoryItem = ({
   };
 
   return (
-    <div className="space-y-1">
+    <div className={`space-y-1 transition-all duration-300 ${isSubcategoryVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
       <a
         href="#"
         onClick={(e) => handleSubcategoryClick(selectedType!, categoryId, subcategory.id, e)}
@@ -73,7 +91,10 @@ export const SubcategoryItem = ({
                 href="#"
                 key={`${subcategory.id}-${index}`}
                 onClick={(e) => handleDescriptionClick(selectedType!, categoryId, subcategory.id, e)}
-                className="block w-full text-left text-xs text-muted-foreground hover:text-primary hover:underline px-3 py-1"
+                className={`block w-full text-left text-xs text-muted-foreground hover:text-primary hover:underline px-3 py-1 transition-all duration-300 ${
+                  isSubcategoryVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
+                }`}
+                style={{ transitionDelay: `${index * 50}ms` }}
               >
                 {t(`descriptions.${selectedType}.${getTranslationKey(description)}`, { defaultValue: description })}
               </a>
