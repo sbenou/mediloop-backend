@@ -13,17 +13,32 @@ import DashboardSidebar from '@/components/sidebar/DashboardSidebar';
 
 const UniversalDashboard = () => {
   const [searchParams] = useSearchParams();
-  const { profile } = useAuth();
+  const { profile, isPharmacist } = useAuth();
   
   const currentView = searchParams.get('view') || 'home';
+  const section = searchParams.get('section') || 'dashboard';
   const role = profile?.role || null;
+  
+  console.log('UniversalDashboard rendering:', {
+    currentView,
+    section,
+    role,
+    isPharmacist
+  });
   
   // Get tab parameters from URL for components that need it
   const profileTab = searchParams.get('profileTab') || 'personal';
   const ordersTab = searchParams.get('ordersTab') || 'orders';
 
+  // If user is a pharmacist and no specific view is set, show pharmacy view
+  const effectiveView = (role === 'pharmacist' || isPharmacist) && currentView === 'home' 
+    ? 'pharmacy' 
+    : currentView;
+
   const renderView = () => {
-    switch (currentView) {
+    console.log('Rendering view:', effectiveView, 'with section:', section);
+    
+    switch (effectiveView) {
       case 'home':
         return <HomeView userRole={role} />;
       case 'profile':
@@ -37,7 +52,8 @@ const UniversalDashboard = () => {
       case 'teleconsultations':
         return <TeleconsultationsView userRole={role} />;
       case 'pharmacy':
-        return <PharmacyView userRole={role} section={searchParams.get('section') || undefined} />;
+        console.log('Rendering PharmacyView with section:', section);
+        return <PharmacyView userRole={role} section={section} />;
       default:
         return <HomeView userRole={role} />;
     }

@@ -43,20 +43,29 @@ const Dashboard = () => {
     }
   }, [isLoading, isAuthenticated, navigate, isInitialLoad]);
 
-  // For pharmacist role, ensure they see their dedicated view
+  // Force pharmacist to see their dedicated view - using strict checks
   useEffect(() => {
-    if (!isInitialLoad && isAuthenticated && (profile?.role === 'pharmacist' || isPharmacist)) {
-      console.log("Checking pharmacist view:", { 
-        view, 
-        section, 
+    if (!isInitialLoad && isAuthenticated) {
+      console.log("Checking user role for dashboard view:", { 
         userRole, 
         profileRole: profile?.role,
         isPharmacist 
       });
       
-      if (view !== 'pharmacy') {
-        console.log("Redirecting pharmacist to proper dashboard view");
-        setSearchParams({ view: 'pharmacy', section: 'dashboard' });
+      // Use multiple checks to ensure we correctly identify pharmacists
+      const isUserPharmacist = 
+        profile?.role === 'pharmacist' || 
+        userRole === 'pharmacist' || 
+        isPharmacist;
+      
+      if (isUserPharmacist) {
+        console.log("Pharmacist detected - ensuring pharmacy dashboard view");
+        
+        // If not already on pharmacy view or incorrect section, redirect
+        if (view !== 'pharmacy' || (section !== 'dashboard' && !section)) {
+          console.log("Setting search params for pharmacy dashboard view");
+          setSearchParams({ view: 'pharmacy', section: 'dashboard' });
+        }
       }
     }
   }, [profile, view, section, setSearchParams, isInitialLoad, isAuthenticated, isPharmacist, userRole]);
@@ -74,7 +83,7 @@ const Dashboard = () => {
     }
   }, [userRole, view, section, isInitialLoad, profile, isPharmacist]);
 
-  // Include a debugging component to help identify role issues
+  // Return the unified dashboard for all users
   return (
     <>
       <RoleDebugger />

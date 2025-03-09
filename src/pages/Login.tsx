@@ -59,9 +59,11 @@ const Login = () => {
           }
           
           // Enhanced pharmacist detection with multiple checks
-          const isUserPharmacist = profile.role === 'pharmacist' || isPharmacist;
+          const isUserPharmacist = 
+            profile.role === 'pharmacist' || 
+            isPharmacist;
           
-          // Redirect based on role
+          // Always use the unified dashboard with the appropriate view parameter
           if (isUserPharmacist) {
             console.log('Redirecting pharmacist to pharmacy dashboard view');
             navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
