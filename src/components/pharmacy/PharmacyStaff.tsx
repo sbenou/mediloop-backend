@@ -60,7 +60,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
     try {
       setLoading(true);
       
-      // Get all user IDs associated with this pharmacy
       const { data: pharmacyUsers, error: pharmacyError } = await supabase
         .from('user_pharmacies')
         .select('user_id, created_at')
@@ -81,10 +80,9 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
       
       const userIds = pharmacyUsers.map(pu => pu.user_id);
       
-      // Get profiles for these users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, role, is_blocked')
+        .select('id, full_name, email, avatar_url, role, is_blocked, pharmacy_name, pharmacy_logo_url')
         .in('id', userIds);
         
       if (profilesError) throw profilesError;
@@ -128,7 +126,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
 
   const handleTerminateUser = async (userId: string) => {
     try {
-      // First update the profile to blocked status
       const { error: blockError } = await supabase
         .from('profiles')
         .update({ is_blocked: true })
@@ -136,7 +133,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
 
       if (blockError) throw blockError;
 
-      // Then remove the association with the pharmacy
       const { error: removeError } = await supabase
         .from('user_pharmacies')
         .delete()
@@ -150,7 +146,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
         description: "Staff member removed successfully",
       });
 
-      // Update the local state
       setStaffMembers(prev => prev.filter(member => member.id !== userId));
       setFilteredStaff(prev => prev.filter(member => member.id !== userId));
     } catch (error) {
@@ -235,7 +230,9 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                           deleted_at: null,
                           created_at: null,
                           updated_at: null,
-                          license_number: null
+                          license_number: null,
+                          pharmacy_name: staff.pharmacy_name,
+                          pharmacy_logo_url: staff.pharmacy_logo_url
                         }}
                       />
                       <div>
@@ -275,7 +272,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
         </div>
       )}
       
-      {/* User Details Dialog */}
       {selectedUser && (
         <Dialog open={userDetailsOpen} onOpenChange={setUserDetailsOpen}>
           <DialogContent className="sm:max-w-[600px]">
@@ -307,7 +303,9 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                   deleted_at: null,
                   created_at: null,
                   updated_at: null,
-                  license_number: null
+                  license_number: null,
+                  pharmacy_name: selectedUser.pharmacy_name,
+                  pharmacy_logo_url: selectedUser.pharmacy_logo_url
                 }}
               />
               <h3 className="mt-2 text-lg font-semibold">{selectedUser.full_name}</h3>

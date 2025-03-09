@@ -1,87 +1,52 @@
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tables } from "@/integrations/supabase/types";
-import AvatarUpload from "./AvatarUpload";
-import CNSCardDisplay from "../CNSCardDisplay";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { User } from "lucide-react";
 
-interface ProfileDisplayProps {
-  profile: Tables<"profiles"> | null;
-  onEdit: () => void;
-  onScanCNS: () => void;
-}
+const ProfileDisplay = () => {
+  const { user, profile: userProfile } = useAuth();
 
-export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayProps) {
-  const { userRole } = useAuth();
-  
-  if (!profile) return null;
-
-  console.log('Profile Display - CNS card data:', {
-    front: profile.cns_card_front,
-    back: profile.cns_card_back,
-    number: profile.cns_number
-  }); // Debug log
-
-  // Determine which avatar URL to use based on role
-  const avatarUrl = userRole === 'pharmacist' ? profile.pharmacy_logo_url : profile.avatar_url;
+  const profileImage = userProfile?.role === 'pharmacist' ? 
+    userProfile?.pharmacy_logo_url || userProfile?.avatar_url : 
+    userProfile?.avatar_url;
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="flex flex-col space-y-6">
-          <div className="flex flex-col space-y-6">
-            <div>
-              <AvatarUpload
-                currentAvatarUrl={avatarUrl}
-                onAvatarUpdate={(url) => {
-                  // Profile will be automatically updated through React Query invalidation
-                }}
-              />
-            </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <h2 className="text-2xl font-bold">{profile.full_name}</h2>
-                <p className="text-muted-foreground">{profile.email}</p>
-              </div>
-
-              <div className="space-y-2">
-                <div>
-                  <span className="font-medium">Date of Birth:</span>{" "}
-                  {profile.date_of_birth
-                    ? new Date(profile.date_of_birth).toLocaleDateString()
-                    : "Not set"}
-                </div>
-                <div>
-                  <span className="font-medium">CNS Number:</span>{" "}
-                  {profile.cns_number || "Not set"}
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button onClick={onEdit}>
-                  Edit Profile
-                </Button>
-                <Button variant="outline" onClick={onScanCNS}>
-                  Scan CNS Card
-                </Button>
-              </div>
-            </div>
+      <CardHeader>
+        <CardTitle>Profile</CardTitle>
+        <CardDescription>
+          View your profile information here.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div className="flex items-center space-x-4">
+          <Avatar className="h-12 w-12">
+            {profileImage ? (
+              <AvatarImage src={profileImage} alt="Profile" />
+            ) : (
+              <AvatarFallback>
+                <User className="h-6 w-6" />
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <div className="space-y-1">
+            <p className="text-sm font-medium leading-none">
+              {userProfile?.full_name || "No Name"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {user?.email || "No Email"}
+            </p>
           </div>
-
-          {profile.cns_card_front && (
-            <div>
-              <span className="font-medium block mb-2">CNS Card:</span>
-              <CNSCardDisplay
-                frontImage={profile.cns_card_front}
-                backImage={profile.cns_card_back || ''}
-                cardNumber={profile.cns_number || ''}
-              />
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default ProfileDisplay;

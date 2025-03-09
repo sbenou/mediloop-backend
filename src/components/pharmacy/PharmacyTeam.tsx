@@ -15,6 +15,7 @@ import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
 import { fetchAddressFromPostcode } from '@/services/address-service';
+import { UserProfile } from '@/types/user';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -32,7 +33,6 @@ interface TeamMember {
   pharmacy_logo_url: string | null;
 }
 
-// Define relationship options for the Next of Kin dropdown
 const relationOptions = [
   { value: 'spouse', label: 'Spouse' },
   { value: 'husband', label: 'Husband' },
@@ -73,7 +73,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState("personal");
   const [isAddressLoading, setIsAddressLoading] = useState(false);
-  
+  const [filteredStaff, setFilteredStaff] = useState<TeamMember[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -135,6 +136,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         }));
         
         setTeamMembers(members);
+        setFilteredStaff(members);
       }
     } catch (error) {
       console.error('Error fetching team members:', error);
@@ -309,9 +311,27 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   const mappedTeamMembers = useMemo(() => {
     return teamMembers.map(member => {
       const completeProfile: UserProfile = {
-        ...member,
-        pharmacy_name: member.pharmacy_name || null,
-        pharmacy_logo_url: member.pharmacy_logo_url || null
+        id: member.id,
+        role: member.role || 'pharmacy_user',
+        role_id: null,
+        full_name: member.full_name || null,
+        email: member.email || null,
+        avatar_url: member.avatar_url,
+        date_of_birth: null,
+        city: null,
+        auth_method: null,
+        is_blocked: !member.is_active,
+        doctor_stamp_url: null,
+        doctor_signature_url: null,
+        cns_card_front: null,
+        cns_card_back: null,
+        cns_number: null,
+        deleted_at: null,
+        created_at: null,
+        updated_at: null,
+        license_number: null,
+        pharmacy_name: member.pharmacy_name,
+        pharmacy_logo_url: member.pharmacy_logo_url
       };
       
       return {
@@ -649,7 +669,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         deleted_at: null,
                         created_at: null,
                         updated_at: null,
-                        license_number: null
+                        license_number: null,
+                        pharmacy_name: member.profile.pharmacy_name,
+                        pharmacy_logo_url: member.profile.pharmacy_logo_url
                       }}
                     />
                   </div>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -129,10 +128,17 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         throw profileError;
       }
 
+      // Ensure pharmacy fields exist in profile
+      const completeProfile = profile ? {
+        ...profile,
+        pharmacy_name: profile.pharmacy_name || null,
+        pharmacy_logo_url: profile.pharmacy_logo_url || null
+      } : null;
+
       // Update global auth state
       setAuth({
         user: session.user,
-        profile,
+        profile: completeProfile,
         permissions: [],
         isLoading: false,
       });

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -82,11 +83,29 @@ const PatientDetail = () => {
 
   useEffect(() => {
     if (patientData) {
-      // Add the pharmacy fields to ensure compatibility with UserProfile
+      // Create a complete profile with all required fields
       const completeProfile: UserProfile = {
-        ...patientData,
-        pharmacy_name: patientData.pharmacy_name || null,
-        pharmacy_logo_url: patientData.pharmacy_logo_url || null
+        id: patientData.id,
+        role: 'patient', // Assuming this is a patient profile
+        role_id: null,
+        full_name: patientData.full_name,
+        email: patientData.email,
+        avatar_url: patientData.avatar_url,
+        date_of_birth: null,
+        city: null,
+        auth_method: null,
+        is_blocked: null,
+        doctor_stamp_url: null,
+        doctor_signature_url: null,
+        cns_card_front: null,
+        cns_card_back: null,
+        cns_number: null,
+        deleted_at: null,
+        created_at: null,
+        updated_at: null,
+        license_number: null,
+        pharmacy_name: patientData.pharmacy_name,
+        pharmacy_logo_url: patientData.pharmacy_logo_url
       };
       
       setPatient(completeProfile);
