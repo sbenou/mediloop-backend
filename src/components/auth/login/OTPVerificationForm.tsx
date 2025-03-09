@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -29,7 +30,7 @@ const OTPVerificationForm = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { updateSession } = useAuth();
+  const { refreshSession } = useAuth();
   const [role, setRole] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
 
@@ -40,12 +41,8 @@ const OTPVerificationForm = () => {
     },
   });
 
-  const { mutate: verifyOTP, isLoading } = useMutation<
-    { user: User; session: any },
-    AuthError,
-    z.infer<typeof formSchema>
-  >({
-    mutationFn: async (values) => {
+  const { mutate: verifyOTP, isPending } = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
       const email = searchParams.get('email');
       if (!email) throw new Error('Email not found in query parameters');
 
@@ -69,7 +66,7 @@ const OTPVerificationForm = () => {
     onSuccess: async (data) => {
       const { user, session } = data;
       await createProfileIfNeeded(user);
-      await updateSession(session);
+      await refreshSession();
 
       toast({
         title: "Verification successful",
@@ -123,9 +120,13 @@ const OTPVerificationForm = () => {
     }
   };
 
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    verifyOTP(values);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(verifyOTP)} className="w-full space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
         <FormField
           control={form.control}
           name="otp"
@@ -139,8 +140,8 @@ const OTPVerificationForm = () => {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Verifying..." : "Verify OTP"}
+        <Button type="submit" disabled={isPending}>
+          {isPending ? "Verifying..." : "Verify OTP"}
         </Button>
       </form>
     </Form>
