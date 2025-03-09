@@ -138,14 +138,15 @@ const PharmacyProfile = () => {
     try {
       setIsUploading(true);
       
-      // Create a unique file path
+      // Create a unique file path with proper extension
       const fileExt = file.name.split('.').pop();
       const filePath = `pharmacies/${pharmacyData.id}/${crypto.randomUUID()}.${fileExt}`;
       
-      // Check if storage bucket exists, if not it will be created via RLS policies
       console.log("Uploading to pharmacy-images bucket:", filePath);
+      console.log("File type:", file.type);
+      console.log("File size:", file.size);
       
-      // Upload the file
+      // Upload the file with content type
       const { error: uploadError, data } = await supabase.storage
         .from('pharmacy-images')
         .upload(filePath, file, {
@@ -276,9 +277,9 @@ const PharmacyProfile = () => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <Button variant="outline" className="bg-white/80">
+                <Button variant="outline" className="bg-white/80" disabled={isUploading}>
                   <Upload className="mr-2 h-4 w-4" />
-                  Change Image
+                  {isUploading ? 'Uploading...' : 'Change Image'}
                 </Button>
               </div>
             </div>
@@ -287,6 +288,7 @@ const PharmacyProfile = () => {
               <Image className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload pharmacy image</h3>
               <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your pharmacy</p>
+              {isUploading && <p className="mt-2 text-sm text-blue-500">Uploading...</p>}
             </div>
           )}
           <input
