@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/lib/supabase';
 
 // Define props interface
-interface OTPVerificationFormProps {
+export interface OTPVerificationFormProps {
   email: string;
   onSuccess: () => void;
 }

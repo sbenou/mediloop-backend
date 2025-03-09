@@ -9,7 +9,7 @@ import PrescriptionsView from '@/components/dashboard/views/PrescriptionsView';
 import SettingsView from '@/components/dashboard/views/SettingsView';
 import TeleconsultationsView from '@/components/dashboard/views/TeleconsultationsView';
 import PharmacyView from '@/components/dashboard/views/PharmacyView';
-import { DashboardSidebar } from '@/components/sidebar/DashboardSidebar';
+import DashboardSidebar from '@/components/sidebar/DashboardSidebar';
 
 const UniversalDashboard = () => {
   const [searchParams] = useSearchParams();
@@ -17,23 +17,27 @@ const UniversalDashboard = () => {
   
   const currentView = searchParams.get('view') || 'home';
   const role = profile?.role || null;
+  
+  // Get tab parameters from URL for components that need it
+  const profileTab = searchParams.get('profileTab') || 'personal';
+  const ordersTab = searchParams.get('ordersTab') || 'orders';
 
   const renderView = () => {
     switch (currentView) {
       case 'home':
         return <HomeView userRole={role} />;
       case 'profile':
-        return <ProfileView />;
+        return <ProfileView activeTab={profileTab} userRole={role} />;
       case 'orders':
-        return <OrdersView />;
+        return <OrdersView activeTab={ordersTab} userRole={role} />;
       case 'prescriptions':
-        return <PrescriptionsView />;
+        return <PrescriptionsView userRole={role} />;
       case 'settings':
-        return <SettingsView />;
+        return <SettingsView userRole={role} />;
       case 'teleconsultations':
-        return <TeleconsultationsView />;
+        return <TeleconsultationsView userRole={role} />;
       case 'pharmacy':
-        return <PharmacyView />;
+        return <PharmacyView userRole={role} section={searchParams.get('section') || undefined} />;
       default:
         return <HomeView userRole={role} />;
     }
