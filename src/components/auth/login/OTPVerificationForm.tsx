@@ -1,137 +1,150 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useToast } from "@/components/ui/use-toast"
 import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
-import { useSetRecoilState } from 'recoil';
-import { authState } from '@/store/auth/atoms';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { useMutation } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { AuthError, User } from '@supabase/supabase-js';
+import { useAuth } from '@/hooks/auth/useAuth';
 
-interface OTPVerificationFormProps {
-  email: string;
-  onSuccess?: () => void;
-}
+const formSchema = z.object({
+  otp: z.string()
+    .min(6, { message: "OTP must be at least 6 characters." })
+    .max(6, { message: "OTP must be at most 6 characters." }),
+});
 
-export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormProps) => {
-  const [otp, setOtp] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+const OTPVerificationForm = () => {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const setAuth = useSetRecoilState(authState);
+  const { toast } = useToast();
+  const { updateSession } = useAuth();
+  const [role, setRole] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
 
-  const handleVerification = async () => {
-    if (!email || otp.length !== 6) {
-      toast({
-        variant: "destructive",
-        title: "Verification failed",
-        description: "Please enter a valid 6-digit verification code.",
-      });
-      return;
-    }
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      otp: "",
+    },
+  });
 
-    setIsLoading(true);
+  const { mutate: verifyOTP, isLoading } = useMutation<
+    { user: User; session: any },
+    AuthError,
+    z.infer<typeof formSchema>
+  >({
+    mutationFn: async (values) => {
+      const email = searchParams.get('email');
+      if (!email) throw new Error('Email not found in query parameters');
 
-    try {
-      console.log("Verifying OTP for:", email);
       const { data, error } = await supabase.auth.verifyOtp({
         email,
-        token: otp,
-        type: 'email'
+        token: values.otp,
+        type: 'email',
       });
 
-      if (error) throw error;
-
-      if (data?.user) {
-        console.log("OTP verification successful, fetching user profile");
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        // Ensure profile has all required fields from UserProfile interface
-        const completeProfile = profile ? {
-          ...profile,
-          pharmacy_name: profile.pharmacy_name || null,
-          pharmacy_logo_url: profile.pharmacy_logo_url || null,
-          is_active: !profile.is_blocked
-        } : null;
-
-        setAuth({
-          user: data.user,
-          profile: completeProfile,
-          isLoading: false,
-          permissions: [],
-        });
-
-        toast({
-          title: "Success",
-          description: "Email verified successfully!",
-        });
-
-        // Clean up localStorage
-        localStorage.removeItem('otp_email');
-        localStorage.removeItem('otp_email_expiry');
-
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        console.log("Redirecting to home page");
-        navigate('/', { replace: true });
+      if (error) {
+        console.error('OTP verification error:', error);
+        throw error;
       }
-    } catch (error: any) {
-      console.error("OTP verification failed:", error);
-      let description = "Failed to verify email. Please try again.";
-      
-      if (error.message?.includes('Invalid')) {
-        description = "Invalid verification code. Please check and try again.";
-      } else if (error.message?.includes('expired')) {
-        description = "Verification code has expired. Please request a new one.";
+
+      if (!data.session) {
+        throw new Error('No session found after OTP verification');
       }
-      
+
+      return { user: data.user!, session: data.session };
+    },
+    onSuccess: async (data) => {
+      const { user, session } = data;
+      await createProfileIfNeeded(user);
+      await updateSession(session);
+
+      toast({
+        title: "Verification successful",
+        description: "You have successfully verified your email.",
+      });
+
+      navigate('/dashboard');
+    },
+    onError: (error) => {
       toast({
         variant: "destructive",
         title: "Verification failed",
-        description,
+        description: error.message || "Failed to verify OTP.",
       });
-    } finally {
-      setIsLoading(false);
+    },
+  });
+
+  const createProfileIfNeeded = async (user: User) => {
+    try {
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError && profileError.message !== 'No rows found') {
+        console.error('Error checking profile existence:', profileError);
+        return;
+      }
+
+      if (!existingProfile) {
+        const profileData = {
+          id: user.id,
+          role: role || 'patient',
+          full_name: fullName || '',
+          email: user.email,
+          pharmacy_name: null,  // Initialize with null
+          pharmacy_logo_url: null,  // Initialize with null
+        };
+
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([profileData]);
+
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating profile:', error);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-center">
-        <InputOTP
-          maxLength={6}
-          value={otp}
-          onChange={setOtp}
-          disabled={isLoading}
-        >
-          <InputOTPGroup className="gap-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <InputOTPSlot 
-                key={i} 
-                index={i}
-                className="w-10 h-10 text-center border-2"
-              />
-            ))}
-          </InputOTPGroup>
-        </InputOTP>
-      </div>
-      <Button
-        className="w-full"
-        onClick={handleVerification}
-        disabled={isLoading}
-      >
-        {isLoading ? "Verifying..." : "Verify Email"}
-      </Button>
-    </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(verifyOTP)} className="w-full space-y-6">
+        <FormField
+          control={form.control}
+          name="otp"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>OTP</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter OTP" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Verifying..." : "Verify OTP"}
+        </Button>
+      </form>
+    </Form>
   );
 };
+
+export default OTPVerificationForm;

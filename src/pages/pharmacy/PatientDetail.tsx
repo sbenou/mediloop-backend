@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -14,11 +13,12 @@ interface PatientData {
   id: string;
   full_name: string | null;
   email: string | null;
+  date_of_birth: string | null;
+  role: string;
   avatar_url: string | null;
-  // Include other relevant fields from the profiles table
+  is_blocked: boolean | null;
   pharmacy_name: string | null;
   pharmacy_logo_url: string | null;
-  is_blocked: boolean | null;
 }
 
 const PatientDetail = () => {
@@ -62,16 +62,16 @@ const PatientDetail = () => {
         return;
       }
 
-      // Ensure the fetched data matches the PatientData interface
       const patientInfo: PatientData = {
         id: data.id,
         full_name: data.full_name,
         email: data.email,
+        date_of_birth: data.date_of_birth,
+        role: data.role,
         avatar_url: data.avatar_url,
+        is_blocked: data.is_blocked,
         pharmacy_name: data.pharmacy_name || null,
         pharmacy_logo_url: data.pharmacy_logo_url || null,
-        is_blocked: data.is_blocked || false,
-        // Map other relevant fields from the profiles table
       };
 
       setPatientData(patientInfo);
@@ -85,15 +85,14 @@ const PatientDetail = () => {
 
   useEffect(() => {
     if (patientData) {
-      // Create a complete profile with all required fields
       const completeProfile: UserProfile = {
         id: patientData.id,
-        role: 'patient', // Assuming this is a patient profile
+        role: 'patient',
         role_id: null,
         full_name: patientData.full_name,
         email: patientData.email,
         avatar_url: patientData.avatar_url,
-        date_of_birth: null,
+        date_of_birth: patientData.date_of_birth,
         city: null,
         auth_method: null,
         is_blocked: patientData.is_blocked,

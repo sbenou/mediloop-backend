@@ -1,372 +1,204 @@
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { UserPlus, UserMinus, Loader2 } from "lucide-react";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
-import { toast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { UserCog, Search, Eye, Pencil, UserX } from 'lucide-react';
-import UserAvatar from '@/components/user-menu/UserAvatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
-import { UserProfile } from '@/types/user';
+interface StaffMember {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  role: string | null;
+  is_blocked: boolean | null;
+  is_active?: boolean;
+  joined_date?: string;
+  pharmacy_name: string | null;
+  pharmacy_logo_url: string | null;
+}
 
 interface PharmacyStaffProps {
   pharmacyId: string;
 }
 
-interface StaffMember {
-  id: string;
-  full_name: string;
-  email: string;
-  avatar_url: string | null;
-  role: string;
-  is_active: boolean;
-  joined_at: string;
-  pharmacy_name: string | null;
-  pharmacy_logo_url: string | null;
-}
-
-const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
+const PharmacyStaff = ({ pharmacyId }: PharmacyStaffProps) => {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
-  const [filteredStaff, setFilteredStaff] = useState<StaffMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUser, setSelectedUser] = useState<StaffMember | null>(null);
-  const [userDetailsOpen, setUserDetailsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("personal");
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    fetchStaffMembers();
+    fetchPharmacyStaff();
   }, [pharmacyId]);
 
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredStaff(staffMembers);
-    } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredStaff(
-        staffMembers.filter(
-          member => 
-            member.full_name.toLowerCase().includes(query) || 
-            member.email.toLowerCase().includes(query)
-        )
-      );
-    }
-  }, [searchQuery, staffMembers]);
-
-  const fetchStaffMembers = async () => {
+  const fetchPharmacyStaff = async () => {
     try {
-      setLoading(true);
-      
-      const { data: pharmacyUsers, error: pharmacyError } = await supabase
+      setIsLoading(true);
+      const { data, error } = await supabase
         .from('user_pharmacies')
-        .select('user_id, created_at')
+        .select(`
+          user_id,
+          profiles:user_id (
+            id, 
+            full_name, 
+            email, 
+            avatar_url, 
+            role,
+            is_blocked,
+            pharmacy_name,
+            pharmacy_logo_url
+          )
+        `)
         .eq('pharmacy_id', pharmacyId);
-      
-      if (pharmacyError) throw pharmacyError;
-      
-      if (!pharmacyUsers || pharmacyUsers.length === 0) {
-        setStaffMembers([]);
-        setFilteredStaff([]);
-        setLoading(false);
+
+      if (error) {
+        console.error('Error fetching pharmacy staff:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load pharmacy staff",
+        });
+        setIsLoading(false);
         return;
       }
-      
-      const userIdsWithDates = pharmacyUsers.reduce<{[key: string]: string}>((acc, pu) => {
-        acc[pu.user_id] = pu.created_at;
-        return acc;
-      }, {});
-      
-      const userIds = pharmacyUsers.map(pu => pu.user_id);
-      
-      try {
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, avatar_url, role, is_blocked, pharmacy_name, pharmacy_logo_url')
-          .in('id', userIds);
-          
-        if (profilesError) throw profilesError;
+
+      if (data && data.length > 0) {
+        // Transform the data to match StaffMember interface
+        const staffMembers: StaffMember[] = data
+          .filter(item => item.profiles && typeof item.profiles === 'object')
+          .map(item => {
+            const profile = item.profiles as any;
+            return {
+              id: profile.id || '',
+              user_id: item.user_id || '',
+              full_name: profile.full_name || '',
+              email: profile.email || '',
+              avatar_url: profile.avatar_url || null,
+              role: profile.role || '',
+              is_blocked: profile.is_blocked || false,
+              pharmacy_name: profile.pharmacy_name || null,
+              pharmacy_logo_url: profile.pharmacy_logo_url || null
+            };
+          });
         
-        if (profiles && profiles.length > 0) {
-          const members: StaffMember[] = profiles.map(profile => ({
-            id: profile.id,
-            full_name: profile.full_name || 'Unknown',
-            email: profile.email || 'No email',
-            avatar_url: profile.avatar_url,
-            role: profile.role || 'pharmacy_user',
-            is_active: !profile.is_blocked,
-            joined_at: userIdsWithDates[profile.id] || 'Unknown',
-            pharmacy_name: profile.pharmacy_name || null,
-            pharmacy_logo_url: profile.pharmacy_logo_url || null
-          }));
-          
-          setStaffMembers(members);
-          setFilteredStaff(members);
-        } else {
-          setStaffMembers([]);
-          setFilteredStaff([]);
-        }
-      } catch (error) {
-        console.error('Error processing profiles:', error);
-        setStaffMembers([]);
-        setFilteredStaff([]);
+        setStaffMembers(staffMembers);
       }
+      
+      setIsLoading(false);
     } catch (error) {
-      console.error('Error fetching staff members:', error);
+      console.error('Error in fetchPharmacyStaff:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load pharmacy staff members",
+        description: "An unexpected error occurred while loading staff",
       });
-    } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleViewUser = (user: StaffMember) => {
-    setSelectedUser(user);
-    setUserDetailsOpen(true);
-  };
-
-  const handleEditUser = (userId: string) => {
-    navigate(`/pharmacy/staff/${userId}/edit`);
-  };
-
-  const handleTerminateUser = async (userId: string) => {
+  const handleRemoveStaff = async (userId: string) => {
     try {
-      const { error: blockError } = await supabase
-        .from('profiles')
-        .update({ is_blocked: true })
-        .eq('id', userId);
-
-      if (blockError) throw blockError;
-
-      const { error: removeError } = await supabase
+      setIsLoading(true);
+      const { error } = await supabase
         .from('user_pharmacies')
         .delete()
         .eq('user_id', userId)
         .eq('pharmacy_id', pharmacyId);
 
-      if (removeError) throw removeError;
-
-      toast({
-        title: "Success",
-        description: "Staff member removed successfully",
-      });
-
-      setStaffMembers(prev => prev.filter(member => member.id !== userId));
-      setFilteredStaff(prev => prev.filter(member => member.id !== userId));
+      if (error) {
+        console.error('Error removing staff:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to remove staff member",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Staff member removed successfully",
+        });
+        fetchPharmacyStaff(); // Refresh staff list
+      }
     } catch (error) {
-      console.error('Error terminating user:', error);
+      console.error('Error in handleRemoveStaff:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to remove staff member",
+        description: "An unexpected error occurred while removing staff",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const filteredStaff = staffMembers.filter(member =>
+    member.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
-        <h3 className="text-xl font-semibold flex items-center">
-          <UserCog className="mr-2 h-5 w-5" />
-          Staff Management
-        </h3>
-        
-        <div className="relative w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search staff..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+    <div>
+      <div className="mb-4">
+        <Input
+          type="text"
+          placeholder="Search staff by name or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
-      
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <p>Loading staff members...</p>
-        </div>
-      ) : filteredStaff.length === 0 ? (
-        <div className="bg-gray-50 rounded-lg p-6 text-center">
-          <UserX className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
-            {searchQuery.trim() !== '' ? 'No matching staff members' : 'No staff members found'}
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {searchQuery.trim() !== '' ? 
-              'Try a different search term or clear the search.' : 
-              'Add team members to manage your pharmacy staff.'}
-          </p>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Loading staff...
         </div>
       ) : (
         <div className="rounded-md border">
           <Table>
+            <TableCaption>A list of staff members in your pharmacy.</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead>Staff Member</TableHead>
+                <TableHead className="w-[100px]">Name</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Joined</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredStaff.map(staff => (
-                <TableRow key={staff.id}>
+              {filteredStaff.map((member) => (
+                <TableRow key={member.user_id}>
+                  <TableCell className="font-medium">{member.full_name}</TableCell>
+                  <TableCell>{member.email}</TableCell>
                   <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <UserAvatar 
-                        userProfile={{
-                          id: staff.id,
-                          avatar_url: staff.avatar_url,
-                          full_name: staff.full_name,
-                          role: staff.role,
-                          role_id: null,
-                          email: staff.email,
-                          date_of_birth: null,
-                          city: null,
-                          auth_method: null,
-                          is_blocked: !staff.is_active,
-                          doctor_stamp_url: null,
-                          doctor_signature_url: null,
-                          cns_card_front: null,
-                          cns_card_back: null,
-                          cns_number: null,
-                          deleted_at: null,
-                          created_at: null,
-                          updated_at: null,
-                          license_number: null,
-                          pharmacy_name: staff.pharmacy_name,
-                          pharmacy_logo_url: staff.pharmacy_logo_url,
-                          is_active: staff.is_active
-                        }}
-                      />
-                      <div>
-                        <p className="font-medium">{staff.full_name}</p>
-                        <p className="text-xs text-muted-foreground">{staff.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {staff.role === 'pharmacist' ? 'Pharmacist' : 'Staff Member'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={staff.is_active ? "success" : "destructive"}>
-                      {staff.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(staff.joined_at).toLocaleDateString()}
+                    <Badge variant="secondary">{member.role}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => handleViewUser(staff)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleEditUser(staff.id)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50" onClick={() => handleTerminateUser(staff.id)}>
-                        <UserX className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveStaff(member.user_id)}
+                    >
+                      <UserMinus className="mr-2 h-4 w-4" />
+                      Remove
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
-      )}
-      
-      {selectedUser && (
-        <Dialog open={userDetailsOpen} onOpenChange={setUserDetailsOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Staff Member Details</DialogTitle>
-              <DialogDescription>
-                View information about {selectedUser.full_name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="flex flex-col items-center py-4">
-              <UserAvatar 
-                userProfile={{
-                  id: selectedUser.id,
-                  avatar_url: selectedUser.avatar_url,
-                  full_name: selectedUser.full_name,
-                  role: selectedUser.role,
-                  role_id: null,
-                  email: selectedUser.email,
-                  date_of_birth: null,
-                  city: null,
-                  auth_method: null,
-                  is_blocked: !selectedUser.is_active,
-                  doctor_stamp_url: null,
-                  doctor_signature_url: null,
-                  cns_card_front: null,
-                  cns_card_back: null,
-                  cns_number: null,
-                  deleted_at: null,
-                  created_at: null,
-                  updated_at: null,
-                  license_number: null,
-                  pharmacy_name: selectedUser.pharmacy_name,
-                  pharmacy_logo_url: selectedUser.pharmacy_logo_url,
-                  is_active: selectedUser.is_active
-                }}
-              />
-              <h3 className="mt-2 text-lg font-semibold">{selectedUser.full_name}</h3>
-              <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
-              <div className="mt-2 flex space-x-2">
-                <Badge variant={selectedUser.role === 'pharmacist' ? "default" : "outline"}>
-                  {selectedUser.role === 'pharmacist' ? 'Pharmacist' : 'Staff'}
-                </Badge>
-                <Badge variant={selectedUser.is_active ? "success" : "destructive"}>
-                  {selectedUser.is_active ? 'Active' : 'Inactive'}
-                </Badge>
-              </div>
-            </div>
-            
-            <Tabs defaultValue="personal" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-3">
-                <TabsTrigger value="personal">Personal Details</TabsTrigger>
-                <TabsTrigger value="address">Address</TabsTrigger>
-                <TabsTrigger value="nextofkin">Next of Kin</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="personal" className="space-y-4 py-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  Personal details will be shown here
-                </p>
-              </TabsContent>
-              
-              <TabsContent value="address" className="space-y-4 py-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  Address information will be shown here
-                </p>
-              </TabsContent>
-              
-              <TabsContent value="nextofkin" className="space-y-4 py-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  Next of kin information will be shown here
-                </p>
-              </TabsContent>
-            </Tabs>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setUserDetailsOpen(false)}>
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       )}
     </div>
   );
