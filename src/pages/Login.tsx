@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, user, profile } = useAuth();
+  const { isAuthenticated, isLoading, user, profile, isPharmacist } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,6 +22,7 @@ const Login = () => {
           }
           
           console.log('User role found:', profile.role);
+          console.log('Is pharmacist check:', isPharmacist, profile.role === 'pharmacist');
 
           // Force session storage on successful login for ALL user types
           const { data: { session } } = await supabase.auth.getSession();
@@ -57,9 +58,12 @@ const Login = () => {
             }
           }
           
-          // Always redirect to the universal dashboard with the correct view parameter
-          if (profile.role === 'pharmacist') {
-            console.log('Redirecting pharmacist to universal dashboard with pharmacy view');
+          // Enhanced pharmacist detection with multiple checks
+          const isUserPharmacist = profile.role === 'pharmacist' || isPharmacist;
+          
+          // Redirect based on role
+          if (isUserPharmacist) {
+            console.log('Redirecting pharmacist to pharmacy dashboard view');
             navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
           } else {
             console.log('Redirecting to universal dashboard');
@@ -73,7 +77,7 @@ const Login = () => {
     };
     
     checkUserRole();
-  }, [isAuthenticated, user, profile, navigate]);
+  }, [isAuthenticated, user, profile, navigate, isPharmacist]);
 
   // Show loading state
   if (isLoading) {
@@ -90,7 +94,10 @@ const Login = () => {
 
   // If user is already authenticated, prevent showing the login page
   if (isAuthenticated) {
-    if (profile?.role === 'pharmacist') {
+    // Enhanced pharmacist detection with multiple checks
+    const isUserPharmacist = profile?.role === 'pharmacist' || isPharmacist;
+    
+    if (isUserPharmacist) {
       navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
     } else {
       navigate('/dashboard', { replace: true });
