@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { RefObject } from "react";
+import { RefObject, useEffect } from "react";
 
 interface SidebarUserMenuProps {
   profile: UserProfile | null;
@@ -50,8 +50,29 @@ const SidebarUserMenu = ({
     ? 'Pharmacy Account'
     : profile?.email || 'user@example.com';
 
-  // Debug log to verify userRole value and navigation function
+  // Enhanced debug logs to verify userRole value and navigation function
   console.log("SidebarUserMenu: userRole =", userRole, "navigateToPharmacyProfile =", !!navigateToPharmacyProfile);
+  console.log("SidebarUserMenu: Is pharmacist check =", userRole === 'pharmacist');
+  console.log("SidebarUserMenu: Navigation function type =", typeof navigateToPharmacyProfile);
+
+  // Debug log to check dropdown menu content on mount
+  useEffect(() => {
+    console.log("SidebarUserMenu mounted with:", {
+      userRole,
+      hasPharmacyProfileFn: !!navigateToPharmacyProfile,
+      shouldShowPharmacyLink: userRole === 'pharmacist' && !!navigateToPharmacyProfile
+    });
+
+    // Debug function to inspect DOM after render
+    const checkForPharmacyLink = () => {
+      setTimeout(() => {
+        const pharmacyLinks = document.querySelectorAll('.pharmacy-profile-link');
+        console.log("Pharmacy profile links found in DOM:", pharmacyLinks.length);
+      }, 1000);
+    };
+    
+    checkForPharmacyLink();
+  }, [userRole, navigateToPharmacyProfile]);
 
   return (
     <div className="border-t p-4">
@@ -101,8 +122,19 @@ const SidebarUserMenu = ({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              {/* Add a forced debug output directly in the JSX to see if this block is evaluated */}
+              {userRole === 'pharmacist' && console.log("Pharmacy check passed in JSX")}
+              {!!navigateToPharmacyProfile && console.log("navigateToPharmacyProfile is defined in JSX")}
+              
+              {/* Move the Pharmacy Profile link before Account for better visibility */}
               {userRole === 'pharmacist' && navigateToPharmacyProfile && (
-                <DropdownMenuItem onClick={navigateToPharmacyProfile} className="pharmacy-profile-link">
+                <DropdownMenuItem 
+                  onClick={() => {
+                    console.log("Pharmacy Profile link clicked");
+                    if (navigateToPharmacyProfile) navigateToPharmacyProfile();
+                  }} 
+                  className="pharmacy-profile-link bg-blue-50"
+                >
                   <Store className="mr-2 h-4 w-4" />
                   <span>Pharmacy Profile</span>
                 </DropdownMenuItem>

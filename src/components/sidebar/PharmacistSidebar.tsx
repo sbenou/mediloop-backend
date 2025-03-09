@@ -50,11 +50,16 @@ const PharmacistSidebar = () => {
     navigateToLink(path);
   };
 
-  // Add this console log to help debug pharmacy profile navigation
+  // Enhanced navigateToPharmacyProfile function with additional logging
   const navigateToPharmacyProfile = () => {
     console.log('Navigating to pharmacy profile from PharmacistSidebar');
+    // Add debug check to ensure this function is defined and called
+    console.log('navigateToPharmacyProfile function is defined');
     navigate('/pharmacy/profile');
   };
+
+  // Add debugging to verify the function is defined at render time
+  console.log('PharmacistSidebar: navigateToPharmacyProfile is defined =', typeof navigateToPharmacyProfile === 'function');
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
