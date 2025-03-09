@@ -133,8 +133,8 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   const currentActiveTab = getActiveTab();
   console.log("OrdersView: Current active tab:", currentActiveTab);
 
-  // Display header only for non-pharmacist role
-  const showHeader = userRole !== 'pharmacist';
+  // Display header for all roles
+  const showHeader = true;
 
   return (
     <div className="space-y-6">
