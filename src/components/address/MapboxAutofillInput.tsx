@@ -35,33 +35,33 @@ const MapboxAutofillInput = ({
         
         if (!mounted || !inputRef.current || !formRef.current) return;
         
-        // Wait for next render cycle to ensure DOM is ready
-        setTimeout(() => {
-          if (mounted && inputRef.current && formRef.current) {
-            // Add required autocomplete attribute to the input
-            inputRef.current.setAttribute('autocomplete', 'street-address');
-            
-            // Initialize autofill
-            const autofillInstance = initializeMapboxAutofill(
-              inputRef.current,
-              formRef.current
-            );
-            
-            autofillInstanceRef.current = autofillInstance;
-            
-            // If successful, add event listener for address selection
-            if (autofillInstance && onAddressSelected) {
-              formRef.current.addEventListener('autofill', (event: any) => {
-                const feature = event.detail?.feature;
-                if (feature) {
-                  onAddressSelected(feature);
-                }
-              });
-            }
-            
-            setIsLoading(false);
+        const setupAutofill = () => {
+          if (!mounted || !inputRef.current || !formRef.current) return;
+          
+          // Add required autocomplete attribute
+          inputRef.current.setAttribute('autocomplete', 'street-address');
+          
+          // Initialize autofill
+          const autofillInstance = initializeMapboxAutofill(
+            inputRef.current,
+            formRef.current
+          );
+          
+          if (autofillInstance && onAddressSelected) {
+            formRef.current.addEventListener('autofill', (event: any) => {
+              const feature = event.detail?.feature;
+              if (feature) {
+                onAddressSelected(feature);
+              }
+            });
           }
-        }, 100);
+          
+          autofillInstanceRef.current = autofillInstance;
+          setIsLoading(false);
+        };
+
+        // Wait for next render cycle to ensure DOM is ready
+        setTimeout(setupAutofill, 100);
       } catch (error) {
         console.error("Error initializing Mapbox Autofill:", error);
         setIsLoading(false);
@@ -74,7 +74,6 @@ const MapboxAutofillInput = ({
       mounted = false;
       if (autofillInstanceRef.current) {
         try {
-          // Cleanup autofill instance
           autofillInstanceRef.current.remove();
         } catch (e) {
           console.error("Error removing autofill instance:", e);

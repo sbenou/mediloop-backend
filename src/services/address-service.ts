@@ -18,10 +18,20 @@ interface AddressResult {
 // To get your own token, sign up at https://mapbox.com/
 const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA';
 
+let sdkLoadPromise: Promise<void> | null = null;
+
 // Load Mapbox Search SDK script
 export function loadMapboxSearchSDK() {
-  return new Promise<void>((resolve, reject) => {
+  if (sdkLoadPromise) {
+    return sdkLoadPromise;
+  }
+
+  sdkLoadPromise = new Promise<void>((resolve, reject) => {
     if (document.getElementById('mapbox-search-sdk')) {
+      // If script is already loaded, just initialize config
+      if (window.MapboxSearchSDK) {
+        window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
+      }
       resolve();
       return;
     }
@@ -40,10 +50,13 @@ export function loadMapboxSearchSDK() {
     };
     script.onerror = (error) => {
       console.error('Failed to load Mapbox Search SDK:', error);
+      sdkLoadPromise = null;
       reject(error);
     };
     document.head.appendChild(script);
   });
+
+  return sdkLoadPromise;
 }
 
 // Initialize Mapbox Search Autofill
@@ -54,7 +67,7 @@ export function initializeMapboxAutofill(inputElement: HTMLInputElement, formEle
   }
   
   try {
-    return window.MapboxSearchSDK.autofill({
+    const autofill = window.MapboxSearchSDK.autofill({
       accessToken: MAPBOX_ACCESS_TOKEN,
       options: {
         country: 'lu',
@@ -62,6 +75,9 @@ export function initializeMapboxAutofill(inputElement: HTMLInputElement, formEle
         ...options
       }
     });
+
+    console.log('Mapbox Autofill initialized successfully');
+    return autofill;
   } catch (error) {
     console.error('Error initializing Mapbox Autofill:', error);
     return null;
