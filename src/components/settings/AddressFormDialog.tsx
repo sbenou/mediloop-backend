@@ -110,10 +110,10 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
       const results = await searchAddressesByQuery(query);
       console.log('Address suggestions received:', results);
       setSuggestions(results);
-      setIsSearching(false);
       
-      // Keep showing suggestions only if we have results or are still searching
-      setShowSuggestions(results.length > 0 || isSearching);
+      // Keep showing suggestions only if we have results
+      setShowSuggestions(results.length > 0);
+      setIsSearching(false);
     } catch (error) {
       console.error("Error searching addresses:", error);
       setSuggestions([]);

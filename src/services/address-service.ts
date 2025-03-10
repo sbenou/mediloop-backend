@@ -101,8 +101,8 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
 
     console.log('Starting Mapbox search for:', query);
     
-    // Use a broader search with more types and enable autocomplete
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address&limit=5&autocomplete=true`;
+    // Configure search with broader types for better results
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,poi,place,locality&limit=5&autocomplete=true`;
     
     console.log('Searching addresses with Mapbox API query:', query);
     console.log('Request URL:', url);
@@ -119,16 +119,17 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
     if (data.features && data.features.length > 0) {
       // Map the Mapbox results to our AddressSuggestion format
       return data.features.map((feature: any) => {
+        // Extract components from the place_name
         const addressParts = feature.place_name.split(',').map((part: string) => part.trim());
         
-        // Find postal code (usually in the format "12345")
+        // Find postal code in the text (usually in the format "12345")
         const postalCodeMatch = feature.place_name.match(/\b\d{5}\b/);
         const postalCode = postalCodeMatch ? postalCodeMatch[0] : '';
         
-        // Extract the first part as street, and try to identify city, country from context
+        // Extract the street (first part of the address usually)
         const street = addressParts[0];
         
-        // Get city, country from context if available
+        // Extract city, country from context if available
         let city = '', country = '';
         if (feature.context) {
           feature.context.forEach((ctx: any) => {
