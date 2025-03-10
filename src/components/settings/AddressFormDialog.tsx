@@ -39,19 +39,29 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
   const [isProcessing, setIsProcessing] = useState(false);
   const [isMapboxLoaded, setIsMapboxLoaded] = useState(false);
 
-  // Preload Mapbox SDK as soon as component mounts
+  // Preload Mapbox SDK as soon as component mounts - this is important for quick initialization
   useEffect(() => {
+    let mounted = true;
+    
     // Start loading Mapbox SDK immediately
     loadMapboxSearchSDK()
       .then(() => {
         console.log("Mapbox SDK loaded successfully for AddressFormDialog");
-        setIsMapboxLoaded(true);
+        if (mounted) {
+          setIsMapboxLoaded(true);
+        }
       })
       .catch(error => {
         console.error("Failed to load Mapbox SDK for AddressFormDialog:", error);
         // Set loaded state to true anyway to allow the form to be usable
-        setIsMapboxLoaded(true);
+        if (mounted) {
+          setIsMapboxLoaded(true);
+        }
       });
+      
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Reset form when dialog opens/closes

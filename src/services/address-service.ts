@@ -26,7 +26,7 @@ let sdkLoaded = false;
 export function loadMapboxSearchSDK() {
   // Return immediately if SDK is already loaded
   if (sdkLoaded && window.MapboxSearchSDK) {
-    console.log('Mapbox Search SDK already fully loaded');
+    console.log('Mapbox Search SDK already loaded');
     return Promise.resolve();
   }
   
@@ -36,21 +36,20 @@ export function loadMapboxSearchSDK() {
   }
 
   sdkLoadPromise = new Promise<void>((resolve, reject) => {
-    // Check if SDK is already loaded and initialized
+    // Check if SDK is already loaded
     if (window.MapboxSearchSDK) {
-      console.log('Mapbox Search SDK already loaded and initialized');
+      console.log('Mapbox Search SDK already loaded');
       window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
       sdkLoaded = true;
       resolve();
       return;
     }
     
-    // Check if script tag already exists but SDK is not initialized yet
+    // Check if script tag already exists
     const existingScript = document.getElementById('mapbox-search-sdk');
     if (existingScript) {
       console.log('Mapbox Search SDK script tag exists, waiting for initialization');
       
-      // Wait for SDK to initialize
       const checkInterval = setInterval(() => {
         if (window.MapboxSearchSDK) {
           clearInterval(checkInterval);
@@ -61,12 +60,11 @@ export function loadMapboxSearchSDK() {
         }
       }, 100);
       
-      // Set a timeout to prevent infinite waiting
       setTimeout(() => {
         if (!window.MapboxSearchSDK) {
           clearInterval(checkInterval);
           console.error('Timed out waiting for Mapbox Search SDK to initialize');
-          sdkLoadPromise = null; // Clear the promise to allow retrying
+          sdkLoadPromise = null;
           reject(new Error('Timed out waiting for Mapbox Search SDK'));
         }
       }, 10000);
@@ -80,34 +78,33 @@ export function loadMapboxSearchSDK() {
     script.id = 'mapbox-search-sdk';
     script.src = 'https://api.mapbox.com/search-js/v1.0.0-beta.18/web.js';
     script.async = true;
+    
     script.onload = () => {
-      console.log('Mapbox Search SDK script loaded');
+      console.log('Mapbox Search SDK script loaded, waiting for initialization');
       
-      // Wait for SDK to initialize
-      const checkInterval = setInterval(() => {
+      const waitForSDK = setInterval(() => {
         if (window.MapboxSearchSDK) {
-          clearInterval(checkInterval);
+          clearInterval(waitForSDK);
           window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
-          console.log('Mapbox Search SDK initialized after script load');
+          console.log('Mapbox Search SDK initialized');
           sdkLoaded = true;
           resolve();
         }
       }, 100);
       
-      // Set a timeout to prevent infinite waiting
       setTimeout(() => {
         if (!window.MapboxSearchSDK) {
-          clearInterval(checkInterval);
-          console.error('Timed out waiting for Mapbox Search SDK to initialize after script load');
-          sdkLoadPromise = null; // Clear the promise to allow retrying
-          reject(new Error('Timed out waiting for Mapbox Search SDK after script load'));
+          clearInterval(waitForSDK);
+          console.error('Timed out waiting for Mapbox Search SDK to initialize');
+          sdkLoadPromise = null;
+          reject(new Error('Timed out waiting for Mapbox Search SDK'));
         }
       }, 5000);
     };
     
     script.onerror = (error) => {
       console.error('Failed to load Mapbox Search SDK:', error);
-      sdkLoadPromise = null; // Clear the promise to allow retrying
+      sdkLoadPromise = null;
       reject(error);
     };
     
@@ -117,7 +114,7 @@ export function loadMapboxSearchSDK() {
   return sdkLoadPromise;
 }
 
-// Initialize Mapbox Search Autofill
+// Initialize Mapbox Search Autofill (kept for backwards compatibility)
 export function initializeMapboxAutofill(inputElement: HTMLInputElement, formElement: HTMLFormElement, options = {}) {
   if (typeof window.MapboxSearchSDK === 'undefined') {
     console.error('Mapbox Search SDK is not loaded yet');
@@ -128,22 +125,27 @@ export function initializeMapboxAutofill(inputElement: HTMLInputElement, formEle
     // Ensure the input element has the required attributes
     inputElement.setAttribute('autocomplete', 'street-address');
     
-    // Create the autofill instance with merged options
-    const autofill = window.MapboxSearchSDK.autofill({
+    // Create the autofill instance using the documented approach
+    const collection = window.MapboxSearchSDK.autofill({
       accessToken: MAPBOX_ACCESS_TOKEN,
       options: {
         ...options
       }
     });
     
-    // Log success or failure
-    if (autofill) {
+    if (collection) {
       console.log('Mapbox Autofill initialized successfully');
+      // Force an update to ensure proper initialization
+      setTimeout(() => {
+        if (collection.update) {
+          collection.update();
+        }
+      }, 100);
     } else {
       console.warn('Mapbox Autofill initialization returned null');
     }
     
-    return autofill;
+    return collection;
   } catch (error) {
     console.error('Error initializing Mapbox Autofill:', error);
     return null;
