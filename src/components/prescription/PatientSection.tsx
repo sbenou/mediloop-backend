@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import {
   FormField,
@@ -7,33 +8,31 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { UseFormReturn } from "react-hook-form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandList, CommandItem, CommandGroup, CommandInput } from "@/components/ui/command";
-import { searchAddressesByQuery } from "@/services/address-service";
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import flags from 'react-phone-number-input/flags';
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, MapPin } from "lucide-react";
 import { getCountryCallingCode } from 'react-phone-number-input';
+import AddressSearchDialog from "../address/AddressSearchDialog";
 
 interface PatientSectionProps {
   form: UseFormReturn<any>;
 }
 
 const PatientSection = ({ form }: PatientSectionProps) => {
-  const [addressQuery, setAddressQuery] = useState('');
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
-  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  // Phone state
   const [phoneValue, setPhoneValue] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(true);
   const [countrySelectOpen, setCountrySelectOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const wasFocusedRef = useRef(false);
+  
+  // Address dialog state
+  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
 
   useEffect(() => {
     if (phoneValue) {
@@ -45,88 +44,6 @@ const PatientSection = ({ form }: PatientSectionProps) => {
       });
     }
   }, [phoneValue, form]);
-
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    if (addressQuery && addressQuery.length > 2) {
-      // Set loading state without interfering with typing
-      setIsLoadingAddresses(true);
-      
-      // Cache the focus state before search
-      wasFocusedRef.current = document.activeElement === inputRef.current;
-      
-      // Short delay to avoid too many API calls while typing
-      searchTimeoutRef.current = setTimeout(() => {
-        searchAddresses(addressQuery);
-      }, 300);
-    } else {
-      setAddressSuggestions([]);
-      if (addressQuery.length <= 2) {
-        setIsPopoverOpen(false);
-      }
-      setIsLoadingAddresses(false);
-    }
-    
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [addressQuery]);
-
-  const searchAddresses = async (query: string) => {
-    try {
-      console.log('Executing search for:', query);
-      const suggestions = await searchAddressesByQuery(query);
-      console.log('Address suggestions received:', suggestions.length);
-      setAddressSuggestions(suggestions);
-      
-      // Only open popover if we have suggestions and input has 3+ characters
-      if (suggestions.length > 0 && query.length > 2) {
-        setIsPopoverOpen(true);
-      } else {
-        setIsPopoverOpen(false);
-      }
-    } catch (error) {
-      console.error("Error searching addresses:", error);
-    } finally {
-      setIsLoadingAddresses(false);
-      
-      // Restore focus if the input was previously focused
-      if (wasFocusedRef.current && inputRef.current) {
-        // Use a short timeout to ensure the browser has finished processing events
-        setTimeout(() => {
-          inputRef.current?.focus();
-          
-          // If we had focus, keep the cursor at the end of the text
-          if (inputRef.current) {
-            const length = inputRef.current.value.length;
-            inputRef.current.setSelectionRange(length, length);
-          }
-        }, 0);
-      }
-    }
-  };
-
-  const selectAddress = (address: any) => {
-    form.setValue('patientAddress', address.formatted);
-    setAddressQuery(address.formatted);
-    setIsPopoverOpen(false);
-    
-    // Always return focus to input after selection
-    setTimeout(() => {
-      inputRef.current?.focus();
-      
-      // Position cursor at the end
-      if (inputRef.current) {
-        const length = inputRef.current.value.length;
-        inputRef.current.setSelectionRange(length, length);
-      }
-    }, 0);
-  };
 
   const CountrySelectButton = ({ 
     country, 
@@ -149,6 +66,14 @@ const PatientSection = ({ form }: PatientSectionProps) => {
         <ChevronsUpDown className="h-4 w-4 ml-2 opacity-50 shrink-0" />
       </button>
     );
+  };
+
+  // Handle address selection from the dialog
+  const handleAddressSelect = (address: string) => {
+    form.setValue('patientAddress', address, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
   };
 
   return (
@@ -267,105 +192,36 @@ const PatientSection = ({ form }: PatientSectionProps) => {
           <FormItem>
             <FormLabel>Patient Address</FormLabel>
             <FormControl>
-              <div className="relative">
-                <Popover 
-                  open={isPopoverOpen} 
-                  onOpenChange={(open) => {
-                    // Only allow programmatic control of popover state
-                    // Don't close popover when clicking on input
-                    if (!open && document.activeElement === inputRef.current) {
-                      return;
-                    }
-                    setIsPopoverOpen(open);
-                  }}
+              <div className="relative flex">
+                <Input
+                  {...field}
+                  placeholder="Enter patient address"
+                  className="bg-accent/5 pr-10"
+                  readOnly
+                  onClick={() => setAddressDialogOpen(true)}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full"
+                  onClick={() => setAddressDialogOpen(true)}
                 >
-                  <PopoverTrigger asChild>
-                    {/* We make the trigger a div instead of the input to avoid focus issues */}
-                    <div className="w-full">
-                      <Input 
-                        ref={inputRef}
-                        value={addressQuery}
-                        onChange={(e) => {
-                          const newValue = e.target.value;
-                          field.onChange(newValue);
-                          setAddressQuery(newValue);
-                        }}
-                        // Prevent blur when clicking on suggestions
-                        onClick={(e) => {
-                          // Make sure we maintain focus
-                          e.currentTarget.focus();
-                          // If we have suggestions and enough typed characters, show them
-                          if (addressQuery.length > 2 && addressSuggestions.length > 0) {
-                            setIsPopoverOpen(true);
-                          }
-                        }}
-                        className="bg-accent/5 w-full" 
-                        placeholder="Start typing an address..."
-                        autoComplete="off" // Disable browser autocomplete to avoid conflicts
-                      />
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent 
-                    className="p-0 w-[98%] max-w-none" 
-                    align="start"
-                    side="bottom"
-                    sideOffset={2}
-                    avoidCollisions={false}
-                    forceMount={true}
-                    onInteractOutside={(e) => {
-                      // Don't close when interacting with the input
-                      if (inputRef.current?.contains(e.target as Node)) {
-                        e.preventDefault();
-                        return;
-                      }
-                      
-                      // Otherwise, close the popover when clicking outside
-                      setIsPopoverOpen(false);
-                    }}
-                    onClick={(e) => {
-                      // Stop bubbling to prevent popover from closing immediately
-                      e.stopPropagation();
-                    }}
-                  >
-                    <Command className="w-full">
-                      <CommandList>
-                        {isLoadingAddresses ? (
-                          <div className="flex items-center justify-center p-4">
-                            <div className="animate-spin h-4 w-4 rounded-full border-2 border-gray-900 border-opacity-25 border-t-gray-600"></div>
-                            <span className="ml-2 text-sm">Searching...</span>
-                          </div>
-                        ) : (
-                          <CommandGroup heading="Address suggestions">
-                            {addressSuggestions.length > 0 ? (
-                              addressSuggestions.map((address, index) => (
-                                <CommandItem
-                                  key={index}
-                                  onSelect={() => selectAddress(address)}
-                                  className="cursor-pointer"
-                                >
-                                  <div className="flex flex-col">
-                                    <span>{address.formatted}</span>
-                                  </div>
-                                </CommandItem>
-                              ))
-                            ) : (
-                              <div className="p-4 text-sm text-gray-500">
-                                {addressQuery.length >= 3 
-                                  ? 'No suggestions found. Try adding more details.' 
-                                  : 'Type at least 3 characters'}
-                              </div>
-                            )}
-                          </CommandGroup>
-                        )}
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                  <MapPin className="h-4 w-4" />
+                </Button>
               </div>
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
+      />
+      
+      {/* Address Search Dialog */}
+      <AddressSearchDialog
+        open={addressDialogOpen}
+        onOpenChange={setAddressDialogOpen}
+        onSelectAddress={handleAddressSelect}
+        initialValue={form.getValues("patientAddress") || ""}
       />
     </div>
   );
