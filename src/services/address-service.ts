@@ -1,4 +1,3 @@
-
 // This service uses the free API from opencagedata.com
 // It fetches address information based on a postal code or address string
 
@@ -82,7 +81,7 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
     // - fuzzy=1: Allow some fuzziness in the match
     const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}&limit=5&language=en&no_annotations=1&fuzzy=1&abbrv=1&roadinfo=1`;
     
-    console.log('Searching addresses with query:', query, 'URL:', url);
+    console.log('Searching addresses with query:', query);
     const response = await fetch(url);
     
     if (!response.ok) {
