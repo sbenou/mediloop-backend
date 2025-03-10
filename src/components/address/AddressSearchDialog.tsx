@@ -2,10 +2,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Command, CommandList, CommandItem, CommandGroup } from "@/components/ui/command";
-import { searchAddressesByQuery } from "@/services/address-service";
-import { Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { confirmMapboxAddress } from "@/services/address-service";
+import MapboxAutofillInput from "./MapboxAutofillInput";
+import MapboxMinimap from "./MapboxMinimap";
 
 interface AddressSearchDialogProps {
   open: boolean;
@@ -20,65 +20,66 @@ const AddressSearchDialog = ({
   onSelectAddress,
   initialValue = ""
 }: AddressSearchDialogProps) => {
-  const [searchQuery, setSearchQuery] = useState(initialValue);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [selectedFeature, setSelectedFeature] = useState<any>(null);
+  const [showMinimap, setShowMinimap] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Focus input when dialog opens
+  // Reset state when dialog opens/closes
   useEffect(() => {
-    if (open && inputRef.current) {
-      // Slight delay to ensure dialog is fully rendered
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
+    if (!open) {
+      setSelectedFeature(null);
+      setShowMinimap(false);
     }
   }, [open]);
 
-  // Handle search query changes with debounce
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    if (searchQuery && searchQuery.length >= 3) {
-      setIsSearching(true);
-      
-      searchTimeoutRef.current = setTimeout(() => {
-        searchAddresses(searchQuery);
-      }, 300); // 300ms debounce time
-    } else {
-      setSuggestions([]);
-      setIsSearching(false);
-    }
-    
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchQuery]);
-
-  // Search for addresses
-  const searchAddresses = async (query: string) => {
-    try {
-      console.log('Executing address search for:', query);
-      const results = await searchAddressesByQuery(query);
-      console.log('Address suggestions received:', results.length);
-      setSuggestions(results);
-    } catch (error) {
-      console.error("Error searching addresses:", error);
-      setSuggestions([]);
-    } finally {
-      setIsSearching(false);
-    }
+  const handleAddressSelected = (feature: any) => {
+    console.log("Address selected:", feature);
+    setSelectedFeature(feature);
+    setShowMinimap(true);
   };
 
-  // Handle address selection
-  const handleAddressSelect = (address: any) => {
-    onSelectAddress(address.formatted);
-    onOpenChange(false);
+  const handleLocationChange = (feature: any) => {
+    console.log("Location changed on map:", feature);
+    setSelectedFeature(feature);
+  };
+
+  const handleConfirmAddress = async () => {
+    if (!formRef.current) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      // Confirm the address using Mapbox
+      const result = await confirmMapboxAddress(formRef.current, true);
+      console.log("Address confirmation result:", result);
+      
+      if (result.type === 'accepted' || result.type === 'nochange') {
+        // Get the final address from the form
+        if (formRef.current) {
+          const formattedAddress = selectedFeature?.properties?.full_address || 
+                                  selectedFeature?.properties?.place_name || 
+                                  initialValue;
+                                  
+          onSelectAddress(formattedAddress);
+          onOpenChange(false);
+          
+          toast({
+            title: "Address Selected",
+            description: "The address has been successfully selected."
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error confirming address:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "There was a problem confirming the address."
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -88,62 +89,51 @@ const AddressSearchDialog = ({
           <DialogTitle>Search Address</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-2">
+        <form ref={formRef} className="space-y-4 py-2">
           <div className="relative">
-            <Input
-              ref={inputRef}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+            <MapboxAutofillInput
+              formRef={formRef}
+              initialValue={initialValue}
               placeholder="Start typing your address..."
-              className="pr-10"
-              autoComplete="off"
+              className="w-full"
+              onAddressSelected={handleAddressSelected}
             />
           </div>
           
-          <div className="relative border rounded-md max-h-60 overflow-auto">
-            {isSearching ? (
-              <div className="flex items-center justify-center p-4">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span>Searching addresses...</span>
-              </div>
-            ) : (
-              <Command className="w-full">
-                <CommandList>
-                  <CommandGroup>
-                    {suggestions.length > 0 ? (
-                      suggestions.map((address, index) => (
-                        <CommandItem
-                          key={index}
-                          onSelect={() => handleAddressSelect(address)}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-medium">{address.street}</span>
-                            <span className="text-xs text-gray-500">
-                              {[address.city, address.postal_code, address.country]
-                                .filter(Boolean)
-                                .join(', ')}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))
-                    ) : (
-                      <div className="p-4 text-sm text-gray-500 text-center">
-                        {searchQuery.length >= 3 
-                          ? 'No suggestions found. Try adding more details.' 
-                          : 'Type at least 3 characters to search'}
-                      </div>
-                    )}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            )}
-          </div>
-        </div>
+          {showMinimap && selectedFeature && (
+            <div className="space-y-2">
+              <MapboxMinimap 
+                feature={selectedFeature} 
+                height="200px"
+                onLocationChange={handleLocationChange}
+              />
+              <p className="text-xs text-muted-foreground">
+                Drag the pin to adjust the exact location if needed.
+              </p>
+            </div>
+          )}
+        </form>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isProcessing}
+          >
             Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmAddress}
+            disabled={!selectedFeature || isProcessing}
+          >
+            {isProcessing ? (
+              <>
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+                Processing...
+              </>
+            ) : (
+              "Confirm Address"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
