@@ -1,5 +1,6 @@
-// This service uses the free API from opencagedata.com
-// It fetches address information based on a postal code or address string
+
+// This service uses Mapbox Geocoding API for fetching address information
+// It provides better search functionality and more reliable results
 
 interface AddressResult {
   address?: {
@@ -23,33 +24,62 @@ interface AddressSuggestion {
   formatted: string;
 }
 
+// Mapbox public token - You should replace this with your own token
+// To get your own token, sign up at https://mapbox.com/
+const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA';
+
 export async function fetchAddressFromPostcode(postcode: string): Promise<AddressResult> {
   try {
-    // Using OpenCage Geocoding API (free tier allows 2,500 requests per day)
-    // Replace with your own API key in a production environment
-    const apiKey = 'c7f247fbb26b43ecb2ee4dd8a3599c29'; // Free demo API key with limited usage
-    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(postcode)}&key=${apiKey}&limit=1`;
-    
+    if (!postcode || postcode.length < 3) {
+      console.log('Postcode too short, not searching');
+      return {};
+    }
+
     console.log('Fetching address from postcode:', postcode);
+    
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(postcode)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=postcode&limit=1`;
+    
     const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
     console.log('Address API response:', data);
     
-    if (data.results && data.results.length > 0) {
-      const result = data.results[0];
-      const components = result.components;
+    if (data.features && data.features.length > 0) {
+      const result = data.features[0];
+      
+      // Extract place data
+      const context = result.context || [];
+      let city = '', state = '', country = '';
+      
+      // Extract address components from context
+      context.forEach((ctx: any) => {
+        if (ctx.id.startsWith('place')) {
+          city = ctx.text;
+        } else if (ctx.id.startsWith('region')) {
+          state = ctx.text;
+        } else if (ctx.id.startsWith('country')) {
+          country = ctx.text;
+        }
+      });
+      
+      // Extract street name if available
+      const addressParts = result.place_name.split(',');
+      const street = addressParts.length > 1 ? addressParts[0].trim() : '';
       
       return {
         address: {
-          street: components.road || components.street || '',
-          city: components.city || components.town || components.village || '',
-          state: components.state || components.county || '',
-          country: components.country || '',
-          formatted: result.formatted || ''
+          street: street,
+          city: city,
+          state: state,
+          country: country,
+          formatted: result.place_name
         },
         coordinates: {
-          lat: result.geometry.lat,
-          lng: result.geometry.lng
+          lat: result.center[1],
+          lng: result.center[0]
         }
       };
     }
@@ -71,15 +101,8 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
 
     console.log('Starting search for:', query);
     
-    // Using OpenCage Geocoding API (free tier allows 2,500 requests per day)
-    const apiKey = 'c7f247fbb26b43ecb2ee4dd8a3599c29'; // Free demo API key with limited usage
-    
-    // Improve geocoding results by adding more parameters:
-    // - abbrv=1: Use abbreviations in the formatted result
-    // - add_request=1: Include the request in the response
-    // - roadinfo=1: Include road information where available
-    // - fuzzy=1: Allow some fuzziness in the match
-    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}&limit=5&language=en&no_annotations=1&fuzzy=1&abbrv=1&roadinfo=1`;
+    // Use Mapbox Geocoding API with the places endpoint
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address&limit=5`;
     
     console.log('Searching addresses with query:', query);
     const response = await fetch(url);
@@ -91,19 +114,46 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
     const data = await response.json();
     console.log('Address search API response:', data);
     
-    if (data.results && data.results.length > 0) {
-      // Extract the meaningful address components
-      return data.results.map((result: any) => {
-        const components = result.components;
+    if (data.features && data.features.length > 0) {
+      // Map the Mapbox results to our AddressSuggestion format
+      return data.features.map((feature: any) => {
+        const addressParts = feature.place_name.split(',').map((part: string) => part.trim());
+        
+        // Find postal code (usually in the format "12345")
+        const postalCodeMatch = feature.place_name.match(/\b\d{5}\b/);
+        const postalCode = postalCodeMatch ? postalCodeMatch[0] : '';
+        
+        // Extract the first part as street, and try to identify city, country from context
+        const street = addressParts[0];
+        
+        // Get city, country from context if available
+        let city = '', country = '';
+        if (feature.context) {
+          feature.context.forEach((ctx: any) => {
+            if (ctx.id.startsWith('place')) {
+              city = ctx.text;
+            } else if (ctx.id.startsWith('country')) {
+              country = ctx.text;
+            }
+          });
+        }
+        
+        // If we couldn't extract city from context, try to get it from address parts
+        if (!city && addressParts.length > 1) {
+          city = addressParts[1];
+        }
+        
+        // If we couldn't extract country from context, use the last part
+        if (!country && addressParts.length > 2) {
+          country = addressParts[addressParts.length - 1];
+        }
+        
         return {
-          street: [
-            components.house_number, 
-            components.road || components.street
-          ].filter(Boolean).join(' '),
-          city: components.city || components.town || components.village || '',
-          postal_code: components.postcode || '',
-          country: components.country || '',
-          formatted: result.formatted
+          street: street,
+          city: city,
+          postal_code: postalCode,
+          country: country,
+          formatted: feature.place_name
         };
       });
     }
