@@ -1,12 +1,13 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import AddressForm from "./AddressForm";
 import AddressList from "./AddressList";
 import { Address } from "./types";
+import AddressFormDialog from "./AddressFormDialog";
 
 const AddressManagement = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -45,28 +46,21 @@ const AddressManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-end">
         <Button
-          onClick={() => setShowAddressForm(!showAddressForm)}
+          onClick={() => setShowAddressForm(true)}
           className="mb-4"
         >
           <Plus className="mr-2" />
-          {showAddressForm ? "Cancel" : "Add New Address"}
+          Add New Address
         </Button>
       </div>
 
-      {showAddressForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New Address</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AddressForm 
-              userId={session.user.id}
-              onSuccess={() => setShowAddressForm(false)}
-              existingAddresses={addresses || []}
-            />
-          </CardContent>
-        </Card>
-      )}
+      {/* Address Form Dialog */}
+      <AddressFormDialog
+        userId={session.user.id}
+        open={showAddressForm}
+        onOpenChange={setShowAddressForm}
+        existingAddresses={addresses || []}
+      />
 
       <Card>
         <CardHeader>
