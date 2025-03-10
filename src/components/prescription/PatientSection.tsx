@@ -78,9 +78,9 @@ const PatientSection = ({ form }: PatientSectionProps) => {
               <PopoverTrigger asChild>
                 <FormControl>
                   <Input 
-                    value={addressQuery || field.value}
+                    value={addressQuery}
                     onChange={(e) => {
-                      field.onChange(e);
+                      field.onChange(e.target.value);
                       setAddressQuery(e.target.value);
                     }}
                     className="bg-accent/5" 

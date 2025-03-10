@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -70,14 +69,9 @@ const AddressForm = ({ userId, onSuccess, existingAddresses }: AddressFormProps)
     setAddressQuery(value);
     setNewAddress({ ...newAddress, street: value });
     
-    // Debounce the search
-    const timer = setTimeout(() => {
-      if (value.length >= 3) {
-        searchAddresses(value);
-      }
-    }, 300);
-    
-    return () => clearTimeout(timer);
+    if (value.length >= 3) {
+      searchAddresses(value);
+    }
   };
 
   const addAddressMutation = useMutation({

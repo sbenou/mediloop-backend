@@ -35,7 +35,6 @@ interface TeamMember {
   is_active: boolean;
 }
 
-// Define relationship options for the Next of Kin dropdown
 const relationOptions = [
   { value: 'spouse', label: 'Spouse' },
   { value: 'husband', label: 'Husband' },
@@ -55,7 +54,6 @@ const relationOptions = [
   { value: 'other', label: 'Other' },
 ];
 
-// Address suggestion interface
 interface AddressSuggestion {
   street: string;
   city: string;
@@ -113,13 +111,12 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
     fetchTeamMembers();
   }, [pharmacyId]);
 
-  // Address search with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       if (addressQuery.trim() && addressQuery.length > 3) {
         searchAddresses(addressQuery);
       }
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [addressQuery]);
@@ -280,7 +277,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Update the form values with the phone number values
     values.next_of_kin_phone = nokPhoneValue;
     
     try {
@@ -471,7 +467,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                   </TabsContent>
                   
                   <TabsContent value="address" className="space-y-4">
-                    {/* Street field with autocomplete - moved before postcode */}
                     <FormField
                       control={form.control}
                       name="street"
@@ -480,17 +475,20 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                           <FormLabel>Street Address</FormLabel>
                           <div className="relative">
                             <Popover 
-                              open={isOpenAddressSuggestions && addressSuggestions.length > 0} 
+                              open={isOpenAddressSuggestions} 
                               onOpenChange={setIsOpenAddressSuggestions}
                             >
                               <PopoverTrigger asChild>
                                 <FormControl>
                                   <Input 
                                     placeholder="Start typing your address..." 
-                                    value={addressQuery || field.value}
+                                    value={addressQuery}
                                     onChange={(e) => {
-                                      field.onChange(e);
+                                      field.onChange(e.target.value);
                                       setAddressQuery(e.target.value);
+                                      if (e.target.value.length > 3) {
+                                        searchAddresses(e.target.value);
+                                      }
                                     }}
                                   />
                                 </FormControl>
