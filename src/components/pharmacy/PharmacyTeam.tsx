@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -20,6 +19,7 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { CommandInput, CommandList, CommandItem, CommandGroup, Command } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { searchAddressesByQuery } from '@/services/address-service';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -127,34 +127,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   const searchAddresses = async (query: string) => {
     try {
       setIsAddressLoading(true);
-      
-      // Using the OpenCage API (free tier)
-      const apiKey = 'c7f247fbb26b43ecb2ee4dd8a3599c29'; // Free demo API key with limited usage
-      const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}&limit=5`;
-      
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (data.results && data.results.length > 0) {
-        const suggestions = data.results.map((result: any) => {
-          const components = result.components;
-          return {
-            street: [
-              components.house_number, 
-              components.road || components.street
-            ].filter(Boolean).join(' '),
-            city: components.city || components.town || components.village || '',
-            postal_code: components.postcode || '',
-            country: components.country || '',
-            formatted: result.formatted
-          };
-        });
-        
-        setAddressSuggestions(suggestions);
-        setIsOpenAddressSuggestions(true);
-      } else {
-        setAddressSuggestions([]);
-      }
+      const suggestions = await searchAddressesByQuery(query);
+      setAddressSuggestions(suggestions);
+      setIsOpenAddressSuggestions(suggestions.length > 0);
     } catch (error) {
       console.error('Error searching addresses:', error);
       toast({
@@ -511,7 +486,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                               <PopoverTrigger asChild>
                                 <FormControl>
                                   <Input 
-                                    placeholder="123 Main St" 
+                                    placeholder="Start typing your address..." 
                                     value={addressQuery || field.value}
                                     onChange={(e) => {
                                       field.onChange(e);
@@ -568,27 +543,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         render={({ field }) => (
                           <FormItem className="flex-1">
                             <FormLabel>Postal Code</FormLabel>
-                            <div className="flex space-x-2">
-                              <FormControl>
-                                <Input placeholder="10001" {...field} />
-                              </FormControl>
-                              <Button 
-                                type="button" 
-                                onClick={lookupAddress}
-                                disabled={isAddressLoading}
-                                variant="outline"
-                                size="icon"
-                              >
-                                {isAddressLoading ? (
-                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                  </svg>
-                                )}
-                              </Button>
-                            </div>
+                            <FormControl>
+                              <Input placeholder="10001" {...field} />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}

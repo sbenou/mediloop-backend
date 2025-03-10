@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +14,9 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { AddressType } from "./types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandItem, CommandGroup } from "@/components/ui/command";
+import { searchAddressesByQuery } from "@/services/address-service";
 
 interface AddressFormProps {
   userId: string;
@@ -30,6 +34,51 @@ const AddressForm = ({ userId, onSuccess, existingAddresses }: AddressFormProps)
     type: "secondary" as AddressType,
     is_default: false
   });
+  const [addressQuery, setAddressQuery] = useState('');
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  const searchAddresses = async (query: string) => {
+    if (query.length < 3) return;
+    
+    try {
+      setIsSearching(true);
+      const suggestions = await searchAddressesByQuery(query);
+      setAddressSuggestions(suggestions);
+      setIsPopoverOpen(suggestions.length > 0);
+    } catch (error) {
+      console.error('Error searching for addresses:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleAddressSelect = (address: any) => {
+    setNewAddress({
+      ...newAddress,
+      street: address.street,
+      city: address.city,
+      postal_code: address.postal_code,
+      country: address.country
+    });
+    setAddressQuery(address.street);
+    setIsPopoverOpen(false);
+  };
+
+  const handleStreetChange = (value: string) => {
+    setAddressQuery(value);
+    setNewAddress({ ...newAddress, street: value });
+    
+    // Debounce the search
+    const timer = setTimeout(() => {
+      if (value.length >= 3) {
+        searchAddresses(value);
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  };
 
   const addAddressMutation = useMutation({
     mutationFn: async (address: typeof newAddress) => {
@@ -72,12 +121,56 @@ const AddressForm = ({ userId, onSuccess, existingAddresses }: AddressFormProps)
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="street">Street Address</Label>
-        <Input
-          id="street"
-          value={newAddress.street}
-          onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
-          required
-        />
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          <PopoverTrigger asChild>
+            <div>
+              <Input
+                id="street"
+                value={addressQuery}
+                onChange={(e) => handleStreetChange(e.target.value)}
+                placeholder="Start typing your street address"
+                className="w-full"
+                required
+              />
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-full" align="start">
+            <Command>
+              <CommandList>
+                {isSearching ? (
+                  <div className="flex items-center justify-center p-2">
+                    <div className="animate-spin h-4 w-4 rounded-full border-2 border-gray-900 border-opacity-25 border-t-gray-600"></div>
+                    <span className="ml-2 text-sm">Searching...</span>
+                  </div>
+                ) : (
+                  <CommandGroup heading="Address suggestions">
+                    {addressSuggestions.map((address, index) => (
+                      <CommandItem
+                        key={index}
+                        onSelect={() => handleAddressSelect(address)}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">{address.street}</span>
+                          <span className="text-xs text-gray-500">
+                            {[address.postal_code, address.city, address.country]
+                              .filter(Boolean)
+                              .join(', ')}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                    {addressSuggestions.length === 0 && addressQuery.length >= 3 && !isSearching && (
+                      <div className="p-2 text-sm text-gray-500">
+                        No suggestions found
+                      </div>
+                    )}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="space-y-2">
