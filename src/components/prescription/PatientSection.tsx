@@ -51,14 +51,14 @@ const PatientSection = ({ form }: PatientSectionProps) => {
     }
     
     if (addressQuery && addressQuery.length > 2) {
-      // Set loading state but allow typing to continue
+      // Set loading state but don't block UI
       setIsLoadingAddresses(true);
       setIsPopoverOpen(true);
       
-      // Delay the search to prevent making API calls on every keystroke
+      // Use longer timeout to allow for more typing before searching
       searchTimeoutRef.current = setTimeout(() => {
         searchAddresses(addressQuery);
-      }, 800);
+      }, 1000);
     } else {
       setAddressSuggestions([]);
       if (!addressQuery) {
@@ -231,66 +231,70 @@ const PatientSection = ({ form }: PatientSectionProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Patient Address</FormLabel>
-            <Popover 
-              open={isPopoverOpen} 
-              onOpenChange={(open) => {
-                if (!open) setIsPopoverOpen(false);
-              }}
-            >
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Input 
-                    value={addressQuery}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      field.onChange(newValue);
-                      setAddressQuery(newValue);
-                    }}
-                    onFocus={() => {
-                      if (addressQuery && addressQuery.length > 2) {
-                        setIsPopoverOpen(true);
-                      }
-                    }}
-                    className="bg-accent/5" 
-                    placeholder="Start typing an address..."
-                  />
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 w-[300px]" align="start">
-                <Command>
-                  <CommandList>
-                    {isLoadingAddresses ? (
-                      <div className="flex items-center justify-center p-4">
-                        <div className="animate-spin h-4 w-4 rounded-full border-2 border-gray-900 border-opacity-25 border-t-gray-600"></div>
-                        <span className="ml-2 text-sm">Searching...</span>
-                      </div>
-                    ) : (
-                      <CommandGroup heading="Address suggestions">
-                        {addressSuggestions.length > 0 ? (
-                          addressSuggestions.map((address, index) => (
-                            <CommandItem
-                              key={index}
-                              onSelect={() => selectAddress(address)}
-                              className="cursor-pointer"
-                            >
-                              <div className="flex flex-col">
-                                <span>{address.formatted}</span>
-                              </div>
-                            </CommandItem>
-                          ))
-                        ) : (
-                          <div className="p-4 text-sm text-gray-500">
-                            {addressQuery.length >= 3 
-                              ? 'No suggestions found. Try adding more details.' 
-                              : 'Type at least 3 characters'}
+            <div className="relative">
+              <Input 
+                value={addressQuery}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  field.onChange(newValue);
+                  setAddressQuery(newValue);
+                }}
+                onFocus={() => {
+                  if (addressQuery && addressQuery.length > 2) {
+                    setIsPopoverOpen(true);
+                  }
+                }}
+                className="bg-accent/5 w-full" 
+                placeholder="Start typing an address..."
+              />
+              
+              {addressQuery.length > 2 && (
+                <Popover 
+                  open={isPopoverOpen} 
+                  onOpenChange={(open) => {
+                    if (!open) setIsPopoverOpen(false);
+                  }}
+                >
+                  <PopoverTrigger asChild>
+                    <div className="absolute inset-0 opacity-0 cursor-default" />
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-[300px]" align="start">
+                    <Command>
+                      <CommandList>
+                        {isLoadingAddresses ? (
+                          <div className="flex items-center justify-center p-4">
+                            <div className="animate-spin h-4 w-4 rounded-full border-2 border-gray-900 border-opacity-25 border-t-gray-600"></div>
+                            <span className="ml-2 text-sm">Searching...</span>
                           </div>
+                        ) : (
+                          <CommandGroup heading="Address suggestions">
+                            {addressSuggestions.length > 0 ? (
+                              addressSuggestions.map((address, index) => (
+                                <CommandItem
+                                  key={index}
+                                  onSelect={() => selectAddress(address)}
+                                  className="cursor-pointer"
+                                >
+                                  <div className="flex flex-col">
+                                    <span>{address.formatted}</span>
+                                  </div>
+                                </CommandItem>
+                              ))
+                            ) : (
+                              <div className="p-4 text-sm text-gray-500">
+                                {addressQuery.length >= 3 
+                                  ? 'No suggestions found. Try adding more details.' 
+                                  : 'Type at least 3 characters'}
+                              </div>
+                            )}
+                          </CommandGroup>
                         )}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
             <FormMessage />
           </FormItem>
         )}
