@@ -11,6 +11,7 @@ interface MapboxAutofillInputProps {
   placeholder?: string;
   required?: boolean;
   onAddressSelected?: (address: any) => void;
+  autoFocus?: boolean;
 }
 
 const MapboxAutofillInput = ({
@@ -19,7 +20,8 @@ const MapboxAutofillInput = ({
   className = "",
   placeholder = "Start typing your address...",
   required = false,
-  onAddressSelected
+  onAddressSelected,
+  autoFocus = true
 }: MapboxAutofillInputProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,33 +37,37 @@ const MapboxAutofillInput = ({
         
         if (!mounted || !inputRef.current || !formRef.current) return;
         
-        const setupAutofill = () => {
-          if (!mounted || !inputRef.current || !formRef.current) return;
-          
-          // Add required autocomplete attribute
-          inputRef.current.setAttribute('autocomplete', 'street-address');
-          
-          // Initialize autofill
-          const autofillInstance = initializeMapboxAutofill(
-            inputRef.current,
-            formRef.current
-          );
-          
-          if (autofillInstance && onAddressSelected) {
-            formRef.current.addEventListener('autofill', (event: any) => {
-              const feature = event.detail?.feature;
-              if (feature) {
-                onAddressSelected(feature);
-              }
-            });
+        // Add required autocomplete attribute
+        inputRef.current.setAttribute('autocomplete', 'street-address');
+        
+        // Initialize autofill with correct country and language settings
+        const autofillInstance = initializeMapboxAutofill(
+          inputRef.current,
+          formRef.current,
+          {
+            language: 'en',
+            country: 'lu',
+            minimap: true,
+            coordinates: true
           }
-          
-          autofillInstanceRef.current = autofillInstance;
-          setIsLoading(false);
-        };
+        );
+        
+        if (autofillInstance && onAddressSelected) {
+          formRef.current.addEventListener('autofill', (event: any) => {
+            const feature = event.detail?.feature;
+            if (feature) {
+              onAddressSelected(feature);
+            }
+          });
+        }
+        
+        autofillInstanceRef.current = autofillInstance;
+        setIsLoading(false);
 
-        // Wait for next render cycle to ensure DOM is ready
-        setTimeout(setupAutofill, 100);
+        // Focus the input if autoFocus is true
+        if (autoFocus && inputRef.current) {
+          inputRef.current.focus();
+        }
       } catch (error) {
         console.error("Error initializing Mapbox Autofill:", error);
         setIsLoading(false);
@@ -80,7 +86,7 @@ const MapboxAutofillInput = ({
         }
       }
     };
-  }, [formRef, onAddressSelected]);
+  }, [formRef, onAddressSelected, autoFocus]);
 
   return (
     <div className="relative">
@@ -92,6 +98,7 @@ const MapboxAutofillInput = ({
         placeholder={placeholder}
         required={required}
         disabled={isLoading}
+        autoFocus={autoFocus}
       />
       {isLoading && (
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">

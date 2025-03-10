@@ -28,7 +28,7 @@ export function loadMapboxSearchSDK() {
 
   sdkLoadPromise = new Promise<void>((resolve, reject) => {
     if (document.getElementById('mapbox-search-sdk')) {
-      // If script is already loaded, just initialize config
+      // If script is already loaded, initialize config and resolve
       if (window.MapboxSearchSDK) {
         window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
       }
@@ -42,7 +42,6 @@ export function loadMapboxSearchSDK() {
     script.async = true;
     script.onload = () => {
       console.log('Mapbox Search SDK loaded successfully');
-      // Initialize global config after script loads
       if (window.MapboxSearchSDK) {
         window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
       }
@@ -70,8 +69,6 @@ export function initializeMapboxAutofill(inputElement: HTMLInputElement, formEle
     const autofill = window.MapboxSearchSDK.autofill({
       accessToken: MAPBOX_ACCESS_TOKEN,
       options: {
-        country: 'lu',
-        language: 'en',
         ...options
       }
     });
