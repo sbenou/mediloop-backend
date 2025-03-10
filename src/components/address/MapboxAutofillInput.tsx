@@ -1,7 +1,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { loadMapboxSearchSDK } from "@/services/address-service";
 import { Loader2 } from "lucide-react";
 
 interface MapboxAutofillInputProps {
@@ -25,8 +24,8 @@ const MapboxAutofillInput = ({
 }: MapboxAutofillInputProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const autofillCollectionRef = useRef<any>(null);
-  
+  const autofillInstanceRef = useRef<any>(null);
+
   // Attach event listener for address selection
   useEffect(() => {
     if (!formRef.current || !onAddressSelected) return;
@@ -57,72 +56,112 @@ const MapboxAutofillInput = ({
     if (!inputRef.current || !formRef.current) return;
     
     let mounted = true;
+    let timeoutId: number;
     
     const initializeAutofill = async () => {
       try {
-        setIsLoading(true);
+        // Only show loading state if it takes more than a short delay
+        timeoutId = window.setTimeout(() => {
+          if (mounted) setIsLoading(true);
+        }, 100);
         
-        // Ensure input has the required attribute
+        // Ensure input has the required attribute for Mapbox autofill
         if (inputRef.current) {
           inputRef.current.setAttribute('autocomplete', 'street-address');
         }
         
-        // Load the Mapbox SDK
-        await loadMapboxSearchSDK();
-        
-        if (!mounted || !window.MapboxSearchSDK || !inputRef.current || !formRef.current) {
-          setIsLoading(false);
-          return;
+        // Check if Mapbox SDK is already loaded
+        if (!window.MapboxSearchSDK) {
+          await loadMapboxScript();
         }
         
-        // Initialize autofill using the documented approach
-        const collection = window.MapboxSearchSDK.autofill({
-          accessToken: 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA',
-          options: {
-            language: 'en',
-            country: 'lu',
-            minimap: true
+        if (!mounted) return;
+        
+        if (autofillInstanceRef.current) {
+          try {
+            autofillInstanceRef.current.remove();
+          } catch (e) {
+            console.error("Error removing previous autofill instance:", e);
           }
-        });
+        }
         
-        autofillCollectionRef.current = collection;
-        
-        // Force update to ensure input is recognized after DOM changes
-        if (collection && collection.update) {
-          setTimeout(() => {
-            if (mounted && collection.update) {
-              collection.update();
+        // Initialize autofill using the approach from the docs
+        if (window.MapboxSearchSDK) {
+          autofillInstanceRef.current = window.MapboxSearchSDK.autofill({
+            accessToken: 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA',
+            options: {
+              language: 'en',
+              country: 'lu',
+              minimap: true
             }
-          }, 100);
+          });
+          
+          console.log("Mapbox autofill initialized successfully");
         }
         
-        if (mounted) {
-          setIsLoading(false);
-          
-          // Focus input after initialization if autoFocus is true
-          if (autoFocus && inputRef.current) {
-            setTimeout(() => {
-              if (mounted && inputRef.current) {
-                inputRef.current.focus();
-              }
-            }, 50);
-          }
+        // Clear loading state
+        clearTimeout(timeoutId);
+        if (mounted) setIsLoading(false);
+        
+        // Focus the input after a short delay
+        if (autoFocus && inputRef.current) {
+          setTimeout(() => {
+            if (mounted && inputRef.current && !inputRef.current.disabled) {
+              inputRef.current.focus();
+            }
+          }, 50);
         }
       } catch (error) {
         console.error("Error initializing Mapbox Autofill:", error);
-        if (mounted) {
-          setIsLoading(false);
-        }
+        clearTimeout(timeoutId);
+        if (mounted) setIsLoading(false);
       }
     };
     
+    // Load Mapbox script
+    const loadMapboxScript = (): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        if (window.MapboxSearchSDK) {
+          return resolve();
+        }
+        
+        const script = document.getElementById('mapbox-search-sdk') as HTMLScriptElement;
+        if (script) {
+          script.onload = () => resolve();
+          script.onerror = (e) => reject(e);
+          return;
+        }
+        
+        const newScript = document.createElement('script');
+        newScript.id = 'mapbox-search-sdk';
+        newScript.src = 'https://api.mapbox.com/search-js/v1.0.0-beta.18/web.js';
+        newScript.async = true;
+        
+        newScript.onload = () => {
+          console.log("Mapbox script loaded successfully");
+          resolve();
+        };
+        
+        newScript.onerror = (e) => {
+          console.error("Failed to load Mapbox script:", e);
+          reject(e);
+        };
+        
+        document.head.appendChild(newScript);
+      });
+    };
+    
+    // Initialize immediately
     initializeAutofill();
     
     return () => {
       mounted = false;
-      if (autofillCollectionRef.current && autofillCollectionRef.current.remove) {
+      clearTimeout(timeoutId);
+      
+      if (autofillInstanceRef.current && autofillInstanceRef.current.remove) {
         try {
-          autofillCollectionRef.current.remove();
+          autofillInstanceRef.current.remove();
+          autofillInstanceRef.current = null;
         } catch (e) {
           console.error("Error removing autofill instance:", e);
         }
@@ -150,5 +189,12 @@ const MapboxAutofillInput = ({
     </div>
   );
 };
+
+// Add TypeScript interface for window to access Mapbox Search SDK
+declare global {
+  interface Window {
+    MapboxSearchSDK: any;
+  }
+}
 
 export default MapboxAutofillInput;

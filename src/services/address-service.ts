@@ -1,73 +1,38 @@
-
 // This service uses Mapbox Search SDK for address autofill and confirmation
 
-interface AddressResult {
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    formatted?: string;
-  };
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
-}
-
-// Mapbox public token - You should replace this with your own token
-// To get your own token, sign up at https://mapbox.com/
+// Mapbox public token for the app
 const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA';
-
-let sdkLoadPromise: Promise<void> | null = null;
-let sdkLoaded = false;
 
 // Load Mapbox Search SDK script
 export function loadMapboxSearchSDK() {
-  // Return immediately if SDK is already loaded
-  if (sdkLoaded && window.MapboxSearchSDK) {
-    console.log('Mapbox Search SDK already loaded');
-    return Promise.resolve();
-  }
-  
-  if (sdkLoadPromise) {
-    console.log('Mapbox Search SDK loading in progress, returning existing promise');
-    return sdkLoadPromise;
-  }
-
-  sdkLoadPromise = new Promise<void>((resolve, reject) => {
-    // Check if SDK is already loaded
+  return new Promise<void>((resolve, reject) => {
+    // Return immediately if SDK is already loaded
     if (window.MapboxSearchSDK) {
       console.log('Mapbox Search SDK already loaded');
-      window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
-      sdkLoaded = true;
-      resolve();
-      return;
+      return resolve();
     }
     
     // Check if script tag already exists
-    const existingScript = document.getElementById('mapbox-search-sdk');
+    const existingScript = document.getElementById('mapbox-search-sdk') as HTMLScriptElement;
+    
     if (existingScript) {
-      console.log('Mapbox Search SDK script tag exists, waiting for initialization');
-      
+      // If script exists but SDK is not yet initialized, wait for it
       const checkInterval = setInterval(() => {
         if (window.MapboxSearchSDK) {
           clearInterval(checkInterval);
-          window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
           console.log('Mapbox Search SDK initialized after waiting');
-          sdkLoaded = true;
           resolve();
         }
       }, 100);
       
+      // Add timeout to prevent infinite waiting
       setTimeout(() => {
         if (!window.MapboxSearchSDK) {
           clearInterval(checkInterval);
           console.error('Timed out waiting for Mapbox Search SDK to initialize');
-          sdkLoadPromise = null;
           reject(new Error('Timed out waiting for Mapbox Search SDK'));
         }
-      }, 10000);
+      }, 5000);
       
       return;
     }
@@ -80,23 +45,22 @@ export function loadMapboxSearchSDK() {
     script.async = true;
     
     script.onload = () => {
-      console.log('Mapbox Search SDK script loaded, waiting for initialization');
+      console.log('Mapbox Search SDK script loaded');
       
+      // Check for SDK initialization
       const waitForSDK = setInterval(() => {
         if (window.MapboxSearchSDK) {
           clearInterval(waitForSDK);
-          window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
           console.log('Mapbox Search SDK initialized');
-          sdkLoaded = true;
           resolve();
         }
       }, 100);
       
+      // Add timeout to prevent infinite waiting
       setTimeout(() => {
         if (!window.MapboxSearchSDK) {
           clearInterval(waitForSDK);
           console.error('Timed out waiting for Mapbox Search SDK to initialize');
-          sdkLoadPromise = null;
           reject(new Error('Timed out waiting for Mapbox Search SDK'));
         }
       }, 5000);
@@ -104,52 +68,11 @@ export function loadMapboxSearchSDK() {
     
     script.onerror = (error) => {
       console.error('Failed to load Mapbox Search SDK:', error);
-      sdkLoadPromise = null;
       reject(error);
     };
     
     document.head.appendChild(script);
   });
-
-  return sdkLoadPromise;
-}
-
-// Initialize Mapbox Search Autofill (kept for backwards compatibility)
-export function initializeMapboxAutofill(inputElement: HTMLInputElement, formElement: HTMLFormElement, options = {}) {
-  if (typeof window.MapboxSearchSDK === 'undefined') {
-    console.error('Mapbox Search SDK is not loaded yet');
-    return null;
-  }
-  
-  try {
-    // Ensure the input element has the required attributes
-    inputElement.setAttribute('autocomplete', 'street-address');
-    
-    // Create the autofill instance using the documented approach
-    const collection = window.MapboxSearchSDK.autofill({
-      accessToken: MAPBOX_ACCESS_TOKEN,
-      options: {
-        ...options
-      }
-    });
-    
-    if (collection) {
-      console.log('Mapbox Autofill initialized successfully');
-      // Force an update to ensure proper initialization
-      setTimeout(() => {
-        if (collection.update) {
-          collection.update();
-        }
-      }, 100);
-    } else {
-      console.warn('Mapbox Autofill initialization returned null');
-    }
-    
-    return collection;
-  } catch (error) {
-    console.error('Error initializing Mapbox Autofill:', error);
-    return null;
-  }
 }
 
 // Confirm address before submission
@@ -160,6 +83,7 @@ export async function confirmMapboxAddress(formElement: HTMLFormElement, minimap
   }
   
   try {
+    console.log('Confirming address with Mapbox...');
     return await window.MapboxSearchSDK.confirmAddress(formElement, {
       accessToken: MAPBOX_ACCESS_TOKEN,
       minimap,
@@ -195,7 +119,21 @@ export function createMapboxMinimap(feature: any) {
   }
 }
 
-// Legacy functions kept for backward compatibility
+interface AddressResult {
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    formatted?: string;
+  };
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+}
+
+// Legacy functions kept for backward compatibility - these won't be modified
 export async function fetchAddressFromPostcode(postcode: string): Promise<AddressResult> {
   try {
     if (!postcode || postcode.length < 3) {
