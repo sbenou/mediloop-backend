@@ -65,7 +65,7 @@ const AddressSearchDialog = ({
     try {
       console.log('Executing address search for:', query);
       const results = await searchAddressesByQuery(query);
-      console.log('Address suggestions received:', results.length);
+      console.log('Address suggestions received:', results);
       setSuggestions(results);
     } catch (error) {
       console.error("Error searching addresses:", error);

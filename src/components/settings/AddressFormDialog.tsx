@@ -41,10 +41,12 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const streetInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset form when dialog opens/closes
+  // Reset form and focus on street input when dialog opens
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      // Reset form
       setNewAddress({
         street: "",
         city: "",
@@ -55,6 +57,13 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
       });
       setSuggestions([]);
       setShowSuggestions(false);
+      
+      // Focus on street input with a small delay to ensure the dialog is fully rendered
+      setTimeout(() => {
+        if (streetInputRef.current) {
+          streetInputRef.current.focus();
+        }
+      }, 50);
     }
   }, [open]);
 
@@ -77,13 +86,18 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
     } else {
       setSuggestions([]);
       setIsSearching(false);
+      if (query.length === 0) {
+        setShowSuggestions(false);
+      }
     }
   };
 
   // Search for addresses
   const searchAddresses = async (query: string) => {
     try {
+      console.log('Executing address search for:', query);
       const results = await searchAddressesByQuery(query);
+      console.log('Address suggestions received:', results);
       setSuggestions(results);
     } catch (error) {
       console.error("Error searching addresses:", error);
@@ -96,19 +110,14 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
   // Handle address suggestion selection
   const handleAddressSelect = (address: any) => {
     // Parse the formatted address into components
-    const addressParts = address.formatted.split(', ');
-    
-    let street = addressParts[0] || '';
-    let city = address.city || '';
-    let postalCode = address.postal_code || '';
-    let country = address.country || '';
+    console.log('Selected address:', address);
     
     setNewAddress({
       ...newAddress,
-      street,
-      city,
-      postal_code: postalCode,
-      country
+      street: address.street || '',
+      city: address.city || '',
+      postal_code: address.postal_code || '',
+      country: address.country || ''
     });
     
     setShowSuggestions(false);
@@ -143,6 +152,24 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
     addAddressMutation.mutate(newAddress);
   };
 
+  // Handle clicking outside to close suggestions
+  const handleDocumentClick = (e: MouseEvent) => {
+    if (showSuggestions && streetInputRef.current && !streetInputRef.current.contains(e.target as Node)) {
+      setShowSuggestions(false);
+    }
+  };
+
+  // Add and remove document click listener
+  useEffect(() => {
+    if (showSuggestions) {
+      document.addEventListener('click', handleDocumentClick);
+    }
+    
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [showSuggestions]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -156,6 +183,7 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
             <div className="relative">
               <Input
                 id="street"
+                ref={streetInputRef}
                 value={newAddress.street}
                 onChange={handleStreetChange}
                 placeholder="Start typing your street address"
