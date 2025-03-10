@@ -33,7 +33,6 @@ const PatientSection = ({ form }: PatientSectionProps) => {
   const [countrySelectOpen, setCountrySelectOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Add a new ref for the input element
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -53,17 +52,16 @@ const PatientSection = ({ form }: PatientSectionProps) => {
     }
     
     if (addressQuery && addressQuery.length > 2) {
-      // Set loading state but don't block UI
+      // Set loading state without interfering with typing
       setIsLoadingAddresses(true);
-      setIsPopoverOpen(true);
       
-      // Use timeout for search but allow typing to continue
+      // Maintain focus on input while searching
       searchTimeoutRef.current = setTimeout(() => {
         searchAddresses(addressQuery);
-      }, 500); // Reduced to make it more responsive but still prevent too many API calls
+      }, 500);
     } else {
       setAddressSuggestions([]);
-      if (!addressQuery) {
+      if (addressQuery.length <= 2) {
         setIsPopoverOpen(false);
       }
       setIsLoadingAddresses(false);
@@ -82,6 +80,7 @@ const PatientSection = ({ form }: PatientSectionProps) => {
       const suggestions = await searchAddressesByQuery(query);
       console.log('Address suggestions received:', suggestions.length);
       setAddressSuggestions(suggestions);
+      setIsPopoverOpen(suggestions.length > 0);
     } catch (error) {
       console.error("Error searching addresses:", error);
     } finally {
@@ -93,6 +92,10 @@ const PatientSection = ({ form }: PatientSectionProps) => {
     form.setValue('patientAddress', address.formatted);
     setAddressQuery(address.formatted);
     setIsPopoverOpen(false);
+    // Return focus to input after selection
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
   };
 
   const CountrySelectButton = ({ 
@@ -233,51 +236,51 @@ const PatientSection = ({ form }: PatientSectionProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Patient Address</FormLabel>
-            <div className="relative">
-              <Input 
-                ref={inputRef}
-                value={addressQuery}
-                onChange={(e) => {
-                  const newValue = e.target.value;
-                  field.onChange(newValue);
-                  setAddressQuery(newValue);
-                }}
-                onFocus={() => {
-                  if (addressQuery && addressQuery.length > 2) {
-                    setIsPopoverOpen(true);
-                  }
-                }}
-                className="bg-accent/5 w-full" 
-                placeholder="Start typing an address..."
-              />
-              
-              {/* Fixed popover that doesn't interfere with typing */}
-              {addressQuery.length > 2 && (
-                <div className="relative">
+            <FormControl>
+              <div className="relative">
+                <Input 
+                  ref={inputRef}
+                  value={addressQuery}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    field.onChange(newValue);
+                    setAddressQuery(newValue);
+                  }}
+                  onFocus={() => {
+                    if (addressQuery && addressQuery.length > 2 && addressSuggestions.length > 0) {
+                      setIsPopoverOpen(true);
+                    }
+                  }}
+                  className="bg-accent/5 w-full" 
+                  placeholder="Start typing an address..."
+                />
+                
+                {addressQuery.length > 2 && (
                   <Popover 
                     open={isPopoverOpen} 
-                    onOpenChange={(open) => {
-                      // Allow control of the popover without interrupting input
-                      if (!open) setIsPopoverOpen(false);
-                    }}
+                    onOpenChange={setIsPopoverOpen}
                   >
-                    {/* Using a non-interactive trigger that doesn't trap focus */}
                     <PopoverTrigger asChild>
-                      <div className="absolute inset-0 top-[-38px] w-full h-10 opacity-0 pointer-events-none" />
+                      <div className="absolute top-0 left-0 w-full h-0 opacity-0 pointer-events-none">
+                        {/* Invisible trigger */}
+                      </div>
                     </PopoverTrigger>
                     <PopoverContent 
-                      className="p-0 w-[300px]" 
-                      align="start" 
-                      alignOffset={-5}
-                      onPointerDownOutside={(e) => {
-                        // Prevent closing when clicking inside the input
+                      className="p-0 w-[98%] max-w-none" 
+                      align="start"
+                      side="bottom"
+                      alignOffset={8}
+                      sideOffset={2}
+                      avoidCollisions={false}
+                      forceMount
+                      onInteractOutside={(e) => {
+                        // Don't close when interacting with the input
                         if (inputRef.current?.contains(e.target as Node)) {
                           e.preventDefault();
                         }
                       }}
-                      forceMount
                     >
-                      <Command>
+                      <Command className="w-full">
                         <CommandList>
                           {isLoadingAddresses ? (
                             <div className="flex items-center justify-center p-4">
@@ -311,9 +314,9 @@ const PatientSection = ({ form }: PatientSectionProps) => {
                       </Command>
                     </PopoverContent>
                   </Popover>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}

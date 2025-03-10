@@ -101,8 +101,8 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
 
     console.log('Starting Mapbox search for:', query);
     
-    // Use Mapbox Geocoding API with the places endpoint
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address&limit=5`;
+    // Use a more permissive search with multiple types to get better results
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,place,locality,neighborhood,poi&limit=5`;
     
     console.log('Searching addresses with Mapbox API query:', query);
     const response = await fetch(url);
