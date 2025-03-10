@@ -35,17 +35,17 @@ export async function fetchAddressFromPostcode(postcode: string): Promise<Addres
       return {};
     }
 
-    console.log('Fetching address from postcode:', postcode);
+    console.log('Fetching address from postcode with Mapbox API:', postcode);
     
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(postcode)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=postcode&limit=1`;
     
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Mapbox API error: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
-    console.log('Address API response:', data);
+    console.log('Mapbox address API response:', data);
     
     if (data.features && data.features.length > 0) {
       const result = data.features[0];
@@ -86,7 +86,7 @@ export async function fetchAddressFromPostcode(postcode: string): Promise<Addres
     
     return {};
   } catch (error) {
-    console.error('Error fetching address:', error);
+    console.error('Error fetching address from Mapbox:', error);
     return {};
   }
 }
@@ -99,20 +99,20 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
       return [];
     }
 
-    console.log('Starting search for:', query);
+    console.log('Starting Mapbox search for:', query);
     
     // Use Mapbox Geocoding API with the places endpoint
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address&limit=5`;
     
-    console.log('Searching addresses with query:', query);
+    console.log('Searching addresses with Mapbox API query:', query);
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Mapbox API error: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
-    console.log('Address search API response:', data);
+    console.log('Mapbox address search API response:', data);
     
     if (data.features && data.features.length > 0) {
       // Map the Mapbox results to our AddressSuggestion format
@@ -158,10 +158,10 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
       });
     }
     
-    console.log('No address results found');
+    console.log('No address results found from Mapbox');
     return [];
   } catch (error) {
-    console.error('Error searching addresses:', error);
+    console.error('Error searching addresses with Mapbox:', error);
     return [];
   }
 }

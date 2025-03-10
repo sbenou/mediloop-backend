@@ -16,6 +16,7 @@ import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import flags from 'react-phone-number-input/flags';
 import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown } from "lucide-react";
 
 interface PatientSectionProps {
   form: UseFormReturn<any>;
@@ -28,6 +29,8 @@ const PatientSection = ({ form }: PatientSectionProps) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [phoneValue, setPhoneValue] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(true);
+  const [countrySelectOpen, setCountrySelectOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check phone validity on change
@@ -90,6 +93,30 @@ const PatientSection = ({ form }: PatientSectionProps) => {
     setIsPopoverOpen(false);
   };
 
+  // Custom component for the country selector button to match other UI elements
+  const CountrySelectButton = ({ 
+    country, 
+    countries, 
+    flags, 
+    onClick 
+  }: any) => {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex h-10 w-auto items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        {country && (
+          <span className="flex items-center">
+            {flags[country] && <span className="mr-2">{flags[country]()}</span>}
+            <span>+{countries[country][0]}</span>
+          </span>
+        )}
+        <ChevronsUpDown className="h-4 w-4 ml-2 opacity-50 shrink-0" />
+      </button>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-primary">Patient Details</h3>
@@ -118,26 +145,75 @@ const PatientSection = ({ form }: PatientSectionProps) => {
                 "flex rounded-md border border-input bg-accent/5 ring-offset-background focus-within:ring-1 focus-within:ring-primary",
                 !isPhoneValid && phoneValue && "border-destructive focus-within:ring-destructive"
               )}>
-                <PhoneInput
-                  flags={flags}
-                  international
-                  countryCallingCodeEditable={false}
-                  defaultCountry="LU"
-                  value={phoneValue}
-                  onChange={(value) => {
-                    setPhoneValue(value || '');
-                  }}
-                  className="flex h-10 w-full rounded-md bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                  countrySelectProps={{
-                    unicodeFlags: true,
-                    dropdownClass: "bg-popover text-popover-foreground shadow-md rounded-md border border-input overflow-hidden py-1.5",
-                    buttonClass: "border-0 bg-transparent",
-                    arrowClass: "opacity-50 w-3 h-3",
-                    searchable: true, // Enable search
-                    searchClass: "py-3 px-3 border-b mb-1",
-                    searchPlaceholder: "Search for a country...",
-                  }}
-                />
+                <Popover open={countrySelectOpen} onOpenChange={setCountrySelectOpen}>
+                  <PopoverTrigger asChild>
+                    <div className="flex items-center">
+                      <PhoneInput
+                        flags={flags}
+                        international
+                        countryCallingCodeEditable={false}
+                        defaultCountry="LU"
+                        value={phoneValue}
+                        onChange={(value) => {
+                          setPhoneValue(value || '');
+                        }}
+                        className="flex h-10 w-full rounded-md bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        countrySelectComponent={CountrySelectButton}
+                        countrySelectProps={{
+                          unicodeFlags: true,
+                          dropdownClass: "bg-popover text-popover-foreground shadow-md rounded-md border border-input overflow-hidden py-1.5",
+                          buttonClass: "border-0 bg-transparent",
+                          arrowClass: "opacity-50 w-3 h-3",
+                          searchable: false, // We'll implement our own search
+                        }}
+                      />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[250px] p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search country..."
+                        value={countrySearch}
+                        onValueChange={setCountrySearch}
+                        className="h-9"
+                      />
+                      <CommandList>
+                        <CommandGroup>
+                          {Object.entries(flags)
+                            .filter(([code]) => {
+                              if (!countrySearch) return true;
+                              const country = new Intl.DisplayNames(['en'], { type: 'region' }).of(code.toUpperCase());
+                              return country?.toLowerCase().includes(countrySearch.toLowerCase());
+                            })
+                            .map(([code, Flag]) => (
+                              <CommandItem
+                                key={code}
+                                onSelect={() => {
+                                  // This will set the country in PhoneInput
+                                  const inputEl = document.querySelector('input[type="tel"]') as HTMLInputElement;
+                                  if (inputEl) {
+                                    // Create and dispatch a custom event to set the country
+                                    const newValue = phoneValue ? phoneValue.replace(/^\+\d+/, '') : '';
+                                    setPhoneValue(`+${PhoneInput.getCountryCallingCode(code as any)}${newValue}`);
+                                  }
+                                  setCountrySelectOpen(false);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 cursor-pointer"
+                              >
+                                <span className="flex-shrink-0">{Flag && <Flag />}</span>
+                                <span className="ml-2">
+                                  {new Intl.DisplayNames(['en'], { type: 'region' }).of(code.toUpperCase())}
+                                </span>
+                                <span className="ml-auto text-sm text-muted-foreground">
+                                  +{PhoneInput.getCountryCallingCode(code as any)}
+                                </span>
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               {!isPhoneValid && phoneValue && (
                 <p className="text-sm font-medium text-destructive mt-1">Please enter a valid phone number for the selected country</p>
