@@ -1,5 +1,4 @@
-// This service uses Mapbox Geocoding API for fetching address information
-// It provides better search functionality and more reliable results
+// This service uses Mapbox Search SDK for address autofill and confirmation
 
 interface AddressResult {
   address?: {
@@ -13,14 +12,6 @@ interface AddressResult {
     lat: number;
     lng: number;
   };
-}
-
-interface AddressSuggestion {
-  street: string;
-  city: string;
-  postal_code: string;
-  country: string;
-  formatted: string;
 }
 
 // Mapbox public token - You should replace this with your own token
@@ -116,6 +107,7 @@ export function createMapboxMinimap(feature: any) {
   }
 }
 
+// Legacy functions kept for backward compatibility
 export async function fetchAddressFromPostcode(postcode: string): Promise<AddressResult> {
   try {
     if (!postcode || postcode.length < 3) {
@@ -179,7 +171,7 @@ export async function fetchAddressFromPostcode(postcode: string): Promise<Addres
   }
 }
 
-export async function searchAddressesByQuery(query: string): Promise<AddressSuggestion[]> {
+export async function searchAddressesByQuery(query: string): Promise<any[]> {
   try {
     // Only search when we have a meaningful query
     if (!query || query.length < 3) {
