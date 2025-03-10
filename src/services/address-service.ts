@@ -102,9 +102,11 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
     console.log('Starting Mapbox search for:', query);
     
     // Use a broader search with more types and enable autocomplete
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,postcode,place,locality,neighborhood,poi,district,region&limit=5&autocomplete=true`;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address&limit=5&autocomplete=true`;
     
     console.log('Searching addresses with Mapbox API query:', query);
+    console.log('Request URL:', url);
+    
     const response = await fetch(url);
     
     if (!response.ok) {

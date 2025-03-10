@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -41,6 +40,7 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -55,6 +55,16 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
       });
       setSuggestions([]);
       setShowSuggestions(false);
+    }
+  }, [open]);
+
+  // Handle focus on the street input field
+  useEffect(() => {
+    if (open && inputRef.current) {
+      // Slight delay to ensure dialog is fully rendered
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   }, [open]);
 
@@ -77,38 +87,64 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
     } else {
       setSuggestions([]);
       setIsSearching(false);
+      setShowSuggestions(false);
+    }
+  };
+
+  // Handle input focus
+  const handleInputFocus = () => {
+    if (newAddress.street.length >= 3) {
+      setShowSuggestions(true);
+      if (suggestions.length === 0 && !isSearching) {
+        searchAddresses(newAddress.street);
+      }
     }
   };
 
   // Search for addresses
   const searchAddresses = async (query: string) => {
     try {
+      console.log('Executing address search for query:', query);
+      setIsSearching(true);
+      
       const results = await searchAddressesByQuery(query);
+      console.log('Address suggestions received:', results);
       setSuggestions(results);
+      setIsSearching(false);
+      
+      // Keep showing suggestions only if we have results or are still searching
+      setShowSuggestions(results.length > 0 || isSearching);
     } catch (error) {
       console.error("Error searching addresses:", error);
       setSuggestions([]);
-    } finally {
       setIsSearching(false);
+      setShowSuggestions(false);
     }
   };
+
+  // Handle clicking outside the suggestions dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Handle address suggestion selection
   const handleAddressSelect = (address: any) => {
     // Parse the formatted address into components
-    const addressParts = address.formatted.split(', ');
-    
-    let street = addressParts[0] || '';
-    let city = address.city || '';
-    let postalCode = address.postal_code || '';
-    let country = address.country || '';
-    
     setNewAddress({
       ...newAddress,
-      street,
-      city,
-      postal_code: postalCode,
-      country
+      street: address.street || '',
+      city: address.city || '',
+      postal_code: address.postal_code || '',
+      country: address.country || ''
     });
     
     setShowSuggestions(false);
@@ -156,8 +192,10 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
             <div className="relative">
               <Input
                 id="street"
+                ref={inputRef}
                 value={newAddress.street}
                 onChange={handleStreetChange}
+                onFocus={handleInputFocus}
                 placeholder="Start typing your street address"
                 className="pr-10"
                 required
