@@ -40,7 +40,8 @@ const MapboxAutofillInput = ({
         // Add required autocomplete attribute
         inputRef.current.setAttribute('autocomplete', 'street-address');
         
-        // Initialize autofill with correct country and language settings
+        // Initialize autofill with proper settings - using Luxembourg country code
+        // and English language to ensure proper functionality
         const autofillInstance = initializeMapboxAutofill(
           inputRef.current,
           formRef.current,
@@ -53,6 +54,7 @@ const MapboxAutofillInput = ({
         );
         
         if (autofillInstance && onAddressSelected) {
+          // Add event listener for address selection
           formRef.current.addEventListener('autofill', (event: any) => {
             const feature = event.detail?.feature;
             if (feature) {
@@ -64,9 +66,14 @@ const MapboxAutofillInput = ({
         autofillInstanceRef.current = autofillInstance;
         setIsLoading(false);
 
-        // Focus the input if autoFocus is true
+        // Focus the input after initialization if autoFocus is true
         if (autoFocus && inputRef.current) {
-          inputRef.current.focus();
+          // Use setTimeout to ensure focus happens after render
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+            }
+          }, 100);
         }
       } catch (error) {
         console.error("Error initializing Mapbox Autofill:", error);

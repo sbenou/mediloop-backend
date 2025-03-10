@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -36,7 +37,23 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
   const [minimapFeature, setMinimapFeature] = useState<any>(null);
   const [isAddressConfirmed, setIsAddressConfirmed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isMapboxLoaded, setIsMapboxLoaded] = useState(false);
 
+  // Preload Mapbox SDK when dialog opens
+  useEffect(() => {
+    if (open && !isMapboxLoaded) {
+      loadMapboxSearchSDK()
+        .then(() => {
+          console.log("Mapbox SDK loaded successfully for AddressFormDialog");
+          setIsMapboxLoaded(true);
+        })
+        .catch(error => {
+          console.error("Failed to load Mapbox SDK for AddressFormDialog:", error);
+        });
+    }
+  }, [open, isMapboxLoaded]);
+
+  // Reset form when dialog opens/closes
   useEffect(() => {
     if (!open) {
       setNewAddress({
@@ -50,12 +67,7 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
       setShowMinimap(false);
       setMinimapFeature(null);
       setIsAddressConfirmed(false);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (open) {
-      loadMapboxSearchSDK().catch(console.error);
+      setIsProcessing(false);
     }
   }, [open]);
 
@@ -195,6 +207,7 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
                 required
                 className="pr-10"
                 onAddressSelected={handleAddressSelected}
+                autoFocus={true}
               />
               <Button
                 type="button"
