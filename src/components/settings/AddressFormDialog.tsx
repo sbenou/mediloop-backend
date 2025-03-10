@@ -6,13 +6,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { AddressType } from "./types";
 import { MapPin, Loader2 } from "lucide-react";
-import { confirmMapboxAddress, loadMapboxSearchSDK } from "@/services/address-service";
-import MapboxAutofillInput from "../address/MapboxAutofillInput";
-import MapboxMinimap from "../address/MapboxMinimap";
+import { Command, CommandList, CommandItem, CommandGroup } from "@/components/ui/command";
+import { searchAddressesByQuery } from "@/services/address-service";
 
 interface AddressFormDialogProps {
   userId: string;
@@ -23,7 +28,6 @@ interface AddressFormDialogProps {
 
 const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: AddressFormDialogProps) => {
   const queryClient = useQueryClient();
-  const formRef = useRef<HTMLFormElement>(null);
   const [newAddress, setNewAddress] = useState({
     street: "",
     city: "",
@@ -33,18 +37,10 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
     is_default: false
   });
   
-  const [showMinimap, setShowMinimap] = useState(false);
-  const [minimapFeature, setMinimapFeature] = useState<any>(null);
-  const [isAddressConfirmed, setIsAddressConfirmed] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  // Load Mapbox SDK as soon as the component mounts, before dialog opens
-  useEffect(() => {
-    // Load Mapbox SDK eagerly - this will help with quick initialization
-    loadMapboxSearchSDK()
-      .then(() => console.log("Mapbox SDK loaded successfully for AddressFormDialog"))
-      .catch(error => console.error("Failed to load Mapbox SDK for AddressFormDialog:", error));
-  }, []);  
+  const [isSearching, setIsSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -57,12 +53,66 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
         type: "secondary",
         is_default: false
       });
-      setShowMinimap(false);
-      setMinimapFeature(null);
-      setIsAddressConfirmed(false);
-      setIsProcessing(false);
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
   }, [open]);
+
+  // Handle street address input changes with debounce
+  const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setNewAddress({ ...newAddress, street: query });
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    if (query && query.length >= 3) {
+      setIsSearching(true);
+      setShowSuggestions(true);
+      
+      searchTimeoutRef.current = setTimeout(() => {
+        searchAddresses(query);
+      }, 300); // 300ms debounce time
+    } else {
+      setSuggestions([]);
+      setIsSearching(false);
+    }
+  };
+
+  // Search for addresses
+  const searchAddresses = async (query: string) => {
+    try {
+      const results = await searchAddressesByQuery(query);
+      setSuggestions(results);
+    } catch (error) {
+      console.error("Error searching addresses:", error);
+      setSuggestions([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle address suggestion selection
+  const handleAddressSelect = (address: any) => {
+    // Parse the formatted address into components
+    const addressParts = address.formatted.split(', ');
+    
+    let street = addressParts[0] || '';
+    let city = address.city || '';
+    let postalCode = address.postal_code || '';
+    let country = address.country || '';
+    
+    setNewAddress({
+      ...newAddress,
+      street,
+      city,
+      postal_code: postalCode,
+      country
+    });
+    
+    setShowSuggestions(false);
+  };
 
   const addAddressMutation = useMutation({
     mutationFn: async (address: typeof newAddress) => {
@@ -88,99 +138,9 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
     },
   });
 
-  const handleAddressSelected = (feature: any) => {
-    console.log("Address selected:", feature);
-    
-    setMinimapFeature(feature);
-    setShowMinimap(true);
-    
-    const properties = feature.properties || {};
-    const address = properties.address || {};
-    
-    if (formRef.current) {
-      setNewAddress(prev => ({
-        ...prev,
-        street: address.street || address.name || '',
-        city: address.place || address.locality || '',
-        postal_code: address.postcode || '',
-        country: address.country || ''
-      }));
-    }
-  };
-
-  const handleLocationChange = (feature: any) => {
-    console.log("Location changed on map:", feature);
-    setMinimapFeature(feature);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formRef.current) return;
-    
-    setIsProcessing(true);
-    
-    if (isAddressConfirmed) {
-      submitAddressToDatabase();
-      return;
-    }
-    
-    try {
-      const result = await confirmMapboxAddress(formRef.current, true);
-      console.log("Address confirmation result:", result);
-      
-      if (result.type === 'accepted') {
-        toast({
-          title: "Address Confirmed",
-          description: "Using the suggested address."
-        });
-        setIsAddressConfirmed(true);
-        
-        const formData = new FormData(formRef.current);
-        setNewAddress(prev => ({
-          ...prev,
-          street: formData.get('street-address')?.toString() || prev.street,
-          city: formData.get('address-level2')?.toString() || prev.city,
-          postal_code: formData.get('postal-code')?.toString() || prev.postal_code,
-          country: formData.get('country')?.toString() || prev.country,
-        }));
-        
-        submitAddressToDatabase();
-      } else if (result.type === 'rejected') {
-        toast({
-          title: "Using Original Address",
-          description: "Continuing with the address you entered."
-        });
-        setIsAddressConfirmed(true);
-        submitAddressToDatabase();
-      } else {
-        setIsAddressConfirmed(true);
-        submitAddressToDatabase();
-      }
-    } catch (error) {
-      console.error("Error confirming address:", error);
-      submitAddressToDatabase();
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const submitAddressToDatabase = () => {
-    if (formRef.current) {
-      const formData = new FormData(formRef.current);
-      const finalAddress = {
-        street: formData.get('street-address')?.toString() || newAddress.street,
-        city: formData.get('address-level2')?.toString() || newAddress.city,
-        postal_code: formData.get('postal-code')?.toString() || newAddress.postal_code,
-        country: formData.get('country')?.toString() || newAddress.country,
-        type: newAddress.type,
-        is_default: newAddress.is_default
-      };
-      
-      addAddressMutation.mutate(finalAddress);
-    } else {
-      addAddressMutation.mutate(newAddress);
-    }
+    addAddressMutation.mutate(newAddress);
   };
 
   return (
@@ -190,17 +150,17 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
           <DialogTitle>Add New Address</DialogTitle>
         </DialogHeader>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="street-address">Street Address</Label>
+            <Label htmlFor="street">Street Address</Label>
             <div className="relative">
-              <MapboxAutofillInput
-                formRef={formRef}
-                placeholder="Start typing your address..."
-                required
+              <Input
+                id="street"
+                value={newAddress.street}
+                onChange={handleStreetChange}
+                placeholder="Start typing your street address"
                 className="pr-10"
-                onAddressSelected={handleAddressSelected}
-                autoFocus={true}
+                required
               />
               <Button
                 type="button"
@@ -211,42 +171,68 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
               >
                 <MapPin className="h-4 w-4" />
               </Button>
+              
+              {showSuggestions && (
+                <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                  {isSearching ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span>Searching addresses...</span>
+                    </div>
+                  ) : (
+                    <Command className="w-full">
+                      <CommandList>
+                        <CommandGroup>
+                          {suggestions.length > 0 ? (
+                            suggestions.map((address, index) => (
+                              <CommandItem
+                                key={index}
+                                onSelect={() => handleAddressSelect(address)}
+                                className="cursor-pointer"
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{address.street}</span>
+                                  <span className="text-xs text-gray-500">
+                                    {[address.city, address.postal_code, address.country]
+                                      .filter(Boolean)
+                                      .join(', ')}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            ))
+                          ) : (
+                            <div className="p-4 text-sm text-gray-500 text-center">
+                              {newAddress.street.length >= 3 
+                                ? 'No suggestions found. Try adding more details.' 
+                                : 'Type at least 3 characters to search'}
+                            </div>
+                          )}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {showMinimap && minimapFeature && (
-            <div className="space-y-2">
-              <Label>Confirm Location</Label>
-              <MapboxMinimap 
-                feature={minimapFeature} 
-                height="200px"
-                onLocationChange={handleLocationChange}
-              />
-              <p className="text-xs text-muted-foreground">
-                Drag the pin to adjust the exact location if needed.
-              </p>
-            </div>
-          )}
-
           <div className="space-y-2">
-            <Label htmlFor="address-level2">City</Label>
+            <Label htmlFor="city">City</Label>
             <Input
-              id="address-level2"
-              name="address-level2"
+              id="city"
               value={newAddress.city}
               onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-              autoComplete="address-level2"
+              required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="postal-code">Postal Code</Label>
+            <Label htmlFor="postal_code">Postal Code</Label>
             <Input
-              id="postal-code"
-              name="postal-code"
+              id="postal_code"
               value={newAddress.postal_code}
               onChange={(e) => setNewAddress({ ...newAddress, postal_code: e.target.value })}
-              autoComplete="postal-code"
+              required
             />
           </div>
 
@@ -254,10 +240,9 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
             <Label htmlFor="country">Country</Label>
             <Input
               id="country"
-              name="country"
               value={newAddress.country}
               onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })}
-              autoComplete="country"
+              required
             />
           </div>
 
@@ -279,20 +264,11 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
           </div>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isProcessing}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isProcessing || addAddressMutation.isPending}>
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : addAddressMutation.isPending ? (
-                "Adding..."
-              ) : (
-                "Add Address"
-              )}
+            <Button type="submit" disabled={addAddressMutation.isPending}>
+              {addAddressMutation.isPending ? "Adding..." : "Add Address"}
             </Button>
           </DialogFooter>
         </form>

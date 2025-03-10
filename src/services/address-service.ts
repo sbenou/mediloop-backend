@@ -1,123 +1,6 @@
-// This service uses Mapbox Search SDK for address autofill and confirmation
 
-// Mapbox public token for the app
-const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA';
-
-// Load Mapbox Search SDK script
-export function loadMapboxSearchSDK() {
-  return new Promise<void>((resolve, reject) => {
-    // Return immediately if SDK is already loaded
-    if (window.MapboxSearchSDK) {
-      console.log('Mapbox Search SDK already loaded');
-      return resolve();
-    }
-    
-    // Check if script tag already exists
-    const existingScript = document.getElementById('mapbox-search-sdk') as HTMLScriptElement;
-    
-    if (existingScript) {
-      // If script exists but SDK is not yet initialized, wait for it
-      const checkInterval = setInterval(() => {
-        if (window.MapboxSearchSDK) {
-          clearInterval(checkInterval);
-          console.log('Mapbox Search SDK initialized after waiting');
-          resolve();
-        }
-      }, 100);
-      
-      // Add timeout to prevent infinite waiting
-      setTimeout(() => {
-        if (!window.MapboxSearchSDK) {
-          clearInterval(checkInterval);
-          console.error('Timed out waiting for Mapbox Search SDK to initialize');
-          reject(new Error('Timed out waiting for Mapbox Search SDK'));
-        }
-      }, 5000);
-      
-      return;
-    }
-    
-    // Create and load the script
-    console.log('Creating Mapbox Search SDK script tag');
-    const script = document.createElement('script');
-    script.id = 'mapbox-search-sdk';
-    script.src = 'https://api.mapbox.com/search-js/v1.0.0-beta.18/web.js';
-    script.async = true;
-    
-    script.onload = () => {
-      console.log('Mapbox Search SDK script loaded');
-      
-      // Check for SDK initialization
-      const waitForSDK = setInterval(() => {
-        if (window.MapboxSearchSDK) {
-          clearInterval(waitForSDK);
-          console.log('Mapbox Search SDK initialized');
-          resolve();
-        }
-      }, 100);
-      
-      // Add timeout to prevent infinite waiting
-      setTimeout(() => {
-        if (!window.MapboxSearchSDK) {
-          clearInterval(waitForSDK);
-          console.error('Timed out waiting for Mapbox Search SDK to initialize');
-          reject(new Error('Timed out waiting for Mapbox Search SDK'));
-        }
-      }, 5000);
-    };
-    
-    script.onerror = (error) => {
-      console.error('Failed to load Mapbox Search SDK:', error);
-      reject(error);
-    };
-    
-    document.head.appendChild(script);
-  });
-}
-
-// Confirm address before submission
-export async function confirmMapboxAddress(formElement: HTMLFormElement, minimap = true) {
-  if (typeof window.MapboxSearchSDK === 'undefined') {
-    console.error('Mapbox Search SDK is not loaded yet');
-    return { type: 'nochange' };
-  }
-  
-  try {
-    console.log('Confirming address with Mapbox...');
-    return await window.MapboxSearchSDK.confirmAddress(formElement, {
-      accessToken: MAPBOX_ACCESS_TOKEN,
-      minimap,
-      skipConfirmModal: (feature: any) => 
-        ['exact', 'high'].includes(feature.properties.match_code?.confidence)
-    });
-  } catch (error) {
-    console.error('Error confirming address with Mapbox:', error);
-    return { type: 'nochange' };
-  }
-}
-
-// Create a Mapbox Minimap element
-export function createMapboxMinimap(feature: any) {
-  if (typeof window.MapboxSearchSDK === 'undefined') {
-    console.error('Mapbox Search SDK is not loaded yet');
-    return null;
-  }
-  
-  try {
-    const minimap = new window.MapboxSearchSDK.MapboxAddressMinimap({
-      accessToken: MAPBOX_ACCESS_TOKEN,
-    });
-    
-    if (feature) {
-      minimap.feature = feature;
-    }
-    
-    return minimap;
-  } catch (error) {
-    console.error('Error creating Mapbox Minimap:', error);
-    return null;
-  }
-}
+// This service uses Mapbox Geocoding API for fetching address information
+// It provides better search functionality and more reliable results
 
 interface AddressResult {
   address?: {
@@ -133,7 +16,18 @@ interface AddressResult {
   };
 }
 
-// Legacy functions kept for backward compatibility - these won't be modified
+interface AddressSuggestion {
+  street: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  formatted: string;
+}
+
+// Mapbox public token - You should replace this with your own token
+// To get your own token, sign up at https://mapbox.com/
+const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA';
+
 export async function fetchAddressFromPostcode(postcode: string): Promise<AddressResult> {
   try {
     if (!postcode || postcode.length < 3) {
@@ -197,7 +91,7 @@ export async function fetchAddressFromPostcode(postcode: string): Promise<Addres
   }
 }
 
-export async function searchAddressesByQuery(query: string): Promise<any[]> {
+export async function searchAddressesByQuery(query: string): Promise<AddressSuggestion[]> {
   try {
     // Only search when we have a meaningful query
     if (!query || query.length < 3) {
@@ -207,12 +101,10 @@ export async function searchAddressesByQuery(query: string): Promise<any[]> {
 
     console.log('Starting Mapbox search for:', query);
     
-    // Configure search with broader types for better results
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,poi,place,locality&limit=5&autocomplete=true`;
+    // Use a broader search with more types and enable autocomplete
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,postcode,place,locality,neighborhood,poi,district,region&limit=5&autocomplete=true`;
     
     console.log('Searching addresses with Mapbox API query:', query);
-    console.log('Request URL:', url);
-    
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -225,17 +117,16 @@ export async function searchAddressesByQuery(query: string): Promise<any[]> {
     if (data.features && data.features.length > 0) {
       // Map the Mapbox results to our AddressSuggestion format
       return data.features.map((feature: any) => {
-        // Extract components from the place_name
         const addressParts = feature.place_name.split(',').map((part: string) => part.trim());
         
-        // Find postal code in the text (usually in the format "12345")
+        // Find postal code (usually in the format "12345")
         const postalCodeMatch = feature.place_name.match(/\b\d{5}\b/);
         const postalCode = postalCodeMatch ? postalCodeMatch[0] : '';
         
-        // Extract the street (first part of the address usually)
+        // Extract the first part as street, and try to identify city, country from context
         const street = addressParts[0];
         
-        // Extract city, country from context if available
+        // Get city, country from context if available
         let city = '', country = '';
         if (feature.context) {
           feature.context.forEach((ctx: any) => {
@@ -272,12 +163,5 @@ export async function searchAddressesByQuery(query: string): Promise<any[]> {
   } catch (error) {
     console.error('Error searching addresses with Mapbox:', error);
     return [];
-  }
-}
-
-// Add TypeScript interface for window to access Mapbox Search SDK
-declare global {
-  interface Window {
-    MapboxSearchSDK: any;
   }
 }
