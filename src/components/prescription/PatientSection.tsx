@@ -25,8 +25,11 @@ const PatientSection = ({ form }: PatientSectionProps) => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (addressQuery && addressQuery.length > 3) {
+      if (addressQuery && addressQuery.length > 2) {
         searchAddresses(addressQuery);
+      } else {
+        setAddressSuggestions([]);
+        setIsPopoverOpen(false);
       }
     }, 300);
     
@@ -37,6 +40,7 @@ const PatientSection = ({ form }: PatientSectionProps) => {
     setIsLoadingAddresses(true);
     try {
       const suggestions = await searchAddressesByQuery(query);
+      console.log('Address suggestions:', suggestions);
       setAddressSuggestions(suggestions);
       setIsPopoverOpen(suggestions.length > 0);
     } catch (error) {
@@ -109,6 +113,11 @@ const PatientSection = ({ form }: PatientSectionProps) => {
                             </div>
                           </CommandItem>
                         ))}
+                        {addressSuggestions.length === 0 && addressQuery.length >= 3 && !isLoadingAddresses && (
+                          <div className="p-2 text-sm text-gray-500">
+                            No suggestions found
+                          </div>
+                        )}
                       </CommandGroup>
                     )}
                   </CommandList>

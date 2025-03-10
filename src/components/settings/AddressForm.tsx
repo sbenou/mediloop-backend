@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -39,12 +39,26 @@ const AddressForm = ({ userId, onSuccess, existingAddresses }: AddressFormProps)
   const [isSearching, setIsSearching] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (addressQuery && addressQuery.length > 2) {
+        searchAddresses(addressQuery);
+      } else {
+        setAddressSuggestions([]);
+        setIsPopoverOpen(false);
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [addressQuery]);
+
   const searchAddresses = async (query: string) => {
     if (query.length < 3) return;
     
     try {
       setIsSearching(true);
       const suggestions = await searchAddressesByQuery(query);
+      console.log('Address suggestions:', suggestions);
       setAddressSuggestions(suggestions);
       setIsPopoverOpen(suggestions.length > 0);
     } catch (error) {
@@ -69,10 +83,6 @@ const AddressForm = ({ userId, onSuccess, existingAddresses }: AddressFormProps)
   const handleStreetChange = (value: string) => {
     setAddressQuery(value);
     setNewAddress({ ...newAddress, street: value });
-    
-    if (value.length >= 3) {
-      searchAddresses(value);
-    }
   };
 
   const addAddressMutation = useMutation({

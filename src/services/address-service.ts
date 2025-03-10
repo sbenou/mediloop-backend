@@ -31,8 +31,10 @@ export async function fetchAddressFromPostcode(postcode: string): Promise<Addres
     const apiKey = 'c7f247fbb26b43ecb2ee4dd8a3599c29'; // Free demo API key with limited usage
     const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(postcode)}&key=${apiKey}&limit=1`;
     
+    console.log('Fetching address from postcode:', postcode);
     const response = await fetch(url);
     const data = await response.json();
+    console.log('Address API response:', data);
     
     if (data.results && data.results.length > 0) {
       const result = data.results[0];
@@ -66,8 +68,15 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
     const apiKey = 'c7f247fbb26b43ecb2ee4dd8a3599c29'; // Free demo API key with limited usage
     const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}&limit=5`;
     
+    console.log('Searching addresses with query:', query);
     const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
+    console.log('Address search API response:', data);
     
     if (data.results && data.results.length > 0) {
       return data.results.map((result: any) => {
@@ -85,6 +94,7 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
       });
     }
     
+    console.log('No address results found');
     return [];
   } catch (error) {
     console.error('Error searching addresses:', error);
