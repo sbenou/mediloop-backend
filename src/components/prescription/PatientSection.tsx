@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FormField,
   FormItem,
@@ -22,32 +21,42 @@ const PatientSection = ({ form }: PatientSectionProps) => {
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
     
     if (addressQuery && addressQuery.length > 2) {
       setIsLoadingAddresses(true);
-      // Display the loading state for at least 500ms to prevent flickering
-      timeoutId = setTimeout(() => {
+      setIsPopoverOpen(true);
+      
+      searchTimeoutRef.current = setTimeout(() => {
         searchAddresses(addressQuery);
-      }, 500);
+      }, 800);
     } else {
       setAddressSuggestions([]);
-      setIsPopoverOpen(false);
+      if (!addressQuery) {
+        setIsPopoverOpen(false);
+      }
       setIsLoadingAddresses(false);
     }
     
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
     };
   }, [addressQuery]);
 
   const searchAddresses = async (query: string) => {
     try {
+      console.log('Executing search for:', query);
       const suggestions = await searchAddressesByQuery(query);
       console.log('Address suggestions received:', suggestions.length);
       setAddressSuggestions(suggestions);
+      
       setIsPopoverOpen(true);
     } catch (error) {
       console.error("Error searching addresses:", error);
@@ -84,7 +93,9 @@ const PatientSection = ({ form }: PatientSectionProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Patient Address</FormLabel>
-            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+            <Popover open={isPopoverOpen} onOpenChange={(open) => {
+              if (!open) setIsPopoverOpen(false);
+            }}>
               <PopoverTrigger asChild>
                 <div>
                   <Input 
@@ -93,12 +104,17 @@ const PatientSection = ({ form }: PatientSectionProps) => {
                       field.onChange(e.target.value);
                       setAddressQuery(e.target.value);
                     }}
+                    onFocus={() => {
+                      if (addressQuery && addressQuery.length > 2) {
+                        setIsPopoverOpen(true);
+                      }
+                    }}
                     className="bg-accent/5" 
                     placeholder="Start typing an address..."
                   />
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="p-0" align="start">
+              <PopoverContent className="p-0 w-[300px]" align="start">
                 <Command>
                   <CommandList>
                     {isLoadingAddresses ? (
@@ -122,7 +138,9 @@ const PatientSection = ({ form }: PatientSectionProps) => {
                           ))
                         ) : (
                           <div className="p-4 text-sm text-gray-500">
-                            {addressQuery.length >= 3 ? 'No suggestions found' : 'Type at least 3 characters'}
+                            {addressQuery.length >= 3 
+                              ? 'No suggestions found. Try adding more details.' 
+                              : 'Type at least 3 characters'}
                           </div>
                         )}
                       </CommandGroup>

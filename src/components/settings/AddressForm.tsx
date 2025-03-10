@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -38,32 +37,42 @@ const AddressForm = ({ userId, onSuccess, existingAddresses }: AddressFormProps)
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
     
     if (addressQuery && addressQuery.length > 2) {
       setIsSearching(true);
-      // Display the loading state for at least 500ms to prevent flickering
-      timeoutId = setTimeout(() => {
+      setIsPopoverOpen(true);
+      
+      searchTimeoutRef.current = setTimeout(() => {
         searchAddresses(addressQuery);
-      }, 500);
+      }, 800);
     } else {
       setAddressSuggestions([]);
-      setIsPopoverOpen(false);
+      if (!addressQuery) {
+        setIsPopoverOpen(false);
+      }
       setIsSearching(false);
     }
     
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
     };
   }, [addressQuery]);
 
   const searchAddresses = async (query: string) => {
     try {
+      console.log('Executing search for:', query);
       const suggestions = await searchAddressesByQuery(query);
       console.log('Address suggestions received:', suggestions.length);
       setAddressSuggestions(suggestions);
+      
       setIsPopoverOpen(true);
     } catch (error) {
       console.error('Error searching for addresses:', error);
@@ -118,6 +127,7 @@ const AddressForm = ({ userId, onSuccess, existingAddresses }: AddressFormProps)
         type: "secondary",
         is_default: false
       });
+      setAddressQuery('');
       toast({
         title: "Address Added",
         description: "Your new address has been added successfully.",
@@ -135,13 +145,20 @@ const AddressForm = ({ userId, onSuccess, existingAddresses }: AddressFormProps)
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="street">Street Address</Label>
-        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+        <Popover open={isPopoverOpen} onOpenChange={(open) => {
+          if (!open) setIsPopoverOpen(false);
+        }}>
           <PopoverTrigger asChild>
             <div>
               <Input
                 id="street"
                 value={addressQuery}
                 onChange={(e) => handleStreetChange(e.target.value)}
+                onFocus={() => {
+                  if (addressQuery && addressQuery.length > 2) {
+                    setIsPopoverOpen(true);
+                  }
+                }}
                 placeholder="Start typing your street address"
                 className="w-full"
                 required
@@ -177,7 +194,9 @@ const AddressForm = ({ userId, onSuccess, existingAddresses }: AddressFormProps)
                       ))
                     ) : (
                       <div className="p-4 text-sm text-gray-500">
-                        {addressQuery.length >= 3 ? 'No suggestions found' : 'Type at least 3 characters'}
+                        {addressQuery.length >= 3 
+                          ? 'No suggestions found. Try adding more details to your search.' 
+                          : 'Type at least 3 characters'}
                       </div>
                     )}
                   </CommandGroup>

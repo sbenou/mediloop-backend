@@ -70,14 +70,19 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
       return [];
     }
 
-    // Artificial delay to prevent rapid flickering
-    await new Promise(resolve => setTimeout(resolve, 300));
+    console.log('Starting search for:', query);
     
     // Using OpenCage Geocoding API (free tier allows 2,500 requests per day)
     const apiKey = 'c7f247fbb26b43ecb2ee4dd8a3599c29'; // Free demo API key with limited usage
-    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}&limit=5&language=en&no_annotations=1`;
     
-    console.log('Searching addresses with query:', query);
+    // Improve geocoding results by adding more parameters:
+    // - abbrv=1: Use abbreviations in the formatted result
+    // - add_request=1: Include the request in the response
+    // - roadinfo=1: Include road information where available
+    // - fuzzy=1: Allow some fuzziness in the match
+    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}&limit=5&language=en&no_annotations=1&fuzzy=1&abbrv=1&roadinfo=1`;
+    
+    console.log('Searching addresses with query:', query, 'URL:', url);
     const response = await fetch(url);
     
     if (!response.ok) {
