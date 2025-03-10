@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -138,7 +137,6 @@ const PharmacyProfile = () => {
     try {
       setIsUploading(true);
       
-      // Create a unique file path with proper extension
       const fileExt = file.name.split('.').pop();
       const filePath = `pharmacies/${pharmacyData.id}/${crypto.randomUUID()}.${fileExt}`;
       
@@ -146,7 +144,6 @@ const PharmacyProfile = () => {
       console.log("File type:", file.type);
       console.log("File size:", file.size);
       
-      // Upload the file with content type
       const { error: uploadError, data } = await supabase.storage
         .from('pharmacy-images')
         .upload(filePath, file, {
@@ -161,14 +158,12 @@ const PharmacyProfile = () => {
 
       console.log("Upload successful, getting public URL");
       
-      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('pharmacy-images')
         .getPublicUrl(filePath);
 
       console.log("Public URL obtained:", publicUrl);
 
-      // Update pharmacy metadata with new logo URL
       const { error: metadataError } = await supabase
         .from('pharmacy_metadata')
         .upsert({ 
@@ -183,7 +178,6 @@ const PharmacyProfile = () => {
 
       console.log("Pharmacy metadata updated successfully");
 
-      // Update local state
       setPharmacyData({
         ...pharmacyData,
         logo_url: publicUrl

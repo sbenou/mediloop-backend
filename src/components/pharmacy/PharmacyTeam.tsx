@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,10 @@ import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
 import { fetchAddressFromPostcode } from '@/services/address-service';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import { CommandInput, CommandList, CommandItem, CommandGroup, Command } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -51,6 +55,15 @@ const relationOptions = [
   { value: 'other', label: 'Other' },
 ];
 
+// Address suggestion interface
+interface AddressSuggestion {
+  street: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  formatted: string;
+}
+
 const formSchema = z.object({
   full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -72,6 +85,11 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState("personal");
   const [isAddressLoading, setIsAddressLoading] = useState(false);
+  const [addressQuery, setAddressQuery] = useState('');
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [isOpenAddressSuggestions, setIsOpenAddressSuggestions] = useState(false);
+  const [phoneValue, setPhoneValue] = useState('');
+  const [nokPhoneValue, setNokPhoneValue] = useState('');
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -94,6 +112,74 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   useEffect(() => {
     fetchTeamMembers();
   }, [pharmacyId]);
+
+  // Address search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (addressQuery.trim() && addressQuery.length > 3) {
+        searchAddresses(addressQuery);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [addressQuery]);
+
+  const searchAddresses = async (query: string) => {
+    try {
+      setIsAddressLoading(true);
+      
+      // Using the OpenCage API (free tier)
+      const apiKey = 'c7f247fbb26b43ecb2ee4dd8a3599c29'; // Free demo API key with limited usage
+      const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}&limit=5`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        const suggestions = data.results.map((result: any) => {
+          const components = result.components;
+          return {
+            street: [
+              components.house_number, 
+              components.road || components.street
+            ].filter(Boolean).join(' '),
+            city: components.city || components.town || components.village || '',
+            postal_code: components.postcode || '',
+            country: components.country || '',
+            formatted: result.formatted
+          };
+        });
+        
+        setAddressSuggestions(suggestions);
+        setIsOpenAddressSuggestions(true);
+      } else {
+        setAddressSuggestions([]);
+      }
+    } catch (error) {
+      console.error('Error searching addresses:', error);
+      toast({
+        title: "Error",
+        description: "Failed to search for addresses",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAddressLoading(false);
+    }
+  };
+
+  const selectAddress = (address: AddressSuggestion) => {
+    form.setValue('street', address.street || '');
+    form.setValue('city', address.city || '');
+    form.setValue('postal_code', address.postal_code || '');
+    form.setValue('country', address.country || '');
+    setIsOpenAddressSuggestions(false);
+    setAddressQuery(address.street || '');
+    
+    toast({
+      title: "Address Selected",
+      description: "Address details have been filled automatically"
+    });
+  };
 
   const fetchTeamMembers = async () => {
     try {
@@ -219,6 +305,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Update the form values with the phone number values
+    values.next_of_kin_phone = nokPhoneValue;
+    
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
@@ -292,6 +381,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
       setAddUserOpen(false);
       form.reset();
+      setPhoneValue('');
+      setNokPhoneValue('');
       fetchTeamMembers();
     } catch (error) {
       console.error('Error adding new user:', error);
@@ -405,6 +496,71 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                   </TabsContent>
                   
                   <TabsContent value="address" className="space-y-4">
+                    {/* Street field with autocomplete - moved before postcode */}
+                    <FormField
+                      control={form.control}
+                      name="street"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Street Address</FormLabel>
+                          <div className="relative">
+                            <Popover 
+                              open={isOpenAddressSuggestions && addressSuggestions.length > 0} 
+                              onOpenChange={setIsOpenAddressSuggestions}
+                            >
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="123 Main St" 
+                                    value={addressQuery || field.value}
+                                    onChange={(e) => {
+                                      field.onChange(e);
+                                      setAddressQuery(e.target.value);
+                                    }}
+                                  />
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="p-0" align="start" side="bottom" sideOffset={5}>
+                                <Command>
+                                  <CommandList>
+                                    {isAddressLoading ? (
+                                      <CommandItem disabled>
+                                        <div className="flex items-center justify-center w-full py-2">
+                                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                                          <span className="ml-2">Searching...</span>
+                                        </div>
+                                      </CommandItem>
+                                    ) : (
+                                      <CommandGroup heading="Address suggestions">
+                                        {addressSuggestions.map((suggestion, index) => (
+                                          <CommandItem 
+                                            key={index}
+                                            onSelect={() => selectAddress(suggestion)}
+                                            className="cursor-pointer"
+                                          >
+                                            <div className="text-sm">
+                                              <div className="font-medium">{suggestion.street}</div>
+                                              <div className="text-muted-foreground">
+                                                {[suggestion.postal_code, suggestion.city, suggestion.country]
+                                                  .filter(Boolean)
+                                                  .join(', ')}
+                                              </div>
+                                            </div>
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    )}
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          {isAddressLoading && <div className="text-xs text-muted-foreground mt-1">Searching for addresses...</div>}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
                     <div className="flex space-x-2">
                       <FormField
                         control={form.control}
@@ -438,20 +594,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         )}
                       />
                     </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="street"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Street Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="123 Main St" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
@@ -520,7 +662,21 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         <FormItem>
                           <FormLabel>Phone Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="+1 (555) 123-4567" {...field} />
+                            <div className="rounded-md border border-input">
+                              <PhoneInput
+                                international
+                                countryCallingCodeEditable={false}
+                                defaultCountry="LU"
+                                value={nokPhoneValue}
+                                onChange={setNokPhoneValue}
+                                onBlur={() => {
+                                  if (nokPhoneValue) {
+                                    field.onChange(nokPhoneValue);
+                                  }
+                                }}
+                                className="flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm shadow-none"
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
