@@ -479,7 +479,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                               onOpenChange={setIsOpenAddressSuggestions}
                             >
                               <PopoverTrigger asChild>
-                                <FormControl>
+                                <div>
                                   <Input 
                                     placeholder="Start typing your address..." 
                                     value={addressQuery}
@@ -491,7 +491,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                                       }
                                     }}
                                   />
-                                </FormControl>
+                                </div>
                               </PopoverTrigger>
                               <PopoverContent className="p-0" align="start" side="bottom" sideOffset={5}>
                                 <Command>

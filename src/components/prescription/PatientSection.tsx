@@ -76,7 +76,7 @@ const PatientSection = ({ form }: PatientSectionProps) => {
             <FormLabel>Patient Address</FormLabel>
             <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
               <PopoverTrigger asChild>
-                <FormControl>
+                <div>
                   <Input 
                     value={addressQuery}
                     onChange={(e) => {
@@ -86,7 +86,7 @@ const PatientSection = ({ form }: PatientSectionProps) => {
                     className="bg-accent/5" 
                     placeholder="Start typing an address..."
                   />
-                </FormControl>
+                </div>
               </PopoverTrigger>
               <PopoverContent className="p-0" align="start">
                 <Command>
