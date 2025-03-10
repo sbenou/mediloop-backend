@@ -1,3 +1,4 @@
+
 import { ProductSearch } from '@/components/ProductSearch';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -24,7 +25,6 @@ import EmailConfirmationHandler from "@/components/auth/EmailConfirmationHandler
 import UnifiedProfilePage from "./pages/UnifiedProfilePage";
 
 // Pharmacy routes
-import PharmacyDashboardOld from "./pages/pharmacy/PharmacyDashboardOld";
 import PatientsPage from "./pages/pharmacy/PatientsPage";
 import PatientDetail from "./pages/pharmacy/PatientDetail";
 import OrdersPage from "./pages/pharmacy/OrdersPage";
@@ -95,8 +95,8 @@ function App() {
                   
                   {/* Pharmacy routes */}
                   <Route path="/pharmacy">
-                    {/* Include both old and new dashboard */}
-                    <Route path="dashboard-old" element={<PharmacyDashboardOld />} />
+                    {/* Always redirect to the new dashboard view */}
+                    <Route index element={<Navigate to="/dashboard?view=pharmacy&section=dashboard" replace />} />
                     <Route path="dashboard" element={<Navigate to="/dashboard?view=pharmacy&section=dashboard" replace />} />
                     <Route path="patients" element={<Navigate to="/dashboard?view=pharmacy&section=patients" replace />} />
                     <Route path="orders" element={<Navigate to="/dashboard?view=pharmacy&section=orders" replace />} />

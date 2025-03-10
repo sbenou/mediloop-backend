@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -6,7 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 import UniversalDashboard from "@/pages/UniversalDashboard";
 
 const Dashboard = () => {
-  const { isAuthenticated, isLoading, userRole } = useAuth();
+  const { isAuthenticated, isLoading, userRole, isPharmacist } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -33,22 +34,22 @@ const Dashboard = () => {
 
   // For pharmacist role, ensure they see their dedicated view
   useEffect(() => {
-    if (userRole === 'pharmacist' && !isInitialLoad && isAuthenticated) {
-      console.log("Checking pharmacist view:", { view, section });
+    if ((userRole === 'pharmacist' || isPharmacist) && !isInitialLoad && isAuthenticated) {
+      console.log("Checking pharmacist view:", { view, section, isPharmacist, userRole });
       
       if (view !== 'pharmacy' || !section) {
         console.log("Redirecting pharmacist to proper dashboard view");
         setSearchParams({ view: 'pharmacy', section: 'dashboard' });
       }
     }
-  }, [userRole, view, section, setSearchParams, isInitialLoad, isAuthenticated]);
+  }, [userRole, view, section, setSearchParams, isInitialLoad, isAuthenticated, isPharmacist]);
 
   // Debug logging
   useEffect(() => {
     if (!isInitialLoad) {
-      console.log("Dashboard rendering with:", { userRole, view, section });
+      console.log("Dashboard rendering with:", { userRole, view, section, isPharmacist });
     }
-  }, [userRole, view, section, isInitialLoad]);
+  }, [userRole, view, section, isInitialLoad, isPharmacist]);
 
   // For very specific user roles, provide a dedicated dashboard
   if (userRole === 'patient' && !view) {

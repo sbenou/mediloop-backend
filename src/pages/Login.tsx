@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, user, profile } = useAuth();
+  const { isAuthenticated, isLoading, user, profile, isPharmacist } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const Login = () => {
             return;
           }
           
-          console.log('User role found:', profile.role);
+          console.log('User role found:', profile.role, 'Is pharmacist:', isPharmacist);
 
           // Force session storage on successful login for ALL user types
           const { data: { session } } = await supabase.auth.getSession();
@@ -57,7 +57,14 @@ const Login = () => {
             }
           }
           
-          // UPDATED: Redirect all users to the universal dashboard
+          // Special handling for pharmacists
+          if (profile.role === 'pharmacist' || isPharmacist) {
+            console.log('Redirecting pharmacist to pharmacy dashboard view');
+            navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
+            return;
+          }
+          
+          // For all other users, redirect to the universal dashboard
           console.log('Redirecting to universal dashboard...');
           navigate('/dashboard', { replace: true });
         } catch (err) {
@@ -68,7 +75,7 @@ const Login = () => {
     };
     
     checkUserRole();
-  }, [isAuthenticated, user, profile, navigate]);
+  }, [isAuthenticated, user, profile, navigate, isPharmacist]);
 
   // Show loading state
   if (isLoading) {
@@ -85,8 +92,14 @@ const Login = () => {
 
   // If user is already authenticated, prevent showing the login page
   if (isAuthenticated) {
-    // Explicitly redirect to dashboard here to avoid blank page
-    navigate('/dashboard', { replace: true });
+    // Check if the user is a pharmacist
+    if (profile?.role === 'pharmacist' || isPharmacist) {
+      console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
+      navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
+    } else {
+      // For all other users
+      navigate('/dashboard', { replace: true });
+    }
     return null;
   }
 

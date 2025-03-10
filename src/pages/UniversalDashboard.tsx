@@ -14,12 +14,13 @@ import TeleconsultationsView from "@/components/dashboard/views/Teleconsultation
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/use-toast";
 
 const UniversalDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, userRole, isLoading, profile } = useAuth();
+  const { isAuthenticated, userRole, isLoading, profile, isPharmacist } = useAuth();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const currentView = searchParams.get("view") || "home";
@@ -31,24 +32,25 @@ const UniversalDashboard = () => {
   useEffect(() => {
     console.log("UniversalDashboard render:", { 
       userRole, 
+      isPharmacist,
       currentView, 
       pharmacySection,
       searchParams: Object.fromEntries(searchParams.entries()),
       location: location.pathname + location.search
     });
-  }, [userRole, currentView, pharmacySection, searchParams, location]);
+  }, [userRole, currentView, pharmacySection, searchParams, location, isPharmacist]);
   
   // Make sure we have a default section for pharmacists
   useEffect(() => {
-    if (userRole === "pharmacist" && !isInitialLoad && isAuthenticated) {
-      console.log("Checking pharmacist params:", { currentView, pharmacySection });
+    if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad && isAuthenticated) {
+      console.log("Checking pharmacist params:", { currentView, pharmacySection, isPharmacist });
       
       if (currentView !== 'pharmacy' || !pharmacySection) {
         console.log("Setting default pharmacist params");
         setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isAuthenticated]);
+  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isAuthenticated, isPharmacist]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
@@ -61,13 +63,18 @@ const UniversalDashboard = () => {
   useEffect(() => {
     // Only redirect if we're sure the user is not authenticated (after initial load)
     if (!isInitialLoad && !isAuthenticated) {
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "Please login to access the dashboard.",
+      });
       navigate("/login");
     }
   }, [isAuthenticated, isInitialLoad, navigate]);
   
   const getContent = () => {
     // For pharmacists, always show the pharmacy view regardless of the URL parameter
-    if (userRole === "pharmacist") {
+    if (userRole === "pharmacist" || isPharmacist) {
       console.log("Rendering PharmacyView with section:", pharmacySection);
       return <PharmacyView userRole={userRole} section={pharmacySection} />;
     }
@@ -83,6 +90,7 @@ const UniversalDashboard = () => {
       case "prescriptions":
         return <PrescriptionsView userRole={userRole} />;
       case "pharmacy":
+        // This case is for non-pharmacists who might access the pharmacy view
         return <PharmacyView userRole={userRole} section={pharmacySection} />;
       case "teleconsultations":
         return <TeleconsultationsView userRole={userRole} />;
