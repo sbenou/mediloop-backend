@@ -64,9 +64,18 @@ export async function fetchAddressFromPostcode(postcode: string): Promise<Addres
 
 export async function searchAddressesByQuery(query: string): Promise<AddressSuggestion[]> {
   try {
+    // Only search when we have a meaningful query
+    if (!query || query.length < 3) {
+      console.log('Query too short, not searching');
+      return [];
+    }
+
+    // Artificial delay to prevent rapid flickering
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     // Using OpenCage Geocoding API (free tier allows 2,500 requests per day)
     const apiKey = 'c7f247fbb26b43ecb2ee4dd8a3599c29'; // Free demo API key with limited usage
-    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}&limit=5`;
+    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}&limit=5&language=en&no_annotations=1`;
     
     console.log('Searching addresses with query:', query);
     const response = await fetch(url);
@@ -79,6 +88,7 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
     console.log('Address search API response:', data);
     
     if (data.results && data.results.length > 0) {
+      // Extract the meaningful address components
       return data.results.map((result: any) => {
         const components = result.components;
         return {

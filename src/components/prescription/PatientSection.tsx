@@ -24,25 +24,31 @@ const PatientSection = ({ form }: PatientSectionProps) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (addressQuery && addressQuery.length > 2) {
-        searchAddresses(addressQuery);
-      } else {
-        setAddressSuggestions([]);
-        setIsPopoverOpen(false);
-      }
-    }, 300);
+    let timeoutId: NodeJS.Timeout | null = null;
     
-    return () => clearTimeout(timer);
+    if (addressQuery && addressQuery.length > 2) {
+      setIsLoadingAddresses(true);
+      // Display the loading state for at least 500ms to prevent flickering
+      timeoutId = setTimeout(() => {
+        searchAddresses(addressQuery);
+      }, 500);
+    } else {
+      setAddressSuggestions([]);
+      setIsPopoverOpen(false);
+      setIsLoadingAddresses(false);
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [addressQuery]);
 
   const searchAddresses = async (query: string) => {
-    setIsLoadingAddresses(true);
     try {
       const suggestions = await searchAddressesByQuery(query);
-      console.log('Address suggestions:', suggestions);
+      console.log('Address suggestions received:', suggestions.length);
       setAddressSuggestions(suggestions);
-      setIsPopoverOpen(suggestions.length > 0);
+      setIsPopoverOpen(true);
     } catch (error) {
       console.error("Error searching addresses:", error);
     } finally {
@@ -96,26 +102,27 @@ const PatientSection = ({ form }: PatientSectionProps) => {
                 <Command>
                   <CommandList>
                     {isLoadingAddresses ? (
-                      <div className="flex items-center justify-center p-2">
+                      <div className="flex items-center justify-center p-4">
                         <div className="animate-spin h-4 w-4 rounded-full border-2 border-gray-900 border-opacity-25 border-t-gray-600"></div>
                         <span className="ml-2 text-sm">Searching...</span>
                       </div>
                     ) : (
                       <CommandGroup heading="Address suggestions">
-                        {addressSuggestions.map((address, index) => (
-                          <CommandItem
-                            key={index}
-                            onSelect={() => selectAddress(address)}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex flex-col">
-                              <span>{address.formatted}</span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                        {addressSuggestions.length === 0 && addressQuery.length >= 3 && !isLoadingAddresses && (
-                          <div className="p-2 text-sm text-gray-500">
-                            No suggestions found
+                        {addressSuggestions.length > 0 ? (
+                          addressSuggestions.map((address, index) => (
+                            <CommandItem
+                              key={index}
+                              onSelect={() => selectAddress(address)}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex flex-col">
+                                <span>{address.formatted}</span>
+                              </div>
+                            </CommandItem>
+                          ))
+                        ) : (
+                          <div className="p-4 text-sm text-gray-500">
+                            {addressQuery.length >= 3 ? 'No suggestions found' : 'Type at least 3 characters'}
                           </div>
                         )}
                       </CommandGroup>
