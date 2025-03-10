@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -6,17 +5,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { AddressType } from "./types";
 import { MapPin, Loader2 } from "lucide-react";
-import { confirmMapboxAddress } from "@/services/address-service";
+import { confirmMapboxAddress, loadMapboxSearchSDK } from "@/services/address-service";
 import MapboxAutofillInput from "../address/MapboxAutofillInput";
 import MapboxMinimap from "../address/MapboxMinimap";
 
@@ -44,7 +37,6 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
   const [isAddressConfirmed, setIsAddressConfirmed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Reset form when dialog opens/closes
   useEffect(() => {
     if (!open) {
       setNewAddress({
@@ -58,6 +50,12 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
       setShowMinimap(false);
       setMinimapFeature(null);
       setIsAddressConfirmed(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      loadMapboxSearchSDK().catch(console.error);
     }
   }, [open]);
 
@@ -88,18 +86,13 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
   const handleAddressSelected = (feature: any) => {
     console.log("Address selected:", feature);
     
-    // Show minimap with the selected location
     setMinimapFeature(feature);
     setShowMinimap(true);
     
-    // Extract address components from the feature
     const properties = feature.properties || {};
     const address = properties.address || {};
     
-    // Update form fields
     if (formRef.current) {
-      // We don't need to manually set these as Mapbox autofill handles it
-      // This is just for our internal state
       setNewAddress(prev => ({
         ...prev,
         street: address.street || address.name || '',
@@ -122,26 +115,22 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
     
     setIsProcessing(true);
     
-    // If address is already confirmed, submit directly
     if (isAddressConfirmed) {
       submitAddressToDatabase();
       return;
     }
     
     try {
-      // Confirm the address using Mapbox
       const result = await confirmMapboxAddress(formRef.current, true);
       console.log("Address confirmation result:", result);
       
       if (result.type === 'accepted') {
-        // User accepted the suggested address
         toast({
           title: "Address Confirmed",
           description: "Using the suggested address."
         });
         setIsAddressConfirmed(true);
         
-        // Update our state with the final values
         const formData = new FormData(formRef.current);
         setNewAddress(prev => ({
           ...prev,
@@ -153,7 +142,6 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
         
         submitAddressToDatabase();
       } else if (result.type === 'rejected') {
-        // User rejected the suggested address
         toast({
           title: "Using Original Address",
           description: "Continuing with the address you entered."
@@ -161,13 +149,11 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
         setIsAddressConfirmed(true);
         submitAddressToDatabase();
       } else {
-        // No confirmation needed or user closed the modal
         setIsAddressConfirmed(true);
         submitAddressToDatabase();
       }
     } catch (error) {
       console.error("Error confirming address:", error);
-      // Fallback to direct submission
       submitAddressToDatabase();
     } finally {
       setIsProcessing(false);
@@ -175,7 +161,6 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
   };
 
   const submitAddressToDatabase = () => {
-    // Get final form values
     if (formRef.current) {
       const formData = new FormData(formRef.current);
       const finalAddress = {
@@ -189,7 +174,6 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
       
       addAddressMutation.mutate(finalAddress);
     } else {
-      // Fallback to our state if form ref is not available
       addAddressMutation.mutate(newAddress);
     }
   };

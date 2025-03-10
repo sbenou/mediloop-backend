@@ -32,6 +32,10 @@ export function loadMapboxSearchSDK() {
     script.async = true;
     script.onload = () => {
       console.log('Mapbox Search SDK loaded successfully');
+      // Initialize global config after script loads
+      if (window.MapboxSearchSDK) {
+        window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
+      }
       resolve();
     };
     script.onerror = (error) => {
