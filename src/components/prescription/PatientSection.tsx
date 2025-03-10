@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import {
   FormField,
@@ -17,6 +16,7 @@ import 'react-phone-number-input/style.css';
 import flags from 'react-phone-number-input/flags';
 import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { getCountryCallingCode } from 'react-phone-number-input';
 
 interface PatientSectionProps {
   form: UseFormReturn<any>;
@@ -33,7 +33,6 @@ const PatientSection = ({ form }: PatientSectionProps) => {
   const [countrySearch, setCountrySearch] = useState('');
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check phone validity on change
   useEffect(() => {
     if (phoneValue) {
       const valid = isValidPhoneNumber(phoneValue);
@@ -93,7 +92,6 @@ const PatientSection = ({ form }: PatientSectionProps) => {
     setIsPopoverOpen(false);
   };
 
-  // Custom component for the country selector button to match other UI elements
   const CountrySelectButton = ({ 
     country, 
     countries, 
@@ -164,7 +162,7 @@ const PatientSection = ({ form }: PatientSectionProps) => {
                           dropdownClass: "bg-popover text-popover-foreground shadow-md rounded-md border border-input overflow-hidden py-1.5",
                           buttonClass: "border-0 bg-transparent",
                           arrowClass: "opacity-50 w-3 h-3",
-                          searchable: false, // We'll implement our own search
+                          searchable: false,
                         }}
                       />
                     </div>
@@ -185,30 +183,32 @@ const PatientSection = ({ form }: PatientSectionProps) => {
                               const country = new Intl.DisplayNames(['en'], { type: 'region' }).of(code.toUpperCase());
                               return country?.toLowerCase().includes(countrySearch.toLowerCase());
                             })
-                            .map(([code, Flag]) => (
-                              <CommandItem
-                                key={code}
-                                onSelect={() => {
-                                  // This will set the country in PhoneInput
-                                  const inputEl = document.querySelector('input[type="tel"]') as HTMLInputElement;
-                                  if (inputEl) {
-                                    // Create and dispatch a custom event to set the country
-                                    const newValue = phoneValue ? phoneValue.replace(/^\+\d+/, '') : '';
-                                    setPhoneValue(`+${PhoneInput.getCountryCallingCode(code as any)}${newValue}`);
-                                  }
-                                  setCountrySelectOpen(false);
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 cursor-pointer"
-                              >
-                                <span className="flex-shrink-0">{Flag && <Flag />}</span>
-                                <span className="ml-2">
-                                  {new Intl.DisplayNames(['en'], { type: 'region' }).of(code.toUpperCase())}
-                                </span>
-                                <span className="ml-auto text-sm text-muted-foreground">
-                                  +{PhoneInput.getCountryCallingCode(code as any)}
-                                </span>
-                              </CommandItem>
-                            ))}
+                            .map(([code, Flag]) => {
+                              const countryName = new Intl.DisplayNames(['en'], { type: 'region' }).of(code.toUpperCase()) || 'Unknown Country';
+                              return (
+                                <CommandItem
+                                  key={code}
+                                  onSelect={() => {
+                                    const inputEl = document.querySelector('input[type="tel"]') as HTMLInputElement;
+                                    if (inputEl) {
+                                      setPhoneValue(`+${getCountryCallingCode(code as any)}${phoneValue.replace(/^\+\d+/, '')}`);
+                                    }
+                                    setCountrySelectOpen(false);
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 cursor-pointer"
+                                >
+                                  <span className="flex-shrink-0">
+                                    {Flag && <Flag title={countryName} />}
+                                  </span>
+                                  <span className="ml-2">
+                                    {countryName}
+                                  </span>
+                                  <span className="ml-auto text-sm text-muted-foreground">
+                                    +{getCountryCallingCode(code as any)}
+                                  </span>
+                                </CommandItem>
+                              );
+                            })}
                         </CommandGroup>
                       </CommandList>
                     </Command>
