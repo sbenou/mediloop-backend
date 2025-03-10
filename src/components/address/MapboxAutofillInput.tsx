@@ -24,24 +24,52 @@ const MapboxAutofillInput = ({
   autoFocus = true
 }: MapboxAutofillInputProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Changed initial state to false
   const autofillInstanceRef = useRef<any>(null);
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
 
+  // Load SDK separately from initialization to improve performance
   useEffect(() => {
     let mounted = true;
 
-    const initializeAutofill = async () => {
+    const loadSDK = async () => {
+      try {
+        await loadMapboxSearchSDK();
+        if (mounted) {
+          setIsSDKLoaded(true);
+        }
+      } catch (error) {
+        console.error("Error loading Mapbox Search SDK:", error);
+        // Even if loading fails, we should enable the input
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadSDK();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Initialize autofill once SDK is loaded
+  useEffect(() => {
+    if (!isSDKLoaded || !inputRef.current || !formRef.current) return;
+
+    let mounted = true;
+    
+    const initAutofill = async () => {
       try {
         setIsLoading(true);
-        await loadMapboxSearchSDK();
-        
-        if (!mounted || !inputRef.current || !formRef.current) return;
         
         // Add required autocomplete attribute
-        inputRef.current.setAttribute('autocomplete', 'street-address');
+        if (inputRef.current) {
+          inputRef.current.setAttribute('autocomplete', 'street-address');
+        }
         
-        // Initialize autofill with proper settings - using Luxembourg country code
-        // and English language to ensure proper functionality
+        // Initialize autofill with proper settings
         const autofillInstance = initializeMapboxAutofill(
           inputRef.current,
           formRef.current,
@@ -53,35 +81,40 @@ const MapboxAutofillInput = ({
           }
         );
         
-        if (autofillInstance && onAddressSelected) {
-          // Add event listener for address selection
-          formRef.current.addEventListener('autofill', (event: any) => {
+        // Set up event listener for address selection
+        if (autofillInstance && onAddressSelected && formRef.current) {
+          const handleAutofill = (event: any) => {
             const feature = event.detail?.feature;
             if (feature) {
               onAddressSelected(feature);
             }
-          });
+          };
+          
+          // Remove previous event listener to avoid duplicates
+          formRef.current.removeEventListener('autofill', handleAutofill);
+          // Add the event listener
+          formRef.current.addEventListener('autofill', handleAutofill);
         }
         
         autofillInstanceRef.current = autofillInstance;
-        setIsLoading(false);
-
-        // Focus the input after initialization if autoFocus is true
-        if (autoFocus && inputRef.current) {
-          // Use setTimeout to ensure focus happens after render
-          setTimeout(() => {
-            if (inputRef.current) {
-              inputRef.current.focus();
-            }
-          }, 100);
+        
+        if (mounted) {
+          setIsLoading(false);
+        }
+        
+        // Focus the input after initialization
+        if (autoFocus && inputRef.current && mounted) {
+          inputRef.current.focus();
         }
       } catch (error) {
         console.error("Error initializing Mapbox Autofill:", error);
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    initializeAutofill();
+    initAutofill();
 
     return () => {
       mounted = false;
@@ -92,8 +125,13 @@ const MapboxAutofillInput = ({
           console.error("Error removing autofill instance:", e);
         }
       }
+      
+      // Clean up event listeners
+      if (formRef.current) {
+        formRef.current.removeEventListener('autofill', () => {});
+      }
     };
-  }, [formRef, onAddressSelected, autoFocus]);
+  }, [formRef, onAddressSelected, autoFocus, isSDKLoaded]);
 
   return (
     <div className="relative">
@@ -105,7 +143,7 @@ const MapboxAutofillInput = ({
         placeholder={placeholder}
         required={required}
         disabled={isLoading}
-        autoFocus={autoFocus}
+        autoFocus={autoFocus && !isLoading}
       />
       {isLoading && (
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">

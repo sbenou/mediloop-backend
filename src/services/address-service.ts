@@ -20,10 +20,18 @@ interface AddressResult {
 const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA';
 
 let sdkLoadPromise: Promise<void> | null = null;
+let sdkLoaded = false;
 
 // Load Mapbox Search SDK script
 export function loadMapboxSearchSDK() {
+  // Return immediately if SDK is already loaded
+  if (sdkLoaded && window.MapboxSearchSDK) {
+    console.log('Mapbox Search SDK already fully loaded');
+    return Promise.resolve();
+  }
+  
   if (sdkLoadPromise) {
+    console.log('Mapbox Search SDK loading in progress, returning existing promise');
     return sdkLoadPromise;
   }
 
@@ -32,12 +40,14 @@ export function loadMapboxSearchSDK() {
     if (window.MapboxSearchSDK) {
       console.log('Mapbox Search SDK already loaded and initialized');
       window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
+      sdkLoaded = true;
       resolve();
       return;
     }
     
     // Check if script tag already exists but SDK is not initialized yet
-    if (document.getElementById('mapbox-search-sdk')) {
+    const existingScript = document.getElementById('mapbox-search-sdk');
+    if (existingScript) {
       console.log('Mapbox Search SDK script tag exists, waiting for initialization');
       
       // Wait for SDK to initialize
@@ -46,6 +56,7 @@ export function loadMapboxSearchSDK() {
           clearInterval(checkInterval);
           window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
           console.log('Mapbox Search SDK initialized after waiting');
+          sdkLoaded = true;
           resolve();
         }
       }, 100);
@@ -55,6 +66,7 @@ export function loadMapboxSearchSDK() {
         if (!window.MapboxSearchSDK) {
           clearInterval(checkInterval);
           console.error('Timed out waiting for Mapbox Search SDK to initialize');
+          sdkLoadPromise = null; // Clear the promise to allow retrying
           reject(new Error('Timed out waiting for Mapbox Search SDK'));
         }
       }, 10000);
@@ -77,6 +89,7 @@ export function loadMapboxSearchSDK() {
           clearInterval(checkInterval);
           window.MapboxSearchSDK.config.accessToken = MAPBOX_ACCESS_TOKEN;
           console.log('Mapbox Search SDK initialized after script load');
+          sdkLoaded = true;
           resolve();
         }
       }, 100);
@@ -86,6 +99,7 @@ export function loadMapboxSearchSDK() {
         if (!window.MapboxSearchSDK) {
           clearInterval(checkInterval);
           console.error('Timed out waiting for Mapbox Search SDK to initialize after script load');
+          sdkLoadPromise = null; // Clear the promise to allow retrying
           reject(new Error('Timed out waiting for Mapbox Search SDK after script load'));
         }
       }, 5000);
@@ -93,7 +107,7 @@ export function loadMapboxSearchSDK() {
     
     script.onerror = (error) => {
       console.error('Failed to load Mapbox Search SDK:', error);
-      sdkLoadPromise = null;
+      sdkLoadPromise = null; // Clear the promise to allow retrying
       reject(error);
     };
     
@@ -111,6 +125,9 @@ export function initializeMapboxAutofill(inputElement: HTMLInputElement, formEle
   }
   
   try {
+    // Ensure the input element has the required attributes
+    inputElement.setAttribute('autocomplete', 'street-address');
+    
     // Create the autofill instance with merged options
     const autofill = window.MapboxSearchSDK.autofill({
       accessToken: MAPBOX_ACCESS_TOKEN,
@@ -118,8 +135,14 @@ export function initializeMapboxAutofill(inputElement: HTMLInputElement, formEle
         ...options
       }
     });
-
-    console.log('Mapbox Autofill initialized successfully');
+    
+    // Log success or failure
+    if (autofill) {
+      console.log('Mapbox Autofill initialized successfully');
+    } else {
+      console.warn('Mapbox Autofill initialization returned null');
+    }
+    
     return autofill;
   } catch (error) {
     console.error('Error initializing Mapbox Autofill:', error);
