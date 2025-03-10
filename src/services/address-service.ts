@@ -101,8 +101,9 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
 
     console.log('Starting Mapbox search for:', query);
     
-    // Use a more permissive search with multiple types to get better results
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,place,locality,neighborhood,poi&limit=5`;
+    // Use a broader search with more types to get comprehensive results
+    // We're explicitly setting all possible address types to ensure maximum matches
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,postcode,place,locality,neighborhood,poi,district,region&limit=5&autocomplete=true`;
     
     console.log('Searching addresses with Mapbox API query:', query);
     const response = await fetch(url);
