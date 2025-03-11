@@ -23,7 +23,15 @@ export type Subcategory = Tables<'subcategories'>
 export type UserPharmacy = Tables<'user_pharmacies'>
 export type Notification = Tables<'notifications'>
 export type Teleconsultation = Tables<'teleconsultations'>
-export type PharmacyTeamMember = Tables<'pharmacy_team_members'>
+
+// Update the PharmacyTeamMember type to match the database schema
+export type PharmacyTeamMember = {
+  id: string;
+  user_id: string;
+  pharmacy_id: string;
+  role: string;
+  created_at: string;
+};
 
 // Define a custom type for doctor workplace since it's not in the generated types yet
 export interface DoctorWorkplace {

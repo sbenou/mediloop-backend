@@ -1,68 +1,128 @@
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PharmacyTeamMember } from "@/types/supabase";
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { PharmacyTeamMember } from '@/types/supabase';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/components/ui/use-toast';
 
-export type PharmacyTeamMemberFormValues = {
-  id?: string;
-  full_name: string;
-  email: string;
-  phone_number?: string;
-  role: string;
-  pharmacy_id: string;
-  user_id?: string;
-};
-
-interface PharmacyTeamMemberFormProps {
-  initialData?: Partial<PharmacyTeamMemberFormValues>;
-  onSubmit: (data: PharmacyTeamMemberFormValues) => void;
-  onCancel: () => void;
-  isEditing: boolean;
-  pharmacyId: string;
-}
-
+// Define the form schema with Zod
 const formSchema = z.object({
-  id: z.string().optional(),
-  full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
+  full_name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Invalid email address" }),
   phone_number: z.string().optional(),
-  role: z.string().min(1, { message: "Please select a role." }),
-  pharmacy_id: z.string(),
-  user_id: z.string().optional(),
+  role: z.string(),
 });
 
-export const PharmacyTeamMemberForm = ({ 
-  initialData, 
-  onSubmit, 
-  onCancel, 
-  isEditing,
-  pharmacyId
-}: PharmacyTeamMemberFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+// Form values type that matches our schema
+export type PharmacyTeamMemberFormValues = z.infer<typeof formSchema>;
 
-  const form = useForm<z.infer<typeof formSchema>>({
+interface PharmacyTeamMemberFormProps {
+  pharmacyId: string;
+  teamMember?: PharmacyTeamMember & {
+    full_name?: string;
+    email?: string;
+    phone_number?: string;
+  };
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+const PharmacyTeamMemberForm: React.FC<PharmacyTeamMemberFormProps> = ({
+  pharmacyId,
+  teamMember,
+  onSuccess,
+  onCancel
+}) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Initialize the form with default values or the values of the team member being edited
+  const form = useForm<PharmacyTeamMemberFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: initialData?.id || undefined,
-      full_name: initialData?.full_name || "",
-      email: initialData?.email || "",
-      phone_number: initialData?.phone_number || "",
-      role: initialData?.role || "pharmacy_user",
-      pharmacy_id: pharmacyId,
-      user_id: initialData?.user_id,
-    },
+      full_name: teamMember?.full_name || '',
+      email: teamMember?.email || '',
+      phone_number: teamMember?.phone_number || '',
+      role: teamMember?.role || 'pharmacy_user',
+    }
   });
 
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true);
+  const handleSubmit = async (values: PharmacyTeamMemberFormValues) => {
     try {
-      await onSubmit(values as PharmacyTeamMemberFormValues);
+      setIsSubmitting(true);
+      
+      if (teamMember) {
+        // Update existing team member
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: values.full_name,
+            email: values.email,
+            phone_number: values.phone_number,
+          })
+          .eq('id', teamMember.user_id);
+          
+        if (error) throw error;
+        
+        // Update role in pharmacy_team_members if changed
+        if (teamMember.role !== values.role) {
+          const { error: roleError } = await supabase
+            .from('pharmacy_team_members')
+            .update({ role: values.role })
+            .eq('id', teamMember.id);
+            
+          if (roleError) throw roleError;
+        }
+        
+        toast({
+          title: "Success",
+          description: "Team member updated successfully",
+        });
+      } else {
+        // Create new team member - first create auth user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: values.email,
+          password: 'TemporaryPassword123', // This should be randomly generated or provided by form
+          options: {
+            data: {
+              full_name: values.full_name,
+              role: values.role,
+            }
+          }
+        });
+
+        if (authError) throw authError;
+        if (!authData.user) throw new Error("Failed to create user account");
+
+        // Add to pharmacy team
+        const { error: teamError } = await supabase
+          .from('pharmacy_team_members')
+          .insert({
+            user_id: authData.user.id,
+            pharmacy_id: pharmacyId,
+            role: values.role,
+          });
+
+        if (teamError) throw teamError;
+
+        toast({
+          title: "Success",
+          description: "New team member added successfully",
+        });
+      }
+      
+      onSuccess();
+    } catch (error) {
+      console.error('Error saving team member:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to ${teamMember ? 'update' : 'add'} team member`,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -78,7 +138,7 @@ export const PharmacyTeamMemberForm = ({
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="John Doe" />
+                <Input placeholder="John Doe" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -92,7 +152,12 @@ export const PharmacyTeamMemberForm = ({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input {...field} type="email" placeholder="john@example.com" />
+                <Input 
+                  type="email" 
+                  placeholder="john@example.com" 
+                  {...field} 
+                  disabled={!!teamMember} // Disable email editing for existing members
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -104,9 +169,9 @@ export const PharmacyTeamMemberForm = ({
           name="phone_number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone Number (Optional)</FormLabel>
+              <FormLabel>Phone Number (optional)</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="+1234567890" />
+                <Input placeholder="+1234567890" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -119,21 +184,15 @@ export const PharmacyTeamMemberForm = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Role</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="pharmacy_user">Pharmacy Staff</SelectItem>
-                  <SelectItem value="pharmacist">Pharmacist</SelectItem>
-                  <SelectItem value="pharmacy_manager">Pharmacy Manager</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <select 
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  {...field}
+                >
+                  <option value="pharmacy_user">Pharmacy Staff</option>
+                  <option value="pharmacist">Pharmacist</option>
+                </select>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -152,10 +211,12 @@ export const PharmacyTeamMemberForm = ({
             type="submit"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Create'}
+            {isSubmitting ? 'Saving...' : teamMember ? 'Update' : 'Add'} Team Member
           </Button>
         </div>
       </form>
     </Form>
   );
 };
+
+export default PharmacyTeamMemberForm;
