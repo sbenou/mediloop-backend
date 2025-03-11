@@ -71,12 +71,18 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
       const addressToInsert = {
         ...address,
         user_id: userId,
-        is_default: !existingAddresses?.length || address.is_default
+        is_default: !existingAddresses?.length || address.is_default,
+        // Ensure all required fields are present and not optional
+        street: address.street,
+        city: address.city,
+        postal_code: address.postal_code,
+        country: address.country,
+        type: address.type
       };
 
       const { error } = await supabase
         .from('addresses')
-        .insert(addressToInsert);
+        .insert([addressToInsert]);
 
       if (error) throw error;
     },

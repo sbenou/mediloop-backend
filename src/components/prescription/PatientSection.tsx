@@ -8,7 +8,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { UseFormReturn } from "react-hook-form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandList, CommandItem, CommandGroup, CommandInput } from "@/components/ui/command";
@@ -16,9 +15,9 @@ import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import flags from 'react-phone-number-input/flags';
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, MapPin } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import { getCountryCallingCode } from 'react-phone-number-input';
-import AddressSearchDialog from "../address/AddressSearchDialog";
+import AddressFields from "@/components/address/AddressFields";
 
 interface PatientSectionProps {
   form: UseFormReturn<any>;
@@ -30,9 +29,6 @@ const PatientSection = ({ form }: PatientSectionProps) => {
   const [isPhoneValid, setIsPhoneValid] = useState(true);
   const [countrySelectOpen, setCountrySelectOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
-  
-  // Address dialog state
-  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
 
   useEffect(() => {
     if (phoneValue) {
@@ -66,14 +62,6 @@ const PatientSection = ({ form }: PatientSectionProps) => {
         <ChevronsUpDown className="h-4 w-4 ml-2 opacity-50 shrink-0" />
       </button>
     );
-  };
-
-  // Handle address selection from the dialog
-  const handleAddressSelect = (address: string) => {
-    form.setValue('patientAddress', address, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
   };
 
   return (
@@ -185,44 +173,14 @@ const PatientSection = ({ form }: PatientSectionProps) => {
         )}
       />
       
-      <FormField
-        control={form.control}
-        name="patientAddress"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Patient Address</FormLabel>
-            <FormControl>
-              <div className="relative flex">
-                <Input
-                  {...field}
-                  placeholder="Enter patient address"
-                  className="bg-accent/5 pr-10"
-                  readOnly
-                  onClick={() => setAddressDialogOpen(true)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full"
-                  onClick={() => setAddressDialogOpen(true)}
-                >
-                  <MapPin className="h-4 w-4" />
-                </Button>
-              </div>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      
-      {/* Address Search Dialog */}
-      <AddressSearchDialog
-        open={addressDialogOpen}
-        onOpenChange={setAddressDialogOpen}
-        onSelectAddress={handleAddressSelect}
-        initialValue={form.getValues("patientAddress") || ""}
-      />
+      {/* Replace the previous address field and dialog with AddressFields component */}
+      <div className="space-y-4">
+        <h4 className="font-medium">Patient Address</h4>
+        <AddressFields 
+          form={form} 
+          prefix="patient" 
+        />
+      </div>
     </div>
   );
 };
