@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,11 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { NextOfKin, RelationType } from "../types";
-import { MapPin, Search, Loader2, X } from "lucide-react";
-import { searchAddressesByQuery } from "@/services/address-service";
+import { MapPin, Loader2 } from "lucide-react";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import AddressSearchDialog from "@/components/address/AddressSearchDialog";
+import { searchAddress } from "@/services/geocoding";
 
 const relationOptions: { value: RelationType; label: string }[] = [
   { value: "parent", label: "Parent" },
@@ -49,8 +47,11 @@ export const NextOfKinForm = ({
   onCancel, 
   isEditing = false 
 }: NextOfKinFormProps) => {
-  // Replace the direct address search with the dialog approach
-  const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const streetInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -81,40 +82,75 @@ export const NextOfKinForm = ({
     }
   };
 
-  const handleAddressSelect = (formattedAddress: string) => {
-    // Parse the formatted address and update individual fields
-    const addressParts = formattedAddress.split(', ');
+  // Handle street address input changes with debounce
+  const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    form.setValue('street', query);
     
-    if (addressParts.length >= 3) {
-      // Extract components based on typical format: Street, City, PostalCode, Country
-      const street = addressParts[0];
-      const city = addressParts[1];
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    if (query && query.length >= 3) {
+      setIsSearching(true);
+      setShowSuggestions(true);
       
-      // Handle postal code which might be embedded with the city or separated
-      let postalCode = '';
-      let country = '';
-      
-      if (addressParts.length === 3) {
-        // Format likely: Street, City, Country
-        country = addressParts[2];
-        
-        // Try to extract postal code from city
-        const postalMatch = city.match(/\b\d{4,5}\b/);
-        if (postalMatch) {
-          postalCode = postalMatch[0];
-        }
-      } else if (addressParts.length >= 4) {
-        // Format likely: Street, City, PostalCode, Country
-        postalCode = addressParts[2];
-        country = addressParts[3];
+      searchTimeoutRef.current = setTimeout(() => {
+        searchAddresses(query);
+      }, 300); // 300ms debounce time
+    } else {
+      setSuggestions([]);
+      setIsSearching(false);
+      if (query.length === 0) {
+        setShowSuggestions(false);
       }
-      
-      form.setValue('street', street);
-      form.setValue('city', city.replace(/\b\d{4,5}\b/, '').trim());
-      form.setValue('postal_code', postalCode);
-      form.setValue('country', country);
     }
   };
+
+  // Search for addresses
+  const searchAddresses = async (query: string) => {
+    try {
+      console.log('Executing address search for:', query);
+      const results = await searchAddress(query);
+      console.log('Address suggestions received:', results);
+      setSuggestions(results);
+    } catch (error) {
+      console.error("Error searching addresses:", error);
+      setSuggestions([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle address suggestion selection
+  const handleAddressSelect = (address: any) => {
+    console.log('Selected address:', address);
+    
+    form.setValue('street', address.street || '');
+    form.setValue('city', address.city || '');
+    form.setValue('postal_code', address.postal_code || '');
+    form.setValue('country', address.country || '');
+    
+    setShowSuggestions(false);
+  };
+
+  // Handle clicking outside to close suggestions
+  const handleDocumentClick = (e: MouseEvent) => {
+    if (showSuggestions && streetInputRef.current && !streetInputRef.current.contains(e.target as Node)) {
+      setShowSuggestions(false);
+    }
+  };
+
+  // Add and remove document click listener
+  useEffect(() => {
+    if (showSuggestions) {
+      document.addEventListener('click', handleDocumentClick);
+    }
+    
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [showSuggestions]);
 
   return (
     <Form {...form}>
@@ -189,7 +225,9 @@ export const NextOfKinForm = ({
                 <div className="relative">
                   <FormControl>
                     <Input 
-                      {...field} 
+                      {...field}
+                      ref={streetInputRef}
+                      onChange={handleStreetChange}
                       placeholder="Street address" 
                       className="pr-10"
                     />
@@ -199,10 +237,52 @@ export const NextOfKinForm = ({
                     variant="ghost"
                     size="icon"
                     className="absolute right-0 top-0 h-full"
-                    onClick={() => setIsAddressDialogOpen(true)}
+                    tabIndex={-1}
                   >
                     <MapPin className="h-4 w-4" />
                   </Button>
+                  
+                  {showSuggestions && (
+                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                      {isSearching ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <span>Searching addresses...</span>
+                        </div>
+                      ) : (
+                        <Command className="w-full">
+                          <CommandList>
+                            <CommandGroup>
+                              {suggestions.length > 0 ? (
+                                suggestions.map((address, index) => (
+                                  <CommandItem
+                                    key={index}
+                                    onSelect={() => handleAddressSelect(address)}
+                                    className="cursor-pointer"
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{address.street}</span>
+                                      <span className="text-xs text-gray-500">
+                                        {[address.city, address.postal_code, address.country]
+                                          .filter(Boolean)
+                                          .join(', ')}
+                                      </span>
+                                    </div>
+                                  </CommandItem>
+                                ))
+                              ) : (
+                                <div className="p-4 text-sm text-gray-500 text-center">
+                                  {field.value.length >= 3 
+                                    ? 'No suggestions found. Try adding more details.' 
+                                    : 'Type at least 3 characters to search'}
+                                </div>
+                              )}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <FormMessage />
               </FormItem>
@@ -263,14 +343,6 @@ export const NextOfKinForm = ({
           </Button>
         </div>
       </form>
-      
-      {/* Add the AddressSearchDialog component */}
-      <AddressSearchDialog
-        open={isAddressDialogOpen}
-        onOpenChange={setIsAddressDialogOpen}
-        onSelectAddress={handleAddressSelect}
-        initialValue={form.getValues().street}
-      />
     </Form>
   );
 };
