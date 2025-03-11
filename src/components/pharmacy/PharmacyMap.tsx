@@ -119,23 +119,21 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   }
 
   // Create coordinates for leaflet
-  const pharmacyPosition: L.LatLngExpression = [pharmacyCoordinates.lat, pharmacyCoordinates.lng];
-  const defaultCenter: L.LatLngExpression = pharmacyPosition;
+  const pharmacyPosition: [number, number] = [pharmacyCoordinates.lat, pharmacyCoordinates.lng];
 
   return (
     <div className="space-y-3">
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200">
         <MapContainer 
           style={{ height: '100%', width: '100%' }}
-          zoom={13}
           whenReady={() => setIsMapLoaded(true)}
-          // In React-Leaflet v5+, you need to use `defaultCenter` instead of `center`
-          center={defaultCenter}
+          defaultZoom={13}
+          defaultCenter={pharmacyPosition}
         >
           <TileLayer
-            // For React-Leaflet v5+, attribution and url are correctly passed as props
+            tileSize={256}
+            tileUrl="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           
           {/* Pharmacy Marker */}
