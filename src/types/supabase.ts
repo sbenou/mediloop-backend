@@ -41,20 +41,7 @@ export interface DoctorWorkplace {
   created_at: string;
 }
 
-// Define a custom extended type for pharmacy team members with profile information
-export interface PharmacyTeamMemberWithProfile extends PharmacyTeamMember {
-  full_name?: string;
-  email?: string;
-  avatar_url?: string | null;
-  is_active?: boolean;
-  phone_number?: string;
-  user_id: string;
-  pharmacy_id: string;
-  id: string;
-  role: string;
-}
-
-// Define a user profile type for avatar and other components
+// Define a complete user profile type for avatar and other components
 export interface UserProfile {
   id: string;
   avatar_url: string | null;
@@ -75,4 +62,13 @@ export interface UserProfile {
   created_at: string | null;
   updated_at: string | null;
   license_number: string | null;
+}
+
+// Define a custom extended type for pharmacy team members with profile information
+export interface PharmacyTeamMemberWithProfile extends PharmacyTeamMember {
+  full_name?: string;
+  email?: string;
+  avatar_url?: string | null;
+  is_active?: boolean;
+  phone_number?: string;
 }
