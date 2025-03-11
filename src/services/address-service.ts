@@ -1,16 +1,4 @@
 
-import { supabase } from "@/lib/supabase";
-
-interface AddressResult {
-  address?: {
-    street: string;
-    city: string;
-    country: string;
-    postal_code?: string;
-  };
-  error?: string;
-}
-
 interface AddressSuggestion {
   street: string;
   city: string;
@@ -19,113 +7,36 @@ interface AddressSuggestion {
   formatted: string;
 }
 
-interface GeoCoordinates {
-  longitude: number;
-  latitude: number;
-}
-
-export async function fetchAddressFromPostcode(postcode: string): Promise<AddressResult> {
-  try {
-    // Call the Supabase Edge Function that communicates with the Mapbox API
-    const { data, error } = await supabase.functions.invoke('get-geocoding', {
-      body: { query: postcode, types: 'postcode' }
-    });
-
-    if (error) throw error;
-
-    if (data && data.features && data.features.length > 0) {
-      const feature = data.features[0];
-      const { place_name, context } = feature;
-      
-      // Extract the address components from the Mapbox response
-      const city = context?.find((c: any) => c.id.startsWith('place'))?.text || '';
-      const country = context?.find((c: any) => c.id.startsWith('country'))?.text || '';
-      
-      return {
-        address: {
-          street: place_name || '',
-          city,
-          country,
-          postal_code: postcode
-        }
-      };
-    }
-    
-    return { error: 'No address found for this postcode' };
-  } catch (error) {
-    console.error('Error fetching address from postcode:', error);
-    return { error: 'Failed to fetch address' };
-  }
-}
-
 export async function searchAddressesByQuery(query: string): Promise<AddressSuggestion[]> {
   try {
-    const { data, error } = await supabase.functions.invoke('get-geocoding', {
-      body: { query }
-    });
-
-    if (error) throw error;
-
-    if (data && data.features && data.features.length > 0) {
-      return data.features.map((feature: any) => {
-        const { place_name, context, text } = feature;
-        
-        // Extract address components
-        const city = context?.find((c: any) => c.id.startsWith('place'))?.text || '';
-        const region = context?.find((c: any) => c.id.startsWith('region'))?.text || '';
-        const country = context?.find((c: any) => c.id.startsWith('country'))?.text || '';
-        const postalCode = context?.find((c: any) => c.id.startsWith('postcode'))?.text || '';
-        
-        return {
-          street: text || '',
-          city: city || region,
-          postal_code: postalCode,
-          country,
-          formatted: place_name
-        };
-      });
+    // Using Mapbox geocoding API
+    const mapboxApiKey = process.env.NEXT_PUBLIC_MAPBOX_API_KEY || "YOUR_MAPBOX_API_KEY";
+    const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxApiKey}&types=address&limit=5`;
+    
+    const response = await fetch(endpoint);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch address suggestions');
     }
     
-    return [];
-  } catch (error) {
-    console.error('Error searching addresses:', error);
-    return [];
-  }
-}
-
-export async function reverseGeocode(coordinates: GeoCoordinates): Promise<AddressSuggestion | null> {
-  try {
-    const { data, error } = await supabase.functions.invoke('get-geocoding', {
-      body: { 
-        longitude: coordinates.longitude,
-        latitude: coordinates.latitude
-      }
-    });
-
-    if (error) throw error;
-
-    if (data && data.features && data.features.length > 0) {
-      const feature = data.features[0];
-      const { place_name, context, text } = feature;
-      
-      // Extract address components
-      const city = context?.find((c: any) => c.id.startsWith('place'))?.text || '';
-      const region = context?.find((c: any) => c.id.startsWith('region'))?.text || '';
-      const country = context?.find((c: any) => c.id.startsWith('country'))?.text || '';
-      const postalCode = context?.find((c: any) => c.id.startsWith('postcode'))?.text || '';
+    // Transform Mapbox response to our AddressSuggestion format
+    return data.features.map((feature: any) => {
+      const context = feature.context || [];
+      const cityContext = context.find((c: any) => c.id.startsWith('place'));
+      const postalContext = context.find((c: any) => c.id.startsWith('postcode'));
+      const countryContext = context.find((c: any) => c.id.startsWith('country'));
       
       return {
-        street: text || '',
-        city: city || region,
-        postal_code: postalCode,
-        country,
-        formatted: place_name
+        street: feature.text || '',
+        city: cityContext ? cityContext.text : '',
+        postal_code: postalContext ? postalContext.text : '',
+        country: countryContext ? countryContext.text : '',
+        formatted: feature.place_name || '',
       };
-    }
-    
-    return null;
+    });
   } catch (error) {
-    console.error('Error in reverse geocoding:', error);
-    return null;
+    console.error('Error searching for addresses:', error);
+    return [];
   }
 }
