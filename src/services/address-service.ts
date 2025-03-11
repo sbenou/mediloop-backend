@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { PharmacyTeamMemberWithProfile } from '@/types/supabase';
 import { Database } from '@/integrations/supabase/types';
@@ -62,17 +61,43 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
       throw new Error('Pharmacy ID is required');
     }
 
-    // Use the Supabase RPC function which returns the data in the required format
     const { data, error } = await supabase
-      .rpc('get_pharmacy_team_members', { pharmacy_id_param: pharmacyId });
+      .from('pharmacy_team_members')
+      .select(`
+        id,
+        user_id,
+        pharmacy_id,
+        role,
+        created_at,
+        deleted_at,
+        profiles:user_id (
+          full_name,
+          email,
+          avatar_url,
+          is_blocked,
+          role_id,
+          date_of_birth,
+          city,
+          auth_method,
+          doctor_stamp_url,
+          doctor_signature_url,
+          cns_card_front,
+          cns_card_back,
+          cns_number,
+          updated_at,
+          license_number
+        )
+      `)
+      .eq('pharmacy_id', pharmacyId)
+      .is('deleted_at', null);
     
     if (error) {
       console.error('Error fetching team members:', error);
       throw new Error(`Failed to fetch team members: ${error.message}`);
     }
 
-    // The returned data is an array of JSON objects that we need to parse into our type
-    const teamMembers: PharmacyTeamMemberWithProfile[] = (data || []).map((member: any) => {
+    const teamMembers: PharmacyTeamMemberWithProfile[] = data.map(member => {
+      const profile = member.profiles || {};
       return {
         id: member.id,
         user_id: member.user_id,
@@ -80,22 +105,22 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
         role: member.role,
         created_at: member.created_at,
         deleted_at: member.deleted_at,
-        full_name: member.full_name || null,
-        email: member.email || null,
-        avatar_url: member.avatar_url || null,
-        is_active: member.is_active || false,
-        is_blocked: member.is_blocked || false,
-        role_id: member.role_id || null,
-        date_of_birth: member.date_of_birth || null,
-        city: member.city || null,
-        auth_method: member.auth_method || null,
-        doctor_stamp_url: member.doctor_stamp_url || null,
-        doctor_signature_url: member.doctor_signature_url || null,
-        cns_card_front: member.cns_card_front || null,
-        cns_card_back: member.cns_card_back || null,
-        cns_number: member.cns_number || null,
-        updated_at: member.updated_at || null,
-        license_number: member.license_number || null
+        full_name: profile.full_name || null,
+        email: profile.email || null,
+        avatar_url: profile.avatar_url || null,
+        is_active: !profile.is_blocked,
+        is_blocked: profile.is_blocked || false,
+        role_id: profile.role_id || null,
+        date_of_birth: profile.date_of_birth || null,
+        city: profile.city || null,
+        auth_method: profile.auth_method || null,
+        doctor_stamp_url: profile.doctor_stamp_url || null,
+        doctor_signature_url: profile.doctor_signature_url || null,
+        cns_card_front: profile.cns_card_front || null,
+        cns_card_back: profile.cns_card_back || null,
+        cns_number: profile.cns_number || null,
+        updated_at: profile.updated_at || null,
+        license_number: profile.license_number || null
       };
     });
     
