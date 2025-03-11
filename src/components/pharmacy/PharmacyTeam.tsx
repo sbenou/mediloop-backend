@@ -529,7 +529,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                                                   .filter(Boolean)
                                                   .join(', ')}
                                               </div>
-                                            </CommandItem>
+                                            </div>
+                                          </CommandItem>
                                         ))}
                                       </CommandGroup>
                                     )}
