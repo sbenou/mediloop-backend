@@ -8,9 +8,10 @@ import { toast } from "@/components/ui/use-toast";
 import { NextOfKin, RelationType } from "./types";
 import { NextOfKinForm } from "./nextofkin/NextOfKinForm";
 import { NextOfKinList } from "./nextofkin/NextOfKinList";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const NextOfKinManagement = () => {
-  const [isAdding, setIsAdding] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingKin, setEditingKin] = useState<NextOfKin | null>(null);
   const queryClient = useQueryClient();
 
@@ -77,7 +78,7 @@ const NextOfKinManagement = () => {
         title: "Contact added",
         description: "Next of kin contact has been added successfully.",
       });
-      setIsAdding(false);
+      closeDialog();
     },
     onError: (error) => {
       console.error('Error adding next of kin:', error);
@@ -115,7 +116,7 @@ const NextOfKinManagement = () => {
         title: "Contact updated",
         description: "Next of kin contact has been updated successfully.",
       });
-      setEditingKin(null);
+      closeDialog();
     },
     onError: (error) => {
       console.error('Error updating next of kin:', error);
@@ -175,11 +176,16 @@ const NextOfKinManagement = () => {
 
   const handleEditKin = (kin: NextOfKin) => {
     setEditingKin(kin);
-    setIsAdding(false);
+    setIsDialogOpen(true);
   };
 
-  const handleCancel = () => {
-    setIsAdding(false);
+  const openAddDialog = () => {
+    setEditingKin(null);
+    setIsDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
     setEditingKin(null);
   };
 
@@ -191,28 +197,19 @@ const NextOfKinManagement = () => {
     );
   }
 
+  const dialogTitle = editingKin ? "Edit Next of Kin Contact" : "Add Next of Kin Contact";
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Next of Kin Contacts</CardTitle>
-          {!isAdding && !editingKin && (
-            <Button onClick={() => setIsAdding(true)}>
-              Add Contact
-            </Button>
-          )}
+          <Button onClick={openAddDialog}>
+            Add Contact
+          </Button>
         </CardHeader>
         <CardContent>
-          {isAdding ? (
-            <NextOfKinForm onSubmit={handleAddKin} onCancel={handleCancel} />
-          ) : editingKin ? (
-            <NextOfKinForm 
-              initialData={editingKin} 
-              onSubmit={handleUpdateKin} 
-              onCancel={handleCancel} 
-              isEditing 
-            />
-          ) : contacts && contacts.length > 0 ? (
+          {contacts && contacts.length > 0 ? (
             <NextOfKinList 
               contacts={contacts} 
               onEdit={handleEditKin} 
@@ -226,6 +223,21 @@ const NextOfKinManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog for adding/editing next of kin */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+          </DialogHeader>
+          <NextOfKinForm 
+            initialData={editingKin || undefined} 
+            onSubmit={editingKin ? handleUpdateKin : handleAddKin} 
+            onCancel={closeDialog} 
+            isEditing={!!editingKin}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
