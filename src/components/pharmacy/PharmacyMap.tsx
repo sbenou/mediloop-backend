@@ -209,9 +209,13 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     }
   }, [userLocation, pharmacyCoordinates, isUsingLocation]);
   
-  // Update markers when coordinates or map changes and calculate distance
+  // Update markers when coordinates or map changes
   useEffect(() => {
     if (!map.current || !isMapLoaded) return;
+    
+    console.log('Updating map markers with pharmacy coordinates:', pharmacyCoordinates);
+    console.log('User location:', userLocation);
+    console.log('Map loaded:', isMapLoaded);
     
     // Clear existing markers
     if (pharmacyMarker.current) {
@@ -307,7 +311,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200 relative">
         <div 
           ref={mapContainer} 
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0"
           style={{ width: '100%', height: '100%', position: 'absolute' }}
         />
       </div>
