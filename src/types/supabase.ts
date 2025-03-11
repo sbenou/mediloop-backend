@@ -65,22 +65,23 @@ export interface UserProfile {
 }
 
 // Define a custom extended type for pharmacy team members with profile information
+// Make sure it has all required properties from UserProfile when needed for createUserProfile function
 export interface PharmacyTeamMemberWithProfile extends PharmacyTeamMember {
-  full_name?: string | null;
-  email?: string | null;
-  avatar_url?: string | null;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
   is_active?: boolean;
-  is_blocked?: boolean | null;
+  is_blocked: boolean | null;
   phone_number?: string;
-  role_id?: string | null;
-  date_of_birth?: string | null;
-  city?: string | null;
-  auth_method?: string | null;
-  doctor_stamp_url?: string | null;
-  doctor_signature_url?: string | null;
-  cns_card_front?: string | null;
-  cns_card_back?: string | null;
-  cns_number?: string | null;
-  updated_at?: string | null;
-  license_number?: string | null;
+  role_id: string | null;  // Changed from optional to required
+  date_of_birth: string | null;
+  city: string | null;
+  auth_method: string | null;
+  doctor_stamp_url: string | null;
+  doctor_signature_url: string | null;
+  cns_card_front: string | null;
+  cns_card_back: string | null;
+  cns_number: string | null;
+  updated_at: string | null;
+  license_number: string | null;
 }

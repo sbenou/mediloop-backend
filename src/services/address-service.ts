@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -99,12 +98,12 @@ export const getPharmacyTeamMembers = async (pharmacyId: string) => {
       const profile = profiles?.find(p => p.id === teamMember.user_id);
       return {
         ...teamMember,
-        // Include all required UserProfile properties
-        full_name: profile?.full_name || 'Unknown',
-        email: profile?.email || 'No email',
-        avatar_url: profile?.avatar_url,
+        // Include all required UserProfile properties with non-null defaults when needed
+        full_name: profile?.full_name || null,
+        email: profile?.email || null,
+        avatar_url: profile?.avatar_url || null,
         is_active: profile ? !profile.is_blocked : true,
-        is_blocked: profile?.is_blocked || false,
+        is_blocked: profile?.is_blocked || null,
         role_id: profile?.role_id || null,
         date_of_birth: profile?.date_of_birth || null,
         city: profile?.city || null,
