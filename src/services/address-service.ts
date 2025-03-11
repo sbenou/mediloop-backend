@@ -66,14 +66,73 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
       throw new Error('Pharmacy ID is required');
     }
 
-    // Use direct SQL query to bypass RLS policies using service role
-    const { data: teamMembers, error: teamError } = await supabase
-      .rpc('get_pharmacy_team_members', { pharmacy_id_param: pharmacyId });
+    // Instead of using RPC, we'll use a direct SQL query with a service role
+    // This approaches the data directly without relying on the RPC function that's causing issues
+    const { data, error } = await supabase
+      .from('pharmacy_team_members')
+      .select(`
+        id,
+        user_id,
+        pharmacy_id,
+        role,
+        created_at,
+        deleted_at,
+        profiles:user_id (
+          full_name,
+          email,
+          avatar_url,
+          is_blocked,
+          role_id,
+          date_of_birth,
+          city,
+          auth_method,
+          doctor_stamp_url,
+          doctor_signature_url,
+          cns_card_front,
+          cns_card_back,
+          cns_number,
+          updated_at,
+          license_number
+        )
+      `)
+      .eq('pharmacy_id', pharmacyId)
+      .is('deleted_at', null);
     
-    if (teamError) {
-      console.error('Error fetching team members:', teamError);
-      throw new Error(`Failed to fetch team members: ${teamError.message}`);
+    if (error) {
+      console.error('Error fetching team members:', error);
+      throw new Error(`Failed to fetch team members: ${error.message}`);
     }
+    
+    // Transform the nested data structure into the flat PharmacyTeamMemberWithProfile structure
+    const teamMembers: PharmacyTeamMemberWithProfile[] = data.map(member => {
+      const profile = member.profiles || {};
+      
+      return {
+        id: member.id,
+        user_id: member.user_id,
+        pharmacy_id: member.pharmacy_id,
+        role: member.role,
+        created_at: member.created_at,
+        deleted_at: member.deleted_at,
+        // Profile fields
+        full_name: profile.full_name,
+        email: profile.email,
+        avatar_url: profile.avatar_url,
+        is_active: !profile.is_blocked,
+        is_blocked: profile.is_blocked,
+        role_id: profile.role_id,
+        date_of_birth: profile.date_of_birth,
+        city: profile.city,
+        auth_method: profile.auth_method,
+        doctor_stamp_url: profile.doctor_stamp_url,
+        doctor_signature_url: profile.doctor_signature_url,
+        cns_card_front: profile.cns_card_front,
+        cns_card_back: profile.cns_card_back,
+        cns_number: profile.cns_number,
+        updated_at: profile.updated_at,
+        license_number: profile.license_number
+      };
+    });
     
     return teamMembers || [];
   } catch (error) {
