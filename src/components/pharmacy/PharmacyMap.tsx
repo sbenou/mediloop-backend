@@ -56,15 +56,13 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   useEffect(() => {
     const getPharmacyCoordinates = async () => {
       try {
-        const query = `${pharmacy.address}, ${pharmacy.city} ${pharmacy.postal_code}`;
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
-        const data = await response.json();
+        // Cache check - this will help avoid unnecessary API calls
+        const cacheKey = `pharmacy-coords-${pharmacy.address}-${pharmacy.city}-${pharmacy.postal_code}`;
+        const cachedCoords = sessionStorage.getItem(cacheKey);
         
-        if (data && data.length > 0) {
-          const coords = {
-            lat: parseFloat(data[0].lat),
-            lng: parseFloat(data[0].lon)
-          };
+        if (cachedCoords) {
+          console.log('Using cached pharmacy coordinates');
+          const coords = JSON.parse(cachedCoords);
           setPharmacyCoordinates(coords);
           
           // Calculate distance if user location is available
@@ -77,9 +75,52 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
             );
             setDistance(distanceValue);
           }
+          return;
+        }
+        
+        console.log('Fetching pharmacy coordinates for:', pharmacy.address);
+        const query = `${pharmacy.address}, ${pharmacy.city} ${pharmacy.postal_code}`;
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+        
+        if (!response.ok) {
+          throw new Error(`Geocoding API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Geocoding response:', data);
+        
+        if (data && data.length > 0) {
+          const coords = {
+            lat: parseFloat(data[0].lat),
+            lng: parseFloat(data[0].lon)
+          };
+          console.log('Found coordinates:', coords);
+          
+          // Cache the coordinates
+          sessionStorage.setItem(cacheKey, JSON.stringify(coords));
+          setPharmacyCoordinates(coords);
+          
+          // Calculate distance if user location is available
+          if (userLocation) {
+            const distanceValue = calculateDistance(
+              userLocation.lat, 
+              userLocation.lon, 
+              coords.lat, 
+              coords.lng
+            );
+            setDistance(distanceValue);
+          }
+        } else {
+          console.error('No location found for address:', query);
+          // Default coordinates for Luxembourg as fallback
+          const defaultCoords = { lat: 49.8153, lng: 6.1296 };
+          setPharmacyCoordinates(defaultCoords);
         }
       } catch (error) {
         console.error('Error fetching pharmacy coordinates:', error);
+        // Default coordinates for Luxembourg as fallback
+        const defaultCoords = { lat: 49.8153, lng: 6.1296 };
+        setPharmacyCoordinates(defaultCoords);
       }
     };
     
@@ -136,14 +177,20 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200">
         <MapContainer 
           style={{ height: '100%', width: '100%' }}
-          whenReady={() => setIsMapLoaded(true)}
+          whenReady={() => {
+            console.log('Map is ready!');
+            setIsMapLoaded(true);
+          }}
         >
+          {/* This controller component will set the view */}
           <MapController 
             center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]} 
             zoom={13} 
           />
+          
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
           />
           
           {/* Pharmacy Marker */}
