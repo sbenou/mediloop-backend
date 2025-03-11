@@ -118,27 +118,21 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     );
   }
 
-  // Create coordinates for leaflet
-  const pharmacyPosition: [number, number] = [pharmacyCoordinates.lat, pharmacyCoordinates.lng];
-  const mapOptions = {
-    center: pharmacyPosition,
-    zoom: 13
-  };
-
   return (
     <div className="space-y-3">
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200">
         <MapContainer 
+          center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]} 
+          zoom={13} 
           style={{ height: '100%', width: '100%' }}
           whenReady={() => setIsMapLoaded(true)}
-          {...mapOptions}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           
           {/* Pharmacy Marker */}
-          <Marker position={pharmacyPosition}>
+          <Marker position={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]}>
             <Popup>
               <div className="text-sm font-medium">{pharmacy.name}</div>
               <div className="text-xs">{pharmacy.address}</div>
@@ -147,7 +141,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           
           {/* User location marker (if available) */}
           {userLocation && (
-            <Marker position={[userLocation.lat, userLocation.lon] as L.LatLngExpression}>
+            <Marker position={[userLocation.lat, userLocation.lon]}>
               <Popup>Your location</Popup>
             </Marker>
           )}
