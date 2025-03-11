@@ -9,21 +9,6 @@ import { calculateDistance } from '@/lib/utils/distance';
 import { Button } from '@/components/ui/button';
 import L from 'leaflet';
 
-// Fix Leaflet icon issues in browser environments
-// This is needed because Leaflet's default icon paths are broken in bundled environments
-useEffect(() => {
-  // Only run this in browser environment
-  if (typeof window !== 'undefined') {
-    // Leaflet's default icon uses a marker that might 404, let's fix that
-    delete L.Icon.Default.prototype._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-      iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-    });
-  }
-}, []);
-
 interface PharmacyMapProps {
   pharmacy: {
     id: string;
@@ -39,6 +24,20 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [distance, setDistance] = useState<string | null>(null);
   const userLocation = useRecoilValue(userLocationState);
+  
+  // Fix Leaflet icon issues in browser environments
+  useEffect(() => {
+    // Only run this in browser environment
+    if (typeof window !== 'undefined') {
+      // Leaflet's default icon uses a marker that might 404, let's fix that
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+      });
+    }
+  }, []);
   
   // Get pharmacy coordinates based on address
   useEffect(() => {
@@ -119,22 +118,28 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     );
   }
 
+  // Create coordinates for leaflet
+  const pharmacyPosition: L.LatLngExpression = [pharmacyCoordinates.lat, pharmacyCoordinates.lng];
+  const defaultCenter: L.LatLngExpression = pharmacyPosition;
+
   return (
     <div className="space-y-3">
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200">
-        <MapContainer
-          center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng] as L.LatLngExpression}
-          zoom={13}
+        <MapContainer 
           style={{ height: '100%', width: '100%' }}
+          zoom={13}
           whenReady={() => setIsMapLoaded(true)}
+          // In React-Leaflet v5+, you need to use `defaultCenter` instead of `center`
+          center={defaultCenter}
         >
           <TileLayer
+            // For React-Leaflet v5+, attribution and url are correctly passed as props
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           
           {/* Pharmacy Marker */}
-          <Marker position={[pharmacyCoordinates.lat, pharmacyCoordinates.lng] as L.LatLngExpression}>
+          <Marker position={pharmacyPosition}>
             <Popup>
               <div className="text-sm font-medium">{pharmacy.name}</div>
               <div className="text-xs">{pharmacy.address}</div>
