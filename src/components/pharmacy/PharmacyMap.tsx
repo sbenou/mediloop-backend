@@ -1,12 +1,14 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { MapPin, Navigation } from 'lucide-react';
-import { useRecoilValue } from 'recoil';
-import { userLocationState } from '@/store/location/atoms';
+import { MapPin, Navigation, MapPinOff } from 'lucide-react';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { userLocationState, isUsingLocationState } from '@/store/location/atoms';
 import { Button } from '@/components/ui/button';
 import { getCoordinatesWithMapbox, getDistanceFromUserToPharmacy } from '@/services/mapbox';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 // Default coordinates for common locations in case geocoding fails
 const DEFAULT_COORDINATES = {
@@ -40,7 +42,11 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [distance, setDistance] = useState<string | null>(null);
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
+  
   const userLocation = useRecoilValue(userLocationState);
+  const setUserLocation = useSetRecoilState(userLocationState);
+  const isUsingLocation = useRecoilValue(isUsingLocationState);
+  const setIsUsingLocation = useSetRecoilState(isUsingLocationState);
   
   // Get Mapbox token
   useEffect(() => {
@@ -102,6 +108,30 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     };
   }, [mapboxToken]);
   
+  // Get user's location when isUsingLocation changes to true
+  useEffect(() => {
+    if (isUsingLocation && navigator.geolocation) {
+      setIsCalculatingDistance(true);
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newUserLocation = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          };
+          
+          setUserLocation(newUserLocation);
+          setIsCalculatingDistance(false);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setIsUsingLocation(false);
+          setIsCalculatingDistance(false);
+        }
+      );
+    }
+  }, [isUsingLocation, setUserLocation, setIsUsingLocation]);
+  
   // Get pharmacy coordinates based on address
   useEffect(() => {
     const getPharmacyCoordinates = async () => {
@@ -118,7 +148,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           setPharmacyCoordinates(coords);
           
           // Calculate distance if user location is available
-          if (userLocation) {
+          if (userLocation && isUsingLocation) {
             setIsCalculatingDistance(true);
             const distanceValue = getDistanceFromUserToPharmacy(userLocation, coords);
             setDistance(distanceValue);
@@ -148,7 +178,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           setPharmacyCoordinates(coordinates);
           
           // Calculate distance if user location is available
-          if (userLocation) {
+          if (userLocation && isUsingLocation) {
             setIsCalculatingDistance(true);
             const distanceValue = getDistanceFromUserToPharmacy(userLocation, coordinates);
             setDistance(distanceValue);
@@ -173,9 +203,9 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     };
     
     getPharmacyCoordinates();
-  }, [pharmacy, userLocation]);
+  }, [pharmacy, userLocation, isUsingLocation]);
   
-  // Update markers when coordinates or map changes
+  // Update markers when coordinates or map changes and calculate distance
   useEffect(() => {
     if (!map.current || !isMapLoaded) return;
     
@@ -215,7 +245,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     }
     
     // Add user location marker if available
-    if (userLocation) {
+    if (userLocation && isUsingLocation) {
       const el = document.createElement('div');
       el.className = 'user-marker';
       el.style.width = '20px';
@@ -228,38 +258,24 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         .setLngLat([userLocation.lon, userLocation.lat])
         .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
         .addTo(map.current);
-    }
-  }, [pharmacyCoordinates, userLocation, isMapLoaded, pharmacy]);
-  
-  // Handle getting user's current location
-  const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      console.log('Geolocation is not supported by your browser');
-      return;
-    }
-    
-    setIsCalculatingDistance(true);
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const coords = {
-          lat: position.coords.latitude,
-          lon: position.coords.longitude
-        };
         
-        // Recalculate distance if pharmacy coordinates exist
-        if (pharmacyCoordinates) {
-          const distanceValue = getDistanceFromUserToPharmacy(coords, pharmacyCoordinates);
-          setDistance(distanceValue);
-        }
-        
-        setIsCalculatingDistance(false);
-      },
-      (error) => {
-        console.error('Error getting location:', error);
+      // Calculate and update distance
+      if (pharmacyCoordinates && !distance) {
+        setIsCalculatingDistance(true);
+        const distanceValue = getDistanceFromUserToPharmacy(userLocation, pharmacyCoordinates);
+        setDistance(distanceValue);
         setIsCalculatingDistance(false);
       }
-    );
+    }
+  }, [pharmacyCoordinates, userLocation, isMapLoaded, pharmacy, isUsingLocation, distance]);
+  
+  // Handle location toggle
+  const handleLocationToggle = (checked: boolean) => {
+    setIsUsingLocation(checked);
+    
+    if (!checked) {
+      setDistance(null);
+    }
   };
 
   if (!mapboxToken) {
@@ -295,8 +311,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200 relative">
         <div 
           ref={mapContainer} 
-          style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} 
-          className="w-full h-full"
+          className="absolute inset-0 w-full h-full"
         />
       </div>
       
@@ -307,22 +322,23 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           <p className="text-sm font-medium text-center text-primary">
             Calculating distance...
           </p>
-        ) : distance ? (
+        ) : isUsingLocation && distance ? (
           <p className="text-sm font-medium text-center text-primary">
             Distance: {distance}
           </p>
         ) : null}
         
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full mt-2 text-xs" 
-          onClick={handleGetCurrentLocation}
-          disabled={isCalculatingDistance}
-        >
-          <Navigation className="h-3 w-3 mr-1" />
-          {isCalculatingDistance ? 'Getting location...' : 'Get current location'}
-        </Button>
+        <div className="flex items-center justify-between space-x-2 mt-2">
+          <Label htmlFor="location-toggle" className="text-xs">
+            {isUsingLocation ? 'Using your location' : 'Share your location'}
+          </Label>
+          <Switch
+            id="location-toggle"
+            checked={isUsingLocation}
+            onCheckedChange={handleLocationToggle}
+            disabled={isCalculatingDistance}
+          />
+        </div>
       </div>
     </div>
   );
