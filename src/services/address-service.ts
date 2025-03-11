@@ -105,6 +105,7 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
     
     // Transform the nested data structure into the flat PharmacyTeamMemberWithProfile structure
     const teamMembers: PharmacyTeamMemberWithProfile[] = data.map(member => {
+      // Type the profile explicitly to handle possible undefined values correctly
       const profile = member.profiles || {};
       
       return {
@@ -114,23 +115,23 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
         role: member.role,
         created_at: member.created_at,
         deleted_at: member.deleted_at,
-        // Profile fields
-        full_name: profile.full_name,
-        email: profile.email,
-        avatar_url: profile.avatar_url,
-        is_active: !profile.is_blocked,
-        is_blocked: profile.is_blocked,
-        role_id: profile.role_id,
-        date_of_birth: profile.date_of_birth,
-        city: profile.city,
-        auth_method: profile.auth_method,
-        doctor_stamp_url: profile.doctor_stamp_url,
-        doctor_signature_url: profile.doctor_signature_url,
-        cns_card_front: profile.cns_card_front,
-        cns_card_back: profile.cns_card_back,
-        cns_number: profile.cns_number,
-        updated_at: profile.updated_at,
-        license_number: profile.license_number
+        // Profile fields with proper null/undefined handling
+        full_name: profile.full_name || null,
+        email: profile.email || null,
+        avatar_url: profile.avatar_url || null,
+        is_active: profile.is_blocked !== undefined ? !profile.is_blocked : true,
+        is_blocked: profile.is_blocked || null,
+        role_id: profile.role_id || null,
+        date_of_birth: profile.date_of_birth || null,
+        city: profile.city || null,
+        auth_method: profile.auth_method || null,
+        doctor_stamp_url: profile.doctor_stamp_url || null,
+        doctor_signature_url: profile.doctor_signature_url || null,
+        cns_card_front: profile.cns_card_front || null,
+        cns_card_back: profile.cns_card_back || null,
+        cns_number: profile.cns_number || null,
+        updated_at: profile.updated_at || null,
+        license_number: profile.license_number || null
       };
     });
     
