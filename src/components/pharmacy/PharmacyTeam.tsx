@@ -14,12 +14,11 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
-import { fetchAddressFromPostcode } from '@/services/address-service';
+import { searchAddressesByQuery } from '@/services/address-service';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { CommandInput, CommandList, CommandItem, CommandGroup, Command } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { searchAddressesByQuery } from '@/services/address-service';
 import { PharmacyTeamMemberWithProfile } from '@/types/supabase';
 
 interface PharmacyTeamProps {
@@ -223,48 +222,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         title: "Error",
         description: "Failed to update user status",
       });
-    }
-  };
-
-  const lookupAddress = async () => {
-    const postcode = form.getValues('postal_code');
-    if (!postcode || postcode.length < 3) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a valid postal code",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsAddressLoading(true);
-    try {
-      const addressData = await fetchAddressFromPostcode(postcode);
-      if (addressData && addressData.address) {
-        form.setValue('street', addressData.address.street || '');
-        form.setValue('city', addressData.address.city || '');
-        form.setValue('country', addressData.address.country || '');
-        
-        toast({
-          title: "Address Found",
-          description: "Address details have been filled automatically"
-        });
-      } else {
-        toast({
-          title: "Address Not Found",
-          description: "We couldn't find an address with this postal code. Please enter manually.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching address:', error);
-      toast({
-        title: "Error",
-        description: "Failed to lookup address information",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAddressLoading(false);
     }
   };
 
