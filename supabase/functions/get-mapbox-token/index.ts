@@ -4,6 +4,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Type': 'application/json',
 };
 
 serve(async (req) => {
@@ -22,36 +23,21 @@ serve(async (req) => {
         JSON.stringify({ error: 'Mapbox token not configured' }),
         { 
           status: 500, 
-          headers: { 
-            'Content-Type': 'application/json',
-            ...corsHeaders 
-          }
+          headers: corsHeaders
         }
       );
     }
 
-    // Return the token
+    // Return the token as JSON
     return new Response(
       JSON.stringify({ token: mapboxToken }),
-      { 
-        status: 200, 
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders 
-        }
-      }
+      { status: 200, headers: corsHeaders }
     );
   } catch (error) {
     console.error('Error getting Mapbox token:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders 
-        }
-      }
+      { status: 500, headers: corsHeaders }
     );
   }
 });

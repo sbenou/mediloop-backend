@@ -45,11 +45,17 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [hasRendered, setHasRendered] = useState(false);
+  const [mapInitAttempted, setMapInitAttempted] = useState(false);
   
   const userLocation = useRecoilValue(userLocationState);
   const setUserLocation = useSetRecoilState(userLocationState);
   const isUsingLocation = useRecoilValue(isUsingLocationState);
   const setIsUsingLocation = useSetRecoilState(isUsingLocationState);
+  
+  // Set rendered flag after first render
+  useEffect(() => {
+    setHasRendered(true);
+  }, []);
   
   // Get Mapbox token
   useEffect(() => {
@@ -69,8 +75,8 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         console.error('Error setting Mapbox token:', error);
         setMapError('Failed to load map resources');
         
-        // Try with fallback token
-        const fallbackToken = 'pk.eyJ1IjoiZGVtby1hY2NvdW50IiwiYSI6ImNscHdkZjBiODJ0NTMyaW1yOWdoN2FvdW8ifQ.r_qpHhn0rJd-SgGhNfRw1A';
+        // Try with fallback token (this should be a valid token)
+        const fallbackToken = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
         setMapboxToken(fallbackToken);
         mapboxgl.accessToken = fallbackToken;
       }
@@ -78,93 +84,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     
     fetchMapboxToken();
   }, []);
-  
-  // Set rendered flag after first render
-  useEffect(() => {
-    setHasRendered(true);
-  }, []);
-  
-  // Initialize map when token is available
-  useEffect(() => {
-    if (!mapboxToken || !mapContainer.current || map.current) return;
-    
-    console.log('Initializing Mapbox map with token');
-    
-    try {
-      // Force explicit height
-      if (mapContainer.current) {
-        mapContainer.current.style.height = '200px';
-        mapContainer.current.style.width = '100%';
-      }
-      
-      // Initialize map with default center
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [6.1296, 49.8153], // Luxembourg center as default
-        zoom: 13,
-        attributionControl: false,
-      });
-      
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-      
-      // Set loaded state when map is ready
-      map.current.on('load', () => {
-        console.log('Mapbox map loaded successfully');
-        setIsMapLoaded(true);
-        setMapError(null);
-      });
-      
-      map.current.on('error', (e) => {
-        console.error('Mapbox map error:', e);
-        setMapError('Error loading map');
-      });
-    } catch (error) {
-      console.error('Error creating Mapbox map:', error);
-      setMapError('Failed to initialize map');
-    }
-    
-    // Cleanup
-    return () => {
-      if (map.current) {
-        console.log('Cleaning up Mapbox map');
-        map.current.remove();
-        map.current = null;
-      }
-    };
-  }, [mapboxToken, hasRendered]);
-  
-  // Get user's location when isUsingLocation changes to true
-  useEffect(() => {
-    if (isUsingLocation && navigator.geolocation) {
-      setIsCalculatingDistance(true);
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const newUserLocation = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          };
-          
-          console.log('User location obtained:', newUserLocation);
-          setUserLocation(newUserLocation);
-          setIsCalculatingDistance(false);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setIsUsingLocation(false);
-          setIsCalculatingDistance(false);
-          toast({
-            variant: "destructive",
-            title: "Location Error",
-            description: "Could not access your location. Please check your browser permissions.",
-          });
-        }
-      );
-    }
-  }, [isUsingLocation, setUserLocation, setIsUsingLocation]);
-  
+
   // Get pharmacy coordinates based on address
   useEffect(() => {
     const getPharmacyCoordinates = async () => {
@@ -222,6 +142,49 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     getPharmacyCoordinates();
   }, [pharmacy]);
   
+  // Initialize map when token is available
+  useEffect(() => {
+    if (!mapboxToken || !mapContainer.current || map.current || mapInitAttempted) return;
+    
+    console.log('Initializing Mapbox map with token');
+    setMapInitAttempted(true);
+    
+    try {
+      // Force explicit height
+      if (mapContainer.current) {
+        mapContainer.current.style.height = '200px';
+        mapContainer.current.style.width = '100%';
+      }
+      
+      // Initialize map with default center
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [6.1296, 49.8153], // Luxembourg center as default
+        zoom: 13,
+        attributionControl: false,
+      });
+      
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+      
+      // Set loaded state when map is ready
+      map.current.on('load', () => {
+        console.log('Mapbox map loaded successfully');
+        setIsMapLoaded(true);
+        setMapError(null);
+      });
+      
+      map.current.on('error', (e) => {
+        console.error('Mapbox map error:', e);
+        setMapError('Error loading map');
+      });
+    } catch (error) {
+      console.error('Error creating Mapbox map:', error);
+      setMapError('Failed to initialize map');
+    }
+  }, [mapboxToken, hasRendered, mapInitAttempted]);
+  
   // Calculate distance when user location or pharmacy coordinates change
   useEffect(() => {
     if (userLocation && pharmacyCoordinates && isUsingLocation) {
@@ -241,6 +204,36 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       setDistance(null);
     }
   }, [userLocation, pharmacyCoordinates, isUsingLocation]);
+  
+  // Get user's location when isUsingLocation changes to true
+  useEffect(() => {
+    if (isUsingLocation && navigator.geolocation) {
+      setIsCalculatingDistance(true);
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newUserLocation = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          };
+          
+          console.log('User location obtained:', newUserLocation);
+          setUserLocation(newUserLocation);
+          setIsCalculatingDistance(false);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setIsUsingLocation(false);
+          setIsCalculatingDistance(false);
+          toast({
+            variant: "destructive",
+            title: "Location Error",
+            description: "Could not access your location. Please check your browser permissions.",
+          });
+        }
+      );
+    }
+  }, [isUsingLocation, setUserLocation, setIsUsingLocation]);
   
   // Update markers when coordinates or map changes
   useEffect(() => {
@@ -334,26 +327,10 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     }
   };
 
-  // Show loading state when no token
-  if (!mapboxToken) {
-    return (
-      <div className="space-y-3">
-        <div className="bg-gray-200 h-32 rounded-md flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="h-8 w-8 text-gray-400 mx-auto" />
-            <p className="text-sm text-gray-600 mt-1">Loading map token...</p>
-          </div>
-        </div>
-        <p className="text-sm text-center">{pharmacy.address}, {pharmacy.city} {pharmacy.postal_code}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3">
       <div 
         className="h-[200px] rounded-md overflow-hidden border border-gray-200 relative bg-gray-100"
-        style={{ minHeight: '200px' }}
       >
         {mapError ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">

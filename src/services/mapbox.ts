@@ -1,8 +1,8 @@
 
 import { calculateDistance } from '@/lib/utils/distance';
 
-// Fallback token - use this only if the Edge Function fails
-const FALLBACK_TOKEN = 'pk.eyJ1IjoiZGVtby1hY2NvdW50IiwiYSI6ImNscHdkZjBiODJ0NTMyaW1yOWdoN2FvdW8ifQ.r_qpHhn0rJd-SgGhNfRw1A';
+// Use a working fallback token
+const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
 
 /**
  * Get Mapbox public token from Supabase Edge Function
@@ -24,16 +24,7 @@ export const getMapboxToken = async (): Promise<string> => {
       return FALLBACK_TOKEN;
     }
     
-    const text = await response.text();
-    let data;
-    
-    try {
-      data = JSON.parse(text);
-    } catch (parseError) {
-      console.error('Error parsing Mapbox token response:', parseError);
-      console.error('Response text:', text);
-      return FALLBACK_TOKEN;
-    }
+    const data = await response.json();
     
     if (data && data.token) {
       return data.token;
