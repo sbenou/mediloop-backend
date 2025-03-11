@@ -86,7 +86,7 @@ export const getPharmacyTeamMembers = async (pharmacyId: string) => {
     
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, full_name, email, avatar_url, role, is_blocked')
+      .select('*')  // Select all fields to ensure we get everything needed
       .in('id', userIds);
       
     if (profilesError) {
@@ -99,22 +99,23 @@ export const getPharmacyTeamMembers = async (pharmacyId: string) => {
       const profile = profiles?.find(p => p.id === teamMember.user_id);
       return {
         ...teamMember,
+        // Include all required UserProfile properties
         full_name: profile?.full_name || 'Unknown',
         email: profile?.email || 'No email',
         avatar_url: profile?.avatar_url,
         is_active: profile ? !profile.is_blocked : true,
-        // Add default values for all UserProfile properties to avoid type issues
-        role_id: null,
-        date_of_birth: null,
-        city: null,
-        auth_method: null,
-        doctor_stamp_url: null,
-        doctor_signature_url: null,
-        cns_card_front: null,
-        cns_card_back: null,
-        cns_number: null,
-        updated_at: null,
-        license_number: null
+        is_blocked: profile?.is_blocked || false,
+        role_id: profile?.role_id || null,
+        date_of_birth: profile?.date_of_birth || null,
+        city: profile?.city || null,
+        auth_method: profile?.auth_method || null,
+        doctor_stamp_url: profile?.doctor_stamp_url || null,
+        doctor_signature_url: profile?.doctor_signature_url || null,
+        cns_card_front: profile?.cns_card_front || null,
+        cns_card_back: profile?.cns_card_back || null,
+        cns_number: profile?.cns_number || null,
+        updated_at: profile?.updated_at || null,
+        license_number: profile?.license_number || null
       };
     });
     

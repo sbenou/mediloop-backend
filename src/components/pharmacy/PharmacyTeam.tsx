@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -318,7 +317,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       date_of_birth: member.date_of_birth || null,
       city: member.city || null,
       auth_method: member.auth_method || null,
-      is_blocked: !member.is_active || null,
+      is_blocked: member.is_blocked || null,
       doctor_stamp_url: member.doctor_stamp_url || null,
       doctor_signature_url: member.doctor_signature_url || null,
       cns_card_front: member.cns_card_front || null,
