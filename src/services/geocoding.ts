@@ -56,3 +56,76 @@ export async function searchCity(query: string): Promise<Array<{ display_name: s
     return [];
   }
 }
+
+// Ensure we have a comprehensive function for address search that's used consistently
+export async function searchAddress(query: string): Promise<Array<{
+  street: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  formatted: string;
+}>> {
+  if (!query || query.length < 3) return [];
+  
+  try {
+    // Reuse the existing searchAddressesByQuery function from address-service.ts
+    const mapboxToken = await getMapboxToken();
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&types=address&limit=5`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Mapbox API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.features && data.features.length > 0) {
+      return data.features.map((feature: any) => {
+        // Parse the address components from the Mapbox result
+        const addressParts = feature.place_name.split(',').map((part: string) => part.trim());
+        
+        // Find postal code (usually in the format "12345")
+        const postalCodeMatch = feature.place_name.match(/\b\d{4,5}\b/);
+        const postalCode = postalCodeMatch ? postalCodeMatch[0] : '';
+        
+        // Extract the first part as street, and try to identify city, country from context
+        const street = addressParts[0];
+        
+        // Get city, country from context if available
+        let city = '', country = '';
+        if (feature.context) {
+          feature.context.forEach((ctx: any) => {
+            if (ctx.id.startsWith('place')) {
+              city = ctx.text;
+            } else if (ctx.id.startsWith('country')) {
+              country = ctx.text;
+            }
+          });
+        }
+        
+        // If we couldn't extract city from context, try to get it from address parts
+        if (!city && addressParts.length > 1) {
+          city = addressParts[1];
+        }
+        
+        // If we couldn't extract country from context, use the last part
+        if (!country && addressParts.length > 2) {
+          country = addressParts[addressParts.length - 1];
+        }
+        
+        return {
+          street: street,
+          city: city,
+          postal_code: postalCode,
+          country: country,
+          formatted: feature.place_name
+        };
+      });
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error searching addresses:', error);
+    return [];
+  }
+}

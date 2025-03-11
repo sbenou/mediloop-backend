@@ -2,38 +2,13 @@
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { getMapboxToken } from "@/services/address-service";
+import { getCoordinates, searchAddress } from "@/services/geocoding";
 
 export const useLocationSearch = () => {
   const [coordinates, setCoordinates] = useState<{ lat: string; lon: string } | null>(null);
   const [searchRadius, setSearchRadius] = useState(2000);
   const [isSearching, setIsSearching] = useState(false);
-
-  const getCoordinates = async (query: string): Promise<{ lat: string; lon: string } | null> => {
-    if (!query) return null;
-    
-    try {
-      const mapboxToken = await getMapboxToken();
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&limit=1`;
-      
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Mapbox API error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.features && data.features.length > 0) {
-        const [lng, lat] = data.features[0].center;
-        // Cache the results
-        sessionStorage.setItem(`coords-${query}`, JSON.stringify({ lat: String(lat), lon: String(lng) }));
-        return { lat: String(lat), lon: String(lng) };
-      }
-      return null;
-    } catch (error) {
-      console.error('Error getting coordinates:', error);
-      return null;
-    }
-  };
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
 
   const handleCitySearch = async (city: string) => {
     if (!city || isSearching) return false;
@@ -87,11 +62,31 @@ export const useLocationSearch = () => {
     }
   };
 
+  // Add method for searching addresses directly
+  const handleAddressSearch = async (query: string) => {
+    if (!query || query.length < 3 || isSearching) return;
+    
+    setIsSearching(true);
+    try {
+      const results = await searchAddress(query);
+      setAddressSuggestions(results);
+      return results;
+    } catch (error) {
+      console.error('Error searching addresses:', error);
+      setAddressSuggestions([]);
+      return [];
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return {
     coordinates,
     searchRadius,
     setSearchRadius,
     handleCitySearch,
+    handleAddressSearch,
+    addressSuggestions,
     isSearching
   };
 };

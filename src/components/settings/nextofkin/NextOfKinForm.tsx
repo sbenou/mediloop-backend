@@ -12,6 +12,7 @@ import { MapPin, Search, Loader2, X } from "lucide-react";
 import { searchAddressesByQuery } from "@/services/address-service";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import AddressSearchDialog from "@/components/address/AddressSearchDialog";
 
 const relationOptions: { value: RelationType; label: string }[] = [
   { value: "parent", label: "Parent" },
@@ -48,10 +49,8 @@ export const NextOfKinForm = ({
   onCancel, 
   isEditing = false 
 }: NextOfKinFormProps) => {
-  const [addressSearchQuery, setAddressSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
-  const [isAddressPopoverOpen, setIsAddressPopoverOpen] = useState(false);
+  // Replace the direct address search with the dialog approach
+  const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -82,35 +81,39 @@ export const NextOfKinForm = ({
     }
   };
 
-  const handleAddressSearch = async (query: string) => {
-    setAddressSearchQuery(query);
+  const handleAddressSelect = (formattedAddress: string) => {
+    // Parse the formatted address and update individual fields
+    const addressParts = formattedAddress.split(', ');
     
-    if (query.length >= 3) {
-      setIsSearching(true);
-      try {
-        const results = await searchAddressesByQuery(query);
-        setAddressSuggestions(results);
-      } catch (error) {
-        console.error('Error searching addresses:', error);
-      } finally {
-        setIsSearching(false);
+    if (addressParts.length >= 3) {
+      // Extract components based on typical format: Street, City, PostalCode, Country
+      const street = addressParts[0];
+      const city = addressParts[1];
+      
+      // Handle postal code which might be embedded with the city or separated
+      let postalCode = '';
+      let country = '';
+      
+      if (addressParts.length === 3) {
+        // Format likely: Street, City, Country
+        country = addressParts[2];
+        
+        // Try to extract postal code from city
+        const postalMatch = city.match(/\b\d{4,5}\b/);
+        if (postalMatch) {
+          postalCode = postalMatch[0];
+        }
+      } else if (addressParts.length >= 4) {
+        // Format likely: Street, City, PostalCode, Country
+        postalCode = addressParts[2];
+        country = addressParts[3];
       }
-    } else {
-      setAddressSuggestions([]);
+      
+      form.setValue('street', street);
+      form.setValue('city', city.replace(/\b\d{4,5}\b/, '').trim());
+      form.setValue('postal_code', postalCode);
+      form.setValue('country', country);
     }
-  };
-
-  const handleAddressSelect = (address: any) => {
-    form.setValue('street', address.street);
-    form.setValue('city', address.city);
-    form.setValue('postal_code', address.postal_code);
-    form.setValue('country', address.country);
-    setIsAddressPopoverOpen(false);
-  };
-
-  const clearAddressSearch = () => {
-    setAddressSearchQuery("");
-    setAddressSuggestions([]);
   };
 
   return (
@@ -183,91 +186,24 @@ export const NextOfKinForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Street</FormLabel>
-                <Popover open={isAddressPopoverOpen} onOpenChange={setIsAddressPopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <div className="relative">
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder="Start typing to search address..." 
-                          value={addressSearchQuery || field.value}
-                          onChange={(e) => {
-                            field.onChange(e.target.value);
-                            handleAddressSearch(e.target.value);
-                          }}
-                          onFocus={() => setIsAddressPopoverOpen(true)}
-                        />
-                      </FormControl>
-                      {addressSearchQuery && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={clearAddressSearch}
-                          className="absolute right-8 top-0 h-full"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full"
-                        onClick={() => setIsAddressPopoverOpen(!isAddressPopoverOpen)}
-                      >
-                        <MapPin className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="p-0 w-[300px] md:w-[400px]" align="start">
-                    <Command>
-                      <div className="flex items-center border-b px-3">
-                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                        <Input
-                          placeholder="Search address..."
-                          value={addressSearchQuery}
-                          onChange={(e) => handleAddressSearch(e.target.value)}
-                          className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-none"
-                        />
-                      </div>
-                      {isSearching && (
-                        <div className="flex items-center justify-center p-4">
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          <p className="text-sm text-muted-foreground">Searching addresses...</p>
-                        </div>
-                      )}
-                      <CommandList>
-                        <CommandGroup>
-                          {addressSuggestions.length > 0 ? (
-                            addressSuggestions.map((address, index) => (
-                              <CommandItem
-                                key={index}
-                                onSelect={() => handleAddressSelect(address)}
-                                className="cursor-pointer"
-                              >
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{address.street}</span>
-                                  <span className="text-xs text-gray-500">
-                                    {[address.city, address.postal_code, address.country]
-                                      .filter(Boolean)
-                                      .join(', ')}
-                                  </span>
-                                </div>
-                              </CommandItem>
-                            ))
-                          ) : (
-                            <div className="p-4 text-sm text-center text-muted-foreground">
-                              {addressSearchQuery.length >= 3 
-                                ? 'No suggestions found. Try a different search.' 
-                                : 'Type at least 3 characters to search'}
-                            </div>
-                          )}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <div className="relative">
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="Street address" 
+                      className="pr-10"
+                    />
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full"
+                    onClick={() => setIsAddressDialogOpen(true)}
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -327,6 +263,14 @@ export const NextOfKinForm = ({
           </Button>
         </div>
       </form>
+      
+      {/* Add the AddressSearchDialog component */}
+      <AddressSearchDialog
+        open={isAddressDialogOpen}
+        onOpenChange={setIsAddressDialogOpen}
+        onSelectAddress={handleAddressSelect}
+        initialValue={form.getValues().street}
+      />
     </Form>
   );
 };
