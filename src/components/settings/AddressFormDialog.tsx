@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -15,11 +14,11 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { AddressType } from "./types";
-import AddressFields from "@/components/address/AddressFields";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
+import AddressFields from "@/components/address/AddressFields";
 
 interface AddressFormDialogProps {
   userId: string;
@@ -77,7 +76,7 @@ const AddressFormDialog = ({ userId, open, onOpenChange, existingAddresses }: Ad
 
       const { error } = await supabase
         .from('addresses')
-        .insert([addressToInsert]);
+        .insert(addressToInsert);
 
       if (error) throw error;
     },
