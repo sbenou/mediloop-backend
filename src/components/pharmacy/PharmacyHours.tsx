@@ -54,12 +54,23 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   useEffect(() => {
     if (hours) {
       try {
-        // Safely parse the hours string or use default if invalid
-        const parsedHours = JSON.parse(hours);
+        // Try to parse the hours string
+        let parsedHours;
+        try {
+          parsedHours = JSON.parse(hours);
+        } catch (parseError) {
+          console.error('Error parsing hours JSON:', parseError);
+          // If it's not valid JSON, use default hours
+          setWeekHours(defaultHours);
+          setHasError(true);
+          return;
+        }
         
         // Validate the parsed object has all expected days
         const isValid = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-          .every(day => parsedHours[day] && 
+          .every(day => 
+            parsedHours[day] && 
+            typeof parsedHours[day] === 'object' &&
             'open' in parsedHours[day] && 
             'openTime' in parsedHours[day] && 
             'closeTime' in parsedHours[day]);
@@ -73,11 +84,12 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
           setHasError(true);
         }
       } catch (error) {
-        console.error('Error parsing hours:', error);
+        console.error('Error handling hours:', error);
         setWeekHours(defaultHours);
         setHasError(true);
       }
     } else {
+      // No hours data, use defaults
       setWeekHours(defaultHours);
     }
   }, [hours]);
@@ -104,10 +116,19 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
 
   const handleSave = async () => {
     try {
+      const hoursString = JSON.stringify(weekHours);
+      
+      // Validate that the stringified object is valid JSON
+      try {
+        JSON.parse(hoursString);
+      } catch (e) {
+        throw new Error('Generated hours data is not valid JSON');
+      }
+      
       const { error } = await supabase
         .from('pharmacies')
         .update({
-          hours: JSON.stringify(weekHours),
+          hours: hoursString,
         })
         .eq('id', pharmacyId);
 
