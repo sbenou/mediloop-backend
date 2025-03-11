@@ -1,4 +1,6 @@
+
 import { supabase } from '@/lib/supabase';
+import { PharmacyTeamMemberWithProfile } from '@/types/supabase';
 
 /**
  * Searches addresses by a given query string.
@@ -57,7 +59,7 @@ export const softDeleteTeamMember = async (userId: string): Promise<boolean> => 
  * @param pharmacyId - The ID of the pharmacy
  * @returns Promise containing team members with their profiles
  */
-export const getPharmacyTeamMembers = async (pharmacyId: string) => {
+export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<PharmacyTeamMemberWithProfile[]> => {
   try {
     if (!pharmacyId) {
       console.error('No pharmacy ID provided to getPharmacyTeamMembers');
