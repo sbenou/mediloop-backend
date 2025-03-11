@@ -39,6 +39,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [distance, setDistance] = useState<string | null>(null);
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
   const userLocation = useRecoilValue(userLocationState);
   
   // Get Mapbox token
@@ -118,8 +119,10 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           
           // Calculate distance if user location is available
           if (userLocation) {
+            setIsCalculatingDistance(true);
             const distanceValue = getDistanceFromUserToPharmacy(userLocation, coords);
             setDistance(distanceValue);
+            setIsCalculatingDistance(false);
           }
           return;
         }
@@ -146,8 +149,10 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           
           // Calculate distance if user location is available
           if (userLocation) {
+            setIsCalculatingDistance(true);
             const distanceValue = getDistanceFromUserToPharmacy(userLocation, coordinates);
             setDistance(distanceValue);
+            setIsCalculatingDistance(false);
           }
         } else {
           console.error('No location found for address:', fullQuery);
@@ -233,6 +238,8 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       return;
     }
     
+    setIsCalculatingDistance(true);
+    
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const coords = {
@@ -245,9 +252,12 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           const distanceValue = getDistanceFromUserToPharmacy(coords, pharmacyCoordinates);
           setDistance(distanceValue);
         }
+        
+        setIsCalculatingDistance(false);
       },
       (error) => {
         console.error('Error getting location:', error);
+        setIsCalculatingDistance(false);
       }
     );
   };
@@ -286,27 +296,32 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         <div 
           ref={mapContainer} 
           style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} 
-          className="!w-full !h-full"
+          className="w-full h-full"
         />
       </div>
       
       <div className="flex flex-col space-y-2">
         <p className="text-sm text-center">{pharmacy.address}, {pharmacy.city} {pharmacy.postal_code}</p>
         
-        {distance && (
+        {isCalculatingDistance ? (
+          <p className="text-sm font-medium text-center text-primary">
+            Calculating distance...
+          </p>
+        ) : distance ? (
           <p className="text-sm font-medium text-center text-primary">
             Distance: {distance}
           </p>
-        )}
+        ) : null}
         
         <Button 
           variant="outline" 
           size="sm" 
           className="w-full mt-2 text-xs" 
           onClick={handleGetCurrentLocation}
+          disabled={isCalculatingDistance}
         >
           <Navigation className="h-3 w-3 mr-1" />
-          Get current location
+          {isCalculatingDistance ? 'Getting location...' : 'Get current location'}
         </Button>
       </div>
     </div>
