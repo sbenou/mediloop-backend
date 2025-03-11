@@ -1,7 +1,7 @@
 
 import { calculateDistance } from '@/lib/utils/distance';
 
-// Use a working fallback token
+// Use a known working token as fallback
 const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
 
 /**
@@ -9,6 +9,8 @@ const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b
  */
 export const getMapboxToken = async (): Promise<string> => {
   try {
+    console.log('Fetching Mapbox token from Edge Function...');
+    
     // Try to get from the Supabase Edge Function
     const response = await fetch('/api/get-mapbox-token');
     
@@ -17,16 +19,18 @@ export const getMapboxToken = async (): Promise<string> => {
       return FALLBACK_TOKEN;
     }
     
-    // Validate the response is proper JSON
+    // Check response content type
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       console.error('Invalid response content type:', contentType);
       return FALLBACK_TOKEN;
     }
     
+    // Parse the response as JSON
     const data = await response.json();
     
     if (data && data.token) {
+      console.log('Successfully retrieved Mapbox token');
       return data.token;
     }
     

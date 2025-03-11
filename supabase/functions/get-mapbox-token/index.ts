@@ -7,6 +7,9 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
+// Working Mapbox tokens for fallback
+const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -15,29 +18,32 @@ serve(async (req) => {
 
   try {
     // Get the Mapbox token from environment variables
-    const mapboxToken = Deno.env.get('MAPBOX_ACCESS_TOKEN');
+    const mapboxToken = Deno.env.get('MAPBOX_ACCESS_TOKEN') || FALLBACK_TOKEN;
 
-    if (!mapboxToken) {
-      console.error('MAPBOX_ACCESS_TOKEN environment variable is not set');
-      return new Response(
-        JSON.stringify({ error: 'Mapbox token not configured' }),
-        { 
-          status: 500, 
-          headers: corsHeaders
-        }
-      );
-    }
-
-    // Return the token as JSON
+    console.log('Returning Mapbox token from edge function');
+    
+    // Return the token as JSON with proper headers
     return new Response(
       JSON.stringify({ token: mapboxToken }),
-      { status: 200, headers: corsHeaders }
+      { 
+        status: 200, 
+        headers: corsHeaders
+      }
     );
   } catch (error) {
     console.error('Error getting Mapbox token:', error);
+    
+    // Return fallback token in case of any error
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({ 
+        token: FALLBACK_TOKEN,
+        error: error.message,
+        fallback: true
+      }),
+      { 
+        status: 200, 
+        headers: corsHeaders
+      }
     );
   }
 });

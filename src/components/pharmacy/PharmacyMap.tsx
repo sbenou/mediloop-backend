@@ -45,7 +45,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [hasRendered, setHasRendered] = useState(false);
-  const [mapInitAttempted, setMapInitAttempted] = useState(false);
+  const [mapInitialized, setMapInitialized] = useState(false);
   
   const userLocation = useRecoilValue(userLocationState);
   const setUserLocation = useSetRecoilState(userLocationState);
@@ -63,9 +63,9 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       try {
         console.log('Fetching Mapbox token...');
         const token = await getMapboxToken();
-        console.log('Received token:', token ? 'Valid token' : 'No token');
         
         if (token) {
+          console.log('Received token:', token ? 'Valid token' : 'No token');
           setMapboxToken(token);
           mapboxgl.accessToken = token;
         } else {
@@ -75,8 +75,9 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         console.error('Error setting Mapbox token:', error);
         setMapError('Failed to load map resources');
         
-        // Try with fallback token (this should be a valid token)
+        // Always set a fallback token
         const fallbackToken = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
+        console.log('Using fallback token');
         setMapboxToken(fallbackToken);
         mapboxgl.accessToken = fallbackToken;
       }
@@ -144,16 +145,20 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   
   // Initialize map when token is available
   useEffect(() => {
-    if (!mapboxToken || !mapContainer.current || map.current || mapInitAttempted) return;
+    if (!mapboxToken || !mapContainer.current || map.current || !hasRendered || mapInitialized) {
+      return;
+    }
     
     console.log('Initializing Mapbox map with token');
-    setMapInitAttempted(true);
+    setMapInitialized(true);
     
     try {
-      // Force explicit height
+      // Force explicit height and ensure container is visible
       if (mapContainer.current) {
         mapContainer.current.style.height = '200px';
         mapContainer.current.style.width = '100%';
+        mapContainer.current.style.display = 'block';
+        mapContainer.current.style.visibility = 'visible';
       }
       
       // Initialize map with default center
@@ -163,6 +168,8 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         center: [6.1296, 49.8153], // Luxembourg center as default
         zoom: 13,
         attributionControl: false,
+        interactive: true,
+        antialias: true
       });
       
       // Add navigation controls
@@ -173,6 +180,11 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         console.log('Mapbox map loaded successfully');
         setIsMapLoaded(true);
         setMapError(null);
+        
+        // Force resize after load to ensure proper rendering
+        setTimeout(() => {
+          if (map.current) map.current.resize();
+        }, 200);
       });
       
       map.current.on('error', (e) => {
@@ -183,7 +195,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       console.error('Error creating Mapbox map:', error);
       setMapError('Failed to initialize map');
     }
-  }, [mapboxToken, hasRendered, mapInitAttempted]);
+  }, [mapboxToken, hasRendered, mapInitialized]);
   
   // Calculate distance when user location or pharmacy coordinates change
   useEffect(() => {
@@ -244,7 +256,6 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     
     console.log('Updating map markers with pharmacy coordinates:', pharmacyCoordinates);
     console.log('User location:', userLocation);
-    console.log('Map loaded:', isMapLoaded);
     
     // Request an animation frame to ensure the map container is rendered
     requestAnimationFrame(() => {
