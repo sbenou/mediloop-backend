@@ -10,6 +10,7 @@ import UserAvatar from '@/components/user-menu/UserAvatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { softDeleteTeamMember } from '@/services/address-service';
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -58,7 +59,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
     try {
       setLoading(true);
       
-      // Get all team members associated with this pharmacy
       const { data: teamMembers, error: teamError } = await supabase
         .from('pharmacy_team_members')
         .select('user_id, created_at')
@@ -79,7 +79,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
       
       const userIds = teamMembers.map(member => member.user_id);
       
-      // Get profiles for these users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, email, avatar_url, role, is_blocked')
@@ -124,7 +123,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
 
   const handleTerminateUser = async (userId: string) => {
     try {
-      // First update the profile to blocked status
       const { error: blockError } = await supabase
         .from('profiles')
         .update({ is_blocked: true })
@@ -132,21 +130,17 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
 
       if (blockError) throw blockError;
 
-      // Then remove the association with the pharmacy
-      const { error: removeError } = await supabase
-        .from('pharmacy_team_members')
-        .delete()
-        .eq('user_id', userId)
-        .eq('pharmacy_id', pharmacyId);
+      const success = await softDeleteTeamMember(userId);
 
-      if (removeError) throw removeError;
+      if (!success) {
+        throw new Error('Failed to soft delete team member');
+      }
 
       toast({
         title: "Success",
         description: "Staff member removed successfully",
       });
 
-      // Update the local state
       setStaffMembers(prev => prev.filter(member => member.id !== userId));
       setFilteredStaff(prev => prev.filter(member => member.id !== userId));
     } catch (error) {
@@ -271,7 +265,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
         </div>
       )}
       
-      {/* User Details Dialog */}
       {selectedUser && (
         <Dialog open={userDetailsOpen} onOpenChange={setUserDetailsOpen}>
           <DialogContent className="sm:max-w-[600px]">

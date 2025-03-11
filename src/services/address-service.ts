@@ -70,3 +70,20 @@ export async function getCoordinatesFromAddress(address: string): Promise<{latit
     return null;
   }
 }
+
+// Add a new function to soft-delete pharmacy team members
+export async function softDeleteTeamMember(memberId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.rpc('soft_delete_team_member', { member_id: memberId });
+    
+    if (error) {
+      console.error('Error soft deleting team member:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to soft delete team member:', error);
+    return false;
+  }
+}

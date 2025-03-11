@@ -31,6 +31,7 @@ export type PharmacyTeamMember = {
   pharmacy_id: string;
   role: string;
   created_at: string;
+  deleted_at: string | null;
 };
 
 // Define a custom type for doctor workplace since it's not in the generated types yet

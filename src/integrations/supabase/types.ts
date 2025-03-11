@@ -322,6 +322,7 @@ export type Database = {
       pharmacy_team_members: {
         Row: {
           created_at: string
+          deleted_at: string | null
           id: string
           pharmacy_id: string | null
           role: string
@@ -329,6 +330,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
           pharmacy_id?: string | null
           role?: string
@@ -336,6 +338,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
           pharmacy_id?: string | null
           role?: string
@@ -772,6 +775,10 @@ export type Database = {
         }
         Returns: Json
       }
+      is_pharmacist: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       mark_all_notifications_read: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -779,6 +786,12 @@ export type Database = {
       mark_notification_read: {
         Args: {
           notification_id: string
+        }
+        Returns: undefined
+      }
+      soft_delete_team_member: {
+        Args: {
+          member_id: string
         }
         Returns: undefined
       }

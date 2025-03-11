@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -150,7 +151,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       const { data: pharmacyTeam, error: teamError } = await supabase
         .from('pharmacy_team_members')
         .select('*')
-        .eq('pharmacy_id', pharmacyId);
+        .eq('pharmacy_id', pharmacyId)
+        .is('deleted_at', null);
       
       if (teamError) throw teamError;
       
