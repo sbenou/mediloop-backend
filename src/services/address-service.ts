@@ -1,6 +1,6 @@
-
 import { supabase } from '@/lib/supabase';
 import { PharmacyTeamMemberWithProfile } from '@/types/supabase';
+import { Database } from '@/integrations/supabase/types';
 
 /**
  * Searches addresses by a given query string.
@@ -54,11 +54,6 @@ export const softDeleteTeamMember = async (userId: string): Promise<boolean> => 
   }
 };
 
-/**
- * Gets pharmacy team members for a given pharmacy ID
- * @param pharmacyId - The ID of the pharmacy
- * @returns Promise containing team members with their profiles
- */
 export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<PharmacyTeamMemberWithProfile[]> => {
   try {
     if (!pharmacyId) {
@@ -66,8 +61,16 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
       throw new Error('Pharmacy ID is required');
     }
 
-    // Instead of using RPC, we'll use a direct SQL query with a service role
-    // This approaches the data directly without relying on the RPC function that's causing issues
+    type ProfilesResponse = {
+      id: string;
+      user_id: string;
+      pharmacy_id: string;
+      role: string;
+      created_at: string;
+      deleted_at: string | null;
+      profiles: Database['public']['Tables']['profiles']['Row'] | null;
+    };
+
     const { data, error } = await supabase
       .from('pharmacy_team_members')
       .select(`
@@ -102,10 +105,9 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
       console.error('Error fetching team members:', error);
       throw new Error(`Failed to fetch team members: ${error.message}`);
     }
-    
+
     // Transform the nested data structure into the flat PharmacyTeamMemberWithProfile structure
-    const teamMembers: PharmacyTeamMemberWithProfile[] = data.map(member => {
-      // Type the profile explicitly to handle possible undefined values correctly
+    const teamMembers: PharmacyTeamMemberWithProfile[] = (data as ProfilesResponse[]).map(member => {
       const profile = member.profiles || {};
       
       return {
@@ -115,12 +117,11 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
         role: member.role,
         created_at: member.created_at,
         deleted_at: member.deleted_at,
-        // Profile fields with proper null/undefined handling
         full_name: profile.full_name || null,
         email: profile.email || null,
         avatar_url: profile.avatar_url || null,
         is_active: profile.is_blocked !== undefined ? !profile.is_blocked : true,
-        is_blocked: profile.is_blocked || null,
+        is_blocked: profile.is_blocked || false,
         role_id: profile.role_id || null,
         date_of_birth: profile.date_of_birth || null,
         city: profile.city || null,
@@ -135,7 +136,7 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
       };
     });
     
-    return teamMembers || [];
+    return teamMembers;
   } catch (error) {
     console.error('Error in getPharmacyTeamMembers:', error);
     throw error;
