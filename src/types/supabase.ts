@@ -49,3 +49,26 @@ export interface PharmacyTeamMemberWithProfile extends PharmacyTeamMember {
   is_active?: boolean;
   phone_number?: string;
 }
+
+// Define a user profile type for avatar and other components
+export interface UserProfile {
+  id: string;
+  avatar_url: string | null;
+  full_name: string | null;
+  role: string | null;
+  role_id: string | null;
+  email: string | null;
+  date_of_birth: string | null;
+  city: string | null;
+  auth_method: string | null;
+  is_blocked: boolean | null;
+  doctor_stamp_url: string | null;
+  doctor_signature_url: string | null;
+  cns_card_front: string | null;
+  cns_card_back: string | null;
+  cns_number: string | null;
+  deleted_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  license_number: string | null;
+}
