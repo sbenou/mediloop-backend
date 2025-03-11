@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface DayHours {
   open: boolean;
@@ -48,6 +49,7 @@ const defaultHours: WeekHours = {
 const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [weekHours, setWeekHours] = useState<WeekHours>(defaultHours);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (hours) {
@@ -64,13 +66,16 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         
         if (isValid) {
           setWeekHours(parsedHours);
+          setHasError(false);
         } else {
           console.warn('Hours data structure is invalid, using defaults');
           setWeekHours(defaultHours);
+          setHasError(true);
         }
       } catch (error) {
         console.error('Error parsing hours:', error);
         setWeekHours(defaultHours);
+        setHasError(true);
       }
     } else {
       setWeekHours(defaultHours);
@@ -114,6 +119,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
       });
       
       setIsEditing(false);
+      setHasError(false);
     } catch (error) {
       console.error('Error updating hours:', error);
       toast({
@@ -127,6 +133,23 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   const formatDay = (day: string) => {
     return day.charAt(0).toUpperCase() + day.slice(1);
   };
+
+  if (hasError && !isEditing) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertTitle>Invalid Hours Format</AlertTitle>
+          <AlertDescription>
+            There was a problem loading the pharmacy hours. Please update the hours to fix this issue.
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => setIsEditing(true)}>
+          <Edit className="mr-2 h-4 w-4" />
+          Set Opening Hours
+        </Button>
+      </div>
+    );
+  }
 
   if (isEditing) {
     return (

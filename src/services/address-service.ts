@@ -60,6 +60,11 @@ export const softDeleteTeamMember = async (userId: string): Promise<boolean> => 
  */
 export const getPharmacyTeamMembers = async (pharmacyId: string) => {
   try {
+    if (!pharmacyId) {
+      console.error('No pharmacy ID provided to getPharmacyTeamMembers');
+      throw new Error('Pharmacy ID is required');
+    }
+
     // Get all team members for this pharmacy that haven't been deleted
     const { data: teamMembers, error: teamError } = await supabase
       .from('pharmacy_team_members')
@@ -69,7 +74,7 @@ export const getPharmacyTeamMembers = async (pharmacyId: string) => {
     
     if (teamError) {
       console.error('Error fetching team members:', teamError);
-      throw new Error('Failed to fetch team members');
+      throw new Error(`Failed to fetch team members: ${teamError.message}`);
     }
     
     if (!teamMembers || teamMembers.length === 0) {
@@ -86,7 +91,7 @@ export const getPharmacyTeamMembers = async (pharmacyId: string) => {
       
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError);
-      throw new Error('Failed to fetch user profiles');
+      throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
     }
     
     // Combine team members with their profile data
@@ -97,7 +102,19 @@ export const getPharmacyTeamMembers = async (pharmacyId: string) => {
         full_name: profile?.full_name || 'Unknown',
         email: profile?.email || 'No email',
         avatar_url: profile?.avatar_url,
-        is_active: profile ? !profile.is_blocked : true
+        is_active: profile ? !profile.is_blocked : true,
+        // Add default values for all UserProfile properties to avoid type issues
+        role_id: null,
+        date_of_birth: null,
+        city: null,
+        auth_method: null,
+        doctor_stamp_url: null,
+        doctor_signature_url: null,
+        cns_card_front: null,
+        cns_card_back: null,
+        cns_number: null,
+        updated_at: null,
+        license_number: null
       };
     });
     

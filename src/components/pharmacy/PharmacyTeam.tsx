@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -312,21 +313,21 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       avatar_url: member.avatar_url || null,
       full_name: member.full_name || null,
       role: member.role || null,
-      role_id: null,
+      role_id: member.role_id || null,
       email: member.email || null,
-      date_of_birth: null,
-      city: null,
-      auth_method: null,
+      date_of_birth: member.date_of_birth || null,
+      city: member.city || null,
+      auth_method: member.auth_method || null,
       is_blocked: !member.is_active || null,
-      doctor_stamp_url: null,
-      doctor_signature_url: null,
-      cns_card_front: null,
-      cns_card_back: null,
-      cns_number: null,
-      deleted_at: null,
-      created_at: null,
-      updated_at: null,
-      license_number: null
+      doctor_stamp_url: member.doctor_stamp_url || null,
+      doctor_signature_url: member.doctor_signature_url || null,
+      cns_card_front: member.cns_card_front || null,
+      cns_card_back: member.cns_card_back || null,
+      cns_number: member.cns_number || null,
+      deleted_at: member.deleted_at || null,
+      created_at: member.created_at || null,
+      updated_at: member.updated_at || null,
+      license_number: member.license_number || null
     };
   };
 
