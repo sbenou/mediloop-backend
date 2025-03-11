@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -123,6 +124,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
 
   const handleTerminateUser = async (userId: string) => {
     try {
+      // First, block the user profile
       const { error: blockError } = await supabase
         .from('profiles')
         .update({ is_blocked: true })
@@ -130,6 +132,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
 
       if (blockError) throw blockError;
 
+      // Then soft delete the team member
       const success = await softDeleteTeamMember(userId);
 
       if (!success) {

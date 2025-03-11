@@ -7,6 +7,8 @@ interface AddressSuggestion {
   formatted: string;
 }
 
+import { supabase } from '@/lib/supabase';
+
 export async function searchAddressesByQuery(query: string): Promise<AddressSuggestion[]> {
   try {
     // Using Mapbox geocoding API

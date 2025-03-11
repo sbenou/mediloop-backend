@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -15,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
-import { searchAddressesByQuery } from '@/services/address-service';
+import { searchAddressesByQuery, softDeleteTeamMember } from '@/services/address-service';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { CommandInput, CommandList, CommandItem, CommandGroup, Command } from '@/components/ui/command';
@@ -223,6 +222,30 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         variant: "destructive",
         title: "Error",
         description: "Failed to update user status",
+      });
+    }
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
+    try {
+      const success = await softDeleteTeamMember(memberId);
+      
+      if (!success) {
+        throw new Error('Failed to soft delete team member');
+      }
+      
+      toast({
+        title: "Success",
+        description: "Team member removed successfully",
+      });
+      
+      fetchTeamMembers();
+    } catch (error) {
+      console.error('Error removing team member:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to remove team member",
       });
     }
   };
@@ -716,9 +739,19 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         className={member.is_active ? "bg-green-500" : "bg-gray-400"}
                       />
                     </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={`/pharmacy/staff/${member.user_id}`}>View Profile</a>
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href={`/pharmacy/staff/${member.user_id}`}>View</a>
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => handleDeleteMember(member.user_id)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
