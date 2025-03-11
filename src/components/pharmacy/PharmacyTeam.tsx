@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -158,19 +157,19 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
     try {
       setLoading(true);
       
-      const { data: pharmacyUsers, error: pharmacyError } = await supabase
-        .from('user_pharmacies')
+      const { data: pharmacyTeam, error: teamError } = await supabase
+        .from('pharmacy_team_members')
         .select('user_id')
         .eq('pharmacy_id', pharmacyId);
       
-      if (pharmacyError) throw pharmacyError;
+      if (teamError) throw teamError;
       
-      if (!pharmacyUsers || pharmacyUsers.length === 0) {
+      if (!pharmacyTeam || pharmacyTeam.length === 0) {
         setTeamMembers([]);
         return;
       }
       
-      const userIds = pharmacyUsers.map(pu => pu.user_id);
+      const userIds = pharmacyTeam.map(member => member.user_id);
       
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -308,14 +307,15 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
       if (profileError) throw profileError;
 
-      const { error: pharmacyAssocError } = await supabase
-        .from('user_pharmacies')
+      const { error: teamMemberError } = await supabase
+        .from('pharmacy_team_members')
         .insert({
           user_id: userId,
           pharmacy_id: pharmacyId,
+          role: values.role,
         });
 
-      if (pharmacyAssocError) throw pharmacyAssocError;
+      if (teamMemberError) throw teamMemberError;
 
       const { error: addressError } = await supabase
         .from('addresses')

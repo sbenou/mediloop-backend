@@ -19,6 +19,11 @@ interface AddressSuggestion {
   formatted: string;
 }
 
+interface GeoCoordinates {
+  longitude: number;
+  latitude: number;
+}
+
 export async function fetchAddressFromPostcode(postcode: string): Promise<AddressResult> {
   try {
     // Call the Supabase Edge Function that communicates with the Mapbox API
@@ -85,5 +90,42 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
   } catch (error) {
     console.error('Error searching addresses:', error);
     return [];
+  }
+}
+
+export async function reverseGeocode(coordinates: GeoCoordinates): Promise<AddressSuggestion | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-geocoding', {
+      body: { 
+        longitude: coordinates.longitude,
+        latitude: coordinates.latitude
+      }
+    });
+
+    if (error) throw error;
+
+    if (data && data.features && data.features.length > 0) {
+      const feature = data.features[0];
+      const { place_name, context, text } = feature;
+      
+      // Extract address components
+      const city = context?.find((c: any) => c.id.startsWith('place'))?.text || '';
+      const region = context?.find((c: any) => c.id.startsWith('region'))?.text || '';
+      const country = context?.find((c: any) => c.id.startsWith('country'))?.text || '';
+      const postalCode = context?.find((c: any) => c.id.startsWith('postcode'))?.text || '';
+      
+      return {
+        street: text || '',
+        city: city || region,
+        postal_code: postalCode,
+        country,
+        formatted: place_name
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error in reverse geocoding:', error);
+    return null;
   }
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -59,26 +58,26 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
     try {
       setLoading(true);
       
-      // Get all user IDs associated with this pharmacy
-      const { data: pharmacyUsers, error: pharmacyError } = await supabase
-        .from('user_pharmacies')
+      // Get all team members associated with this pharmacy
+      const { data: teamMembers, error: teamError } = await supabase
+        .from('pharmacy_team_members')
         .select('user_id, created_at')
         .eq('pharmacy_id', pharmacyId);
       
-      if (pharmacyError) throw pharmacyError;
+      if (teamError) throw teamError;
       
-      if (!pharmacyUsers || pharmacyUsers.length === 0) {
+      if (!teamMembers || teamMembers.length === 0) {
         setStaffMembers([]);
         setFilteredStaff([]);
         return;
       }
       
-      const userIdsWithDates = pharmacyUsers.reduce<{[key: string]: string}>((acc, pu) => {
-        acc[pu.user_id] = pu.created_at;
+      const userIdsWithDates = teamMembers.reduce<{[key: string]: string}>((acc, member) => {
+        acc[member.user_id] = member.created_at;
         return acc;
       }, {});
       
-      const userIds = pharmacyUsers.map(pu => pu.user_id);
+      const userIds = teamMembers.map(member => member.user_id);
       
       // Get profiles for these users
       const { data: profiles, error: profilesError } = await supabase
@@ -135,7 +134,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
 
       // Then remove the association with the pharmacy
       const { error: removeError } = await supabase
-        .from('user_pharmacies')
+        .from('pharmacy_team_members')
         .delete()
         .eq('user_id', userId)
         .eq('pharmacy_id', pharmacyId);
