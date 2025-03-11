@@ -26,7 +26,7 @@ interface AddressSuggestion {
 }
 
 // Get the Mapbox access token from Edge function for security
-const getMapboxToken = async (): Promise<string> => {
+export const getMapboxToken = async (): Promise<string> => {
   try {
     // Try to get the token from a Supabase Edge Function
     const { data, error } = await supabase.functions.invoke('get-mapbox-token');

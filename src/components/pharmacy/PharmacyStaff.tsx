@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { UserCog, Search, Eye, Pencil, UserX } from 'lucide-react';
+import { UserCog, Search, Eye, Pencil, UserX, Loader2, MapPin, X } from 'lucide-react';
 import UserAvatar from '@/components/user-menu/UserAvatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { searchAddressesByQuery } from '@/services/address-service';
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -35,6 +38,18 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
   const [userDetailsOpen, setUserDetailsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
   const navigate = useNavigate();
+  
+  // Address search state
+  const [addressSearchQuery, setAddressSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [isAddressPopoverOpen, setIsAddressPopoverOpen] = useState(false);
+  const [userAddress, setUserAddress] = useState({
+    street: "",
+    city: "",
+    postal_code: "",
+    country: ""
+  });
 
   useEffect(() => {
     fetchStaffMembers();
@@ -158,6 +173,40 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
         description: "Failed to remove staff member",
       });
     }
+  };
+  
+  const handleAddressSearch = async (query: string) => {
+    setAddressSearchQuery(query);
+    
+    if (query.length >= 3) {
+      setIsSearching(true);
+      try {
+        const results = await searchAddressesByQuery(query);
+        setAddressSuggestions(results);
+      } catch (error) {
+        console.error('Error searching addresses:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      setAddressSuggestions([]);
+    }
+  };
+
+  const handleAddressSelect = (address: any) => {
+    setUserAddress({
+      street: address.street,
+      city: address.city,
+      postal_code: address.postal_code,
+      country: address.country
+    });
+    setAddressSearchQuery(address.formatted);
+    setIsAddressPopoverOpen(false);
+  };
+
+  const clearAddressSearch = () => {
+    setAddressSearchQuery("");
+    setAddressSuggestions([]);
   };
 
   return (
@@ -333,9 +382,121 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
               </TabsContent>
               
               <TabsContent value="address" className="space-y-4 py-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  Address information will be shown here
-                </p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Street Address</label>
+                    <Popover open={isAddressPopoverOpen} onOpenChange={setIsAddressPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <div className="relative">
+                          <Input 
+                            placeholder="Start typing to search address..." 
+                            value={addressSearchQuery}
+                            onChange={(e) => {
+                              handleAddressSearch(e.target.value);
+                            }}
+                            onFocus={() => setIsAddressPopoverOpen(true)}
+                          />
+                          {addressSearchQuery && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={clearAddressSearch}
+                              className="absolute right-8 top-0 h-full"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full"
+                            onClick={() => setIsAddressPopoverOpen(!isAddressPopoverOpen)}
+                          >
+                            <MapPin className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0 w-[300px] md:w-[400px]" align="start">
+                        <Command>
+                          <div className="flex items-center border-b px-3">
+                            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                            <Input
+                              placeholder="Search address..."
+                              value={addressSearchQuery}
+                              onChange={(e) => handleAddressSearch(e.target.value)}
+                              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-none"
+                            />
+                          </div>
+                          {isSearching && (
+                            <div className="flex items-center justify-center p-4">
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              <p className="text-sm text-muted-foreground">Searching addresses...</p>
+                            </div>
+                          )}
+                          <CommandList>
+                            <CommandGroup>
+                              {addressSuggestions.length > 0 ? (
+                                addressSuggestions.map((address, index) => (
+                                  <CommandItem
+                                    key={index}
+                                    onSelect={() => handleAddressSelect(address)}
+                                    className="cursor-pointer"
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{address.street}</span>
+                                      <span className="text-xs text-gray-500">
+                                        {[address.city, address.postal_code, address.country]
+                                          .filter(Boolean)
+                                          .join(', ')}
+                                      </span>
+                                    </div>
+                                  </CommandItem>
+                                ))
+                              ) : (
+                                <div className="p-4 text-sm text-center text-muted-foreground">
+                                  {addressSearchQuery.length >= 3 
+                                    ? 'No suggestions found. Try a different search.' 
+                                    : 'Type at least 3 characters to search'}
+                                </div>
+                              )}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">City</label>
+                      <Input 
+                        placeholder="City" 
+                        value={userAddress.city}
+                        onChange={(e) => setUserAddress({...userAddress, city: e.target.value})}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Postal Code</label>
+                      <Input 
+                        placeholder="Postal Code" 
+                        value={userAddress.postal_code}
+                        onChange={(e) => setUserAddress({...userAddress, postal_code: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Country</label>
+                    <Input 
+                      placeholder="Country" 
+                      value={userAddress.country}
+                      onChange={(e) => setUserAddress({...userAddress, country: e.target.value})}
+                    />
+                  </div>
+                </div>
               </TabsContent>
               
               <TabsContent value="nextofkin" className="space-y-4 py-4">
