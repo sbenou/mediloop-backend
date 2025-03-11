@@ -54,7 +54,13 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   useEffect(() => {
     if (hours) {
       try {
-        // Try to parse the hours string
+        // Try to parse the hours string, handle empty or null values
+        if (!hours || hours.trim() === '') {
+          setWeekHours(defaultHours);
+          setHasError(true);
+          return;
+        }
+        
         let parsedHours;
         try {
           parsedHours = JSON.parse(hours);
