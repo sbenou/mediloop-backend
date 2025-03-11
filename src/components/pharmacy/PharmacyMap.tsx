@@ -73,6 +73,8 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   useEffect(() => {
     if (!mapboxToken || !mapContainer.current || map.current) return;
     
+    console.log('Initializing Mapbox map with token:', mapboxToken);
+    
     // Initialize map with default center
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -280,8 +282,12 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
 
   return (
     <div className="space-y-3">
-      <div className="h-[200px] rounded-md overflow-hidden border border-gray-200">
-        <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
+      <div className="h-[200px] rounded-md overflow-hidden border border-gray-200 relative">
+        <div 
+          ref={mapContainer} 
+          style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} 
+          className="!w-full !h-full"
+        />
       </div>
       
       <div className="flex flex-col space-y-2">
