@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -25,6 +26,7 @@ interface PharmacyTeamProps {
   pharmacyId: string;
 }
 
+// Define a TeamMember interface to fix type issues
 interface TeamMember {
   id: string;
   user_id: string;
@@ -179,6 +181,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       if (profilesError) throw profilesError;
       
       if (profiles) {
+        // Fixed type issue by explicitly mapping to TeamMember interface
         const members: TeamMember[] = profiles.map(profile => ({
           id: profile.id,
           user_id: profile.id,
