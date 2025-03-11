@@ -66,14 +66,14 @@ export interface UserProfile {
 
 // Define a custom extended type for pharmacy team members with profile information
 // Make sure it has all required properties from UserProfile when needed for createUserProfile function
-export interface PharmacyTeamMemberWithProfile extends PharmacyTeamMember {
+export interface PharmacyTeamMemberWithProfile extends Omit<PharmacyTeamMember, 'created_at'> {
   full_name: string | null;
   email: string | null;
   avatar_url: string | null;
   is_active?: boolean;
   is_blocked: boolean | null;
   phone_number?: string;
-  role_id: string | null;  // Changed from optional to required
+  role_id: string | null;  // Required field to match UserProfile
   date_of_birth: string | null;
   city: string | null;
   auth_method: string | null;
@@ -84,4 +84,5 @@ export interface PharmacyTeamMemberWithProfile extends PharmacyTeamMember {
   cns_number: string | null;
   updated_at: string | null;
   license_number: string | null;
+  created_at: string;  // Ensure this is included from PharmacyTeamMember
 }
