@@ -54,6 +54,36 @@ export const softDeleteTeamMember = async (userId: string): Promise<boolean> => 
   }
 };
 
+// Define an interface for the profile data that comes back from Supabase
+interface ProfileData {
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  is_blocked: boolean | null;
+  role_id: string | null;
+  date_of_birth: string | null;
+  city: string | null;
+  auth_method: string | null;
+  doctor_stamp_url: string | null;
+  doctor_signature_url: string | null;
+  cns_card_front: string | null;
+  cns_card_back: string | null;
+  cns_number: string | null;
+  updated_at: string | null;
+  license_number: string | null;
+}
+
+// Define the shape of the Supabase query response
+interface TeamMemberResponse {
+  id: string;
+  user_id: string;
+  pharmacy_id: string;
+  role: string;
+  created_at: string;
+  deleted_at: string | null;
+  profiles: ProfileData | null;
+}
+
 export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<PharmacyTeamMemberWithProfile[]> => {
   try {
     if (!pharmacyId) {
@@ -96,8 +126,11 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
       throw new Error(`Failed to fetch team members: ${error.message}`);
     }
 
-    const teamMembers: PharmacyTeamMemberWithProfile[] = data.map(member => {
-      const profile = member.profiles || {};
+    // Cast the response to our defined type and map to the required output format
+    const teamMembers: PharmacyTeamMemberWithProfile[] = (data as TeamMemberResponse[]).map(member => {
+      // Handle the case where profiles might be null
+      const profile = member.profiles || {} as ProfileData;
+      
       return {
         id: member.id,
         user_id: member.user_id,
