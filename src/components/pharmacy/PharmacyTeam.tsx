@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -483,7 +484,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                                                   .filter(Boolean)
                                                   .join(', ')}
                                               </div>
-                                            </CommandItem>
+                                            </div>
+                                          </CommandItem>
                                         ))}
                                       </CommandGroup>
                                     )}
