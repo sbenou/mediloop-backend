@@ -14,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
-import { searchAddressesByQuery, softDeleteTeamMember } from '@/services/address-service';
+import { searchAddressesByQuery, softDeleteTeamMember, getPharmacyTeamMembers } from '@/services/address-service';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { CommandInput, CommandList, CommandItem, CommandGroup, Command } from '@/components/ui/command';
@@ -147,42 +147,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
     try {
       setLoading(true);
       
-      const { data: pharmacyTeam, error: teamError } = await supabase
-        .from('pharmacy_team_members')
-        .select('*')
-        .eq('pharmacy_id', pharmacyId)
-        .is('deleted_at', null);
-      
-      if (teamError) throw teamError;
-      
-      if (!pharmacyTeam || pharmacyTeam.length === 0) {
-        setTeamMembers([]);
-        return;
-      }
-      
-      const userIds = pharmacyTeam.map(member => member.user_id);
-      
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url, role, is_blocked')
-        .in('id', userIds);
-        
-      if (profilesError) throw profilesError;
-      
-      if (profiles) {
-        const membersWithProfiles: PharmacyTeamMemberWithProfile[] = pharmacyTeam.map(teamMember => {
-          const profile = profiles.find(p => p.id === teamMember.user_id);
-          return {
-            ...teamMember,
-            full_name: profile?.full_name || 'Unknown',
-            email: profile?.email || 'No email',
-            avatar_url: profile?.avatar_url,
-            is_active: profile ? !profile.is_blocked : true
-          };
-        });
-        
-        setTeamMembers(membersWithProfiles);
-      }
+      const members = await getPharmacyTeamMembers(pharmacyId);
+      setTeamMembers(members);
     } catch (error) {
       console.error('Error fetching team members:', error);
       toast({

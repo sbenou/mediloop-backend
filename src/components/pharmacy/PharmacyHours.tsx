@@ -52,11 +52,28 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   useEffect(() => {
     if (hours) {
       try {
+        // Safely parse the hours string or use default if invalid
         const parsedHours = JSON.parse(hours);
-        setWeekHours(parsedHours);
+        
+        // Validate the parsed object has all expected days
+        const isValid = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+          .every(day => parsedHours[day] && 
+            'open' in parsedHours[day] && 
+            'openTime' in parsedHours[day] && 
+            'closeTime' in parsedHours[day]);
+        
+        if (isValid) {
+          setWeekHours(parsedHours);
+        } else {
+          console.warn('Hours data structure is invalid, using defaults');
+          setWeekHours(defaultHours);
+        }
       } catch (error) {
         console.error('Error parsing hours:', error);
+        setWeekHours(defaultHours);
       }
+    } else {
+      setWeekHours(defaultHours);
     }
   }, [hours]);
 
@@ -174,6 +191,12 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
           )}
         </div>
       ))}
+      <div className="flex justify-end pt-2">
+        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+          <Edit className="mr-2 h-4 w-4" />
+          Edit Hours
+        </Button>
+      </div>
     </div>
   );
 };
