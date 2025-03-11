@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -133,13 +134,14 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200">
         <MapContainer 
           style={{ height: '100%', width: '100%' }}
-          zoom={13}
-          center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]}
           whenReady={() => setIsMapLoaded(true)}
         >
+          <MapController 
+            center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]} 
+            zoom={13} 
+          />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
           />
           
           {/* Pharmacy Marker */}
