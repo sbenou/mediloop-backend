@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation } from 'lucide-react';
 import { useRecoilValue } from 'recoil';
@@ -8,6 +8,17 @@ import { userLocationState } from '@/store/location/atoms';
 import { calculateDistance } from '@/lib/utils/distance';
 import { Button } from '@/components/ui/button';
 import L from 'leaflet';
+
+// Create a MapController component to set the view once the map is initialized
+const MapController = ({ center, zoom }: { center: [number, number], zoom: number }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, map, zoom]);
+  
+  return null;
+};
 
 interface PharmacyMapProps {
   pharmacy: {
@@ -122,11 +133,13 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     <div className="space-y-3">
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200">
         <MapContainer 
-          center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]} 
-          zoom={13} 
           style={{ height: '100%', width: '100%' }}
           whenReady={() => setIsMapLoaded(true)}
         >
+          <MapController 
+            center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]} 
+            zoom={13} 
+          />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
