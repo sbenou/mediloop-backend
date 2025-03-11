@@ -14,12 +14,12 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
-import { fetchAddressFromPostcode } from '@/services/address-service';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { CommandInput, CommandList, CommandItem, CommandGroup, Command } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { searchAddressesByQuery } from '@/services/address-service';
+import { searchAddress } from '@/services/geocoding';
+import { MapPin, Loader2 } from 'lucide-react';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -98,6 +98,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   const [isOpenAddressSuggestions, setIsOpenAddressSuggestions] = useState(false);
   const [phoneValue, setPhoneValue] = useState('');
   const [nokPhoneValue, setNokPhoneValue] = useState('');
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const streetInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -121,47 +123,77 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
     fetchTeamMembers();
   }, [pharmacyId]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (addressQuery.trim() && addressQuery.length > 3) {
-        searchAddresses(addressQuery);
+  // Handle street address input changes with debounce
+  const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setAddressQuery(query);
+    form.setValue('street', query);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    if (query && query.length >= 3) {
+      setIsAddressLoading(true);
+      setIsOpenAddressSuggestions(true);
+      
+      searchTimeoutRef.current = setTimeout(() => {
+        searchAddresses(query);
+      }, 300); // 300ms debounce time
+    } else {
+      setAddressSuggestions([]);
+      setIsAddressLoading(false);
+      if (query.length === 0) {
+        setIsOpenAddressSuggestions(false);
       }
-    }, 500);
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, [addressQuery]);
-
+  // Search for addresses
   const searchAddresses = async (query: string) => {
     try {
-      setIsAddressLoading(true);
-      const suggestions = await searchAddressesByQuery(query);
-      setAddressSuggestions(suggestions);
-      setIsOpenAddressSuggestions(suggestions.length > 0);
+      console.log('Executing address search for:', query);
+      const results = await searchAddress(query);
+      console.log('Address suggestions received:', results);
+      setAddressSuggestions(results);
     } catch (error) {
-      console.error('Error searching addresses:', error);
-      toast({
-        title: "Error",
-        description: "Failed to search for addresses",
-        variant: "destructive"
-      });
+      console.error("Error searching addresses:", error);
+      setAddressSuggestions([]);
     } finally {
       setIsAddressLoading(false);
     }
   };
 
-  const selectAddress = (address: AddressSuggestion) => {
+  // Handle address suggestion selection
+  const handleAddressSelect = (address: any) => {
+    console.log('Selected address:', address);
+    
     form.setValue('street', address.street || '');
     form.setValue('city', address.city || '');
     form.setValue('postal_code', address.postal_code || '');
     form.setValue('country', address.country || '');
-    setIsOpenAddressSuggestions(false);
-    setAddressQuery(address.street || '');
     
-    toast({
-      title: "Address Selected",
-      description: "Address details have been filled automatically"
-    });
+    setAddressQuery(address.street || '');
+    setIsOpenAddressSuggestions(false);
   };
+
+  // Handle clicking outside to close suggestions
+  const handleDocumentClick = (e: MouseEvent) => {
+    if (isOpenAddressSuggestions && streetInputRef.current && !streetInputRef.current.contains(e.target as Node)) {
+      setIsOpenAddressSuggestions(false);
+    }
+  };
+
+  // Add and remove document click listener
+  useEffect(() => {
+    if (isOpenAddressSuggestions) {
+      document.addEventListener('click', handleDocumentClick);
+    }
+    
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [isOpenAddressSuggestions]);
 
   const fetchTeamMembers = async () => {
     try {
@@ -258,11 +290,14 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
     setIsAddressLoading(true);
     try {
-      const addressData = await fetchAddressFromPostcode(postcode);
-      if (addressData && addressData.address) {
-        form.setValue('street', addressData.address.street || '');
-        form.setValue('city', addressData.address.city || '');
-        form.setValue('country', addressData.address.country || '');
+      // We'll implement a direct search for the postcode
+      const results = await searchAddress(postcode);
+      if (results && results.length > 0) {
+        // Use the first result
+        const address = results[0];
+        form.setValue('street', address.street || '');
+        form.setValue('city', address.city || '');
+        form.setValue('country', address.country || '');
         
         toast({
           title: "Address Found",
@@ -378,6 +413,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
   return (
     <div className="space-y-6">
+      
+      
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold">Pharmacy Team</h3>
         <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
@@ -404,7 +441,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                     <TabsTrigger value="nextofkin">Next of Kin</TabsTrigger>
                   </TabsList>
                   
+                  
                   <TabsContent value="personal" className="space-y-4">
+                    
                     <FormField
                       control={form.control}
                       name="full_name"
@@ -485,61 +524,68 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         <FormItem className="flex-1">
                           <FormLabel>Street Address</FormLabel>
                           <div className="relative">
-                            <Popover 
-                              open={isOpenAddressSuggestions} 
-                              onOpenChange={setIsOpenAddressSuggestions}
+                            <FormControl>
+                              <Input 
+                                {...field}
+                                ref={streetInputRef}
+                                placeholder="Start typing your address..." 
+                                value={addressQuery}
+                                onChange={handleStreetChange}
+                                className="pr-10"
+                              />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full"
+                              tabIndex={-1}
                             >
-                              <PopoverTrigger asChild>
-                                <div>
-                                  <Input 
-                                    placeholder="Start typing your address..." 
-                                    value={addressQuery}
-                                    onChange={(e) => {
-                                      field.onChange(e.target.value);
-                                      setAddressQuery(e.target.value);
-                                      if (e.target.value.length > 3) {
-                                        searchAddresses(e.target.value);
-                                      }
-                                    }}
-                                  />
-                                </div>
-                              </PopoverTrigger>
-                              <PopoverContent className="p-0" align="start" side="bottom" sideOffset={5}>
-                                <Command>
-                                  <CommandList>
-                                    {isAddressLoading ? (
-                                      <CommandItem disabled>
-                                        <div className="flex items-center justify-center w-full py-2">
-                                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                                          <span className="ml-2">Searching...</span>
-                                        </div>
-                                      </CommandItem>
-                                    ) : (
-                                      <CommandGroup heading="Address suggestions">
-                                        {addressSuggestions.map((suggestion, index) => (
-                                          <CommandItem 
-                                            key={index}
-                                            onSelect={() => selectAddress(suggestion)}
-                                            className="cursor-pointer"
-                                          >
-                                            <div className="text-sm">
-                                              <div className="font-medium">{suggestion.street}</div>
-                                              <div className="text-muted-foreground">
-                                                {[suggestion.postal_code, suggestion.city, suggestion.country]
-                                                  .filter(Boolean)
-                                                  .join(', ')}
+                              <MapPin className="h-4 w-4" />
+                            </Button>
+                            
+                            {isOpenAddressSuggestions && (
+                              <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                                {isAddressLoading ? (
+                                  <div className="flex items-center justify-center p-4">
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    <span>Searching addresses...</span>
+                                  </div>
+                                ) : (
+                                  <Command className="w-full">
+                                    <CommandList>
+                                      <CommandGroup>
+                                        {addressSuggestions.length > 0 ? (
+                                          addressSuggestions.map((suggestion, index) => (
+                                            <CommandItem
+                                              key={index}
+                                              onSelect={() => handleAddressSelect(suggestion)}
+                                              className="cursor-pointer"
+                                            >
+                                              <div className="flex flex-col">
+                                                <span className="font-medium">{suggestion.street}</span>
+                                                <span className="text-xs text-gray-500">
+                                                  {[suggestion.city, suggestion.postal_code, suggestion.country]
+                                                    .filter(Boolean)
+                                                    .join(', ')}
+                                                </span>
                                               </div>
-                                            </div>
-                                          </CommandItem>
-                                        ))}
+                                            </CommandItem>
+                                          ))
+                                        ) : (
+                                          <div className="p-4 text-sm text-gray-500 text-center">
+                                            {addressQuery.length >= 3 
+                                              ? 'No suggestions found. Try adding more details.' 
+                                              : 'Type at least 3 characters to search'}
+                                          </div>
+                                        )}
                                       </CommandGroup>
-                                    )}
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
+                                    </CommandList>
+                                  </Command>
+                                )}
+                              </div>
+                            )}
                           </div>
-                          {isAddressLoading && <div className="text-xs text-muted-foreground mt-1">Searching for addresses...</div>}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -559,6 +605,23 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                           </FormItem>
                         )}
                       />
+                      
+                      <Button 
+                        type="button" 
+                        onClick={lookupAddress} 
+                        variant="outline" 
+                        className="mt-8"
+                        disabled={isAddressLoading}
+                      >
+                        {isAddressLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Looking up...
+                          </>
+                        ) : (
+                          'Lookup Address'
+                        )}
+                      </Button>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
@@ -606,7 +669,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                     </div>
                   </TabsContent>
                   
+                  
                   <TabsContent value="nextofkin" className="space-y-4">
+                    
                     <FormField
                       control={form.control}
                       name="next_of_kin_name"
@@ -706,6 +771,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
           </DialogContent>
         </Dialog>
       </div>
+      
       
       {loading ? (
         <div className="flex justify-center py-12">
