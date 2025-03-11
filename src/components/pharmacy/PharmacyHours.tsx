@@ -53,10 +53,18 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   useEffect(() => {
     if (hours) {
       try {
-        // Try to parse the hours as JSON
-        const parsedHours = JSON.parse(hours);
-        setWeekHours(parsedHours);
-        setIsJsonFormat(true);
+        // Only try to parse if the hours string starts with a JSON-like character
+        if (hours.trim().startsWith('{')) {
+          // Try to parse the hours as JSON
+          const parsedHours = JSON.parse(hours);
+          setWeekHours(parsedHours);
+          setIsJsonFormat(true);
+        } else {
+          // If the hours are in string format, store them as a string
+          console.log('Hours are in string format, not attempting to parse as JSON');
+          setHoursString(hours);
+          setIsJsonFormat(false);
+        }
       } catch (error) {
         console.error('Error parsing hours:', error);
         
@@ -156,122 +164,118 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
     }
   };
 
-  if (isEditing) {
-    // If we have string format hours, show a simple text area for editing
-    if (!isJsonFormat && hoursString !== null) {
-      return (
-        <div className="space-y-4">
-          <textarea 
-            value={hoursString}
-            onChange={(e) => handleEditStringHours(e.target.value)}
-            className="w-full p-2 border rounded resize-y min-h-[150px]"
-            placeholder="Enter hours in format: Mon-Fri: 8:00-19:00, Sat: 9:00-13:00"
-          />
-          
-          <div className="flex justify-end space-x-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleSaveStringHours}>
-              <Save className="mr-2 h-4 w-4" />
-              Save Hours
-            </Button>
-          </div>
-        </div>
-      );
-    }
-    
-    // Otherwise show the structured editor
-    return (
-      <div className="space-y-4">
-        {Object.entries(weekHours).map(([day, dayData]) => (
-          <div key={day} className="flex items-center space-x-4">
-            <div className="w-24">
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  checked={dayData.open} 
-                  onCheckedChange={() => handleToggleDay(day as keyof WeekHours)} 
-                  id={`switch-${day}`}
-                />
-                <Label htmlFor={`switch-${day}`}>{formatDay(day)}</Label>
-              </div>
-            </div>
-            
-            {dayData.open ? (
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="time"
-                  value={dayData.openTime}
-                  onChange={(e) => handleTimeChange(day as keyof WeekHours, 'openTime', e.target.value)}
-                  className="w-24"
-                />
-                <span>-</span>
-                <Input
-                  type="time"
-                  value={dayData.closeTime}
-                  onChange={(e) => handleTimeChange(day as keyof WeekHours, 'closeTime', e.target.value)}
-                  className="w-24"
-                />
-              </div>
-            ) : (
-              <span className="text-sm text-muted-foreground">Closed</span>
-            )}
-          </div>
-        ))}
-        
-        <div className="flex justify-end space-x-2 pt-2">
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleSave}>
-            <Save className="mr-2 h-4 w-4" />
-            Save Hours
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Display the string hours if we have them
-  if (!isJsonFormat && hoursString !== null) {
-    return (
-      <div className="space-y-3">
-        <div className="space-y-1 text-sm">
-          {hoursString.split(',').map((line, index) => (
-            <div key={index} className="flex justify-between items-center">
-              <span>{line.trim()}</span>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-end mt-2">
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Hours
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Display the structured hours format
+  
+  
   return (
     <div className="space-y-3">
-      {Object.entries(weekHours).map(([day, dayData]) => (
-        <div key={day} className="flex justify-between items-center">
-          <span className="font-medium">{formatDay(day)}</span>
-          {dayData.open ? (
-            <span className="text-sm">{dayData.openTime} - {dayData.closeTime}</span>
-          ) : (
-            <span className="text-sm text-muted-foreground">Closed</span>
-          )}
-        </div>
-      ))}
-      <div className="flex justify-end mt-2">
-        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit Hours
-        </Button>
-      </div>
+      {isEditing ? (
+        
+        !isJsonFormat && hoursString !== null ? (
+          <div className="space-y-4">
+            <textarea 
+              value={hoursString}
+              onChange={(e) => handleEditStringHours(e.target.value)}
+              className="w-full p-2 border rounded resize-y min-h-[150px]"
+              placeholder="Enter hours in format: Mon-Fri: 8:00-19:00, Sat: 9:00-13:00"
+            />
+            
+            <div className="flex justify-end space-x-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSaveStringHours}>
+                <Save className="mr-2 h-4 w-4" />
+                Save Hours
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {Object.entries(weekHours).map(([day, dayData]) => (
+              <div key={day} className="flex items-center space-x-4">
+                <div className="w-24">
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      checked={dayData.open} 
+                      onCheckedChange={() => handleToggleDay(day as keyof WeekHours)} 
+                      id={`switch-${day}`}
+                    />
+                    <Label htmlFor={`switch-${day}`}>{formatDay(day)}</Label>
+                  </div>
+                </div>
+                
+                {dayData.open ? (
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="time"
+                      value={dayData.openTime}
+                      onChange={(e) => handleTimeChange(day as keyof WeekHours, 'openTime', e.target.value)}
+                      className="w-24"
+                    />
+                    <span>-</span>
+                    <Input
+                      type="time"
+                      value={dayData.closeTime}
+                      onChange={(e) => handleTimeChange(day as keyof WeekHours, 'closeTime', e.target.value)}
+                      className="w-24"
+                    />
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Closed</span>
+                )}
+              </div>
+            ))}
+            
+            <div className="flex justify-end space-x-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSave}>
+                <Save className="mr-2 h-4 w-4" />
+                Save Hours
+              </Button>
+            </div>
+          </div>
+        )
+      ) : (
+        
+        !isJsonFormat && hoursString !== null ? (
+          <div className="space-y-3">
+            <div className="space-y-1 text-sm">
+              {hoursString.split(',').map((line, index) => (
+                <div key={index} className="flex justify-between items-center">
+                  <span>{line.trim()}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end mt-2">
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Hours
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {Object.entries(weekHours).map(([day, dayData]) => (
+              <div key={day} className="flex justify-between items-center">
+                <span className="font-medium">{formatDay(day)}</span>
+                {dayData.open ? (
+                  <span className="text-sm">{dayData.openTime} - {dayData.closeTime}</span>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Closed</span>
+                )}
+              </div>
+            ))}
+            <div className="flex justify-end mt-2">
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Hours
+              </Button>
+            </div>
+          </div>
+        )
+      )}
     </div>
   );
 };
