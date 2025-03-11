@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -204,19 +203,21 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     );
   }
 
+  // Default values for map initialization
+  const initialCenter: [number, number] = [49.8153, 6.1296]; // Luxembourg center
+  const initialZoom = 13;
+
   return (
     <div className="space-y-3">
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200">
         <MapContainer 
           style={{ height: '100%', width: '100%' }}
-          center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]}
-          zoom={13}
           whenReady={() => {
             console.log('Map is ready!');
             setIsMapLoaded(true);
           }}
         >
-          {/* This controller component will set the view */}
+          {/* This controller component will handle the view updates */}
           <MapController 
             center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]} 
             zoom={13} 
@@ -224,9 +225,8 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            // Use attribute prop instead of attribution to fix TypeScript error
-            // @ts-ignore - Ignoring this type error as attribution is actually supported in react-leaflet
-            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+            // @ts-ignore - attribution is supported in react-leaflet
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           
           {/* Pharmacy Marker */}
