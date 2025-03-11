@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { PharmacyTeamMemberWithProfile } from '@/types/supabase';
 import { Database } from '@/integrations/supabase/types';
@@ -54,36 +55,6 @@ export const softDeleteTeamMember = async (userId: string): Promise<boolean> => 
   }
 };
 
-// Define an interface for the profile data that comes back from Supabase
-interface ProfileData {
-  full_name: string | null;
-  email: string | null;
-  avatar_url: string | null;
-  is_blocked: boolean | null;
-  role_id: string | null;
-  date_of_birth: string | null;
-  city: string | null;
-  auth_method: string | null;
-  doctor_stamp_url: string | null;
-  doctor_signature_url: string | null;
-  cns_card_front: string | null;
-  cns_card_back: string | null;
-  cns_number: string | null;
-  updated_at: string | null;
-  license_number: string | null;
-}
-
-// Define the shape of the Supabase query response
-interface TeamMemberResponse {
-  id: string;
-  user_id: string;
-  pharmacy_id: string;
-  role: string;
-  created_at: string;
-  deleted_at: string | null;
-  profiles: ProfileData | null;
-}
-
 export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<PharmacyTeamMemberWithProfile[]> => {
   try {
     if (!pharmacyId) {
@@ -91,73 +62,83 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
       throw new Error('Pharmacy ID is required');
     }
 
-    const { data, error } = await supabase
+    // First, get all team members for this pharmacy
+    const { data: teamMembers, error: teamError } = await supabase
       .from('pharmacy_team_members')
-      .select(`
-        id,
-        user_id,
-        pharmacy_id,
-        role,
-        created_at,
-        deleted_at,
-        profiles:user_id (
-          full_name,
-          email,
-          avatar_url,
-          is_blocked,
-          role_id,
-          date_of_birth,
-          city,
-          auth_method,
-          doctor_stamp_url,
-          doctor_signature_url,
-          cns_card_front,
-          cns_card_back,
-          cns_number,
-          updated_at,
-          license_number
-        )
-      `)
+      .select('id, user_id, pharmacy_id, role, created_at, deleted_at')
       .eq('pharmacy_id', pharmacyId)
       .is('deleted_at', null);
     
-    if (error) {
-      console.error('Error fetching team members:', error);
-      throw new Error(`Failed to fetch team members: ${error.message}`);
+    if (teamError) {
+      console.error('Error fetching team members:', teamError);
+      throw new Error(`Failed to fetch team members: ${teamError.message}`);
     }
 
-    // Cast the response to our defined type and map to the required output format
-    const teamMembers: PharmacyTeamMemberWithProfile[] = (data as TeamMemberResponse[]).map(member => {
-      // Handle the case where profiles might be null
-      const profile = member.profiles || {} as ProfileData;
-      
-      return {
-        id: member.id,
-        user_id: member.user_id,
-        pharmacy_id: member.pharmacy_id,
-        role: member.role,
-        created_at: member.created_at,
-        deleted_at: member.deleted_at,
-        full_name: profile.full_name || null,
-        email: profile.email || null,
-        avatar_url: profile.avatar_url || null,
-        is_active: !profile.is_blocked,
-        is_blocked: profile.is_blocked || false,
-        role_id: profile.role_id || null,
-        date_of_birth: profile.date_of_birth || null,
-        city: profile.city || null,
-        auth_method: profile.auth_method || null,
-        doctor_stamp_url: profile.doctor_stamp_url || null,
-        doctor_signature_url: profile.doctor_signature_url || null,
-        cns_card_front: profile.cns_card_front || null,
-        cns_card_back: profile.cns_card_back || null,
-        cns_number: profile.cns_number || null,
-        updated_at: profile.updated_at || null,
-        license_number: profile.license_number || null
-      };
-    });
+    if (!teamMembers || teamMembers.length === 0) {
+      return [];
+    }
+
+    // Now fetch the profile data for each team member
+    const teamMembersWithProfile: PharmacyTeamMemberWithProfile[] = await Promise.all(
+      teamMembers.map(async (member) => {
+        // Get profile data for this user
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select(`
+            full_name,
+            email,
+            avatar_url,
+            is_blocked,
+            role_id,
+            date_of_birth,
+            city,
+            auth_method,
+            doctor_stamp_url,
+            doctor_signature_url,
+            cns_card_front,
+            cns_card_back,
+            cns_number,
+            updated_at,
+            license_number
+          `)
+          .eq('id', member.user_id)
+          .single();
+        
+        if (profileError) {
+          console.warn(`Error fetching profile for user ${member.user_id}:`, profileError);
+        }
+        
+        // Use empty object as fallback if profile data is not found
+        const profile = profileData || {};
+        
+        return {
+          id: member.id,
+          user_id: member.user_id,
+          pharmacy_id: member.pharmacy_id,
+          role: member.role,
+          created_at: member.created_at,
+          deleted_at: member.deleted_at,
+          full_name: profile.full_name || null,
+          email: profile.email || null,
+          avatar_url: profile.avatar_url || null,
+          is_active: !profile.is_blocked,
+          is_blocked: profile.is_blocked || false,
+          role_id: profile.role_id || null,
+          date_of_birth: profile.date_of_birth || null,
+          city: profile.city || null,
+          auth_method: profile.auth_method || null,
+          doctor_stamp_url: profile.doctor_stamp_url || null,
+          doctor_signature_url: profile.doctor_signature_url || null,
+          cns_card_front: profile.cns_card_front || null,
+          cns_card_back: profile.cns_card_back || null,
+          cns_number: profile.cns_number || null,
+          updated_at: profile.updated_at || null,
+          license_number: profile.license_number || null
+        };
+      })
+    );
     
-    return teamMembers;
+    return teamMembersWithProfile;
   } catch (error) {
     console.error('Error in getPharmacyTeamMembers:', error);
     throw error;
