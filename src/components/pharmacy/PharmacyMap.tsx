@@ -44,6 +44,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   const [distance, setDistance] = useState<string | null>(null);
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [hasRendered, setHasRendered] = useState(false);
   
   const userLocation = useRecoilValue(userLocationState);
   const setUserLocation = useSetRecoilState(userLocationState);
@@ -57,6 +58,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         console.log('Fetching Mapbox token...');
         const token = await getMapboxToken();
         console.log('Received token:', token ? 'Valid token' : 'No token');
+        
         if (token) {
           setMapboxToken(token);
           mapboxgl.accessToken = token;
@@ -77,23 +79,35 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     fetchMapboxToken();
   }, []);
   
+  // Set rendered flag after first render
+  useEffect(() => {
+    setHasRendered(true);
+  }, []);
+  
   // Initialize map when token is available
   useEffect(() => {
     if (!mapboxToken || !mapContainer.current || map.current) return;
     
-    console.log('Initializing Mapbox map with token:', mapboxToken.substring(0, 10) + '...');
+    console.log('Initializing Mapbox map with token');
     
     try {
+      // Force explicit height
+      if (mapContainer.current) {
+        mapContainer.current.style.height = '200px';
+        mapContainer.current.style.width = '100%';
+      }
+      
       // Initialize map with default center
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
         center: [6.1296, 49.8153], // Luxembourg center as default
         zoom: 13,
+        attributionControl: false,
       });
       
       // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
       
       // Set loaded state when map is ready
       map.current.on('load', () => {
@@ -119,7 +133,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         map.current = null;
       }
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, hasRendered]);
   
   // Get user's location when isUsingLocation changes to true
   useEffect(() => {
@@ -239,68 +253,76 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     console.log('User location:', userLocation);
     console.log('Map loaded:', isMapLoaded);
     
-    // Clear existing markers
-    if (pharmacyMarker.current) {
-      pharmacyMarker.current.remove();
-      pharmacyMarker.current = null;
-    }
-    
-    if (userMarker.current) {
-      userMarker.current.remove();
-      userMarker.current = null;
-    }
-    
-    // Add pharmacy marker and fly to it
-    if (pharmacyCoordinates) {
-      try {
-        // Create pharmacy marker
-        const el = document.createElement('div');
-        el.className = 'pharmacy-marker';
-        el.style.width = '25px';
-        el.style.height = '25px';
-        el.style.backgroundImage = 'url(https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png)';
-        el.style.backgroundSize = 'contain';
-        
-        pharmacyMarker.current = new mapboxgl.Marker(el)
-          .setLngLat([pharmacyCoordinates.lng, pharmacyCoordinates.lat])
-          .setPopup(new mapboxgl.Popup({ offset: 25 })
-            .setHTML(`<div class="text-sm font-medium">${pharmacy.name}</div><div class="text-xs">${pharmacy.address}</div>`))
-          .addTo(map.current);
-        
-        // Fly to pharmacy location
-        map.current.flyTo({
-          center: [pharmacyCoordinates.lng, pharmacyCoordinates.lat],
-          zoom: 15,
-          essential: true
-        });
-        
-        console.log('Added pharmacy marker at:', [pharmacyCoordinates.lng, pharmacyCoordinates.lat]);
-      } catch (error) {
-        console.error('Error adding pharmacy marker:', error);
+    // Request an animation frame to ensure the map container is rendered
+    requestAnimationFrame(() => {
+      if (!map.current) return;
+      
+      // Force map resize to ensure proper display
+      map.current.resize();
+      
+      // Clear existing markers
+      if (pharmacyMarker.current) {
+        pharmacyMarker.current.remove();
+        pharmacyMarker.current = null;
       }
-    }
-    
-    // Add user location marker if available
-    if (userLocation && isUsingLocation) {
-      try {
-        const el = document.createElement('div');
-        el.className = 'user-marker';
-        el.style.width = '20px';
-        el.style.height = '20px';
-        el.style.borderRadius = '50%';
-        el.style.backgroundColor = '#3b82f6';
-        el.style.border = '2px solid white';
-        
-        userMarker.current = new mapboxgl.Marker(el)
-          .setLngLat([userLocation.lon, userLocation.lat])
-          .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
-          .addTo(map.current);
+      
+      if (userMarker.current) {
+        userMarker.current.remove();
+        userMarker.current = null;
+      }
+      
+      // Add pharmacy marker and fly to it
+      if (pharmacyCoordinates) {
+        try {
+          // Create pharmacy marker
+          const el = document.createElement('div');
+          el.className = 'pharmacy-marker';
+          el.style.width = '25px';
+          el.style.height = '25px';
+          el.style.backgroundImage = 'url(https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png)';
+          el.style.backgroundSize = 'contain';
           
-        console.log('Added user marker at:', [userLocation.lon, userLocation.lat]);
-      } catch (error) {
-        console.error('Error adding user marker:', error);
+          pharmacyMarker.current = new mapboxgl.Marker(el)
+            .setLngLat([pharmacyCoordinates.lng, pharmacyCoordinates.lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 })
+              .setHTML(`<div class="text-sm font-medium">${pharmacy.name}</div><div class="text-xs">${pharmacy.address}</div>`))
+            .addTo(map.current);
+          
+          // Fly to pharmacy location
+          map.current.flyTo({
+            center: [pharmacyCoordinates.lng, pharmacyCoordinates.lat],
+            zoom: 15,
+            essential: true
+          });
+          
+          console.log('Added pharmacy marker at:', [pharmacyCoordinates.lng, pharmacyCoordinates.lat]);
+        } catch (error) {
+          console.error('Error adding pharmacy marker:', error);
+        }
       }
-    }
+      
+      // Add user location marker if available
+      if (userLocation && isUsingLocation) {
+        try {
+          const el = document.createElement('div');
+          el.className = 'user-marker';
+          el.style.width = '20px';
+          el.style.height = '20px';
+          el.style.borderRadius = '50%';
+          el.style.backgroundColor = '#3b82f6';
+          el.style.border = '2px solid white';
+          
+          userMarker.current = new mapboxgl.Marker(el)
+            .setLngLat([userLocation.lon, userLocation.lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
+            .addTo(map.current);
+            
+          console.log('Added user marker at:', [userLocation.lon, userLocation.lat]);
+        } catch (error) {
+          console.error('Error adding user marker:', error);
+        }
+      }
+    });
   }, [pharmacyCoordinates, userLocation, isMapLoaded, pharmacy, isUsingLocation]);
   
   // Handle location toggle
@@ -327,24 +349,12 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     );
   }
 
-  // Show loading state when no coordinates
-  if (!pharmacyCoordinates) {
-    return (
-      <div className="space-y-3">
-        <div className="bg-gray-200 h-32 rounded-md flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="h-8 w-8 text-gray-400 mx-auto" />
-            <p className="text-sm text-gray-600 mt-1">Loading map location...</p>
-          </div>
-        </div>
-        <p className="text-sm text-center">{pharmacy.address}, {pharmacy.city} {pharmacy.postal_code}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3">
-      <div className="h-[200px] rounded-md overflow-hidden border border-gray-200 relative">
+      <div 
+        className="h-[200px] rounded-md overflow-hidden border border-gray-200 relative bg-gray-100"
+        style={{ minHeight: '200px' }}
+      >
         {mapError ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
             <div className="text-center p-4">
@@ -356,7 +366,12 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           <div 
             ref={mapContainer} 
             className="absolute inset-0"
-            style={{ width: '100%', height: '100%', position: 'absolute' }}
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              position: 'absolute',
+              minHeight: '200px'
+            }}
           />
         )}
       </div>
