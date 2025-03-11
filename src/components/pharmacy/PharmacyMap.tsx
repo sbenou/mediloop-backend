@@ -146,14 +146,6 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           console.log('Using cached pharmacy coordinates');
           const coords = JSON.parse(cachedCoords);
           setPharmacyCoordinates(coords);
-          
-          // Calculate distance if user location is available
-          if (userLocation && isUsingLocation) {
-            setIsCalculatingDistance(true);
-            const distanceValue = getDistanceFromUserToPharmacy(userLocation, coords);
-            setDistance(distanceValue);
-            setIsCalculatingDistance(false);
-          }
           return;
         }
         
@@ -176,14 +168,6 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           // Cache the coordinates
           sessionStorage.setItem(cacheKey, JSON.stringify(coordinates));
           setPharmacyCoordinates(coordinates);
-          
-          // Calculate distance if user location is available
-          if (userLocation && isUsingLocation) {
-            setIsCalculatingDistance(true);
-            const distanceValue = getDistanceFromUserToPharmacy(userLocation, coordinates);
-            setDistance(distanceValue);
-            setIsCalculatingDistance(false);
-          }
         } else {
           console.error('No location found for address:', fullQuery);
           
@@ -203,7 +187,27 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
     };
     
     getPharmacyCoordinates();
-  }, [pharmacy, userLocation, isUsingLocation]);
+  }, [pharmacy]);
+  
+  // Calculate distance when user location or pharmacy coordinates change
+  useEffect(() => {
+    if (userLocation && pharmacyCoordinates && isUsingLocation) {
+      setIsCalculatingDistance(true);
+      
+      try {
+        const distanceValue = getDistanceFromUserToPharmacy(userLocation, pharmacyCoordinates);
+        console.log('Distance calculated:', distanceValue);
+        setDistance(distanceValue);
+      } catch (error) {
+        console.error('Error calculating distance:', error);
+        setDistance(null);
+      } finally {
+        setIsCalculatingDistance(false);
+      }
+    } else if (!isUsingLocation) {
+      setDistance(null);
+    }
+  }, [userLocation, pharmacyCoordinates, isUsingLocation]);
   
   // Update markers when coordinates or map changes and calculate distance
   useEffect(() => {
@@ -258,16 +262,8 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         .setLngLat([userLocation.lon, userLocation.lat])
         .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
         .addTo(map.current);
-        
-      // Calculate and update distance
-      if (pharmacyCoordinates && !distance) {
-        setIsCalculatingDistance(true);
-        const distanceValue = getDistanceFromUserToPharmacy(userLocation, pharmacyCoordinates);
-        setDistance(distanceValue);
-        setIsCalculatingDistance(false);
-      }
     }
-  }, [pharmacyCoordinates, userLocation, isMapLoaded, pharmacy, isUsingLocation, distance]);
+  }, [pharmacyCoordinates, userLocation, isMapLoaded, pharmacy, isUsingLocation]);
   
   // Handle location toggle
   const handleLocationToggle = (checked: boolean) => {
@@ -312,6 +308,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         <div 
           ref={mapContainer} 
           className="absolute inset-0 w-full h-full"
+          style={{ width: '100%', height: '100%', position: 'absolute' }}
         />
       </div>
       
