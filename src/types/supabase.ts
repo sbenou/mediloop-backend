@@ -48,6 +48,10 @@ export interface PharmacyTeamMemberWithProfile extends PharmacyTeamMember {
   avatar_url?: string | null;
   is_active?: boolean;
   phone_number?: string;
+  user_id: string;
+  pharmacy_id: string;
+  id: string;
+  role: string;
 }
 
 // Define a user profile type for avatar and other components
