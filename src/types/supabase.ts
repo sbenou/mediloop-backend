@@ -24,65 +24,9 @@ export type UserPharmacy = Tables<'user_pharmacies'>
 export type Notification = Tables<'notifications'>
 export type Teleconsultation = Tables<'teleconsultations'>
 
-// Update the PharmacyTeamMember type to match the database schema
-export type PharmacyTeamMember = {
-  id: string;
-  user_id: string;
-  pharmacy_id: string;
-  role: string;
-  created_at: string;
-  deleted_at: string | null;
-};
-
 // Define a custom type for doctor workplace since it's not in the generated types yet
 export interface DoctorWorkplace {
   user_id: string;
   workplace_id: string;
   created_at: string;
-}
-
-// Define a complete user profile type for avatar and other components
-export interface UserProfile {
-  id: string;
-  avatar_url: string | null;
-  full_name: string | null;
-  role: string | null;
-  role_id: string | null;
-  email: string | null;
-  date_of_birth: string | null;
-  city: string | null;
-  auth_method: string | null;
-  is_blocked: boolean | null;
-  doctor_stamp_url: string | null;
-  doctor_signature_url: string | null;
-  cns_card_front: string | null;
-  cns_card_back: string | null;
-  cns_number: string | null;
-  deleted_at: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  license_number: string | null;
-}
-
-// Define a custom extended type for pharmacy team members with profile information
-// Make sure it has all required properties from UserProfile when needed for createUserProfile function
-export interface PharmacyTeamMemberWithProfile extends Omit<PharmacyTeamMember, 'created_at'> {
-  full_name: string | null;
-  email: string | null;
-  avatar_url: string | null;
-  is_active?: boolean;
-  is_blocked: boolean | null;
-  phone_number?: string;
-  role_id: string | null;  // Required field to match UserProfile
-  date_of_birth: string | null;
-  city: string | null;
-  auth_method: string | null;
-  doctor_stamp_url: string | null;
-  doctor_signature_url: string | null;
-  cns_card_front: string | null;
-  cns_card_back: string | null;
-  cns_number: string | null;
-  updated_at: string | null;
-  license_number: string | null;
-  created_at: string;  // Ensure this is included from PharmacyTeamMember
 }

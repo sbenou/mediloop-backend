@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -12,7 +13,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface DayHours {
   open: boolean;
@@ -48,51 +48,15 @@ const defaultHours: WeekHours = {
 const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [weekHours, setWeekHours] = useState<WeekHours>(defaultHours);
-  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    try {
-      // Handle empty, null, or invalid hours data
-      if (!hours || hours.trim() === '') {
-        console.log('Hours data is empty or null, using defaults');
-        setWeekHours(defaultHours);
-        setHasError(true);
-        return;
-      }
-      
-      let parsedHours: WeekHours;
-      
+    if (hours) {
       try {
-        parsedHours = JSON.parse(hours) as WeekHours;
-      } catch (parseError) {
-        console.error('Error parsing hours JSON:', parseError);
-        setWeekHours(defaultHours);
-        setHasError(true);
-        return;
-      }
-      
-      // Validate the parsed object has all expected days
-      const requiredDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-      const isValid = requiredDays.every(day => 
-        parsedHours[day as keyof WeekHours] && 
-        typeof parsedHours[day as keyof WeekHours] === 'object' &&
-        'open' in parsedHours[day as keyof WeekHours] && 
-        'openTime' in parsedHours[day as keyof WeekHours] && 
-        'closeTime' in parsedHours[day as keyof WeekHours]
-      );
-      
-      if (isValid) {
+        const parsedHours = JSON.parse(hours);
         setWeekHours(parsedHours);
-        setHasError(false);
-      } else {
-        console.warn('Hours data structure is invalid, using defaults');
-        setWeekHours(defaultHours);
-        setHasError(true);
+      } catch (error) {
+        console.error('Error parsing hours:', error);
       }
-    } catch (error) {
-      console.error('Error handling hours:', error);
-      setWeekHours(defaultHours);
-      setHasError(true);
     }
   }, [hours]);
 
@@ -118,19 +82,10 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
 
   const handleSave = async () => {
     try {
-      const hoursString = JSON.stringify(weekHours);
-      
-      // Validate that the stringified object is valid JSON
-      try {
-        JSON.parse(hoursString);
-      } catch (e) {
-        throw new Error('Generated hours data is not valid JSON');
-      }
-      
       const { error } = await supabase
         .from('pharmacies')
         .update({
-          hours: hoursString,
+          hours: JSON.stringify(weekHours),
         })
         .eq('id', pharmacyId);
 
@@ -142,7 +97,6 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
       });
       
       setIsEditing(false);
-      setHasError(false);
     } catch (error) {
       console.error('Error updating hours:', error);
       toast({
@@ -156,23 +110,6 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   const formatDay = (day: string) => {
     return day.charAt(0).toUpperCase() + day.slice(1);
   };
-
-  if (hasError && !isEditing) {
-    return (
-      <div className="space-y-4">
-        <Alert variant="destructive">
-          <AlertTitle>Invalid Hours Format</AlertTitle>
-          <AlertDescription>
-            There was a problem loading the pharmacy hours. Please update the hours to fix this issue.
-          </AlertDescription>
-        </Alert>
-        <Button onClick={() => setIsEditing(true)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Set Opening Hours
-        </Button>
-      </div>
-    );
-  }
 
   if (isEditing) {
     return (
@@ -237,12 +174,6 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
           )}
         </div>
       ))}
-      <div className="flex justify-end pt-2">
-        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit Hours
-        </Button>
-      </div>
     </div>
   );
 };

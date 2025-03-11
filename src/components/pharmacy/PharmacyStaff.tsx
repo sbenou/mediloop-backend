@@ -11,7 +11,6 @@ import UserAvatar from '@/components/user-menu/UserAvatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { softDeleteTeamMember } from '@/services/address-service';
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -60,26 +59,28 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
     try {
       setLoading(true);
       
-      const { data: teamMembers, error: teamError } = await supabase
-        .from('pharmacy_team_members')
+      // Get all user IDs associated with this pharmacy
+      const { data: pharmacyUsers, error: pharmacyError } = await supabase
+        .from('user_pharmacies')
         .select('user_id, created_at')
         .eq('pharmacy_id', pharmacyId);
       
-      if (teamError) throw teamError;
+      if (pharmacyError) throw pharmacyError;
       
-      if (!teamMembers || teamMembers.length === 0) {
+      if (!pharmacyUsers || pharmacyUsers.length === 0) {
         setStaffMembers([]);
         setFilteredStaff([]);
         return;
       }
       
-      const userIdsWithDates = teamMembers.reduce<{[key: string]: string}>((acc, member) => {
-        acc[member.user_id] = member.created_at;
+      const userIdsWithDates = pharmacyUsers.reduce<{[key: string]: string}>((acc, pu) => {
+        acc[pu.user_id] = pu.created_at;
         return acc;
       }, {});
       
-      const userIds = teamMembers.map(member => member.user_id);
+      const userIds = pharmacyUsers.map(pu => pu.user_id);
       
+      // Get profiles for these users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, email, avatar_url, role, is_blocked')
@@ -124,7 +125,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
 
   const handleTerminateUser = async (userId: string) => {
     try {
-      // First, block the user profile
+      // First update the profile to blocked status
       const { error: blockError } = await supabase
         .from('profiles')
         .update({ is_blocked: true })
@@ -132,18 +133,21 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
 
       if (blockError) throw blockError;
 
-      // Then soft delete the team member
-      const success = await softDeleteTeamMember(userId);
+      // Then remove the association with the pharmacy
+      const { error: removeError } = await supabase
+        .from('user_pharmacies')
+        .delete()
+        .eq('user_id', userId)
+        .eq('pharmacy_id', pharmacyId);
 
-      if (!success) {
-        throw new Error('Failed to soft delete team member');
-      }
+      if (removeError) throw removeError;
 
       toast({
         title: "Success",
         description: "Staff member removed successfully",
       });
 
+      // Update the local state
       setStaffMembers(prev => prev.filter(member => member.id !== userId));
       setFilteredStaff(prev => prev.filter(member => member.id !== userId));
     } catch (error) {
@@ -268,6 +272,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
         </div>
       )}
       
+      {/* User Details Dialog */}
       {selectedUser && (
         <Dialog open={userDetailsOpen} onOpenChange={setUserDetailsOpen}>
           <DialogContent className="sm:max-w-[600px]">

@@ -14,15 +14,25 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import UserAvatar from '@/components/user-menu/UserAvatar';
-import { searchAddressesByQuery, softDeleteTeamMember, getPharmacyTeamMembers } from '@/services/address-service';
+import { fetchAddressFromPostcode } from '@/services/address-service';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { CommandInput, CommandList, CommandItem, CommandGroup, Command } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { PharmacyTeamMemberWithProfile, UserProfile } from '@/types/supabase';
+import { searchAddressesByQuery } from '@/services/address-service';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
+}
+
+interface TeamMember {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+  role: string;
+  is_active: boolean;
 }
 
 const relationOptions = [
@@ -68,7 +78,7 @@ const formSchema = z.object({
 });
 
 const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
-  const [teamMembers, setTeamMembers] = useState<PharmacyTeamMemberWithProfile[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState("personal");
@@ -147,8 +157,40 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
     try {
       setLoading(true);
       
-      const members = await getPharmacyTeamMembers(pharmacyId);
-      setTeamMembers(members);
+      const { data: pharmacyUsers, error: pharmacyError } = await supabase
+        .from('user_pharmacies')
+        .select('user_id')
+        .eq('pharmacy_id', pharmacyId);
+      
+      if (pharmacyError) throw pharmacyError;
+      
+      if (!pharmacyUsers || pharmacyUsers.length === 0) {
+        setTeamMembers([]);
+        return;
+      }
+      
+      const userIds = pharmacyUsers.map(pu => pu.user_id);
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url, role, is_blocked')
+        .in('id', userIds);
+        
+      if (profilesError) throw profilesError;
+      
+      if (profiles) {
+        const members: TeamMember[] = profiles.map(profile => ({
+          id: profile.id,
+          user_id: profile.id,
+          full_name: profile.full_name || 'Unknown',
+          email: profile.email || 'No email',
+          avatar_url: profile.avatar_url,
+          role: profile.role || 'pharmacy_user',
+          is_active: !profile.is_blocked,
+        }));
+        
+        setTeamMembers(members);
+      }
     } catch (error) {
       console.error('Error fetching team members:', error);
       toast({
@@ -192,27 +234,45 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
     }
   };
 
-  const handleDeleteMember = async (memberId: string) => {
+  const lookupAddress = async () => {
+    const postcode = form.getValues('postal_code');
+    if (!postcode || postcode.length < 3) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid postal code",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsAddressLoading(true);
     try {
-      const success = await softDeleteTeamMember(memberId);
-      
-      if (!success) {
-        throw new Error('Failed to soft delete team member');
+      const addressData = await fetchAddressFromPostcode(postcode);
+      if (addressData && addressData.address) {
+        form.setValue('street', addressData.address.street || '');
+        form.setValue('city', addressData.address.city || '');
+        form.setValue('country', addressData.address.country || '');
+        
+        toast({
+          title: "Address Found",
+          description: "Address details have been filled automatically"
+        });
+      } else {
+        toast({
+          title: "Address Not Found",
+          description: "We couldn't find an address with this postal code. Please enter manually.",
+          variant: "destructive"
+        });
       }
-      
-      toast({
-        title: "Success",
-        description: "Team member removed successfully",
-      });
-      
-      fetchTeamMembers();
     } catch (error) {
-      console.error('Error removing team member:', error);
+      console.error('Error fetching address:', error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "Failed to remove team member",
+        description: "Failed to lookup address information",
+        variant: "destructive"
       });
+    } finally {
+      setIsAddressLoading(false);
     }
   };
 
@@ -247,15 +307,14 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 
       if (profileError) throw profileError;
 
-      const { error: teamMemberError } = await supabase
-        .from('pharmacy_team_members')
+      const { error: pharmacyAssocError } = await supabase
+        .from('user_pharmacies')
         .insert({
           user_id: userId,
           pharmacy_id: pharmacyId,
-          role: values.role,
         });
 
-      if (teamMemberError) throw teamMemberError;
+      if (pharmacyAssocError) throw pharmacyAssocError;
 
       const { error: addressError } = await supabase
         .from('addresses')
@@ -304,30 +363,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         description: "Failed to add new team member",
       });
     }
-  };
-
-  const createUserProfile = (member: PharmacyTeamMemberWithProfile): UserProfile => {
-    return {
-      id: member.user_id,
-      avatar_url: member.avatar_url || null,
-      full_name: member.full_name || null,
-      role: member.role || null,
-      role_id: member.role_id || null,
-      email: member.email || null,
-      date_of_birth: member.date_of_birth || null,
-      city: member.city || null,
-      auth_method: member.auth_method || null,
-      is_blocked: member.is_blocked || null,
-      doctor_stamp_url: member.doctor_stamp_url || null,
-      doctor_signature_url: member.doctor_signature_url || null,
-      cns_card_front: member.cns_card_front || null,
-      cns_card_back: member.cns_card_back || null,
-      cns_number: member.cns_number || null,
-      deleted_at: member.deleted_at || null,
-      created_at: member.created_at,
-      updated_at: member.updated_at || null,
-      license_number: member.license_number || null
-    };
   };
 
   return (
@@ -685,7 +720,27 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                 <div className="bg-gray-100 pt-6 pb-4 px-4 flex flex-col items-center">
                   <div className="relative">
                     <UserAvatar 
-                      userProfile={createUserProfile(member)}
+                      userProfile={{
+                        id: member.user_id,
+                        avatar_url: member.avatar_url,
+                        full_name: member.full_name,
+                        role: member.role,
+                        role_id: null,
+                        email: member.email,
+                        date_of_birth: null,
+                        city: null,
+                        auth_method: null,
+                        is_blocked: !member.is_active,
+                        doctor_stamp_url: null,
+                        doctor_signature_url: null,
+                        cns_card_front: null,
+                        cns_card_back: null,
+                        cns_number: null,
+                        deleted_at: null,
+                        created_at: null,
+                        updated_at: null,
+                        license_number: null
+                      }}
                     />
                   </div>
                   <h3 className="font-medium text-center mt-2 truncate w-full">{member.full_name}</h3>
@@ -705,23 +760,13 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                       </span>
                       <Switch 
                         checked={member.is_active} 
-                        onCheckedChange={() => handleToggleActive(member.user_id, Boolean(member.is_active))}
+                        onCheckedChange={() => handleToggleActive(member.user_id, member.is_active)}
                         className={member.is_active ? "bg-green-500" : "bg-gray-400"}
                       />
                     </div>
-                    <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={`/pharmacy/staff/${member.user_id}`}>View</a>
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => handleDeleteMember(member.user_id)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
+                    <Button variant="ghost" size="sm" asChild>
+                      <a href={`/pharmacy/staff/${member.user_id}`}>View Profile</a>
+                    </Button>
                   </div>
                 </div>
               </CardContent>
