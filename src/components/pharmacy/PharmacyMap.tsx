@@ -32,6 +32,17 @@ interface PharmacyMapProps {
   };
 }
 
+// Default coordinates for common locations in case geocoding fails
+const DEFAULT_COORDINATES = {
+  // Luxembourg as general fallback
+  'luxembourg': { lat: 49.8153, lng: 6.1296 },
+  // Additional cities for better fallbacks
+  'luxembourg city': { lat: 49.6116, lng: 6.1319 },
+  'dudelange': { lat: 49.4783, lng: 6.0844 },
+  'esch-sur-alzette': { lat: 49.4941, lng: 5.9806 },
+  'differdange': { lat: 49.5242, lng: 5.8903 }
+};
+
 const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   const [pharmacyCoordinates, setPharmacyCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -80,14 +91,28 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         
         console.log('Fetching pharmacy coordinates for:', pharmacy.address);
         const query = `${pharmacy.address}, ${pharmacy.city} ${pharmacy.postal_code}`;
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+        
+        // First try with full address
+        let response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
         
         if (!response.ok) {
           throw new Error(`Geocoding API error: ${response.status}`);
         }
         
-        const data = await response.json();
+        let data = await response.json();
         console.log('Geocoding response:', data);
+        
+        // If first request fails, try with just city and postal code
+        if (!data || data.length === 0) {
+          console.log('No results found with full address, trying with city and postal code');
+          const simplifiedQuery = `${pharmacy.city} ${pharmacy.postal_code}`;
+          response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(simplifiedQuery)}&limit=1`);
+          
+          if (response.ok) {
+            data = await response.json();
+            console.log('Simplified geocoding response:', data);
+          }
+        }
         
         if (data && data.length > 0) {
           const coords = {
@@ -112,15 +137,22 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           }
         } else {
           console.error('No location found for address:', query);
-          // Default coordinates for Luxembourg as fallback
-          const defaultCoords = { lat: 49.8153, lng: 6.1296 };
-          setPharmacyCoordinates(defaultCoords);
+          
+          // Use city-specific fallback if available
+          const cityLower = pharmacy.city.toLowerCase();
+          if (DEFAULT_COORDINATES[cityLower as keyof typeof DEFAULT_COORDINATES]) {
+            console.log(`Using default coordinates for ${pharmacy.city}`);
+            setPharmacyCoordinates(DEFAULT_COORDINATES[cityLower as keyof typeof DEFAULT_COORDINATES]);
+          } else {
+            // Default coordinates for Luxembourg as fallback
+            console.log('Using default Luxembourg coordinates');
+            setPharmacyCoordinates(DEFAULT_COORDINATES.luxembourg);
+          }
         }
       } catch (error) {
         console.error('Error fetching pharmacy coordinates:', error);
         // Default coordinates for Luxembourg as fallback
-        const defaultCoords = { lat: 49.8153, lng: 6.1296 };
-        setPharmacyCoordinates(defaultCoords);
+        setPharmacyCoordinates(DEFAULT_COORDINATES.luxembourg);
       }
     };
     
@@ -177,6 +209,8 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       <div className="h-[200px] rounded-md overflow-hidden border border-gray-200">
         <MapContainer 
           style={{ height: '100%', width: '100%' }}
+          center={[pharmacyCoordinates.lat, pharmacyCoordinates.lng]}
+          zoom={13}
           whenReady={() => {
             console.log('Map is ready!');
             setIsMapLoaded(true);
