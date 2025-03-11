@@ -47,6 +47,8 @@ const defaultHours: WeekHours = {
 const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [weekHours, setWeekHours] = useState<WeekHours>(defaultHours);
+  const [isJsonFormat, setIsJsonFormat] = useState(false);
+  const [hoursString, setHoursString] = useState<string | null>(null);
 
   useEffect(() => {
     if (hours) {
@@ -54,12 +56,14 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         // Try to parse the hours as JSON
         const parsedHours = JSON.parse(hours);
         setWeekHours(parsedHours);
+        setIsJsonFormat(true);
       } catch (error) {
         console.error('Error parsing hours:', error);
         
-        // If the hours are in string format (like "Mon-Fri: 8:00-19:00"), don't try to use them
-        // Just keep the default hours instead
+        // If the hours are in string format (like "Mon-Fri: 8:00-19:00"), store them as a string
         console.log('Using default hours since the format could not be parsed as JSON');
+        setHoursString(hours);
+        setIsJsonFormat(false);
       }
     }
   }, [hours]);
@@ -86,10 +90,51 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
 
   const handleSave = async () => {
     try {
+      // Convert to JSON format when saving
+      const hoursData = JSON.stringify(weekHours);
+      
       const { error } = await supabase
         .from('pharmacies')
         .update({
-          hours: JSON.stringify(weekHours),
+          hours: hoursData,
+        })
+        .eq('id', pharmacyId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Opening hours updated successfully",
+      });
+      
+      setIsEditing(false);
+      setIsJsonFormat(true);
+      setHoursString(null);
+    } catch (error) {
+      console.error('Error updating hours:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update opening hours",
+      });
+    }
+  };
+
+  const formatDay = (day: string) => {
+    return day.charAt(0).toUpperCase() + day.slice(1);
+  };
+
+  // For editing the string format hours
+  const handleEditStringHours = (newHoursString: string) => {
+    setHoursString(newHoursString);
+  };
+
+  const handleSaveStringHours = async () => {
+    try {
+      const { error } = await supabase
+        .from('pharmacies')
+        .update({
+          hours: hoursString,
         })
         .eq('id', pharmacyId);
 
@@ -111,35 +156,32 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
     }
   };
 
-  const formatDay = (day: string) => {
-    return day.charAt(0).toUpperCase() + day.slice(1);
-  };
-
-  // Display the formatted hours string if we couldn't parse the JSON
-  const displayStringHours = () => {
-    if (hours && !isEditing) {
-      try {
-        // Try to parse as JSON
-        JSON.parse(hours);
-        // If successful, return null as we'll use the weekHours state
-        return null;
-      } catch (error) {
-        // If the JSON parse failed, it's a plain string, so display it
-        return (
-          <div className="space-y-1 text-sm">
-            {hours.split(',').map((line, index) => (
-              <div key={index} className="flex justify-between items-center">
-                <span>{line.trim()}</span>
-              </div>
-            ))}
-          </div>
-        );
-      }
-    }
-    return null;
-  };
-
   if (isEditing) {
+    // If we have string format hours, show a simple text area for editing
+    if (!isJsonFormat && hoursString !== null) {
+      return (
+        <div className="space-y-4">
+          <textarea 
+            value={hoursString}
+            onChange={(e) => handleEditStringHours(e.target.value)}
+            className="w-full p-2 border rounded resize-y min-h-[150px]"
+            placeholder="Enter hours in format: Mon-Fri: 8:00-19:00, Sat: 9:00-13:00"
+          />
+          
+          <div className="flex justify-end space-x-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSaveStringHours}>
+              <Save className="mr-2 h-4 w-4" />
+              Save Hours
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
+    // Otherwise show the structured editor
     return (
       <div className="space-y-4">
         {Object.entries(weekHours).map(([day, dayData]) => (
@@ -190,12 +232,17 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
     );
   }
 
-  // If hours is a plain string format, display it that way
-  const stringHoursDisplay = displayStringHours();
-  if (stringHoursDisplay) {
+  // Display the string hours if we have them
+  if (!isJsonFormat && hoursString !== null) {
     return (
       <div className="space-y-3">
-        {stringHoursDisplay}
+        <div className="space-y-1 text-sm">
+          {hoursString.split(',').map((line, index) => (
+            <div key={index} className="flex justify-between items-center">
+              <span>{line.trim()}</span>
+            </div>
+          ))}
+        </div>
         <div className="flex justify-end mt-2">
           <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
             <Edit className="mr-2 h-4 w-4" />
@@ -206,7 +253,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
     );
   }
 
-  // Otherwise show the structured hours format
+  // Display the structured hours format
   return (
     <div className="space-y-3">
       {Object.entries(weekHours).map(([day, dayData]) => (
