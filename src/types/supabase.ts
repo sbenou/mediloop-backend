@@ -31,3 +31,11 @@ export interface DoctorWorkplace {
   workplace_id: string;
   created_at: string;
 }
+
+// Define a custom extended type for pharmacy team members with profile information
+export interface PharmacyTeamMemberWithProfile extends PharmacyTeamMember {
+  full_name?: string;
+  email?: string;
+  avatar_url?: string | null;
+  is_active?: boolean;
+}

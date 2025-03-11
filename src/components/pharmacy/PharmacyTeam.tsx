@@ -20,19 +20,10 @@ import 'react-phone-number-input/style.css';
 import { CommandInput, CommandList, CommandItem, CommandGroup, Command } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { searchAddressesByQuery } from '@/services/address-service';
+import { PharmacyTeamMemberWithProfile } from '@/types/supabase';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
-}
-
-interface TeamMember {
-  id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  avatar_url: string | null;
-  role: string;
-  is_active: boolean;
 }
 
 const relationOptions = [
@@ -78,7 +69,7 @@ const formSchema = z.object({
 });
 
 const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamMembers, setTeamMembers] = useState<PharmacyTeamMemberWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState("personal");
@@ -159,7 +150,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       
       const { data: pharmacyTeam, error: teamError } = await supabase
         .from('pharmacy_team_members')
-        .select('user_id')
+        .select('*')
         .eq('pharmacy_id', pharmacyId);
       
       if (teamError) throw teamError;
@@ -179,17 +170,18 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       if (profilesError) throw profilesError;
       
       if (profiles) {
-        const members: TeamMember[] = profiles.map(profile => ({
-          id: profile.id,
-          user_id: profile.id,
-          full_name: profile.full_name || 'Unknown',
-          email: profile.email || 'No email',
-          avatar_url: profile.avatar_url,
-          role: profile.role || 'pharmacy_user',
-          is_active: !profile.is_blocked,
-        }));
+        const membersWithProfiles: PharmacyTeamMemberWithProfile[] = pharmacyTeam.map(teamMember => {
+          const profile = profiles.find(p => p.id === teamMember.user_id);
+          return {
+            ...teamMember,
+            full_name: profile?.full_name || 'Unknown',
+            email: profile?.email || 'No email',
+            avatar_url: profile?.avatar_url,
+            is_active: profile ? !profile.is_blocked : true
+          };
+        });
         
-        setTeamMembers(members);
+        setTeamMembers(membersWithProfiles);
       }
     } catch (error) {
       console.error('Error fetching team members:', error);
@@ -724,10 +716,10 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                       userProfile={{
                         id: member.user_id,
                         avatar_url: member.avatar_url,
-                        full_name: member.full_name,
+                        full_name: member.full_name || 'Unknown',
                         role: member.role,
                         role_id: null,
-                        email: member.email,
+                        email: member.email || '',
                         date_of_birth: null,
                         city: null,
                         auth_method: null,
@@ -761,7 +753,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                       </span>
                       <Switch 
                         checked={member.is_active} 
-                        onCheckedChange={() => handleToggleActive(member.user_id, member.is_active)}
+                        onCheckedChange={() => handleToggleActive(member.user_id, Boolean(member.is_active))}
                         className={member.is_active ? "bg-green-500" : "bg-gray-400"}
                       />
                     </div>
