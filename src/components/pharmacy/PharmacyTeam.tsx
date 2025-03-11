@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -24,6 +23,15 @@ import { searchAddressesByQuery } from '@/services/address-service';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
+}
+
+interface PharmacyTeamMemberDB {
+  id: string;
+  user_id: string;
+  pharmacy_id: string;
+  role: string;
+  created_at: string;
+  deleted_at: string | null;
 }
 
 // Define a TeamMember interface to fix type issues
@@ -521,8 +529,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                                                   .filter(Boolean)
                                                   .join(', ')}
                                               </div>
-                                            </div>
-                                          </CommandItem>
+                                            </CommandItem>
                                         ))}
                                       </CommandGroup>
                                     )}
