@@ -9,17 +9,20 @@ export const getMapboxToken = async (): Promise<string> => {
     // Try to get from the Supabase Edge Function
     const response = await fetch('/api/get-mapbox-token');
     
-    if (response.ok) {
-      const { token } = await response.json();
-      if (token) return token;
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Mapbox token: ${response.status}`);
     }
     
-    // Use a fallback token - NOTE: This should be replaced with a valid token
-    // This is just a placeholder to ensure the component doesn't break
-    return 'pk.eyJ1IjoiZGVtby1hY2NvdW50IiwiYSI6ImNscHdkZjBiODJ0NTMyaW1yOWdoN2FvdW8ifQ.r_qpHhn0rJd-SgGhNfRw1A';
+    const data = await response.json();
+    
+    if (data && data.token) {
+      return data.token;
+    }
+    
+    throw new Error('Invalid token response format');
   } catch (error) {
     console.error('Error getting Mapbox token:', error);
-    // Return a fallback token
+    // Return a fallback token - Ensure this is a valid public token
     return 'pk.eyJ1IjoiZGVtby1hY2NvdW50IiwiYSI6ImNscHdkZjBiODJ0NTMyaW1yOWdoN2FvdW8ifQ.r_qpHhn0rJd-SgGhNfRw1A';
   }
 };
@@ -45,13 +48,16 @@ export const getCoordinatesWithMapbox = async (
     // Get Mapbox token
     const token = await getMapboxToken();
     
+    if (!token) {
+      throw new Error('No valid Mapbox token available');
+    }
+    
     // Fetch coordinates from Mapbox API
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=1`;
     const response = await fetch(url);
     
     if (!response.ok) {
-      console.error(`Mapbox API error: ${response.status}`);
-      return fallbackCoordinates || null;
+      throw new Error(`Mapbox API error: ${response.status}`);
     }
     
     const data = await response.json();
