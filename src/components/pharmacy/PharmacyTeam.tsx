@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -84,7 +85,10 @@ const formSchema = z.object({
   next_of_kin_name: z.string().min(2, { message: "Next of kin name is required." }),
   next_of_kin_phone: z.string().min(5, { message: "Valid phone number is required." }),
   next_of_kin_relation: z.string().min(2, { message: "Relation is required." }),
-  next_of_kin_address: z.string().min(2, { message: "Address is required." }),
+  next_of_kin_street: z.string().min(2, { message: "Street is required." }),
+  next_of_kin_city: z.string().min(2, { message: "City is required." }),
+  next_of_kin_postal_code: z.string().min(2, { message: "Postal code is required." }),
+  next_of_kin_country: z.string().min(2, { message: "Country is required." }),
 });
 
 const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
@@ -98,8 +102,14 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   const [isOpenAddressSuggestions, setIsOpenAddressSuggestions] = useState(false);
   const [phoneValue, setPhoneValue] = useState('');
   const [nokPhoneValue, setNokPhoneValue] = useState('');
+  const [nokAddressQuery, setNokAddressQuery] = useState('');
+  const [nokAddressSuggestions, setNokAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [isOpenNokAddressSuggestions, setIsOpenNokAddressSuggestions] = useState(false);
+  const [isNokAddressLoading, setIsNokAddressLoading] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const nokSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const streetInputRef = useRef<HTMLInputElement>(null);
+  const nokStreetInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -115,7 +125,10 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       next_of_kin_name: "",
       next_of_kin_phone: "",
       next_of_kin_relation: "other",
-      next_of_kin_address: "",
+      next_of_kin_street: "",
+      next_of_kin_city: "",
+      next_of_kin_postal_code: "",
+      next_of_kin_country: "",
     },
   });
 
@@ -138,7 +151,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       setIsOpenAddressSuggestions(true);
       
       searchTimeoutRef.current = setTimeout(() => {
-        searchAddresses(query);
+        searchAddresses(query, setAddressSuggestions, setIsAddressLoading);
       }, 300); // 300ms debounce time
     } else {
       setAddressSuggestions([]);
@@ -149,18 +162,48 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
     }
   };
 
-  // Search for addresses
-  const searchAddresses = async (query: string) => {
+  // Handle NOK street address input changes with debounce
+  const handleNokStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setNokAddressQuery(query);
+    form.setValue('next_of_kin_street', query);
+    
+    if (nokSearchTimeoutRef.current) {
+      clearTimeout(nokSearchTimeoutRef.current);
+    }
+    
+    if (query && query.length >= 3) {
+      setIsNokAddressLoading(true);
+      setIsOpenNokAddressSuggestions(true);
+      
+      nokSearchTimeoutRef.current = setTimeout(() => {
+        searchAddresses(query, setNokAddressSuggestions, setIsNokAddressLoading);
+      }, 300); // 300ms debounce time
+    } else {
+      setNokAddressSuggestions([]);
+      setIsNokAddressLoading(false);
+      if (query.length === 0) {
+        setIsOpenNokAddressSuggestions(false);
+      }
+    }
+  };
+
+  // Search for addresses (shared function)
+  const searchAddresses = async (
+    query: string, 
+    setSuggestions: React.Dispatch<React.SetStateAction<AddressSuggestion[]>>,
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
     try {
       console.log('Executing address search for:', query);
       const results = await searchAddress(query);
       console.log('Address suggestions received:', results);
-      setAddressSuggestions(results);
+      setSuggestions(results);
     } catch (error) {
       console.error("Error searching addresses:", error);
-      setAddressSuggestions([]);
+      setSuggestions([]);
     } finally {
-      setIsAddressLoading(false);
+      setLoading(false);
     }
   };
 
@@ -177,23 +220,39 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
     setIsOpenAddressSuggestions(false);
   };
 
+  // Handle NOK address suggestion selection
+  const handleNokAddressSelect = (address: any) => {
+    console.log('Selected NOK address:', address);
+    
+    form.setValue('next_of_kin_street', address.street || '');
+    form.setValue('next_of_kin_city', address.city || '');
+    form.setValue('next_of_kin_postal_code', address.postal_code || '');
+    form.setValue('next_of_kin_country', address.country || '');
+    
+    setNokAddressQuery(address.street || '');
+    setIsOpenNokAddressSuggestions(false);
+  };
+
   // Handle clicking outside to close suggestions
   const handleDocumentClick = (e: MouseEvent) => {
     if (isOpenAddressSuggestions && streetInputRef.current && !streetInputRef.current.contains(e.target as Node)) {
       setIsOpenAddressSuggestions(false);
     }
+    if (isOpenNokAddressSuggestions && nokStreetInputRef.current && !nokStreetInputRef.current.contains(e.target as Node)) {
+      setIsOpenNokAddressSuggestions(false);
+    }
   };
 
   // Add and remove document click listener
   useEffect(() => {
-    if (isOpenAddressSuggestions) {
+    if (isOpenAddressSuggestions || isOpenNokAddressSuggestions) {
       document.addEventListener('click', handleDocumentClick);
     }
     
     return () => {
       document.removeEventListener('click', handleDocumentClick);
     };
-  }, [isOpenAddressSuggestions]);
+  }, [isOpenAddressSuggestions, isOpenNokAddressSuggestions]);
 
   const fetchTeamMembers = async () => {
     try {
@@ -383,10 +442,10 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
           full_name: values.next_of_kin_name,
           phone_number: values.next_of_kin_phone,
           relation: values.next_of_kin_relation,
-          street: values.next_of_kin_address,
-          city: values.city,
-          postal_code: values.postal_code,
-          country: values.country,
+          street: values.next_of_kin_street,
+          city: values.next_of_kin_city,
+          postal_code: values.next_of_kin_postal_code,
+          country: values.next_of_kin_country,
         });
 
       if (nextOfKinError) throw nextOfKinError;
@@ -605,23 +664,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                           </FormItem>
                         )}
                       />
-                      
-                      <Button 
-                        type="button" 
-                        onClick={lookupAddress} 
-                        variant="outline" 
-                        className="mt-8"
-                        disabled={isAddressLoading}
-                      >
-                        {isAddressLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Looking up...
-                          </>
-                        ) : (
-                          'Lookup Address'
-                        )}
-                      </Button>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
@@ -739,12 +781,116 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                     
                     <FormField
                       control={form.control}
-                      name="next_of_kin_address"
+                      name="next_of_kin_street"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Street Address</FormLabel>
+                          <div className="relative">
+                            <FormControl>
+                              <Input 
+                                {...field}
+                                ref={nokStreetInputRef}
+                                placeholder="Start typing your address..." 
+                                value={nokAddressQuery}
+                                onChange={handleNokStreetChange}
+                                className="pr-10"
+                              />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full"
+                              tabIndex={-1}
+                            >
+                              <MapPin className="h-4 w-4" />
+                            </Button>
+                            
+                            {isOpenNokAddressSuggestions && (
+                              <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                                {isNokAddressLoading ? (
+                                  <div className="flex items-center justify-center p-4">
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    <span>Searching addresses...</span>
+                                  </div>
+                                ) : (
+                                  <Command className="w-full">
+                                    <CommandList>
+                                      <CommandGroup>
+                                        {nokAddressSuggestions.length > 0 ? (
+                                          nokAddressSuggestions.map((suggestion, index) => (
+                                            <CommandItem
+                                              key={index}
+                                              onSelect={() => handleNokAddressSelect(suggestion)}
+                                              className="cursor-pointer"
+                                            >
+                                              <div className="flex flex-col">
+                                                <span className="font-medium">{suggestion.street}</span>
+                                                <span className="text-xs text-gray-500">
+                                                  {[suggestion.city, suggestion.postal_code, suggestion.country]
+                                                    .filter(Boolean)
+                                                    .join(', ')}
+                                                </span>
+                                              </div>
+                                            </CommandItem>
+                                          ))
+                                        ) : (
+                                          <div className="p-4 text-sm text-gray-500 text-center">
+                                            {nokAddressQuery.length >= 3 
+                                              ? 'No suggestions found. Try adding more details.' 
+                                              : 'Type at least 3 characters to search'}
+                                          </div>
+                                        )}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="next_of_kin_city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input placeholder="New York" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="next_of_kin_postal_code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Postal Code</FormLabel>
+                            <FormControl>
+                              <Input placeholder="10001" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="next_of_kin_country"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Address</FormLabel>
+                          <FormLabel>Country</FormLabel>
                           <FormControl>
-                            <Input placeholder="456 Oak Ave" {...field} />
+                            <Input placeholder="United States" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -856,3 +1002,4 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
 };
 
 export default PharmacyTeam;
+
