@@ -1,6 +1,7 @@
 
 // This service uses Mapbox Geocoding API for fetching address information
 // It provides better search functionality and more reliable results
+import { supabase } from '@/lib/supabase';
 
 interface AddressResult {
   address?: {
