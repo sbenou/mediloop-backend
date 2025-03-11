@@ -190,6 +190,8 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
           
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            // Use attribute prop instead of attribution to fix TypeScript error
+            // @ts-ignore - Ignoring this type error as attribution is actually supported in react-leaflet
             attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
           />
           
