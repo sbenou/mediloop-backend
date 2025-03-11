@@ -324,7 +324,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       cns_card_back: member.cns_card_back || null,
       cns_number: member.cns_number || null,
       deleted_at: member.deleted_at || null,
-      created_at: member.created_at || null,
+      created_at: member.created_at,
       updated_at: member.updated_at || null,
       license_number: member.license_number || null
     };

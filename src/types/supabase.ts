@@ -65,7 +65,6 @@ export interface UserProfile {
 }
 
 // Define a custom extended type for pharmacy team members with profile information
-// Fixed to properly implement all required properties
 export interface PharmacyTeamMemberWithProfile {
   id: string;
   user_id: string;
