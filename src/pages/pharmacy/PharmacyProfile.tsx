@@ -367,7 +367,7 @@ const PharmacyProfile = () => {
                 Location
               </CardTitle>
               <CardDescription>
-                Pharmacy location on map
+                Pharmacy location and distance
               </CardDescription>
             </CardHeader>
             <CardContent>
