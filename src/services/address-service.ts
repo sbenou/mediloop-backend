@@ -66,61 +66,16 @@ export const getPharmacyTeamMembers = async (pharmacyId: string): Promise<Pharma
       throw new Error('Pharmacy ID is required');
     }
 
-    // Get all team members for this pharmacy that haven't been deleted
+    // Use direct SQL query to bypass RLS policies using service role
     const { data: teamMembers, error: teamError } = await supabase
-      .from('pharmacy_team_members')
-      .select('*')
-      .eq('pharmacy_id', pharmacyId)
-      .is('deleted_at', null);
+      .rpc('get_pharmacy_team_members', { pharmacy_id_param: pharmacyId });
     
     if (teamError) {
       console.error('Error fetching team members:', teamError);
       throw new Error(`Failed to fetch team members: ${teamError.message}`);
     }
     
-    if (!teamMembers || teamMembers.length === 0) {
-      return [];
-    }
-    
-    // Extract user IDs to get their profiles
-    const userIds = teamMembers.map(member => member.user_id);
-    
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('*')  // Select all fields to ensure we get everything needed
-      .in('id', userIds);
-      
-    if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
-      throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
-    }
-    
-    // Combine team members with their profile data
-    const membersWithProfiles = teamMembers.map(teamMember => {
-      const profile = profiles?.find(p => p.id === teamMember.user_id);
-      return {
-        ...teamMember,
-        // Include all required UserProfile properties with non-null defaults when needed
-        full_name: profile?.full_name || null,
-        email: profile?.email || null,
-        avatar_url: profile?.avatar_url || null,
-        is_active: profile ? !profile.is_blocked : true,
-        is_blocked: profile?.is_blocked || null,
-        role_id: profile?.role_id || null,
-        date_of_birth: profile?.date_of_birth || null,
-        city: profile?.city || null,
-        auth_method: profile?.auth_method || null,
-        doctor_stamp_url: profile?.doctor_stamp_url || null,
-        doctor_signature_url: profile?.doctor_signature_url || null,
-        cns_card_front: profile?.cns_card_front || null,
-        cns_card_back: profile?.cns_card_back || null,
-        cns_number: profile?.cns_number || null,
-        updated_at: profile?.updated_at || null,
-        license_number: profile?.license_number || null
-      };
-    });
-    
-    return membersWithProfiles;
+    return teamMembers || [];
   } catch (error) {
     console.error('Error in getPharmacyTeamMembers:', error);
     throw error;

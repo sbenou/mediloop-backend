@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -52,51 +51,48 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (hours) {
+    try {
+      // Handle empty, null, or invalid hours data
+      if (!hours || hours.trim() === '') {
+        console.log('Hours data is empty or null, using defaults');
+        setWeekHours(defaultHours);
+        setHasError(true);
+        return;
+      }
+      
+      let parsedHours: WeekHours;
+      
       try {
-        // Try to parse the hours string, handle empty or null values
-        if (!hours || hours.trim() === '') {
-          setWeekHours(defaultHours);
-          setHasError(true);
-          return;
-        }
-        
-        let parsedHours;
-        try {
-          parsedHours = JSON.parse(hours);
-        } catch (parseError) {
-          console.error('Error parsing hours JSON:', parseError);
-          // If it's not valid JSON, use default hours
-          setWeekHours(defaultHours);
-          setHasError(true);
-          return;
-        }
-        
-        // Validate the parsed object has all expected days
-        const isValid = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-          .every(day => 
-            parsedHours[day] && 
-            typeof parsedHours[day] === 'object' &&
-            'open' in parsedHours[day] && 
-            'openTime' in parsedHours[day] && 
-            'closeTime' in parsedHours[day]);
-        
-        if (isValid) {
-          setWeekHours(parsedHours);
-          setHasError(false);
-        } else {
-          console.warn('Hours data structure is invalid, using defaults');
-          setWeekHours(defaultHours);
-          setHasError(true);
-        }
-      } catch (error) {
-        console.error('Error handling hours:', error);
+        parsedHours = JSON.parse(hours) as WeekHours;
+      } catch (parseError) {
+        console.error('Error parsing hours JSON:', parseError);
+        setWeekHours(defaultHours);
+        setHasError(true);
+        return;
+      }
+      
+      // Validate the parsed object has all expected days
+      const requiredDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+      const isValid = requiredDays.every(day => 
+        parsedHours[day as keyof WeekHours] && 
+        typeof parsedHours[day as keyof WeekHours] === 'object' &&
+        'open' in parsedHours[day as keyof WeekHours] && 
+        'openTime' in parsedHours[day as keyof WeekHours] && 
+        'closeTime' in parsedHours[day as keyof WeekHours]
+      );
+      
+      if (isValid) {
+        setWeekHours(parsedHours);
+        setHasError(false);
+      } else {
+        console.warn('Hours data structure is invalid, using defaults');
         setWeekHours(defaultHours);
         setHasError(true);
       }
-    } else {
-      // No hours data, use defaults
+    } catch (error) {
+      console.error('Error handling hours:', error);
       setWeekHours(defaultHours);
+      setHasError(true);
     }
   }, [hours]);
 
