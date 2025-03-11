@@ -38,4 +38,5 @@ export interface PharmacyTeamMemberWithProfile extends PharmacyTeamMember {
   email?: string;
   avatar_url?: string | null;
   is_active?: boolean;
+  phone_number?: string;
 }

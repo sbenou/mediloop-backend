@@ -1,125 +1,71 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-interface GeocodeRequest {
-  query: string;
-  types?: string;
-  limit?: number;
-}
-
-interface ReverseGeocodeRequest {
-  longitude: number;
-  latitude: number;
-}
-
-// Define CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+interface GeocodingRequest {
+  address: string;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: corsHeaders,
-      status: 204,
-    });
-  }
-
   try {
-    // Get the Mapbox access token from environment variables
-    const mapboxToken = Deno.env.get("MAPBOX_ACCESS_TOKEN");
-    if (!mapboxToken) {
+    // Extract the API key from environment variables
+    const mapboxApiKey = Deno.env.get("MAPBOX_API_KEY") || "";
+    
+    if (!mapboxApiKey) {
       return new Response(
-        JSON.stringify({ error: "Mapbox token not configured" }),
-        {
-          status: 500,
-          headers: { 
-            ...corsHeaders,
-            "Content-Type": "application/json" 
-          },
-        }
+        JSON.stringify({ error: "Mapbox API key not configured" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Parse the request body
-    const requestData = await req.json();
+    // Parse the request body to get the address
+    const { address }: GeocodingRequest = await req.json();
     
-    // Check if this is a reverse geocoding request
-    if (requestData.longitude !== undefined && requestData.latitude !== undefined) {
-      return handleReverseGeocode(requestData, mapboxToken, corsHeaders);
-    } 
+    if (!address) {
+      return new Response(
+        JSON.stringify({ error: "Address is required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Call the Mapbox Geocoding API
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxApiKey}`;
     
-    // Otherwise, handle it as a forward geocoding request
-    return handleForwardGeocode(requestData, mapboxToken, corsHeaders);
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      return new Response(
+        JSON.stringify({ error: `Geocoding API error: ${errorText}` }),
+        { status: response.status, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    
+    const data = await response.json();
+    
+    // Extract coordinates from the first result
+    if (data.features && data.features.length > 0) {
+      const [longitude, latitude] = data.features[0].center;
+      
+      return new Response(
+        JSON.stringify({ 
+          coordinates: { latitude, longitude },
+          formatted_address: data.features[0].place_name,
+          raw: data
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      );
+    } else {
+      return new Response(
+        JSON.stringify({ error: "No results found for this address" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    
   } catch (error) {
-    console.error("Error in geocoding function:", error);
+    console.error("Error:", error.message);
     return new Response(
-      JSON.stringify({ error: "Failed to process geocoding request" }),
-      {
-        status: 500,
-        headers: { 
-          ...corsHeaders,
-          "Content-Type": "application/json" 
-        },
-      }
+      JSON.stringify({ error: `Internal server error: ${error.message}` }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 });
-
-async function handleForwardGeocode(data: GeocodeRequest, mapboxToken: string, corsHeaders: HeadersInit) {
-  const { query, types = "", limit = 5 } = data;
-  
-  if (!query) {
-    return new Response(
-      JSON.stringify({ error: "Query parameter is required" }),
-      {
-        status: 400,
-        headers: { 
-          ...corsHeaders,
-          "Content-Type": "application/json" 
-        },
-      }
-    );
-  }
-
-  // Construct the Mapbox Geocoding API URL
-  const typeParam = types ? `&types=${types}` : "";
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-    query
-  )}.json?access_token=${mapboxToken}${typeParam}&limit=${limit}`;
-
-  console.log(`Making forward geocoding request for: ${query}`);
-
-  // Make the request to the Mapbox API
-  const response = await fetch(url);
-  const data = await response.json();
-
-  return new Response(JSON.stringify(data), {
-    headers: { 
-      ...corsHeaders,
-      "Content-Type": "application/json" 
-    },
-  });
-}
-
-async function handleReverseGeocode(data: ReverseGeocodeRequest, mapboxToken: string, corsHeaders: HeadersInit) {
-  const { longitude, latitude } = data;
-  
-  // Construct the Mapbox Reverse Geocoding API URL
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${mapboxToken}`;
-
-  console.log(`Making reverse geocoding request for: ${latitude},${longitude}`);
-
-  // Make the request to the Mapbox API
-  const response = await fetch(url);
-  const responseData = await response.json();
-
-  return new Response(JSON.stringify(responseData), {
-    headers: { 
-      ...corsHeaders,
-      "Content-Type": "application/json" 
-    },
-  });
-}

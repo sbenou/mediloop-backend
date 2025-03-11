@@ -20,11 +20,7 @@ export type PharmacyTeamMemberFormValues = {
 };
 
 interface PharmacyTeamMemberFormProps {
-  initialData?: PharmacyTeamMember & {
-    full_name?: string;
-    email?: string;
-    phone_number?: string;
-  };
+  initialData?: Partial<PharmacyTeamMemberFormValues>;
   onSubmit: (data: PharmacyTeamMemberFormValues) => void;
   onCancel: () => void;
   isEditing: boolean;
@@ -53,7 +49,7 @@ export const PharmacyTeamMemberForm = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: initialData?.id,
+      id: initialData?.id || undefined,
       full_name: initialData?.full_name || "",
       email: initialData?.email || "",
       phone_number: initialData?.phone_number || "",
@@ -66,7 +62,7 @@ export const PharmacyTeamMemberForm = ({
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      await onSubmit(values);
+      await onSubmit(values as PharmacyTeamMemberFormValues);
     } finally {
       setIsSubmitting(false);
     }
