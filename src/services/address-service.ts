@@ -24,9 +24,25 @@ interface AddressSuggestion {
   formatted: string;
 }
 
-// Mapbox public token - You should replace this with your own token
-// To get your own token, sign up at https://mapbox.com/
-const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA';
+// Get the Mapbox access token from Edge function for security
+const getMapboxToken = async (): Promise<string> => {
+  try {
+    // Try to get the token from a Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+    
+    if (error || !data?.token) {
+      console.warn('Could not get Mapbox token from Edge Function, using fallback token');
+      // Fallback to the test token if the Edge Function fails
+      return 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA';
+    }
+    
+    return data.token;
+  } catch (e) {
+    console.error('Error getting Mapbox token:', e);
+    // Fallback to the test token if there's an error
+    return 'pk.eyJ1IjoibG92YWJsZS10ZXN0IiwiYSI6ImNscmN0ZG96ZjBjemsyaXQ0Nm8zcnhkY2MifQ.IYYu7fJKa45S4TXxTV6-KA';
+  }
+};
 
 // Sample fallback data in case the Mapbox API doesn't return results
 // (useful for testing with restricted tokens)
@@ -77,7 +93,8 @@ export async function fetchAddressFromPostcode(postcode: string): Promise<Addres
 
     console.log('Fetching address from postcode with Mapbox API:', postcode);
     
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(postcode)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=postcode&limit=1`;
+    const mapboxToken = await getMapboxToken();
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(postcode)}.json?access_token=${mapboxToken}&types=postcode&limit=1`;
     
     const response = await fetch(url);
     if (!response.ok) {
@@ -141,8 +158,9 @@ export async function searchAddressesByQuery(query: string): Promise<AddressSugg
 
     console.log('Starting Mapbox search for:', query);
     
+    const mapboxToken = await getMapboxToken();
     // Configure the search to be more flexible and use multiple types
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,place,poi,postcode&autocomplete=true&limit=5&language=en`;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&types=address,place,poi,postcode&autocomplete=true&limit=5&language=en`;
     
     console.log('Searching addresses with Mapbox API query:', query);
     const response = await fetch(url);
