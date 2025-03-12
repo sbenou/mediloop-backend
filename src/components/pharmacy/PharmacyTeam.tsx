@@ -42,14 +42,16 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       ) : teamMembers.length === 0 ? (
         <EmptyTeamState onAddMember={() => setAddUserOpen(true)} />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {teamMembers.map(member => (
-            <TeamMemberCard 
-              key={member.id}
-              member={member}
-              onToggleActive={handleToggleActive}
-            />
-          ))}
+        <div className="flex justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-5xl">
+            {teamMembers.map(member => (
+              <TeamMemberCard 
+                key={member.id}
+                member={member}
+                onToggleActive={handleToggleActive}
+              />
+            ))}
+          </div>
         </div>
       )}
 

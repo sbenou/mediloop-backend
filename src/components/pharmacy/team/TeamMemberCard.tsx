@@ -43,6 +43,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                 updated_at: null,
                 license_number: null
               }}
+              size="xl" // Increasing the size to make the avatar larger
             />
           </div>
           <h3 className="font-medium text-center mt-2 truncate w-full">{member.full_name}</h3>
