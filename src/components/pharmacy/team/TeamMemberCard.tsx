@@ -27,7 +27,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
       <CardContent className="p-0">
         <div className="bg-gray-100 pt-6 pb-4 px-4">
           <div className="relative flex justify-between items-start">
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center w-full pr-8">
               <UserAvatar 
                 userProfile={{
                   id: member.user_id,
@@ -59,7 +59,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8 absolute top-0 right-0">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -75,7 +75,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           </div>
         </div>
         <div className="p-4">
-          <div className="flex items-center">
+          <div className="flex items-center justify-center mb-4">
             <Mail className="h-4 w-4 text-gray-400 mr-2" />
             <p className="text-sm truncate">{member.email}</p>
           </div>
