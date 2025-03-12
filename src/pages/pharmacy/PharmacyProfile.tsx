@@ -279,123 +279,125 @@ const PharmacyProfile = () => {
           
           {/* Profile Tab Content */}
           <TabsContent value="profile" className="mt-6">
-            <div 
-              onClick={handleImageClick}
-              className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
-            >
-              {pharmacyData?.logo_url ? (
-                <div className="w-full h-full relative">
-                  <img 
-                    src={pharmacyData.logo_url} 
-                    alt={pharmacyData.name} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <Button variant="outline" className="bg-white/80" disabled={isUploading}>
-                      <Upload className="mr-2 h-4 w-4" />
-                      {isUploading ? 'Uploading...' : 'Change Image'}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <Image className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload pharmacy image</h3>
-                  <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your pharmacy</p>
-                  {isUploading && <p className="mt-2 text-sm text-blue-500">Uploading...</p>}
-                </div>
-              )}
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileChange}
-                disabled={isUploading}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-              <Card className="h-full">
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center text-lg">
-                      <Users className="mr-2 h-5 w-5" />
-                      Pharmacy Information
-                    </CardTitle>
-                    <CardDescription>
-                      Contact details and address
-                    </CardDescription>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
+            <div className="container mx-auto px-4">
+              <div 
+                onClick={handleImageClick}
+                className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                {pharmacyData?.logo_url ? (
+                  <div className="w-full h-full relative">
+                    <img 
+                      src={pharmacyData.logo_url} 
+                      alt={pharmacyData.name} 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <Button variant="outline" className="bg-white/80" disabled={isUploading}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        {isUploading ? 'Uploading...' : 'Change Image'}
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setIsEditingInfo(true)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Information
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardHeader>
-                <CardContent>
-                  {isEditingInfo ? (
-                    <PharmacyInfo pharmacy={pharmacyData} />
-                  ) : (
-                    <PharmacyInfo pharmacy={pharmacyData} />
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="h-full">
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center text-lg">
-                      <Clock className="mr-2 h-5 w-5" />
-                      Opening Hours
-                    </CardTitle>
-                    <CardDescription>
-                      When your pharmacy is open
-                    </CardDescription>
+                    </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setIsEditingHours(true)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Hours
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardHeader>
-                <CardContent>
-                  <PharmacyHours hours={pharmacyData.hours} pharmacyId={pharmacyData.id} />
-                </CardContent>
-              </Card>
-
-              <Card className="h-full">
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center text-lg">
-                      <MapPin className="mr-2 h-5 w-5" />
-                      Location
-                    </CardTitle>
-                    <CardDescription>
-                      Pharmacy location and distance
-                    </CardDescription>
+                ) : (
+                  <div className="text-center">
+                    <Image className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload pharmacy image</h3>
+                    <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your pharmacy</p>
+                    {isUploading && <p className="mt-2 text-sm text-blue-500">Uploading...</p>}
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <PharmacyMap pharmacy={pharmacyData} />
-                </CardContent>
-              </Card>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <Card className="h-full">
+                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center text-lg">
+                        <Users className="mr-2 h-5 w-5" />
+                        Pharmacy Information
+                      </CardTitle>
+                      <CardDescription>
+                        Contact details and address
+                      </CardDescription>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setIsEditingInfo(true)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Information
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardHeader>
+                  <CardContent>
+                    {isEditingInfo ? (
+                      <PharmacyInfo pharmacy={pharmacyData} />
+                    ) : (
+                      <PharmacyInfo pharmacy={pharmacyData} />
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="h-full">
+                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center text-lg">
+                        <Clock className="mr-2 h-5 w-5" />
+                        Opening Hours
+                      </CardTitle>
+                      <CardDescription>
+                        When your pharmacy is open
+                      </CardDescription>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setIsEditingHours(true)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Hours
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardHeader>
+                  <CardContent>
+                    <PharmacyHours hours={pharmacyData.hours} pharmacyId={pharmacyData.id} />
+                  </CardContent>
+                </Card>
+
+                <Card className="h-full">
+                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center text-lg">
+                        <MapPin className="mr-2 h-5 w-5" />
+                        Location
+                      </CardTitle>
+                      <CardDescription>
+                        Pharmacy location and distance
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <PharmacyMap pharmacy={pharmacyData} />
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
           
@@ -406,7 +408,9 @@ const PharmacyProfile = () => {
           
           {/* Staff Management Tab Content */}
           <TabsContent value="staff" className="mt-6">
-            <PharmacyStaff pharmacyId={pharmacyData.id} />
+            <div className="container mx-auto px-4">
+              <PharmacyStaff pharmacyId={pharmacyData.id} />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
