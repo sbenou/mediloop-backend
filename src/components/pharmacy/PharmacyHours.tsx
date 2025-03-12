@@ -393,9 +393,9 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
           </div>
         )
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 text-left">
           {formatHoursDisplay().map((line, index) => (
-            <div key={index} className="text-sm">
+            <div key={index} className="text-sm text-left">
               {line}
             </div>
           ))}
