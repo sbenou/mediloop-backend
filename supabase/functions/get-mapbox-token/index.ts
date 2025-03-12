@@ -7,7 +7,7 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
-// Working Mapbox tokens for fallback
+// Working Mapbox token for fallback
 const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
 
 serve(async (req) => {

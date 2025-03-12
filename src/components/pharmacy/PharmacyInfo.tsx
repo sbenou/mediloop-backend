@@ -1,17 +1,10 @@
-
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Phone, Mail, MapPin, Edit, Save, MoreVertical } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Phone, Mail, MapPin, Edit, Save } from 'lucide-react';
 
 interface PharmacyInfoProps {
   pharmacy: {
@@ -157,32 +150,34 @@ const PharmacyInfo: React.FC<PharmacyInfoProps> = ({ pharmacy }) => {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div>
-        <h3 className="font-medium">{pharmacy.name}</h3>
+        <h3 className="font-medium text-lg">{pharmacy.name}</h3>
       </div>
       
-      <div className="flex items-start">
-        <MapPin className="h-4 w-4 mr-2 mt-0.5 text-gray-500" />
-        <div>
-          <p className="text-sm">{pharmacy.address}</p>
-          <p className="text-sm">{pharmacy.city}, {pharmacy.postal_code}</p>
+      <div className="space-y-3">
+        <div className="flex items-start">
+          <MapPin className="h-4 w-4 mr-3 mt-0.5 text-gray-500 flex-shrink-0" />
+          <div>
+            <p className="text-sm">{pharmacy.address}</p>
+            <p className="text-sm">{pharmacy.city}, {pharmacy.postal_code}</p>
+          </div>
         </div>
+        
+        {pharmacy.phone && (
+          <div className="flex items-center">
+            <Phone className="h-4 w-4 mr-3 text-gray-500 flex-shrink-0" />
+            <p className="text-sm">{pharmacy.phone}</p>
+          </div>
+        )}
+        
+        {pharmacy.email && (
+          <div className="flex items-center">
+            <Mail className="h-4 w-4 mr-3 text-gray-500 flex-shrink-0" />
+            <p className="text-sm">{pharmacy.email}</p>
+          </div>
+        )}
       </div>
-      
-      {pharmacy.phone && (
-        <div className="flex items-center">
-          <Phone className="h-4 w-4 mr-2 text-gray-500" />
-          <p className="text-sm">{pharmacy.phone}</p>
-        </div>
-      )}
-      
-      {pharmacy.email && (
-        <div className="flex items-center">
-          <Mail className="h-4 w-4 mr-2 text-gray-500" />
-          <p className="text-sm">{pharmacy.email}</p>
-        </div>
-      )}
     </div>
   );
 };

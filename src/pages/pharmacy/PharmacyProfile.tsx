@@ -296,10 +296,10 @@ const PharmacyProfile = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
+          <Card className="h-full">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-lg">
                   <Users className="mr-2 h-5 w-5" />
                   Pharmacy Information
                 </CardTitle>
@@ -330,10 +330,10 @@ const PharmacyProfile = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="h-full">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-lg">
                   <Clock className="mr-2 h-5 w-5" />
                   Opening Hours
                 </CardTitle>
@@ -360,15 +360,17 @@ const PharmacyProfile = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center">
-                <MapPin className="mr-2 h-5 w-5" />
-                Location
-              </CardTitle>
-              <CardDescription>
-                Pharmacy location and distance
-              </CardDescription>
+          <Card className="h-full">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center text-lg">
+                  <MapPin className="mr-2 h-5 w-5" />
+                  Location
+                </CardTitle>
+                <CardDescription>
+                  Pharmacy location and distance
+                </CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
               <PharmacyMap pharmacy={pharmacyData} />

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -5,13 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Edit, Save, MoreVertical } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Save, Clock } from 'lucide-react';
 
 interface DayHours {
   open: boolean;
@@ -44,6 +39,104 @@ const defaultHours: WeekHours = {
   sunday: { open: false, openTime: '09:00', closeTime: '18:00' },
 };
 
+// Helper to parse hours from string format to structured format
+const parseStringHours = (hoursString: string): WeekHours => {
+  const result = {...defaultHours};
+  
+  try {
+    const lines = hoursString.split(',').map(l => l.trim());
+    
+    lines.forEach(line => {
+      // Handle patterns like "Mon-Fri: 8:00-19:00"
+      if (line.includes('-') && line.includes(':')) {
+        const [daysStr, timeStr] = line.split(':').map(s => s.trim());
+        const [startTime, endTime] = timeStr.split('-').map(s => s.trim());
+        
+        if (daysStr.includes('-')) {
+          // Handle day ranges like "Mon-Fri"
+          const [startDay, endDay] = daysStr.split('-').map(s => s.trim().toLowerCase());
+          const dayMap: {[key: string]: keyof WeekHours} = {
+            'mon': 'monday', 'monday': 'monday',
+            'tue': 'tuesday', 'tuesday': 'tuesday',
+            'wed': 'wednesday', 'wednesday': 'wednesday', 
+            'thu': 'thursday', 'thursday': 'thursday',
+            'fri': 'friday', 'friday': 'friday',
+            'sat': 'saturday', 'saturday': 'saturday',
+            'sun': 'sunday', 'sunday': 'sunday'
+          };
+          
+          const days: (keyof WeekHours)[] = [];
+          const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+          
+          const startIdx = dayOrder.indexOf(dayMap[startDay] || 'monday');
+          const endIdx = dayOrder.indexOf(dayMap[endDay] || 'friday');
+          
+          if (startIdx !== -1 && endIdx !== -1) {
+            for (let i = startIdx; i <= endIdx; i++) {
+              days.push(dayOrder[i] as keyof WeekHours);
+            }
+            
+            days.forEach(day => {
+              result[day] = {
+                open: true,
+                openTime: startTime,
+                closeTime: endTime
+              };
+            });
+          }
+        } else {
+          // Handle single days like "Sat"
+          const day = daysStr.toLowerCase();
+          const dayMap: {[key: string]: keyof WeekHours} = {
+            'mon': 'monday', 'monday': 'monday',
+            'tue': 'tuesday', 'tuesday': 'tuesday',
+            'wed': 'wednesday', 'wednesday': 'wednesday', 
+            'thu': 'thursday', 'thursday': 'thursday',
+            'fri': 'friday', 'friday': 'friday',
+            'sat': 'saturday', 'saturday': 'saturday',
+            'sun': 'sunday', 'sunday': 'sunday'
+          };
+          
+          if (dayMap[day]) {
+            result[dayMap[day]] = {
+              open: true,
+              openTime: startTime,
+              closeTime: endTime
+            };
+          }
+        }
+      }
+      
+      // Handle "closed" patterns
+      if (line.toLowerCase().includes('closed')) {
+        const day = line.split(':')[0].trim().toLowerCase();
+        const dayMap: {[key: string]: keyof WeekHours} = {
+          'mon': 'monday', 'monday': 'monday',
+          'tue': 'tuesday', 'tuesday': 'tuesday',
+          'wed': 'wednesday', 'wednesday': 'wednesday', 
+          'thu': 'thursday', 'thursday': 'thursday',
+          'fri': 'friday', 'friday': 'friday',
+          'sat': 'saturday', 'saturday': 'saturday',
+          'sun': 'sunday', 'sunday': 'sunday'
+        };
+        
+        if (dayMap[day]) {
+          result[dayMap[day]] = {
+            open: false,
+            openTime: '09:00',
+            closeTime: '18:00'
+          };
+        }
+      }
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error parsing string hours:', error);
+    return defaultHours;
+  }
+};
+
 const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [weekHours, setWeekHours] = useState<WeekHours>(defaultHours);
@@ -63,14 +156,18 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
           // If the hours are in string format, store them as a string
           console.log('Hours are in string format, not attempting to parse as JSON');
           setHoursString(hours);
+          // Also try to parse into structured format
+          setWeekHours(parseStringHours(hours));
           setIsJsonFormat(false);
         }
       } catch (error) {
         console.error('Error parsing hours:', error);
         
-        // If the hours are in string format (like "Mon-Fri: 8:00-19:00"), store them as a string
+        // If the hours are in string format, still store them as a string
         console.log('Using default hours since the format could not be parsed as JSON');
         setHoursString(hours);
+        // Try to parse from string format into structured format
+        setWeekHours(parseStringHours(hours || ''));
         setIsJsonFormat(false);
       }
     }
@@ -238,43 +335,18 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
           </div>
         )
       ) : (
-        
-        !isJsonFormat && hoursString !== null ? (
-          <div className="space-y-3">
-            <div className="space-y-1 text-sm">
-              {hoursString.split(',').map((line, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span>{line.trim()}</span>
-                </div>
-              ))}
+        <div className="space-y-3">
+          {Object.entries(weekHours).map(([day, dayData]) => (
+            <div key={day} className="flex justify-between items-center">
+              <span className="font-medium w-28">{formatDay(day)}</span>
+              {dayData.open ? (
+                <span className="text-sm">{dayData.openTime} - {dayData.closeTime}</span>
+              ) : (
+                <span className="text-sm text-muted-foreground">Closed</span>
+              )}
             </div>
-            <div className="flex justify-end mt-2">
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Hours
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {Object.entries(weekHours).map(([day, dayData]) => (
-              <div key={day} className="flex justify-between items-center">
-                <span className="font-medium">{formatDay(day)}</span>
-                {dayData.open ? (
-                  <span className="text-sm">{dayData.openTime} - {dayData.closeTime}</span>
-                ) : (
-                  <span className="text-sm text-muted-foreground">Closed</span>
-                )}
-              </div>
-            ))}
-            <div className="flex justify-end mt-2">
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Hours
-              </Button>
-            </div>
-          </div>
-        )
+          ))}
+        </div>
       )}
     </div>
   );

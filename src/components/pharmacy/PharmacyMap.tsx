@@ -364,22 +364,26 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
         )}
       </div>
       
-      <div className="flex flex-col space-y-2">
-        <p className="text-sm text-center">{pharmacy.address}, {pharmacy.city} {pharmacy.postal_code}</p>
+      <div className="flex items-center justify-between mt-2">
+        <div className="flex flex-col">
+          {isCalculatingDistance ? (
+            <p className="text-sm font-medium text-primary">
+              Calculating distance...
+            </p>
+          ) : isUsingLocation && distance ? (
+            <p className="text-sm font-medium text-primary">
+              Distance: {distance}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Share your location to see distance
+            </p>
+          )}
+        </div>
         
-        {isCalculatingDistance ? (
-          <p className="text-sm font-medium text-center text-primary">
-            Calculating distance...
-          </p>
-        ) : isUsingLocation && distance ? (
-          <p className="text-sm font-medium text-center text-primary">
-            Distance: {distance}
-          </p>
-        ) : null}
-        
-        <div className="flex items-center justify-between space-x-2 mt-2">
-          <Label htmlFor="location-toggle" className="text-xs">
-            {isUsingLocation ? 'Using your location' : 'Share your location'}
+        <div className="flex items-center space-x-2">
+          <Label htmlFor="location-toggle" className="text-xs mr-2">
+            {isUsingLocation ? 'Using location' : 'Share location'}
           </Label>
           <Switch
             id="location-toggle"
