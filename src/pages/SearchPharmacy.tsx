@@ -13,18 +13,24 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import UnifiedLayout from "@/components/layout/UnifiedLayout";
+import { useLocationSearch } from "@/hooks/useLocationSearch";
 
 const SearchPharmacy = () => {
   const [search, setSearch] = useState('');
   const [isMapView, setIsMapView] = useState(false);
   const navigate = useNavigate();
   
+  const { coordinates: locationCoordinates, handleCitySearch } = useLocationSearch();
+  
+  // Get default Luxembourg coordinates if location search hasn't provided any
   const { data: coordinates } = useQuery({
     queryKey: ['geo-coordinates'],
     queryFn: async () => {
-      return { lat: 49.8153, lon: 6.1296 };
+      return locationCoordinates ? 
+        { lat: parseFloat(locationCoordinates.lat), lon: parseFloat(locationCoordinates.lon) } : 
+        { lat: 49.8153, lon: 6.1296 };
     },
+    enabled: true,
   });
   
   const currentCoordinates = coordinates || { lat: 49.8153, lon: 6.1296 };
@@ -59,12 +65,23 @@ const SearchPharmacy = () => {
     }
   }, [profile, pharmacyAssignment, navigate]);
 
+  useEffect(() => {
+    // Initialize with Luxembourg City as default
+    if (!locationCoordinates) {
+      handleCitySearch("Luxembourg City");
+    }
+  }, []);
+
+  console.log("SearchPharmacy rendering with coordinates:", currentCoordinates);
+  console.log("Pharmacies found:", pharmacies?.length);
+
   const toggleView = () => {
     setIsMapView(prev => !prev);
   };
 
   const searchPharmacy = (searchTerm: string) => {
     setSearch(searchTerm);
+    handleCitySearch(searchTerm);
     console.log("Searching for pharmacies near:", searchTerm);
   };
 
@@ -129,8 +146,8 @@ const SearchPharmacy = () => {
             </div>
             <PharmacyMap
               coordinates={currentCoordinates}
-              pharmacies={pharmacies}
-              filteredPharmacies={pharmacies}
+              pharmacies={pharmacies || []}
+              filteredPharmacies={pharmacies || []}
               onPharmaciesInShape={() => {}}
               showDefaultLocation={false}
             />
@@ -145,14 +162,20 @@ const SearchPharmacy = () => {
                 Switch to Map View
               </button>
             </div>
-            <PharmacyListSection
-              pharmacies={pharmacies}
-              isLoading={isLoading}
-              coordinates={currentCoordinates}
-              defaultPharmacyId={null}
-              onPharmacySelect={handleSelectPharmacy}
-              onSetDefaultPharmacy={() => {}}
-            />
+            {pharmacies ? (
+              <PharmacyListSection
+                pharmacies={pharmacies}
+                isLoading={isLoading}
+                coordinates={currentCoordinates}
+                defaultPharmacyId={null}
+                onPharmacySelect={handleSelectPharmacy}
+                onSetDefaultPharmacy={() => {}}
+              />
+            ) : (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-gray-500">Loading pharmacies...</p>
+              </div>
+            )}
           </div>
         )}
       </main>
