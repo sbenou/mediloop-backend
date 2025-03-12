@@ -254,17 +254,17 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[400px]">Staff Member</TableHead>
-                <TableHead className="w-[150px]">Role</TableHead>
-                <TableHead className="w-[150px]">Status</TableHead>
-                <TableHead className="w-[200px]">Joined</TableHead>
-                <TableHead className="w-[150px] text-right">Actions</TableHead>
+                <TableHead>Staff Member</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Joined</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredStaff.map(staff => (
                 <TableRow key={staff.id}>
-                  <TableCell className="w-[400px]">
+                  <TableCell className="align-middle">
                     <div className="flex items-center space-x-3">
                       <UserAvatar 
                         userProfile={{
@@ -295,18 +295,18 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="w-[150px]">
+                  <TableCell className="align-middle">
                     {staff.role === 'pharmacist' ? 'Pharmacist' : 'Staff Member'}
                   </TableCell>
-                  <TableCell className="w-[150px]">
+                  <TableCell className="align-middle">
                     <Badge variant={staff.is_active ? "success" : "destructive"}>
                       {staff.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="w-[200px]">
+                  <TableCell className="align-middle">
                     {new Date(staff.joined_at).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="w-[150px] text-right">
+                  <TableCell className="text-right align-middle">
                     <div className="flex justify-end space-x-2">
                       <TooltipProvider>
                         <Tooltip>
