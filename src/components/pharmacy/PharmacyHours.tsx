@@ -282,7 +282,15 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
     // If all weekdays have the same schedule, display them as Mon-Fri
     if (allWeekdaysSame) {
       if (weekdayHours[0].open) {
-        formattedHours.push(`Mon-Fri: ${weekdayHours[0].openTime}-${weekdayHours[0].closeTime}`);
+        // Extract just the hour part if possible for cleaner display
+        const openHour = weekdayHours[0].openTime.split(':')[0];
+        const closeHour = weekdayHours[0].closeTime.split(':')[0];
+        
+        // Use the full time format if it exists, otherwise use hour-only format
+        const openTime = weekdayHours[0].openTime;
+        const closeTime = weekdayHours[0].closeTime;
+        
+        formattedHours.push(`Mon-Fri: ${openTime}-${closeTime}`);
       } else {
         formattedHours.push('Mon-Fri: Closed');
       }
@@ -298,6 +306,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
       
       weekdayHours.forEach((day, index) => {
         if (day.open) {
+          // Use full time format
           formattedHours.push(`${dayMap[index]}: ${day.openTime}-${day.closeTime}`);
         } else {
           formattedHours.push(`${dayMap[index]}: Closed`);
