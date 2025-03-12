@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ const PatientDashboard = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
+  const navigate = useNavigate();
   
   // Fetch stats data for the patient dashboard
   const { data: statsData, isLoading: isStatsLoading } = usePatientDashboardStats();
@@ -131,14 +132,24 @@ const PatientDashboard = () => {
             <TabsContent value="pharmacy" className="mt-4">
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-semibold mb-4">Default Pharmacy</h2>
-                <PharmacySelection />
+                <Button
+                  onClick={() => navigate('/search-pharmacy')}
+                  className="w-full"
+                >
+                  Search and Select a Pharmacy
+                </Button>
               </div>
             </TabsContent>
             
             <TabsContent value="doctor" className="mt-4">
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-semibold mb-4">My Doctor</h2>
-                <DoctorManagement />
+                <Button
+                  onClick={() => navigate('/find-doctor')}
+                  className="w-full"
+                >
+                  Find and Connect with a Doctor
+                </Button>
               </div>
             </TabsContent>
             
