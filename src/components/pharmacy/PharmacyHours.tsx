@@ -40,6 +40,7 @@ const defaultHours: WeekHours = {
 
 // Helper to parse hours from string format to structured format
 const parseStringHours = (hoursString: string): WeekHours => {
+  // Start with default hours for safety
   const result = {...defaultHours};
   
   try {
@@ -136,6 +137,34 @@ const parseStringHours = (hoursString: string): WeekHours => {
   }
 };
 
+// Helper to validate hours data and fill in any missing properties
+const validateHoursData = (data: any): WeekHours => {
+  const result = {...defaultHours};
+  
+  // Skip validation if data is not an object
+  if (!data || typeof data !== 'object') {
+    return result;
+  }
+
+  // For each day in WeekHours, validate and fill in missing properties
+  Object.keys(defaultHours).forEach((day) => {
+    const typedDay = day as keyof WeekHours;
+    
+    // If day exists in data
+    if (data[typedDay]) {
+      result[typedDay] = {
+        // Use values from data if they exist, otherwise use defaults
+        open: typeof data[typedDay].open === 'boolean' ? data[typedDay].open : defaultHours[typedDay].open,
+        openTime: data[typedDay].openTime || defaultHours[typedDay].openTime,
+        closeTime: data[typedDay].closeTime || defaultHours[typedDay].closeTime
+      };
+    }
+    // If day doesn't exist in data, default values are already in result
+  });
+
+  return result;
+};
+
 const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [weekHours, setWeekHours] = useState<WeekHours>(defaultHours);
@@ -149,7 +178,9 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         if (hours.trim().startsWith('{')) {
           // Try to parse the hours as JSON
           const parsedHours = JSON.parse(hours);
-          setWeekHours(parsedHours);
+          // Validate and fill any missing properties
+          const validatedHours = validateHoursData(parsedHours);
+          setWeekHours(validatedHours);
           setIsJsonFormat(true);
         } else {
           // If the hours are in string format, store them as a string
@@ -262,78 +293,87 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   
   // Function to format the hours in the original display format
   const formatHoursDisplay = () => {
-    // Check if weekdays (Mon-Fri) have the same schedule
-    const weekdayHours = [
-      weekHours.monday,
-      weekHours.tuesday,
-      weekHours.wednesday,
-      weekHours.thursday,
-      weekHours.friday
-    ];
-    
-    const allWeekdaysSame = weekdayHours.every(day => 
-      day.open === weekdayHours[0].open && 
-      day.openTime === weekdayHours[0].openTime && 
-      day.closeTime === weekdayHours[0].closeTime
-    );
-    
-    const formattedHours = [];
-    
-    // If all weekdays have the same schedule, display them as Mon-Fri
-    if (allWeekdaysSame) {
-      if (weekdayHours[0].open) {
-        // Extract just the hour part if possible for cleaner display
-        const openHour = weekdayHours[0].openTime.split(':')[0];
-        const closeHour = weekdayHours[0].closeTime.split(':')[0];
-        
-        // Use the full time format if it exists, otherwise use hour-only format
-        const openTime = weekdayHours[0].openTime;
-        const closeTime = weekdayHours[0].closeTime;
-        
-        formattedHours.push(`Mon-Fri: ${openTime}-${closeTime}`);
-      } else {
-        formattedHours.push('Mon-Fri: Closed');
-      }
-    } else {
-      // Display each weekday individually
-      const dayMap: Record<number, string> = {
-        0: 'Mon',
-        1: 'Tue',
-        2: 'Wed',
-        3: 'Thu',
-        4: 'Fri'
-      };
+    try {
+      // Ensure weekHours is valid
+      if (!weekHours) return [];
       
-      weekdayHours.forEach((day, index) => {
-        if (day.open) {
-          // Use full time format
-          formattedHours.push(`${dayMap[index]}: ${day.openTime}-${day.closeTime}`);
+      // Check if weekdays (Mon-Fri) have the same schedule
+      const weekdayHours = [
+        weekHours.monday,
+        weekHours.tuesday,
+        weekHours.wednesday,
+        weekHours.thursday,
+        weekHours.friday
+      ];
+      
+      // Ensure all days have valid properties
+      const validWeekdayHours = weekdayHours.map(day => ({
+        open: typeof day?.open === 'boolean' ? day.open : false,
+        openTime: day?.openTime || '09:00',
+        closeTime: day?.closeTime || '18:00'
+      }));
+      
+      const allWeekdaysSame = validWeekdayHours.every(day => 
+        day.open === validWeekdayHours[0].open && 
+        day.openTime === validWeekdayHours[0].openTime && 
+        day.closeTime === validWeekdayHours[0].closeTime
+      );
+      
+      const formattedHours = [];
+      
+      // If all weekdays have the same schedule, display them as Mon-Fri
+      if (allWeekdaysSame) {
+        if (validWeekdayHours[0].open) {
+          formattedHours.push(`Mon-Fri: ${validWeekdayHours[0].openTime}-${validWeekdayHours[0].closeTime}`);
         } else {
-          formattedHours.push(`${dayMap[index]}: Closed`);
+          formattedHours.push('Mon-Fri: Closed');
         }
-      });
+      } else {
+        // Display each weekday individually
+        const dayMap: Record<number, string> = {
+          0: 'Mon',
+          1: 'Tue',
+          2: 'Wed',
+          3: 'Thu',
+          4: 'Fri'
+        };
+        
+        validWeekdayHours.forEach((day, index) => {
+          if (day.open) {
+            formattedHours.push(`${dayMap[index]}: ${day.openTime}-${day.closeTime}`);
+          } else {
+            formattedHours.push(`${dayMap[index]}: Closed`);
+          }
+        });
+      }
+      
+      // Add Saturday and Sunday with safety checks
+      const satData = weekHours.saturday || defaultHours.saturday;
+      const sunData = weekHours.sunday || defaultHours.sunday;
+      
+      if (satData.open) {
+        formattedHours.push(`Sat: ${satData.openTime || '09:00'}-${satData.closeTime || '13:00'}`);
+      } else {
+        formattedHours.push('Sat: Closed');
+      }
+      
+      if (sunData.open) {
+        formattedHours.push(`Sun: ${sunData.openTime || '09:00'}-${sunData.closeTime || '18:00'}`);
+      } else {
+        formattedHours.push('Sun: Closed');
+      }
+      
+      return formattedHours;
+    } catch (error) {
+      console.error('Error formatting hours display:', error);
+      return ['Hours information unavailable'];
     }
-    
-    // Add Saturday and Sunday
-    if (weekHours.saturday.open) {
-      formattedHours.push(`Sat: ${weekHours.saturday.openTime}-${weekHours.saturday.closeTime}`);
-    } else {
-      formattedHours.push('Sat: Closed');
-    }
-    
-    if (weekHours.sunday.open) {
-      formattedHours.push(`Sun: ${weekHours.sunday.openTime}-${weekHours.sunday.closeTime}`);
-    } else {
-      formattedHours.push('Sun: Closed');
-    }
-    
-    return formattedHours;
   };
+  
   
   return (
     <div className="space-y-3">
       {isEditing ? (
-        
         !isJsonFormat && hoursString !== null ? (
           <div className="space-y-4">
             <textarea 
