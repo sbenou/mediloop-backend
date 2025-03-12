@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,8 +29,8 @@ interface DashboardStatsProps {
 // Mock data for sparklines if real data is not provided
 const generateMockTrendData = (trend: number = 1) => {
   const direction = Math.random() > 0.5 ? 1 : -1;
-  return Array(6).fill(0).map((_, i) => ({
-    value: 5 + Math.random() * 5 * direction * trend
+  return Array(6).fill(0).map(() => ({
+    value: Math.floor(3 + Math.random() * 12 * direction * trend)
   }));
 };
 

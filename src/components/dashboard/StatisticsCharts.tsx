@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   BarChart, 
@@ -26,22 +25,22 @@ import {
 
 type TimeFrame = "current-month" | "last-3-months";
 
-// Mock data generator with more realistic and consistent data
+// Mock data generator with more varied data
 const generateMockData = (type: "prescriptions" | "teleconsultations", timeFrame: TimeFrame) => {
   if (timeFrame === "current-month") {
-    // Generate data for current month (4 weeks)
+    // Generate more varied data for current month (4 weeks)
     return [
-      { name: "Week 1", count: type === "prescriptions" ? 8 : 5 },
-      { name: "Week 2", count: type === "prescriptions" ? 12 : 7 },
-      { name: "Week 3", count: type === "prescriptions" ? 6 : 4 },
-      { name: "Week 4", count: type === "prescriptions" ? 10 : 6 }
+      { name: "Week 1", count: type === "prescriptions" ? Math.floor(Math.random() * 15 + 5) : Math.floor(Math.random() * 10 + 3) },
+      { name: "Week 2", count: type === "prescriptions" ? Math.floor(Math.random() * 15 + 5) : Math.floor(Math.random() * 10 + 3) },
+      { name: "Week 3", count: type === "prescriptions" ? Math.floor(Math.random() * 15 + 5) : Math.floor(Math.random() * 10 + 3) },
+      { name: "Week 4", count: type === "prescriptions" ? Math.floor(Math.random() * 15 + 5) : Math.floor(Math.random() * 10 + 3) }
     ];
   } else {
-    // Generate data for last 3 months
+    // Generate more varied data for last 3 months
     return [
-      { name: "Month 1", count: type === "prescriptions" ? 25 : 15 },
-      { name: "Month 2", count: type === "prescriptions" ? 18 : 12 },
-      { name: "Month 3", count: type === "prescriptions" ? 22 : 18 }
+      { name: "Month 1", count: type === "prescriptions" ? Math.floor(Math.random() * 30 + 15) : Math.floor(Math.random() * 20 + 10) },
+      { name: "Month 2", count: type === "prescriptions" ? Math.floor(Math.random() * 30 + 15) : Math.floor(Math.random() * 20 + 10) },
+      { name: "Month 3", count: type === "prescriptions" ? Math.floor(Math.random() * 30 + 15) : Math.floor(Math.random() * 20 + 10) }
     ];
   }
 };
