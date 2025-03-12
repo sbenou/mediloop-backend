@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -6,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Image, Upload, Clock, MapPin, Users, UserCog, AlertTriangle, Store, Edit, MoreVertical } from 'lucide-react';
+import { Image, Upload, Clock, MapPin, Users, UserCog, AlertTriangle, Store, Edit, MoreVertical, User } from 'lucide-react';
 import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
@@ -32,7 +33,7 @@ interface PharmacyData {
 
 const PharmacyProfile = () => {
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState("info");
+  const [activeTab, setActiveTab] = useState("profile");
   const [isUploading, setIsUploading] = useState(false);
   const [pharmacyData, setPharmacyData] = useState<PharmacyData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -259,127 +260,13 @@ const PharmacyProfile = () => {
           </p>
         </div>
 
-        <div 
-          onClick={handleImageClick}
-          className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
-        >
-          {pharmacyData?.logo_url ? (
-            <div className="w-full h-full relative">
-              <img 
-                src={pharmacyData.logo_url} 
-                alt={pharmacyData.name} 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <Button variant="outline" className="bg-white/80" disabled={isUploading}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  {isUploading ? 'Uploading...' : 'Change Image'}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <Image className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload pharmacy image</h3>
-              <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your pharmacy</p>
-              {isUploading && <p className="mt-2 text-sm text-blue-500">Uploading...</p>}
-            </div>
-          )}
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handleFileChange}
-            disabled={isUploading}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="h-full">
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center text-lg">
-                  <Users className="mr-2 h-5 w-5" />
-                  Pharmacy Information
-                </CardTitle>
-                <CardDescription>
-                  Contact details and address
-                </CardDescription>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setIsEditingInfo(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Information
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardHeader>
-            <CardContent>
-              {isEditingInfo ? (
-                <PharmacyInfo pharmacy={pharmacyData} />
-              ) : (
-                <PharmacyInfo pharmacy={pharmacyData} />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="h-full">
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center text-lg">
-                  <Clock className="mr-2 h-5 w-5" />
-                  Opening Hours
-                </CardTitle>
-                <CardDescription>
-                  When your pharmacy is open
-                </CardDescription>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setIsEditingHours(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Hours
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardHeader>
-            <CardContent>
-              <PharmacyHours hours={pharmacyData.hours} pharmacyId={pharmacyData.id} />
-            </CardContent>
-          </Card>
-
-          <Card className="h-full">
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center text-lg">
-                  <MapPin className="mr-2 h-5 w-5" />
-                  Location
-                </CardTitle>
-                <CardDescription>
-                  Pharmacy location and distance
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <PharmacyMap pharmacy={pharmacyData} />
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="team" value={activeTab} onValueChange={handleTabChange}>
+        {/* Tabs moved to top of content */}
+        <Tabs defaultValue="profile" value={activeTab} onValueChange={handleTabChange}>
           <TabsList>
+            <TabsTrigger value="profile" className="flex items-center">
+              <User className="mr-2 h-4 w-4" />
+              Profile
+            </TabsTrigger>
             <TabsTrigger value="team" className="flex items-center">
               <Users className="mr-2 h-4 w-4" />
               Team
@@ -390,10 +277,134 @@ const PharmacyProfile = () => {
             </TabsTrigger>
           </TabsList>
           
+          {/* Profile Tab Content */}
+          <TabsContent value="profile" className="mt-6">
+            <div 
+              onClick={handleImageClick}
+              className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              {pharmacyData?.logo_url ? (
+                <div className="w-full h-full relative">
+                  <img 
+                    src={pharmacyData.logo_url} 
+                    alt={pharmacyData.name} 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <Button variant="outline" className="bg-white/80" disabled={isUploading}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isUploading ? 'Uploading...' : 'Change Image'}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <Image className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload pharmacy image</h3>
+                  <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your pharmacy</p>
+                  {isUploading && <p className="mt-2 text-sm text-blue-500">Uploading...</p>}
+                </div>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+              <Card className="h-full">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center text-lg">
+                      <Users className="mr-2 h-5 w-5" />
+                      Pharmacy Information
+                    </CardTitle>
+                    <CardDescription>
+                      Contact details and address
+                    </CardDescription>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setIsEditingInfo(true)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Information
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
+                <CardContent>
+                  {isEditingInfo ? (
+                    <PharmacyInfo pharmacy={pharmacyData} />
+                  ) : (
+                    <PharmacyInfo pharmacy={pharmacyData} />
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="h-full">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center text-lg">
+                      <Clock className="mr-2 h-5 w-5" />
+                      Opening Hours
+                    </CardTitle>
+                    <CardDescription>
+                      When your pharmacy is open
+                    </CardDescription>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setIsEditingHours(true)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Hours
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
+                <CardContent>
+                  <PharmacyHours hours={pharmacyData.hours} pharmacyId={pharmacyData.id} />
+                </CardContent>
+              </Card>
+
+              <Card className="h-full">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center text-lg">
+                      <MapPin className="mr-2 h-5 w-5" />
+                      Location
+                    </CardTitle>
+                    <CardDescription>
+                      Pharmacy location and distance
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <PharmacyMap pharmacy={pharmacyData} />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          {/* Team Tab Content */}
           <TabsContent value="team" className="mt-6">
             <PharmacyTeam pharmacyId={pharmacyData.id} />
           </TabsContent>
           
+          {/* Staff Management Tab Content */}
           <TabsContent value="staff" className="mt-6">
             <PharmacyStaff pharmacyId={pharmacyData.id} />
           </TabsContent>
