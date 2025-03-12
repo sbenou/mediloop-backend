@@ -75,7 +75,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           </div>
         </div>
         <div className="p-4">
-          <div className="flex items-center justify-center mb-4">
+          <div className="flex items-center mb-4">
             <Mail className="h-4 w-4 text-gray-400 mr-2" />
             <p className="text-sm truncate">{member.email}</p>
           </div>
