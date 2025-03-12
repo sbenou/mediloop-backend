@@ -79,9 +79,11 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke={isPatientTrendPositive ? "#10b981" : "#ef4444"} 
-                      dot={false} 
-                      isAnimationActive={false}
+                      stroke="#2196F3" 
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={true}
+                      connectNulls={true}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -116,13 +118,17 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                   </span>
                 </div>
                 <ResponsiveContainer width="100%" height={20}>
-                  <BarChart data={ordersTrend}>
-                    <Bar 
+                  <LineChart data={ordersTrend}>
+                    <Line 
+                      type="monotone" 
                       dataKey="value" 
-                      fill={isOrdersTrendPositive ? "#10b981" : "#ef4444"} 
-                      isAnimationActive={false}
+                      stroke="#2196F3" 
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={true}
+                      connectNulls={true}
                     />
-                  </BarChart>
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
@@ -159,9 +165,11 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke={isPrescriptionsTrendPositive ? "#10b981" : "#ef4444"} 
-                      dot={false} 
-                      isAnimationActive={false}
+                      stroke="#2196F3" 
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={true}
+                      connectNulls={true}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -193,13 +201,17 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                   </span>
                 </div>
                 <ResponsiveContainer width="100%" height={20}>
-                  <BarChart data={revenueTrend}>
-                    <Bar 
+                  <LineChart data={revenueTrend}>
+                    <Line 
+                      type="monotone" 
                       dataKey="value" 
-                      fill={isRevenueTrendPositive ? "#10b981" : "#ef4444"} 
-                      isAnimationActive={false}
+                      stroke="#2196F3" 
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={true}
+                      connectNulls={true}
                     />
-                  </BarChart>
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
