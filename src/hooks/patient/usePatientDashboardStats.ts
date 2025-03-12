@@ -32,7 +32,7 @@ export const usePatientDashboardStats = () => {
           .from('teleconsultations')
           .select('*', { count: 'exact', head: true })
           .eq('patient_id', user.id)
-          .in('status', ['pending', 'scheduled']);
+          .in('status', ['pending', 'confirmed']); // Using valid status values
           
         if (teleconsultationsError) throw teleconsultationsError;
         
