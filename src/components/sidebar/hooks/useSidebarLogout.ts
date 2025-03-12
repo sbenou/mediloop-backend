@@ -3,6 +3,7 @@ import { toast } from "@/components/ui/use-toast";
 import { clearAllAuthStorage } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { clearAllCookies, broadcastAuthEvent } from "@/lib/auth/sessionUtils";
 
 export const useSidebarLogout = () => {
   const navigate = useNavigate();
@@ -19,22 +20,7 @@ export const useSidebarLogout = () => {
       }
       
       clearAllAuthStorage();
-      
-      const allCookies = document.cookie.split(';');
-      const domain = window.location.hostname;
-      
-      allCookies.forEach(cookie => {
-        const name = cookie.trim().split('=')[0];
-        if (!name) return;
-        
-        ["/", "/login", "/dashboard", "", "/api", "/auth", null].forEach(path => {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'};`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path || '/'}; domain=${domain};`;
-          document.cookie = `${name}=; max-age=-1; path=${path || '/'};`;
-        });
-        
-        document.cookie = `${name}=; max-age=-1;`;
-      });
+      clearAllCookies();
       
       try {
         localStorage.removeItem('selectedCountry');
@@ -48,6 +34,9 @@ export const useSidebarLogout = () => {
         console.error("Supabase signOut error:", error);
         throw error;
       }
+      
+      // Broadcast logout event to other tabs
+      broadcastAuthEvent('LOGOUT');
       
       toast({
         title: "Logged out",
