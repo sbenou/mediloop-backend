@@ -2,7 +2,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Card } from "@/components/ui/card";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
 import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
@@ -74,6 +73,7 @@ const HomeView: React.FC<HomeViewProps> = ({ userRole }) => {
         }}
         isLoading={isStatsLoading}
         onNavigate={handleViewChange}
+        userRole={userRole || undefined}
       />
       
       {/* Health State Indicators for patient and doctor roles */}

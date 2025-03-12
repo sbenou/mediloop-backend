@@ -1,13 +1,12 @@
+
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, ShoppingBag, FileText, TrendingUp, TrendingDown } from "lucide-react";
+import { Users, ShoppingBag, FileText, TrendingUp, TrendingDown, Video, CreditCard } from "lucide-react";
 import { 
   ResponsiveContainer, 
   LineChart, 
-  Line,
-  BarChart,
-  Bar
+  Line
 } from "recharts";
 
 interface DashboardStatsProps {
@@ -24,6 +23,7 @@ interface DashboardStatsProps {
   } | null;
   isLoading: boolean;
   onNavigate: (path: string) => void;
+  userRole?: string;
 }
 
 // Mock data generator with more dramatic variations
@@ -37,7 +37,7 @@ const generateMockTrendData = (trend: number = 1) => {
   }));
 };
 
-const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNavigate }) => {
+const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNavigate, userRole = 'pharmacist' }) => {
   // Generate mock data for trends if not provided
   const patientTrend = stats?.patient_trend || generateMockTrendData(1);
   const ordersTrend = stats?.orders_trend || generateMockTrendData(-0.5);
@@ -50,15 +50,40 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
   const isPrescriptionsTrendPositive = prescriptionsTrend[0].value < prescriptionsTrend[prescriptionsTrend.length - 1].value;
   const isRevenueTrendPositive = revenueTrend[0].value < revenueTrend[revenueTrend.length - 1].value;
   
+  // Adjust labels and icons based on user role
+  const firstCardConfig = userRole === 'patient' 
+    ? { 
+        label: 'Active Teleconsultations', 
+        icon: <Video className="h-5 w-5 text-muted-foreground" />,
+        path: 'teleconsultations'
+      }
+    : { 
+        label: 'Active Patients', 
+        icon: <Users className="h-5 w-5 text-muted-foreground" />,
+        path: 'patients'
+      };
+    
+  const fourthCardConfig = userRole === 'patient'
+    ? {
+        label: 'Completed Payments',
+        icon: <CreditCard className="h-5 w-5 text-muted-foreground" />,
+        path: 'orders'
+      }
+    : {
+        label: 'Monthly Revenue',
+        icon: <span className="text-muted-foreground">€</span>,
+        path: ''
+      };
+  
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card 
         className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
-        onClick={() => onNavigate('patients')}
+        onClick={() => onNavigate(firstCardConfig.path)}
       >
         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium">Active Patients</h3>
-          <Users className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-sm font-medium">{firstCardConfig.label}</h3>
+          {firstCardConfig.icon}
         </div>
         <div className="pt-2">
           {isLoading ? (
@@ -181,17 +206,24 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         </div>
       </Card>
       
-      <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow">
+      <Card 
+        className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+        onClick={() => fourthCardConfig.path ? onNavigate(fourthCardConfig.path) : null}
+      >
         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium">Monthly Revenue</h3>
-          <span className="text-muted-foreground">€</span>
+          <h3 className="text-sm font-medium">{fourthCardConfig.label}</h3>
+          {fourthCardConfig.icon}
         </div>
         <div className="pt-2">
           {isLoading ? (
             <Skeleton className="h-8 w-24" />
           ) : (
             <div>
-              <div className="text-2xl font-bold">€{stats?.monthly_revenue?.toLocaleString() || 0}</div>
+              <div className="text-2xl font-bold">
+                {userRole === 'patient' ? 
+                  `+${stats?.monthly_revenue || 0}` : 
+                  `€${stats?.monthly_revenue?.toLocaleString() || 0}`}
+              </div>
               <div className="h-8 mt-1">
                 <div className="flex items-center">
                   {isRevenueTrendPositive ? 

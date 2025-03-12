@@ -19,7 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
 import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
 import DashboardStats from "@/components/dashboard/views/pharmacy/DashboardStats";
-import { usePharmacyDashboardStats } from "@/hooks/admin/useDashboardStats";
+import { usePatientDashboardStats } from "@/hooks/patient/usePatientDashboardStats";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
@@ -31,8 +31,8 @@ const PatientDashboard = () => {
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
   
-  // Fetch stats data for the dashboard
-  const { data: statsData, isLoading: isStatsLoading } = usePharmacyDashboardStats();
+  // Fetch stats data for the patient dashboard
+  const { data: statsData, isLoading: isStatsLoading } = usePatientDashboardStats();
 
   useEffect(() => {
     console.log("PatientDashboard page loaded with view:", view, "and ordersTab:", ordersTab);
@@ -297,13 +297,13 @@ const PatientDashboard = () => {
             </div>
           </div>
           
-          {/* Dashboard Stats with sparklines */}
+          {/* Dashboard Stats with sparklines - now using patient-specific stats */}
           <DashboardStats 
             stats={{
-              total_patients: statsData?.total_patients || 0,
-              pending_orders: statsData?.pending_orders || 0,
               total_prescriptions: statsData?.total_prescriptions || 0,
-              monthly_revenue: statsData?.monthly_revenue || 0
+              pending_orders: statsData?.pending_orders || 0,
+              total_patients: statsData?.active_teleconsultations || 0, // Reuse this field for teleconsultations
+              monthly_revenue: statsData?.completed_payments || 0 // Reuse this field for payments
             }}
             isLoading={isStatsLoading}
             onNavigate={handleViewChange}
