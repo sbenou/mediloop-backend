@@ -15,24 +15,29 @@ export const usePharmacySearch = (
     queryFn: async () => {
       if (!coordinates) return [];
       
-      // Try to get from cache first
-      const cacheKey = `pharmacies-${coordinates.lat}-${coordinates.lon}-${searchRadius}`;
-      const cachedData = sessionStorage.getItem(cacheKey);
-      if (cachedData) {
-        return JSON.parse(cachedData);
+      try {
+        // Try to get from cache first
+        const cacheKey = `pharmacies-${coordinates.lat}-${coordinates.lon}-${searchRadius}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
+        if (cachedData) {
+          return JSON.parse(cachedData);
+        }
+
+        // When searching for all pharmacies in Luxembourg, use Luxembourg's center coordinates
+        // and a larger radius to cover the whole country
+        const searchLat = coordinates.lat;
+        const searchLon = coordinates.lon;
+        const searchDist = searchRadius;
+
+        const results = await searchPharmacies(searchLat, searchLon, searchDist);
+        
+        // Cache the results
+        sessionStorage.setItem(cacheKey, JSON.stringify(results));
+        return results;
+      } catch (err) {
+        console.error("Error in usePharmacySearch:", err);
+        return [];
       }
-
-      // When searching for all pharmacies in Luxembourg, use Luxembourg's center coordinates
-      // and a larger radius to cover the whole country
-      const searchLat = coordinates.lat;
-      const searchLon = coordinates.lon;
-      const searchDist = searchRadius;
-
-      const results = await searchPharmacies(searchLat, searchLon, searchDist);
-      
-      // Cache the results
-      sessionStorage.setItem(cacheKey, JSON.stringify(results));
-      return results;
     },
     enabled: !!coordinates,
     staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes

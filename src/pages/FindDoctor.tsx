@@ -80,82 +80,88 @@ const FindDoctor = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto p-4">
-        <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
-        <div className="mb-4">
-          <LocationToggle
-            showDefaultLocation={isUsingLocation}
-            onLocationToggle={(checked) => {
-              if (!checked) {
-                // When disabling location
-                setUserLocation(LUXEMBOURG_COORDINATES);
-                setIsUsingLocation(false);
-                if (userProfile?.city) {
-                  handleCitySearch(userProfile.city);
-                } else {
-                  handleCitySearch("Luxembourg City");
-                }
-              } else {
-                // When enabling location
-                if ("geolocation" in navigator) {
-                  navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                      setUserLocation({
-                        lat: position.coords.latitude,
-                        lon: position.coords.longitude
-                      });
-                      setIsUsingLocation(true);
-                      toast({
-                        title: "Using your location",
-                        description: "Showing locations near you",
-                      });
-                    },
-                    (error) => {
-                      console.error('Geolocation error:', error);
-                      setUserLocation(LUXEMBOURG_COORDINATES);
-                      setIsUsingLocation(false);
-                      toast({
-                        title: "Location Error",
-                        description: "Could not get your location. Using default location instead.",
-                        variant: "destructive",
-                      });
+        <div className="w-full max-w-6xl mx-auto">
+          <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
+          <div className="mb-4">
+            <LocationToggle
+              showDefaultLocation={isUsingLocation}
+              onLocationToggle={(checked) => {
+                try {
+                  if (!checked) {
+                    // When disabling location
+                    setUserLocation(LUXEMBOURG_COORDINATES);
+                    setIsUsingLocation(false);
+                    if (userProfile?.city) {
+                      handleCitySearch(userProfile.city);
+                    } else {
+                      handleCitySearch("Luxembourg City");
                     }
-                  );
-                }
-              }
-              setSearchRadius(2000);
-            }}
-          />
-        </div>
-        <div className="w-full h-full mt-6">
-          {doctors ? (
-            <DoctorListSection
-              doctors={doctors}
-              isLoading={isDoctorsLoading || isSearching}
-              coordinates={displayCoordinates}
-              showUserLocation={isUsingLocation}
-              onConnect={(doctorId, source) => {
-                if (!isAuthenticated) {
-                  toast({
-                    title: "Login Required",
-                    description: "Please login to connect with doctors.",
-                  });
-                  return;
-                }
-
-                if (source === 'overpass') {
-                  toast({
-                    title: "Information",
-                    description: "Connection requests are only available for registered doctors.",
-                  });
-                  return;
+                  } else {
+                    // When enabling location
+                    if ("geolocation" in navigator) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          setUserLocation({
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude
+                          });
+                          setIsUsingLocation(true);
+                          toast({
+                            title: "Using your location",
+                            description: "Showing locations near you",
+                          });
+                        },
+                        (error) => {
+                          console.error('Geolocation error:', error);
+                          setUserLocation(LUXEMBOURG_COORDINATES);
+                          setIsUsingLocation(false);
+                          toast({
+                            title: "Location Error",
+                            description: "Could not get your location. Using default location instead.",
+                            variant: "destructive",
+                          });
+                        }
+                      );
+                    }
+                  }
+                  setSearchRadius(2000);
+                } catch (err) {
+                  console.error("Error toggling location:", err);
                 }
               }}
             />
-          ) : (
-            <div className="flex justify-center items-center h-64">
-              <p className="text-gray-500">Loading doctors...</p>
-            </div>
-          )}
+          </div>
+          <div className="w-full h-full mt-6">
+            {doctors ? (
+              <DoctorListSection
+                doctors={doctors}
+                isLoading={isDoctorsLoading || isSearching}
+                coordinates={displayCoordinates}
+                showUserLocation={isUsingLocation}
+                onConnect={(doctorId, source) => {
+                  if (!isAuthenticated) {
+                    toast({
+                      title: "Login Required",
+                      description: "Please login to connect with doctors.",
+                    });
+                    return;
+                  }
+
+                  if (source === 'overpass') {
+                    toast({
+                      title: "Information",
+                      description: "Connection requests are only available for registered doctors.",
+                    });
+                    return;
+                  }
+                }}
+              />
+            ) : (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-gray-500">Loading doctors...</p>
+              </div>
+            )}
+          </div>
         </div>
       </main>
       <Footer />
