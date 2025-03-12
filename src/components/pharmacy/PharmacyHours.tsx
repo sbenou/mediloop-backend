@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -335,7 +336,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         <div className="space-y-2">
           {Object.entries(weekHours).map(([day, dayData]) => (
             <div key={day} className="grid grid-cols-12 items-center text-sm">
-              <span className="col-span-4 font-medium text-left">{formatDay(day)}</span>
+              <span className="col-span-4 font-medium text-left">{formatDay(day)}:</span>
               {dayData.open ? (
                 <span className="col-span-8 text-left">{dayData.openTime} - {dayData.closeTime}</span>
               ) : (
