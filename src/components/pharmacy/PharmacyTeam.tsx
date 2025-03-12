@@ -26,7 +26,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   } = usePharmacyTeam(pharmacyId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 container mx-auto px-4">
       <div className="flex flex-col items-center justify-center space-y-4">
         <h3 className="text-xl font-semibold">Pharmacy Team</h3>
         <Button onClick={() => setAddUserOpen(true)}>
@@ -42,8 +42,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
       ) : teamMembers.length === 0 ? (
         <EmptyTeamState onAddMember={() => setAddUserOpen(true)} />
       ) : (
-        <div className="flex justify-center">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+        <div className="flex justify-center w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-5xl">
             {teamMembers.map(member => (
               <TeamMemberCard 
                 key={member.id}
