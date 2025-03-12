@@ -26,14 +26,6 @@ interface DashboardStatsProps {
   onNavigate: (path: string) => void;
 }
 
-// Mock data for sparklines if real data is not provided
-const generateMockTrendData = (trend: number = 1) => {
-  const direction = Math.random() > 0.5 ? 1 : -1;
-  return Array(6).fill(0).map(() => ({
-    value: Math.floor(3 + Math.random() * 12 * direction * trend)
-  }));
-};
-
 // Mock data generator with more dramatic variations
 const generateMockTrendData = (trend: number = 1) => {
   // Create an array of 6 points with more dramatic variations
