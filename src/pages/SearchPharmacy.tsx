@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import UnifiedLayout from "@/components/layout/UnifiedLayout";
 
 const SearchPharmacy = () => {
   const [search, setSearch] = useState('');
@@ -105,6 +107,7 @@ const SearchPharmacy = () => {
     );
   }
 
+  // For patients or non-authenticated users, show the pharmacy search view
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
