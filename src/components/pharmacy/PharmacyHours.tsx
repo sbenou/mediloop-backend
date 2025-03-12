@@ -1,175 +1,24 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Save, Clock } from 'lucide-react';
-
-interface DayHours {
-  open: boolean;
-  openTime: string;
-  closeTime: string;
-}
-
-interface WeekHours {
-  monday: DayHours;
-  tuesday: DayHours;
-  wednesday: DayHours;
-  thursday: DayHours;
-  friday: DayHours;
-  saturday: DayHours;
-  sunday: DayHours;
-}
+import { WeekHours } from '@/types/pharmacy/hours';
+import { parseStringHours, validateHoursData, formatHoursDisplay } from '@/utils/pharmacy/hoursFormatters';
+import { HoursEditor } from './hours/HoursEditor';
+import { StringHoursEditor } from './hours/StringHoursEditor';
+import { HoursDisplay } from './hours/HoursDisplay';
 
 interface PharmacyHoursProps {
   hours: string | null;
   pharmacyId: string;
 }
 
-const defaultHours: WeekHours = {
-  monday: { open: true, openTime: '09:00', closeTime: '18:00' },
-  tuesday: { open: true, openTime: '09:00', closeTime: '18:00' },
-  wednesday: { open: true, openTime: '09:00', closeTime: '18:00' },
-  thursday: { open: true, openTime: '09:00', closeTime: '18:00' },
-  friday: { open: true, openTime: '09:00', closeTime: '18:00' },
-  saturday: { open: true, openTime: '09:00', closeTime: '13:00' },
-  sunday: { open: false, openTime: '09:00', closeTime: '18:00' },
-};
-
-// Helper to parse hours from string format to structured format
-const parseStringHours = (hoursString: string): WeekHours => {
-  // Start with default hours for safety
-  const result = {...defaultHours};
-  
-  try {
-    const lines = hoursString.split(',').map(l => l.trim());
-    
-    lines.forEach(line => {
-      // Handle patterns like "Mon-Fri: 8:00-19:00"
-      if (line.includes('-') && line.includes(':')) {
-        const [daysStr, timeStr] = line.split(':').map(s => s.trim());
-        const [startTime, endTime] = timeStr.split('-').map(s => s.trim());
-        
-        if (daysStr.includes('-')) {
-          // Handle day ranges like "Mon-Fri"
-          const [startDay, endDay] = daysStr.split('-').map(s => s.trim().toLowerCase());
-          const dayMap: {[key: string]: keyof WeekHours} = {
-            'mon': 'monday', 'monday': 'monday',
-            'tue': 'tuesday', 'tuesday': 'tuesday',
-            'wed': 'wednesday', 'wednesday': 'wednesday', 
-            'thu': 'thursday', 'thursday': 'thursday',
-            'fri': 'friday', 'friday': 'friday',
-            'sat': 'saturday', 'saturday': 'saturday',
-            'sun': 'sunday', 'sunday': 'sunday'
-          };
-          
-          const days: (keyof WeekHours)[] = [];
-          const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-          
-          const startIdx = dayOrder.indexOf(dayMap[startDay] || 'monday');
-          const endIdx = dayOrder.indexOf(dayMap[endDay] || 'friday');
-          
-          if (startIdx !== -1 && endIdx !== -1) {
-            for (let i = startIdx; i <= endIdx; i++) {
-              days.push(dayOrder[i] as keyof WeekHours);
-            }
-            
-            days.forEach(day => {
-              result[day] = {
-                open: true,
-                openTime: startTime,
-                closeTime: endTime
-              };
-            });
-          }
-        } else {
-          // Handle single days like "Sat"
-          const day = daysStr.toLowerCase();
-          const dayMap: {[key: string]: keyof WeekHours} = {
-            'mon': 'monday', 'monday': 'monday',
-            'tue': 'tuesday', 'tuesday': 'tuesday',
-            'wed': 'wednesday', 'wednesday': 'wednesday', 
-            'thu': 'thursday', 'thursday': 'thursday',
-            'fri': 'friday', 'friday': 'friday',
-            'sat': 'saturday', 'saturday': 'saturday',
-            'sun': 'sunday', 'sunday': 'sunday'
-          };
-          
-          if (dayMap[day]) {
-            result[dayMap[day]] = {
-              open: true,
-              openTime: startTime,
-              closeTime: endTime
-            };
-          }
-        }
-      }
-      
-      // Handle "closed" patterns
-      if (line.toLowerCase().includes('closed')) {
-        const day = line.split(':')[0].trim().toLowerCase();
-        const dayMap: {[key: string]: keyof WeekHours} = {
-          'mon': 'monday', 'monday': 'monday',
-          'tue': 'tuesday', 'tuesday': 'tuesday',
-          'wed': 'wednesday', 'wednesday': 'wednesday', 
-          'thu': 'thursday', 'thursday': 'thursday',
-          'fri': 'friday', 'friday': 'friday',
-          'sat': 'saturday', 'saturday': 'saturday',
-          'sun': 'sunday', 'sunday': 'sunday'
-        };
-        
-        if (dayMap[day]) {
-          result[dayMap[day]] = {
-            open: false,
-            openTime: '09:00',
-            closeTime: '18:00'
-          };
-        }
-      }
-    });
-    
-    return result;
-  } catch (error) {
-    console.error('Error parsing string hours:', error);
-    return defaultHours;
-  }
-};
-
-// Helper to validate hours data and fill in any missing properties
-const validateHoursData = (data: any): WeekHours => {
-  const result = {...defaultHours};
-  
-  // Skip validation if data is not an object
-  if (!data || typeof data !== 'object') {
-    return result;
-  }
-
-  // For each day in WeekHours, validate and fill in missing properties
-  Object.keys(defaultHours).forEach((day) => {
-    const typedDay = day as keyof WeekHours;
-    
-    // If day exists in data
-    if (data[typedDay]) {
-      result[typedDay] = {
-        // Use values from data if they exist, otherwise use defaults
-        open: typeof data[typedDay].open === 'boolean' ? data[typedDay].open : defaultHours[typedDay].open,
-        openTime: data[typedDay].openTime || defaultHours[typedDay].openTime,
-        closeTime: data[typedDay].closeTime || defaultHours[typedDay].closeTime
-      };
-    }
-    // If day doesn't exist in data, default values are already in result
-  });
-
-  return result;
-};
-
 const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [weekHours, setWeekHours] = useState<WeekHours>(defaultHours);
+  const [weekHours, setWeekHours] = useState<WeekHours | null>(null);
   const [isJsonFormat, setIsJsonFormat] = useState(false);
   const [hoursString, setHoursString] = useState<string | null>(null);
+  const [formattedHours, setFormattedHours] = useState<string[]>([]);
 
   useEffect(() => {
     if (hours) {
@@ -182,12 +31,15 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
           const validatedHours = validateHoursData(parsedHours);
           setWeekHours(validatedHours);
           setIsJsonFormat(true);
+          setFormattedHours(formatHoursDisplay(validatedHours));
         } else {
           // If the hours are in string format, store them as a string
           console.log('Hours are in string format, not attempting to parse as JSON');
           setHoursString(hours);
           // Also try to parse into structured format
-          setWeekHours(parseStringHours(hours));
+          const parsedHours = parseStringHours(hours);
+          setWeekHours(parsedHours);
+          setFormattedHours(formatHoursDisplay(parsedHours));
           setIsJsonFormat(false);
         }
       } catch (error) {
@@ -197,34 +49,18 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         console.log('Using default hours since the format could not be parsed as JSON');
         setHoursString(hours);
         // Try to parse from string format into structured format
-        setWeekHours(parseStringHours(hours || ''));
+        const parsedHours = parseStringHours(hours || '');
+        setWeekHours(parsedHours);
+        setFormattedHours(formatHoursDisplay(parsedHours));
         setIsJsonFormat(false);
       }
     }
   }, [hours]);
 
-  const handleToggleDay = (day: keyof WeekHours) => {
-    setWeekHours(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        open: !prev[day].open,
-      }
-    }));
-  };
-
-  const handleTimeChange = (day: keyof WeekHours, field: 'openTime' | 'closeTime', value: string) => {
-    setWeekHours(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [field]: value,
-      }
-    }));
-  };
-
-  const handleSave = async () => {
+  const handleSaveJsonHours = async () => {
     try {
+      if (!weekHours) return;
+      
       // Convert to JSON format when saving
       const hoursData = JSON.stringify(weekHours);
       
@@ -245,6 +81,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
       setIsEditing(false);
       setIsJsonFormat(true);
       setHoursString(null);
+      setFormattedHours(formatHoursDisplay(weekHours));
     } catch (error) {
       console.error('Error updating hours:', error);
       toast({
@@ -255,17 +92,10 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
     }
   };
 
-  const formatDay = (day: string) => {
-    return day.charAt(0).toUpperCase() + day.slice(1);
-  };
-
-  // For editing the string format hours
-  const handleEditStringHours = (newHoursString: string) => {
-    setHoursString(newHoursString);
-  };
-
   const handleSaveStringHours = async () => {
     try {
+      if (!hoursString) return;
+      
       const { error } = await supabase
         .from('pharmacies')
         .update({
@@ -281,6 +111,11 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
       });
       
       setIsEditing(false);
+      
+      // Update the parsed hours from the string
+      const parsedHours = parseStringHours(hoursString);
+      setWeekHours(parsedHours);
+      setFormattedHours(formatHoursDisplay(parsedHours));
     } catch (error) {
       console.error('Error updating hours:', error);
       toast({
@@ -291,165 +126,31 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
     }
   };
   
-  // Function to format the hours in the original display format
-  const formatHoursDisplay = () => {
-    try {
-      // Ensure weekHours is valid
-      if (!weekHours) return [];
-      
-      // Check if weekdays (Mon-Fri) have the same schedule
-      const weekdayHours = [
-        weekHours.monday,
-        weekHours.tuesday,
-        weekHours.wednesday,
-        weekHours.thursday,
-        weekHours.friday
-      ];
-      
-      // Ensure all days have valid properties
-      const validWeekdayHours = weekdayHours.map(day => ({
-        open: typeof day?.open === 'boolean' ? day.open : false,
-        openTime: day?.openTime || '09:00',
-        closeTime: day?.closeTime || '18:00'
-      }));
-      
-      const allWeekdaysSame = validWeekdayHours.every(day => 
-        day.open === validWeekdayHours[0].open && 
-        day.openTime === validWeekdayHours[0].openTime && 
-        day.closeTime === validWeekdayHours[0].closeTime
+  if (isEditing) {
+    if (!isJsonFormat && hoursString !== null) {
+      return (
+        <StringHoursEditor
+          hoursString={hoursString}
+          onHoursChange={setHoursString}
+          onCancel={() => setIsEditing(false)}
+          onSave={handleSaveStringHours}
+        />
       );
-      
-      const formattedHours = [];
-      
-      // If all weekdays have the same schedule, display them as Mon-Fri
-      if (allWeekdaysSame) {
-        if (validWeekdayHours[0].open) {
-          formattedHours.push(`Mon-Fri: ${validWeekdayHours[0].openTime}-${validWeekdayHours[0].closeTime}`);
-        } else {
-          formattedHours.push('Mon-Fri: Closed');
-        }
-      } else {
-        // Display each weekday individually
-        const dayMap: Record<number, string> = {
-          0: 'Mon',
-          1: 'Tue',
-          2: 'Wed',
-          3: 'Thu',
-          4: 'Fri'
-        };
-        
-        validWeekdayHours.forEach((day, index) => {
-          if (day.open) {
-            formattedHours.push(`${dayMap[index]}: ${day.openTime}-${day.closeTime}`);
-          } else {
-            formattedHours.push(`${dayMap[index]}: Closed`);
-          }
-        });
-      }
-      
-      // Add Saturday and Sunday with safety checks
-      const satData = weekHours.saturday || defaultHours.saturday;
-      const sunData = weekHours.sunday || defaultHours.sunday;
-      
-      if (satData.open) {
-        formattedHours.push(`Sat: ${satData.openTime || '09:00'}-${satData.closeTime || '13:00'}`);
-      } else {
-        formattedHours.push('Sat: Closed');
-      }
-      
-      if (sunData.open) {
-        formattedHours.push(`Sun: ${sunData.openTime || '09:00'}-${sunData.closeTime || '18:00'}`);
-      } else {
-        formattedHours.push('Sun: Closed');
-      }
-      
-      return formattedHours;
-    } catch (error) {
-      console.error('Error formatting hours display:', error);
-      return ['Hours information unavailable'];
+    } else if (weekHours) {
+      return (
+        <HoursEditor
+          weekHours={weekHours}
+          onHoursChange={setWeekHours}
+          onCancel={() => setIsEditing(false)}
+          onSave={handleSaveJsonHours}
+        />
+      );
     }
-  };
-  
+  }
   
   return (
     <div className="space-y-3">
-      {isEditing ? (
-        !isJsonFormat && hoursString !== null ? (
-          <div className="space-y-4">
-            <textarea 
-              value={hoursString}
-              onChange={(e) => handleEditStringHours(e.target.value)}
-              className="w-full p-2 border rounded resize-y min-h-[150px]"
-              placeholder="Enter hours in format: Mon-Fri: 8:00-19:00, Sat: 9:00-13:00"
-            />
-            
-            <div className="flex justify-end space-x-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-              <Button size="sm" onClick={handleSaveStringHours}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Hours
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {Object.entries(weekHours).map(([day, dayData]) => (
-              <div key={day} className="flex items-center space-x-4">
-                <div className="w-24">
-                  <div className="flex items-center space-x-2">
-                    <Switch 
-                      checked={dayData.open} 
-                      onCheckedChange={() => handleToggleDay(day as keyof WeekHours)} 
-                      id={`switch-${day}`}
-                    />
-                    <Label htmlFor={`switch-${day}`}>{formatDay(day)}</Label>
-                  </div>
-                </div>
-                
-                {dayData.open ? (
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      type="time"
-                      value={dayData.openTime}
-                      onChange={(e) => handleTimeChange(day as keyof WeekHours, 'openTime', e.target.value)}
-                      className="w-24"
-                    />
-                    <span>-</span>
-                    <Input
-                      type="time"
-                      value={dayData.closeTime}
-                      onChange={(e) => handleTimeChange(day as keyof WeekHours, 'closeTime', e.target.value)}
-                      className="w-24"
-                    />
-                  </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">Closed</span>
-                )}
-              </div>
-            ))}
-            
-            <div className="flex justify-end space-x-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-              <Button size="sm" onClick={handleSave}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Hours
-              </Button>
-            </div>
-          </div>
-        )
-      ) : (
-        <div className="space-y-2 text-left">
-          {formatHoursDisplay().map((line, index) => (
-            <div key={index} className="text-sm text-left">
-              {line}
-            </div>
-          ))}
-        </div>
-      )}
+      <HoursDisplay formattedHours={formattedHours} />
     </div>
   );
 };

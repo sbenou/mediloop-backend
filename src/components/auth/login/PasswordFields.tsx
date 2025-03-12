@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "./PasswordInput";
 import { usePasswordLogin } from "@/hooks/auth/usePasswordLogin";
+import { RememberMeOption } from "./RememberMeOption";
 
 interface PasswordFieldsProps {
   email: string;
@@ -13,7 +14,11 @@ interface PasswordFieldsProps {
   onForgotPassword: () => void;
 }
 
-export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordFieldsProps) => {
+export const PasswordFields = ({ 
+  email, 
+  onSuccess, 
+  onForgotPassword 
+}: PasswordFieldsProps) => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true); // Default to true for better UX
   const { handleLogin, isLoading } = usePasswordLogin({ email, onSuccess });
@@ -31,40 +36,56 @@ export const PasswordFields = ({ email, onSuccess, onForgotPassword }: PasswordF
         disabled={isLoading}
       />
       
-      <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="rememberMe" 
-          checked={rememberMe} 
-          onCheckedChange={(checked) => setRememberMe(checked === true)}
-        />
-        <Label htmlFor="rememberMe" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-          Remember me
-        </Label>
-      </div>
+      <RememberMeOption 
+        checked={rememberMe}
+        onChange={setRememberMe}
+        disabled={isLoading}
+      />
       
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <>
-            <Loader className="mr-2 h-4 w-4 animate-spin" />
-            Signing in...
-          </>
-        ) : (
-          "Sign in"
-        )}
-      </Button>
-      <Button
-        type="button"
-        variant="link"
-        className="w-full"
-        onClick={onForgotPassword}
-        disabled={isLoading}
-      >
-        Forgot your password?
-      </Button>
+      <LoginButton isLoading={isLoading} />
+      
+      <ForgotPasswordButton 
+        onClick={onForgotPassword} 
+        disabled={isLoading} 
+      />
     </form>
   );
 };
+
+interface LoginButtonProps {
+  isLoading: boolean;
+}
+
+const LoginButton = ({ isLoading }: LoginButtonProps) => (
+  <Button
+    type="submit"
+    className="w-full"
+    disabled={isLoading}
+  >
+    {isLoading ? (
+      <>
+        <Loader className="mr-2 h-4 w-4 animate-spin" />
+        Signing in...
+      </>
+    ) : (
+      "Sign in"
+    )}
+  </Button>
+);
+
+interface ForgotPasswordButtonProps {
+  onClick: () => void;
+  disabled: boolean;
+}
+
+const ForgotPasswordButton = ({ onClick, disabled }: ForgotPasswordButtonProps) => (
+  <Button
+    type="button"
+    variant="link"
+    className="w-full"
+    onClick={onClick}
+    disabled={disabled}
+  >
+    Forgot your password?
+  </Button>
+);
