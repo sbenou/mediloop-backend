@@ -18,6 +18,8 @@ import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
 import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
+import DashboardStats from "@/components/dashboard/views/pharmacy/DashboardStats";
+import { usePharmacyDashboardStats } from "@/hooks/admin/useDashboardStats";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
@@ -28,6 +30,9 @@ const PatientDashboard = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
+  
+  // Fetch stats data for the dashboard
+  const { data: statsData, isLoading: isStatsLoading } = usePharmacyDashboardStats();
 
   useEffect(() => {
     console.log("PatientDashboard page loaded with view:", view, "and ordersTab:", ordersTab);
@@ -292,43 +297,17 @@ const PatientDashboard = () => {
             </div>
           </div>
           
-          <div className="flex flex-wrap gap-4">
-            <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow" 
-                  onClick={() => handleViewChange('prescriptions')}>
-              <div className="text-center">
-                <h3 className="text-base font-medium">Prescriptions</h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">Total active prescriptions</p>
-                <p className="text-4xl font-bold mt-2">0</p>
-              </div>
-            </Card>
-            
-            <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleViewChange('orders')}>
-              <div className="text-center">
-                <h3 className="text-base font-medium">Orders</h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">Total orders placed</p>
-                <p className="text-4xl font-bold mt-2">0</p>
-              </div>
-            </Card>
-            
-            <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleViewChange('profile', 'doctor')}>
-              <div className="text-center">
-                <h3 className="text-base font-medium">Doctors</h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">Connected healthcare providers</p>
-                <p className="text-4xl font-bold mt-2">0</p>
-              </div>
-            </Card>
-            
-            <Card className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleViewChange('teleconsultations')}>
-              <div className="text-center">
-                <h3 className="text-base font-medium">Teleconsultations</h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">Upcoming appointments</p>
-                <p className="text-4xl font-bold mt-2">0</p>
-              </div>
-            </Card>
-          </div>
+          {/* Dashboard Stats with sparklines */}
+          <DashboardStats 
+            stats={{
+              total_patients: statsData?.total_patients || 0,
+              pending_orders: statsData?.pending_orders || 0,
+              total_prescriptions: statsData?.total_prescriptions || 0,
+              monthly_revenue: statsData?.monthly_revenue || 0
+            }}
+            isLoading={isStatsLoading}
+            onNavigate={handleViewChange}
+          />
           
           <HealthStateIndicator userRole="patient" />
           
