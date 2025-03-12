@@ -3,9 +3,15 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Mail } from 'lucide-react';
+import { Mail, MoreVertical, ExternalLink } from 'lucide-react';
 import UserAvatar from '@/components/user-menu/UserAvatar';
 import { TeamMember } from './types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TeamMemberCardProps {
   member: TeamMember;
@@ -67,9 +73,21 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                 className={member.is_active ? "bg-green-500" : "bg-gray-400"}
               />
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <a href={`/pharmacy/staff/${member.user_id}`}>View Profile</a>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <a href={`/pharmacy/staff/${member.user_id}`} className="flex items-center cursor-pointer">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    View Profile
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardContent>
