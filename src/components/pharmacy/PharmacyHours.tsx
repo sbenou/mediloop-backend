@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -260,8 +259,6 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
       });
     }
   };
-
-  
   
   return (
     <div className="space-y-3">
@@ -335,14 +332,14 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
           </div>
         )
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {Object.entries(weekHours).map(([day, dayData]) => (
-            <div key={day} className="flex justify-between items-center">
-              <span className="font-medium w-28">{formatDay(day)}</span>
+            <div key={day} className="grid grid-cols-12 items-center text-sm">
+              <span className="col-span-4 font-medium text-left">{formatDay(day)}</span>
               {dayData.open ? (
-                <span className="text-sm">{dayData.openTime} - {dayData.closeTime}</span>
+                <span className="col-span-8 text-left">{dayData.openTime} - {dayData.closeTime}</span>
               ) : (
-                <span className="text-sm text-muted-foreground">Closed</span>
+                <span className="col-span-8 text-left text-muted-foreground">Closed</span>
               )}
             </div>
           ))}
