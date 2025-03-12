@@ -254,17 +254,17 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[400px]">Staff Member</TableHead>
-                <TableHead className="w-[150px]">Role</TableHead>
-                <TableHead className="w-[150px]">Status</TableHead>
-                <TableHead className="w-[200px]">Joined</TableHead>
-                <TableHead className="w-[150px] text-right">Actions</TableHead>
+                <TableHead className="w-[400px] align-middle">Staff Member</TableHead>
+                <TableHead className="w-[150px] align-middle">Role</TableHead>
+                <TableHead className="w-[150px] align-middle">Status</TableHead>
+                <TableHead className="w-[200px] align-middle">Joined</TableHead>
+                <TableHead className="w-[150px] text-right align-middle">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredStaff.map(staff => (
                 <TableRow key={staff.id}>
-                  <TableCell className="w-[400px]">
+                  <TableCell className="w-[400px] align-middle">
                     <div className="flex items-center space-x-3">
                       <UserAvatar 
                         userProfile={{
@@ -295,54 +295,54 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId }) => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="w-[150px]">
+                  <TableCell className="w-[150px] align-middle">
                     {staff.role === 'pharmacist' ? 'Pharmacist' : 'Staff Member'}
                   </TableCell>
-                  <TableCell className="w-[150px]">
+                  <TableCell className="w-[150px] align-middle">
                     <Badge variant={staff.is_active ? "success" : "destructive"}>
                       {staff.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="w-[200px]">
+                  <TableCell className="w-[200px] align-middle">
                     {new Date(staff.joined_at).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="w-[150px] text-right">
-                          <div className="flex justify-end space-x-2">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="outline" size="sm" onClick={() => handleViewUser(staff)}>
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>View Details</p>
-                                </TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="outline" size="sm" onClick={() => handleEditUser(staff.id)}>
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Edit Staff Member</p>
-                                </TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50" onClick={() => handleTerminateUser(staff.id)}>
-                                    <UserX className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Remove Staff Member</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
+                  <TableCell className="w-[150px] text-right align-middle">
+                    <div className="flex justify-end space-x-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleViewUser(staff)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View Details</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleEditUser(staff.id)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit Staff Member</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50" onClick={() => handleTerminateUser(staff.id)}>
+                              <UserX className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Remove Staff Member</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
