@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,9 @@ import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
 import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
 import DashboardStats from "@/components/dashboard/views/pharmacy/DashboardStats";
 import { usePatientDashboardStats } from "@/hooks/patient/usePatientDashboardStats";
+import PharmacySelection from "@/components/settings/PharmacySelection";
+import DoctorSearch from "@/components/DoctorSearch";
+import DoctorManagement from "@/components/settings/DoctorManagement";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
@@ -128,14 +131,14 @@ const PatientDashboard = () => {
             <TabsContent value="pharmacy" className="mt-4">
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-semibold mb-4">Default Pharmacy</h2>
-                <p className="text-muted-foreground">No default pharmacy selected.</p>
+                <PharmacySelection />
               </div>
             </TabsContent>
             
             <TabsContent value="doctor" className="mt-4">
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-semibold mb-4">My Doctor</h2>
-                <p className="text-muted-foreground">No doctor connection found.</p>
+                <DoctorManagement />
               </div>
             </TabsContent>
             
