@@ -126,35 +126,37 @@ const FindDoctor = () => {
             }}
           />
         </div>
-        {doctors ? (
-          <DoctorListSection
-            doctors={doctors}
-            isLoading={isDoctorsLoading || isSearching}
-            coordinates={displayCoordinates}
-            showUserLocation={isUsingLocation}
-            onConnect={(doctorId, source) => {
-              if (!isAuthenticated) {
-                toast({
-                  title: "Login Required",
-                  description: "Please login to connect with doctors.",
-                });
-                return;
-              }
+        <div className="w-full h-full mt-6">
+          {doctors ? (
+            <DoctorListSection
+              doctors={doctors}
+              isLoading={isDoctorsLoading || isSearching}
+              coordinates={displayCoordinates}
+              showUserLocation={isUsingLocation}
+              onConnect={(doctorId, source) => {
+                if (!isAuthenticated) {
+                  toast({
+                    title: "Login Required",
+                    description: "Please login to connect with doctors.",
+                  });
+                  return;
+                }
 
-              if (source === 'overpass') {
-                toast({
-                  title: "Information",
-                  description: "Connection requests are only available for registered doctors.",
-                });
-                return;
-              }
-            }}
-          />
-        ) : (
-          <div className="flex justify-center items-center h-64">
-            <p className="text-gray-500">Loading doctors...</p>
-          </div>
-        )}
+                if (source === 'overpass') {
+                  toast({
+                    title: "Information",
+                    description: "Connection requests are only available for registered doctors.",
+                  });
+                  return;
+                }
+              }}
+            />
+          ) : (
+            <div className="flex justify-center items-center h-64">
+              <p className="text-gray-500">Loading doctors...</p>
+            </div>
+          )}
+        </div>
       </main>
       <Footer />
     </div>

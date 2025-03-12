@@ -134,50 +134,54 @@ const SearchPharmacy = () => {
           title="Find a Pharmacy Near You"
         />
 
-        {isMapView ? (
-          <div className="container mx-auto py-8 px-4">
-            <div className="flex justify-end mb-4">
-              <button 
-                onClick={toggleView}
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-              >
-                Switch to List View
-              </button>
-            </div>
-            <PharmacyMap
-              coordinates={currentCoordinates}
-              pharmacies={pharmacies || []}
-              filteredPharmacies={pharmacies || []}
-              onPharmaciesInShape={() => {}}
-              showDefaultLocation={false}
-            />
-          </div>
-        ) : (
-          <div className="container mx-auto py-8 px-4">
-            <div className="flex justify-end mb-4">
-              <button 
-                onClick={toggleView}
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-              >
-                Switch to Map View
-              </button>
-            </div>
-            {pharmacies ? (
-              <PharmacyListSection
-                pharmacies={pharmacies}
-                isLoading={isLoading}
-                coordinates={currentCoordinates}
-                defaultPharmacyId={null}
-                onPharmacySelect={handleSelectPharmacy}
-                onSetDefaultPharmacy={() => {}}
-              />
-            ) : (
-              <div className="flex justify-center items-center h-64">
-                <p className="text-gray-500">Loading pharmacies...</p>
+        <div className="container mx-auto py-8 px-4">
+          {isMapView ? (
+            <div className="w-full h-[calc(100vh-300px)]">
+              <div className="flex justify-end mb-4">
+                <button 
+                  onClick={toggleView}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  Switch to List View
+                </button>
               </div>
-            )}
-          </div>
-        )}
+              <PharmacyMap
+                coordinates={currentCoordinates}
+                pharmacies={pharmacies || []}
+                filteredPharmacies={pharmacies || []}
+                onPharmaciesInShape={() => {}}
+                showDefaultLocation={false}
+              />
+            </div>
+          ) : (
+            <div className="w-full">
+              <div className="flex justify-end mb-4">
+                <button 
+                  onClick={toggleView}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  Switch to Map View
+                </button>
+              </div>
+              {pharmacies ? (
+                <div className="w-full h-full">
+                  <PharmacyListSection
+                    pharmacies={pharmacies}
+                    isLoading={isLoading}
+                    coordinates={currentCoordinates}
+                    defaultPharmacyId={null}
+                    onPharmacySelect={handleSelectPharmacy}
+                    onSetDefaultPharmacy={() => {}}
+                  />
+                </div>
+              ) : (
+                <div className="flex justify-center items-center h-64">
+                  <p className="text-gray-500">Loading pharmacies...</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
