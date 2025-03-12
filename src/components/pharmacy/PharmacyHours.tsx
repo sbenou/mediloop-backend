@@ -260,6 +260,67 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
     }
   };
   
+  // Function to format the hours in the original display format
+  const formatHoursDisplay = () => {
+    // Check if weekdays (Mon-Fri) have the same schedule
+    const weekdayHours = [
+      weekHours.monday,
+      weekHours.tuesday,
+      weekHours.wednesday,
+      weekHours.thursday,
+      weekHours.friday
+    ];
+    
+    const allWeekdaysSame = weekdayHours.every(day => 
+      day.open === weekdayHours[0].open && 
+      day.openTime === weekdayHours[0].openTime && 
+      day.closeTime === weekdayHours[0].closeTime
+    );
+    
+    const formattedHours = [];
+    
+    // If all weekdays have the same schedule, display them as Mon-Fri
+    if (allWeekdaysSame) {
+      if (weekdayHours[0].open) {
+        formattedHours.push(`Mon-Fri: ${weekdayHours[0].openTime}-${weekdayHours[0].closeTime}`);
+      } else {
+        formattedHours.push('Mon-Fri: Closed');
+      }
+    } else {
+      // Display each weekday individually
+      const dayMap: Record<number, string> = {
+        0: 'Mon',
+        1: 'Tue',
+        2: 'Wed',
+        3: 'Thu',
+        4: 'Fri'
+      };
+      
+      weekdayHours.forEach((day, index) => {
+        if (day.open) {
+          formattedHours.push(`${dayMap[index]}: ${day.openTime}-${day.closeTime}`);
+        } else {
+          formattedHours.push(`${dayMap[index]}: Closed`);
+        }
+      });
+    }
+    
+    // Add Saturday and Sunday
+    if (weekHours.saturday.open) {
+      formattedHours.push(`Sat: ${weekHours.saturday.openTime}-${weekHours.saturday.closeTime}`);
+    } else {
+      formattedHours.push('Sat: Closed');
+    }
+    
+    if (weekHours.sunday.open) {
+      formattedHours.push(`Sun: ${weekHours.sunday.openTime}-${weekHours.sunday.closeTime}`);
+    } else {
+      formattedHours.push('Sun: Closed');
+    }
+    
+    return formattedHours;
+  };
+  
   return (
     <div className="space-y-3">
       {isEditing ? (
@@ -333,14 +394,9 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         )
       ) : (
         <div className="space-y-2">
-          {Object.entries(weekHours).map(([day, dayData]) => (
-            <div key={day} className="grid grid-cols-12 items-center text-sm">
-              <span className="col-span-4 font-medium text-left">{formatDay(day)}:</span>
-              {dayData.open ? (
-                <span className="col-span-8 text-left">{dayData.openTime} - {dayData.closeTime}</span>
-              ) : (
-                <span className="col-span-8 text-left text-muted-foreground">Closed</span>
-              )}
+          {formatHoursDisplay().map((line, index) => (
+            <div key={index} className="text-sm">
+              {line}
             </div>
           ))}
         </div>
