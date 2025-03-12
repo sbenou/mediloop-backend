@@ -34,6 +34,17 @@ const generateMockTrendData = (trend: number = 1) => {
   }));
 };
 
+// Mock data generator with more dramatic variations
+const generateMockTrendData = (trend: number = 1) => {
+  // Create an array of 6 points with more dramatic variations
+  return Array(6).fill(0).map(() => ({
+    value: Math.floor(
+      (Math.random() < 0.5 ? -1 : 1) * // Randomly make values positive or negative
+      (5 + Math.random() * 20) * trend // Larger range for more dramatic changes
+    )
+  }));
+};
+
 const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNavigate }) => {
   // Generate mock data for trends if not provided
   const patientTrend = stats?.patient_trend || generateMockTrendData(1);

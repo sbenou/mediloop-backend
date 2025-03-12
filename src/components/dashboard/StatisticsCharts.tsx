@@ -25,22 +25,26 @@ import {
 
 type TimeFrame = "current-month" | "last-3-months";
 
-// Mock data generator with more varied data
+// Mock data generator with more dramatic variations
 const generateMockData = (type: "prescriptions" | "teleconsultations", timeFrame: TimeFrame) => {
+  const generateDramaticValue = (base: number, variance: number) => {
+    return Math.floor(base + (Math.random() < 0.5 ? -1 : 1) * Math.random() * variance);
+  };
+
   if (timeFrame === "current-month") {
-    // Generate more varied data for current month (4 weeks)
+    // Generate more dramatically varied data for current month (4 weeks)
     return [
-      { name: "Week 1", count: type === "prescriptions" ? Math.floor(Math.random() * 15 + 5) : Math.floor(Math.random() * 10 + 3) },
-      { name: "Week 2", count: type === "prescriptions" ? Math.floor(Math.random() * 15 + 5) : Math.floor(Math.random() * 10 + 3) },
-      { name: "Week 3", count: type === "prescriptions" ? Math.floor(Math.random() * 15 + 5) : Math.floor(Math.random() * 10 + 3) },
-      { name: "Week 4", count: type === "prescriptions" ? Math.floor(Math.random() * 15 + 5) : Math.floor(Math.random() * 10 + 3) }
+      { name: "Week 1", count: type === "prescriptions" ? generateDramaticValue(10, 20) : generateDramaticValue(8, 15) },
+      { name: "Week 2", count: type === "prescriptions" ? generateDramaticValue(10, 20) : generateDramaticValue(8, 15) },
+      { name: "Week 3", count: type === "prescriptions" ? generateDramaticValue(10, 20) : generateDramaticValue(8, 15) },
+      { name: "Week 4", count: type === "prescriptions" ? generateDramaticValue(10, 20) : generateDramaticValue(8, 15) }
     ];
   } else {
-    // Generate more varied data for last 3 months
+    // Generate more dramatically varied data for last 3 months
     return [
-      { name: "Month 1", count: type === "prescriptions" ? Math.floor(Math.random() * 30 + 15) : Math.floor(Math.random() * 20 + 10) },
-      { name: "Month 2", count: type === "prescriptions" ? Math.floor(Math.random() * 30 + 15) : Math.floor(Math.random() * 20 + 10) },
-      { name: "Month 3", count: type === "prescriptions" ? Math.floor(Math.random() * 30 + 15) : Math.floor(Math.random() * 20 + 10) }
+      { name: "Month 1", count: type === "prescriptions" ? generateDramaticValue(20, 30) : generateDramaticValue(15, 25) },
+      { name: "Month 2", count: type === "prescriptions" ? generateDramaticValue(20, 30) : generateDramaticValue(15, 25) },
+      { name: "Month 3", count: type === "prescriptions" ? generateDramaticValue(20, 30) : generateDramaticValue(15, 25) }
     ];
   }
 };
