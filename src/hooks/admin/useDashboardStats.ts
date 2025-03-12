@@ -7,6 +7,11 @@ interface DashboardStats {
   pending_orders: number;
   monthly_revenue: number;
   total_prescriptions: number;
+  // We could add trend data here in the future:
+  // patient_trend?: Array<{ value: number }>;
+  // orders_trend?: Array<{ value: number }>;
+  // prescriptions_trend?: Array<{ value: number }>;
+  // revenue_trend?: Array<{ value: number }>;
 }
 
 interface AdminDashboardStats {
