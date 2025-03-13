@@ -30,6 +30,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
     if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
       // For pharmacist view within dashboard
       navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${value}`);
+    } else if (location.pathname === '/dashboard' && searchParams.get('view') === 'doctor') {
+      // For doctor view within dashboard
+      navigate(`/dashboard?view=doctor&section=profile&profileTab=${value}`);
     } else {
       // For regular dashboard profile view
       navigate(`/dashboard?view=profile&profileTab=${value}`);
@@ -56,6 +59,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
       case 'doctor':
         return [
           ...commonTabs,
+          { id: 'stamp', label: 'Stamp & Signature' },
           { id: 'qualifications', label: 'Qualifications' },
           { id: 'clinic', label: 'Clinic Details' }
         ];
@@ -137,6 +141,19 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
             <NextOfKinManagement />
           </div>
         </TabsContent>
+        
+        {/* Stamp & Signature Tab - Only for doctors */}
+        {userRole === 'doctor' && (
+          <TabsContent value="stamp" className="mt-4">
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
+              <DoctorStampSignature 
+                stampUrl={profile?.doctor_stamp_url || null} 
+                signatureUrl={profile?.doctor_signature_url || null} 
+              />
+            </div>
+          </TabsContent>
+        )}
         
         {/* Additional role-specific tabs */}
         {userRole === 'doctor' && (

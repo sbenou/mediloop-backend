@@ -10,6 +10,7 @@ import { AuthProvider } from '@/providers/AuthProvider';
 import Index from './pages/Index';
 import Home from './pages/Home';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
+import Dashboard from './pages/Dashboard';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -27,7 +28,6 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 // Placeholder components for routes
 const Login = () => <PlaceholderPage title="Login" />;
 const Register = () => <PlaceholderPage title="Register" />;
-const Dashboard = () => <PlaceholderPage title="Dashboard" />;
 const AdminDashboard = () => <PlaceholderPage title="Admin Dashboard" />;
 const SuperAdminDashboard = () => <PlaceholderPage title="Super Admin Dashboard" />;
 const SearchPharmacy = () => <PlaceholderPage title="Search Pharmacy" />;
@@ -35,6 +35,7 @@ const Prescription = () => <PlaceholderPage title="Prescription" />;
 const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
 const PharmacyProfile = () => <PlaceholderPage title="Pharmacy Profile" />;
+const DoctorProfile = () => <PlaceholderPage title="Doctor Profile" />;
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/admin-settings" element={<AdminSettings />} />
                   <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
+                  <Route path="/doctor/profile" element={<DoctorProfile />} />
                   <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
                 </Routes>
                 <Toaster />

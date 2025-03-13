@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import PatientDashboard from "@/pages/PatientDashboard";
 import { toast } from "@/components/ui/use-toast";
 import UniversalDashboard from "@/pages/UniversalDashboard";
+import DoctorDashboard from "@/pages/DoctorDashboard";
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, isPharmacist } = useAuth();
@@ -44,6 +45,18 @@ const Dashboard = () => {
     }
   }, [userRole, view, section, setSearchParams, isInitialLoad, isAuthenticated, isPharmacist]);
 
+  // For doctor role, ensure they see their dedicated view
+  useEffect(() => {
+    if (userRole === 'doctor' && !isInitialLoad && isAuthenticated) {
+      console.log("Checking doctor view:", { view, section, userRole });
+      
+      if (view !== 'doctor' || !section) {
+        console.log("Redirecting doctor to proper dashboard view");
+        setSearchParams({ view: 'doctor', section: 'dashboard' });
+      }
+    }
+  }, [userRole, view, section, setSearchParams, isInitialLoad, isAuthenticated]);
+
   // Debug logging
   useEffect(() => {
     if (!isInitialLoad) {
@@ -51,7 +64,12 @@ const Dashboard = () => {
     }
   }, [userRole, view, section, isInitialLoad, isPharmacist]);
 
-  // For very specific user roles, provide a dedicated dashboard
+  // For doctor role, provide a dedicated dashboard
+  if (userRole === 'doctor') {
+    return <DoctorDashboard />;
+  }
+
+  // For specific patient view
   if (userRole === 'patient' && !view) {
     return <PatientDashboard />;
   }
