@@ -33,7 +33,8 @@ export const useProfileFetch = () => {
           doctor_signature_url,
           deleted_at,
           created_at,
-          updated_at
+          updated_at,
+          pharmacy_id
         `)
         .eq('id', userId)
         .maybeSingle();

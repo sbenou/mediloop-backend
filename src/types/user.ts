@@ -28,6 +28,7 @@ export interface UserProfile {
   updated_at: string | null;
   license_number: string | null;
   // Adding pharmacy-specific fields
+  pharmacy_id?: string | null;  // Add the pharmacy_id field
   pharmacy_name?: string | null;
   pharmacy_logo_url?: string | null;
 }
