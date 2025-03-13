@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
+import { RecoilRoot } from 'recoil';
 import Home from './pages/Home';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
 
@@ -29,23 +30,25 @@ const PharmacyProfile = () => <PlaceholderPage title="Pharmacy Profile" />;
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/superadmin/*" element={<SuperAdminDashboard />} />
-        <Route path="/search-pharmacy" element={<SearchPharmacy />} />
-        <Route path="/prescription" element={<Prescription />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/admin-settings" element={<AdminSettings />} />
-        <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
-        <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
-      </Routes>
-      <Toaster />
-    </Router>
+    <RecoilRoot>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/superadmin/*" element={<SuperAdminDashboard />} />
+          <Route path="/search-pharmacy" element={<SearchPharmacy />} />
+          <Route path="/prescription" element={<Prescription />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/admin-settings" element={<AdminSettings />} />
+          <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
+          <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
+        </Routes>
+        <Toaster />
+      </Router>
+    </RecoilRoot>
   );
 }
 
