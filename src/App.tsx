@@ -13,6 +13,7 @@ import SearchPharmacyTest from './pages/SearchPharmacyTest';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import EmailConfirmationHandler from './components/auth/EmailConfirmationHandler';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ function App() {
                   <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
                   <Route path="/doctor/profile" element={<DoctorProfile />} />
                   <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
+                  <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
                 </Routes>
                 <Toaster />
               </Router>
