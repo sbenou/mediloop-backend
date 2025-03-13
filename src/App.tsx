@@ -12,6 +12,7 @@ import Home from './pages/Home';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ function App() {
                   <Route path="/" element={<Index />} />
                   <Route path="/home" element={<Home />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/admin" element={<AdminDashboard />} />
