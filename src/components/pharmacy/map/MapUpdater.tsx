@@ -18,6 +18,9 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
   
   useEffect(() => {
     if (!map) return;
+    
+    // Clean up function declaration - for later use
+    let cleanupFunctions: (() => void)[] = [];
 
     try {
       // Validate coordinates
@@ -41,6 +44,15 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       // Set up feature group for drawn items
       const drawnItems = new L.FeatureGroup();
       map.addLayer(drawnItems);
+      
+      // Add to cleanup
+      cleanupFunctions.push(() => {
+        try {
+          map.removeLayer(drawnItems);
+        } catch (err) {
+          console.error("Error removing drawn items layer:", err);
+        }
+      });
 
       // Check if L.Control.Draw is available
       if (!L.Control || !L.Control.Draw) {
@@ -209,6 +221,15 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       // Add draw control to map
       try {
         map.addControl(drawControl);
+        
+        // Add to cleanup
+        cleanupFunctions.push(() => {
+          try {
+            map.removeControl(drawControl);
+          } catch (controlErr) {
+            console.error("Error removing draw control:", controlErr);
+          }
+        });
       } catch (err) {
         console.error("Error adding draw control:", err);
       }
@@ -258,43 +279,53 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         }
       };
 
-      // Make sure L.Draw.Event is available
+      // Safely add event listeners if L.Draw.Event exists
       if (L.Draw && L.Draw.Event) {
-        // Add event listeners
-        map.on(L.Draw.Event.DRAWSTART, handleDrawStart);
-        map.on(L.Draw.Event.CREATED, handleDrawCreated);
-        map.on(L.Draw.Event.DELETED, handleDrawDeleted);
-
-        // Cleanup function
-        return () => {
-          try {
-            // Remove event listeners
-            map.off(L.Draw.Event.DRAWSTART, handleDrawStart);
-            map.off(L.Draw.Event.CREATED, handleDrawCreated);
-            map.off(L.Draw.Event.DELETED, handleDrawDeleted);
-            
-            // Remove control and layer
-            try {
-              map.removeControl(drawControl);
-            } catch (controlErr) {
-              console.error("Error removing draw control:", controlErr);
-            }
-            
-            try {
-              map.removeLayer(drawnItems);
-            } catch (layerErr) {
-              console.error("Error removing drawn items layer:", layerErr);
-            }
-          } catch (err) {
-            console.error("Error in cleanup function:", err);
-          }
-        };
+        // Define the event constant names to avoid string literals
+        const DRAWSTART = 'draw:drawstart';
+        const CREATED = 'draw:created';
+        const DELETED = 'draw:deleted';
+        
+        // Add event listeners using the correct event names
+        map.on(DRAWSTART, handleDrawStart);
+        map.on(CREATED, handleDrawCreated);
+        map.on(DELETED, handleDrawDeleted);
+        
+        // Add to cleanup: remove event listeners
+        cleanupFunctions.push(() => {
+          map.off(DRAWSTART, handleDrawStart);
+          map.off(CREATED, handleDrawCreated);
+          map.off(DELETED, handleDrawDeleted);
+        });
       } else {
-        console.error("L.Draw.Event not available");
+        console.error("L.Draw.Event not available, using alternative approach");
+        
+        // Fallback to standard event names if L.Draw.Event is not available
+        map.on('drawstart', handleDrawStart);
+        map.on('draw:created', handleDrawCreated);
+        map.on('draw:deleted', handleDrawDeleted);
+        
+        // Add to cleanup: remove event listeners
+        cleanupFunctions.push(() => {
+          map.off('drawstart', handleDrawStart);
+          map.off('draw:created', handleDrawCreated);
+          map.off('draw:deleted', handleDrawDeleted);
+        });
       }
     } catch (err) {
       console.error("Error in MapUpdater useEffect:", err);
     }
+
+    // Return cleanup function that calls all registered cleanup handlers
+    return () => {
+      cleanupFunctions.forEach(cleanup => {
+        try {
+          cleanup();
+        } catch (err) {
+          console.error("Error in cleanup function:", err);
+        }
+      });
+    };
   }, [coordinates, map, pharmacies, onPharmaciesInShape, showDefaultLocation, defaultZoom]);
   
   return null;
