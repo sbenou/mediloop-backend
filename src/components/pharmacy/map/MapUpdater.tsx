@@ -34,6 +34,32 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       log('map object is not available');
       return;
     }
+
+    // Clean up function for event listeners
+    const cleanup = () => {
+      log('cleanup function executing');
+      
+      try {
+        // Remove event handlers
+        map.off('draw:drawstart');
+        map.off('draw:created');
+        map.off('draw:deleted');
+        
+        // Remove draw control
+        if (drawControlRef.current) {
+          map.removeControl(drawControlRef.current);
+          drawControlRef.current = null;
+        }
+        
+        // Remove drawn items layer
+        if (drawnItemsRef.current) {
+          map.removeLayer(drawnItemsRef.current);
+          drawnItemsRef.current = null;
+        }
+      } catch (err) {
+        log('error in cleanup', err);
+      }
+    };
     
     log('initializing map', {
       mapCenter: map.getCenter(),
@@ -90,8 +116,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
             const radius = layer.getRadius();
             return center.distanceTo(point) <= radius;
           } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-            const bounds = layer.getBounds();
-            return bounds.contains(point);
+            return layer.getBounds().contains(point);
           }
           return false;
         } catch (err) {
@@ -140,31 +165,27 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         try {
           log('creating new draw control');
           
-          // Check if L.Control.Draw is available
-          if (typeof L.Control.Draw === 'undefined') {
-            log('Leaflet Draw plugin not available');
+          // Safely check if L.Control.Draw is available
+          if (!L.Control.hasOwnProperty('Draw')) {
+            log('Leaflet Draw plugin not available, skipping draw control');
             return;
           }
           
+          // Create draw control with simplified options to avoid potential errors
           drawControlRef.current = new L.Control.Draw({
             position: 'topright',
             draw: {
               polygon: {
                 allowIntersection: false,
-                shapeOptions: {
-                  color: '#3b82f6'
-                }
+                shapeOptions: { color: '#3b82f6' }
               },
               rectangle: {
-                shapeOptions: {
-                  color: '#3b82f6'
-                }
+                shapeOptions: { color: '#3b82f6' }
               },
               circle: {
-                shapeOptions: {
-                  color: '#3b82f6'
-                }
+                shapeOptions: { color: '#3b82f6' }
               },
+              // Disable other draw types to avoid potential errors
               marker: false,
               polyline: false,
               circlemarker: false
@@ -182,7 +203,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         }
       }
 
-      // Handle draw events
+      // Define event handlers
       const handleDrawStart = () => {
         log('draw:drawstart event triggered');
         if (drawnItemsRef.current) {
@@ -228,46 +249,24 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         });
       };
 
-      // Remove previous event handlers
-      map.off('draw:drawstart');
-      map.off('draw:created');
-      map.off('draw:deleted');
+      // Remove previous event handlers to avoid duplicates
+      cleanup();
       
-      // Add event handlers
-      map.on('draw:drawstart', handleDrawStart);
-      map.on('draw:created', handleDrawCreated);
-      map.on('draw:deleted', handleDrawDeleted);
-      
-      log('event handlers attached');
+      // Add event handlers safely
+      try {
+        map.on('draw:drawstart', handleDrawStart);
+        map.on('draw:created', handleDrawCreated);
+        map.on('draw:deleted', handleDrawDeleted);
+        log('event handlers attached');
+      } catch (err) {
+        log('error attaching event handlers', err);
+      }
     } catch (err) {
       log('error in useEffect', err);
     }
 
-    // Cleanup
-    return () => {
-      log('cleanup function executing');
-      
-      try {
-        // Remove event handlers
-        map.off('draw:drawstart');
-        map.off('draw:created');
-        map.off('draw:deleted');
-        
-        // Remove draw control
-        if (drawControlRef.current) {
-          map.removeControl(drawControlRef.current);
-          drawControlRef.current = null;
-        }
-        
-        // Remove drawn items layer
-        if (drawnItemsRef.current) {
-          map.removeLayer(drawnItemsRef.current);
-          drawnItemsRef.current = null;
-        }
-      } catch (err) {
-        log('error in cleanup', err);
-      }
-    };
+    // Return cleanup function
+    return cleanup;
   }, [map, coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation, defaultZoom]);
   
   return null;

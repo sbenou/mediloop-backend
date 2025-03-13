@@ -152,7 +152,11 @@ const DoctorListSection = ({
           <MapUpdater coordinates={coordinates} />
           
           {showUserLocation && (
-            <Marker position={centerPosition} key="user-location">
+            <Marker 
+              position={centerPosition} 
+              key="user-location"
+              icon={userLocationIcon}
+            >
               <Popup>Your location</Popup>
             </Marker>
           )}
@@ -163,10 +167,10 @@ const DoctorListSection = ({
               doctor.coordinates?.lon || coordinates.lon
             ];
             
-            // Create a reference setter function
-            const setMarkerRef = (ref: any) => {
-              if (ref) {
-                markerRefs.current[doctor.id] = ref;
+            // Use a callback ref to get the marker instance
+            const setMarkerRef = (marker: L.Marker | null) => {
+              if (marker) {
+                markerRefs.current[doctor.id] = marker;
               }
             };
             
@@ -178,6 +182,7 @@ const DoctorListSection = ({
                   click: () => handleDoctorSelect(doctor.id),
                 }}
                 ref={setMarkerRef}
+                icon={selectedDoctorId === doctor.id ? createSelectedIcon() : defaultIcon}
               >
                 <Popup>
                   <div className="text-sm">
