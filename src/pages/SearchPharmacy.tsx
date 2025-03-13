@@ -18,6 +18,7 @@ import { useLocationSearch } from "@/hooks/useLocationSearch";
 const SearchPharmacy = () => {
   const [search, setSearch] = useState('');
   const [isMapView, setIsMapView] = useState(false);
+  const [mapPharmacies, setMapPharmacies] = useState<any[]>([]);
   const navigate = useNavigate();
   
   const { coordinates: locationCoordinates, handleCitySearch } = useLocationSearch();
@@ -85,6 +86,13 @@ const SearchPharmacy = () => {
     }
   }, []);
 
+  useEffect(() => {
+    // Initialize map pharmacies with all pharmacies when they load
+    if (pharmacies && pharmacies.length > 0) {
+      setMapPharmacies(pharmacies);
+    }
+  }, [pharmacies]);
+
   console.log("SearchPharmacy rendering with coordinates:", currentCoordinates);
   console.log("Pharmacies found:", pharmacies?.length);
 
@@ -116,6 +124,11 @@ const SearchPharmacy = () => {
     } catch (err) {
       console.error("Error completing pharmacy selection:", err);
     }
+  };
+
+  // Handler for when pharmacies are filtered by shape on the map
+  const handlePharmaciesInShape = (filteredPharmacies: any[]) => {
+    setMapPharmacies(filteredPharmacies);
   };
 
   if (isPharmacist && (!pharmacyAssignment?.pharmacy_id || isPharmacistSignup)) {
@@ -176,8 +189,8 @@ const SearchPharmacy = () => {
                 <PharmacyMap
                   coordinates={currentCoordinates}
                   pharmacies={pharmacies || []}
-                  filteredPharmacies={pharmacies || []}
-                  onPharmaciesInShape={() => {}}
+                  filteredPharmacies={mapPharmacies}
+                  onPharmaciesInShape={handlePharmaciesInShape}
                   showDefaultLocation={false}
                 />
               </div>

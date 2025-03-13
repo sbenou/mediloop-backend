@@ -32,9 +32,6 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
-        // The 'center' prop was removed as it's not part of MapContainerProps in the current react-leaflet version
-        // The 'zoom' prop was also removed for the same reason
-        // We handle setting both the center and zoom through the MapUpdater component
         className="h-full"
         style={{ height: '100%', width: '100%' }}
       >
