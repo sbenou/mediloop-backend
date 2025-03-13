@@ -1,4 +1,3 @@
-
 import { UserProfile } from "@/types/user";
 import { ChevronDown, CreditCard, LogOut, User, Store } from "lucide-react";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -24,6 +23,7 @@ interface SidebarUserMenuProps {
   navigateToBilling: () => void;
   navigateToUpgrade: () => void;
   navigateToPharmacyProfile?: () => void;
+  navigateToDoctorProfile?: () => void; // Add this line to include the missing prop
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
@@ -38,6 +38,7 @@ const SidebarUserMenu = ({
   navigateToBilling,
   navigateToUpgrade,
   navigateToPharmacyProfile,
+  navigateToDoctorProfile, // Add this to destructure the new prop
   handleFileChange
 }: SidebarUserMenuProps) => {
   // State to track if the pharmacy link has been rendered
@@ -148,6 +149,25 @@ const SidebarUserMenu = ({
                   <span>Pharmacy Profile</span>
                 </DropdownMenuItem>
               )}
+              
+              {/* Doctor Profile link */}
+              {userRole === 'doctor' && typeof navigateToDoctorProfile === 'function' && (
+                <DropdownMenuItem 
+                  onClick={() => {
+                    console.log("Doctor Profile link clicked");
+                    if (navigateToDoctorProfile) {
+                      navigateToDoctorProfile();
+                    } else {
+                      console.error("navigateToDoctorProfile is not defined");
+                    }
+                  }}
+                  className="doctor-profile-link bg-blue-50"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Doctor Profile</span>
+                </DropdownMenuItem>
+              )}
+              
               <DropdownMenuItem onClick={navigateToProfile}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Account</span>

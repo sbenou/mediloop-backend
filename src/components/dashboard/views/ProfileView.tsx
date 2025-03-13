@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
@@ -10,6 +9,7 @@ import AddressManagement from "@/components/settings/AddressManagement";
 import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
+import { DoctorStampSignature } from "@/components/settings/profile/DoctorStampSignature";
 
 interface ProfileViewProps {
   activeTab: string;
