@@ -16,6 +16,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { SimplifiedMapUpdater } from '@/components/pharmacy/map/SimplifiedMapUpdater';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -94,29 +95,6 @@ function DrawControl() {
     };
   }, [map]);
 
-  return null;
-}
-
-// Simple map updater component
-function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (!map || !coordinates) return;
-    
-    if (typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number') {
-      console.log('Setting map view to:', coordinates);
-      try {
-        map.flyTo([coordinates.lat, coordinates.lon], 12, {
-          duration: 1.5,
-          easeLinearity: 0.25
-        });
-      } catch (error) {
-        console.error('Error updating map view:', error);
-      }
-    }
-  }, [map, coordinates]);
-  
   return null;
 }
 
@@ -206,9 +184,10 @@ const SearchPharmacyTest = () => {
     }
     
     try {
+      // Fixed: Using the field that actually exists in the profiles table
       const { error } = await supabase
         .from('profiles')
-        .update({ default_pharmacy_id: pharmacyId })
+        .update({ pharmacy_id: pharmacyId })
         .eq('id', profile.id);
         
       if (error) throw error;
@@ -315,7 +294,7 @@ const SearchPharmacyTest = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               
-              <MapUpdater coordinates={currentCoordinates} />
+              <SimplifiedMapUpdater coordinates={currentCoordinates} />
               <DrawControl />
               
               {/* Render user location marker if using location */}
