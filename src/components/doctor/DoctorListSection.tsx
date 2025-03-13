@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 // Fix for default marker icons in Leaflet with Vite
@@ -45,7 +45,11 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
   
   useEffect(() => {
     if (map && coordinates) {
-      map.setView([coordinates.lat, coordinates.lon], 13);
+      try {
+        map.setView([coordinates.lat, coordinates.lon], 13);
+      } catch (error) {
+        console.error("Error updating map view:", error);
+      }
     }
   }, [coordinates, map]);
   
