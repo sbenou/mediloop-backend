@@ -30,27 +30,22 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
   
   // Set default center position
   const defaultCenter: [number, number] = [49.8153, 6.1296]; // Luxembourg
-  
-  // In React Leaflet v5, you need to pass the center and zoom to the initialViewState prop
-  const initialViewState = {
-    center: coordinates?.lat && coordinates?.lon 
-      ? [coordinates.lat, coordinates.lon] as [number, number]
-      : defaultCenter,
-    zoom: 10
-  };
+  const centerCoords = coordinates?.lat && coordinates?.lon 
+    ? [coordinates.lat, coordinates.lon] as [number, number]
+    : defaultCenter;
   
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
-        initialViewState={initialViewState}
+        center={centerCoords}
+        zoom={10}
         scrollWheelZoom={true}
         className="h-full"
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          // Using the property without quotes to avoid typings issue
-          attribution={'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}
+          attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
         />
         
         <MapUpdater 
