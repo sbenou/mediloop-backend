@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -184,14 +183,9 @@ const SearchPharmacyTest = () => {
     }
     
     try {
-      // Update the query to use the correct column name that exists in the profiles table
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          // Using the correct field for pharmacy selection in the profiles table
-          // This was previously using 'pharmacy_id' which didn't exist
-          pharmacy_id: pharmacyId 
-        })
+        .update({ pharmacy_id: pharmacyId })
         .eq('id', profile.id);
         
       if (error) throw error;

@@ -1,18 +1,31 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
-import SearchPharmacy from './pages/SearchPharmacy';
-import Prescription from './pages/Prescription';
-import Settings from './pages/Settings';
-import AdminSettings from './pages/admin/AdminSettings';
-import PharmacyProfile from './pages/pharmacy/PharmacyProfile';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
+
+// Placeholder components for routes that don't have components yet
+const PlaceholderPage = ({ title }: { title: string }) => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <h1 className="text-2xl font-bold mb-4">{title} Page</h1>
+      <p>This page is under construction.</p>
+    </div>
+  </div>
+);
+
+// Placeholder components for routes
+const Login = () => <PlaceholderPage title="Login" />;
+const Register = () => <PlaceholderPage title="Register" />;
+const Dashboard = () => <PlaceholderPage title="Dashboard" />;
+const AdminDashboard = () => <PlaceholderPage title="Admin Dashboard" />;
+const SuperAdminDashboard = () => <PlaceholderPage title="Super Admin Dashboard" />;
+const SearchPharmacy = () => <PlaceholderPage title="Search Pharmacy" />;
+const Prescription = () => <PlaceholderPage title="Prescription" />;
+const Settings = () => <PlaceholderPage title="Settings" />;
+const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
+const PharmacyProfile = () => <PlaceholderPage title="Pharmacy Profile" />;
 
 function App() {
   return (
