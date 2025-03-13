@@ -37,19 +37,16 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
-        // In React Leaflet v5, the 'center' and 'zoom' props are expected by the component
-        // They control the initial view state of the map
         key={`map-${centerCoords[0]}-${centerCoords[1]}`}
-        defaultCenter={centerCoords}
-        defaultZoom={10}
+        center={centerCoords}
+        zoom={10}
         scrollWheelZoom={true}
         className="h-full"
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          // Fix the attribution prop format
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution={`&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors`}
         />
         
         <MapUpdater 
