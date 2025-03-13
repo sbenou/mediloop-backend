@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -39,6 +40,13 @@ export const useSignup = () => {
       
       console.log(`Starting signup process for ${email} with role ${role}`);
       
+      // First check if the user is already signed in (from a previous session)
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        console.log("User already has an active session - signing out first");
+        await supabase.auth.signOut();
+      }
+      
       // Check if user already exists in profiles
       const { data: existingProfile, error: checkError } = await supabase
         .from("profiles")
@@ -77,7 +85,7 @@ export const useSignup = () => {
               description: "Successfully signed in with your existing account",
             });
             
-            if (role === 'pharmacist' && onRegistrationComplete) {
+            if ((role === 'pharmacist' || role === 'doctor') && onRegistrationComplete) {
               onRegistrationComplete(signInData.user.id, role);
             } else {
               navigate("/");
@@ -108,6 +116,17 @@ export const useSignup = () => {
         
         if (error) {
           console.error("Signup error:", error);
+          
+          // Special handling for "User already registered" error
+          if (error.message && error.message.includes("already registered")) {
+            toast({
+              title: "Account already exists",
+              description: "Please try signing in instead, or use a different email address.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
           throw error;
         }
         
@@ -170,7 +189,7 @@ export const useSignup = () => {
                     duration: 4000,
                   });
                   
-                  if (role === 'pharmacist' && onRegistrationComplete) {
+                  if ((role === 'pharmacist' || role === 'doctor') && onRegistrationComplete) {
                     onRegistrationComplete(signInData.user.id, role);
                   } else {
                     navigate("/");
@@ -189,7 +208,7 @@ export const useSignup = () => {
             description: "Your account has been created successfully",
           });
           
-          if (role === 'pharmacist' && onRegistrationComplete) {
+          if ((role === 'pharmacist' || role === 'doctor') && onRegistrationComplete) {
             onRegistrationComplete(userId, role);
           } else {
             navigate("/");
@@ -240,7 +259,7 @@ export const useSignup = () => {
               });
               
               // If this is a pharmacist, call the registration complete callback
-              if (role === 'pharmacist' && onRegistrationComplete) {
+              if ((role === 'pharmacist' || role === 'doctor') && onRegistrationComplete) {
                 onRegistrationComplete(devUserId, role);
               } else {
                 navigate("/");
