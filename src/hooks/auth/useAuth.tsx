@@ -38,9 +38,14 @@ export const useAuth = () => {
     });
   }, [isAuthenticated, userRole, auth.profile, isPharmacist, isPharmacistFromSelector]);
   
+  // Define hasPermission function outside the returned values to ensure it's stable
+  const hasPermission = useCallback((permission: string) => {
+    return permissions.includes(permission);
+  }, [permissions]);
+  
   // Better session recovery for tab switching and session expiry
   const refreshSession = useCallback(async () => {
-    if (isRefreshingSession) return;
+    if (isRefreshingSession) return null;
     
     try {
       setIsRefreshingSession(true);
@@ -184,30 +189,31 @@ export const useAuth = () => {
     }
   }, [isAuthenticated, isLoading, userRole, auth.profile, isPharmacist, isPharmacistFromSelector]);
 
-  // Fix: Create a hasPermission function separately to ensure it's always a function
-  const hasPermission = useCallback((permission: string) => {
-    return isLoading || permissions.includes(permission);
-  }, [isLoading, permissions]);
-
-  // Memoize all values together to prevent unnecessary re-renders
-  const values = useMemo(() => ({
-    isAuthenticated,
-    userRole,
-    permissions,
-    isLoading,
-    hasPermission,
+  // Memoize the authData object first
+  const authData = useMemo(() => ({
     user: auth.user,
     profile: auth.profile,
-    refreshSession,
-    isPharmacist
-  }), [
+  }), [auth.user, auth.profile]);
+
+  // Now create the final values object with all the needed properties
+  const values = useMemo(() => {
+    return {
+      isAuthenticated,
+      userRole,
+      permissions,
+      isLoading,
+      hasPermission: (permission: string) => permissions.includes(permission),
+      user: authData.user,
+      profile: authData.profile,
+      refreshSession,
+      isPharmacist
+    };
+  }, [
     isAuthenticated, 
     userRole, 
     permissions, 
     isLoading, 
-    hasPermission,
-    auth.user, 
-    auth.profile, 
+    authData,
     refreshSession, 
     isPharmacist
   ]);
