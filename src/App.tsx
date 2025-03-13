@@ -11,6 +11,7 @@ import Index from './pages/Index';
 import Home from './pages/Home';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
 import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -26,7 +27,6 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 );
 
 // Placeholder components for routes
-const Login = () => <PlaceholderPage title="Login" />;
 const Register = () => <PlaceholderPage title="Register" />;
 const AdminDashboard = () => <PlaceholderPage title="Admin Dashboard" />;
 const SuperAdminDashboard = () => <PlaceholderPage title="Super Admin Dashboard" />;
