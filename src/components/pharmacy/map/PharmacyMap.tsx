@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { MapUpdater } from './MapUpdater';
+import { SimplifiedMapUpdater } from './SimplifiedMapUpdater';
+import { toast } from "@/components/ui/use-toast";
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -123,12 +124,11 @@ export function PharmacyMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <MapUpdater 
+        <SimplifiedMapUpdater 
           coordinates={coordinates} 
           pharmacies={pharmacies || []}
           onPharmaciesInShape={onPharmaciesInShape}
           showDefaultLocation={showDefaultLocation}
-          defaultZoom={10}
         />
         
         {renderUserLocationMarker()}

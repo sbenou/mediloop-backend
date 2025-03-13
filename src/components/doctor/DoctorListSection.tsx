@@ -83,6 +83,12 @@ const DoctorListSection = ({
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const markerRefs = useRef<Record<string, L.Marker | null>>({});
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [mapKey, setMapKey] = useState(`doctormap-${Date.now()}`);
+
+  // Refresh the map when coordinates change
+  useEffect(() => {
+    setMapKey(`doctormap-${Date.now()}`);
+  }, [coordinates?.lat, coordinates?.lon]);
 
   if (!coordinates) {
     return <div>Loading location...</div>;
@@ -97,13 +103,6 @@ const DoctorListSection = ({
       marker.openPopup();
     }
     listItemRefs.current[doctorId]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  };
-
-  // Safely store marker reference
-  const setMarkerRef = (doctorId: string) => (marker: L.Marker | null) => {
-    if (marker) {
-      markerRefs.current[doctorId] = marker;
-    }
   };
 
   return (
@@ -148,6 +147,7 @@ const DoctorListSection = ({
 
       <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
         <MapContainer
+          key={mapKey}
           center={centerPosition}
           zoom={10}
           className="h-full"
@@ -176,13 +176,17 @@ const DoctorListSection = ({
               doctor.coordinates?.lon || coordinates.lon
             ];
             
+            // Create a closure to handle click events
+            const handleClick = () => {
+              handleDoctorSelect(doctor.id);
+            };
+            
             return (
               <Marker
                 key={doctor.id}
                 position={position}
                 icon={selectedDoctorId === doctor.id ? createSelectedIcon() : defaultIcon}
-                ref={setMarkerRef(doctor.id)}
-                onClick={() => handleDoctorSelect(doctor.id)}
+                eventHandlers={{ click: handleClick }}
               >
                 <Popup>
                   <div className="text-sm">

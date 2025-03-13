@@ -17,6 +17,7 @@ declare module 'react-leaflet' {
     style?: React.CSSProperties;
     children?: ReactNode;
     key?: string;
+    whenCreated?: (map: L.Map) => void;
   }
 
   export interface TileLayerProps {
@@ -29,8 +30,11 @@ declare module 'react-leaflet' {
     children?: ReactNode;
     key?: string;
     icon?: L.Icon;
-    ref?: Ref<L.Marker>;
-    onClick?: () => void;
+    eventHandlers?: {
+      click?: () => void;
+      mouseover?: () => void;
+      mouseout?: () => void;
+    };
   }
 
   export interface PopupProps {
@@ -39,7 +43,7 @@ declare module 'react-leaflet' {
 
   export const MapContainer: FC<MapContainerProps>;
   export const TileLayer: FC<TileLayerProps>;
-  export const Marker: FC<MarkerProps & RefAttributes<L.Marker>>;
+  export const Marker: FC<MarkerProps & { ref?: Ref<L.Marker> }>;
   export const Popup: FC<PopupProps>;
   export const useMap: () => L.Map;
 }
