@@ -34,6 +34,9 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
       <MapContainer
         className="h-full"
         style={{ height: '100%', width: '100%' }}
+        center={defaultCenter} 
+        zoom={10}
+        scrollWheelZoom={true}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
