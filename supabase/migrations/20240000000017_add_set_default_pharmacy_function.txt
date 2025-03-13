@@ -1,0 +1,19 @@
+
+-- Create a function to set the default pharmacy for a user
+CREATE OR REPLACE FUNCTION public.set_default_pharmacy(
+  user_id UUID,
+  pharmacy_id UUID
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE public.profiles
+  SET pharmacy_id = set_default_pharmacy.pharmacy_id
+  WHERE id = set_default_pharmacy.user_id;
+END;
+$$;
+
+-- Add comment to explain the function
+COMMENT ON FUNCTION public.set_default_pharmacy(UUID, UUID) IS 'Updates a user''s default pharmacy';

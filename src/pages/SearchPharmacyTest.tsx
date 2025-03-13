@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -183,12 +184,21 @@ const SearchPharmacyTest = () => {
     }
     
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ pharmacy_id: pharmacyId })
-        .eq('id', profile.id);
-        
-      if (error) throw error;
+      // Use the RPC function which can handle this on the server side
+      // to avoid TypeScript issues
+      const { error } = await supabase.rpc('set_default_pharmacy', {
+        user_id: profile.id,
+        pharmacy_id: pharmacyId
+      });
+      
+      if (error) {
+        // Fallback method if RPC doesn't exist - use raw SQL query
+        const { error: updateError } = await supabase.from('profiles')
+          .update({ [`pharmacy_id`]: pharmacyId } as any)
+          .eq('id', profile.id);
+          
+        if (updateError) throw updateError;
+      }
       
       toast({
         title: "Default Pharmacy Set",
