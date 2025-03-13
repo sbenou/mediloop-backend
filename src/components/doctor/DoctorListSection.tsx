@@ -43,7 +43,9 @@ function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number }
   const map = useMap();
   
   useEffect(() => {
-    map.setView([coordinates.lat, coordinates.lon], 13);
+    if (map && coordinates) {
+      map.setView([coordinates.lat, coordinates.lon], 13);
+    }
   }, [coordinates, map]);
   
   return null;
@@ -79,8 +81,8 @@ const DoctorListSection = ({
   showUserLocation = false
 }: DoctorListSectionProps) => {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
-  const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
-  const listItemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const markerRefs = useRef<Record<string, L.Marker | null>>({});
+  const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   if (!coordinates) {
     return <div>Loading location...</div>;
@@ -95,6 +97,13 @@ const DoctorListSection = ({
       marker.openPopup();
     }
     listItemRefs.current[doctorId]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  // Safely store marker reference
+  const setMarkerRef = (doctorId: string) => (marker: L.Marker | null) => {
+    if (marker) {
+      markerRefs.current[doctorId] = marker;
+    }
   };
 
   return (
@@ -167,22 +176,13 @@ const DoctorListSection = ({
               doctor.coordinates?.lon || coordinates.lon
             ];
             
-            // Use a callback ref to get the marker instance
-            const setMarkerRef = (marker: L.Marker | null) => {
-              if (marker) {
-                markerRefs.current[doctor.id] = marker;
-              }
-            };
-            
             return (
               <Marker
                 key={doctor.id}
                 position={position}
-                eventHandlers={{
-                  click: () => handleDoctorSelect(doctor.id),
-                }}
-                ref={setMarkerRef}
                 icon={selectedDoctorId === doctor.id ? createSelectedIcon() : defaultIcon}
+                ref={setMarkerRef(doctor.id)}
+                onClick={() => handleDoctorSelect(doctor.id)}
               >
                 <Popup>
                   <div className="text-sm">

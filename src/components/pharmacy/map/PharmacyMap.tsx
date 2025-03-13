@@ -62,7 +62,7 @@ export function PharmacyMap({
   
   console.log('PharmacyMap: center coordinates', centerCoords);
   
-  // Manually render pharmacy markers to avoid issues
+  // Render pharmacy markers
   const renderPharmacyMarkers = () => {
     if (!Array.isArray(filteredPharmacies)) return null;
     

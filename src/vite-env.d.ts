@@ -6,7 +6,7 @@ declare module 'leaflet-draw' {
 }
 
 declare module 'react-leaflet' {
-  import { FC, ReactNode, RefAttributes, Ref } from 'react';
+  import { FC, ReactNode, RefAttributes, Ref, MouseEvent } from 'react';
   import L from 'leaflet';
 
   export interface MapContainerProps {
@@ -28,14 +28,9 @@ declare module 'react-leaflet' {
     position: [number, number];
     children?: ReactNode;
     key?: string;
-    eventHandlers?: {
-      click?: () => void;
-      mouseover?: () => void;
-      mouseout?: () => void;
-      [key: string]: (() => void) | undefined;
-    };
     icon?: L.Icon;
     ref?: Ref<L.Marker>;
+    onClick?: () => void;
   }
 
   export interface PopupProps {
@@ -44,7 +39,7 @@ declare module 'react-leaflet' {
 
   export const MapContainer: FC<MapContainerProps>;
   export const TileLayer: FC<TileLayerProps>;
-  export const Marker: FC<MarkerProps>;
+  export const Marker: FC<MarkerProps & RefAttributes<L.Marker>>;
   export const Popup: FC<PopupProps>;
   export const useMap: () => L.Map;
 }

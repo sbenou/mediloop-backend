@@ -29,6 +29,23 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
     pharmCount: pharmacies?.length || 0
   });
   
+  // Update map view when coordinates change
+  useEffect(() => {
+    if (!map || !coordinates) return;
+    
+    try {
+      if (showDefaultLocation && 
+          typeof coordinates.lat === 'number' && 
+          typeof coordinates.lon === 'number') {
+        log('setting view to user location');
+        map.setView([coordinates.lat, coordinates.lon], defaultZoom);
+      }
+    } catch (err) {
+      log('error setting map view', err);
+    }
+  }, [map, coordinates, showDefaultLocation, defaultZoom]);
+  
+  // Initialize draw controls and handle shape-based filtering
   useEffect(() => {
     if (!map) {
       log('map object is not available');
@@ -40,54 +57,46 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       log('cleanup function executing');
       
       try {
-        // Remove event handlers
-        map.off('draw:drawstart');
-        map.off('draw:created');
-        map.off('draw:deleted');
+        // Safely remove event handlers if they were added
+        if (map) {
+          // Use explicit event handlers instead of anonymous functions
+          map.off('draw:drawstart');
+          map.off('draw:created');
+          map.off('draw:deleted');
+        }
         
         // Remove draw control
         if (drawControlRef.current) {
-          map.removeControl(drawControlRef.current);
+          try {
+            map.removeControl(drawControlRef.current);
+          } catch (err) {
+            // Silently fail if already removed
+          }
           drawControlRef.current = null;
         }
         
         // Remove drawn items layer
         if (drawnItemsRef.current) {
-          map.removeLayer(drawnItemsRef.current);
+          try {
+            map.removeLayer(drawnItemsRef.current);
+          } catch (err) {
+            // Silently fail if already removed
+          }
           drawnItemsRef.current = null;
         }
       } catch (err) {
         log('error in cleanup', err);
       }
     };
-    
-    log('initializing map', {
-      mapCenter: map.getCenter(),
-      mapZoom: map.getZoom()
-    });
 
     try {
-      // Validate coordinates
-      const validCoordinates = coordinates && 
-        typeof coordinates.lat === 'number' && 
-        typeof coordinates.lon === 'number';
-      
-      // Center map if needed
-      if (validCoordinates && showDefaultLocation) {
-        log('setting view to user location');
-        map.setView([coordinates.lat, coordinates.lon], defaultZoom);
-      }
-      
-      // Set up feature group for drawn items if not already created
-      if (!drawnItemsRef.current) {
-        log('creating feature group for drawn items');
-        drawnItemsRef.current = new L.FeatureGroup();
-        map.addLayer(drawnItemsRef.current);
-      }
-      
       // Filter pharmacies based on location
       const filterByLocation = () => {
         try {
+          const validCoordinates = coordinates && 
+            typeof coordinates.lat === 'number' && 
+            typeof coordinates.lon === 'number';
+            
           if (showDefaultLocation && validCoordinates) {
             const userLocation = L.latLng(coordinates.lat, coordinates.lon);
             return pharmacies.filter(pharmacy => {
@@ -153,57 +162,58 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         log('error setting initial pharmacies', err);
       }
 
-      // Remove existing draw control if it exists
-      if (drawControlRef.current) {
-        log('removing existing draw control');
-        map.removeControl(drawControlRef.current);
-        drawControlRef.current = null;
+      // Create feature group for drawn items if it doesn't exist
+      if (!drawnItemsRef.current) {
+        try {
+          log('creating feature group for drawn items');
+          drawnItemsRef.current = new L.FeatureGroup();
+          map.addLayer(drawnItemsRef.current);
+        } catch (err) {
+          log('error creating feature group', err);
+        }
       }
 
-      // Create and add draw control
+      // Create and add draw control if it doesn't exist
       if (!drawControlRef.current && drawnItemsRef.current) {
         try {
           log('creating new draw control');
           
-          // Safely check if L.Control.Draw is available
-          if (!L.Control.hasOwnProperty('Draw')) {
-            log('Leaflet Draw plugin not available, skipping draw control');
-            return;
+          // Check if L.Control.Draw is available in a safer way
+          if (typeof L.Control === 'object' && L.Control.Draw) {
+            drawControlRef.current = new L.Control.Draw({
+              position: 'topright',
+              draw: {
+                polygon: {
+                  allowIntersection: false,
+                  shapeOptions: { color: '#3b82f6' }
+                },
+                rectangle: {
+                  shapeOptions: { color: '#3b82f6' }
+                },
+                circle: {
+                  shapeOptions: { color: '#3b82f6' }
+                },
+                marker: false,
+                polyline: false,
+                circlemarker: false
+              },
+              edit: {
+                featureGroup: drawnItemsRef.current,
+                remove: true
+              }
+            });
+            
+            map.addControl(drawControlRef.current);
+            log('draw control added successfully');
+          } else {
+            log('Leaflet Draw plugin not available');
           }
-          
-          // Create draw control with simplified options to avoid potential errors
-          drawControlRef.current = new L.Control.Draw({
-            position: 'topright',
-            draw: {
-              polygon: {
-                allowIntersection: false,
-                shapeOptions: { color: '#3b82f6' }
-              },
-              rectangle: {
-                shapeOptions: { color: '#3b82f6' }
-              },
-              circle: {
-                shapeOptions: { color: '#3b82f6' }
-              },
-              // Disable other draw types to avoid potential errors
-              marker: false,
-              polyline: false,
-              circlemarker: false
-            },
-            edit: {
-              featureGroup: drawnItemsRef.current,
-              remove: true
-            }
-          });
-          
-          map.addControl(drawControlRef.current);
-          log('draw control added successfully');
         } catch (err) {
           log('error creating draw control', err);
         }
       }
 
-      // Define event handlers
+      // Define explicit named event handlers to avoid closure issues
       const handleDrawStart = () => {
         log('draw:drawstart event triggered');
         if (drawnItemsRef.current) {
@@ -249,14 +259,12 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         });
       };
 
-      // Remove previous event handlers to avoid duplicates
-      cleanup();
-      
       // Add event handlers safely
       try {
-        map.on('draw:drawstart', handleDrawStart);
-        map.on('draw:created', handleDrawCreated);
-        map.on('draw:deleted', handleDrawDeleted);
+        // Ensure we don't add duplicate handlers
+        map.off('draw:drawstart').on('draw:drawstart', handleDrawStart);
+        map.off('draw:created').on('draw:created', handleDrawCreated);
+        map.off('draw:deleted').on('draw:deleted', handleDrawDeleted);
         log('event handlers attached');
       } catch (err) {
         log('error attaching event handlers', err);
@@ -267,7 +275,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
 
     // Return cleanup function
     return cleanup;
-  }, [map, coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation, defaultZoom]);
+  }, [map, coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation]);
   
   return null;
 }
