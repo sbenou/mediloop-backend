@@ -19,11 +19,13 @@ declare module 'react-leaflet' {
     style?: React.CSSProperties;
     children?: ReactNode;
     key?: string;
+    whenCreated?: (map: L.Map) => void;
   }
 
   export interface TileLayerProps {
     attribution?: string;
     url: string;
+    key?: string;
   }
 
   export interface MarkerProps {
@@ -40,6 +42,7 @@ declare module 'react-leaflet' {
 
   export interface PopupProps {
     children?: ReactNode;
+    key?: string;
   }
 
   // Export component types
