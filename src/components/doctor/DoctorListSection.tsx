@@ -1,12 +1,13 @@
 
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { SimplifiedMapUpdater } from "../pharmacy/map/SimplifiedMapUpdater";
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -38,23 +39,6 @@ const selectedIcon = new L.Icon({
 
 // Default icon for non-selected markers
 const defaultIcon = new L.Icon.Default();
-
-// Simple map updater component
-function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (map && coordinates) {
-      try {
-        map.setView([coordinates.lat, coordinates.lon], 13);
-      } catch (error) {
-        console.error("Error updating map view:", error);
-      }
-    }
-  }, [coordinates, map]);
-  
-  return null;
-}
 
 interface Doctor {
   id: string;
@@ -158,7 +142,7 @@ const DoctorListSection = ({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          <MapUpdater coordinates={coordinates} />
+          <SimplifiedMapUpdater coordinates={coordinates} />
           
           {showUserLocation && (
             <Marker 

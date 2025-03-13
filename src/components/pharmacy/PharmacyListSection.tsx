@@ -13,16 +13,22 @@ if (typeof window !== 'undefined') {
 }
 
 // Initialize Leaflet.draw localization and measurement formatting
-L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
-L.drawLocal.draw.handlers.circle.radius = 'Radius';
-L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
-L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
-L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
-L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
+if (typeof L !== 'undefined' && L.drawLocal) {
+  try {
+    L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
+    L.drawLocal.draw.handlers.circle.radius = 'Radius';
+    L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
+    L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
+    L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
+    L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
 
-(L as any).drawLocal.draw.toolbar.buttons.polygon = 'Draw a polygon';
-(L as any).drawLocal.draw.toolbar.buttons.rectangle = 'Draw a rectangle';
-(L as any).drawLocal.draw.toolbar.buttons.circle = 'Draw a circle';
+    (L as any).drawLocal.draw.toolbar.buttons.polygon = 'Draw a polygon';
+    (L as any).drawLocal.draw.toolbar.buttons.rectangle = 'Draw a rectangle';
+    (L as any).drawLocal.draw.toolbar.buttons.circle = 'Draw a circle';
+  } catch (err) {
+    console.error('Error initializing Leaflet.draw localization:', err);
+  }
+}
 
 interface PharmacyListSectionProps {
   pharmacies: any[];

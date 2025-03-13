@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { toast } from "@/components/ui/use-toast";
+import { SimplifiedMapUpdater } from './SimplifiedMapUpdater';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -23,136 +24,6 @@ const userLocationIcon = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
-
-// Enhanced MapUpdater component that handles draw controls safely
-function MapUpdater({ 
-  coordinates,
-  pharmacies,
-  onPharmaciesInShape
-}: { 
-  coordinates: { lat: number; lon: number }; 
-  pharmacies: any[];
-  onPharmaciesInShape: (pharmacies: any[]) => void;
-}) {
-  const map = useMap();
-  
-  // Update map center when coordinates change
-  useEffect(() => {
-    if (map && coordinates) {
-      try {
-        map.setView([coordinates.lat, coordinates.lon], 10);
-      } catch (error) {
-        console.error('Error updating map view:', error);
-      }
-    }
-  }, [map, coordinates]);
-  
-  // Handle draw controls
-  useEffect(() => {
-    if (!map) return;
-    
-    // Create the feature group to store editable layers
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-    
-    // Safety check - only proceed if L.Control.Draw exists
-    if (!L.Control || typeof (L.Control as any).Draw !== 'function') {
-      console.warn('Leaflet.Draw plugin not available');
-      return;
-    }
-    
-    try {
-      // Initialize draw control with options
-      const drawControl = new (L.Control as any).Draw({
-        position: 'topright',
-        draw: {
-          polygon: {
-            allowIntersection: false,
-            shapeOptions: { color: '#3b82f6' }
-          },
-          rectangle: {
-            shapeOptions: { color: '#3b82f6' }
-          },
-          circle: {
-            shapeOptions: { color: '#3b82f6' }
-          },
-          marker: false,
-          polyline: false,
-          circlemarker: false
-        },
-        edit: {
-          featureGroup: drawnItems,
-          remove: true
-        }
-      });
-      
-      map.addControl(drawControl);
-      
-      // Check if a point is inside a shape
-      const isPointInShape = (point: L.LatLng, layer: any) => {
-        if (layer instanceof L.Circle) {
-          return point.distanceTo(layer.getLatLng()) <= layer.getRadius();
-        } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-          return layer.getBounds().contains(point);
-        }
-        return false;
-      };
-      
-      // Filter pharmacies based on drawn shape
-      const filterByShape = (layer: any) => {
-        return pharmacies.filter(pharmacy => {
-          if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return false;
-          const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-          return isPointInShape(pharmacyLatLng, layer);
-        });
-      };
-      
-      // Handlers for draw events
-      const handleDrawCreated = (e: any) => {
-        drawnItems.clearLayers();
-        drawnItems.addLayer(e.layer);
-        
-        const filteredPharmacies = filterByShape(e.layer);
-        onPharmaciesInShape(filteredPharmacies);
-        
-        toast({
-          title: "Shape drawn",
-          description: `Found ${filteredPharmacies.length} pharmacies in this area`,
-        });
-      };
-      
-      const handleDrawDeleted = () => {
-        onPharmaciesInShape(pharmacies);
-        toast({
-          title: "Shape deleted",
-          description: `Showing all pharmacies`,
-        });
-      };
-      
-      // Safe event binding
-      map.on('draw:created', handleDrawCreated);
-      map.on('draw:deleted', handleDrawDeleted);
-      
-      // Cleanup to prevent memory leaks and duplicate handlers
-      return () => {
-        try {
-          map.off('draw:created', handleDrawCreated);
-          map.off('draw:deleted', handleDrawDeleted);
-          
-          map.removeLayer(drawnItems);
-          map.removeControl(drawControl);
-        } catch (err) {
-          console.error('Error cleaning up map resources:', err);
-        }
-      };
-    } catch (error) {
-      console.error('Error setting up draw control:', error);
-      return () => {};
-    }
-  }, [map, coordinates, pharmacies, onPharmaciesInShape]);
-  
-  return null;
-}
 
 interface PharmacyMapProps {
   coordinates: { lat: number; lon: number };
@@ -182,6 +53,43 @@ export function PharmacyMap({
     // Force re-render of the map when coordinates change
     setMapKey(`map-${Date.now()}`);
   }, [coordinates?.lat, coordinates?.lon]);
+  
+  // Filter pharmacies for the manual drawing functionality
+  useEffect(() => {
+    if (!pharmacies || !Array.isArray(pharmacies)) return;
+    
+    if (showDefaultLocation && coordinates) {
+      // When location is enabled, show pharmacies nearby
+      try {
+        const userLocation = coordinates ? L.latLng(coordinates.lat, coordinates.lon) : null;
+        if (userLocation) {
+          const nearbyPharmacies = pharmacies.filter(pharmacy => {
+            if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return false;
+            try {
+              const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+              return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km radius
+            } catch (error) {
+              console.error('Error calculating distance for pharmacy:', pharmacy, error);
+              return false;
+            }
+          });
+          onPharmaciesInShape(nearbyPharmacies);
+          
+          if (nearbyPharmacies.length > 0) {
+            toast({
+              title: "Location Used",
+              description: `Found ${nearbyPharmacies.length} pharmacies within 2km`,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error filtering pharmacies by location:', error);
+      }
+    } else {
+      // When no location filter, show all pharmacies
+      onPharmaciesInShape(pharmacies);
+    }
+  }, [showDefaultLocation, coordinates, pharmacies, onPharmaciesInShape]);
   
   // Render pharmacy markers
   const renderPharmacyMarkers = () => {
@@ -254,11 +162,7 @@ export function PharmacyMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <MapUpdater 
-          coordinates={coordinates} 
-          pharmacies={pharmacies || []}
-          onPharmaciesInShape={onPharmaciesInShape}
-        />
+        <SimplifiedMapUpdater coordinates={coordinates} />
         
         {renderUserLocationMarker()}
         {renderPharmacyMarkers()}

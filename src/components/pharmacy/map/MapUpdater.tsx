@@ -1,8 +1,7 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet-draw';
 import { toast } from "@/components/ui/use-toast";
 
 interface MapUpdaterProps {
@@ -13,10 +12,14 @@ interface MapUpdaterProps {
   defaultZoom?: number;
 }
 
-export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation, defaultZoom = 10 }: MapUpdaterProps) {
+export function MapUpdater({ 
+  coordinates, 
+  pharmacies, 
+  onPharmaciesInShape, 
+  showDefaultLocation, 
+  defaultZoom = 10 
+}: MapUpdaterProps) {
   const map = useMap();
-  const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
-  const drawControlRef = useRef<L.Control.Draw | null>(null);
   
   // Create a logger for this component to help diagnose issues
   const log = (message: string, data?: any) => {
@@ -45,237 +48,45 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
     }
   }, [map, coordinates, showDefaultLocation, defaultZoom]);
   
-  // Initialize draw controls and handle shape-based filtering
+  // Filter pharmacies when location changes
   useEffect(() => {
-    if (!map) {
-      log('map object is not available');
-      return;
-    }
-
-    // Clean up function for event listeners
-    const cleanup = () => {
-      log('cleanup function executing');
-      
-      try {
-        // Safely remove event handlers if they were added
-        if (map) {
-          // Use explicit event handlers instead of anonymous functions
-          map.off('draw:drawstart');
-          map.off('draw:created');
-          map.off('draw:deleted');
-        }
-        
-        // Remove draw control
-        if (drawControlRef.current) {
-          try {
-            map.removeControl(drawControlRef.current);
-          } catch (err) {
-            // Silently fail if already removed
-          }
-          drawControlRef.current = null;
-        }
-        
-        // Remove drawn items layer
-        if (drawnItemsRef.current) {
-          try {
-            map.removeLayer(drawnItemsRef.current);
-          } catch (err) {
-            // Silently fail if already removed
-          }
-          drawnItemsRef.current = null;
-        }
-      } catch (err) {
-        log('error in cleanup', err);
-      }
-    };
-
+    if (!map || !coordinates || !Array.isArray(pharmacies)) return;
+    
     try {
-      // Filter pharmacies based on location
-      const filterByLocation = () => {
-        try {
-          const validCoordinates = coordinates && 
-            typeof coordinates.lat === 'number' && 
-            typeof coordinates.lon === 'number';
-            
-          if (showDefaultLocation && validCoordinates) {
-            const userLocation = L.latLng(coordinates.lat, coordinates.lon);
-            return pharmacies.filter(pharmacy => {
-              if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return false;
-              try {
-                const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-                return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km radius
-              } catch (err) {
-                log('error calculating distance', err);
-                return false;
-              }
-            });
-          }
-          return pharmacies || [];
-        } catch (err) {
-          log('error in filterByLocation', err);
-          return pharmacies || [];
-        }
-      };
-
-      // Check if a point is inside a shape
-      const isPointInShape = (point: L.LatLng, layer: L.Layer) => {
-        try {
-          if (layer instanceof L.Circle) {
-            const center = layer.getLatLng();
-            const radius = layer.getRadius();
-            return center.distanceTo(point) <= radius;
-          } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-            return layer.getBounds().contains(point);
-          }
-          return false;
-        } catch (err) {
-          log('error in isPointInShape', err);
-          return false;
-        }
-      };
-
-      // Filter pharmacies based on drawn shape
-      const filterByShape = (layer: L.Layer) => {
-        try {
-          return pharmacies.filter(pharmacy => {
+      if (showDefaultLocation) {
+        const validCoordinates = coordinates && 
+          typeof coordinates.lat === 'number' && 
+          typeof coordinates.lon === 'number';
+          
+        if (validCoordinates) {
+          const userLocation = L.latLng(coordinates.lat, coordinates.lon);
+          const nearbyPharmacies = pharmacies.filter(pharmacy => {
             if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return false;
             try {
-              const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-              return isPointInShape(pharmacyLatLng, layer);
+              const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+              return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km radius
             } catch (err) {
-              log('error checking if pharmacy is in shape', err);
+              log('error calculating distance', err);
               return false;
             }
           });
-        } catch (err) {
-          log('error in filterByShape', err);
-          return [];
-        }
-      };
-
-      // Set initial filtered pharmacies
-      try {
-        log('setting initial filtered pharmacies');
-        const initialFiltered = filterByLocation();
-        onPharmaciesInShape(initialFiltered);
-      } catch (err) {
-        log('error setting initial pharmacies', err);
-      }
-
-      // Create feature group for drawn items if it doesn't exist
-      if (!drawnItemsRef.current) {
-        try {
-          log('creating feature group for drawn items');
-          drawnItemsRef.current = new L.FeatureGroup();
-          map.addLayer(drawnItemsRef.current);
-        } catch (err) {
-          log('error creating feature group', err);
-        }
-      }
-
-      // Create and add draw control if it doesn't exist
-      if (!drawControlRef.current && drawnItemsRef.current) {
-        try {
-          log('creating new draw control');
           
-          // Check if L.Control.Draw is available in a safer way
-          if (typeof L.Control === 'object' && L.Control.Draw) {
-            drawControlRef.current = new L.Control.Draw({
-              position: 'topright',
-              draw: {
-                polygon: {
-                  allowIntersection: false,
-                  shapeOptions: { color: '#3b82f6' }
-                },
-                rectangle: {
-                  shapeOptions: { color: '#3b82f6' }
-                },
-                circle: {
-                  shapeOptions: { color: '#3b82f6' }
-                },
-                marker: false,
-                polyline: false,
-                circlemarker: false
-              },
-              edit: {
-                featureGroup: drawnItemsRef.current,
-                remove: true
-              }
-            });
-            
-            map.addControl(drawControlRef.current);
-            log('draw control added successfully');
-          } else {
-            log('Leaflet Draw plugin not available');
-          }
-        } catch (err) {
-          log('error creating draw control', err);
-        }
-      }
-
-      // Define explicit named event handlers to avoid closure issues
-      const handleDrawStart = () => {
-        log('draw:drawstart event triggered');
-        if (drawnItemsRef.current) {
-          drawnItemsRef.current.clearLayers();
-        }
-      };
-
-      const handleDrawCreated = (e: any) => {
-        log('draw:created event triggered');
-        if (!e || !e.layer) {
-          log('draw created event missing layer');
-          return;
-        }
-        
-        const layer = e.layer;
-        
-        if (drawnItemsRef.current) {
-          drawnItemsRef.current.clearLayers();
-          drawnItemsRef.current.addLayer(layer);
+          onPharmaciesInShape(nearbyPharmacies);
           
-          // Filter pharmacies based on shape
-          const filteredPharmacies = filterByShape(layer);
-          log('filtered pharmacies after draw', { count: filteredPharmacies.length });
-          
-          onPharmaciesInShape(filteredPharmacies);
-
           toast({
-            title: "Shape drawn",
-            description: `Found ${filteredPharmacies.length} pharmacies in this area`,
+            title: "Location filter applied",
+            description: `Found ${nearbyPharmacies.length} pharmacies within 2km`,
           });
         }
-      };
-
-      const handleDrawDeleted = () => {
-        log('draw:deleted event triggered');
-        // Reset to initial state
-        const filteredPharmacies = filterByLocation();
-        onPharmaciesInShape(filteredPharmacies);
-        
-        toast({
-          title: "Shape deleted",
-          description: `Showing ${filteredPharmacies.length} pharmacies`,
-        });
-      };
-
-      // Add event handlers safely
-      try {
-        // Ensure we don't add duplicate handlers
-        map.off('draw:drawstart').on('draw:drawstart', handleDrawStart);
-        map.off('draw:created').on('draw:created', handleDrawCreated);
-        map.off('draw:deleted').on('draw:deleted', handleDrawDeleted);
-        log('event handlers attached');
-      } catch (err) {
-        log('error attaching event handlers', err);
+      } else {
+        // When not using location filtering, show all pharmacies
+        onPharmaciesInShape(pharmacies);
       }
     } catch (err) {
-      log('error in useEffect', err);
+      log('error in filter effect', err);
+      onPharmaciesInShape(pharmacies); // Fallback to all pharmacies
     }
-
-    // Return cleanup function
-    return cleanup;
-  }, [map, coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation]);
+  }, [map, coordinates, pharmacies, showDefaultLocation, onPharmaciesInShape]);
   
   return null;
 }

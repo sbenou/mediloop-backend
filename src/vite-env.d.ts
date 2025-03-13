@@ -42,10 +42,6 @@ declare module 'react-leaflet' {
     children?: ReactNode;
   }
 
-  export interface MapUpdaterProps {
-    coordinates: { lat: number; lon: number };
-  }
-
   // Export component types
   export const MapContainer: React.FC<MapContainerProps>;
   export const TileLayer: React.FC<TileLayerProps>;
@@ -55,8 +51,8 @@ declare module 'react-leaflet' {
   // Hook to access the map instance
   export function useMap(): L.Map;
 
-  // Event hook for map events (necessary for proper event binding)
-  export interface MapEvents {
+  // MapEvents interface renamed to avoid conflicts
+  export interface LeafletMapEvents {
     click?: (e: L.LeafletMouseEvent) => void;
     zoom?: (e: L.LeafletEvent) => void;
     moveend?: (e: L.LeafletEvent) => void;
