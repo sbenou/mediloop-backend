@@ -32,8 +32,11 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       
       const zoomLevel = showDefaultLocation ? 13 : defaultZoom;
       
-      // Set the view on the map
+      // Set the view on the map - this is essential since we removed the props from MapContainer
       map.setView(center as L.LatLngExpression, zoomLevel);
+      
+      // Also enable scroll wheel zoom since we removed that prop from MapContainer
+      map.scrollWheelZoom.enable();
 
       // Set up feature group for drawn items
       const drawnItems = new L.FeatureGroup();
