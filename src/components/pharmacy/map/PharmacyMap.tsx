@@ -31,11 +31,15 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
+        center={[coordinates?.lat || 49.8153, coordinates?.lon || 6.1296]}
+        zoom={10}
+        scrollWheelZoom={true}
         className="h-full"
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          // Use attribution as a data- attribute to avoid type error
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         
