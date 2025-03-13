@@ -37,7 +37,6 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
         // We handle setting both the center and zoom through the MapUpdater component
         className="h-full"
         style={{ height: '100%', width: '100%' }}
-        whenReady={() => {}}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
