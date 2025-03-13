@@ -30,16 +30,17 @@ export function PharmacyMap({
 }: PharmacyMapProps) {
   // Set default center position
   const defaultCenter: [number, number] = [49.8153, 6.1296]; // Luxembourg
-  const centerCoords = coordinates?.lat && coordinates?.lon 
-    ? [coordinates.lat, coordinates.lon] as [number, number]
+  const centerCoords: [number, number] = coordinates?.lat && coordinates?.lon 
+    ? [coordinates.lat, coordinates.lon] 
     : defaultCenter;
   
   // Add key state to force re-render when needed
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
   
   useEffect(() => {
+    // Force re-render of the map when coordinates change
     setMapKey(`map-${Date.now()}`);
-  }, [centerCoords[0], centerCoords[1]]);
+  }, [coordinates?.lat, coordinates?.lon]);
   
   console.log('PharmacyMap: rendering', { 
     hasCoordinates: !!coordinates,
@@ -50,6 +51,51 @@ export function PharmacyMap({
   });
   
   console.log('PharmacyMap: center coordinates', centerCoords);
+  
+  // Manually render pharmacy markers to avoid issues
+  const renderPharmacyMarkers = () => {
+    if (!Array.isArray(filteredPharmacies)) return null;
+    
+    return filteredPharmacies.map((pharmacy, index) => {
+      if (!pharmacy || !pharmacy.coordinates || 
+          typeof pharmacy.coordinates.lat !== 'number' || 
+          typeof pharmacy.coordinates.lon !== 'number') {
+        return null;
+      }
+      
+      return (
+        <Marker
+          key={`pharmacy-${pharmacy.id || index}`}
+          position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
+        >
+          <Popup>
+            <div className="text-sm">
+              <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
+              <p>{pharmacy.address || 'Address not available'}</p>
+              <p>{pharmacy.hours || 'Hours not available'}</p>
+            </div>
+          </Popup>
+        </Marker>
+      );
+    });
+  };
+  
+  // Render the user location marker if needed
+  const renderUserLocationMarker = () => {
+    if (showDefaultLocation && coordinates && 
+        typeof coordinates.lat === 'number' && 
+        typeof coordinates.lon === 'number') {
+      return (
+        <Marker 
+          position={[coordinates.lat, coordinates.lon]}
+          key="user-location"
+        >
+          <Popup>Your location</Popup>
+        </Marker>
+      );
+    }
+    return null;
+  };
   
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
@@ -74,37 +120,8 @@ export function PharmacyMap({
           defaultZoom={10}
         />
         
-        {showDefaultLocation && coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number' && (
-          <Marker 
-            position={[coordinates.lat, coordinates.lon]}
-            key="user-location"
-          >
-            <Popup>Your location</Popup>
-          </Marker>
-        )}
-        
-        {Array.isArray(filteredPharmacies) && filteredPharmacies.map((pharmacy, index) => {
-          if (!pharmacy || !pharmacy.coordinates || 
-              typeof pharmacy.coordinates.lat !== 'number' || 
-              typeof pharmacy.coordinates.lon !== 'number') {
-            return null;
-          }
-          
-          return (
-            <Marker
-              key={`pharmacy-${pharmacy.id || index}`}
-              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
-                  <p>{pharmacy.address || 'Address not available'}</p>
-                  <p>{pharmacy.hours || 'Hours not available'}</p>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+        {renderUserLocationMarker()}
+        {renderPharmacyMarkers()}
       </MapContainer>
     </div>
   );
