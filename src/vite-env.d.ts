@@ -6,7 +6,7 @@ declare module 'leaflet-draw' {
 }
 
 declare module 'react-leaflet' {
-  import { FC, ReactNode } from 'react';
+  import { FC, ReactNode, RefAttributes, Ref } from 'react';
   import L from 'leaflet';
 
   export interface MapContainerProps {
@@ -35,6 +35,7 @@ declare module 'react-leaflet' {
       [key: string]: (() => void) | undefined;
     };
     icon?: L.Icon;
+    ref?: Ref<L.Marker>;
   }
 
   export interface PopupProps {
