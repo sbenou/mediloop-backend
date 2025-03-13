@@ -12,7 +12,7 @@ import PharmacySelection from '@/components/settings/pharmacy/PharmacySelection'
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
 
 const SearchPharmacy = () => {
@@ -35,7 +35,7 @@ const SearchPharmacy = () => {
   
   const currentCoordinates = coordinates || { lat: 49.8153, lon: 6.1296 };
   
-  const { pharmacies, isLoading } = usePharmacySearch(currentCoordinates);
+  const { pharmacies, isLoading, toggleView } = usePharmacySearch(currentCoordinates);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState<string | null>(null);
   
   const location = useLocation();
@@ -48,20 +48,29 @@ const SearchPharmacy = () => {
     queryKey: ['pharmacistPharmacy', profile?.id],
     enabled: !!profile?.id && profile?.role === 'pharmacist',
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_pharmacies')
-        .select('pharmacy_id')
-        .eq('user_id', profile?.id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from('user_pharmacies')
+          .select('pharmacy_id')
+          .eq('user_id', profile?.id)
+          .maybeSingle();
+        
+        if (error) throw error;
+        return data;
+      } catch (err) {
+        console.error("Error fetching pharmacy assignment:", err);
+        return null;
+      }
     },
   });
 
   useEffect(() => {
-    if (profile?.role === 'pharmacist' && pharmacyAssignment?.pharmacy_id) {
-      navigate('/pharmacy/profile');
+    try {
+      if (profile?.role === 'pharmacist' && pharmacyAssignment?.pharmacy_id) {
+        navigate('/pharmacy/profile');
+      }
+    } catch (err) {
+      console.error("Error in pharmacist navigation effect:", err);
     }
   }, [profile, pharmacyAssignment, navigate]);
 
@@ -79,10 +88,6 @@ const SearchPharmacy = () => {
   console.log("SearchPharmacy rendering with coordinates:", currentCoordinates);
   console.log("Pharmacies found:", pharmacies?.length);
 
-  const toggleView = () => {
-    setIsMapView(prev => !prev);
-  };
-
   const searchPharmacy = (searchTerm: string) => {
     try {
       setSearch(searchTerm);
@@ -94,15 +99,23 @@ const SearchPharmacy = () => {
   };
 
   const handleSelectPharmacy = (pharmacyId: string) => {
-    setSelectedPharmacyId(pharmacyId);
+    try {
+      setSelectedPharmacyId(pharmacyId);
+    } catch (err) {
+      console.error("Error selecting pharmacy:", err);
+    }
   };
 
   const handlePharmacySelectionComplete = () => {
-    toast({
-      title: "Pharmacy Selection Complete",
-      description: "You can now access your pharmacy profile.",
-    });
-    navigate('/pharmacy/profile');
+    try {
+      toast({
+        title: "Pharmacy Selection Complete",
+        description: "You can now access your pharmacy profile.",
+      });
+      navigate('/pharmacy/profile');
+    } catch (err) {
+      console.error("Error completing pharmacy selection:", err);
+    }
   };
 
   if (isPharmacist && (!pharmacyAssignment?.pharmacy_id || isPharmacistSignup)) {
@@ -136,7 +149,7 @@ const SearchPharmacy = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 w-full">
         <SearchHeader
           onSearch={searchPharmacy}
           title="Find a Pharmacy Near You"
@@ -148,7 +161,13 @@ const SearchPharmacy = () => {
               <div className="w-full h-[calc(100vh-300px)]">
                 <div className="flex justify-end mb-4">
                   <button 
-                    onClick={toggleView}
+                    onClick={() => {
+                      try {
+                        toggleView();
+                      } catch (err) {
+                        console.error("Error toggling view:", err);
+                      }
+                    }}
                     className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
                   >
                     Switch to List View
@@ -178,8 +197,8 @@ const SearchPharmacy = () => {
                     Switch to Map View
                   </button>
                 </div>
-                {pharmacies ? (
-                  <div className="w-full h-full">
+                {Array.isArray(pharmacies) ? (
+                  <div className="w-full">
                     <PharmacyListSection
                       pharmacies={pharmacies}
                       isLoading={isLoading}

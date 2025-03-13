@@ -73,5 +73,8 @@ export const useDoctorSearch = (
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
   });
 
-  return { doctors, isLoading };
+  return { 
+    doctors: doctors || [], 
+    isLoading 
+  };
 };

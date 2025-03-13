@@ -47,13 +47,20 @@ export const usePharmacySearch = (
   });
 
   const searchPharmacy = (query: string) => {
-    setSearch(query);
-    // In a real implementation, this would filter pharmacies or trigger a new search
-    console.log("Searching for pharmacy:", query);
+    try {
+      setSearch(query);
+      console.log("Searching for pharmacy:", query);
+    } catch (error) {
+      console.error("Error in searchPharmacy:", error);
+    }
   };
 
   const toggleView = () => {
-    setIsMapView(prev => !prev);
+    try {
+      setIsMapView(prev => !prev);
+    } catch (error) {
+      console.error("Error in toggleView:", error);
+    }
   };
 
   return { 
