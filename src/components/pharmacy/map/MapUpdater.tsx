@@ -48,6 +48,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         return;
       }
 
+      // Create draw control
       const drawControl = new L.Control.Draw({
         position: 'topright',
         draw: {

@@ -34,8 +34,6 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
       <MapContainer
         className="h-full"
         style={{ height: '100%', width: '100%' }}
-        // Remove the props that are causing TypeScript errors
-        // They will be handled by the MapUpdater component
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
