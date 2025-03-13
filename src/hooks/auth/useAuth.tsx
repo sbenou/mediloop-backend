@@ -1,3 +1,4 @@
+
 import { useRecoilValue } from 'recoil';
 import { useMemo, useEffect, useState, useCallback } from 'react';
 import { 
@@ -183,23 +184,33 @@ export const useAuth = () => {
     }
   }, [isAuthenticated, isLoading, userRole, auth.profile, isPharmacist, isPharmacistFromSelector]);
 
-  // Memoize all values together to prevent unnecessary re-renders
-  const memoizedValues = useMemo(() => ({
-    profile: auth.profile,
-    user: auth.user,
-    hasPermission: (permission: string) => isLoading || permissions.includes(permission),
-    isPharmacist: isPharmacist,
-  }), [auth.profile, auth.user, isLoading, permissions, isPharmacist]);
+  // Fix: Create a hasPermission function separately to ensure it's always a function
+  const hasPermission = useCallback((permission: string) => {
+    return isLoading || permissions.includes(permission);
+  }, [isLoading, permissions]);
 
-  return {
+  // Memoize all values together to prevent unnecessary re-renders
+  const values = useMemo(() => ({
     isAuthenticated,
     userRole,
     permissions,
     isLoading,
-    hasPermission: memoizedValues.hasPermission,
-    user: memoizedValues.user,
-    profile: memoizedValues.profile,
+    hasPermission,
+    user: auth.user,
+    profile: auth.profile,
     refreshSession,
     isPharmacist
-  };
+  }), [
+    isAuthenticated, 
+    userRole, 
+    permissions, 
+    isLoading, 
+    hasPermission,
+    auth.user, 
+    auth.profile, 
+    refreshSession, 
+    isPharmacist
+  ]);
+
+  return values;
 };
