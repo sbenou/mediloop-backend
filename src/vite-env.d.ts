@@ -17,6 +17,7 @@ declare module 'react-leaflet' {
     scrollWheelZoom?: boolean;
     style?: React.CSSProperties;
     className?: string;
+    key?: string;
     [key: string]: any;
   }
   
