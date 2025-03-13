@@ -44,22 +44,12 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         typeof coordinates.lat === 'number' && 
         typeof coordinates.lon === 'number';
       
-      // Center map on coordinates
-      const center = validCoordinates ? 
-        [coordinates.lat, coordinates.lon] : 
-        [49.8153, 6.1296]; // Luxembourg center coordinates
+      // Center map on coordinates if needed
+      if (validCoordinates && showDefaultLocation) {
+        console.log('MapUpdater: setting view to user location');
+        map.setView([coordinates.lat, coordinates.lon], 13);
+      }
       
-      const zoomLevel = showDefaultLocation ? 13 : defaultZoom;
-      
-      console.log('MapUpdater: setting view', {
-        center,
-        zoomLevel,
-        validCoords: validCoordinates
-      });
-      
-      // We don't need to set the view here since MapContainer handles this
-      // map.setView(center as L.LatLngExpression, zoomLevel);
-
       // Set up feature group for drawn items if not already created
       if (!drawnItemsRef.current) {
         console.log('MapUpdater: creating new feature group for drawn items');
@@ -252,8 +242,8 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       }
 
       // Define event handlers
-      const handleDrawStart = (e: any) => {
-        console.log('MapUpdater: draw:drawstart event triggered', e?.type);
+      const handleDrawStart = () => {
+        console.log('MapUpdater: draw:drawstart event triggered');
         try {
           if (drawnItemsRef.current) {
             drawnItemsRef.current.clearLayers();
@@ -301,8 +291,8 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         }
       };
 
-      const handleDrawDeleted = (e: any) => {
-        console.log('MapUpdater: draw:deleted event triggered', e?.type);
+      const handleDrawDeleted = () => {
+        console.log('MapUpdater: draw:deleted event triggered');
         try {
           // Reset to initial state
           const filteredPharmacies = filterByLocation();
@@ -318,16 +308,13 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       };
 
       // Safety check before attaching events
-      const eventNames = ['draw:drawstart', 'draw:created', 'draw:deleted'];
+      // First, explicitly remove any previous event handlers
+      map.off('draw:drawstart');
+      map.off('draw:created');
+      map.off('draw:deleted');
       
-      // Clean up previous event handlers with the same names
-      console.log('MapUpdater: cleaning up previous event handlers');
-      eventNames.forEach(eventName => {
-        map.off(eventName);
-      });
-
-      // Attach event handlers
-      console.log('MapUpdater: attaching event handlers with explicit names');
+      // Then attach event handlers with the correct string-based event names
+      console.log('MapUpdater: attaching event handlers');
       map.on('draw:drawstart', handleDrawStart);
       map.on('draw:created', handleDrawCreated);
       map.on('draw:deleted', handleDrawDeleted);

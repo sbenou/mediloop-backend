@@ -28,10 +28,15 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
     filteredCount: filteredPharmacies?.length || 0
   });
   
+  // Set default center position
+  const center: [number, number] = coordinates?.lat && coordinates?.lon 
+    ? [coordinates.lat, coordinates.lon] 
+    : [49.8153, 6.1296]; // Default to Luxembourg
+  
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
-        center={[coordinates?.lat || 49.8153, coordinates?.lon || 6.1296]}
+        center={center}
         zoom={10}
         scrollWheelZoom={true}
         className="h-full"
@@ -39,7 +44,6 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          // Use attribution as a data- attribute to avoid type error
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         
