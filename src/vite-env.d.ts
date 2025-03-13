@@ -8,17 +8,17 @@ declare module 'leaflet-draw' {
 
 // Add type declarations for react-leaflet components
 declare module 'react-leaflet' {
-  import { FC, ReactNode } from 'react';
+  import { FC, ReactNode, CSSProperties } from 'react';
   import L from 'leaflet';
   
   export interface MapContainerProps {
     center: [number, number];
     zoom: number;
     scrollWheelZoom?: boolean;
-    style?: React.CSSProperties;
+    style?: CSSProperties;
     className?: string;
     key?: string;
-    children?: ReactNode | ReactNode[]; // Explicitly add children prop
+    children?: ReactNode | ReactNode[];
     [key: string]: any;
   }
   
@@ -29,9 +29,21 @@ declare module 'react-leaflet' {
     [key: string]: any;
   }
   
+  export interface MarkerProps {
+    position: [number, number];
+    key?: string;
+    children?: ReactNode;
+    [key: string]: any;
+  }
+  
+  export interface PopupProps {
+    children?: ReactNode;
+    [key: string]: any;
+  }
+  
   export const MapContainer: FC<MapContainerProps>;
   export const TileLayer: FC<TileLayerProps>;
-  export const Marker: FC<any>;
-  export const Popup: FC<any>;
+  export const Marker: FC<MarkerProps>;
+  export const Popup: FC<PopupProps>;
   export function useMap(): L.Map;
 }
