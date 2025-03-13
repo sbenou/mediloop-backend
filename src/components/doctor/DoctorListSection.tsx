@@ -152,7 +152,7 @@ const DoctorListSection = ({
           <MapUpdater coordinates={coordinates} />
           
           {showUserLocation && (
-            <Marker position={centerPosition}>
+            <Marker position={centerPosition} key="user-location">
               <Popup>Your location</Popup>
             </Marker>
           )}
@@ -163,6 +163,13 @@ const DoctorListSection = ({
               doctor.coordinates?.lon || coordinates.lon
             ];
             
+            // Create a reference setter function
+            const setMarkerRef = (ref: any) => {
+              if (ref) {
+                markerRefs.current[doctor.id] = ref;
+              }
+            };
+            
             return (
               <Marker
                 key={doctor.id}
@@ -170,11 +177,7 @@ const DoctorListSection = ({
                 eventHandlers={{
                   click: () => handleDoctorSelect(doctor.id),
                 }}
-                ref={(ref) => {
-                  if (ref) {
-                    markerRefs.current[doctor.id] = ref;
-                  }
-                }}
+                ref={setMarkerRef}
               >
                 <Popup>
                   <div className="text-sm">

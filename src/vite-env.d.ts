@@ -28,6 +28,13 @@ declare module 'react-leaflet' {
     position: [number, number];
     children?: ReactNode;
     key?: string;
+    eventHandlers?: {
+      click?: () => void;
+      mouseover?: () => void;
+      mouseout?: () => void;
+      [key: string]: (() => void) | undefined;
+    };
+    icon?: L.Icon;
   }
 
   export interface PopupProps {
