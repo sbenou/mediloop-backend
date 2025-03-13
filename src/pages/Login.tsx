@@ -5,6 +5,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { Loader } from "lucide-react";
 
 const Login = () => {
   const { isAuthenticated, isLoading, user, profile, isPharmacist } = useAuth();
@@ -64,6 +65,13 @@ const Login = () => {
             return;
           }
           
+          // Special handling for doctors
+          if (profile.role === 'doctor') {
+            console.log('Redirecting doctor to doctor dashboard view');
+            navigate('/dashboard?view=doctor&section=dashboard', { replace: true });
+            return;
+          }
+          
           // For all other users, redirect to the universal dashboard
           console.log('Redirecting to universal dashboard...');
           navigate('/dashboard', { replace: true });
@@ -83,7 +91,13 @@ const Login = () => {
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl">Loading...</CardTitle>
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Loader className="h-8 w-8 animate-spin text-primary" />
+              <CardTitle className="text-2xl">Loading...</CardTitle>
+              <CardDescription>
+                Please wait while we load your profile
+              </CardDescription>
+            </div>
           </CardHeader>
         </Card>
       </div>
@@ -96,6 +110,9 @@ const Login = () => {
     if (profile?.role === 'pharmacist' || isPharmacist) {
       console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
       navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
+    } else if (profile?.role === 'doctor') {
+      console.log('Already authenticated as doctor, redirecting to doctor dashboard');
+      navigate('/dashboard?view=doctor&section=dashboard', { replace: true });
     } else {
       // For all other users
       navigate('/dashboard', { replace: true });

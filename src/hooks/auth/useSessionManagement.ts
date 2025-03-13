@@ -37,11 +37,56 @@ export const useSessionManagement = () => {
 
       if (!profile) {
         console.error('No profile found after fetch, clearing auth state');
+        // Try to create profile one last time if it doesn't exist
+        try {
+          const userData = session.user;
+          const role = userData.user_metadata?.role || 'patient';
+          const fullName = userData.user_metadata?.full_name || userData.user_metadata?.name || 'User';
+          
+          await supabase.rpc('create_profile_secure', {
+            user_id: userData.id,
+            user_role: role,
+            user_full_name: fullName,
+            user_email: userData.email || '',
+            user_license_number: userData.user_metadata?.license_number || null,
+          });
+          
+          // Try to fetch again after creation
+          const retryFetch = await fetchAndSetProfile(session.user.id);
+          
+          if (retryFetch.profile) {
+            console.log('Successfully created and fetched profile on retry');
+            setAuth({
+              user: session.user,
+              profile: retryFetch.profile,
+              permissions: retryFetch.permissions,
+              isLoading: false,
+            });
+            return;
+          }
+        } catch (retryError) {
+          console.error('Error in profile creation retry:', retryError);
+        }
+        
+        // If we still don't have a profile, clear auth state
         setAuth({
           user: null,
           profile: null,
           permissions: [],
           isLoading: false,
+        });
+        
+        // Clear session as well to force a new login
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error('Error signing out after profile fetch failure:', signOutError);
+        }
+        
+        toast({
+          variant: "destructive",
+          title: "Profile Error",
+          description: "Unable to load your profile. Please try logging in again.",
         });
         return;
       }

@@ -12,6 +12,21 @@ export const useProfileFetch = () => {
     try {
       setIsLoading(true);
 
+      // First, check if the user exists in auth users
+      const { data: authUser, error: authError } = await supabase.auth.getUser(userId);
+
+      if (authError) {
+        console.error('Error fetching auth user:', authError);
+        return { profile: null, permissions: [] };
+      }
+
+      if (!authUser?.user) {
+        console.error('No auth user found with ID:', userId);
+        return { profile: null, permissions: [] };
+      }
+
+      console.log('Auth user found, fetching profile:', authUser.user.id);
+
       const { data: profile, error } = await supabase
         .from('profiles')
         .select(`
@@ -43,6 +58,54 @@ export const useProfileFetch = () => {
         return { profile: null, permissions: [] };
       }
 
+      if (!profile) {
+        console.error('No profile found for user:', userId);
+        // If there's no profile, create one automatically
+        try {
+          console.log('Creating profile for user:', userId);
+          const userData = authUser.user;
+          
+          // Extract role from user metadata if available
+          const role = userData.user_metadata?.role || 'patient';
+          const fullName = userData.user_metadata?.full_name || userData.user_metadata?.name || 'User';
+          
+          const { error: createError } = await supabase.rpc('create_profile_secure', {
+            user_id: userId,
+            user_role: role,
+            user_full_name: fullName,
+            user_email: userData.email || '',
+            user_license_number: userData.user_metadata?.license_number || null,
+          });
+          
+          if (createError) {
+            console.error('Error creating profile:', createError);
+            return { profile: null, permissions: [] };
+          }
+          
+          // Try to fetch the newly created profile
+          const { data: newProfile, error: newProfileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+            
+          if (newProfileError || !newProfile) {
+            console.error('Error fetching newly created profile:', newProfileError);
+            return { profile: null, permissions: [] };
+          }
+          
+          console.log('Profile created and fetched successfully');
+          const safeNewProfile = safeQueryResult<UserProfile>(newProfile);
+          return { 
+            profile: safeNewProfile, 
+            permissions: [] 
+          };
+        } catch (createProfileError) {
+          console.error('Error in profile creation:', createProfileError);
+          return { profile: null, permissions: [] };
+        }
+      }
+
       // Get the pharmacy_id separately to handle the case where the column might not exist yet
       let pharmacyId = null;
       try {
@@ -60,7 +123,7 @@ export const useProfileFetch = () => {
 
       const safeProfile = safeQueryResult<UserProfile>(profile);
       if (!safeProfile) {
-        console.error('No profile found for user:', userId);
+        console.error('Failed to process profile data for user:', userId);
         return { profile: null, permissions: [] };
       }
 
