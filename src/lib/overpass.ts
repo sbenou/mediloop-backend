@@ -104,7 +104,7 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
           ].filter(Boolean).join(', ') || 'Address not available',
           distance: lat && lon ? calculateDistance(lat, lon, element.lat, element.lon) : 'Unknown',
           hours: tags?.opening_hours || 'Hours not available',
-          phone: tags?.['contact:phone'] || tags?.phone || '',
+          phone: tags?.['contact:phone'] || '',
           email: tags?.['contact:email'] || tags?.email || '',
           coordinates: {
             lat: lat,
