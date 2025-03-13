@@ -22,16 +22,18 @@ interface PharmacyMapProps {
 
 export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPharmaciesInShape, showDefaultLocation }: PharmacyMapProps) {
   // Default center of Luxembourg if no coordinates provided
-  const defaultCenter: L.LatLngExpression = [49.8153, 6.1296];
+  const defaultCenter: [number, number] = [49.8153, 6.1296];
   
   // Ensure valid coordinates
-  const mapCoordinates = coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number'
+  const mapCoordinates: [number, number] = coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number'
     ? [coordinates.lat, coordinates.lon]
     : defaultCenter;
 
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
+        center={mapCoordinates}
+        zoom={10}
         className="h-full"
         style={{ height: '100%', width: '100%' }}
       >
@@ -43,7 +45,7 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
           pharmacies={pharmacies || []}
           onPharmaciesInShape={onPharmaciesInShape}
           showDefaultLocation={showDefaultLocation}
-          defaultZoom={10} // Pass the default zoom level to MapUpdater
+          defaultZoom={10}
         />
         
         {showDefaultLocation && coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number' && (
