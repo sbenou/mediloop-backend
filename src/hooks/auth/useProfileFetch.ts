@@ -33,8 +33,7 @@ export const useProfileFetch = () => {
           doctor_signature_url,
           deleted_at,
           created_at,
-          updated_at,
-          pharmacy_id
+          updated_at
         `)
         .eq('id', userId)
         .maybeSingle();
@@ -44,10 +43,30 @@ export const useProfileFetch = () => {
         return { profile: null, permissions: [] };
       }
 
+      // Get the pharmacy_id separately to handle the case where the column might not exist yet
+      let pharmacyId = null;
+      try {
+        const { data: pharmacyData } = await supabase
+          .from('user_pharmacies')
+          .select('pharmacy_id')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        pharmacyId = pharmacyData?.pharmacy_id || null;
+        console.log('Fetched pharmacy_id from user_pharmacies:', pharmacyId);
+      } catch (pharmacyError) {
+        console.error('Error fetching pharmacy_id:', pharmacyError);
+      }
+
       const safeProfile = safeQueryResult<UserProfile>(profile);
       if (!safeProfile) {
         console.error('No profile found for user:', userId);
         return { profile: null, permissions: [] };
+      }
+
+      // Manually add the pharmacy_id to the profile
+      if (pharmacyId) {
+        safeProfile.pharmacy_id = pharmacyId;
       }
 
       const permissions = safeProfile.role_id 
@@ -57,6 +76,7 @@ export const useProfileFetch = () => {
       console.log('Profile and permissions fetched:', { 
         profileId: safeProfile.id, 
         role: safeProfile.role,
+        pharmacyId: safeProfile.pharmacy_id,
         permissionsCount: permissions.length 
       });
 
