@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -138,11 +139,15 @@ const DoctorListSection = ({
 
       <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
         <MapContainer
+          center={centerPosition}
+          zoom={10}
           className="h-full"
           style={{ height: '100%', width: '100%' }}
+          scrollWheelZoom={true}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           <MapUpdater coordinates={coordinates} />
           
