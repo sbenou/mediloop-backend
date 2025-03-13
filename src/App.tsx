@@ -6,6 +6,7 @@ import { RecoilRoot } from 'recoil';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { AuthProvider } from '@/providers/AuthProvider';
 import Index from './pages/Index';
 import Home from './pages/Home';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
@@ -39,28 +40,30 @@ function App() {
   return (
     <RecoilRoot>
       <QueryClientProvider client={queryClient}>
-        <CurrencyProvider>
-          <CartProvider>
-            <Router>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/superadmin/*" element={<SuperAdminDashboard />} />
-                <Route path="/search-pharmacy" element={<SearchPharmacy />} />
-                <Route path="/prescription" element={<Prescription />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/admin-settings" element={<AdminSettings />} />
-                <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
-                <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
-              </Routes>
-              <Toaster />
-            </Router>
-          </CartProvider>
-        </CurrencyProvider>
+        <AuthProvider>
+          <CurrencyProvider>
+            <CartProvider>
+              <Router>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/home" element={<Home />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/superadmin/*" element={<SuperAdminDashboard />} />
+                  <Route path="/search-pharmacy" element={<SearchPharmacy />} />
+                  <Route path="/prescription" element={<Prescription />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/admin-settings" element={<AdminSettings />} />
+                  <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
+                  <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
+                </Routes>
+                <Toaster />
+              </Router>
+            </CartProvider>
+          </CurrencyProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </RecoilRoot>
   );
