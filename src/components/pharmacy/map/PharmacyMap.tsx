@@ -2,8 +2,7 @@
 import { useState, useEffect } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { SimplifiedMapUpdater } from './SimplifiedMapUpdater';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { toast } from "@/components/ui/use-toast";
 
 // Fix for default marker icons in Leaflet with Vite
@@ -24,6 +23,142 @@ const userLocationIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
+// Simple map updater component
+function MapUpdater({ 
+  coordinates,
+  pharmacies,
+  onPharmaciesInShape
+}: { 
+  coordinates: { lat: number; lon: number }; 
+  pharmacies: any[];
+  onPharmaciesInShape: (pharmacies: any[]) => void;
+}) {
+  const map = useMap();
+  
+  // Update map center when coordinates change
+  useEffect(() => {
+    if (map && coordinates) {
+      map.setView([coordinates.lat, coordinates.lon], 10);
+    }
+  }, [map, coordinates]);
+  
+  // Initialize draw control
+  useEffect(() => {
+    if (!map) return;
+    
+    try {
+      // Load and initialize Leaflet.Draw only if it exists
+      if (L.Control && 'Draw' in L.Control) {
+        // Create feature group for drawn items
+        const drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+        
+        // Initialize draw control
+        const drawControl = new (L.Control as any).Draw({
+          position: 'topright',
+          draw: {
+            polygon: {
+              allowIntersection: false,
+              shapeOptions: { color: '#3b82f6' }
+            },
+            rectangle: {
+              shapeOptions: { color: '#3b82f6' }
+            },
+            circle: {
+              shapeOptions: { color: '#3b82f6' }
+            },
+            marker: false,
+            polyline: false,
+            circlemarker: false
+          },
+          edit: {
+            featureGroup: drawnItems,
+            remove: true
+          }
+        });
+        
+        map.addControl(drawControl);
+        
+        // Check if a point is inside a shape
+        const isPointInShape = (point: L.LatLng, layer: any) => {
+          if (layer instanceof L.Circle) {
+            return point.distanceTo(layer.getLatLng()) <= layer.getRadius();
+          } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+            return layer.getBounds().contains(point);
+          }
+          return false;
+        };
+        
+        // Filter pharmacies based on drawn shape
+        const filterByShape = (layer: any) => {
+          return pharmacies.filter(pharmacy => {
+            if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return false;
+            const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+            return isPointInShape(pharmacyLatLng, layer);
+          });
+        };
+        
+        // Event handlers that don't rely on complex binding
+        const handleDrawCreated = (e: any) => {
+          drawnItems.clearLayers();
+          drawnItems.addLayer(e.layer);
+          
+          const filteredPharmacies = filterByShape(e.layer);
+          onPharmaciesInShape(filteredPharmacies);
+          
+          toast({
+            title: "Shape drawn",
+            description: `Found ${filteredPharmacies.length} pharmacies in this area`,
+          });
+        };
+        
+        // Safe event bindings
+        if (map.listens) {
+          map.off('draw:created');
+          map.on('draw:created', handleDrawCreated);
+          
+          map.off('draw:deleted');
+          map.on('draw:deleted', () => {
+            onPharmaciesInShape(pharmacies);
+            toast({
+              title: "Shape deleted",
+              description: `Showing all pharmacies`,
+            });
+          });
+        }
+        
+        // Cleanup
+        return () => {
+          if (map.listens) {
+            map.off('draw:created');
+            map.off('draw:deleted');
+          }
+          
+          try {
+            // Try to remove the draw control safely
+            if (drawControl && map.removeControl) {
+              map.removeControl(drawControl);
+            }
+            
+            // Remove drawn items layer
+            if (map.removeLayer) {
+              map.removeLayer(drawnItems);
+            }
+          } catch (e) {
+            console.error('Error cleaning up map resources:', e);
+          }
+        };
+      } else {
+        console.log('Leaflet.Draw is not available');
+      }
+    } catch (error) {
+      console.error('Error setting up draw control:', error);
+    }
+  }, [map, coordinates, pharmacies, onPharmaciesInShape]);
+  
+  return null;
+}
+
 interface PharmacyMapProps {
   coordinates: { lat: number; lon: number };
   pharmacies: any[];
@@ -39,8 +174,8 @@ export function PharmacyMap({
   onPharmaciesInShape, 
   showDefaultLocation 
 }: PharmacyMapProps) {
-  // Set default center position
-  const defaultCenter: [number, number] = [49.8153, 6.1296]; // Luxembourg
+  // Default center position for Luxembourg
+  const defaultCenter: [number, number] = [49.8153, 6.1296];
   const centerCoords: [number, number] = coordinates?.lat && coordinates?.lon 
     ? [coordinates.lat, coordinates.lon] 
     : defaultCenter;
@@ -52,16 +187,6 @@ export function PharmacyMap({
     // Force re-render of the map when coordinates change
     setMapKey(`map-${Date.now()}`);
   }, [coordinates?.lat, coordinates?.lon]);
-  
-  console.log('PharmacyMap: rendering', { 
-    hasCoordinates: !!coordinates,
-    pharmCount: pharmacies?.length || 0,
-    filteredCount: filteredPharmacies?.length || 0,
-    leafletLoaded: typeof L !== 'undefined',
-    reactLeafletLoaded: typeof MapContainer !== 'undefined'
-  });
-  
-  console.log('PharmacyMap: center coordinates', centerCoords);
   
   // Render pharmacy markers
   const renderPharmacyMarkers = () => {
@@ -109,6 +234,16 @@ export function PharmacyMap({
     return null;
   };
   
+  console.log('PharmacyMap: rendering', { 
+    hasCoordinates: !!coordinates,
+    pharmCount: pharmacies?.length || 0,
+    filteredCount: filteredPharmacies?.length || 0,
+    leafletLoaded: typeof L !== 'undefined',
+    reactLeafletLoaded: typeof MapContainer !== 'undefined'
+  });
+  
+  console.log('PharmacyMap: center coordinates', centerCoords);
+  
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
@@ -124,11 +259,10 @@ export function PharmacyMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <SimplifiedMapUpdater 
+        <MapUpdater 
           coordinates={coordinates} 
           pharmacies={pharmacies || []}
           onPharmaciesInShape={onPharmaciesInShape}
-          showDefaultLocation={showDefaultLocation}
         />
         
         {renderUserLocationMarker()}

@@ -2,22 +2,23 @@
 /// <reference types="vite/client" />
 
 declare module 'leaflet-draw' {
+  import L from 'leaflet';
   export = L;
 }
 
 declare module 'react-leaflet' {
-  import { FC, ReactNode, RefAttributes, Ref, MouseEvent } from 'react';
+  import { ReactNode } from 'react';
   import L from 'leaflet';
 
+  // Define interfaces for React Leaflet components
   export interface MapContainerProps {
-    center: [number, number];
+    center: L.LatLngExpression;
     zoom: number;
     scrollWheelZoom?: boolean;
     className?: string;
     style?: React.CSSProperties;
     children?: ReactNode;
     key?: string;
-    whenCreated?: (map: L.Map) => void;
   }
 
   export interface TileLayerProps {
@@ -26,7 +27,7 @@ declare module 'react-leaflet' {
   }
 
   export interface MarkerProps {
-    position: [number, number];
+    position: L.LatLngExpression;
     children?: ReactNode;
     key?: string;
     icon?: L.Icon;
@@ -41,9 +42,12 @@ declare module 'react-leaflet' {
     children?: ReactNode;
   }
 
-  export const MapContainer: FC<MapContainerProps>;
-  export const TileLayer: FC<TileLayerProps>;
-  export const Marker: FC<MarkerProps & { ref?: Ref<L.Marker> }>;
-  export const Popup: FC<PopupProps>;
-  export const useMap: () => L.Map;
+  // Export component types
+  export const MapContainer: React.FC<MapContainerProps>;
+  export const TileLayer: React.FC<TileLayerProps>;
+  export const Marker: React.FC<MarkerProps>;
+  export const Popup: React.FC<PopupProps>;
+  
+  // Hook to access the map instance
+  export function useMap(): L.Map;
 }

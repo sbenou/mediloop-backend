@@ -27,7 +27,7 @@ const userLocationIcon = new L.Icon({
 });
 
 // Create larger icon for selected marker
-const createSelectedIcon = () => new L.Icon({
+const selectedIcon = new L.Icon({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [31, 51],
@@ -39,6 +39,7 @@ const createSelectedIcon = () => new L.Icon({
 // Default icon for non-selected markers
 const defaultIcon = new L.Icon.Default();
 
+// Simple map updater component
 function MapUpdater({ coordinates }: { coordinates: { lat: number; lon: number } }) {
   const map = useMap();
   
@@ -81,7 +82,6 @@ const DoctorListSection = ({
   showUserLocation = false
 }: DoctorListSectionProps) => {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
-  const markerRefs = useRef<Record<string, L.Marker | null>>({});
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [mapKey, setMapKey] = useState(`doctormap-${Date.now()}`);
 
@@ -98,10 +98,6 @@ const DoctorListSection = ({
 
   const handleDoctorSelect = (doctorId: string) => {
     setSelectedDoctorId(doctorId);
-    const marker = markerRefs.current[doctorId];
-    if (marker) {
-      marker.openPopup();
-    }
     listItemRefs.current[doctorId]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
 
@@ -176,17 +172,14 @@ const DoctorListSection = ({
               doctor.coordinates?.lon || coordinates.lon
             ];
             
-            // Create a closure to handle click events
-            const handleClick = () => {
-              handleDoctorSelect(doctor.id);
-            };
-            
             return (
               <Marker
                 key={doctor.id}
                 position={position}
-                icon={selectedDoctorId === doctor.id ? createSelectedIcon() : defaultIcon}
-                eventHandlers={{ click: handleClick }}
+                icon={selectedDoctorId === doctor.id ? selectedIcon : defaultIcon}
+                eventHandlers={{
+                  click: () => handleDoctorSelect(doctor.id)
+                }}
               >
                 <Popup>
                   <div className="text-sm">
