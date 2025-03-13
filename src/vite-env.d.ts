@@ -18,12 +18,14 @@ declare module 'react-leaflet' {
     style?: React.CSSProperties;
     className?: string;
     key?: string;
+    children?: ReactNode | ReactNode[]; // Explicitly add children prop
     [key: string]: any;
   }
   
   export interface TileLayerProps {
     url: string;
     attribution: string;
+    key?: string;
     [key: string]: any;
   }
   
