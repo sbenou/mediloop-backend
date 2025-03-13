@@ -1,8 +1,7 @@
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw/dist/leaflet.draw.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { MapUpdater } from './MapUpdater';
 
@@ -39,10 +38,9 @@ export function PharmacyMap({
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
   
   useEffect(() => {
-    setMapKey(`map-${centerCoords[0]}-${centerCoords[1]}-${Date.now()}`);
+    setMapKey(`map-${Date.now()}`);
   }, [centerCoords[0], centerCoords[1]]);
   
-  // Log info for debugging
   console.log('PharmacyMap: rendering', { 
     hasCoordinates: !!coordinates,
     pharmCount: pharmacies?.length || 0,
@@ -52,36 +50,6 @@ export function PharmacyMap({
   });
   
   console.log('PharmacyMap: center coordinates', centerCoords);
-  
-  // Render pharmacy markers
-  const renderPharmacyMarkers = () => {
-    if (!Array.isArray(filteredPharmacies)) {
-      return null;
-    }
-    
-    return filteredPharmacies.map((pharmacy, index) => {
-      if (!pharmacy || !pharmacy.coordinates || 
-          typeof pharmacy.coordinates.lat !== 'number' || 
-          typeof pharmacy.coordinates.lon !== 'number') {
-        return null;
-      }
-      
-      return (
-        <Marker
-          key={`pharmacy-${pharmacy.id || index}`}
-          position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
-        >
-          <Popup>
-            <div className="text-sm">
-              <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
-              <p>{pharmacy.address || 'Address not available'}</p>
-              <p>{pharmacy.hours || 'Hours not available'}</p>
-            </div>
-          </Popup>
-        </Marker>
-      );
-    });
-  };
   
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
@@ -94,8 +62,8 @@ export function PharmacyMap({
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
         <MapUpdater 
@@ -109,12 +77,34 @@ export function PharmacyMap({
         {showDefaultLocation && coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number' && (
           <Marker 
             position={[coordinates.lat, coordinates.lon]}
+            key="user-location"
           >
             <Popup>Your location</Popup>
           </Marker>
         )}
         
-        {renderPharmacyMarkers()}
+        {Array.isArray(filteredPharmacies) && filteredPharmacies.map((pharmacy, index) => {
+          if (!pharmacy || !pharmacy.coordinates || 
+              typeof pharmacy.coordinates.lat !== 'number' || 
+              typeof pharmacy.coordinates.lon !== 'number') {
+            return null;
+          }
+          
+          return (
+            <Marker
+              key={`pharmacy-${pharmacy.id || index}`}
+              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
+                  <p>{pharmacy.address || 'Address not available'}</p>
+                  <p>{pharmacy.hours || 'Hours not available'}</p>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );
