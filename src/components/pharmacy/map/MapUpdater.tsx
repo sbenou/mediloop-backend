@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -9,9 +8,10 @@ interface MapUpdaterProps {
   pharmacies: any[];
   onPharmaciesInShape: (pharmacies: any[]) => void;
   showDefaultLocation: boolean;
+  defaultZoom?: number; // Add default zoom prop
 }
 
-export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation }: MapUpdaterProps) {
+export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showDefaultLocation, defaultZoom = 10 }: MapUpdaterProps) {
   const map = useMap();
   
   useEffect(() => {
@@ -28,7 +28,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         ? [coordinates.lat, coordinates.lon]
         : [49.8153, 6.1296]; // Luxembourg center coordinates
       
-      const zoomLevel = showDefaultLocation ? 13 : 10;
+      const zoomLevel = showDefaultLocation ? 13 : defaultZoom;
       map.setView(defaultView as L.LatLngExpression, zoomLevel);
 
       const drawnItems = new L.FeatureGroup();
@@ -272,7 +272,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
     } catch (err) {
       console.error("Error in MapUpdater useEffect:", err);
     }
-  }, [coordinates, map, pharmacies, onPharmaciesInShape, showDefaultLocation]);
+  }, [coordinates, map, pharmacies, onPharmaciesInShape, showDefaultLocation, defaultZoom]);
   
   return null;
 }

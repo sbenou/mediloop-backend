@@ -33,8 +33,8 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
         // The 'center' prop was removed as it's not part of MapContainerProps in the current react-leaflet version
-        // We handle setting the center through the MapUpdater component
-        zoom={10}
+        // The 'zoom' prop was also removed for the same reason
+        // We handle setting both the center and zoom through the MapUpdater component
         className="h-full"
         style={{ height: '100%', width: '100%' }}
         whenReady={() => {}}
@@ -47,6 +47,7 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
           pharmacies={pharmacies || []}
           onPharmaciesInShape={onPharmaciesInShape}
           showDefaultLocation={showDefaultLocation}
+          defaultZoom={10} // Pass the default zoom level to MapUpdater
         />
         
         {showDefaultLocation && coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number' && (
