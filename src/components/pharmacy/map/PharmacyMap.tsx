@@ -2,6 +2,7 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw/dist/leaflet.draw.css';  // Make sure we import the CSS as well
 import { MapUpdater } from './MapUpdater';
 
 // Fix for default marker icons in Leaflet with Vite
@@ -15,20 +16,21 @@ L.Icon.Default.mergeOptions({
 interface PharmacyMapProps {
   coordinates: { lat: number; lon: number };
   pharmacies: any[];
-  filteredPharmacies: any[]; // Add this prop to receive the filtered pharmacies
+  filteredPharmacies: any[];
   onPharmaciesInShape: (pharmacies: any[]) => void;
   showDefaultLocation: boolean;
 }
 
 export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPharmaciesInShape, showDefaultLocation }: PharmacyMapProps) {
+  console.log('PharmacyMap: rendering', { 
+    hasCoordinates: !!coordinates,
+    pharmCount: pharmacies?.length || 0,
+    filteredCount: filteredPharmacies?.length || 0
+  });
+  
   // Default center of Luxembourg if no coordinates provided
   const defaultCenter: [number, number] = [49.8153, 6.1296];
   
-  // Ensure valid coordinates
-  const mapCoordinates: [number, number] = coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number'
-    ? [coordinates.lat, coordinates.lon]
-    : defaultCenter;
-
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer

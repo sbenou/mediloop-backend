@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -19,6 +18,8 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
   useEffect(() => {
     if (!map) return;
     
+    console.log('MapUpdater: initializing with map object', { mapExists: !!map });
+    
     // Clean up function declaration - for later use
     let cleanupFunctions: (() => void)[] = [];
 
@@ -35,6 +36,8 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       
       const zoomLevel = showDefaultLocation ? 13 : defaultZoom;
       
+      console.log('MapUpdater: setting view', { center, zoomLevel });
+      
       // Set the view on the map - this is essential since we removed the props from MapContainer
       map.setView(center as L.LatLngExpression, zoomLevel);
       
@@ -42,6 +45,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       map.scrollWheelZoom.enable();
 
       // Set up feature group for drawn items
+      console.log('MapUpdater: creating feature group for drawn items');
       const drawnItems = new L.FeatureGroup();
       map.addLayer(drawnItems);
       
@@ -60,6 +64,8 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         return;
       }
 
+      console.log('MapUpdater: creating draw control');
+      
       // Create draw control
       const drawControl = new L.Control.Draw({
         position: 'topright',
@@ -211,6 +217,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
 
       // Initial pharmacy list
       try {
+        console.log('MapUpdater: setting initial filtered pharmacies');
         const initialFiltered = filterByLocation();
         onPharmaciesInShape(initialFiltered);
       } catch (err) {
@@ -220,6 +227,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
 
       // Add draw control to map
       try {
+        console.log('MapUpdater: adding draw control to map');
         map.addControl(drawControl);
         
         // Add to cleanup
@@ -235,7 +243,8 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       }
 
       // Event handlers for drawing
-      const handleDrawStart = () => {
+      const handleDrawStart = (event: any) => {
+        console.log('MapUpdater: draw start event triggered', event);
         try {
           drawnItems.clearLayers();
         } catch (err) {
@@ -244,6 +253,7 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
       };
 
       const handleDrawCreated = (event: any) => {
+        console.log('MapUpdater: draw created event triggered', event);
         try {
           if (!event || !event.layer) return;
           
@@ -264,7 +274,8 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         }
       };
 
-      const handleDrawDeleted = () => {
+      const handleDrawDeleted = (event: any) => {
+        console.log('MapUpdater: draw deleted event triggered', event);
         try {
           // Reset to initial state
           const filteredPharmacies = filterByLocation();
@@ -279,45 +290,45 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
         }
       };
 
-      // Safely add event listeners if L.Draw.Event exists
-      if (L.Draw && L.Draw.Event) {
-        // Define the event constant names to avoid string literals
-        const DRAWSTART = 'draw:drawstart';
-        const CREATED = 'draw:created';
-        const DELETED = 'draw:deleted';
-        
-        // Add event listeners using the correct event names
-        map.on(DRAWSTART, handleDrawStart);
-        map.on(CREATED, handleDrawCreated);
-        map.on(DELETED, handleDrawDeleted);
-        
-        // Add to cleanup: remove event listeners
-        cleanupFunctions.push(() => {
-          map.off(DRAWSTART, handleDrawStart);
-          map.off(CREATED, handleDrawCreated);
-          map.off(DELETED, handleDrawDeleted);
-        });
-      } else {
-        console.error("L.Draw.Event not available, using alternative approach");
-        
-        // Fallback to standard event names if L.Draw.Event is not available
-        map.on('drawstart', handleDrawStart);
-        map.on('draw:created', handleDrawCreated);
-        map.on('draw:deleted', handleDrawDeleted);
-        
-        // Add to cleanup: remove event listeners
-        cleanupFunctions.push(() => {
-          map.off('drawstart', handleDrawStart);
-          map.off('draw:created', handleDrawCreated);
-          map.off('draw:deleted', handleDrawDeleted);
-        });
-      }
+      // Check available Leaflet Draw events
+      console.log('MapUpdater: checking available events', {
+        drawEventExists: !!L.Draw,
+        drawEventProps: L.Draw ? Object.keys(L.Draw) : 'none',
+        eventProps: L.Draw && L.Draw.Event ? Object.keys(L.Draw.Event) : 'none'
+      });
+
+      // Use a safer approach to handle Leaflet Draw events
+      // Using plain event strings which are documented in the Leaflet Draw library
+      console.log('MapUpdater: attaching event handlers');
+      
+      // Standard event names according to Leaflet Draw documentation
+      const DRAWSTART = 'draw:drawstart';
+      const CREATED = 'draw:created';
+      const DELETED = 'draw:deleted';
+      
+      console.log(`MapUpdater: Adding event listener for "${DRAWSTART}"`);
+      map.on(DRAWSTART, handleDrawStart);
+      
+      console.log(`MapUpdater: Adding event listener for "${CREATED}"`);
+      map.on(CREATED, handleDrawCreated);
+      
+      console.log(`MapUpdater: Adding event listener for "${DELETED}"`);
+      map.on(DELETED, handleDrawDeleted);
+      
+      // Add to cleanup: remove event listeners
+      cleanupFunctions.push(() => {
+        console.log('MapUpdater: Removing event listeners during cleanup');
+        map.off(DRAWSTART, handleDrawStart);
+        map.off(CREATED, handleDrawCreated);
+        map.off(DELETED, handleDrawDeleted);
+      });
     } catch (err) {
       console.error("Error in MapUpdater useEffect:", err);
     }
 
     // Return cleanup function that calls all registered cleanup handlers
     return () => {
+      console.log('MapUpdater: executing cleanup function');
       cleanupFunctions.forEach(cleanup => {
         try {
           cleanup();
@@ -328,5 +339,6 @@ export function MapUpdater({ coordinates, pharmacies, onPharmaciesInShape, showD
     };
   }, [coordinates, map, pharmacies, onPharmaciesInShape, showDefaultLocation, defaultZoom]);
   
+  console.log('MapUpdater: rendering (returns null)');
   return null;
 }
