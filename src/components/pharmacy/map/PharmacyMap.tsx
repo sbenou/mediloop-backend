@@ -2,7 +2,7 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw/dist/leaflet.draw.css';  // Make sure we import the CSS as well
+import 'leaflet-draw/dist/leaflet.draw.css';
 import { MapUpdater } from './MapUpdater';
 
 // Fix for default marker icons in Leaflet with Vite
@@ -28,9 +28,6 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
     filteredCount: filteredPharmacies?.length || 0
   });
   
-  // Default center of Luxembourg if no coordinates provided
-  const defaultCenter: [number, number] = [49.8153, 6.1296];
-  
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
@@ -39,7 +36,9 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
+        
         <MapUpdater 
           coordinates={coordinates} 
           pharmacies={pharmacies || []}
