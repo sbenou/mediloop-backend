@@ -16,11 +16,26 @@ export const usePharmacySearch = (
       if (!coordinates) return [];
       
       try {
+        // Validate coordinates
+        if (typeof coordinates.lat !== 'number' || typeof coordinates.lon !== 'number') {
+          console.error('Invalid coordinates:', coordinates);
+          return [];
+        }
+        
         // Try to get from cache first
         const cacheKey = `pharmacies-${coordinates.lat}-${coordinates.lon}-${searchRadius}`;
-        const cachedData = sessionStorage.getItem(cacheKey);
-        if (cachedData) {
-          return JSON.parse(cachedData);
+        let cachedData;
+        
+        try {
+          const cachedString = sessionStorage.getItem(cacheKey);
+          if (cachedString) {
+            cachedData = JSON.parse(cachedString);
+            if (Array.isArray(cachedData)) {
+              return cachedData;
+            }
+          }
+        } catch (cacheError) {
+          console.error("Error retrieving from cache:", cacheError);
         }
 
         // When searching for all pharmacies in Luxembourg, use Luxembourg's center coordinates
@@ -31,8 +46,18 @@ export const usePharmacySearch = (
 
         const results = await searchPharmacies(searchLat, searchLon, searchDist);
         
+        if (!Array.isArray(results)) {
+          console.error('Invalid response from searchPharmacies:', results);
+          return [];
+        }
+        
         // Cache the results
-        sessionStorage.setItem(cacheKey, JSON.stringify(results));
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(results));
+        } catch (cacheError) {
+          console.error("Error saving to cache:", cacheError);
+        }
+        
         return results;
       } catch (err) {
         console.error("Error in usePharmacySearch:", err);
@@ -64,7 +89,7 @@ export const usePharmacySearch = (
   };
 
   return { 
-    pharmacies: pharmacies || [], 
+    pharmacies: Array.isArray(pharmacies) ? pharmacies : [], 
     isLoading,
     search,
     setSearch,

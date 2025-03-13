@@ -23,10 +23,17 @@ interface PharmacyMapProps {
 export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPharmaciesInShape, showDefaultLocation }: PharmacyMapProps) {
   // Default center of Luxembourg if no coordinates provided
   const defaultCenter: L.LatLngExpression = [49.8153, 6.1296];
+  
+  // Ensure valid coordinates
+  const mapCoordinates = coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number'
+    ? [coordinates.lat, coordinates.lon]
+    : defaultCenter;
 
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
+        center={defaultCenter}
+        zoom={10}
         className="h-full"
         style={{ height: '100%', width: '100%' }}
         whenReady={() => {}}
@@ -36,33 +43,39 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
         />
         <MapUpdater 
           coordinates={coordinates} 
-          pharmacies={pharmacies}
+          pharmacies={pharmacies || []}
           onPharmaciesInShape={onPharmaciesInShape}
           showDefaultLocation={showDefaultLocation}
         />
         
-        {showDefaultLocation && coordinates.lat && coordinates.lon && (
+        {showDefaultLocation && coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number' && (
           <Marker position={[coordinates.lat, coordinates.lon]}>
             <Popup>Your location</Popup>
           </Marker>
         )}
 
-        {filteredPharmacies.map((pharmacy) => (
-          pharmacy.coordinates && pharmacy.coordinates.lat && pharmacy.coordinates.lon && (
+        {Array.isArray(filteredPharmacies) && filteredPharmacies.map((pharmacy) => {
+          if (!pharmacy || !pharmacy.coordinates || 
+              typeof pharmacy.coordinates.lat !== 'number' || 
+              typeof pharmacy.coordinates.lon !== 'number') {
+            return null;
+          }
+          
+          return (
             <Marker
               key={pharmacy.id}
               position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
             >
               <Popup>
                 <div className="text-sm">
-                  <p className="font-semibold">{pharmacy.name}</p>
-                  <p>{pharmacy.address}</p>
-                  <p>{pharmacy.hours}</p>
+                  <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
+                  <p>{pharmacy.address || 'Address not available'}</p>
+                  <p>{pharmacy.hours || 'Hours not available'}</p>
                 </div>
               </Popup>
             </Marker>
-          )
-        ))}
+          );
+        })}
       </MapContainer>
     </div>
   );

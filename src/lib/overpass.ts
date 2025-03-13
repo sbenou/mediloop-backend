@@ -1,3 +1,4 @@
+
 import { LocalCache } from './cache';
 import { calculateDistance } from './utils/distance';
 import type { OverpassResult, Pharmacy, Doctor } from './types/overpass.types';
@@ -77,24 +78,41 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
 
   try {
     const data = await fetchFromOverpass(query);
-    const results = data.elements.map(element => ({
-      id: element.id.toString(),
-      name: element.tags?.name || 'Unnamed Pharmacy',
-      address: [
-        element.tags?.['addr:housenumber'],
-        element.tags?.['addr:street'],
-        element.tags?.['addr:city'],
-        element.tags?.['addr:postcode']
-      ].filter(Boolean).join(', '),
-      distance: calculateDistance(lat, lon, element.lat, element.lon),
-      hours: element.tags?.opening_hours || 'Hours not available',
-      phone: element.tags?.['contact:phone'],
-      email: element.tags?.['contact:email'],
-      coordinates: {
-        lat: element.lat,
-        lon: element.lon
-      }
-    }));
+    
+    // Verify that the data has the expected structure
+    if (!data || !Array.isArray(data.elements)) {
+      console.error('Invalid Overpass API response structure for pharmacies:', data);
+      return [];
+    }
+    
+    const results = data.elements
+      .filter(element => element && typeof element === 'object' && 'id' in element)
+      .map(element => {
+        // Make sure all required properties exist with fallbacks
+        const lat = typeof element.lat === 'number' ? element.lat : null;
+        const lon = typeof element.lon === 'number' ? element.lon : null;
+        const tags = element.tags || {};
+        
+        return {
+          id: String(element.id || ''),
+          name: tags?.name || 'Unnamed Pharmacy',
+          address: [
+            tags?.['addr:housenumber'],
+            tags?.['addr:street'],
+            tags?.['addr:city'],
+            tags?.['addr:postcode']
+          ].filter(Boolean).join(', ') || 'Address not available',
+          distance: lat && lon ? calculateDistance(lat, lon, element.lat, element.lon) : 'Unknown',
+          hours: tags?.opening_hours || 'Hours not available',
+          phone: tags?.['contact:phone'] || tags?.phone || '',
+          email: tags?.['contact:email'] || tags?.email || '',
+          coordinates: {
+            lat: lat,
+            lon: lon
+          }
+        };
+      })
+      .filter(pharmacy => pharmacy.coordinates.lat !== null && pharmacy.coordinates.lon !== null);
 
     LocalCache.set(cacheKey, results);
     return results;
@@ -122,24 +140,41 @@ export const searchDoctors = async (lat: number, lon: number, radius: number = 5
 
   try {
     const data = await fetchFromOverpass(query);
-    const results = data.elements.map(element => ({
-      id: element.id.toString(),
-      full_name: element.tags?.name || 'Unnamed Doctor',
-      name: element.tags?.name || 'Unnamed Doctor',
-      address: [
-        element.tags?.['addr:housenumber'],
-        element.tags?.['addr:street'],
-        element.tags?.['addr:city'],
-        element.tags?.['addr:postcode']
-      ].filter(Boolean).join(', '),
-      city: element.tags?.['addr:city'] || '',
-      license_number: element.tags?.['healthcare:speciality'] || 'General Practice',
-      email: element.tags?.['contact:email'] || element.tags?.email,
-      coordinates: {
-        lat: element.lat,
-        lon: element.lon
-      }
-    }));
+    
+    // Verify that the data has the expected structure
+    if (!data || !Array.isArray(data.elements)) {
+      console.error('Invalid Overpass API response structure for doctors:', data);
+      return [];
+    }
+    
+    const results = data.elements
+      .filter(element => element && typeof element === 'object' && 'id' in element)
+      .map(element => {
+        // Make sure all required properties exist with fallbacks
+        const lat = typeof element.lat === 'number' ? element.lat : null;
+        const lon = typeof element.lon === 'number' ? element.lon : null;
+        const tags = element.tags || {};
+        
+        return {
+          id: String(element.id || ''),
+          full_name: tags?.name || 'Unnamed Doctor',
+          name: tags?.name || 'Unnamed Doctor',
+          address: [
+            tags?.['addr:housenumber'],
+            tags?.['addr:street'],
+            tags?.['addr:city'],
+            tags?.['addr:postcode']
+          ].filter(Boolean).join(', ') || 'Address not available',
+          city: tags?.['addr:city'] || '',
+          license_number: tags?.['healthcare:speciality'] || 'General Practice',
+          email: tags?.['contact:email'] || tags?.email || '',
+          coordinates: {
+            lat: lat,
+            lon: lon
+          }
+        };
+      })
+      .filter(doctor => doctor.coordinates.lat !== null && doctor.coordinates.lon !== null);
 
     LocalCache.set(cacheKey, results);
     return results;

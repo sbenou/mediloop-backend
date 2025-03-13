@@ -30,11 +30,18 @@ export const useDoctorSearch = (
           searchRadius
         );
 
+        if (!Array.isArray(overpassDoctors)) {
+          console.error('Invalid response from searchDoctors:', overpassDoctors);
+          return [];
+        }
+
         // Add source field to Overpass results
-        const formattedOverpassDoctors = overpassDoctors.map(doc => ({
-          ...doc,
-          source: 'overpass' as const
-        }));
+        const formattedOverpassDoctors = overpassDoctors
+          .filter(doc => doc && typeof doc === 'object')
+          .map(doc => ({
+            ...doc,
+            source: 'overpass' as const
+          }));
 
         // Get doctors from database
         const { data: dbDoctors, error } = await supabase
@@ -50,19 +57,28 @@ export const useDoctorSearch = (
         console.log('Database doctors:', dbDoctors);
 
         // Add source field to database results
-        const formattedDbDoctors = (dbDoctors || []).map(doc => ({
-          ...doc,
-          source: 'database' as const
-        }));
+        const formattedDbDoctors = Array.isArray(dbDoctors) 
+          ? dbDoctors.map(doc => ({
+              ...doc,
+              source: 'database' as const
+            }))
+          : [];
 
         // Combine and deduplicate results
         const allDoctors = [
           ...formattedDbDoctors,
           ...formattedOverpassDoctors
-        ];
+        ].filter(Boolean);
 
         // Remove duplicates based on id
-        return Array.from(new Map(allDoctors.map(item => [item.id, item])).values());
+        const doctorMap = new Map();
+        allDoctors.forEach(item => {
+          if (item && item.id) {
+            doctorMap.set(item.id, item);
+          }
+        });
+        
+        return Array.from(doctorMap.values());
       } catch (err) {
         console.error("Error in useDoctorSearch:", err);
         return [];
@@ -74,7 +90,7 @@ export const useDoctorSearch = (
   });
 
   return { 
-    doctors: doctors || [], 
+    doctors: Array.isArray(doctors) ? doctors : [], 
     isLoading 
   };
 };
