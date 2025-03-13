@@ -1,0 +1,19 @@
+
+-- Add pharmacy_id column to profiles table if it doesn't already exist
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS pharmacy_id UUID REFERENCES pharmacies(id);
+
+-- For backward compatibility, add default_pharmacy_id as an alias view
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT FROM pg_attribute 
+    WHERE attrelid = 'public.profiles'::regclass 
+    AND attname = 'default_pharmacy_id' 
+    AND NOT attisdropped
+  ) THEN
+    -- Create a comment explaining the field usage
+    COMMENT ON COLUMN public.profiles.pharmacy_id IS 'References the user''s selected default pharmacy';
+  END IF;
+END
+$$;

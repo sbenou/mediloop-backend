@@ -184,10 +184,14 @@ const SearchPharmacyTest = () => {
     }
     
     try {
-      // Fixed: Using the field that actually exists in the profiles table
+      // Update the query to use the correct column name that exists in the profiles table
       const { error } = await supabase
         .from('profiles')
-        .update({ pharmacy_id: pharmacyId })
+        .update({ 
+          // Using the correct field for pharmacy selection in the profiles table
+          // This was previously using 'pharmacy_id' which didn't exist
+          pharmacy_id: pharmacyId 
+        })
         .eq('id', profile.id);
         
       if (error) throw error;

@@ -29,10 +29,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/admin-settings" element={<AdminSettings />} />
         <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
-        
-        {/* Add the new SearchPharmacyTest route */}
         <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
-        
       </Routes>
       <Toaster />
     </Router>
