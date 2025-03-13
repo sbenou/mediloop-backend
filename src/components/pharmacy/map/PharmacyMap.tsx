@@ -32,10 +32,9 @@ export function PharmacyMap({ coordinates, pharmacies, filteredPharmacies, onPha
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
       <MapContainer
-        center={mapCoordinates}
-        zoom={10}
         className="h-full"
         style={{ height: '100%', width: '100%' }}
+        zoom={10}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
