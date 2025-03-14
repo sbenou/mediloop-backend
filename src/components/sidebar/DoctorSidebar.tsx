@@ -93,8 +93,8 @@ const DoctorSidebar = () => {
           <SidebarItem
             icon={<Stamp className="w-5 h-5 mr-3" />}
             label="Stamp & Signature"
-            isActive={isPharmacistSectionActive('profile') && isPharmacistTabActive('profile', 'profileTab', 'stamp')}
-            onClick={() => navigateToDoctorView('profile', 'stamp', 'profileTab')}
+            isActive={isPharmacistSectionActive('stamp')}
+            onClick={() => navigateToDoctorView('stamp')}
           />
           
           <SidebarCollapsibleItem 
@@ -123,7 +123,7 @@ const DoctorSidebar = () => {
               onClick={() => navigateToDoctorView('profile', 'nextofkin', 'profileTab')}
             />
             <SidebarSubItem
-              icon={<Stethoscope className="w-4 h-4 mr-3" />}
+              icon={<Stamp className="w-4 h-4 mr-3" />}
               label="Stamp & Signature"
               isActive={isPharmacistTabActive('profile', 'profileTab', 'stamp')}
               onClick={() => navigateToDoctorView('profile', 'stamp', 'profileTab')}

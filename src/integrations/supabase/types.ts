@@ -69,6 +69,39 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          doctor_id: string
+          end_time: string | null
+          id: string
+          is_available: boolean | null
+          start_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          doctor_id: string
+          end_time?: string | null
+          id?: string
+          is_available?: boolean | null
+          start_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          doctor_id?: string
+          end_time?: string | null
+          id?: string
+          is_available?: boolean | null
+          start_time?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctor_patient_connections: {
         Row: {
           created_at: string

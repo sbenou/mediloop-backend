@@ -1,664 +1,428 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { format, isBefore, isEqual, addMinutes, isToday, addDays } from 'date-fns';
-import { Clock, Calendar as CalendarIcon, ChevronRight, ChevronLeft, AlertTriangle, Save, Edit, Plus, Trash2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface DoctorAvailability {
-  id: string;
-  doctor_id: string;
-  day_of_week: number; // 0 = Sunday, 1 = Monday, etc.
-  start_time: string; // e.g., "09:00"
-  end_time: string; // e.g., "17:00"
-  is_available: boolean;
-}
-
-interface Booking {
-  id: string;
-  start_time: Date;
-  end_time: Date;
-}
-
-interface TimeSlot {
-  startTime: Date;
-  endTime: Date;
-  available: boolean;
-}
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Plus, X, Save, Clock } from "lucide-react";
+import { format, parse, addMinutes } from "date-fns";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/use-toast";
 
 interface DoctorAvailabilityCalendarProps {
   doctorId: string;
-  doctorName: string;
-  onBookingConfirmed: () => void;
+  doctorName?: string;
+  onBookingConfirmed?: () => void;
   isManagementMode?: boolean;
 }
 
+// Define the structure for doctor availability
+interface DoctorAvailability {
+  id?: string;
+  doctor_id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+}
+
+// Define time slot type
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+}
+
 const DAYS_OF_WEEK = [
-  { value: 0, label: 'Sunday' },
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
-  { value: 6, label: 'Saturday' },
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 ];
 
-const DoctorAvailabilityCalendar: React.FC<DoctorAvailabilityCalendarProps> = ({
-  doctorId,
-  doctorName,
+const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
+  const hour = Math.floor(i / 4);
+  const minute = (i % 4) * 15;
+  const period = hour < 12 ? 'AM' : 'PM';
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+});
+
+const DoctorAvailabilityCalendar = ({ 
+  doctorId, 
+  doctorName = "the doctor", 
   onBookingConfirmed,
   isManagementMode = false
-}) => {
+}: DoctorAvailabilityCalendarProps) => {
   const { profile } = useAuth();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [availabilityLoading, setAvailabilityLoading] = useState(false);
-  const [bookingsLoading, setBookingsLoading] = useState(false);
-  const [reason, setReason] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [doctorAvailability, setDoctorAvailability] = useState<DoctorAvailability[]>([]);
-  const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
-  const [activeTab, setActiveTab] = useState<string>(isManagementMode ? 'manage' : 'book');
-  
-  // State for availability management
-  const [editingAvailability, setEditingAvailability] = useState(false);
-  const [availabilityEdits, setAvailabilityEdits] = useState<DoctorAvailability[]>([]);
-  const [savingAvailability, setSavingAvailability] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([{
+    startTime: '09:00 AM',
+    endTime: '05:00 PM'
+  }]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [availabilityData, setAvailabilityData] = useState<DoctorAvailability[]>([]);
 
+  // Load doctor's availability settings
   useEffect(() => {
     if (doctorId) {
-      fetchDoctorAvailability();
+      loadAvailability();
     }
   }, [doctorId]);
 
-  useEffect(() => {
-    if (selectedDate && doctorId) {
-      fetchExistingBookings();
-    }
-  }, [selectedDate, doctorId]);
-
-  useEffect(() => {
-    if (selectedDate && doctorAvailability.length > 0) {
-      generateTimeSlots();
-    }
-  }, [selectedDate, doctorAvailability, existingBookings]);
-
-  const fetchDoctorAvailability = async () => {
-    setAvailabilityLoading(true);
+  const loadAvailability = async () => {
     try {
-      // Try to fetch doctor availability from the database
+      setIsLoading(true);
+      
       const { data, error } = await supabase
         .from('doctor_availability')
         .select('*')
         .eq('doctor_id', doctorId);
       
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
-      // If doctor has availability settings, use them
       if (data && data.length > 0) {
-        setDoctorAvailability(data);
-        setAvailabilityEdits(JSON.parse(JSON.stringify(data))); // Deep copy for editing
+        setAvailabilityData(data as DoctorAvailability[]);
       } else {
-        // Otherwise, generate default availability (9-5 on weekdays)
-        const defaultAvailability: DoctorAvailability[] = [];
-        
-        for (let day = 0; day < 7; day++) {
-          defaultAvailability.push({
-            id: `default-${day}`,
-            doctor_id: doctorId,
-            day_of_week: day,
-            start_time: day === 0 || day === 6 ? "" : "09:00",
-            end_time: day === 0 || day === 6 ? "" : "17:00",
-            is_available: !(day === 0 || day === 6) // Not available on weekends
-          });
-        }
-        
-        setDoctorAvailability(defaultAvailability);
-        setAvailabilityEdits(JSON.parse(JSON.stringify(defaultAvailability))); // Deep copy for editing
-      }
-    } catch (error) {
-      console.error('Error fetching doctor availability:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load doctor availability",
-        variant: "destructive"
-      });
-    } finally {
-      setAvailabilityLoading(false);
-    }
-  };
-
-  const fetchExistingBookings = async () => {
-    if (!selectedDate) return;
-    
-    setBookingsLoading(true);
-    try {
-      // Get the start and end of the selected day
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      
-      // Query existing confirmed teleconsultations for this doctor on the selected day
-      const { data, error } = await supabase
-        .from('teleconsultations')
-        .select('id, start_time, end_time')
-        .eq('doctor_id', doctorId)
-        .in('status', ['confirmed', 'pending'])
-        .gte('start_time', startOfDay.toISOString())
-        .lte('start_time', endOfDay.toISOString());
-      
-      if (error) throw error;
-      
-      if (data) {
-        const bookings: Booking[] = data.map(booking => ({
-          id: booking.id,
-          start_time: new Date(booking.start_time),
-          end_time: new Date(booking.end_time)
-        }));
-        
-        setExistingBookings(bookings);
-      }
-    } catch (error) {
-      console.error('Error fetching existing bookings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load doctor's schedule",
-        variant: "destructive"
-      });
-    } finally {
-      setBookingsLoading(false);
-    }
-  };
-
-  const generateTimeSlots = () => {
-    if (!selectedDate || doctorAvailability.length === 0) return;
-    
-    const slots: TimeSlot[] = [];
-    const now = new Date();
-    const dayOfWeek = selectedDate.getDay();
-    
-    // Find the doctor's availability for the selected day
-    const availability = doctorAvailability.find(a => a.day_of_week === dayOfWeek);
-    
-    if (!availability || !availability.is_available || !availability.start_time || !availability.end_time) {
-      setTimeSlots([]);
-      return;
-    }
-    
-    // Parse the start and end times
-    const [startHour, startMinute] = availability.start_time.split(':').map(Number);
-    const [endHour, endMinute] = availability.end_time.split(':').map(Number);
-    
-    const startDateTime = new Date(selectedDate);
-    startDateTime.setHours(startHour, startMinute, 0, 0);
-    
-    const endDateTime = new Date(selectedDate);
-    endDateTime.setHours(endHour, endMinute, 0, 0);
-    
-    // Generate 30-minute slots within the available hours
-    const slotDuration = 30; // minutes
-    let currentSlotStart = new Date(startDateTime);
-    
-    while (currentSlotStart < endDateTime) {
-      const currentSlotEnd = addMinutes(currentSlotStart, slotDuration);
-      
-      // Check if the slot is in the past
-      const isInPast = currentSlotStart < now && isToday(currentSlotStart);
-      
-      // Check if the slot overlaps with any existing bookings
-      const isOverlapping = existingBookings.some(booking => {
-        const bookingStart = booking.start_time;
-        const bookingEnd = booking.end_time;
-        
-        return (
-          (currentSlotStart >= bookingStart && currentSlotStart < bookingEnd) ||
-          (currentSlotEnd > bookingStart && currentSlotEnd <= bookingEnd) ||
-          (currentSlotStart <= bookingStart && currentSlotEnd >= bookingEnd)
-        );
-      });
-      
-      slots.push({
-        startTime: new Date(currentSlotStart),
-        endTime: new Date(currentSlotEnd),
-        available: !isInPast && !isOverlapping
-      });
-      
-      // Move to the next slot
-      currentSlotStart = new Date(currentSlotEnd);
-    }
-    
-    setTimeSlots(slots);
-    
-    // Reset selected time slot when date changes
-    setSelectedTimeSlot(null);
-  };
-
-  const handleBookAppointment = async () => {
-    if (!selectedDate || !selectedTimeSlot || !profile?.id || !doctorId) {
-      toast({
-        title: "Missing information",
-        description: "Please select a date, time, and provide a reason for the consultation.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase
-        .from('teleconsultations')
-        .insert({
-          patient_id: profile.id,
+        // Initialize default availability for all days if none exists
+        const defaultAvailability: DoctorAvailability[] = DAYS_OF_WEEK.map((_, index) => ({
           doctor_id: doctorId,
-          start_time: selectedTimeSlot.startTime.toISOString(),
-          end_time: selectedTimeSlot.endTime.toISOString(),
-          status: 'pending',
-          reason: reason.trim() || 'General consultation'
-        });
-
-      if (error) throw error;
-
-      // Create notification for the doctor
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: doctorId,
-          title: 'New Teleconsultation Request',
-          message: `${profile.full_name} has requested a teleconsultation on ${format(selectedTimeSlot.startTime, 'PPP')} at ${format(selectedTimeSlot.startTime, 'p')}.`,
-          type: 'teleconsultation_request',
-          link: '/dashboard?view=teleconsultations'
-        });
-
-      toast({
-        title: "Request sent",
-        description: `Your teleconsultation request with Dr. ${doctorName} has been sent successfully.`,
-      });
-
-      onBookingConfirmed();
+          day_of_week: index,
+          start_time: '09:00 AM',
+          end_time: '05:00 PM',
+          is_available: false
+        }));
+        setAvailabilityData(defaultAvailability);
+      }
     } catch (error) {
-      console.error('Error scheduling teleconsultation:', error);
+      console.error('Error loading availability:', error);
       toast({
-        title: "Failed to schedule",
-        description: "There was an error scheduling your teleconsultation. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
+        title: "Failed to load availability",
+        description: "There was an error loading the doctor's availability. Please try again."
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  // Function to handle changes in availability during editing
-  const handleAvailabilityChange = (dayIndex: number, field: keyof DoctorAvailability, value: any) => {
-    setAvailabilityEdits(prev => 
-      prev.map((day, i) => 
-        i === dayIndex ? { ...day, [field]: value } : day
-      )
-    );
+  // Update UI when a day is selected
+  useEffect(() => {
+    if (selectedDay !== null) {
+      const currentDayData = availabilityData.find(day => day.day_of_week === selectedDay);
+      
+      if (currentDayData) {
+        setIsAvailable(currentDayData.is_available);
+        
+        // Only set time slots if they exist
+        if (currentDayData.start_time && currentDayData.end_time) {
+          setTimeSlots([{
+            startTime: currentDayData.start_time,
+            endTime: currentDayData.end_time
+          }]);
+        } else {
+          // Default time slot
+          setTimeSlots([{
+            startTime: '09:00 AM',
+            endTime: '05:00 PM'
+          }]);
+        }
+      } else {
+        // Default values if no data for this day
+        setIsAvailable(false);
+        setTimeSlots([{
+          startTime: '09:00 AM',
+          endTime: '05:00 PM'
+        }]);
+      }
+    }
+  }, [selectedDay, availabilityData]);
+
+  const handleTimeChange = (index: number, type: 'startTime' | 'endTime', value: string) => {
+    const newTimeSlots = [...timeSlots];
+    newTimeSlots[index][type] = value;
+    setTimeSlots(newTimeSlots);
   };
 
-  // Function to save availability changes to the database
-  const saveAvailabilityChanges = async () => {
-    setSavingAvailability(true);
+  const addTimeSlot = () => {
+    // For now, we're limiting to one time slot per day for simplicity
+    toast({
+      title: "Feature limitation",
+      description: "Currently only one time slot per day is supported."
+    });
+  };
+
+  const removeTimeSlot = (index: number) => {
+    if (timeSlots.length > 1) {
+      const newTimeSlots = timeSlots.filter((_, i) => i !== index);
+      setTimeSlots(newTimeSlots);
+    }
+  };
+
+  const saveAvailability = async () => {
+    if (selectedDay === null) {
+      toast({
+        title: "Select a day",
+        description: "Please select a day of the week to set availability."
+      });
+      return;
+    }
+
     try {
-      // Check if we have availability records in the database
-      const { data, error: checkError } = await supabase
-        .from('doctor_availability')
-        .select('id')
-        .eq('doctor_id', doctorId)
-        .limit(1);
+      setIsSaving(true);
+
+      // Find existing record for this day
+      const existingDay = availabilityData.find(day => day.day_of_week === selectedDay);
       
-      if (checkError) throw checkError;
-      
-      // If there are existing records, update them
-      if (data && data.length > 0) {
-        // Delete existing records first
-        const { error: deleteError } = await supabase
+      if (existingDay?.id) {
+        // Update existing record
+        const { error } = await supabase
           .from('doctor_availability')
-          .delete()
-          .eq('doctor_id', doctorId);
-        
-        if (deleteError) throw deleteError;
+          .update({
+            is_available: isAvailable,
+            start_time: timeSlots[0].startTime,
+            end_time: timeSlots[0].endTime,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingDay.id);
+          
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('doctor_availability')
+          .insert([{
+            doctor_id: doctorId,
+            day_of_week: selectedDay,
+            start_time: timeSlots[0].startTime,
+            end_time: timeSlots[0].endTime,
+            is_available: isAvailable
+          }]);
+          
+        if (error) throw error;
       }
-      
-      // Insert the new availability settings
-      const recordsToInsert = availabilityEdits.map(avail => ({
-        doctor_id: doctorId,
-        day_of_week: avail.day_of_week,
-        start_time: avail.start_time,
-        end_time: avail.end_time,
-        is_available: avail.is_available
-      }));
-      
-      const { error: insertError } = await supabase
-        .from('doctor_availability')
-        .insert(recordsToInsert);
-      
-      if (insertError) throw insertError;
-      
-      // Update local state with the saved data
-      setDoctorAvailability(availabilityEdits);
-      setEditingAvailability(false);
+
+      // Refresh availability data
+      await loadAvailability();
       
       toast({
-        title: "Availability updated",
-        description: "Your availability settings have been saved successfully."
+        title: "Availability saved",
+        description: `Your availability for ${DAYS_OF_WEEK[selectedDay]} has been updated.`
       });
     } catch (error) {
       console.error('Error saving availability:', error);
       toast({
         variant: "destructive",
-        title: "Failed to save",
-        description: "There was an error saving your availability settings. Please try again."
+        title: "Failed to save availability",
+        description: "There was an error saving your availability. Please try again."
       });
     } finally {
-      setSavingAvailability(false);
+      setIsSaving(false);
     }
   };
 
-  // Disable past dates and function to check if a day is available
-  const isDayAvailable = (date: Date) => {
-    const dayOfWeek = date.getDay();
-    const availability = doctorAvailability.find(a => a.day_of_week === dayOfWeek);
-    return availability?.is_available && availability?.start_time && availability?.end_time;
+  const updateAllDaysAtOnce = async () => {
+    try {
+      setIsSaving(true);
+      
+      // First, delete all existing availability records
+      const { error: deleteError } = await supabase
+        .from('doctor_availability')
+        .delete()
+        .eq('doctor_id', doctorId);
+        
+      if (deleteError) throw deleteError;
+      
+      // Then, insert new availability for all days
+      const newAvailabilityRecords = DAYS_OF_WEEK.map((_, index) => ({
+        doctor_id: doctorId,
+        day_of_week: index,
+        start_time: timeSlots[0].startTime,
+        end_time: timeSlots[0].endTime,
+        is_available: isAvailable
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('doctor_availability')
+        .insert(newAvailabilityRecords);
+        
+      if (insertError) throw insertError;
+      
+      // Refresh availability data
+      await loadAvailability();
+      
+      toast({
+        title: "Availability updated",
+        description: "Your availability for all days has been updated."
+      });
+    } catch (error) {
+      console.error('Error updating all days:', error);
+      toast({
+        variant: "destructive",
+        title: "Failed to update availability",
+        description: "There was an error updating your availability. Please try again."
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
-  
-  const disabledDays = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+
+  const renderDaySummary = (day: number) => {
+    const dayData = availabilityData.find(d => d.day_of_week === day);
     
-    // The doctor cannot edit past dates
-    if (isManagementMode) {
-      return isBefore(date, today);
+    if (!dayData || !dayData.is_available) {
+      return <span className="text-muted-foreground">Not available</span>;
     }
     
-    return isBefore(date, today) || !isDayAvailable(date);
-  };
-
-  // Render the availability management section
-  const renderAvailabilityManagement = () => {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Your Weekly Availability</h3>
-          {!editingAvailability ? (
-            <Button onClick={() => setEditingAvailability(true)}>
-              <Edit className="h-4 w-4 mr-2" /> Edit Availability
-            </Button>
-          ) : (
-            <div className="space-x-2">
-              <Button variant="outline" onClick={() => {
-                setAvailabilityEdits(JSON.parse(JSON.stringify(doctorAvailability)));
-                setEditingAvailability(false);
-              }}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={saveAvailabilityChanges} 
-                disabled={savingAvailability}
-              >
-                {savingAvailability ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Saving...
-                  </span>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" /> Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
-        
-        <div className="grid gap-4">
-          {availabilityEdits.map((day, index) => (
-            <Card key={day.day_of_week}>
-              <CardContent className="pt-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center justify-between sm:justify-start sm:w-48">
-                    <span className="font-medium w-28">{DAYS_OF_WEEK.find(d => d.value === day.day_of_week)?.label}</span>
-                    <div className="flex items-center">
-                      <Switch
-                        id={`available-${day.day_of_week}`}
-                        checked={day.is_available}
-                        onCheckedChange={(checked) => handleAvailabilityChange(index, 'is_available', checked)}
-                        disabled={!editingAvailability}
-                      />
-                      <Label htmlFor={`available-${day.day_of_week}`} className="ml-2">
-                        {day.is_available ? 'Available' : 'Unavailable'}
-                      </Label>
-                    </div>
-                  </div>
-                  
-                  {day.is_available && (
-                    <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs mb-1 block">Start time</label>
-                          <Select
-                            value={day.start_time}
-                            onValueChange={(value) => handleAvailabilityChange(index, 'start_time', value)}
-                            disabled={!editingAvailability}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue placeholder="Start time" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 24 }).map((_, hour) => (
-                                <SelectItem key={hour} value={`${hour.toString().padStart(2, '0')}:00`}>
-                                  {hour === 0 ? '12:00 AM' : hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour-12}:00 PM`}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <label className="text-xs mb-1 block">End time</label>
-                          <Select
-                            value={day.end_time}
-                            onValueChange={(value) => handleAvailabilityChange(index, 'end_time', value)}
-                            disabled={!editingAvailability}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue placeholder="End time" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 24 }).map((_, hour) => (
-                                <SelectItem key={hour} value={`${hour.toString().padStart(2, '0')}:00`}>
-                                  {hour === 0 ? '12:00 AM' : hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour-12}:00 PM`}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        
-        {editingAvailability && (
-          <div className="bg-yellow-50 p-4 rounded-md text-sm">
-            <div className="flex items-start">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
-              <p className="text-yellow-800">
-                Changes to your availability may affect existing appointments. Patients will be notified of any changes that affect their appointments.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+      <span className="text-green-600 font-medium">
+        {dayData.start_time} - {dayData.end_time}
+      </span>
     );
   };
 
-  // Render the booking calendar section
-  const renderBookingCalendar = () => {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium mb-4">1. Select a date</h3>
-          <div className="border rounded-md p-4">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              disabled={disabledDays}
-              className="rounded-md"
-              initialFocus
-            />
-          </div>
-        </div>
-
-        {selectedDate && (
-          <div>
-            <h3 className="text-lg font-medium mb-4">2. Select an available time slot</h3>
-            
-            {bookingsLoading ? (
-              <Skeleton className="h-[100px] w-full" />
-            ) : (
-              <>
-                {timeSlots.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                    {timeSlots.map((slot, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        className={`
-                          w-full ${slot.available ? 'hover:bg-green-50 border-green-200' : 'bg-red-50 border-red-200 opacity-50 cursor-not-allowed'}
-                          ${selectedTimeSlot && isEqual(selectedTimeSlot.startTime, slot.startTime) ? 'bg-green-100 border-green-400' : ''}
-                        `}
-                        disabled={!slot.available}
-                        onClick={() => setSelectedTimeSlot(slot)}
-                      >
-                        <Clock className="h-4 w-4 mr-2" /> 
-                        {format(slot.startTime, 'h:mm a')}
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center p-4 border rounded-md bg-gray-50">
-                    <CalendarIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-muted-foreground">No available time slots for this date.</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Please select another date or contact the doctor.
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {selectedTimeSlot && (
-          <div>
-            <h3 className="text-lg font-medium mb-4">3. Reason for consultation</h3>
-            <Textarea
-              placeholder="Please describe your symptoms or reason for the consultation"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="min-h-[100px]"
-            />
-          </div>
-        )}
-        
-        {selectedTimeSlot && (
-          <div className="w-full">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-medium">Selected appointment:</p>
-                <p className="text-gray-700">
-                  {format(selectedTimeSlot.startTime, 'PPPP')}
-                </p>
-                <p className="text-gray-700">
-                  {format(selectedTimeSlot.startTime, 'h:mm a')} - {format(selectedTimeSlot.endTime, 'h:mm a')}
-                </p>
-              </div>
-              <Button 
-                onClick={handleBookAppointment} 
-                disabled={isSubmitting}
-                className="min-w-[150px]"
-              >
-                {isSubmitting ? "Submitting..." : "Request Appointment"}
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-            <div className="bg-yellow-50 p-3 rounded-md text-sm">
-              <div className="flex items-start">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
-                <p className="text-yellow-800">
-                  Your request will be sent to Dr. {doctorName} for approval. You'll receive a notification once they respond.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      <div className="flex justify-center items-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading availability settings...</span>
       </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="mb-6">
         <CardHeader>
-          <CardTitle>
-            {isManagementMode ? 
-              "Manage Your Availability" : 
-              `Book Teleconsultation with Dr. ${doctorName}`
-            }
-          </CardTitle>
+          <CardTitle>Your Availability Calendar</CardTitle>
           <CardDescription>
-            {isManagementMode ?
-              "Set your weekly availability for teleconsultations and manage your schedule." :
-              `Select an available time slot from Dr. ${doctorName}'s calendar. Green slots are available, red slots are already booked.`
-            }
+            Set your availability for teleconsultations. Patients will only be able to book appointments during your available times.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {availabilityLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-[300px] w-full" />
-            </div>
-          ) : (
-            <>
-              {isManagementMode ? (
-                <Tabs defaultValue="manage" value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="manage">Weekly Schedule</TabsTrigger>
-                    <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-                  </TabsList>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+            {DAYS_OF_WEEK.map((day, index) => (
+              <div 
+                key={day} 
+                className={`p-4 border rounded-md cursor-pointer hover:bg-gray-50 transition-colors 
+                  ${selectedDay === index ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
+                onClick={() => setSelectedDay(index)}
+              >
+                <h3 className="font-medium">{day}</h3>
+                <div className="mt-2 text-sm">
+                  {renderDaySummary(index)}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {selectedDay !== null && (
+            <div className="mt-6 border-t pt-6">
+              <h3 className="text-lg font-medium mb-4">
+                Set availability for {DAYS_OF_WEEK[selectedDay]}
+              </h3>
+              
+              <div className="flex items-center space-x-2 mb-6">
+                <Switch 
+                  id="available" 
+                  checked={isAvailable}
+                  onCheckedChange={setIsAvailable}
+                />
+                <Label htmlFor="available">Available for appointments</Label>
+              </div>
+              
+              {isAvailable && (
+                <div className="space-y-4">
+                  {timeSlots.map((slot, index) => (
+                    <div key={index} className="flex flex-wrap items-center gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>From</span>
+                      </div>
+                      
+                      <Select
+                        value={slot.startTime}
+                        onValueChange={(value) => handleTimeChange(index, 'startTime', value)}
+                      >
+                        <SelectTrigger className="w-[160px]">
+                          <SelectValue placeholder="Start time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_OPTIONS.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      <div className="flex items-center space-x-2">
+                        <span>to</span>
+                      </div>
+                      
+                      <Select
+                        value={slot.endTime}
+                        onValueChange={(value) => handleTimeChange(index, 'endTime', value)}
+                      >
+                        <SelectTrigger className="w-[160px]">
+                          <SelectValue placeholder="End time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_OPTIONS.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {timeSlots.length > 1 && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => removeTimeSlot(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
                   
-                  <TabsContent value="manage">
-                    {renderAvailabilityManagement()}
-                  </TabsContent>
-                  
-                  <TabsContent value="calendar">
-                    {renderBookingCalendar()}
-                  </TabsContent>
-                </Tabs>
-              ) : (
-                renderBookingCalendar()
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addTimeSlot}
+                    className="mt-2"
+                    disabled={timeSlots.length >= 1} // Limit to one time slot for now
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add time slot
+                  </Button>
+                </div>
               )}
-            </>
+              
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Button
+                  onClick={saveAvailability}
+                  disabled={isSaving}
+                >
+                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Save className="mr-2 h-4 w-4" />
+                  Save for {DAYS_OF_WEEK[selectedDay]}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={updateAllDaysAtOnce}
+                  disabled={isSaving}
+                >
+                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Apply to all days
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
