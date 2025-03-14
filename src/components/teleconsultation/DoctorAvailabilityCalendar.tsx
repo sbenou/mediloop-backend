@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Plus, X, Save, Clock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { DoctorAvailability, TimeSlot } from "@/types/supabase";
+import { DoctorAvailability, TimeSlot, isTimeSlot } from "@/types/supabase";
 
 interface DoctorAvailabilityCalendarProps {
   doctorId: string;
@@ -79,13 +79,13 @@ const DoctorAvailabilityCalendar = ({
           console.log('Processing availability item:', item);
           
           // Parse any stored time slots or create default
-          const defaultSlot = {
+          const defaultSlot: TimeSlot = {
             startTime: item.start_time || '09:00',
             endTime: item.end_time || '17:00'
           };
           
           // If additional_time_slots exists, parse it
-          let allTimeSlots = [defaultSlot];
+          let allTimeSlots: TimeSlot[] = [defaultSlot];
           let additionalTimeSlots: string | null = null;
           
           try {
@@ -95,30 +95,32 @@ const DoctorAvailabilityCalendar = ({
               
               // Parse the JSON string if it's a string
               if (typeof item.additional_time_slots === 'string') {
-                const parsedSlots = JSON.parse(item.additional_time_slots);
-                if (Array.isArray(parsedSlots)) {
-                  // Make sure each slot has the correct structure
-                  const validSlots = parsedSlots.filter(slot => 
-                    typeof slot === 'object' && 
-                    'startTime' in slot && 
-                    'endTime' in slot
-                  );
-                  allTimeSlots = [defaultSlot, ...validSlots];
+                try {
+                  const parsedSlots = JSON.parse(item.additional_time_slots);
+                  if (Array.isArray(parsedSlots)) {
+                    // Make sure each slot has the correct structure with type guard
+                    const validSlots = parsedSlots.filter(isTimeSlot);
+                    allTimeSlots = [defaultSlot, ...validSlots];
+                  }
+                  additionalTimeSlots = item.additional_time_slots;
+                } catch (parseError) {
+                  console.error('Error parsing JSON string:', parseError);
+                  // Keep default slot if parsing fails
                 }
-                additionalTimeSlots = item.additional_time_slots;
               } 
               // Handle case where it might already be parsed as an object
               else if (typeof item.additional_time_slots === 'object') {
                 const slots = Array.isArray(item.additional_time_slots) 
                   ? item.additional_time_slots
                   : [item.additional_time_slots];
-                  
-                // Validate the structure of each slot
-                const validSlots = slots.filter(slot => 
-                  typeof slot === 'object' && 
-                  'startTime' in slot && 
-                  'endTime' in slot
-                );
+                
+                // Use type guard to validate each slot
+                const validSlots: TimeSlot[] = [];
+                for (const slot of slots) {
+                  if (isTimeSlot(slot)) {
+                    validSlots.push(slot);
+                  }
+                }
                 
                 if (validSlots.length > 0) {
                   allTimeSlots = [defaultSlot, ...validSlots];
@@ -127,7 +129,7 @@ const DoctorAvailabilityCalendar = ({
               }
             }
           } catch (e) {
-            console.error('Error parsing additional time slots:', e);
+            console.error('Error processing additional time slots:', e);
           }
           
           return {

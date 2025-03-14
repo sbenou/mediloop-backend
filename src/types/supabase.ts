@@ -50,3 +50,13 @@ export interface DoctorWorkplace {
   workplace_id: string;
   created_at: string;
 }
+
+// Type guard to check if an object is a valid TimeSlot
+export function isTimeSlot(obj: any): obj is TimeSlot {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    typeof obj.startTime === 'string' &&
+    typeof obj.endTime === 'string'
+  );
+}
