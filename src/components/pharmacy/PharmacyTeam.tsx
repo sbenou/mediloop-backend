@@ -37,7 +37,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
       phone_number: member.phone_number || '',
       role: member.role,
       pharmacy_id: pharmacyId,
-      status: member.is_active ? 'active' : 'inactive',
+      status: member.is_active ? 'active' : 'inactive' as 'active' | 'inactive',
       profile_image: member.avatar_url,
     };
   };
