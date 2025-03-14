@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Canvas, Path } from "fabric/fabric-impl";
 import { Pencil, DownloadIcon, Save, Trash2, Upload } from "lucide-react";
-import { fabric } from 'fabric';
+import * as fabric from 'fabric';
 
 interface DoctorStampSignatureProps {
   stampUrl: string | null;

@@ -10,6 +10,7 @@ import { Loader2, Plus, X, Save, Clock } from "lucide-react";
 import { format, parse, addMinutes } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
+import { DoctorAvailability } from "@/types/supabase";
 
 interface DoctorAvailabilityCalendarProps {
   doctorId: string;
