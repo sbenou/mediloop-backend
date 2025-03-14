@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,8 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Upload, Check, X, Trash, Undo, Circle, Edit } from "lucide-react";
-// Fix the fabric import
-import { fabric } from "fabric/fabric-impl";
+// Fix the fabric import - use the Canvas and other objects directly
+import { Canvas, PencilBrush } from "fabric";
 
 export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stampUrl: string | null, signatureUrl: string | null }) {
   const { profile } = useAuth();
@@ -18,8 +19,8 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
   
   const stampCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const stampFabricRef = useRef<fabric.Canvas | null>(null);
-  const signatureFabricRef = useRef<fabric.Canvas | null>(null);
+  const stampFabricRef = useRef<Canvas | null>(null);
+  const signatureFabricRef = useRef<Canvas | null>(null);
 
   useEffect(() => {
     return () => {
@@ -33,10 +34,10 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
     };
   }, []);
 
-  const initCanvas = (canvasRef: React.RefObject<HTMLCanvasElement>, fabricRef: React.MutableRefObject<fabric.Canvas | null>) => {
+  const initCanvas = (canvasRef: React.RefObject<HTMLCanvasElement>, fabricRef: React.MutableRefObject<Canvas | null>) => {
     if (canvasRef.current && !fabricRef.current) {
       console.log("Initializing canvas with drawing mode");
-      const canvas = new fabric.Canvas(canvasRef.current, {
+      const canvas = new Canvas(canvasRef.current, {
         isDrawingMode: true,
         width: 300,
         height: 200,
@@ -45,7 +46,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       
       // Explicitly set to drawing mode with pencil brush
       canvas.isDrawingMode = true;
-      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+      canvas.freeDrawingBrush = new PencilBrush(canvas);
       canvas.freeDrawingBrush.width = 3;
       canvas.freeDrawingBrush.color = selectedColor;
       

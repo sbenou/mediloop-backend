@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -6,7 +7,7 @@ import { ProfileDisplay } from "./profile/ProfileDisplay";
 import { DefaultAddress } from "./profile/DefaultAddress";
 import { toast } from "@/components/ui/use-toast";
 import CNSCardScanner from "./CNSCardScanner";
-// Fix the import to use the default export
+// Fix import to use default import
 import DoctorStampSignature from "./profile/DoctorStampSignature";
 
 const PersonalDetails = () => {

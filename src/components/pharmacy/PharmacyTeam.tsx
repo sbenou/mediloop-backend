@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { UserPlus, Users } from 'lucide-react'; // Import Users from lucide-react
+import { UserPlus, Users } from 'lucide-react'; // Properly import Users icon
 import { usePharmacyTeam } from './team/usePharmacyTeam';
 import { TeamMemberDialog } from './team/TeamMemberDialog';
 import { TeamMemberCard } from './team/TeamMemberCard';
