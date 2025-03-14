@@ -45,12 +45,14 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
   const initCanvas = (canvasRef: React.RefObject<HTMLCanvasElement>, fabricRef: React.MutableRefObject<Canvas | null>) => {
     if (canvasRef.current && !fabricRef.current) {
       console.log("Initializing canvas with drawing mode");
-      const canvas = new Canvas(canvasRef.current, {
-        isDrawingMode: true,
-        width: 300,
-        height: 200,
-        backgroundColor: '#f8f9fa'
-      });
+      
+      // Create a canvas with the correct size
+      const canvas = new Canvas(canvasRef.current);
+      
+      // Set canvas properties
+      canvas.setWidth(300);
+      canvas.setHeight(200);
+      canvas.setBackgroundColor('#f8f9fa', canvas.renderAll.bind(canvas));
       
       // Explicitly set to drawing mode with pencil brush
       canvas.isDrawingMode = true;
@@ -62,6 +64,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       console.log(`Canvas initialized. Drawing mode: ${canvas.isDrawingMode}, Brush color: ${canvas.freeDrawingBrush.color}`);
       
       fabricRef.current = canvas;
+      canvas.renderAll();
     }
   };
 
@@ -121,8 +124,8 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
     if (fabricRef.current) {
       console.log("Clearing canvas");
       fabricRef.current.clear();
-      fabricRef.current.backgroundColor = '#f8f9fa';
-      fabricRef.current.renderAll();
+      // Important: Reset the background color after clearing
+      fabricRef.current.setBackgroundColor('#f8f9fa', fabricRef.current.renderAll.bind(fabricRef.current));
     }
   };
 
@@ -132,6 +135,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       const objects = fabricRef.current.getObjects();
       if (objects.length > 0) {
         fabricRef.current.remove(objects[objects.length - 1]);
+        fabricRef.current.renderAll();
       }
     }
   };
@@ -186,11 +190,11 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       setUploadingState(true);
       console.log(`Saving ${type} from canvas`);
 
-      // Convert canvas to data URL
+      // Convert canvas to data URL with white background
       const dataUrl = fabricRef.current.toDataURL({
         format: 'png',
         quality: 1,
-        multiplier: 1
+        multiplier: 2
       });
 
       // Convert data URL to blob
@@ -204,7 +208,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       const filePath = `${profile.id}/${type}_${crypto.randomUUID()}.png`;
 
       // Upload to Supabase storage
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('doctor-images')
         .upload(filePath, file, {
           upsert: true,

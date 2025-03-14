@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { UserPlus, Users } from 'lucide-react'; 
+import { UserPlus } from 'lucide-react'; 
 import { usePharmacyTeam } from './team/usePharmacyTeam';
 import { TeamMemberDialog } from './team/TeamMemberDialog';
 import { TeamMemberCard } from './team/TeamMemberCard';
@@ -45,7 +45,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
   // Function to adapt the handleToggleActive function to match expected signature
   const handleCardToggleActive = (memberId: string, currentStatus: 'active' | 'inactive') => {
     const isActive = currentStatus === 'active';
-    handleToggleActive(memberId, isActive);
+    handleToggleActive(memberId, !isActive);
   };
 
   return (
@@ -80,7 +80,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                     profile_image: profile.avatar_url,
                   }}
                   onToggleActive={() => {}}
-                  isMainDoctor={true}
                 />
               )}
               

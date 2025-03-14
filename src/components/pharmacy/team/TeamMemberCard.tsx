@@ -1,20 +1,38 @@
 
 import React from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { 
+  Card, 
+  CardContent, 
+  CardFooter, 
+  CardHeader 
+} from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, Phone, User, Shield } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Eye, Edit, UserX, MoreVertical, AlertTriangle } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 interface TeamMember {
   id: string;
   full_name: string;
   email: string;
-  phone_number: string;
+  phone_number?: string;
   role: string;
   pharmacy_id: string;
   status: 'active' | 'inactive';
-  profile_image?: string;
+  profile_image?: string | null;
 }
 
 interface TeamMemberCardProps {
@@ -26,94 +44,124 @@ interface TeamMemberCardProps {
 export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ 
   member, 
   onToggleActive,
-  isMainDoctor = false
 }) => {
+  const isActive = member.status === 'active';
+  
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'doctor': return 'Doctor';
+      case 'pharmacist': return 'Pharmacist';
+      case 'technician': return 'Pharmacy Technician';
+      case 'intern': return 'Pharmacy Intern';
+      case 'nurse': return 'Nurse';
+      default: return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
-      .map(part => part[0])
+      .map(part => part.charAt(0))
       .join('')
       .toUpperCase()
       .substring(0, 2);
   };
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'doctor':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-      case 'pharmacist':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
-      case 'technician':
-        return 'bg-amber-100 text-amber-800 hover:bg-amber-200';
-      case 'intern':
-        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
-
-  const getHumanReadableRole = (role: string) => {
-    switch (role) {
-      case 'doctor':
-        return 'Doctor';
-      case 'pharmacist':
-        return 'Pharmacist';
-      case 'technician':
-        return 'Pharmacy Technician';
-      case 'intern':
-        return 'Pharmacy Intern';
-      default:
-        return 'Staff Member';
-    }
+  const getStatusColor = (status: string) => {
+    return status === 'active' ? 'bg-green-500' : 'bg-red-500';
   };
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="pb-2 pt-4 relative">
-        {isMainDoctor && (
-          <div className="absolute top-2 right-2">
-            <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
-              <Shield className="h-3 w-3 mr-1" /> Main Doctor
-            </Badge>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={member.profile_image || undefined} />
+              <AvatarFallback>{getInitials(member.full_name)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-md">{member.full_name}</h3>
+              <p className="text-sm text-muted-foreground">{member.email}</p>
+            </div>
           </div>
-        )}
-        <div className="flex justify-center">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={member.profile_image} alt={member.full_name} />
-            <AvatarFallback className="text-lg">{getInitials(member.full_name)}</AvatarFallback>
-          </Avatar>
-        </div>
-        <CardTitle className="text-center text-lg mt-2">{member.full_name}</CardTitle>
-        <div className="flex justify-center mt-1">
-          <Badge variant="outline" className={getRoleBadgeColor(member.role)}>
-            {getHumanReadableRole(member.role)}
-          </Badge>
+          <DropdownMenu>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Actions</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <Eye className="mr-2 h-4 w-4" />
+                <span>View Team Member</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Edit className="mr-2 h-4 w-4" />
+                <span>Edit Team Member</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">
+                <UserX className="mr-2 h-4 w-4" />
+                <span>Terminate Team Member</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className="pb-2">
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center text-muted-foreground">
-            <Mail className="h-4 w-4 mr-2" />
-            <span className="truncate">{member.email}</span>
-          </div>
-          {member.phone_number && (
-            <div className="flex items-center text-muted-foreground">
-              <Phone className="h-4 w-4 mr-2" />
-              <span>{member.phone_number}</span>
+      
+      <CardContent className="pb-3">
+        <div className="mt-2 space-y-2">
+          <div className="flex justify-between items-center">
+            <Badge variant="outline" className="font-normal">
+              {getRoleLabel(member.role)}
+            </Badge>
+            <div className="flex items-center">
+              <span className={`mr-2 h-2 w-2 rounded-full inline-block ${getStatusColor(member.status)}`}></span>
+              <span className="text-xs text-muted-foreground">
+                {isActive ? 'Active' : 'Inactive'}
+              </span>
             </div>
+          </div>
+          
+          {member.phone_number && (
+            <p className="text-sm">
+              <span className="font-medium">Phone:</span> {member.phone_number}
+            </p>
           )}
         </div>
       </CardContent>
-      <CardFooter className="pt-1 pb-3">
-        {!isMainDoctor && (
-          <Button 
-            variant={member.status === 'active' ? "outline" : "default"} 
-            size="sm" 
-            className="w-full"
-            onClick={() => onToggleActive(member.id, member.status)}
-          >
-            {member.status === 'active' ? 'Deactivate' : 'Activate'}
-          </Button>
+      
+      <CardFooter className="pt-2 border-t flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <Switch 
+            checked={isActive} 
+            onCheckedChange={(checked) => onToggleActive(member.id, checked ? 'active' : 'inactive')}
+          />
+          <span className="text-sm">
+            {isActive ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+        
+        {!isActive && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This user is currently inactive</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </CardFooter>
     </Card>

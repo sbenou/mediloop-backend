@@ -18,7 +18,8 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS, onAvatarUpdate }: P
   console.log('Profile Display - CNS card data:', {
     front: profile.cns_card_front,
     back: profile.cns_card_back,
-    number: profile.cns_number
+    number: profile.cns_number,
+    avatar: profile.avatar_url
   }); // Debug log
 
   return (

@@ -23,6 +23,9 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { userRole } = useAuth();
+  
+  // Add a state to track the local avatar URL for immediate display
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(currentAvatarUrl);
 
   const uploadAvatar = async (file: File) => {
     try {
@@ -58,7 +61,10 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
 
       if (updateError) throw updateError;
 
-      // Update the UI immediately
+      // Set the local avatar URL for immediate display
+      setLocalAvatarUrl(publicUrl);
+      
+      // Update the UI through the parent component
       onAvatarUpdate(publicUrl);
       
       // Invalidate the profile query to refresh the data
@@ -124,6 +130,8 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Show a temporary preview before uploading
+      setLocalAvatarUrl(URL.createObjectURL(file));
       await uploadAvatar(file);
     }
   };
@@ -132,6 +140,9 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
+        // Show a temporary preview before uploading
+        setLocalAvatarUrl(imageSrc);
+        
         const response = await fetch(imageSrc);
         const blob = await response.blob();
         const file = new File([blob], 'webcam-photo.jpg', { type: 'image/jpeg' });
@@ -141,11 +152,14 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
     }
   };
 
+  // Use the local avatar URL for display, falling back to the prop
+  const displayAvatarUrl = localAvatarUrl || currentAvatarUrl;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <Avatar className="h-24 w-24">
-          <AvatarImage src={currentAvatarUrl || undefined} />
+          <AvatarImage src={displayAvatarUrl || undefined} alt="Profile" />
           <AvatarFallback className="bg-primary/10">
             <User className="h-12 w-12 text-primary" />
           </AvatarFallback>
