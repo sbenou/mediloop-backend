@@ -34,6 +34,8 @@ interface DoctorAvailability {
   is_available: boolean;
   time_slots?: TimeSlot[];
   additional_time_slots?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const DAYS_OF_WEEK = [
