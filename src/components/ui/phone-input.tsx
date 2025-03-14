@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ReactPhoneInput from 'react-phone-number-input';
+import ReactPhoneInput, { CountryCode } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 interface PhoneInputProps {
@@ -10,7 +10,7 @@ interface PhoneInputProps {
   className?: string;
   international?: boolean;
   countryCallingCodeEditable?: boolean;
-  defaultCountry?: string;
+  defaultCountry?: CountryCode;
 }
 
 export function PhoneInput({ 
@@ -20,7 +20,7 @@ export function PhoneInput({
   className,
   international = true,
   countryCallingCodeEditable = false,
-  defaultCountry = "LU"
+  defaultCountry = "LU" as CountryCode
 }: PhoneInputProps) {
   return (
     <div className={`rounded-md border border-input ${className}`}>

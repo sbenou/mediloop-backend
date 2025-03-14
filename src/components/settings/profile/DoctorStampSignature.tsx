@@ -6,7 +6,7 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Upload, Check, X, Trash, Undo, Circle, Edit } from "lucide-react";
-// Fix the fabric import - use the Canvas and other objects directly
+// Import fabric properly for TypeScript
 import { Canvas, PencilBrush } from "fabric";
 
 export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stampUrl: string | null, signatureUrl: string | null }) {
@@ -98,14 +98,14 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
     }
   }, [selectedColor]);
 
-  const clearCanvas = (fabricRef: React.MutableRefObject<fabric.Canvas | null>) => {
+  const clearCanvas = (fabricRef: React.MutableRefObject<Canvas | null>) => {
     if (fabricRef.current) {
       fabricRef.current.clear();
       fabricRef.current.setBackgroundColor('#f8f9fa', fabricRef.current.renderAll.bind(fabricRef.current));
     }
   };
 
-  const undoLastAction = (fabricRef: React.MutableRefObject<fabric.Canvas | null>) => {
+  const undoLastAction = (fabricRef: React.MutableRefObject<Canvas | null>) => {
     if (fabricRef.current) {
       const objects = fabricRef.current.getObjects();
       if (objects.length > 0) {
@@ -115,7 +115,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
   };
 
   const saveCanvasAsImage = async (
-    fabricRef: React.MutableRefObject<fabric.Canvas | null>,
+    fabricRef: React.MutableRefObject<Canvas | null>,
     type: 'stamp' | 'signature'
   ) => {
     if (!profile?.id || !fabricRef.current) return;
