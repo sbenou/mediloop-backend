@@ -8,9 +8,11 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { Upload, Check, X, Trash, Undo, Circle, Edit, FileUp, Pen } from 'lucide-react';
 import { Canvas, PencilBrush } from "fabric";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stampUrl: string | null, signatureUrl: string | null }) {
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
   const [isEditingStamp, setIsEditingStamp] = useState(false);
   const [isEditingSignature, setIsEditingSignature] = useState(false);
   const [isUploadingStamp, setIsUploadingStamp] = useState(false);
@@ -78,19 +80,30 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
     }
   };
 
+  // Initialize canvas when editing mode is activated
   useEffect(() => {
     if (isEditingStamp && stampActiveTab === "draw") {
-      setTimeout(() => {
-        initCanvas(stampCanvasRef, stampFabricRef);
+      // Add a slight delay to ensure the canvas element is ready
+      const timer = setTimeout(() => {
+        console.log("Trying to initialize stamp canvas");
+        if (stampCanvasRef.current) {
+          initCanvas(stampCanvasRef, stampFabricRef);
+        }
       }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isEditingStamp, stampActiveTab]);
 
   useEffect(() => {
     if (isEditingSignature && signatureActiveTab === "draw") {
-      setTimeout(() => {
-        initCanvas(signatureCanvasRef, signatureFabricRef);
+      // Add a slight delay to ensure the canvas element is ready
+      const timer = setTimeout(() => {
+        console.log("Trying to initialize signature canvas");
+        if (signatureCanvasRef.current) {
+          initCanvas(signatureCanvasRef, signatureFabricRef);
+        }
       }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isEditingSignature, signatureActiveTab]);
 
@@ -106,6 +119,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
 
   const clearCanvas = (fabricRef: React.MutableRefObject<Canvas | null>) => {
     if (fabricRef.current) {
+      console.log("Clearing canvas");
       fabricRef.current.clear();
       fabricRef.current.backgroundColor = '#f8f9fa';
       fabricRef.current.renderAll();
@@ -114,6 +128,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
 
   const undoLastAction = (fabricRef: React.MutableRefObject<Canvas | null>) => {
     if (fabricRef.current) {
+      console.log("Undoing last action");
       const objects = fabricRef.current.getObjects();
       if (objects.length > 0) {
         fabricRef.current.remove(objects[objects.length - 1]);
@@ -169,6 +184,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
 
     try {
       setUploadingState(true);
+      console.log(`Saving ${type} from canvas`);
 
       // Convert canvas to data URL
       const dataUrl = fabricRef.current.toDataURL({
@@ -214,6 +230,9 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
 
       if (updateError) throw updateError;
 
+      // Invalidate queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+
       toast({
         title: "Success",
         description: `Doctor ${type} updated successfully`,
@@ -248,6 +267,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
 
     try {
       setUploadingState(true);
+      console.log(`Uploading ${type} file`);
 
       // Generate a unique file path
       const filePath = `${profile.id}/${type}_${crypto.randomUUID()}.${file.name.split('.').pop()}`;
@@ -279,6 +299,9 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
 
       if (updateError) throw updateError;
 
+      // Invalidate queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+
       toast({
         title: "Success",
         description: `Doctor ${type} uploaded successfully`,
@@ -300,6 +323,25 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       });
     } finally {
       setUploadingState(false);
+    }
+  };
+
+  // Reset the canvas when reopening the edit mode
+  const handleStartEditing = (type: 'stamp' | 'signature') => {
+    if (type === 'stamp') {
+      setIsEditingStamp(true);
+      // Reset the canvas ref so it can be reinitialized
+      if (stampFabricRef.current) {
+        stampFabricRef.current.dispose();
+        stampFabricRef.current = null;
+      }
+    } else {
+      setIsEditingSignature(true);
+      // Reset the canvas ref so it can be reinitialized
+      if (signatureFabricRef.current) {
+        signatureFabricRef.current.dispose();
+        signatureFabricRef.current = null;
+      }
     }
   };
 
@@ -327,7 +369,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                 
                 <TabsContent value="draw" className="mt-4">
                   <div className="border rounded-md p-4 bg-gray-50">
-                    <canvas ref={stampCanvasRef} width="300" height="200" />
+                    <canvas ref={stampCanvasRef} width="300" height="200" id="stamp-canvas" />
                   </div>
                   
                   <div className="flex space-x-2 mt-3 mb-3">
@@ -337,16 +379,19 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                         className={`w-6 h-6 rounded-full border ${selectedColor === '#000000' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
                         style={{ backgroundColor: '#000000' }} 
                         onClick={() => updateBrushColor('#000000')}
+                        type="button"
                       />
                       <button 
                         className={`w-6 h-6 rounded-full border ${selectedColor === '#0000FF' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
                         style={{ backgroundColor: '#0000FF' }} 
                         onClick={() => updateBrushColor('#0000FF')}
+                        type="button"
                       />
                       <button 
                         className={`w-6 h-6 rounded-full border ${selectedColor === '#FF0000' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
                         style={{ backgroundColor: '#FF0000' }} 
                         onClick={() => updateBrushColor('#FF0000')}
+                        type="button"
                       />
                     </div>
                   </div>
@@ -496,7 +541,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                     alt="Doctor Stamp"
                     className="max-h-32 mx-auto mb-4"
                   />
-                  <Button onClick={() => setIsEditingStamp(true)}>
+                  <Button onClick={() => handleStartEditing('stamp')}>
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Stamp
                   </Button>
@@ -506,7 +551,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                   <p className="text-muted-foreground">
                     You haven't created a stamp yet
                   </p>
-                  <Button onClick={() => setIsEditingStamp(true)}>
+                  <Button onClick={() => handleStartEditing('stamp')}>
                     <Upload className="h-4 w-4 mr-2" />
                     Create Stamp
                   </Button>
@@ -539,7 +584,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                 
                 <TabsContent value="draw" className="mt-4">
                   <div className="border rounded-md p-4 bg-gray-50">
-                    <canvas ref={signatureCanvasRef} width="300" height="200" />
+                    <canvas ref={signatureCanvasRef} width="300" height="200" id="signature-canvas" />
                   </div>
                   
                   <div className="flex space-x-2 mt-3 mb-3">
@@ -549,16 +594,19 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                         className={`w-6 h-6 rounded-full border ${selectedColor === '#000000' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
                         style={{ backgroundColor: '#000000' }} 
                         onClick={() => updateBrushColor('#000000')}
+                        type="button"
                       />
                       <button 
                         className={`w-6 h-6 rounded-full border ${selectedColor === '#0000FF' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
                         style={{ backgroundColor: '#0000FF' }} 
                         onClick={() => updateBrushColor('#0000FF')}
+                        type="button"
                       />
                       <button 
                         className={`w-6 h-6 rounded-full border ${selectedColor === '#FF0000' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
                         style={{ backgroundColor: '#FF0000' }} 
                         onClick={() => updateBrushColor('#FF0000')}
+                        type="button"
                       />
                     </div>
                   </div>
@@ -708,7 +756,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                     alt="Doctor Signature"
                     className="max-h-32 mx-auto mb-4"
                   />
-                  <Button onClick={() => setIsEditingSignature(true)}>
+                  <Button onClick={() => handleStartEditing('signature')}>
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Signature
                   </Button>
@@ -718,7 +766,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                   <p className="text-muted-foreground">
                     You haven't created a signature yet
                   </p>
-                  <Button onClick={() => setIsEditingSignature(true)}>
+                  <Button onClick={() => handleStartEditing('signature')}>
                     <Upload className="h-4 w-4 mr-2" />
                     Create Signature
                   </Button>

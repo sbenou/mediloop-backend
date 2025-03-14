@@ -98,6 +98,23 @@ const PersonalDetails = () => {
     date_of_birth: profile?.date_of_birth ? new Date(profile.date_of_birth) : null,
   };
 
+  // When image is updated, we need to invalidate the profile query
+  const handleAvatarUpdate = async (url: string) => {
+    // Immediately update the cached profile data to avoid UI lag
+    queryClient.setQueryData(['profile'], (oldData: any) => {
+      if (oldData) {
+        return {
+          ...oldData,
+          avatar_url: url
+        };
+      }
+      return oldData;
+    });
+    
+    // Then invalidate the query to get fresh data
+    await queryClient.invalidateQueries({ queryKey: ['profile'] });
+  };
+
   return (
     <div className="space-y-8">
       {isEditing ? (
@@ -112,6 +129,7 @@ const PersonalDetails = () => {
             profile={profile}
             onEdit={() => setIsEditing(true)}
             onScanCNS={() => setIsScanning(true)}
+            onAvatarUpdate={handleAvatarUpdate}
           />
           <DefaultAddress />
           {profile?.role === 'doctor' && (

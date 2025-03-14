@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, MapPin, Phone } from "lucide-react";
 
 const teamMemberSchema = z.object({
   full_name: z.string().min(3, "Full name must be at least 3 characters."),
@@ -47,6 +49,8 @@ export const TeamMemberDialog: React.FC<TeamMemberDialogProps> = ({
   setNokPhoneValue,
   entityType = 'pharmacy'
 }) => {
+  const [activeTab, setActiveTab] = useState("personal");
+  
   const form = useForm<TeamMemberFormValues>({
     resolver: zodResolver(teamMemberSchema),
     defaultValues: {
@@ -70,6 +74,27 @@ export const TeamMemberDialog: React.FC<TeamMemberDialogProps> = ({
     };
     onSubmit(formData);
     form.reset();
+    setActiveTab("personal");
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
+  const goToNextTab = () => {
+    if (activeTab === "personal") {
+      setActiveTab("contact");
+    } else if (activeTab === "contact") {
+      setActiveTab("address");
+    }
+  };
+
+  const goToPreviousTab = () => {
+    if (activeTab === "address") {
+      setActiveTab("contact");
+    } else if (activeTab === "contact") {
+      setActiveTab("personal");
+    }
   };
 
   return (
@@ -78,102 +103,142 @@ export const TeamMemberDialog: React.FC<TeamMemberDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Add New Team Member</DialogTitle>
         </DialogHeader>
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="full_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="johndoe@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {entityType === 'doctor' ? (
-                          <>
-                            <SelectItem value="technician">Medical Assistant</SelectItem>
-                            <SelectItem value="nurse">Nurse</SelectItem>
-                            <SelectItem value="intern">Medical Intern</SelectItem>
-                          </>
-                        ) : (
-                          <>
-                            <SelectItem value="pharmacist">Pharmacist</SelectItem>
-                            <SelectItem value="technician">Pharmacy Technician</SelectItem>
-                            <SelectItem value="intern">Pharmacy Intern</SelectItem>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="space-y-2">
-                <Label>Phone Number</Label>
-                <PhoneInput
-                  value={phoneValue}
-                  onChange={setPhoneValue}
-                  placeholder="Enter phone number"
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="personal" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span>Personal</span>
+                </TabsTrigger>
+                <TabsTrigger value="contact" className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  <span>Contact</span>
+                </TabsTrigger>
+                <TabsTrigger value="address" className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>Address</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="personal" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="full_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="johndoe@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {entityType === 'doctor' ? (
+                            <>
+                              <SelectItem value="technician">Medical Assistant</SelectItem>
+                              <SelectItem value="nurse">Nurse</SelectItem>
+                              <SelectItem value="intern">Medical Intern</SelectItem>
+                            </>
+                          ) : (
+                            <>
+                              <SelectItem value="pharmacist">Pharmacist</SelectItem>
+                              <SelectItem value="technician">Pharmacy Technician</SelectItem>
+                              <SelectItem value="intern">Pharmacy Intern</SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Emergency Contact Number</Label>
-              <PhoneInput
-                value={nokPhoneValue}
-                onChange={setNokPhoneValue}
-                placeholder="Enter emergency contact number"
-              />
-            </div>
-
-            <div className="border rounded-lg p-4">
-              <h4 className="font-medium mb-4">Address Information</h4>
-              <AddressFields form={form} />
-            </div>
-
-            <DialogFooter>
+                
+                <div className="flex justify-end">
+                  <Button type="button" onClick={goToNextTab}>Next</Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="contact" className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <PhoneInput
+                    value={phoneValue}
+                    onChange={setPhoneValue}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Emergency Contact Number</Label>
+                  <PhoneInput
+                    value={nokPhoneValue}
+                    onChange={setNokPhoneValue}
+                    placeholder="Enter emergency contact number"
+                  />
+                </div>
+                
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={goToPreviousTab}>
+                    Previous
+                  </Button>
+                  <Button type="button" onClick={goToNextTab}>Next</Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="address" className="space-y-4">
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium mb-4">Address Information</h4>
+                  <AddressFields form={form} />
+                </div>
+                
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={goToPreviousTab}>
+                    Previous
+                  </Button>
+                  <Button type="submit">Add Team Member</Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+            
+            <DialogFooter className={activeTab !== "address" ? "hidden" : ""}>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Add Team Member</Button>
             </DialogFooter>
           </form>
         </Form>

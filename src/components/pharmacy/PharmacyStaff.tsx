@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { TeamMemberDialog } from './team/TeamMemberDialog';
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -34,6 +35,9 @@ interface StaffMember {
 const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 'pharmacy' }) => {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [phoneValue, setPhoneValue] = useState('');
+  const [nokPhoneValue, setNokPhoneValue] = useState('');
   const { profile } = useAuth();
 
   useEffect(() => {
@@ -126,6 +130,17 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
     }
   };
 
+  const handleAddStaff = (data: any) => {
+    console.log('Adding new staff member:', data);
+    toast({
+      title: "Staff Member Added",
+      description: `${data.full_name} has been added to your team.`,
+    });
+    setDialogOpen(false);
+    setPhoneValue('');
+    setNokPhoneValue('');
+  };
+
   const handleViewMember = (memberId: string) => {
     toast({
       title: "View Member",
@@ -153,7 +168,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
         <div className="flex justify-between items-center">
           <CardTitle>Staff Management</CardTitle>
           {entityType === 'pharmacy' && (
-            <Button>
+            <Button onClick={() => setDialogOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
               Add Staff
             </Button>
@@ -244,6 +259,17 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
           </Table>
         )}
       </CardContent>
+
+      <TeamMemberDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={handleAddStaff}
+        phoneValue={phoneValue}
+        setPhoneValue={setPhoneValue}
+        nokPhoneValue={nokPhoneValue}
+        setNokPhoneValue={setNokPhoneValue}
+        entityType={entityType}
+      />
     </Card>
   );
 };

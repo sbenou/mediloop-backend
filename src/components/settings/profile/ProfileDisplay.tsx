@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
@@ -8,9 +9,10 @@ interface ProfileDisplayProps {
   profile: Tables<"profiles"> | null;
   onEdit: () => void;
   onScanCNS: () => void;
+  onAvatarUpdate?: (url: string) => void;
 }
 
-export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayProps) {
+export function ProfileDisplay({ profile, onEdit, onScanCNS, onAvatarUpdate }: ProfileDisplayProps) {
   if (!profile) return null;
 
   console.log('Profile Display - CNS card data:', {
@@ -28,7 +30,10 @@ export function ProfileDisplay({ profile, onEdit, onScanCNS }: ProfileDisplayPro
               <AvatarUpload
                 currentAvatarUrl={profile.avatar_url}
                 onAvatarUpdate={(url) => {
-                  // Profile will be automatically updated through React Query invalidation
+                  console.log("Avatar updated with URL:", url);
+                  if (onAvatarUpdate) {
+                    onAvatarUpdate(url);
+                  }
                 }}
               />
             </div>
