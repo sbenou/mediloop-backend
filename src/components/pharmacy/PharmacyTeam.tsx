@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { UserPlus, Users } from 'lucide-react'; // Properly import Users icon
+import { UserPlus, Users } from 'lucide-react'; 
 import { usePharmacyTeam } from './team/usePharmacyTeam';
 import { TeamMemberDialog } from './team/TeamMemberDialog';
 import { TeamMemberCard } from './team/TeamMemberCard';
@@ -44,7 +44,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
         </div>
       ) : (
         <div className="w-full">
-          {/* If entityType is doctor and there are no team members yet, show doctor profile as first card */}
           {entityType === 'doctor' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {profile && (
@@ -79,9 +78,11 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                 </div>
               ) : null}
             </div>
-          ) : teamMembers.length === 0 ? (
+          )}
+
+          {(entityType !== 'doctor' && teamMembers.length === 0) ? (
             <EmptyTeamState entityType={entityType} />
-          ) : (
+          ) : (entityType !== 'doctor') ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {teamMembers.map(member => (
                 <TeamMemberCard 
@@ -91,7 +92,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                 />
               ))}
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
