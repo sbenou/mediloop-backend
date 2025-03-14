@@ -17,6 +17,12 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { TeamMemberDialog } from './team/TeamMemberDialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -159,6 +165,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
     toast({
       title: "Confirm Termination",
       description: `Are you sure you want to terminate this team member?`,
+      variant: "destructive"
     });
   };
 
@@ -183,80 +190,100 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
             <p className="text-muted-foreground">No staff members found.</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                {entityType === 'pharmacy' && <TableHead className="text-right">Actions</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {staff.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarImage src={member.avatar_url} />
-                        <AvatarFallback>{member.full_name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{member.full_name}</span>
-                        {member.role === 'doctor' && (
-                          <Badge variant="outline" className="mt-1 bg-blue-50 border-blue-200 text-blue-700">
-                            <Shield className="h-3 w-3 mr-1" /> Main Doctor
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{member.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={
-                      member.role === 'doctor' ? 'bg-blue-100 text-blue-800' :
-                      member.role === 'pharmacist' ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-800'
-                    }>
-                      {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={member.status === 'active' ? 'success' : 'destructive'}>
-                      {member.status === 'active' ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                  {entityType === 'pharmacy' && (
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            Actions
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewMember(member.id)}>
-                            <Eye className="h-4 w-4 mr-2" /> View Team Member
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEditMember(member.id)}>
-                            <Edit className="h-4 w-4 mr-2" /> Edit Team Member
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-destructive" 
-                            onClick={() => handleTerminateMember(member.id)}
-                          >
-                            <Trash className="h-4 w-4 mr-2" /> Terminate Team Member
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
+          <TooltipProvider>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {staff.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarImage src={member.avatar_url} />
+                          <AvatarFallback>{member.full_name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{member.full_name}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{member.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={
+                        member.role === 'doctor' ? 'bg-blue-100 text-blue-800' :
+                        member.role === 'pharmacist' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
+                      }>
+                        {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={member.status === 'active' ? 'success' : 'destructive'}>
+                        {member.status === 'active' ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleViewMember(member.id)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View Team Member</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleEditMember(member.id)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit Team Member</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              className="text-destructive hover:text-destructive/90"
+                              onClick={() => handleTerminateMember(member.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Terminate Team Member</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
         )}
       </CardContent>
 
@@ -269,6 +296,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
         nokPhoneValue={nokPhoneValue}
         setNokPhoneValue={setNokPhoneValue}
         entityType={entityType}
+        showAllTabs={true}
       />
     </Card>
   );

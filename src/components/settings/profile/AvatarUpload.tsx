@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,26 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
         const { error: bucketError } = await supabase.storage.createBucket(bucketName, {
           public: true
         });
-        if (bucketError) console.error('Error creating bucket:', bucketError);
+        if (bucketError) {
+          // If bucket already exists, ignore the error
+          if (!bucketError.message.includes('already exists')) {
+            console.error('Error creating bucket:', bucketError);
+            throw bucketError;
+          }
+        }
+      }
+      
+      // Add RLS policy to allow read access to the bucket
+      try {
+        // Check if policy exists by trying to create it (will fail if it exists)
+        await supabase.rpc('create_storage_policy', { 
+          bucket_name: bucketName,
+          policy_name: `${bucketName}_public_read`,
+          definition: `(bucket_id = '${bucketName}' AND role() = 'anon')`
+        });
+      } catch (error) {
+        // Policy might already exist, which is fine
+        console.log('Policy may already exist:', error);
       }
       
       const { error: uploadError, data } = await supabase.storage

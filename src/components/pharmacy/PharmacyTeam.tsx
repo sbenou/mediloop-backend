@@ -80,6 +80,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                     profile_image: profile.avatar_url,
                   }}
                   onToggleActive={() => {}}
+                  showMainDoctorBadge={false}
                 />
               )}
               
@@ -89,6 +90,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                     key={member.id}
                     member={mapTeamMemberToCardMember(member)}
                     onToggleActive={handleCardToggleActive}
+                    showMainDoctorBadge={false}
                   />
                 ))
               ) : profile ? (
@@ -108,6 +110,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                   key={member.id}
                   member={mapTeamMemberToCardMember(member)}
                   onToggleActive={handleCardToggleActive}
+                  showMainDoctorBadge={false}
                 />
               ))}
             </div>
@@ -124,6 +127,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
         nokPhoneValue={nokPhoneValue}
         setNokPhoneValue={setNokPhoneValue}
         entityType={entityType}
+        showAllTabs={true}
       />
     </div>
   );

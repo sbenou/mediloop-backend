@@ -93,9 +93,20 @@ const DoctorAvailabilityCalendar = ({
             endTime: item.end_time || '17:00'
           };
           
+          // If additional_time_slots exists, parse it
+          let allTimeSlots = [defaultSlot];
+          if (item.additional_time_slots) {
+            try {
+              const additionalSlots = JSON.parse(item.additional_time_slots);
+              allTimeSlots = [defaultSlot, ...additionalSlots];
+            } catch (e) {
+              console.error('Error parsing additional time slots:', e);
+            }
+          }
+          
           return {
             ...item,
-            time_slots: [defaultSlot]
+            time_slots: allTimeSlots
           };
         });
         
@@ -199,8 +210,10 @@ const DoctorAvailabilityCalendar = ({
       // We'll just use the first time slot for the main start/end time fields
       // for backward compatibility
       const primaryTimeSlot = timeSlots[0];
+      const additionalTimeSlots = timeSlots.length > 1 ? timeSlots.slice(1) : [];
       
       console.log('Saving time slots:', timeSlots);
+      console.log('Additional time slots:', additionalTimeSlots);
 
       // Find existing record for this day
       const existingDay = availabilityData.find(day => day.day_of_week === selectedDay);
@@ -213,6 +226,7 @@ const DoctorAvailabilityCalendar = ({
             is_available: isAvailable,
             start_time: primaryTimeSlot.startTime,
             end_time: primaryTimeSlot.endTime,
+            additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingDay.id);
@@ -227,6 +241,7 @@ const DoctorAvailabilityCalendar = ({
             day_of_week: selectedDay,
             start_time: primaryTimeSlot.startTime,
             end_time: primaryTimeSlot.endTime,
+            additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
             is_available: isAvailable
           }]);
           
@@ -243,7 +258,8 @@ const DoctorAvailabilityCalendar = ({
           is_available: isAvailable,
           start_time: primaryTimeSlot.startTime,
           end_time: primaryTimeSlot.endTime,
-          time_slots: [...timeSlots]
+          time_slots: [...timeSlots],
+          additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null
         };
       } else {
         updatedAvailabilityData.push({
@@ -252,7 +268,8 @@ const DoctorAvailabilityCalendar = ({
           start_time: primaryTimeSlot.startTime,
           end_time: primaryTimeSlot.endTime,
           is_available: isAvailable,
-          time_slots: [...timeSlots]
+          time_slots: [...timeSlots],
+          additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null
         });
       }
       
@@ -262,6 +279,10 @@ const DoctorAvailabilityCalendar = ({
         title: "Availability saved",
         description: `Your availability for ${DAYS_OF_WEEK[selectedDay]} has been updated.`
       });
+      
+      // Reload the availability data to ensure the UI is up-to-date
+      await loadAvailability();
+      
     } catch (error) {
       console.error('Error saving availability:', error);
       toast({
@@ -286,12 +307,17 @@ const DoctorAvailabilityCalendar = ({
         
       if (deleteError) throw deleteError;
       
+      // Get additional time slots if any
+      const primaryTimeSlot = timeSlots[0];
+      const additionalTimeSlots = timeSlots.length > 1 ? timeSlots.slice(1) : [];
+      
       // Then, insert new availability for all days
       const newAvailabilityRecords = DAYS_OF_WEEK.map((_, index) => ({
         doctor_id: doctorId,
         day_of_week: index,
-        start_time: timeSlots[0].startTime,
-        end_time: timeSlots[0].endTime,
+        start_time: primaryTimeSlot.startTime,
+        end_time: primaryTimeSlot.endTime,
+        additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
         is_available: isAvailable
       }));
       
@@ -305,10 +331,11 @@ const DoctorAvailabilityCalendar = ({
       const updatedAvailabilityData = DAYS_OF_WEEK.map((_, index) => ({
         doctor_id: doctorId,
         day_of_week: index,
-        start_time: timeSlots[0].startTime,
-        end_time: timeSlots[0].endTime,
+        start_time: primaryTimeSlot.startTime,
+        end_time: primaryTimeSlot.endTime,
         is_available: isAvailable,
-        time_slots: [...timeSlots]
+        time_slots: [...timeSlots],
+        additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null
       }));
       
       setAvailabilityData(updatedAvailabilityData);
@@ -317,6 +344,10 @@ const DoctorAvailabilityCalendar = ({
         title: "Availability updated",
         description: "Your availability for all days has been updated."
       });
+      
+      // Reload the availability data to ensure the UI is up-to-date
+      await loadAvailability();
+      
     } catch (error) {
       console.error('Error updating all days:', error);
       toast({
@@ -336,9 +367,26 @@ const DoctorAvailabilityCalendar = ({
       return <span className="text-muted-foreground">Not available</span>;
     }
     
+    // Render the primary time slot
+    let timeDisplay = `${dayData.start_time} - ${dayData.end_time}`;
+    
+    // Add additional time slots if they exist
+    if (dayData.additional_time_slots) {
+      try {
+        const additionalSlots = JSON.parse(dayData.additional_time_slots);
+        if (additionalSlots && additionalSlots.length > 0) {
+          additionalSlots.forEach((slot: TimeSlot) => {
+            timeDisplay += `\n${slot.startTime} - ${slot.endTime}`;
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing additional time slots:', e);
+      }
+    }
+    
     return (
-      <span className="text-green-600 font-medium">
-        {dayData.start_time} - {dayData.end_time}
+      <span className="text-green-600 font-medium whitespace-pre-line">
+        {timeDisplay}
       </span>
     );
   };
