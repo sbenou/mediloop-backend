@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -230,6 +231,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       // Convert canvas to data URL
       const dataUrl = stampCanvas.toDataURL({
         format: 'png',
+        multiplier: 1,
         quality: 1
       });
       
@@ -303,6 +305,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       // Convert canvas to data URL
       const dataUrl = signatureCanvas.toDataURL({
         format: 'png',
+        multiplier: 1,
         quality: 1
       });
       

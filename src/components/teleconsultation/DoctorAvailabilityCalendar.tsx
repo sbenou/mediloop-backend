@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,7 +76,7 @@ const DoctorAvailabilityCalendar = ({
       
       if (data && data.length > 0) {
         // Transform data to include time_slots array
-        const processedData = data.map(item => {
+        const processedData: DoctorAvailability[] = data.map(item => {
           // Parse any stored time slots or create default
           const defaultSlot = {
             startTime: item.start_time || '09:00',
@@ -97,10 +98,10 @@ const DoctorAvailabilityCalendar = ({
             ...item,
             time_slots: allTimeSlots,
             additional_time_slots: item.additional_time_slots
-          };
+          } as DoctorAvailability;
         });
         
-        setAvailabilityData(processedData as DoctorAvailability[]);
+        setAvailabilityData(processedData);
       } else {
         // Initialize default availability for all days if none exists
         const defaultAvailability: DoctorAvailability[] = DAYS_OF_WEEK.map((_, index) => ({
@@ -112,7 +113,10 @@ const DoctorAvailabilityCalendar = ({
           time_slots: [{
             startTime: '09:00',
             endTime: '17:00'
-          }]
+          }],
+          id: `temp-${index}`,  // Temporary ID for new records
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }));
         setAvailabilityData(defaultAvailability);
       }
@@ -208,7 +212,7 @@ const DoctorAvailabilityCalendar = ({
       // Find existing record for this day
       const existingDay = availabilityData.find(day => day.day_of_week === selectedDay);
       
-      if (existingDay?.id) {
+      if (existingDay?.id && !existingDay.id.includes('temp-')) {
         // Update existing record
         const { error } = await supabase
           .from('doctor_availability')
@@ -224,7 +228,7 @@ const DoctorAvailabilityCalendar = ({
         if (error) throw error;
       } else {
         // Insert new record
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from('doctor_availability')
           .insert([{
             doctor_id: doctorId,
@@ -233,45 +237,19 @@ const DoctorAvailabilityCalendar = ({
             end_time: primaryTimeSlot.endTime,
             additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
             is_available: isAvailable
-          }]);
+          }])
+          .select();
           
         if (error) throw error;
       }
 
-      // Update local state to reflect the changes
-      const updatedAvailabilityData = [...availabilityData];
-      const dayIndex = updatedAvailabilityData.findIndex(day => day.day_of_week === selectedDay);
-      
-      if (dayIndex !== -1) {
-        updatedAvailabilityData[dayIndex] = {
-          ...updatedAvailabilityData[dayIndex],
-          is_available: isAvailable,
-          start_time: primaryTimeSlot.startTime,
-          end_time: primaryTimeSlot.endTime,
-          time_slots: [...timeSlots],
-          additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null
-        };
-      } else {
-        updatedAvailabilityData.push({
-          doctor_id: doctorId,
-          day_of_week: selectedDay,
-          start_time: primaryTimeSlot.startTime,
-          end_time: primaryTimeSlot.endTime,
-          is_available: isAvailable,
-          time_slots: [...timeSlots],
-          additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null
-        });
-      }
-      
-      setAvailabilityData(updatedAvailabilityData);
+      // Reload data after update
+      await loadAvailability();
       
       toast({
         title: "Availability saved",
         description: `Your availability for ${DAYS_OF_WEEK[selectedDay]} has been updated.`
       });
-      
-      // Reload the availability data to ensure the UI is up-to-date
-      await loadAvailability();
       
     } catch (error) {
       console.error('Error saving availability:', error);
@@ -317,26 +295,13 @@ const DoctorAvailabilityCalendar = ({
         
       if (insertError) throw insertError;
       
-      // Update local state
-      const updatedAvailabilityData = DAYS_OF_WEEK.map((_, index) => ({
-        doctor_id: doctorId,
-        day_of_week: index,
-        start_time: primaryTimeSlot.startTime,
-        end_time: primaryTimeSlot.endTime,
-        is_available: isAvailable,
-        time_slots: [...timeSlots],
-        additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null
-      }));
-      
-      setAvailabilityData(updatedAvailabilityData);
+      // Reload the data to ensure we have the correct IDs and timestamps
+      await loadAvailability();
       
       toast({
         title: "Availability updated",
         description: "Your availability for all days has been updated."
       });
-      
-      // Reload the availability data to ensure the UI is up-to-date
-      await loadAvailability();
       
     } catch (error) {
       console.error('Error updating all days:', error);

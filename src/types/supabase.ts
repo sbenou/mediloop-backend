@@ -28,6 +28,9 @@ export type Teleconsultation = Tables<'teleconsultations'>
 export type DoctorAvailability = Tables<'doctor_availability'> & {
   additional_time_slots?: string | null;
   time_slots?: Array<{ startTime: string; endTime: string }>;
+  created_at: string;
+  updated_at: string;
+  id: string;
 }
 
 // Define a custom type for doctor workplace since it's not in the generated types yet
