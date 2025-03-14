@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Pencil, Save, Trash, Undo, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Canvas, Image as FabricImage } from "fabric";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface DoctorStampSignatureProps {
   stampUrl: string | null;
@@ -18,6 +20,7 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<'stamp' | 'signature'>('stamp');
   const [drawMode, setDrawMode] = useState<'upload' | 'draw'>('upload');
+  const [penColor, setPenColor] = useState<string>("#000000");
   const stampCanvasRef = useRef<HTMLCanvasElement>(null);
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const fabricStampCanvasRef = useRef<Canvas | null>(null);
@@ -36,7 +39,7 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
       
       if (fabricStampCanvasRef.current.freeDrawingBrush) {
         fabricStampCanvasRef.current.freeDrawingBrush.width = 3;
-        fabricStampCanvasRef.current.freeDrawingBrush.color = '#000000';
+        fabricStampCanvasRef.current.freeDrawingBrush.color = penColor;
       }
     }
 
@@ -50,7 +53,7 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
       
       if (fabricSignatureCanvasRef.current.freeDrawingBrush) {
         fabricSignatureCanvasRef.current.freeDrawingBrush.width = 2;
-        fabricSignatureCanvasRef.current.freeDrawingBrush.color = '#000000';
+        fabricSignatureCanvasRef.current.freeDrawingBrush.color = penColor;
       }
     }
 
@@ -65,12 +68,28 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
     if (drawMode === 'draw') {
       if (fabricStampCanvasRef.current) {
         fabricStampCanvasRef.current.isDrawingMode = true;
+        if (fabricStampCanvasRef.current.freeDrawingBrush) {
+          fabricStampCanvasRef.current.freeDrawingBrush.color = penColor;
+        }
       }
       if (fabricSignatureCanvasRef.current) {
         fabricSignatureCanvasRef.current.isDrawingMode = true;
+        if (fabricSignatureCanvasRef.current.freeDrawingBrush) {
+          fabricSignatureCanvasRef.current.freeDrawingBrush.color = penColor;
+        }
       }
     }
-  }, [drawMode]);
+  }, [drawMode, penColor]);
+
+  // Update pen color when it changes
+  useEffect(() => {
+    if (fabricStampCanvasRef.current && fabricStampCanvasRef.current.freeDrawingBrush) {
+      fabricStampCanvasRef.current.freeDrawingBrush.color = penColor;
+    }
+    if (fabricSignatureCanvasRef.current && fabricSignatureCanvasRef.current.freeDrawingBrush) {
+      fabricSignatureCanvasRef.current.freeDrawingBrush.color = penColor;
+    }
+  }, [penColor]);
 
   // Load images if they exist
   useEffect(() => {
@@ -276,6 +295,18 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
     setDrawMode('upload');
   };
 
+  const handlePenColorChange = (color: string) => {
+    setPenColor(color);
+    
+    if (fabricStampCanvasRef.current && fabricStampCanvasRef.current.freeDrawingBrush) {
+      fabricStampCanvasRef.current.freeDrawingBrush.color = color;
+    }
+    
+    if (fabricSignatureCanvasRef.current && fabricSignatureCanvasRef.current.freeDrawingBrush) {
+      fabricSignatureCanvasRef.current.freeDrawingBrush.color = color;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -348,6 +379,41 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
                 </div>
               ) : (
                 <div className="space-y-4">
+                  <div className="flex space-x-4 items-center">
+                    <Label>Pen Color:</Label>
+                    <RadioGroup 
+                      defaultValue={penColor} 
+                      value={penColor}
+                      onValueChange={handlePenColorChange}
+                      className="flex space-x-2"
+                    >
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem 
+                          value="#000000" 
+                          id="black" 
+                          className="h-4 w-4 rounded-full bg-black hover:bg-gray-800" 
+                        />
+                        <Label htmlFor="black">Black</Label>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem 
+                          value="#0000FF" 
+                          id="blue" 
+                          className="h-4 w-4 rounded-full bg-blue-600 hover:bg-blue-700" 
+                        />
+                        <Label htmlFor="blue">Blue</Label>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem 
+                          value="#FF0000" 
+                          id="red" 
+                          className="h-4 w-4 rounded-full bg-red-600 hover:bg-red-700" 
+                        />
+                        <Label htmlFor="red">Red</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  
                   <div className="border rounded-md p-2 bg-white">
                     <canvas ref={stampCanvasRef} />
                   </div>
@@ -444,6 +510,41 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
                 </div>
               ) : (
                 <div className="space-y-4">
+                  <div className="flex space-x-4 items-center">
+                    <Label>Pen Color:</Label>
+                    <RadioGroup 
+                      defaultValue={penColor} 
+                      value={penColor}
+                      onValueChange={handlePenColorChange}
+                      className="flex space-x-2"
+                    >
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem 
+                          value="#000000" 
+                          id="black-sig" 
+                          className="h-4 w-4 rounded-full bg-black hover:bg-gray-800" 
+                        />
+                        <Label htmlFor="black-sig">Black</Label>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem 
+                          value="#0000FF" 
+                          id="blue-sig" 
+                          className="h-4 w-4 rounded-full bg-blue-600 hover:bg-blue-700" 
+                        />
+                        <Label htmlFor="blue-sig">Blue</Label>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem 
+                          value="#FF0000" 
+                          id="red-sig" 
+                          className="h-4 w-4 rounded-full bg-red-600 hover:bg-red-700" 
+                        />
+                        <Label htmlFor="red-sig">Red</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                
                   <div className="border rounded-md p-2 bg-white">
                     <canvas ref={signatureCanvasRef} />
                   </div>

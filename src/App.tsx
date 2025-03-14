@@ -18,6 +18,7 @@ import CreatePrescription from './pages/CreatePrescription';
 import MyPrescriptions from './pages/MyPrescriptions';
 import Teleconsultations from './pages/Teleconsultations';
 import DoctorDashboard from './pages/DoctorDashboard';
+import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -84,7 +85,7 @@ function App() {
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/admin-settings" element={<AdminSettings />} />
                   <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
-                  <Route path="/doctor/profile" element={<DoctorProfile />} />
+                  <Route path="/doctor/profile" element={<DoctorProfilePage />} />
                   <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
                 </Routes>

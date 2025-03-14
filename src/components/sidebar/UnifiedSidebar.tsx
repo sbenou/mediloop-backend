@@ -45,6 +45,11 @@ const UnifiedSidebar = () => {
     console.log('Navigating to pharmacy profile from UnifiedSidebar');
     navigate('/pharmacy/profile');
   };
+  
+  const navigateToDoctorProfile = () => {
+    console.log('Navigating to doctor profile from UnifiedSidebar');
+    navigate('/doctor/profile');
+  };
 
   const platformMenuItems = [
     {
@@ -240,6 +245,7 @@ const UnifiedSidebar = () => {
         }}
         navigateToUpgrade={() => navigate('/upgrade')}
         navigateToPharmacyProfile={userRole === 'pharmacist' ? navigateToPharmacyProfile : undefined}
+        navigateToDoctorProfile={userRole === 'doctor' ? navigateToDoctorProfile : undefined}
         handleFileChange={handleFileChange}
       />
     </aside>
