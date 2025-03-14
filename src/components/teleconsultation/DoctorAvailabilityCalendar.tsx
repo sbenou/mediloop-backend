@@ -89,8 +89,9 @@ const DoctorAvailabilityCalendar = ({
           let additionalTimeSlots: string | null = null;
           
           try {
-            // Handle the case where additional_time_slots might not exist in the database yet
-            if (item.additional_time_slots) {
+            // Handle additional_time_slots if it exists in the database
+            // TypeScript now knows the property exists on our updated interface
+            if ('additional_time_slots' in item && item.additional_time_slots) {
               console.log('Parsing additional time slots:', item.additional_time_slots);
               // Handle both string and already parsed object
               if (typeof item.additional_time_slots === 'string') {
@@ -448,7 +449,7 @@ const DoctorAvailabilityCalendar = ({
     let timeDisplay = `${dayData.start_time} - ${dayData.end_time}`;
     
     // Add additional time slots if they exist
-    if (dayData.additional_time_slots) {
+    if ('additional_time_slots' in dayData && dayData.additional_time_slots) {
       try {
         const additionalSlots = typeof dayData.additional_time_slots === 'string' 
           ? JSON.parse(dayData.additional_time_slots)
