@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,12 +9,13 @@ import {
   ChevronRight, 
   Calendar as CalendarIcon, 
   Loader2,
-  Clock
+  Clock,
+  Plus
 } from "lucide-react";
-import { format, addDays, startOfWeek, isSameDay, parseISO, isWithinInterval } from "date-fns";
+import { format, addDays, startOfWeek, isSameDay, parseISO, isWithinInterval, addHours, parse } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { BankHoliday, DoctorAvailability, TimeSlot, SupportedCountry, isTimeSlot } from "@/types/supabase";
+import { BankHoliday, DoctorAvailability, TimeSlot, SupportedCountry, isTimeSlot, Teleconsultation } from "@/types/supabase";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/auth/useAuth";
 
@@ -23,6 +25,9 @@ interface AvailabilityWeeklyCalendarProps {
   isManagementMode?: boolean;
   showBankHolidays?: boolean;
 }
+
+// Create array of hours from 8 AM to 8 PM
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 8);
 
 const AvailabilityWeeklyCalendar = ({
   doctorId,
@@ -34,6 +39,7 @@ const AvailabilityWeeklyCalendar = ({
   const [currentWeek, setCurrentWeek] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [isLoading, setIsLoading] = useState(true);
   const [doctorAvailability, setDoctorAvailability] = useState<DoctorAvailability[]>([]);
+  const [teleconsultations, setTeleconsultations] = useState<Teleconsultation[]>([]);
   const [bankHolidays, setBankHolidays] = useState<BankHoliday[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<SupportedCountry>("Luxembourg");
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | undefined>(doctorId);
@@ -124,6 +130,34 @@ const AvailabilityWeeklyCalendar = ({
     };
     
     fetchDoctorAvailability();
+  }, [selectedDoctorId]);
+
+  // Fetch teleconsultations data
+  useEffect(() => {
+    const fetchTeleconsultations = async () => {
+      if (!selectedDoctorId) {
+        setTeleconsultations([]);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('teleconsultations')
+          .select('*')
+          .eq('doctor_id', selectedDoctorId)
+          .eq('status', 'confirmed');
+        
+        if (error) {
+          throw error;
+        }
+        
+        setTeleconsultations(data || []);
+      } catch (error) {
+        console.error('Error fetching teleconsultations:', error);
+      }
+    };
+    
+    fetchTeleconsultations();
   }, [selectedDoctorId]);
   
   // Fetch bank holidays
@@ -228,37 +262,41 @@ const AvailabilityWeeklyCalendar = ({
     
     return `${formattedHour}:${minutes} ${ampm}`;
   };
-  
-  // Render time slots for a day
-  const renderTimeSlots = (dayOfWeek: number) => {
+
+  // Check if a time slot is available for a specific day and hour
+  const isTimeSlotAvailable = (day: Date, hour: number) => {
+    const dayOfWeek = day.getDay();
     const availability = getDayAvailability(dayOfWeek);
     
     if (!availability || !availability.is_available || !availability.time_slots || availability.time_slots.length === 0) {
-      return <div className="text-gray-400 text-sm">Not available</div>;
+      return false;
     }
     
-    return (
-      <div className="space-y-1 mt-2">
-        {availability.time_slots.map((slot, index) => (
-          <div 
-            key={index} 
-            className="flex items-center text-sm bg-green-50 text-green-700 p-1 rounded"
-          >
-            <Clock className="h-3 w-3 mr-1" />
-            <span>
-              {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
+    // Check if the hour is within any of the available time slots
+    return availability.time_slots.some(slot => {
+      const startHour = parseInt(slot.startTime.split(':')[0], 10);
+      const endHour = parseInt(slot.endTime.split(':')[0], 10);
+      return hour >= startHour && hour < endHour;
+    });
   };
-  
-  // Determine if day has teleconsultations (placeholder for future implementation)
-  const hasTeleconsultations = (date: Date) => {
-    // This would check against booked teleconsultations for this doctor on this date
-    // Placeholder for now
-    return false;
+
+  // Check if there's a teleconsultation at a specific day and hour
+  const getTeleconsultationAtTime = (day: Date, hour: number) => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    
+    return teleconsultations.find(consultation => {
+      const consultationDate = format(new Date(consultation.start_time), 'yyyy-MM-dd');
+      if (consultationDate !== dayStr) return false;
+      
+      const startHour = new Date(consultation.start_time).getHours();
+      const endHour = new Date(consultation.end_time).getHours();
+      const endMinutes = new Date(consultation.end_time).getMinutes();
+      
+      // If end minutes are 0 and the hour equals the endHour, we don't want to include that hour
+      const adjustedEndHour = endMinutes === 0 ? endHour : endHour + 1;
+      
+      return hour >= startHour && hour < adjustedEndHour;
+    });
   };
 
   return (
@@ -268,7 +306,7 @@ const AvailabilityWeeklyCalendar = ({
           <div>
             <CardTitle>Weekly Availability Calendar</CardTitle>
             <CardDescription>
-              View {doctorName} schedule including available time slots and bank holidays
+              View {doctorName} schedule including available time slots and booked consultations
             </CardDescription>
           </div>
           
@@ -331,6 +369,21 @@ const AvailabilityWeeklyCalendar = ({
             </div>
           )}
         </div>
+
+        <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-green-100 rounded mr-1"></div>
+            <span className="text-xs">Available</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-red-100 rounded mr-1"></div>
+            <span className="text-xs">Booked</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-gray-100 rounded mr-1"></div>
+            <span className="text-xs">Unavailable</span>
+          </div>
+        </div>
       </CardHeader>
       
       <CardContent>
@@ -340,51 +393,70 @@ const AvailabilityWeeklyCalendar = ({
             <span className="ml-2">Loading calendar data...</span>
           </div>
         ) : (
-          <div className="grid grid-cols-7 gap-1 md:gap-2">
-            {/* Day headers */}
-            {weekDays.map((day, index) => (
-              <div 
-                key={`header-${index}`} 
-                className="text-center font-medium p-2"
-              >
-                <div>{format(day, 'EEE')}</div>
-                <div className="text-sm">{format(day, 'MMM d')}</div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[600px]">
+              {/* Day headers */}
+              <div className="grid grid-cols-8 border-b">
+                <div className="p-2 font-medium text-center border-r"></div>
+                {weekDays.map((day, index) => {
+                  const holiday = isBankHoliday(day);
+                  const isToday = isSameDay(day, new Date());
+                  
+                  return (
+                    <div 
+                      key={`header-${index}`} 
+                      className={`
+                        p-2 text-center font-medium border-r
+                        ${isToday ? 'bg-blue-50' : ''}
+                        ${holiday ? 'bg-red-50' : ''}
+                      `}
+                    >
+                      <div>{format(day, 'EEE')}</div>
+                      <div className="text-sm">{format(day, 'MMM d')}</div>
+                      {holiday && (
+                        <Badge variant="destructive" className="mt-1 text-xs">
+                          {holiday.holiday_name}
+                        </Badge>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-            
-            {/* Calendar cells */}
-            {weekDays.map((day, index) => {
-              const dayOfWeek = day.getDay();
-              const availability = getDayAvailability(dayOfWeek);
-              const holiday = isBankHoliday(day);
-              const hasTeleconsultation = hasTeleconsultations(day);
-              const isToday = isSameDay(day, new Date());
               
-              return (
-                <div
-                  key={`cell-${index}`}
-                  className={`
-                    p-2 border rounded-md min-h-[120px] flex flex-col
-                    ${isToday ? 'border-primary' : 'border-gray-200'}
-                    ${holiday ? 'bg-red-50' : availability?.is_available ? 'bg-green-50/50' : 'bg-gray-50/50'}
-                  `}
-                >
-                  {holiday && (
-                    <Badge variant="destructive" className="self-start mb-1">
-                      {holiday.holiday_name}
-                    </Badge>
-                  )}
+              {/* Hours and time slots */}
+              {HOURS.map(hour => (
+                <div key={`hour-${hour}`} className="grid grid-cols-8 border-b">
+                  {/* Hour column */}
+                  <div className="p-2 border-r text-center font-medium">
+                    {hour}:00
+                  </div>
                   
-                  {renderTimeSlots(dayOfWeek)}
-                  
-                  {hasTeleconsultation && (
-                    <Badge className="self-start mt-auto mb-1 bg-blue-500">
-                      Appointments
-                    </Badge>
-                  )}
+                  {/* Days columns */}
+                  {weekDays.map((day, dayIndex) => {
+                    const isAvailable = isTimeSlotAvailable(day, hour);
+                    const teleconsultation = getTeleconsultationAtTime(day, hour);
+                    const holiday = isBankHoliday(day);
+                    
+                    return (
+                      <div 
+                        key={`cell-${dayIndex}-${hour}`} 
+                        className={`
+                          p-2 border-r h-16 relative
+                          ${holiday ? 'bg-gray-50' : isAvailable ? 'bg-green-100' : 'bg-gray-50'}
+                          ${teleconsultation ? 'bg-red-100' : ''}
+                        `}
+                      >
+                        {teleconsultation && (
+                          <div className="text-xs p-1 bg-red-200 rounded">
+                            Teleconsultation
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

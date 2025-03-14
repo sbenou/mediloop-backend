@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, isPast, isToday, addMinutes } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -269,14 +268,13 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
     return (
       <Card>
         <CardContent className="pt-6 text-center">
-          <p className="text-muted-foreground">You have no teleconsultations.</p>
-          <p className="mt-2">You might need to connect with a doctor first.</p>
+          <p className="text-muted-foreground">Error loading teleconsultations.</p>
           <Button 
             variant="outline" 
             className="mt-4"
-            onClick={() => window.location.href = '/dashboard?view=profile&profileTab=doctor'}
+            onClick={fetchConsultations}
           >
-            Connect with Doctors
+            Try Again
           </Button>
         </CardContent>
       </Card>
