@@ -148,11 +148,12 @@ const DoctorAvailabilityCalendar = ({
   };
 
   const addTimeSlot = () => {
-    // For now, we're limiting to one time slot per day for simplicity
-    toast({
-      title: "Feature limitation",
-      description: "Currently only one time slot per day is supported."
+    const newTimeSlots = [...timeSlots];
+    newTimeSlots.push({
+      startTime: '01:00 PM',
+      endTime: '05:00 PM'
     });
+    setTimeSlots(newTimeSlots);
   };
 
   const removeTimeSlot = (index: number) => {
@@ -174,6 +175,10 @@ const DoctorAvailabilityCalendar = ({
     try {
       setIsSaving(true);
 
+      // For now we support one time slot, using the first one
+      // Future enhancement: Store multiple time slots in the DB
+      const timeSlot = timeSlots[0];
+
       // Find existing record for this day
       const existingDay = availabilityData.find(day => day.day_of_week === selectedDay);
       
@@ -183,8 +188,8 @@ const DoctorAvailabilityCalendar = ({
           .from('doctor_availability')
           .update({
             is_available: isAvailable,
-            start_time: timeSlots[0].startTime,
-            end_time: timeSlots[0].endTime,
+            start_time: timeSlot.startTime,
+            end_time: timeSlot.endTime,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingDay.id);
@@ -197,8 +202,8 @@ const DoctorAvailabilityCalendar = ({
           .insert([{
             doctor_id: doctorId,
             day_of_week: selectedDay,
-            start_time: timeSlots[0].startTime,
-            end_time: timeSlots[0].endTime,
+            start_time: timeSlot.startTime,
+            end_time: timeSlot.endTime,
             is_available: isAvailable
           }]);
           
@@ -396,7 +401,6 @@ const DoctorAvailabilityCalendar = ({
                     size="sm"
                     onClick={addTimeSlot}
                     className="mt-2"
-                    disabled={timeSlots.length >= 1} // Limit to one time slot for now
                   >
                     <Plus className="h-4 w-4 mr-1" /> Add time slot
                   </Button>

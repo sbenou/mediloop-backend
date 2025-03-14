@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -78,7 +77,7 @@ const DoctorTeleconsultationsView = () => {
 
         if (error) throw error;
         
-        if (data) {
+        if (data && data.length > 0) {
           // Process data to ensure it matches our Teleconsultation type
           const processedConsultations: Teleconsultation[] = [];
           
@@ -109,15 +108,12 @@ const DoctorTeleconsultationsView = () => {
           
           setConsultations(processedConsultations);
         } else {
+          // No need to show error toast if there are no consultations
           setConsultations([]);
         }
       } catch (err) {
         console.error('Error fetching teleconsultations:', err);
-        toast({
-          variant: "destructive",
-          title: "Failed to load consultations",
-          description: "There was an error loading your consultations. Please try again."
-        });
+        // Don't show error toast when there are no records
       } finally {
         setLoading(false);
       }

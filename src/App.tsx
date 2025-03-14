@@ -17,6 +17,7 @@ import EmailConfirmationHandler from './components/auth/EmailConfirmationHandler
 import CreatePrescription from './pages/CreatePrescription';
 import MyPrescriptions from './pages/MyPrescriptions';
 import Teleconsultations from './pages/Teleconsultations';
+import DoctorDashboard from './pages/DoctorDashboard';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -41,7 +42,6 @@ const EditPrescription = () => <PlaceholderPage title="Edit Prescription" />;
 const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
 const PharmacyProfile = () => <PlaceholderPage title="Pharmacy Profile" />;
-const DoctorProfile = () => <PlaceholderPage title="Doctor Profile" />;
 
 function App() {
   return (
@@ -71,7 +71,7 @@ function App() {
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/admin-settings" element={<AdminSettings />} />
                   <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
-                  <Route path="/doctor/profile" element={<DoctorProfile />} />
+                  <Route path="/doctor/profile" element={<DoctorDashboard />} />
                   <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
                 </Routes>

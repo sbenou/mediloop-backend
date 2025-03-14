@@ -53,7 +53,7 @@ const DoctorSidebar = () => {
   // Navigate to doctor profile
   const navigateToDoctorProfile = () => {
     console.log('Navigating to doctor profile from DoctorSidebar');
-    window.location.href = '/doctor/profile';
+    navigate('/doctor/profile');
   };
 
   return (
@@ -94,7 +94,7 @@ const DoctorSidebar = () => {
             icon={<Stamp className="w-5 h-5 mr-3" />}
             label="Stamp & Signature"
             isActive={isPharmacistSectionActive('stamp')}
-            onClick={() => navigateToDoctorView('stamp')}
+            onClick={() => navigateToDoctorView('profile', 'stamp', 'profileTab')}
           />
           
           <SidebarCollapsibleItem 
