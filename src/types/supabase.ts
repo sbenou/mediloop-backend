@@ -7,6 +7,7 @@ export type ConnectionStatus = Database['public']['Enums']['connection_status'];
 export type OrderStatus = Database['public']['Enums']['order_status'];
 export type PrescriptionStatus = Database['public']['Enums']['prescription_status'];
 export type TeleconsultationStatus = Database['public']['Enums']['teleconsultation_status'];
+export type SupportedCountry = Database['public']['Enums']['supported_country'];
 
 // Specific table type exports using the Tables helper type
 export type Address = Tables<'addresses'>
@@ -23,6 +24,7 @@ export type Subcategory = Tables<'subcategories'>
 export type UserPharmacy = Tables<'user_pharmacies'>
 export type Notification = Tables<'notifications'>
 export type Teleconsultation = Tables<'teleconsultations'>
+export type BankHoliday = Tables<'bank_holidays'>
 
 // Define TimeSlot interface for doctor availability
 export interface TimeSlot {

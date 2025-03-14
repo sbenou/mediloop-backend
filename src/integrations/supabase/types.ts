@@ -48,6 +48,33 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_holidays: {
+        Row: {
+          country: Database["public"]["Enums"]["supported_country"]
+          created_at: string
+          holiday_date: string
+          holiday_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          country: Database["public"]["Enums"]["supported_country"]
+          created_at?: string
+          holiday_date: string
+          holiday_name: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          country?: Database["public"]["Enums"]["supported_country"]
+          created_at?: string
+          holiday_date?: string
+          holiday_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -887,6 +914,7 @@ export type Database = {
         | "delivered"
         | "cancelled"
       prescription_status: "draft" | "active" | "completed"
+      supported_country: "Luxembourg" | "France"
       teleconsultation_status:
         | "pending"
         | "confirmed"

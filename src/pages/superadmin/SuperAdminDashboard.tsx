@@ -1,127 +1,81 @@
 
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import SuperAdminSidebar from "@/components/sidebar/SuperAdminSidebar";
+import React, { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminTabs } from "@/components/admin/tabs/AdminTabs";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DashboardCards } from "@/components/admin/DashboardCards";
-import { useDashboardStats } from "@/hooks/admin/useDashboardStats";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import PasswordChange from "@/components/settings/PasswordChange";
-import AccountDeletion from "@/components/settings/AccountDeletion";
+import BankHolidayManager from "@/components/admin/BankHolidayManager";
 
 const SuperAdminDashboard = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { profile, isLoading, isAuthenticated } = useAuth();
-  const { data, isLoading: statsLoading } = useDashboardStats();
+  const { profile } = useAuth();
+  const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Check which page we're on within the superadmin section
-  const isSettingsPage = location.pathname === '/superadmin/settings';
-  const isProfilePage = location.pathname === '/superadmin/profile';
-  const isNotificationsPage = location.pathname === '/superadmin/notifications';
-  const isBillingPage = location.pathname === '/superadmin/billing';
-  const isUpgradePage = location.pathname === '/superadmin/upgrade';
-
-  // Redirect non-superadmin users
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || profile?.role !== 'superadmin')) {
-      console.log("Not authorized as superadmin, redirecting to login");
-      navigate('/login');
-    }
-  }, [isAuthenticated, profile, isLoading, navigate]);
-
-  // Show loading state
-  if (isLoading) {
+  if (!profile || profile.role !== 'superadmin') {
     return (
-      <div className="flex h-screen w-full">
-        <div className="w-64 bg-gray-100">
-          <Skeleton className="h-full w-full" />
-        </div>
-        <div className="flex-1 p-8">
-          <Skeleton className="h-12 w-1/3 mb-6" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        </div>
+      <div className="container py-10">
+        <Card>
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>
+              You don't have permission to access this area. This dashboard is only for superadmin users.
+            </CardDescription>
+          </CardHeader>
+        </Card>
       </div>
     );
   }
 
-  // If not authenticated or not a superadmin, don't render anything
-  if (!isAuthenticated || profile?.role !== 'superadmin') {
-    return null; // Will be redirected by useEffect
-  }
-
-  // Function to handle dashboard card clicks but only within the admin settings section
-  const handleAdminTabChange = (value: string) => {
-    navigate(`/admin-settings?tab=${value}`);
-  };
-
   return (
-    <div className="flex h-screen overflow-hidden">
-      <SuperAdminSidebar />
-      
-      <div className="flex-1 overflow-auto">
-        <main className="p-8">
-          {/* Show appropriate content based on the current route */}
-          {isSettingsPage ? (
-            <>
-              <h1 className="text-3xl font-bold mb-6">Account Settings</h1>
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-left">Password Management</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <PasswordChange />
-                  </CardContent>
-                </Card>
+    <div className="container py-10">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-2xl">Super Admin Dashboard</CardTitle>
+          <CardDescription>
+            Manage all aspects of the healthcare platform
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-left">Danger Zone</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <AccountDeletion />
-                  </CardContent>
-                </Card>
-              </div>
-            </>
-          ) : isProfilePage ? (
-            <>
-              <h1 className="text-3xl font-bold mb-6">SuperAdmin Profile</h1>
-              <p>Welcome to your profile, {profile?.full_name || 'SuperAdmin'}!</p>
-              <p className="mt-4">Email: {profile?.email || 'No email found'}</p>
-              <p className="mt-2">Role: {profile?.role || 'superadmin'}</p>
-            </>
-          ) : isNotificationsPage ? (
-            <>
-              <h1 className="text-3xl font-bold mb-6">Notifications</h1>
-              <p>Your notification settings and history will appear here.</p>
-            </>
-          ) : isBillingPage ? (
-            <>
-              <h1 className="text-3xl font-bold mb-6">Billing</h1>
-              <p>Your billing information and subscription details will appear here.</p>
-            </>
-          ) : isUpgradePage ? (
-            <>
-              <h1 className="text-3xl font-bold mb-6">Upgrade Plan</h1>
-              <p>Available upgrade options and plan details will appear here.</p>
-            </>
-          ) : (
-            <>
-              <h1 className="text-3xl font-bold mb-6">SuperAdmin Dashboard</h1>
-              <DashboardCards onCardClick={handleAdminTabChange} />
-            </>
-          )}
-        </main>
-      </div>
-      <Toaster />
+      <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="roles">Roles</TabsTrigger>
+          <TabsTrigger value="bank-holidays">Bank Holidays</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard">
+          <AdminTabs />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>Manage all users in the system</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>User management interface will be available here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="roles">
+          <Card>
+            <CardHeader>
+              <CardTitle>Role Management</CardTitle>
+              <CardDescription>Manage roles and permissions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Role management interface will be available here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="bank-holidays">
+          <BankHolidayManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
