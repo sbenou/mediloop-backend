@@ -101,7 +101,9 @@ const AvailabilityWeeklyCalendar = ({
             ...item,
             additional_time_slots: typeof item.additional_time_slots === 'object' 
               ? JSON.stringify(item.additional_time_slots) 
-              : item.additional_time_slots,
+              : item.additional_time_slots === null 
+                ? null 
+                : String(item.additional_time_slots), // Convert to string if it's a number or boolean
             time_slots: timeSlots
           };
           
