@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCheck, UserMinus, Trash, Edit, Eye } from 'lucide-react';
+import { UserCheck, UserMinus, Trash, Edit, Eye, MoreVertical } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -95,9 +95,9 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
       </CardHeader>
       <CardContent className="pt-0 pb-4">
         <div className="flex flex-col items-center -mt-12">
-          <Avatar className="h-24 w-24 border-4 border-white">
-            <AvatarImage src={member.profile_image || undefined} alt={member.full_name} />
-            <AvatarFallback className="text-lg">{getInitials(member.full_name)}</AvatarFallback>
+          <Avatar className="h-24 w-24 border-4 border-white rounded-full">
+            <AvatarImage src={member.profile_image || undefined} alt={member.full_name} className="rounded-full" />
+            <AvatarFallback className="text-lg rounded-full">{getInitials(member.full_name)}</AvatarFallback>
           </Avatar>
           
           <h3 className="font-medium text-lg mt-2">{member.full_name}</h3>
@@ -131,7 +131,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  Actions
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

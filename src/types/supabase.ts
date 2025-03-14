@@ -23,7 +23,10 @@ export type Subcategory = Tables<'subcategories'>
 export type UserPharmacy = Tables<'user_pharmacies'>
 export type Notification = Tables<'notifications'>
 export type Teleconsultation = Tables<'teleconsultations'>
-export type DoctorAvailability = Tables<'doctor_availability'>
+export type DoctorAvailability = Tables<'doctor_availability'> & {
+  additional_time_slots?: string | null;
+  time_slots?: Array<{ startTime: string; endTime: string }>;
+}
 
 // Define a custom type for doctor workplace since it's not in the generated types yet
 export interface DoctorWorkplace {
