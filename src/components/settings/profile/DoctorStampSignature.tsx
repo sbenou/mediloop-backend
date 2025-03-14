@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -69,7 +68,9 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
         if (!fabricStampCanvasRef.current) return;
         
         fabricStampCanvasRef.current.clear();
-        FabricImage.fromURL(stampUrl, (fabricImg) => {
+        
+        // Correctly using FabricImage.fromURL with the right parameter order
+        FabricImage.fromURL(stampUrl).then((fabricImg) => {
           if (!fabricStampCanvasRef.current) return;
           
           // Calculate scale to fit the canvas
@@ -96,7 +97,9 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
         if (!fabricSignatureCanvasRef.current) return;
         
         fabricSignatureCanvasRef.current.clear();
-        FabricImage.fromURL(signatureUrl, (fabricImg) => {
+        
+        // Correctly using FabricImage.fromURL with the right parameter order
+        FabricImage.fromURL(signatureUrl).then((fabricImg) => {
           if (!fabricSignatureCanvasRef.current) return;
           
           // Calculate scale to fit the canvas
