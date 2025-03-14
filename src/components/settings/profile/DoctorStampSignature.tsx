@@ -1,593 +1,435 @@
-
-import { useState, useRef, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import React, { useState, useEffect, useRef } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Pencil, Save, Trash, Undo, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { Canvas, Image as FabricImage } from "fabric";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
+import { Canvas } from "fabric/fabric-impl";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { Upload, Check, X, Trash, Undo, Circle, Edit } from "lucide-react";
+import { fabric } from "fabric";
 
-interface DoctorStampSignatureProps {
-  stampUrl: string | null;
-  signatureUrl: string | null;
-}
+const DoctorStampSignature = () => {
+  const { profile } = useAuth();
+  const [isEditingStamp, setIsEditingStamp] = useState(false);
+  const [isEditingSignature, setIsEditingSignature] = useState(false);
+  const [isUploadingStamp, setIsUploadingStamp] = useState(false);
+  const [isUploadingSignature, setIsUploadingSignature] = useState(false);
+  const [selectedColor, setSelectedColor] = useState("#000000"); // Default black color
+  
+  const stampCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const stampFabricRef = useRef<Canvas | null>(null);
+  const signatureFabricRef = useRef<Canvas | null>(null);
 
-export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSignatureProps) => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'stamp' | 'signature'>('stamp');
-  const [drawMode, setDrawMode] = useState<'upload' | 'draw'>('upload');
-  const [penColor, setPenColor] = useState<string>("#000000");
-  const stampCanvasRef = useRef<HTMLCanvasElement>(null);
-  const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricStampCanvasRef = useRef<Canvas | null>(null);
-  const fabricSignatureCanvasRef = useRef<Canvas | null>(null);
-  const queryClient = useQueryClient();
-
-  // Initialize fabric canvas
   useEffect(() => {
-    if (stampCanvasRef.current && !fabricStampCanvasRef.current) {
-      fabricStampCanvasRef.current = new Canvas(stampCanvasRef.current, {
-        isDrawingMode: true,
-        width: 300,
-        height: 150,
-        backgroundColor: '#f8f9fa'
-      });
-      
-      if (fabricStampCanvasRef.current.freeDrawingBrush) {
-        fabricStampCanvasRef.current.freeDrawingBrush.width = 3;
-        fabricStampCanvasRef.current.freeDrawingBrush.color = penColor;
-      }
-    }
-
-    if (signatureCanvasRef.current && !fabricSignatureCanvasRef.current) {
-      fabricSignatureCanvasRef.current = new Canvas(signatureCanvasRef.current, {
-        isDrawingMode: true,
-        width: 300,
-        height: 150,
-        backgroundColor: '#f8f9fa'
-      });
-      
-      if (fabricSignatureCanvasRef.current.freeDrawingBrush) {
-        fabricSignatureCanvasRef.current.freeDrawingBrush.width = 2;
-        fabricSignatureCanvasRef.current.freeDrawingBrush.color = penColor;
-      }
-    }
-
     return () => {
-      fabricStampCanvasRef.current?.dispose();
-      fabricSignatureCanvasRef.current?.dispose();
+      // Clean up on unmount
+      if (stampFabricRef.current) {
+        stampFabricRef.current.dispose();
+      }
+      if (signatureFabricRef.current) {
+        signatureFabricRef.current.dispose();
+      }
     };
   }, []);
 
-  // Set drawing mode explicitly when switching to draw mode
-  useEffect(() => {
-    if (drawMode === 'draw') {
-      if (fabricStampCanvasRef.current) {
-        fabricStampCanvasRef.current.isDrawingMode = true;
-        if (fabricStampCanvasRef.current.freeDrawingBrush) {
-          fabricStampCanvasRef.current.freeDrawingBrush.color = penColor;
-        }
-      }
-      if (fabricSignatureCanvasRef.current) {
-        fabricSignatureCanvasRef.current.isDrawingMode = true;
-        if (fabricSignatureCanvasRef.current.freeDrawingBrush) {
-          fabricSignatureCanvasRef.current.freeDrawingBrush.color = penColor;
-        }
-      }
-    }
-  }, [drawMode, penColor]);
-
-  // Update pen color when it changes
-  useEffect(() => {
-    if (fabricStampCanvasRef.current && fabricStampCanvasRef.current.freeDrawingBrush) {
-      fabricStampCanvasRef.current.freeDrawingBrush.color = penColor;
-    }
-    if (fabricSignatureCanvasRef.current && fabricSignatureCanvasRef.current.freeDrawingBrush) {
-      fabricSignatureCanvasRef.current.freeDrawingBrush.color = penColor;
-    }
-  }, [penColor]);
-
-  // Load images if they exist
-  useEffect(() => {
-    if (stampUrl && fabricStampCanvasRef.current && drawMode === 'draw') {
-      const img = new Image();
-      img.src = stampUrl;
-      img.onload = () => {
-        if (!fabricStampCanvasRef.current) return;
-        
-        fabricStampCanvasRef.current.clear();
-        
-        // Correctly using FabricImage.fromURL with the right parameter order
-        FabricImage.fromURL(stampUrl).then((fabricImg) => {
-          if (!fabricStampCanvasRef.current) return;
-          
-          // Calculate scale to fit the canvas
-          const scaleX = fabricStampCanvasRef.current.width / img.width;
-          const scaleY = fabricStampCanvasRef.current.height / img.height;
-          
-          fabricImg.set({
-            scaleX,
-            scaleY,
-            selectable: false,
-            evented: false
-          });
-          
-          fabricStampCanvasRef.current.backgroundImage = fabricImg;
-          fabricStampCanvasRef.current.renderAll();
-        });
-      };
-    }
-
-    if (signatureUrl && fabricSignatureCanvasRef.current && drawMode === 'draw') {
-      const img = new Image();
-      img.src = signatureUrl;
-      img.onload = () => {
-        if (!fabricSignatureCanvasRef.current) return;
-        
-        fabricSignatureCanvasRef.current.clear();
-        
-        // Correctly using FabricImage.fromURL with the right parameter order
-        FabricImage.fromURL(signatureUrl).then((fabricImg) => {
-          if (!fabricSignatureCanvasRef.current) return;
-          
-          // Calculate scale to fit the canvas
-          const scaleX = fabricSignatureCanvasRef.current.width / img.width;
-          const scaleY = fabricSignatureCanvasRef.current.height / img.height;
-          
-          fabricImg.set({
-            scaleX,
-            scaleY,
-            selectable: false,
-            evented: false
-          });
-          
-          fabricSignatureCanvasRef.current.backgroundImage = fabricImg;
-          fabricSignatureCanvasRef.current.renderAll();
-        });
-      };
-    }
-  }, [stampUrl, signatureUrl, drawMode]);
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'stamp' | 'signature') => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsUploading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${type}_${Date.now()}.${fileExt}`;
-
-      const { error: uploadError, data } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, {
-          upsert: true,
-          contentType: file.type,
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-
-      const updateField = type === 'stamp' ? 'doctor_stamp_url' : 'doctor_signature_url';
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ [updateField]: publicUrl })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
-      toast({
-        title: "Success",
-        description: `Doctor's ${type} updated successfully`,
+  const initCanvas = (canvasRef: React.RefObject<HTMLCanvasElement>, fabricRef: React.MutableRefObject<Canvas | null>) => {
+    if (canvasRef.current && !fabricRef.current) {
+      console.log("Initializing canvas with drawing mode");
+      const canvas = new fabric.Canvas(canvasRef.current, {
+        isDrawingMode: true,
+        width: 300,
+        height: 200,
+        backgroundColor: '#f8f9fa'
       });
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to upload ${type}`,
-      });
-    } finally {
-      setIsUploading(false);
+      
+      // Explicitly set to drawing mode with pencil brush
+      canvas.isDrawingMode = true;
+      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+      canvas.freeDrawingBrush.width = 3;
+      canvas.freeDrawingBrush.color = selectedColor;
+      
+      // Log setup for debugging
+      console.log(`Canvas initialized. Drawing mode: ${canvas.isDrawingMode}, Brush color: ${canvas.freeDrawingBrush.color}`);
+      
+      fabricRef.current = canvas;
     }
   };
 
-  const handleSaveCanvas = async (type: 'stamp' | 'signature') => {
+  const updateBrushColor = (color: string) => {
+    setSelectedColor(color);
+    
+    // Update active canvas brush color
+    if (isEditingStamp && stampFabricRef.current) {
+      stampFabricRef.current.freeDrawingBrush.color = color;
+      console.log(`Updated stamp brush color to ${color}`);
+    }
+    
+    if (isEditingSignature && signatureFabricRef.current) {
+      signatureFabricRef.current.freeDrawingBrush.color = color;
+      console.log(`Updated signature brush color to ${color}`);
+    }
+  };
+
+  useEffect(() => {
+    if (isEditingStamp) {
+      setTimeout(() => {
+        initCanvas(stampCanvasRef, stampFabricRef);
+      }, 100);
+    }
+  }, [isEditingStamp]);
+
+  useEffect(() => {
+    if (isEditingSignature) {
+      setTimeout(() => {
+        initCanvas(signatureCanvasRef, signatureFabricRef);
+      }, 100);
+    }
+  }, [isEditingSignature]);
+
+  // Update brush color when color changes
+  useEffect(() => {
+    if (stampFabricRef.current && stampFabricRef.current.isDrawingMode) {
+      stampFabricRef.current.freeDrawingBrush.color = selectedColor;
+    }
+    if (signatureFabricRef.current && signatureFabricRef.current.isDrawingMode) {
+      signatureFabricRef.current.freeDrawingBrush.color = selectedColor;
+    }
+  }, [selectedColor]);
+
+  const clearCanvas = (fabricRef: React.MutableRefObject<Canvas | null>) => {
+    if (fabricRef.current) {
+      fabricRef.current.clear();
+      fabricRef.current.setBackgroundColor('#f8f9fa', fabricRef.current.renderAll.bind(fabricRef.current));
+    }
+  };
+
+  const undoLastAction = (fabricRef: React.MutableRefObject<Canvas | null>) => {
+    if (fabricRef.current) {
+      const objects = fabricRef.current.getObjects();
+      if (objects.length > 0) {
+        fabricRef.current.remove(objects[objects.length - 1]);
+      }
+    }
+  };
+
+  const saveCanvasAsImage = async (
+    fabricRef: React.MutableRefObject<Canvas | null>,
+    type: 'stamp' | 'signature'
+  ) => {
+    if (!profile?.id || !fabricRef.current) return;
+
+    const setUploadingState = type === 'stamp'
+      ? setIsUploadingStamp
+      : setIsUploadingSignature;
+
+    const setEditingState = type === 'stamp'
+      ? setIsEditingStamp
+      : setIsEditingSignature;
+
     try {
-      setIsUploading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      setUploadingState(true);
 
-      const canvas = type === 'stamp' 
-        ? fabricStampCanvasRef.current 
-        : fabricSignatureCanvasRef.current;
-
-      if (!canvas) return;
-
-      // Convert canvas to blob
-      const dataUrl = canvas.toDataURL({
+      // Convert canvas to data URL
+      const dataUrl = fabricRef.current.toDataURL({
         format: 'png',
-        quality: 0.8,
-        multiplier: 1
+        quality: 1
       });
-      
-      // Convert data URL to Blob
+
+      // Convert data URL to blob
       const res = await fetch(dataUrl);
       const blob = await res.blob();
-      
-      const fileName = `${user.id}/${type}_${Date.now()}.png`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, blob, {
+      // Create file from blob
+      const file = new File([blob], `${type}_${Date.now()}.png`, { type: 'image/png' });
+
+      // Generate a unique file path
+      const filePath = `${profile.id}/${type}_${crypto.randomUUID()}.png`;
+
+      // Upload to Supabase storage
+      const { error: uploadError, data } = await supabase.storage
+        .from('doctor-images')
+        .upload(filePath, file, {
           upsert: true,
-          contentType: 'image/png',
+          contentType: 'image/png'
         });
 
       if (uploadError) throw uploadError;
 
+      // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
+        .from('doctor-images')
+        .getPublicUrl(filePath);
 
-      const updateField = type === 'stamp' ? 'doctor_stamp_url' : 'doctor_signature_url';
+      // Update profile with URL
+      const updateData = type === 'stamp'
+        ? { doctor_stamp_url: publicUrl }
+        : { doctor_signature_url: publicUrl };
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ [updateField]: publicUrl })
-        .eq('id', user.id);
+        .update(updateData)
+        .eq('id', profile.id);
 
       if (updateError) throw updateError;
 
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
       toast({
         title: "Success",
-        description: `Doctor's ${type} saved successfully`,
+        description: `Doctor ${type} updated successfully`,
       });
-      
-      // Switch back to upload mode after saving
-      setDrawMode('upload');
+
+      setEditingState(false);
     } catch (error) {
-      console.error('Error saving canvas:', error);
+      console.error(`Error saving ${type}:`, error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to save ${type}`,
+        description: `Failed to update ${type}`,
       });
     } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleClearCanvas = (type: 'stamp' | 'signature') => {
-    const canvas = type === 'stamp' 
-      ? fabricStampCanvasRef.current 
-      : fabricSignatureCanvasRef.current;
-    
-    if (canvas) {
-      canvas.clear();
-      canvas.backgroundColor = '#f8f9fa';
-      canvas.renderAll();
-    }
-  };
-
-  const handleUndo = (type: 'stamp' | 'signature') => {
-    const canvas = type === 'stamp' 
-      ? fabricStampCanvasRef.current 
-      : fabricSignatureCanvasRef.current;
-    
-    if (canvas && canvas._objects && canvas._objects.length > 0) {
-      canvas.remove(canvas._objects[canvas._objects.length - 1]);
-    }
-  };
-  
-  const handleCancel = () => {
-    // Return to upload mode without saving
-    setDrawMode('upload');
-  };
-
-  const handlePenColorChange = (color: string) => {
-    setPenColor(color);
-    
-    if (fabricStampCanvasRef.current && fabricStampCanvasRef.current.freeDrawingBrush) {
-      fabricStampCanvasRef.current.freeDrawingBrush.color = color;
-    }
-    
-    if (fabricSignatureCanvasRef.current && fabricSignatureCanvasRef.current.freeDrawingBrush) {
-      fabricSignatureCanvasRef.current.freeDrawingBrush.color = color;
+      setUploadingState(false);
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Doctor's Stamp & Signature</CardTitle>
+          <CardTitle>Doctor Stamp</CardTitle>
+          <CardDescription>
+            Your professional stamp to use on prescriptions and official documents
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <Tabs 
-            defaultValue="stamp" 
-            value={activeTab} 
-            onValueChange={(value) => setActiveTab(value as 'stamp' | 'signature')}
-          >
-            <TabsList className="mb-4">
-              <TabsTrigger value="stamp">Official Stamp</TabsTrigger>
-              <TabsTrigger value="signature">Signature</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="stamp" className="space-y-4">
-              <div className="flex space-x-3">
-                <Button 
-                  variant={drawMode === 'upload' ? "default" : "outline"} 
-                  onClick={() => setDrawMode('upload')}
-                  size="sm"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Image
-                </Button>
-                <Button 
-                  variant={drawMode === 'draw' ? "default" : "outline"} 
-                  onClick={() => setDrawMode('draw')}
-                  size="sm"
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Draw
-                </Button>
+        <CardContent>
+          {isEditingStamp ? (
+            <div className="space-y-4">
+              <div className="border rounded-md p-4 bg-gray-50">
+                <canvas ref={stampCanvasRef} width="300" height="200" />
               </div>
-
-              {drawMode === 'upload' ? (
-                <div className="flex items-center gap-4">
-                  {stampUrl ? (
-                    <div className="relative w-32 h-32">
-                      <img
-                        src={stampUrl}
-                        alt="Doctor's Stamp"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-                      <p className="text-sm text-muted-foreground">No stamp uploaded</p>
-                    </div>
-                  )}
-                  <div>
-                    <input
-                      type="file"
-                      id="stamp-upload"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, 'stamp')}
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => document.getElementById('stamp-upload')?.click()}
-                      disabled={isUploading}
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      {stampUrl ? 'Update Stamp' : 'Upload Stamp'}
-                    </Button>
-                  </div>
+              
+              <div className="flex space-x-2 mb-3">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm">Color:</span>
+                  <button 
+                    className={`w-6 h-6 rounded-full border ${selectedColor === '#000000' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
+                    style={{ backgroundColor: '#000000' }} 
+                    onClick={() => updateBrushColor('#000000')}
+                  />
+                  <button 
+                    className={`w-6 h-6 rounded-full border ${selectedColor === '#0000FF' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
+                    style={{ backgroundColor: '#0000FF' }} 
+                    onClick={() => updateBrushColor('#0000FF')}
+                  />
+                  <button 
+                    className={`w-6 h-6 rounded-full border ${selectedColor === '#FF0000' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
+                    style={{ backgroundColor: '#FF0000' }} 
+                    onClick={() => updateBrushColor('#FF0000')}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-between">
+                <div className="space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => clearCanvas(stampFabricRef)}
+                  >
+                    <Trash className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => undoLastAction(stampFabricRef)}
+                  >
+                    <Undo className="h-4 w-4 mr-1" />
+                    Undo
+                  </Button>
+                </div>
+                <div className="space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingStamp(false)}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={() => saveCanvasAsImage(stampFabricRef, 'stamp')}
+                    disabled={isUploadingStamp}
+                  >
+                    {isUploadingStamp ? (
+                      <>
+                        <Circle className="h-4 w-4 mr-1 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 mr-1" />
+                        Save Stamp
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-6 border rounded-md">
+              {profile?.doctor_stamp_url ? (
+                <div className="text-center">
+                  <img
+                    src={profile.doctor_stamp_url}
+                    alt="Doctor Stamp"
+                    className="max-h-32 mx-auto mb-4"
+                  />
+                  <Button onClick={() => setIsEditingStamp(true)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Stamp
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="flex space-x-4 items-center">
-                    <Label>Pen Color:</Label>
-                    <RadioGroup 
-                      defaultValue={penColor} 
-                      value={penColor}
-                      onValueChange={handlePenColorChange}
-                      className="flex space-x-2"
-                    >
-                      <div className="flex items-center space-x-1">
-                        <RadioGroupItem 
-                          value="#000000" 
-                          id="black" 
-                          className="h-4 w-4 rounded-full bg-black hover:bg-gray-800" 
-                        />
-                        <Label htmlFor="black">Black</Label>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <RadioGroupItem 
-                          value="#0000FF" 
-                          id="blue" 
-                          className="h-4 w-4 rounded-full bg-blue-600 hover:bg-blue-700" 
-                        />
-                        <Label htmlFor="blue">Blue</Label>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <RadioGroupItem 
-                          value="#FF0000" 
-                          id="red" 
-                          className="h-4 w-4 rounded-full bg-red-600 hover:bg-red-700" 
-                        />
-                        <Label htmlFor="red">Red</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                  
-                  <div className="border rounded-md p-2 bg-white">
-                    <canvas ref={stampCanvasRef} />
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleClearCanvas('stamp')}
-                    >
-                      <Trash className="h-4 w-4 mr-2" />
-                      Clear
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleUndo('stamp')}
-                    >
-                      <Undo className="h-4 w-4 mr-2" />
-                      Undo
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCancel}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleSaveCanvas('stamp')}
-                      disabled={isUploading}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Stamp
-                    </Button>
-                  </div>
+                <div className="text-center space-y-4">
+                  <p className="text-muted-foreground">
+                    You haven't created a stamp yet
+                  </p>
+                  <Button onClick={() => setIsEditingStamp(true)}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Create Stamp
+                  </Button>
                 </div>
               )}
-            </TabsContent>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-            <TabsContent value="signature" className="space-y-4">
-              <div className="flex space-x-3">
-                <Button 
-                  variant={drawMode === 'upload' ? "default" : "outline"} 
-                  onClick={() => setDrawMode('upload')}
-                  size="sm"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Image
-                </Button>
-                <Button 
-                  variant={drawMode === 'draw' ? "default" : "outline"} 
-                  onClick={() => setDrawMode('draw')}
-                  size="sm"
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Draw
-                </Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Doctor Signature</CardTitle>
+          <CardDescription>
+            Your digital signature for prescriptions and medical documents
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isEditingSignature ? (
+            <div className="space-y-4">
+              <div className="border rounded-md p-4 bg-gray-50">
+                <canvas ref={signatureCanvasRef} width="300" height="200" />
               </div>
-
-              {drawMode === 'upload' ? (
-                <div className="flex items-center gap-4">
-                  {signatureUrl ? (
-                    <div className="relative w-32 h-32">
-                      <img
-                        src={signatureUrl}
-                        alt="Doctor's Signature"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-                      <p className="text-sm text-muted-foreground">No signature uploaded</p>
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <input
-                      type="file"
-                      id="signature-upload"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, 'signature')}
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => document.getElementById('signature-upload')?.click()}
-                      disabled={isUploading}
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      {signatureUrl ? 'Update Signature' : 'Upload Signature'}
-                    </Button>
-                  </div>
+              
+              <div className="flex space-x-2 mb-3">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm">Color:</span>
+                  <button 
+                    className={`w-6 h-6 rounded-full border ${selectedColor === '#000000' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
+                    style={{ backgroundColor: '#000000' }} 
+                    onClick={() => updateBrushColor('#000000')}
+                  />
+                  <button 
+                    className={`w-6 h-6 rounded-full border ${selectedColor === '#0000FF' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
+                    style={{ backgroundColor: '#0000FF' }} 
+                    onClick={() => updateBrushColor('#0000FF')}
+                  />
+                  <button 
+                    className={`w-6 h-6 rounded-full border ${selectedColor === '#FF0000' ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`} 
+                    style={{ backgroundColor: '#FF0000' }} 
+                    onClick={() => updateBrushColor('#FF0000')}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-between">
+                <div className="space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => clearCanvas(signatureFabricRef)}
+                  >
+                    <Trash className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => undoLastAction(signatureFabricRef)}
+                  >
+                    <Undo className="h-4 w-4 mr-1" />
+                    Undo
+                  </Button>
+                </div>
+                <div className="space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingSignature(false)}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={() => saveCanvasAsImage(signatureFabricRef, 'signature')}
+                    disabled={isUploadingSignature}
+                  >
+                    {isUploadingSignature ? (
+                      <>
+                        <Circle className="h-4 w-4 mr-1 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 mr-1" />
+                        Save Signature
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-6 border rounded-md">
+              {profile?.doctor_signature_url ? (
+                <div className="text-center">
+                  <img
+                    src={profile.doctor_signature_url}
+                    alt="Doctor Signature"
+                    className="max-h-32 mx-auto mb-4"
+                  />
+                  <Button onClick={() => setIsEditingSignature(true)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Signature
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="flex space-x-4 items-center">
-                    <Label>Pen Color:</Label>
-                    <RadioGroup 
-                      defaultValue={penColor} 
-                      value={penColor}
-                      onValueChange={handlePenColorChange}
-                      className="flex space-x-2"
-                    >
-                      <div className="flex items-center space-x-1">
-                        <RadioGroupItem 
-                          value="#000000" 
-                          id="black-sig" 
-                          className="h-4 w-4 rounded-full bg-black hover:bg-gray-800" 
-                        />
-                        <Label htmlFor="black-sig">Black</Label>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <RadioGroupItem 
-                          value="#0000FF" 
-                          id="blue-sig" 
-                          className="h-4 w-4 rounded-full bg-blue-600 hover:bg-blue-700" 
-                        />
-                        <Label htmlFor="blue-sig">Blue</Label>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <RadioGroupItem 
-                          value="#FF0000" 
-                          id="red-sig" 
-                          className="h-4 w-4 rounded-full bg-red-600 hover:bg-red-700" 
-                        />
-                        <Label htmlFor="red-sig">Red</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                
-                  <div className="border rounded-md p-2 bg-white">
-                    <canvas ref={signatureCanvasRef} />
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleClearCanvas('signature')}
-                    >
-                      <Trash className="h-4 w-4 mr-2" />
-                      Clear
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleUndo('signature')}
-                    >
-                      <Undo className="h-4 w-4 mr-2" />
-                      Undo
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCancel}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleSaveCanvas('signature')}
-                      disabled={isUploading}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Signature
-                    </Button>
-                  </div>
+                <div className="text-center space-y-4">
+                  <p className="text-muted-foreground">
+                    You haven't created a signature yet
+                  </p>
+                  <Button onClick={() => setIsEditingSignature(true)}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Create Signature
+                  </Button>
                 </div>
               )}
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 };
+
+export default DoctorStampSignature;

@@ -67,35 +67,14 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       console.log(`Fetching ${entityType} data for user:`, profile.id);
 
       // First, determine the relation table name based on user role
-      const relationTable = userRole === 'doctor' ? 'user_doctors' : 'user_pharmacies';
+      const relationTable = userRole === 'doctor' ? 'user_pharmacies' : 'user_pharmacies';
       
       // Get the relation between user and professional entity
       let relationQuery;
       if (userRole === 'doctor') {
-        relationQuery = await supabase
-          .from('user_pharmacies') // We use this as a starting point because we know it exists
-          .select('pharmacy_id')
-          .eq('user_id', profile.id)
-          .limit(1);
-          
-        // This is just to check for the error and simulate finding a doctor relation
-        if (relationQuery.error) {
-          console.error(`Error fetching relation:`, relationQuery.error);
-          setError(`Failed to fetch relationship`);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Simulate finding a doctor ID for now, until the user_doctors table is created
+        // For doctors, we'll mock the data since the table doesn't exist yet
         // In a real scenario, we'd query the user_doctors table
         const doctorId = profile.id; // Use profile ID as doctor ID for demo
-        
-        if (!doctorId) {
-          console.log(`No ${entityType} associated with this user:`, profile.id);
-          setError(`No ${entityType} associated with your account`);
-          setIsLoading(false);
-          return;
-        }
         
         // For now, in our demo, we'll create a mock doctor record that matches pharmacy structure
         const mockDoctorData: ProfessionalData = {
@@ -342,7 +321,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
+        <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">{entityType === 'doctor' ? 'Doctor Profile' : 'Pharmacy Profile'}</h1>
           <p className="text-muted-foreground">
             Manage your {entityType} information, opening hours, and staff.
@@ -369,6 +348,10 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           {/* Profile Tab Content */}
           <TabsContent value="profile" className="mt-6">
             <div className="container mx-auto px-4">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold">{entityType === 'doctor' ? 'Doctor Details' : 'Pharmacy Details'}</h3>
+              </div>
+              
               <div 
                 onClick={handleImageClick}
                 className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
@@ -488,13 +471,19 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           
           {/* Team Tab Content */}
           <TabsContent value="team" className="mt-6">
-            <PharmacyTeam pharmacyId={professionalData.id} />
+            <PharmacyTeam 
+              pharmacyId={professionalData.id}
+              entityType={entityType}
+            />
           </TabsContent>
           
           {/* Staff Management Tab Content */}
           <TabsContent value="staff" className="mt-6">
             <div className="container mx-auto px-4">
-              <PharmacyStaff pharmacyId={professionalData.id} />
+              <PharmacyStaff 
+                pharmacyId={professionalData.id}
+                entityType={entityType}
+              />
             </div>
           </TabsContent>
         </Tabs>

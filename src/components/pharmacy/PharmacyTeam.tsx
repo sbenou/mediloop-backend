@@ -9,9 +9,10 @@ import { EmptyTeamState } from './team/EmptyTeamState';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
+  entityType?: 'doctor' | 'pharmacy';
 }
 
-const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
+const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'pharmacy' }) => {
   const {
     teamMembers,
     loading,
@@ -28,7 +29,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   return (
     <div className="space-y-6 container mx-auto px-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold">Pharmacy Team</h3>
+        <h3 className="text-xl font-semibold">{entityType === 'doctor' ? 'Doctor Team' : 'Pharmacy Team'}</h3>
         <Button onClick={() => setAddUserOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
           Add Team Member
@@ -40,7 +41,16 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
           <p>Loading team members...</p>
         </div>
       ) : teamMembers.length === 0 ? (
-        <EmptyTeamState onAddMember={() => setAddUserOpen(true)} />
+        <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
+          <div className="bg-muted p-3 rounded-full">
+            <Users className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold">No Team Members Yet</h3>
+          <p className="text-muted-foreground max-w-md">
+            Add team members to your {entityType} to manage access and responsibilities.
+          </p>
+          {/* Button already exists in the header, don't duplicate it here */}
+        </div>
       ) : (
         <div className="w-full">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -63,6 +73,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
         setPhoneValue={setPhoneValue}
         nokPhoneValue={nokPhoneValue}
         setNokPhoneValue={setNokPhoneValue}
+        entityType={entityType}
       />
     </div>
   );
