@@ -23,6 +23,8 @@ export type Subcategory = Tables<'subcategories'>
 export type UserPharmacy = Tables<'user_pharmacies'>
 export type Notification = Tables<'notifications'>
 export type Teleconsultation = Tables<'teleconsultations'>
+
+// Define DoctorAvailability type with additional_time_slots
 export type DoctorAvailability = Tables<'doctor_availability'> & {
   additional_time_slots?: string | null;
   time_slots?: Array<{ startTime: string; endTime: string }>;

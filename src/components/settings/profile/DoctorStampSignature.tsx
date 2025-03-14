@@ -5,8 +5,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
-import { Canvas, Path } from "fabric/fabric-impl";
-import { Pencil, DownloadIcon, Save, Trash2, Upload } from "lucide-react";
+import { Canvas as FabricCanvas } from "fabric/fabric-impl";
+import { Pencil, Save, Trash2, Upload } from "lucide-react";
 import * as fabric from 'fabric';
 
 interface DoctorStampSignatureProps {
@@ -22,8 +22,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   const stampCanvasRef = useRef<HTMLCanvasElement>(null);
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   
-  const [stampCanvas, setStampCanvas] = useState<Canvas | null>(null);
-  const [signatureCanvas, setSignatureCanvas] = useState<Canvas | null>(null);
+  const [stampCanvas, setStampCanvas] = useState<fabric.Canvas | null>(null);
+  const [signatureCanvas, setSignatureCanvas] = useState<fabric.Canvas | null>(null);
   
   const [isStampDrawMode, setIsStampDrawMode] = useState(false);
   const [isSignatureDrawMode, setIsSignatureDrawMode] = useState(false);
@@ -75,7 +75,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     }
   }, [stampCanvas, signatureCanvas, stampUrl, signatureUrl]);
   
-  const loadImageToCanvas = (canvas: Canvas, url: string) => {
+  const loadImageToCanvas = (canvas: fabric.Canvas, url: string) => {
     fabric.Image.fromURL(url, (img) => {
       canvas.clear();
       
@@ -101,7 +101,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       
       canvas.add(img);
       canvas.renderAll();
-    }, { crossOrigin: 'anonymous' });
+    });
   };
   
   const toggleStampDrawMode = () => {

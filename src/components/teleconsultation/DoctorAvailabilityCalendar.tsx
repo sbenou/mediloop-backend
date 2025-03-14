@@ -25,20 +25,6 @@ interface TimeSlot {
   endTime: string;
 }
 
-// Define the structure for doctor availability
-interface DoctorAvailability {
-  id?: string;
-  doctor_id: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_available: boolean;
-  time_slots?: TimeSlot[];
-  additional_time_slots?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
 const DAYS_OF_WEEK = [
   'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 ];
@@ -109,7 +95,8 @@ const DoctorAvailabilityCalendar = ({
           
           return {
             ...item,
-            time_slots: allTimeSlots
+            time_slots: allTimeSlots,
+            additional_time_slots: item.additional_time_slots
           };
         });
         
