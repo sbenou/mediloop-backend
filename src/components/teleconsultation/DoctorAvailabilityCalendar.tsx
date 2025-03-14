@@ -27,6 +27,7 @@ interface DoctorAvailability {
   start_time: string;
   end_time: string;
   is_available: boolean;
+  time_slots?: TimeSlot[];
 }
 
 // Define time slot type
@@ -84,7 +85,21 @@ const DoctorAvailabilityCalendar = ({
       }
       
       if (data && data.length > 0) {
-        setAvailabilityData(data as DoctorAvailability[]);
+        // Transform data to include time_slots array
+        const processedData = data.map(item => {
+          // Parse any stored time slots or create default
+          const defaultSlot = {
+            startTime: item.start_time || '09:00',
+            endTime: item.end_time || '17:00'
+          };
+          
+          return {
+            ...item,
+            time_slots: [defaultSlot]
+          };
+        });
+        
+        setAvailabilityData(processedData as DoctorAvailability[]);
       } else {
         // Initialize default availability for all days if none exists
         const defaultAvailability: DoctorAvailability[] = DAYS_OF_WEEK.map((_, index) => ({
@@ -92,7 +107,11 @@ const DoctorAvailabilityCalendar = ({
           day_of_week: index,
           start_time: '09:00',
           end_time: '17:00',
-          is_available: false
+          is_available: false,
+          time_slots: [{
+            startTime: '09:00',
+            endTime: '17:00'
+          }]
         }));
         setAvailabilityData(defaultAvailability);
       }
@@ -116,8 +135,11 @@ const DoctorAvailabilityCalendar = ({
       if (currentDayData) {
         setIsAvailable(currentDayData.is_available);
         
-        // Only set time slots if they exist
-        if (currentDayData.start_time && currentDayData.end_time) {
+        // Set time slots if they exist in the data
+        if (currentDayData.time_slots && currentDayData.time_slots.length > 0) {
+          setTimeSlots(currentDayData.time_slots);
+        } else if (currentDayData.start_time && currentDayData.end_time) {
+          // Create a single time slot from start and end times
           setTimeSlots([{
             startTime: currentDayData.start_time,
             endTime: currentDayData.end_time
@@ -174,9 +196,11 @@ const DoctorAvailabilityCalendar = ({
     try {
       setIsSaving(true);
 
-      // We need to save all time slots
-      // For now, we'll just use the first slot as before until the database schema is updated
-      const timeSlot = timeSlots[0];
+      // We'll just use the first time slot for the main start/end time fields
+      // for backward compatibility
+      const primaryTimeSlot = timeSlots[0];
+      
+      console.log('Saving time slots:', timeSlots);
 
       // Find existing record for this day
       const existingDay = availabilityData.find(day => day.day_of_week === selectedDay);
@@ -187,8 +211,8 @@ const DoctorAvailabilityCalendar = ({
           .from('doctor_availability')
           .update({
             is_available: isAvailable,
-            start_time: timeSlot.startTime,
-            end_time: timeSlot.endTime,
+            start_time: primaryTimeSlot.startTime,
+            end_time: primaryTimeSlot.endTime,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingDay.id);
@@ -201,16 +225,38 @@ const DoctorAvailabilityCalendar = ({
           .insert([{
             doctor_id: doctorId,
             day_of_week: selectedDay,
-            start_time: timeSlot.startTime,
-            end_time: timeSlot.endTime,
+            start_time: primaryTimeSlot.startTime,
+            end_time: primaryTimeSlot.endTime,
             is_available: isAvailable
           }]);
           
         if (error) throw error;
       }
 
-      // Refresh availability data
-      await loadAvailability();
+      // Update local state to reflect the changes
+      const updatedAvailabilityData = [...availabilityData];
+      const dayIndex = updatedAvailabilityData.findIndex(day => day.day_of_week === selectedDay);
+      
+      if (dayIndex !== -1) {
+        updatedAvailabilityData[dayIndex] = {
+          ...updatedAvailabilityData[dayIndex],
+          is_available: isAvailable,
+          start_time: primaryTimeSlot.startTime,
+          end_time: primaryTimeSlot.endTime,
+          time_slots: [...timeSlots]
+        };
+      } else {
+        updatedAvailabilityData.push({
+          doctor_id: doctorId,
+          day_of_week: selectedDay,
+          start_time: primaryTimeSlot.startTime,
+          end_time: primaryTimeSlot.endTime,
+          is_available: isAvailable,
+          time_slots: [...timeSlots]
+        });
+      }
+      
+      setAvailabilityData(updatedAvailabilityData);
       
       toast({
         title: "Availability saved",
@@ -255,8 +301,17 @@ const DoctorAvailabilityCalendar = ({
         
       if (insertError) throw insertError;
       
-      // Refresh availability data
-      await loadAvailability();
+      // Update local state
+      const updatedAvailabilityData = DAYS_OF_WEEK.map((_, index) => ({
+        doctor_id: doctorId,
+        day_of_week: index,
+        start_time: timeSlots[0].startTime,
+        end_time: timeSlots[0].endTime,
+        is_available: isAvailable,
+        time_slots: [...timeSlots]
+      }));
+      
+      setAvailabilityData(updatedAvailabilityData);
       
       toast({
         title: "Availability updated",

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,6 +37,15 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
 
       const filePath = `${userId}/${crypto.randomUUID()}`;
       const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 'avatars';
+      
+      // Create the bucket if it doesn't exist
+      const { data: bucketExists } = await supabase.storage.getBucket(bucketName);
+      if (!bucketExists) {
+        const { error: bucketError } = await supabase.storage.createBucket(bucketName, {
+          public: true
+        });
+        if (bucketError) console.error('Error creating bucket:', bucketError);
+      }
       
       const { error: uploadError, data } = await supabase.storage
         .from(bucketName)

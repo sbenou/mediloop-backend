@@ -52,7 +52,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       // Set canvas properties
       canvas.setWidth(300);
       canvas.setHeight(200);
-      canvas.backgroundColor = '#f8f9fa';
+      canvas.backgroundColor = '#ffffff'; // Fix: Use white background
       canvas.renderAll();
       
       // Explicitly set to drawing mode with pencil brush
@@ -62,7 +62,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       canvas.freeDrawingBrush.color = selectedColor;
       
       // Log setup for debugging
-      console.log(`Canvas initialized. Drawing mode: ${canvas.isDrawingMode}, Brush color: ${canvas.freeDrawingBrush.color}`);
+      console.log(`Canvas initialized. Drawing mode: ${canvas.isDrawingMode}, Brush color: ${canvas.freeDrawingBrush.color}, Background: ${canvas.backgroundColor}`);
       
       fabricRef.current = canvas;
       canvas.renderAll();
@@ -126,7 +126,7 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       console.log("Clearing canvas");
       fabricRef.current.clear();
       // Important: Reset the background color after clearing
-      fabricRef.current.backgroundColor = '#f8f9fa';
+      fabricRef.current.backgroundColor = '#ffffff'; // Fix: Use white background
       fabricRef.current.renderAll();
     }
   };
@@ -374,8 +374,8 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                 </TabsList>
                 
                 <TabsContent value="draw" className="mt-4">
-                  <div className="border rounded-md p-4 bg-gray-50">
-                    <canvas ref={stampCanvasRef} width="300" height="200" id="stamp-canvas" />
+                  <div className="border rounded-md p-4 bg-white">
+                    <canvas ref={stampCanvasRef} width="300" height="200" id="stamp-canvas" className="w-full h-[200px]" />
                   </div>
                   
                   <div className="flex space-x-2 mt-3 mb-3">
@@ -589,8 +589,8 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
                 </TabsList>
                 
                 <TabsContent value="draw" className="mt-4">
-                  <div className="border rounded-md p-4 bg-gray-50">
-                    <canvas ref={signatureCanvasRef} width="300" height="200" id="signature-canvas" />
+                  <div className="border rounded-md p-4 bg-white">
+                    <canvas ref={signatureCanvasRef} width="300" height="200" id="signature-canvas" className="w-full h-[200px]" />
                   </div>
                   
                   <div className="flex space-x-2 mt-3 mb-3">
