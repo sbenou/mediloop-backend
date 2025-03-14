@@ -78,8 +78,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   }, [stampCanvas, signatureCanvas, stampUrl, signatureUrl]);
   
   const loadImageToCanvas = (canvas: fabric.Canvas, url: string) => {
-    // Fixed: Use proper callback approach for Fabric.js v6
-    fabric.Image.fromURL(url, (img) => {
+    // Fixed: Using img param directly instead of callback approach
+    fabric.Image.fromURL(url).then((img) => {
       canvas.clear();
       canvas.backgroundColor = '#ffffff';
       
@@ -105,6 +105,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       
       canvas.add(img);
       canvas.renderAll();
+    }).catch(error => {
+      console.error('Error loading image:', error);
     });
   };
   
@@ -169,8 +171,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          // Fixed: Use proper callback approach for Fabric.js v6
-          fabric.Image.fromURL(imgUrl, (img) => {
+          // Fixed: Using promise-based approach for fabric.Image.fromURL
+          fabric.Image.fromURL(imgUrl).then((img) => {
             stampCanvas.clear();
             stampCanvas.backgroundColor = '#ffffff';
             
@@ -190,6 +192,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             
             stampCanvas.add(img);
             stampCanvas.renderAll();
+          }).catch(error => {
+            console.error('Error loading stamp image:', error);
           });
         }
       };
@@ -204,8 +208,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          // Fixed: Use proper callback approach for Fabric.js v6
-          fabric.Image.fromURL(imgUrl, (img) => {
+          // Fixed: Using promise-based approach for fabric.Image.fromURL
+          fabric.Image.fromURL(imgUrl).then((img) => {
             signatureCanvas.clear();
             signatureCanvas.backgroundColor = '#ffffff';
             
@@ -225,6 +229,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             
             signatureCanvas.add(img);
             signatureCanvas.renderAll();
+          }).catch(error => {
+            console.error('Error loading signature image:', error);
           });
         }
       };
