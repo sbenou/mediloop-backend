@@ -1,96 +1,121 @@
 
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Mail, MoreVertical, ExternalLink } from 'lucide-react';
-import UserAvatar from '@/components/user-menu/UserAvatar';
-import { TeamMember } from './types';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Mail, Phone, User, Shield } from 'lucide-react';
+
+interface TeamMember {
+  id: string;
+  full_name: string;
+  email: string;
+  phone_number: string;
+  role: string;
+  pharmacy_id: string;
+  status: 'active' | 'inactive';
+  profile_image?: string;
+}
 
 interface TeamMemberCardProps {
   member: TeamMember;
-  onToggleActive: (userId: string, isActive: boolean) => Promise<void>;
+  onToggleActive: (memberId: string, currentStatus: 'active' | 'inactive') => void;
+  isMainDoctor?: boolean;
 }
 
-export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
-  member,
-  onToggleActive
+export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ 
+  member, 
+  onToggleActive,
+  isMainDoctor = false
 }) => {
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'doctor':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'pharmacist':
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
+      case 'technician':
+        return 'bg-amber-100 text-amber-800 hover:bg-amber-200';
+      case 'intern':
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+  };
+
+  const getHumanReadableRole = (role: string) => {
+    switch (role) {
+      case 'doctor':
+        return 'Doctor';
+      case 'pharmacist':
+        return 'Pharmacist';
+      case 'technician':
+        return 'Pharmacy Technician';
+      case 'intern':
+        return 'Pharmacy Intern';
+      default:
+        return 'Staff Member';
+    }
+  };
+
   return (
-    <Card key={member.user_id} className="overflow-hidden">
-      <CardContent className="p-0">
-        <div className="bg-gray-100 pt-6 pb-4 px-4">
-          <div className="relative flex justify-between items-start">
-            <div className="flex flex-col items-center w-full pr-8">
-              <UserAvatar 
-                userProfile={{
-                  id: member.user_id,
-                  avatar_url: member.avatar_url,
-                  full_name: member.full_name,
-                  role: member.role,
-                  role_id: null,
-                  email: member.email,
-                  date_of_birth: null,
-                  city: null,
-                  auth_method: null,
-                  is_blocked: !member.is_active,
-                  doctor_stamp_url: null,
-                  doctor_signature_url: null,
-                  cns_card_front: null,
-                  cns_card_back: null,
-                  cns_number: null,
-                  deleted_at: null,
-                  created_at: null,
-                  updated_at: null,
-                  license_number: null
-                }}
-                size="xl"
-              />
-              <h3 className="font-medium text-center mt-2 truncate w-full">{member.full_name}</h3>
-              <p className="text-sm text-gray-500 truncate w-full text-center">
-                {member.role === 'pharmacist' ? 'Pharmacist' : 'Staff Member'}
-              </p>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 absolute top-0 right-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <a href={`/pharmacy/staff/${member.user_id}`} className="flex items-center cursor-pointer">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    View Profile
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2 pt-4 relative">
+        {isMainDoctor && (
+          <div className="absolute top-2 right-2">
+            <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
+              <Shield className="h-3 w-3 mr-1" /> Main Doctor
+            </Badge>
           </div>
+        )}
+        <div className="flex justify-center">
+          <Avatar className="h-20 w-20">
+            <AvatarImage src={member.profile_image} alt={member.full_name} />
+            <AvatarFallback className="text-lg">{getInitials(member.full_name)}</AvatarFallback>
+          </Avatar>
         </div>
-        <div className="p-4">
-          <div className="flex items-center mb-4">
-            <Mail className="h-4 w-4 text-gray-400 mr-2" />
-            <p className="text-sm truncate">{member.email}</p>
+        <CardTitle className="text-center text-lg mt-2">{member.full_name}</CardTitle>
+        <div className="flex justify-center mt-1">
+          <Badge variant="outline" className={getRoleBadgeColor(member.role)}>
+            {getHumanReadableRole(member.role)}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center text-muted-foreground">
+            <Mail className="h-4 w-4 mr-2" />
+            <span className="truncate">{member.email}</span>
           </div>
-          <div className="mt-4 flex items-center space-x-2">
-            <span className={`px-2 py-1 rounded-full text-xs ${member.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-              {member.is_active ? 'Active' : 'Inactive'}
-            </span>
-            <Switch 
-              checked={member.is_active} 
-              onCheckedChange={() => onToggleActive(member.user_id, member.is_active)}
-              className={member.is_active ? "bg-green-500" : "bg-gray-400"}
-            />
-          </div>
+          {member.phone_number && (
+            <div className="flex items-center text-muted-foreground">
+              <Phone className="h-4 w-4 mr-2" />
+              <span>{member.phone_number}</span>
+            </div>
+          )}
         </div>
       </CardContent>
+      <CardFooter className="pt-1 pb-3">
+        {!isMainDoctor && (
+          <Button 
+            variant={member.status === 'active' ? "outline" : "default"} 
+            size="sm" 
+            className="w-full"
+            onClick={() => onToggleActive(member.id, member.status)}
+          >
+            {member.status === 'active' ? 'Deactivate' : 'Activate'}
+          </Button>
+        )}
+      </CardFooter>
     </Card>
   );
 };

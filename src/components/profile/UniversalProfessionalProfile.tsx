@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -328,22 +327,24 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           </p>
         </div>
 
-        {/* Tabs moved to top of content */}
-        <Tabs defaultValue="profile" value={activeTab} onValueChange={handleTabChange}>
-          <TabsList>
-            <TabsTrigger value="profile" className="flex items-center">
-              <User className="mr-2 h-4 w-4" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center">
-              <Users className="mr-2 h-4 w-4" />
-              Team
-            </TabsTrigger>
-            <TabsTrigger value="staff" className="flex items-center">
-              <UserCog className="mr-2 h-4 w-4" />
-              Staff Management
-            </TabsTrigger>
-          </TabsList>
+        {/* Tabs with centered list */}
+        <Tabs defaultValue="profile" value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <div className="flex justify-center mb-4">
+            <TabsList>
+              <TabsTrigger value="profile" className="flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </TabsTrigger>
+              <TabsTrigger value="team" className="flex items-center">
+                <Users className="mr-2 h-4 w-4" />
+                Team
+              </TabsTrigger>
+              <TabsTrigger value="staff" className="flex items-center">
+                <UserCog className="mr-2 h-4 w-4" />
+                Staff Management
+              </TabsTrigger>
+            </TabsList>
+          </div>
           
           {/* Profile Tab Content */}
           <TabsContent value="profile" className="mt-6">

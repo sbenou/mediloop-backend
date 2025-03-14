@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin } from "lucide-react";
 import AddressSearchDialog from "@/components/address/AddressSearchDialog";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { useAddressSuggestions } from "@/hooks/useAddressSuggestions";
 
 // Define types for team member roles
 export type TeamMemberRole = 'pharmacist' | 'technician' | 'intern' | 'other';
@@ -71,6 +73,7 @@ export const PharmacyTeamMemberForm = ({
 }: PharmacyTeamMemberFormProps) => {
   const [activeTab, setActiveTab] = useState("details");
   const [isAddressSearchOpen, setIsAddressSearchOpen] = useState(false);
+  const [phoneValue, setPhoneValue] = useState(initialData?.phone_number || "");
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -97,9 +100,35 @@ export const PharmacyTeamMemberForm = ({
     }
   });
 
+  // Use the address suggestions hook
+  const {
+    isSearching,
+    suggestions,
+    showSuggestions,
+    setShowSuggestions,
+    streetInputRef,
+    handleStreetInputChange,
+    handleAddressSelect,
+    handleDocumentClick
+  } = useAddressSuggestions(form);
+
+  // Add event listener for click outside
+  useEffect(() => {
+    document.addEventListener('mousedown', handleDocumentClick as any);
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick as any);
+    };
+  }, [handleDocumentClick]);
+
+  // Update form phone value when phoneValue changes
+  useEffect(() => {
+    form.setValue('phone_number', phoneValue);
+  }, [phoneValue, form]);
+
   const handleSubmit = (data: FormData) => {
     const submitData = {
       ...data,
+      phone_number: phoneValue,
       pharmacy_id: pharmacyId,
       status: 'active' as const,
     };
@@ -111,7 +140,7 @@ export const PharmacyTeamMemberForm = ({
     }
   };
 
-  const handleAddressSelect = (addressString: string) => {
+  const handleAddressDialogSelect = (addressString: string) => {
     try {
       // Find the formatted address in the string
       const addressParts = addressString.split(',').map(part => part.trim());
@@ -179,19 +208,18 @@ export const PharmacyTeamMemberForm = ({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="phone_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="+1234567890" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <PhoneInput
+                    value={phoneValue}
+                    onChange={setPhoneValue}
+                    defaultCountry="LU"
+                    international={true}
+                  />
+                  {form.formState.errors.phone_number && (
+                    <FormMessage>{form.formState.errors.phone_number.message}</FormMessage>
                   )}
-                />
+                </FormItem>
               </div>
 
               <FormField
@@ -251,7 +279,15 @@ export const PharmacyTeamMemberForm = ({
                       <FormLabel>Street</FormLabel>
                       <div className="relative">
                         <FormControl>
-                          <Input {...field} placeholder="123 Main St" />
+                          <Input 
+                            {...field} 
+                            placeholder="123 Main St"
+                            ref={streetInputRef as any}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              handleStreetInputChange(e);
+                            }}
+                          />
                         </FormControl>
                         <Button
                           type="button"
@@ -264,6 +300,28 @@ export const PharmacyTeamMemberForm = ({
                         </Button>
                       </div>
                       <FormMessage />
+                      
+                      {/* Address suggestions dropdown */}
+                      {showSuggestions && suggestions.length > 0 && (
+                        <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                          {isSearching ? (
+                            <div className="px-3 py-2 text-gray-500">Searching addresses...</div>
+                          ) : (
+                            suggestions.map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className="relative cursor-pointer select-none py-2 px-3 hover:bg-gray-100"
+                                onClick={() => handleAddressSelect(suggestion)}
+                              >
+                                <div className="font-medium">{suggestion.street}</div>
+                                <div className="text-xs text-gray-500">
+                                  {suggestion.city}, {suggestion.postal_code}, {suggestion.country}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
                     </FormItem>
                   )}
                 />
@@ -330,7 +388,7 @@ export const PharmacyTeamMemberForm = ({
       <AddressSearchDialog 
         open={isAddressSearchOpen}
         onOpenChange={setIsAddressSearchOpen}
-        onSelectAddress={handleAddressSelect}
+        onSelectAddress={handleAddressDialogSelect}
         initialValue={form.getValues('street')}
       />
     </>

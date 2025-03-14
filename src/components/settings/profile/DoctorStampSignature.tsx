@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,6 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Upload, Check, X, Trash, Undo, Circle, Edit } from "lucide-react";
-// Import fabric properly for TypeScript
 import { Canvas, PencilBrush } from "fabric";
 
 export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stampUrl: string | null, signatureUrl: string | null }) {

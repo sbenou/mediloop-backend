@@ -39,12 +39,11 @@ const DAYS_OF_WEEK = [
   'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 ];
 
+// Generate 24-hour format time options in 15 min increments
 const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
   const hour = Math.floor(i / 4);
   const minute = (i % 4) * 15;
-  const period = hour < 12 ? 'AM' : 'PM';
-  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 });
 
 const DoctorAvailabilityCalendar = ({ 
@@ -57,8 +56,8 @@ const DoctorAvailabilityCalendar = ({
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [isAvailable, setIsAvailable] = useState(false);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([{
-    startTime: '09:00 AM',
-    endTime: '05:00 PM'
+    startTime: '09:00',
+    endTime: '17:00'
   }]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -91,8 +90,8 @@ const DoctorAvailabilityCalendar = ({
         const defaultAvailability: DoctorAvailability[] = DAYS_OF_WEEK.map((_, index) => ({
           doctor_id: doctorId,
           day_of_week: index,
-          start_time: '09:00 AM',
-          end_time: '05:00 PM',
+          start_time: '09:00',
+          end_time: '17:00',
           is_available: false
         }));
         setAvailabilityData(defaultAvailability);
@@ -126,16 +125,16 @@ const DoctorAvailabilityCalendar = ({
         } else {
           // Default time slot
           setTimeSlots([{
-            startTime: '09:00 AM',
-            endTime: '05:00 PM'
+            startTime: '09:00',
+            endTime: '17:00'
           }]);
         }
       } else {
         // Default values if no data for this day
         setIsAvailable(false);
         setTimeSlots([{
-          startTime: '09:00 AM',
-          endTime: '05:00 PM'
+          startTime: '09:00',
+          endTime: '17:00'
         }]);
       }
     }
@@ -150,8 +149,8 @@ const DoctorAvailabilityCalendar = ({
   const addTimeSlot = () => {
     const newTimeSlots = [...timeSlots];
     newTimeSlots.push({
-      startTime: '01:00 PM',
-      endTime: '05:00 PM'
+      startTime: '13:00',
+      endTime: '17:00'
     });
     setTimeSlots(newTimeSlots);
   };
@@ -175,8 +174,8 @@ const DoctorAvailabilityCalendar = ({
     try {
       setIsSaving(true);
 
-      // For now we support one time slot, using the first one
-      // Future enhancement: Store multiple time slots in the DB
+      // We need to save all time slots
+      // For now, we'll just use the first slot as before until the database schema is updated
       const timeSlot = timeSlots[0];
 
       // Find existing record for this day

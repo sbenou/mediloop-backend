@@ -6,6 +6,7 @@ import { usePharmacyTeam } from './team/usePharmacyTeam';
 import { TeamMemberDialog } from './team/TeamMemberDialog';
 import { TeamMemberCard } from './team/TeamMemberCard';
 import { EmptyTeamState } from './team/EmptyTeamState';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -13,6 +14,7 @@ interface PharmacyTeamProps {
 }
 
 const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'pharmacy' }) => {
+  const { profile } = useAuth();
   const {
     teamMembers,
     loading,
@@ -40,28 +42,56 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
         <div className="flex justify-center py-12">
           <p>Loading team members...</p>
         </div>
-      ) : teamMembers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
-          <div className="bg-muted p-3 rounded-full">
-            <Users className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold">No Team Members Yet</h3>
-          <p className="text-muted-foreground max-w-md">
-            Add team members to your {entityType} to manage access and responsibilities.
-          </p>
-          {/* Button already exists in the header, don't duplicate it here */}
-        </div>
       ) : (
         <div className="w-full">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {teamMembers.map(member => (
-              <TeamMemberCard 
-                key={member.id}
-                member={member}
-                onToggleActive={handleToggleActive}
-              />
-            ))}
-          </div>
+          {/* If entityType is doctor and there are no team members yet, show doctor profile as first card */}
+          {entityType === 'doctor' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {profile && (
+                <TeamMemberCard 
+                  key="doctor-profile"
+                  member={{
+                    id: profile.id,
+                    full_name: profile.full_name || 'Doctor',
+                    email: profile.email || '',
+                    phone_number: '',
+                    role: 'doctor',
+                    pharmacy_id: pharmacyId,
+                    status: 'active',
+                    profile_image: profile.avatar_url,
+                  }}
+                  onToggleActive={() => {}}
+                  isMainDoctor={true}
+                />
+              )}
+              
+              {teamMembers.length > 0 ? (
+                teamMembers.map(member => (
+                  <TeamMemberCard 
+                    key={member.id}
+                    member={member}
+                    onToggleActive={handleToggleActive}
+                  />
+                ))
+              ) : profile ? (
+                <div className="col-span-full">
+                  <EmptyTeamState entityType={entityType} />
+                </div>
+              ) : null}
+            </div>
+          ) : teamMembers.length === 0 ? (
+            <EmptyTeamState entityType={entityType} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {teamMembers.map(member => (
+                <TeamMemberCard 
+                  key={member.id}
+                  member={member}
+                  onToggleActive={handleToggleActive}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
