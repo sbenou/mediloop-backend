@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
-  MapPin, Video, Stethoscope
+  MapPin, Video, Stethoscope, Stamp
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -88,6 +88,13 @@ const DoctorSidebar = () => {
             label="Teleconsultations"
             isActive={isPharmacistSectionActive('teleconsultations')}
             onClick={() => navigateToDoctorView('teleconsultations')}
+          />
+          
+          <SidebarItem
+            icon={<Stamp className="w-5 h-5 mr-3" />}
+            label="Stamp & Signature"
+            isActive={isPharmacistSectionActive('profile') && isPharmacistTabActive('profile', 'profileTab', 'stamp')}
+            onClick={() => navigateToDoctorView('profile', 'stamp', 'profileTab')}
           />
           
           <SidebarCollapsibleItem 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -9,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, Video, Clock, CheckCircle, XCircle, User } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { TeleconsultationStatus } from "@/types/supabase";
+import DoctorAvailabilityCalendar from "@/components/teleconsultation/DoctorAvailabilityCalendar";
 
 // Define teleconsultation type
 interface Teleconsultation {
@@ -397,14 +399,15 @@ const DoctorTeleconsultationsView = () => {
           >
             Back to Consultations
           </Button>
-          <div className="bg-gray-100 p-6 rounded-lg">
-            <h3 className="text-lg font-medium mb-4">Your Availability Calendar</h3>
-            <p className="text-muted-foreground mb-4">
-              This calendar view will allow you to set your availability for teleconsultations.
-              <br />
-              <span className="text-sm">(Coming soon)</span>
-            </p>
-          </div>
+          
+          {profile?.id && (
+            <DoctorAvailabilityCalendar 
+              doctorId={profile.id}
+              doctorName={profile.full_name || "Doctor"}
+              onBookingConfirmed={() => setView('list')}
+              isManagementMode={true}
+            />
+          )}
         </div>
       );
     }
