@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase, clearAllAuthStorage } from "@/lib/supabase";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +24,9 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
     console.log('Starting login process...', { email, rememberMe });
 
     try {
+      // Clear any existing sessions to avoid conflicts
+      clearAllAuthStorage();
+      
       // First, sign in with password
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
@@ -108,6 +112,25 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
       
       storeSessionData();
       
+      // Validate the session before proceeding
+      try {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error('User validation error:', userError);
+          throw new Error('Session validation failed');
+        }
+        
+        if (!userData.user) {
+          console.error('No user data in validation');
+          throw new Error('Session validation failed');
+        }
+      } catch (validationError) {
+        console.error('Session validation error:', validationError);
+        clearAllAuthStorage();
+        throw new Error('Session validation failed');
+      }
+      
       // Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -117,19 +140,64 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
 
       if (profileError) {
         console.error('Profile fetch error:', profileError);
-        throw profileError;
+        
+        // If profile doesn't exist, try to create it
+        if (profileError.code === 'PGRST116') {
+          try {
+            // Extract role from user metadata if available
+            const role = session.user.user_metadata?.role || 'patient';
+            const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User';
+            
+            await supabase.rpc('create_profile_secure', {
+              user_id: session.user.id,
+              user_role: role,
+              user_full_name: fullName,
+              user_email: session.user.email || '',
+              user_license_number: session.user.user_metadata?.license_number || null,
+            });
+            
+            // Try fetching again
+            const { data: newProfile, error: newProfileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+              
+            if (newProfileError) {
+              console.error('Error fetching newly created profile:', newProfileError);
+              throw newProfileError;
+            }
+            
+            // Use the newly created profile
+            console.log('Successfully created and fetched profile');
+            // Update global auth state
+            setAuth({
+              user: session.user,
+              profile: newProfile,
+              permissions: [],
+              isLoading: false,
+            });
+          } catch (createError) {
+            console.error('Error creating profile:', createError);
+            throw createError;
+          }
+        } else {
+          throw profileError;
+        }
+      } else if (profile) {
+        // Update global auth state with existing profile
+        setAuth({
+          user: session.user,
+          profile,
+          permissions: [],
+          isLoading: false,
+        });
       }
 
-      // Update global auth state
-      setAuth({
-        user: session.user,
-        profile,
-        permissions: [],
-        isLoading: false,
-      });
-
       console.log('Auth state updated successfully');
-      console.log('User role:', profile.role);
+      if (profile) {
+        console.log('User role:', profile.role);
+      }
 
       // Show success message
       toast({
@@ -169,6 +237,9 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
         permissions: [],
         isLoading: false,
       });
+      
+      // Clear any potentially corrupted session data
+      clearAllAuthStorage();
 
       // Show error message
       toast({
