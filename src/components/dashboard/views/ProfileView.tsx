@@ -9,7 +9,8 @@ import AddressManagement from "@/components/settings/AddressManagement";
 import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
-import { DoctorStampSignature } from "@/components/settings/profile/DoctorStampSignature";
+// Fix the import to use the default export
+import DoctorStampSignature from "@/components/settings/profile/DoctorStampSignature";
 
 interface ProfileViewProps {
   activeTab: string;
@@ -143,17 +144,17 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
         </TabsContent>
         
         {/* Stamp & Signature Tab - Only for doctors */}
-        {userRole === 'doctor' && (
-          <TabsContent value="stamp" className="mt-4">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
-              <DoctorStampSignature 
-                stampUrl={profile?.doctor_stamp_url || null} 
-                signatureUrl={profile?.doctor_signature_url || null} 
-              />
-            </div>
-          </TabsContent>
-        )}
+    {userRole === 'doctor' && (
+      <TabsContent value="stamp" className="mt-4">
+        <div className="bg-white shadow rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
+          <DoctorStampSignature 
+            stampUrl={profile?.doctor_stamp_url || null} 
+            signatureUrl={profile?.doctor_signature_url || null} 
+          />
+        </div>
+      </TabsContent>
+    )}
         
         {/* Additional role-specific tabs */}
         {userRole === 'doctor' && (

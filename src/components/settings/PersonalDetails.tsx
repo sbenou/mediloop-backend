@@ -6,7 +6,8 @@ import { ProfileDisplay } from "./profile/ProfileDisplay";
 import { DefaultAddress } from "./profile/DefaultAddress";
 import { toast } from "@/components/ui/use-toast";
 import CNSCardScanner from "./CNSCardScanner";
-import { DoctorStampSignature } from "./profile/DoctorStampSignature";
+// Fix the import to use the default export
+import DoctorStampSignature from "./profile/DoctorStampSignature";
 
 const PersonalDetails = () => {
   const [isEditing, setIsEditing] = useState(false);

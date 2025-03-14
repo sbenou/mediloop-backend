@@ -3,12 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Canvas } from "fabric/fabric-impl";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Upload, Check, X, Trash, Undo, Circle, Edit } from "lucide-react";
-import { fabric } from "fabric";
+// Fix the fabric import
+import { fabric } from "fabric/fabric-impl";
 
-const DoctorStampSignature = () => {
+export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stampUrl: string | null, signatureUrl: string | null }) {
   const { profile } = useAuth();
   const [isEditingStamp, setIsEditingStamp] = useState(false);
   const [isEditingSignature, setIsEditingSignature] = useState(false);
@@ -18,8 +18,8 @@ const DoctorStampSignature = () => {
   
   const stampCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const stampFabricRef = useRef<Canvas | null>(null);
-  const signatureFabricRef = useRef<Canvas | null>(null);
+  const stampFabricRef = useRef<fabric.Canvas | null>(null);
+  const signatureFabricRef = useRef<fabric.Canvas | null>(null);
 
   useEffect(() => {
     return () => {
@@ -33,7 +33,7 @@ const DoctorStampSignature = () => {
     };
   }, []);
 
-  const initCanvas = (canvasRef: React.RefObject<HTMLCanvasElement>, fabricRef: React.MutableRefObject<Canvas | null>) => {
+  const initCanvas = (canvasRef: React.RefObject<HTMLCanvasElement>, fabricRef: React.MutableRefObject<fabric.Canvas | null>) => {
     if (canvasRef.current && !fabricRef.current) {
       console.log("Initializing canvas with drawing mode");
       const canvas = new fabric.Canvas(canvasRef.current, {
@@ -97,14 +97,14 @@ const DoctorStampSignature = () => {
     }
   }, [selectedColor]);
 
-  const clearCanvas = (fabricRef: React.MutableRefObject<Canvas | null>) => {
+  const clearCanvas = (fabricRef: React.MutableRefObject<fabric.Canvas | null>) => {
     if (fabricRef.current) {
       fabricRef.current.clear();
       fabricRef.current.setBackgroundColor('#f8f9fa', fabricRef.current.renderAll.bind(fabricRef.current));
     }
   };
 
-  const undoLastAction = (fabricRef: React.MutableRefObject<Canvas | null>) => {
+  const undoLastAction = (fabricRef: React.MutableRefObject<fabric.Canvas | null>) => {
     if (fabricRef.current) {
       const objects = fabricRef.current.getObjects();
       if (objects.length > 0) {
@@ -114,7 +114,7 @@ const DoctorStampSignature = () => {
   };
 
   const saveCanvasAsImage = async (
-    fabricRef: React.MutableRefObject<Canvas | null>,
+    fabricRef: React.MutableRefObject<fabric.Canvas | null>,
     type: 'stamp' | 'signature'
   ) => {
     if (!profile?.id || !fabricRef.current) return;
@@ -283,10 +283,10 @@ const DoctorStampSignature = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center p-6 border rounded-md">
-              {profile?.doctor_stamp_url ? (
+              {stampUrl || profile?.doctor_stamp_url ? (
                 <div className="text-center">
                   <img
-                    src={profile.doctor_stamp_url}
+                    src={stampUrl || profile?.doctor_stamp_url}
                     alt="Doctor Stamp"
                     className="max-h-32 mx-auto mb-4"
                   />
@@ -401,10 +401,10 @@ const DoctorStampSignature = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center p-6 border rounded-md">
-              {profile?.doctor_signature_url ? (
+              {signatureUrl || profile?.doctor_signature_url ? (
                 <div className="text-center">
                   <img
-                    src={profile.doctor_signature_url}
+                    src={signatureUrl || profile?.doctor_signature_url}
                     alt="Doctor Signature"
                     className="max-h-32 mx-auto mb-4"
                   />
@@ -430,6 +430,4 @@ const DoctorStampSignature = () => {
       </Card>
     </div>
   );
-};
-
-export default DoctorStampSignature;
+}
