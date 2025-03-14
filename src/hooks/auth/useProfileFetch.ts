@@ -14,7 +14,8 @@ export const useProfileFetch = () => {
 
       // First, check if the user exists in auth users
       try {
-        const { data: authUser, error: authError } = await supabase.auth.getUser(userId);
+        // Directly use getUser without passing userId - it will use the current session
+        const { data: authUser, error: authError } = await supabase.auth.getUser();
 
         if (authError) {
           console.error('Error fetching auth user:', authError);
@@ -22,8 +23,15 @@ export const useProfileFetch = () => {
         }
 
         if (!authUser?.user) {
-          console.error('No auth user found with ID:', userId);
+          console.error('No auth user found in current session');
           return { profile: null, permissions: [] };
+        }
+
+        if (authUser.user.id !== userId) {
+          console.warn('Session user ID does not match requested user ID', { 
+            sessionUserId: authUser.user.id, 
+            requestedUserId: userId 
+          });
         }
 
         console.log('Auth user found, fetching profile:', authUser.user.id);
@@ -32,6 +40,7 @@ export const useProfileFetch = () => {
         // Continue anyway to check if we have a profile
       }
 
+      // Fetch user profile
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -65,7 +74,7 @@ export const useProfileFetch = () => {
         }
 
         if (!profile) {
-          console.error('No profile found for user:', userId);
+          console.log('No profile found for user:', userId);
           // If there's no profile, create one automatically
           try {
             console.log('Creating profile for user:', userId);

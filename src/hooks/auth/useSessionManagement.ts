@@ -47,6 +47,8 @@ export const useSessionManagement = () => {
           console.error('User ID mismatch or missing user data');
           throw new Error('User identity validation failed');
         }
+        
+        console.log('Token validation successful for user:', userData.user.id);
       } catch (tokenError) {
         console.error('Token validation failed:', tokenError);
         // Clear all auth storage to remove invalid tokens
@@ -66,10 +68,11 @@ export const useSessionManagement = () => {
         return;
       }
 
+      // Fetch the user profile
       const { profile, permissions } = await fetchAndSetProfile(session.user.id);
 
       if (!profile) {
-        console.error('No profile found after fetch, clearing auth state');
+        console.error('No profile found after fetch, trying to create one');
         // Try to create profile one last time if it doesn't exist
         try {
           const userData = session.user;
@@ -96,12 +99,14 @@ export const useSessionManagement = () => {
               isLoading: false,
             });
             return;
+          } else {
+            console.error('Still no profile after retry creation');
           }
         } catch (retryError) {
           console.error('Error in profile creation retry:', retryError);
         }
         
-        // If we still don't have a profile, clear auth state
+        // If we still don't have a profile, clear auth state and force re-login
         setAuth({
           user: null,
           profile: null,
@@ -111,6 +116,7 @@ export const useSessionManagement = () => {
         
         // Clear session as well to force a new login
         try {
+          clearAllAuthStorage();
           await supabase.auth.signOut();
         } catch (signOutError) {
           console.error('Error signing out after profile fetch failure:', signOutError);
