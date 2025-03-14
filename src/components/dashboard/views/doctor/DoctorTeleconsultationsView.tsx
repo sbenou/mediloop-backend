@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -9,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, Video, Clock, CheckCircle, XCircle, User } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { TeleconsultationStatus } from "@/types/supabase";
 
 // Define teleconsultation type
 interface Teleconsultation {
@@ -17,7 +17,7 @@ interface Teleconsultation {
   doctor_id: string;
   start_time: string;
   end_time: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: TeleconsultationStatus;
   reason: string;
   room_id?: string;
   patient?: {
@@ -54,14 +54,26 @@ const DoctorTeleconsultationsView = () => {
           .from('teleconsultations')
           .select(`
             *,
-            patient:patient_id(full_name, email)
+            patient:profiles!patient_id(full_name, email)
           `)
           .eq('doctor_id', profile.id)
           .order('start_time', { ascending: true });
 
         if (error) throw error;
         
-        setConsultations(data || []);
+        // Make sure data is not null and properly typed
+        if (data) {
+          // Filter out any items where patient is null or has error property
+          const validConsultations = data.filter(item => 
+            item.patient && 
+            typeof item.patient === 'object' && 
+            !('error' in item.patient)
+          ) as Teleconsultation[];
+          
+          setConsultations(validConsultations);
+        } else {
+          setConsultations([]);
+        }
       } catch (err) {
         console.error('Error fetching teleconsultations:', err);
         toast({
@@ -149,6 +161,7 @@ const DoctorTeleconsultationsView = () => {
 
     return (
       <div className="space-y-8 mt-4">
+        
         {pendingConsultations.length > 0 && (
           <div>
             <h3 className="text-lg font-medium mb-3">Pending Requests</h3>
@@ -213,6 +226,7 @@ const DoctorTeleconsultationsView = () => {
             </div>
           </div>
         )}
+        
         
         {confirmedConsultations.length > 0 && (
           <div>
