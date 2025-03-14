@@ -1,6 +1,7 @@
 
 import React from 'react';
-import ReactPhoneInput, { CountryCode } from 'react-phone-number-input';
+import ReactPhoneInput from 'react-phone-number-input';
+import type { CountryCode } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 interface PhoneInputProps {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,7 +100,8 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
   const clearCanvas = (fabricRef: React.MutableRefObject<Canvas | null>) => {
     if (fabricRef.current) {
       fabricRef.current.clear();
-      fabricRef.current.setBackgroundColor('#f8f9fa', fabricRef.current.renderAll.bind(fabricRef.current));
+      fabricRef.current.backgroundColor = '#f8f9fa';
+      fabricRef.current.renderAll();
     }
   };
 
@@ -134,7 +134,8 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       // Convert canvas to data URL
       const dataUrl = fabricRef.current.toDataURL({
         format: 'png',
-        quality: 1
+        quality: 1,
+        multiplier: 1
       });
 
       // Convert data URL to blob
