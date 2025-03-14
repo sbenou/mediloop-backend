@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Pencil, Save, Trash, Undo } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { Canvas } from "fabric";
+import { Canvas, Image as FabricImage } from "fabric";
 
 interface DoctorStampSignatureProps {
   stampUrl: string | null;
@@ -66,14 +66,25 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
       const img = new Image();
       img.src = stampUrl;
       img.onload = () => {
-        fabricStampCanvasRef.current?.clear();
-        fabricStampCanvasRef.current?.setBackgroundImage(stampUrl, () => {
-          fabricStampCanvasRef.current?.renderAll();
-        }, {
-          scaleX: fabricStampCanvasRef.current.width! / img.width,
-          scaleY: fabricStampCanvasRef.current.height! / img.height,
-          originX: 'left',
-          originY: 'top'
+        if (!fabricStampCanvasRef.current) return;
+        
+        fabricStampCanvasRef.current.clear();
+        FabricImage.fromURL(stampUrl, (fabricImg) => {
+          if (!fabricStampCanvasRef.current) return;
+          
+          // Calculate scale to fit the canvas
+          const scaleX = fabricStampCanvasRef.current.width / img.width;
+          const scaleY = fabricStampCanvasRef.current.height / img.height;
+          
+          fabricImg.set({
+            scaleX,
+            scaleY,
+            selectable: false,
+            evented: false
+          });
+          
+          fabricStampCanvasRef.current.backgroundImage = fabricImg;
+          fabricStampCanvasRef.current.renderAll();
         });
       };
     }
@@ -82,14 +93,25 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
       const img = new Image();
       img.src = signatureUrl;
       img.onload = () => {
-        fabricSignatureCanvasRef.current?.clear();
-        fabricSignatureCanvasRef.current?.setBackgroundImage(signatureUrl, () => {
-          fabricSignatureCanvasRef.current?.renderAll();
-        }, {
-          scaleX: fabricSignatureCanvasRef.current.width! / img.width,
-          scaleY: fabricSignatureCanvasRef.current.height! / img.height,
-          originX: 'left',
-          originY: 'top'
+        if (!fabricSignatureCanvasRef.current) return;
+        
+        fabricSignatureCanvasRef.current.clear();
+        FabricImage.fromURL(signatureUrl, (fabricImg) => {
+          if (!fabricSignatureCanvasRef.current) return;
+          
+          // Calculate scale to fit the canvas
+          const scaleX = fabricSignatureCanvasRef.current.width / img.width;
+          const scaleY = fabricSignatureCanvasRef.current.height / img.height;
+          
+          fabricImg.set({
+            scaleX,
+            scaleY,
+            selectable: false,
+            evented: false
+          });
+          
+          fabricSignatureCanvasRef.current.backgroundImage = fabricImg;
+          fabricSignatureCanvasRef.current.renderAll();
         });
       };
     }
@@ -160,7 +182,8 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
       // Convert canvas to blob
       const dataUrl = canvas.toDataURL({
         format: 'png',
-        quality: 0.8
+        quality: 0.8,
+        multiplier: 1
       });
       
       // Convert data URL to Blob
