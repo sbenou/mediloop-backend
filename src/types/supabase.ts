@@ -40,7 +40,7 @@ export interface DoctorAvailability {
   is_available: boolean | null;
   created_at: string;
   updated_at: string;
-  additional_time_slots?: string | null;
+  additional_time_slots: string | null;
   time_slots?: TimeSlot[];
 }
 

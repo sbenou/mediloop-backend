@@ -71,6 +71,7 @@ export type Database = {
       }
       doctor_availability: {
         Row: {
+          additional_time_slots: Json | null
           created_at: string
           day_of_week: number
           doctor_id: string
@@ -81,6 +82,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          additional_time_slots?: Json | null
           created_at?: string
           day_of_week: number
           doctor_id: string
@@ -91,6 +93,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          additional_time_slots?: Json | null
           created_at?: string
           day_of_week?: number
           doctor_id?: string

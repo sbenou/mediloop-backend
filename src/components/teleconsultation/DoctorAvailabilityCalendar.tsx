@@ -89,8 +89,7 @@ const DoctorAvailabilityCalendar = ({
           let additionalTimeSlots: string | null = null;
           
           try {
-            // Handle additional_time_slots if it exists in the database
-            // TypeScript now knows the property exists on our updated interface
+            // Handle the case where additional_time_slots might not exist in the database yet
             if ('additional_time_slots' in item && item.additional_time_slots) {
               console.log('Parsing additional time slots:', item.additional_time_slots);
               // Handle both string and already parsed object
