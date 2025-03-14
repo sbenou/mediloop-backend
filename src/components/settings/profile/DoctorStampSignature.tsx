@@ -79,7 +79,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   }, [stampCanvas, signatureCanvas, stampUrl, signatureUrl]);
   
   const loadImageToCanvas = (canvas: fabric.Canvas, url: string) => {
-    fabric.Image.fromURL(url, (img) => {
+    // Use the correct call to fabric.Image.fromURL with options as a separate object
+    fabric.Image.fromURL(url, function(img) {
       canvas.clear();
       canvas.backgroundColor = '#ffffff';
       
@@ -169,7 +170,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          fabric.Image.fromURL(imgUrl, (img) => {
+          // Use the correct call to fabric.Image.fromURL with options as a separate object
+          fabric.Image.fromURL(imgUrl, function(img) {
             stampCanvas.clear();
             stampCanvas.backgroundColor = '#ffffff';
             
@@ -203,7 +205,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          fabric.Image.fromURL(imgUrl, (img) => {
+          // Use the correct call to fabric.Image.fromURL with options as a separate object
+          fabric.Image.fromURL(imgUrl, function(img) {
             signatureCanvas.clear();
             signatureCanvas.backgroundColor = '#ffffff';
             
@@ -237,7 +240,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     try {
       console.log('Starting stamp save process...');
       
-      // Convert canvas to data URL
+      // Convert canvas to data URL with required multiplier parameter
       const dataUrl = stampCanvas.toDataURL({
         format: 'png',
         multiplier: 1,
@@ -338,7 +341,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     try {
       console.log('Starting signature save process...');
       
-      // Convert canvas to data URL
+      // Convert canvas to data URL with required multiplier parameter
       const dataUrl = signatureCanvas.toDataURL({
         format: 'png',
         multiplier: 1,
