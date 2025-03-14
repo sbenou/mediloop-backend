@@ -1,8 +1,10 @@
 
 import React from 'react';
 import ReactPhoneInput from 'react-phone-number-input';
-import type { CountryCode } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+
+// The CountryCode type needs to be imported correctly
+type CountryCode = import('react-phone-number-input').Country;
 
 interface PhoneInputProps {
   value: string;
