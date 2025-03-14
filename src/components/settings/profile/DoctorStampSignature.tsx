@@ -168,7 +168,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          fabric.Image.fromURL(event.target.result.toString(), (img) => {
+          const imgUrl = event.target.result.toString();
+          fabric.Image.fromURL(imgUrl, (img) => {
             stampCanvas.clear();
             stampCanvas.backgroundColor = '#ffffff';
             
@@ -201,7 +202,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          fabric.Image.fromURL(event.target.result.toString(), (img) => {
+          const imgUrl = event.target.result.toString();
+          fabric.Image.fromURL(imgUrl, (img) => {
             signatureCanvas.clear();
             signatureCanvas.backgroundColor = '#ffffff';
             
@@ -451,7 +453,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="border rounded-md overflow-hidden bg-white" style={{ width: '300px', height: '200px' }}>
+            <div className="border rounded-md overflow-hidden bg-white w-full" style={{ height: '200px' }}>
               <canvas ref={stampCanvasRef} />
             </div>
             
@@ -539,7 +541,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="border rounded-md overflow-hidden bg-white" style={{ width: '300px', height: '200px' }}>
+            <div className="border rounded-md overflow-hidden bg-white w-full" style={{ height: '200px' }}>
               <canvas ref={signatureCanvasRef} />
             </div>
             

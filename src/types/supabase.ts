@@ -35,9 +35,9 @@ export interface DoctorAvailability {
   id: string;
   doctor_id: string;
   day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_available: boolean;
+  start_time: string | null;
+  end_time: string | null;
+  is_available: boolean | null;
   created_at: string;
   updated_at: string;
   additional_time_slots?: string | null;

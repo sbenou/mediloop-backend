@@ -3,12 +3,10 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, X, Save, Clock } from "lucide-react";
-import { format, parse, addMinutes } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { DoctorAvailability, TimeSlot } from "@/types/supabase";
@@ -76,6 +74,8 @@ const DoctorAvailabilityCalendar = ({
       if (data && data.length > 0) {
         // Transform data to include time_slots array
         const processedData: DoctorAvailability[] = data.map(item => {
+          console.log('Processing availability item:', item);
+          
           // Parse any stored time slots or create default
           const defaultSlot = {
             startTime: item.start_time || '09:00',
@@ -86,12 +86,15 @@ const DoctorAvailabilityCalendar = ({
           let allTimeSlots = [defaultSlot];
           let additionalSlotsString = null;
           
-          if (item.additional_time_slots) {
+          // Cast item to include additional_time_slots property
+          const itemWithAdditional = item as DoctorAvailability;
+          
+          if (itemWithAdditional.additional_time_slots) {
             try {
-              console.log('Parsing additional time slots:', item.additional_time_slots);
-              const additionalSlots = JSON.parse(item.additional_time_slots as string);
+              console.log('Parsing additional time slots:', itemWithAdditional.additional_time_slots);
+              const additionalSlots = JSON.parse(itemWithAdditional.additional_time_slots as string);
               allTimeSlots = [defaultSlot, ...additionalSlots];
-              additionalSlotsString = item.additional_time_slots;
+              additionalSlotsString = itemWithAdditional.additional_time_slots;
             } catch (e) {
               console.error('Error parsing additional time slots:', e);
             }
@@ -151,7 +154,7 @@ const DoctorAvailabilityCalendar = ({
       const currentDayData = availabilityData.find(day => day.day_of_week === selectedDay);
       
       if (currentDayData) {
-        setIsAvailable(currentDayData.is_available);
+        setIsAvailable(currentDayData.is_available || false);
         
         // Set time slots if they exist in the data
         if (currentDayData.time_slots && currentDayData.time_slots.length > 0) {
