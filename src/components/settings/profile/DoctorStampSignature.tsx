@@ -52,7 +52,8 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       // Set canvas properties
       canvas.setWidth(300);
       canvas.setHeight(200);
-      canvas.setBackgroundColor('#f8f9fa', canvas.renderAll.bind(canvas));
+      canvas.backgroundColor = '#f8f9fa';
+      canvas.renderAll();
       
       // Explicitly set to drawing mode with pencil brush
       canvas.isDrawingMode = true;
@@ -125,7 +126,8 @@ export default function DoctorStampSignature({ stampUrl, signatureUrl }: { stamp
       console.log("Clearing canvas");
       fabricRef.current.clear();
       // Important: Reset the background color after clearing
-      fabricRef.current.setBackgroundColor('#f8f9fa', fabricRef.current.renderAll.bind(fabricRef.current));
+      fabricRef.current.backgroundColor = '#f8f9fa';
+      fabricRef.current.renderAll();
     }
   };
 
