@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,36 +78,33 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   }, [stampCanvas, signatureCanvas, stampUrl, signatureUrl]);
   
   const loadImageToCanvas = (canvas: fabric.Canvas, url: string) => {
-    // In Fabric.js v6, fromURL takes url and options object (not a callback)
-    fabric.Image.fromURL(url, {
-      // This will run after the image is loaded
-      onload: (img) => {
-        canvas.clear();
-        canvas.backgroundColor = '#ffffff';
-        
-        // Scale image to fit canvas while maintaining aspect ratio
-        const canvasWidth = canvas.getWidth() || 290;
-        const canvasHeight = canvas.getHeight() || 200;
-        
-        const imgWidth = img.width || 100;
-        const imgHeight = img.height || 100;
-        
-        const scale = Math.min(
-          canvasWidth / imgWidth,
-          canvasHeight / imgHeight
-        );
-        
-        img.scale(scale);
-        
-        // Center the image on the canvas
-        img.set({
-          left: (canvasWidth - (imgWidth * scale)) / 2,
-          top: (canvasHeight - (imgHeight * scale)) / 2
-        });
-        
-        canvas.add(img);
-        canvas.renderAll();
-      }
+    // Fixed: Use proper callback approach for Fabric.js v6
+    fabric.Image.fromURL(url, (img) => {
+      canvas.clear();
+      canvas.backgroundColor = '#ffffff';
+      
+      // Scale image to fit canvas while maintaining aspect ratio
+      const canvasWidth = canvas.getWidth() || 290;
+      const canvasHeight = canvas.getHeight() || 200;
+      
+      const imgWidth = img.width || 100;
+      const imgHeight = img.height || 100;
+      
+      const scale = Math.min(
+        canvasWidth / imgWidth,
+        canvasHeight / imgHeight
+      );
+      
+      img.scale(scale);
+      
+      // Center the image on the canvas
+      img.set({
+        left: (canvasWidth - (imgWidth * scale)) / 2,
+        top: (canvasHeight - (imgHeight * scale)) / 2
+      });
+      
+      canvas.add(img);
+      canvas.renderAll();
     });
   };
   
@@ -173,29 +169,27 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          // In Fabric.js v6, fromURL takes url and options object (not a callback)
-          fabric.Image.fromURL(imgUrl, {
-            onload: (img) => {
-              stampCanvas.clear();
-              stampCanvas.backgroundColor = '#ffffff';
-              
-              // Scale image to fit canvas
-              const scale = Math.min(
-                stampCanvas.getWidth()! / (img.width || 100),
-                stampCanvas.getHeight()! / (img.height || 100)
-              );
-              
-              img.scale(scale);
-              
-              // Center the image
-              img.set({
-                left: (stampCanvas.getWidth()! - ((img.width || 100) * scale)) / 2,
-                top: (stampCanvas.getHeight()! - ((img.height || 100) * scale)) / 2
-              });
-              
-              stampCanvas.add(img);
-              stampCanvas.renderAll();
-            }
+          // Fixed: Use proper callback approach for Fabric.js v6
+          fabric.Image.fromURL(imgUrl, (img) => {
+            stampCanvas.clear();
+            stampCanvas.backgroundColor = '#ffffff';
+            
+            // Scale image to fit canvas
+            const scale = Math.min(
+              stampCanvas.getWidth()! / (img.width || 100),
+              stampCanvas.getHeight()! / (img.height || 100)
+            );
+            
+            img.scale(scale);
+            
+            // Center the image
+            img.set({
+              left: (stampCanvas.getWidth()! - ((img.width || 100) * scale)) / 2,
+              top: (stampCanvas.getHeight()! - ((img.height || 100) * scale)) / 2
+            });
+            
+            stampCanvas.add(img);
+            stampCanvas.renderAll();
           });
         }
       };
@@ -210,29 +204,27 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          // In Fabric.js v6, fromURL takes url and options object (not a callback)
-          fabric.Image.fromURL(imgUrl, {
-            onload: (img) => {
-              signatureCanvas.clear();
-              signatureCanvas.backgroundColor = '#ffffff';
-              
-              // Scale image to fit canvas
-              const scale = Math.min(
-                signatureCanvas.getWidth()! / (img.width || 100),
-                signatureCanvas.getHeight()! / (img.height || 100)
-              );
-              
-              img.scale(scale);
-              
-              // Center the image
-              img.set({
-                left: (signatureCanvas.getWidth()! - ((img.width || 100) * scale)) / 2,
-                top: (signatureCanvas.getHeight()! - ((img.height || 100) * scale)) / 2
-              });
-              
-              signatureCanvas.add(img);
-              signatureCanvas.renderAll();
-            }
+          // Fixed: Use proper callback approach for Fabric.js v6
+          fabric.Image.fromURL(imgUrl, (img) => {
+            signatureCanvas.clear();
+            signatureCanvas.backgroundColor = '#ffffff';
+            
+            // Scale image to fit canvas
+            const scale = Math.min(
+              signatureCanvas.getWidth()! / (img.width || 100),
+              signatureCanvas.getHeight()! / (img.height || 100)
+            );
+            
+            img.scale(scale);
+            
+            // Center the image
+            img.set({
+              left: (signatureCanvas.getWidth()! - ((img.width || 100) * scale)) / 2,
+              top: (signatureCanvas.getHeight()! - ((img.height || 100) * scale)) / 2
+            });
+            
+            signatureCanvas.add(img);
+            signatureCanvas.renderAll();
           });
         }
       };
