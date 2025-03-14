@@ -46,6 +46,7 @@ const DoctorAvailabilityCalendar = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [availabilityData, setAvailabilityData] = useState<DoctorAvailability[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Load doctor's availability settings
   useEffect(() => {
@@ -57,6 +58,7 @@ const DoctorAvailabilityCalendar = ({
   const loadAvailability = async () => {
     try {
       setIsLoading(true);
+      setLoadError(null);
       console.log('Loading availability for doctor:', doctorId);
       
       const { data, error } = await supabase
@@ -66,6 +68,7 @@ const DoctorAvailabilityCalendar = ({
       
       if (error) {
         console.error('Error fetching doctor availability:', error);
+        setLoadError('Failed to load availability data');
         throw error;
       }
       
@@ -84,20 +87,25 @@ const DoctorAvailabilityCalendar = ({
           
           // If additional_time_slots exists, parse it
           let allTimeSlots = [defaultSlot];
-          let additionalSlotsString = null;
+          let additionalTimeSlots: string | null = null;
           
-          // Cast item to include additional_time_slots property
-          const itemWithAdditional = item as DoctorAvailability;
-          
-          if (itemWithAdditional.additional_time_slots) {
-            try {
-              console.log('Parsing additional time slots:', itemWithAdditional.additional_time_slots);
-              const additionalSlots = JSON.parse(itemWithAdditional.additional_time_slots as string);
-              allTimeSlots = [defaultSlot, ...additionalSlots];
-              additionalSlotsString = itemWithAdditional.additional_time_slots;
-            } catch (e) {
-              console.error('Error parsing additional time slots:', e);
+          try {
+            if (item.additional_time_slots) {
+              console.log('Parsing additional time slots:', item.additional_time_slots);
+              // Handle both string and already parsed object
+              if (typeof item.additional_time_slots === 'string') {
+                const parsedSlots = JSON.parse(item.additional_time_slots);
+                if (Array.isArray(parsedSlots)) {
+                  allTimeSlots = [defaultSlot, ...parsedSlots];
+                }
+                additionalTimeSlots = item.additional_time_slots;
+              } else if (Array.isArray(item.additional_time_slots)) {
+                allTimeSlots = [defaultSlot, ...item.additional_time_slots];
+                additionalTimeSlots = JSON.stringify(item.additional_time_slots);
+              }
             }
+          } catch (e) {
+            console.error('Error parsing additional time slots:', e);
           }
           
           return {
@@ -109,7 +117,7 @@ const DoctorAvailabilityCalendar = ({
             is_available: item.is_available,
             created_at: item.created_at,
             updated_at: item.updated_at,
-            additional_time_slots: additionalSlotsString,
+            additional_time_slots: additionalTimeSlots,
             time_slots: allTimeSlots
           } as DoctorAvailability;
         });
@@ -138,6 +146,7 @@ const DoctorAvailabilityCalendar = ({
       }
     } catch (error) {
       console.error('Error loading availability:', error);
+      setLoadError('Failed to load availability data');
       toast({
         variant: "destructive",
         title: "Failed to load availability",
@@ -188,25 +197,88 @@ const DoctorAvailabilityCalendar = ({
   }, [selectedDay, availabilityData]);
 
   const handleTimeChange = (index: number, type: 'startTime' | 'endTime', value: string) => {
-    const newTimeSlots = [...timeSlots];
-    newTimeSlots[index][type] = value;
-    setTimeSlots(newTimeSlots);
+    try {
+      const newTimeSlots = [...timeSlots];
+      newTimeSlots[index] = {
+        ...newTimeSlots[index],
+        [type]: value
+      };
+      setTimeSlots(newTimeSlots);
+    } catch (error) {
+      console.error('Error updating time slot:', error);
+      toast({
+        variant: "destructive",
+        title: "Error updating time",
+        description: "Failed to update time slot. Please try again."
+      });
+    }
   };
 
   const addTimeSlot = () => {
-    const newTimeSlots = [...timeSlots];
-    newTimeSlots.push({
-      startTime: '13:00',
-      endTime: '17:00'
-    });
-    setTimeSlots(newTimeSlots);
+    try {
+      const newTimeSlots = [...timeSlots];
+      newTimeSlots.push({
+        startTime: '13:00',
+        endTime: '17:00'
+      });
+      setTimeSlots(newTimeSlots);
+    } catch (error) {
+      console.error('Error adding time slot:', error);
+      toast({
+        variant: "destructive",
+        title: "Error adding time slot",
+        description: "Failed to add a new time slot. Please try again."
+      });
+    }
   };
 
   const removeTimeSlot = (index: number) => {
-    if (timeSlots.length > 1) {
-      const newTimeSlots = timeSlots.filter((_, i) => i !== index);
-      setTimeSlots(newTimeSlots);
+    try {
+      if (timeSlots.length > 1) {
+        const newTimeSlots = timeSlots.filter((_, i) => i !== index);
+        setTimeSlots(newTimeSlots);
+      }
+    } catch (error) {
+      console.error('Error removing time slot:', error);
+      toast({
+        variant: "destructive",
+        title: "Error removing time slot",
+        description: "Failed to remove time slot. Please try again."
+      });
     }
+  };
+
+  const validateTimeSlots = () => {
+    // Check for overlapping time slots
+    for (let i = 0; i < timeSlots.length; i++) {
+      const slot1 = timeSlots[i];
+      
+      // Check if start time is before end time
+      if (slot1.startTime >= slot1.endTime) {
+        toast({
+          variant: "destructive",
+          title: "Invalid time slot",
+          description: `Time slot ${i+1} has start time after or equal to end time.`
+        });
+        return false;
+      }
+      
+      // Check for overlaps with other slots
+      for (let j = i + 1; j < timeSlots.length; j++) {
+        const slot2 = timeSlots[j];
+        
+        if ((slot1.startTime <= slot2.endTime && slot1.endTime >= slot2.startTime) ||
+            (slot2.startTime <= slot1.endTime && slot2.endTime >= slot1.startTime)) {
+          toast({
+            variant: "destructive",
+            title: "Overlapping time slots",
+            description: `Time slots ${i+1} and ${j+1} overlap. Please adjust the times.`
+          });
+          return false;
+        }
+      }
+    }
+    return true;
   };
 
   const saveAvailability = async () => {
@@ -215,6 +287,10 @@ const DoctorAvailabilityCalendar = ({
         title: "Select a day",
         description: "Please select a day of the week to set availability."
       });
+      return;
+    }
+
+    if (isAvailable && !validateTimeSlots()) {
       return;
     }
 
@@ -298,6 +374,10 @@ const DoctorAvailabilityCalendar = ({
 
   const updateAllDaysAtOnce = async () => {
     try {
+      if (isAvailable && !validateTimeSlots()) {
+        return;
+      }
+      
       setIsSaving(true);
       console.log('Updating availability for all days');
       
@@ -370,8 +450,11 @@ const DoctorAvailabilityCalendar = ({
     // Add additional time slots if they exist
     if (dayData.additional_time_slots) {
       try {
-        const additionalSlots = JSON.parse(dayData.additional_time_slots);
-        if (additionalSlots && additionalSlots.length > 0) {
+        const additionalSlots = typeof dayData.additional_time_slots === 'string' 
+          ? JSON.parse(dayData.additional_time_slots)
+          : dayData.additional_time_slots;
+          
+        if (additionalSlots && Array.isArray(additionalSlots) && additionalSlots.length > 0) {
           additionalSlots.forEach((slot: TimeSlot) => {
             timeDisplay += `\n${slot.startTime} - ${slot.endTime}`;
           });
@@ -393,6 +476,22 @@ const DoctorAvailabilityCalendar = ({
       <div className="flex justify-center items-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2">Loading availability settings...</span>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-4 border rounded-md border-red-200 bg-red-50">
+        <h3 className="text-red-700 font-medium">Error Loading Availability</h3>
+        <p className="text-red-600">{loadError}</p>
+        <Button 
+          variant="outline" 
+          onClick={loadAvailability} 
+          className="mt-2"
+        >
+          Try Again
+        </Button>
       </div>
     );
   }
@@ -488,6 +587,7 @@ const DoctorAvailabilityCalendar = ({
                           size="icon"
                           variant="ghost"
                           onClick={() => removeTimeSlot(index)}
+                          type="button"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -500,6 +600,7 @@ const DoctorAvailabilityCalendar = ({
                     size="sm"
                     onClick={addTimeSlot}
                     className="mt-2"
+                    type="button"
                   >
                     <Plus className="h-4 w-4 mr-1" /> Add time slot
                   </Button>
@@ -510,6 +611,7 @@ const DoctorAvailabilityCalendar = ({
                 <Button
                   onClick={saveAvailability}
                   disabled={isSaving}
+                  type="button"
                 >
                   {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Save className="mr-2 h-4 w-4" />
@@ -520,6 +622,7 @@ const DoctorAvailabilityCalendar = ({
                   variant="outline"
                   onClick={updateAllDaysAtOnce}
                   disabled={isSaving}
+                  type="button"
                 >
                   {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Apply to all days
