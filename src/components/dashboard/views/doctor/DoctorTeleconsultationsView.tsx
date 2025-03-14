@@ -26,6 +26,21 @@ interface Teleconsultation {
   };
 }
 
+// Define the structure of data returned from Supabase
+interface SupabaseTeleconsultation {
+  id: string;
+  patient_id: string;
+  doctor_id: string;
+  start_time: string;
+  end_time: string;
+  status: TeleconsultationStatus;
+  reason: string;
+  room_id?: string;
+  patient: any; // This can be a valid patient object or an error object
+  created_at: string;
+  updated_at: string;
+}
+
 const DoctorTeleconsultationsView = () => {
   const { profile } = useAuth();
   const [searchParams] = useSearchParams();
@@ -61,16 +76,36 @@ const DoctorTeleconsultationsView = () => {
 
         if (error) throw error;
         
-        // Make sure data is not null and properly typed
         if (data) {
-          // Filter out any items where patient is null or has error property
-          const validConsultations = data.filter(item => 
-            item.patient && 
-            typeof item.patient === 'object' && 
-            !('error' in item.patient)
-          ) as Teleconsultation[];
+          // Process data to ensure it matches our Teleconsultation type
+          const processedConsultations: Teleconsultation[] = [];
           
-          setConsultations(validConsultations);
+          for (const item of data as SupabaseTeleconsultation[]) {
+            // Only include items with valid patient data
+            if (item.patient && 
+                typeof item.patient === 'object' && 
+                !('error' in item.patient) &&
+                'full_name' in item.patient && 
+                'email' in item.patient) {
+              
+              processedConsultations.push({
+                id: item.id,
+                patient_id: item.patient_id,
+                doctor_id: item.doctor_id,
+                start_time: item.start_time,
+                end_time: item.end_time,
+                status: item.status,
+                reason: item.reason,
+                room_id: item.room_id,
+                patient: {
+                  full_name: item.patient.full_name,
+                  email: item.patient.email
+                }
+              });
+            }
+          }
+          
+          setConsultations(processedConsultations);
         } else {
           setConsultations([]);
         }
