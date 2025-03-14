@@ -1,10 +1,11 @@
+
 import { useState, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Pencil, Save, Trash, Undo } from "lucide-react";
+import { Upload, Pencil, Save, Trash, Undo, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Canvas, Image as FabricImage } from "fabric";
 
@@ -58,6 +59,18 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
       fabricSignatureCanvasRef.current?.dispose();
     };
   }, []);
+
+  // Set drawing mode explicitly when switching to draw mode
+  useEffect(() => {
+    if (drawMode === 'draw') {
+      if (fabricStampCanvasRef.current) {
+        fabricStampCanvasRef.current.isDrawingMode = true;
+      }
+      if (fabricSignatureCanvasRef.current) {
+        fabricSignatureCanvasRef.current.isDrawingMode = true;
+      }
+    }
+  }, [drawMode]);
 
   // Load images if they exist
   useEffect(() => {
@@ -221,6 +234,9 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
         title: "Success",
         description: `Doctor's ${type} saved successfully`,
       });
+      
+      // Switch back to upload mode after saving
+      setDrawMode('upload');
     } catch (error) {
       console.error('Error saving canvas:', error);
       toast({
@@ -253,6 +269,11 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
     if (canvas && canvas._objects && canvas._objects.length > 0) {
       canvas.remove(canvas._objects[canvas._objects.length - 1]);
     }
+  };
+  
+  const handleCancel = () => {
+    // Return to upload mode without saving
+    setDrawMode('upload');
   };
 
   return (
@@ -348,6 +369,14 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
                       Undo
                     </Button>
                     <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancel}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button 
                       size="sm" 
                       onClick={() => handleSaveCanvas('stamp')}
                       disabled={isUploading}
@@ -434,6 +463,14 @@ export const DoctorStampSignature = ({ stampUrl, signatureUrl }: DoctorStampSign
                     >
                       <Undo className="h-4 w-4 mr-2" />
                       Undo
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancel}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
                     </Button>
                     <Button 
                       size="sm" 

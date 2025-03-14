@@ -43,6 +43,19 @@ const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
 const PharmacyProfile = () => <PlaceholderPage title="Pharmacy Profile" />;
 
+// Custom DoctorProfile component that renders DoctorDashboard with profile params
+const DoctorProfile = () => {
+  // Set URL search params for profile view
+  const searchParams = new URLSearchParams();
+  searchParams.set('view', 'doctor');
+  searchParams.set('section', 'profile');
+  searchParams.set('profileTab', 'personal');
+  
+  // Pass these params to the DoctorDashboard component
+  // The component will handle routing internally based on these params
+  return <DoctorDashboard initialParams={searchParams} />;
+};
+
 function App() {
   return (
     <RecoilRoot>
@@ -71,7 +84,7 @@ function App() {
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/admin-settings" element={<AdminSettings />} />
                   <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
-                  <Route path="/doctor/profile" element={<DoctorDashboard />} />
+                  <Route path="/doctor/profile" element={<DoctorProfile />} />
                   <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
                 </Routes>

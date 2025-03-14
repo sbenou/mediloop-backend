@@ -15,16 +15,29 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
 
-const DoctorDashboard = () => {
+interface DoctorDashboardProps {
+  initialParams?: URLSearchParams;
+}
+
+const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, userRole, isLoading, profile } = useAuth();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  const currentView = searchParams.get("view") || "doctor";
-  const section = searchParams.get("section") || "dashboard";
-  const profileTab = searchParams.get("profileTab") || "personal";
+  // Get parameters from URL or use initialParams if provided
+  const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
+  const section = searchParams.get("section") || initialParams?.get("section") || "dashboard";
+  const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
+  
+  // Set URL params on initial load if initialParams was provided
+  useEffect(() => {
+    if (initialParams && isInitialLoad && !isLoading) {
+      console.log("Setting initial params from props:", Object.fromEntries(initialParams.entries()));
+      setSearchParams(initialParams);
+    }
+  }, [initialParams, isInitialLoad, isLoading, setSearchParams]);
   
   // Console logging for debugging
   useEffect(() => {
@@ -32,10 +45,12 @@ const DoctorDashboard = () => {
       userRole, 
       currentView, 
       section,
+      profileTab,
       searchParams: Object.fromEntries(searchParams.entries()),
-      location: location.pathname + location.search
+      location: location.pathname + location.search,
+      hasInitialParams: !!initialParams
     });
-  }, [userRole, currentView, section, searchParams, location]);
+  }, [userRole, currentView, section, profileTab, searchParams, location, initialParams]);
   
   // Make sure we have a default section for doctors
   useEffect(() => {
