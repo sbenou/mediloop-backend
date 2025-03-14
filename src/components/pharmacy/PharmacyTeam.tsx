@@ -28,6 +28,26 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
     setNokPhoneValue
   } = usePharmacyTeam(pharmacyId);
 
+  // Function to transform TeamMember from the hook to the format expected by TeamMemberCard
+  const mapTeamMemberToCardMember = (member: any) => {
+    return {
+      id: member.id,
+      full_name: member.full_name,
+      email: member.email,
+      phone_number: member.phone_number || '',
+      role: member.role,
+      pharmacy_id: pharmacyId,
+      status: member.is_active ? 'active' : 'inactive',
+      profile_image: member.avatar_url,
+    };
+  };
+
+  // Function to adapt the handleToggleActive function to match expected signature
+  const handleCardToggleActive = (memberId: string, currentStatus: 'active' | 'inactive') => {
+    const isActive = currentStatus === 'active';
+    handleToggleActive(memberId, isActive);
+  };
+
   return (
     <div className="space-y-6 container mx-auto px-4">
       <div className="flex justify-between items-center">
@@ -68,8 +88,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                 teamMembers.map(member => (
                   <TeamMemberCard 
                     key={member.id}
-                    member={member}
-                    onToggleActive={handleToggleActive}
+                    member={mapTeamMemberToCardMember(member)}
+                    onToggleActive={handleCardToggleActive}
                   />
                 ))
               ) : profile ? (
@@ -87,8 +107,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
               {teamMembers.map(member => (
                 <TeamMemberCard 
                   key={member.id}
-                  member={member}
-                  onToggleActive={handleToggleActive}
+                  member={mapTeamMemberToCardMember(member)}
+                  onToggleActive={handleCardToggleActive}
                 />
               ))}
             </div>
