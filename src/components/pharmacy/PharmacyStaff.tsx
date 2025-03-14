@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { UserPlus, UserCheck, UserX, Shield } from 'lucide-react';
+import { UserPlus, UserCheck, UserX, Shield, Eye, Edit, Trash } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from '@/hooks/auth/useAuth';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -119,6 +126,27 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
     }
   };
 
+  const handleViewMember = (memberId: string) => {
+    toast({
+      title: "View Member",
+      description: `Viewing details for team member ID: ${memberId}`,
+    });
+  };
+
+  const handleEditMember = (memberId: string) => {
+    toast({
+      title: "Edit Member",
+      description: `Editing team member ID: ${memberId}`,
+    });
+  };
+
+  const handleTerminateMember = (memberId: string) => {
+    toast({
+      title: "Confirm Termination",
+      description: `Are you sure you want to terminate this team member?`,
+    });
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -186,23 +214,28 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
                   </TableCell>
                   {entityType === 'pharmacy' && (
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleStaffStatus(member.id, member.status)}
-                      >
-                        {member.status === 'active' ? (
-                          <>
-                            <UserX className="h-4 w-4 mr-1" />
-                            Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <UserCheck className="h-4 w-4 mr-1" />
-                            Activate
-                          </>
-                        )}
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            Actions
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleViewMember(member.id)}>
+                            <Eye className="h-4 w-4 mr-2" /> View Team Member
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditMember(member.id)}>
+                            <Edit className="h-4 w-4 mr-2" /> Edit Team Member
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-destructive" 
+                            onClick={() => handleTerminateMember(member.id)}
+                          >
+                            <Trash className="h-4 w-4 mr-2" /> Terminate Team Member
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   )}
                 </TableRow>
