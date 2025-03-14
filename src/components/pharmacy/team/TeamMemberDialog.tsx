@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AddressFields } from "@/components/address/AddressFields";
+import AddressFields from "@/components/address/AddressFields";
 import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from 'lucide-react';
 
@@ -185,9 +185,8 @@ export const TeamMemberDialog: React.FC<TeamMemberDialogProps> = ({
                   />
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone-input">Phone Number</Label>
                     <PhoneInput
-                      id="phone"
                       value={phoneValue}
                       onChange={setPhoneValue}
                       defaultCountry="LU"
@@ -227,8 +226,7 @@ export const TeamMemberDialog: React.FC<TeamMemberDialogProps> = ({
                 <TabsContent value="address" className="space-y-4">
                   <AddressFields 
                     form={form} 
-                    fieldPrefix="" 
-                    showMapSearch={true}
+                    disabled={false}
                   />
                   
                   <div className="flex justify-between">
@@ -271,9 +269,8 @@ export const TeamMemberDialog: React.FC<TeamMemberDialogProps> = ({
                   />
 
                   <div className="space-y-2">
-                    <Label htmlFor="nok_phone">Next of Kin Phone Number</Label>
+                    <Label htmlFor="nok-phone-input">Next of Kin Phone Number</Label>
                     <PhoneInput
-                      id="nok_phone"
                       value={nokPhoneValue}
                       onChange={setNokPhoneValue}
                       defaultCountry="LU"
@@ -283,9 +280,9 @@ export const TeamMemberDialog: React.FC<TeamMemberDialogProps> = ({
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium">Next of Kin Address</h3>
                     <AddressFields 
-                      form={form} 
-                      fieldPrefix="nok_" 
-                      showMapSearch={true}
+                      form={form}
+                      prefix="nok_"
+                      disabled={false}
                     />
                   </div>
 
@@ -332,9 +329,8 @@ export const TeamMemberDialog: React.FC<TeamMemberDialogProps> = ({
                 />
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone-input">Phone Number</Label>
                   <PhoneInput
-                    id="phone"
                     value={phoneValue}
                     onChange={setPhoneValue}
                     defaultCountry="LU"

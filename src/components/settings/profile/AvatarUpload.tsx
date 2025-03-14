@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,17 +53,18 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
         }
       }
       
-      // Add RLS policy to allow read access to the bucket
+      // Add policy directly via updateBucket if it doesn't exist
       try {
-        // Check if policy exists by trying to create it (will fail if it exists)
-        await supabase.rpc('create_storage_policy', { 
-          bucket_name: bucketName,
-          policy_name: `${bucketName}_public_read`,
-          definition: `(bucket_id = '${bucketName}' AND role() = 'anon')`
+        const { error } = await supabase.storage.updateBucket(bucketName, {
+          public: true,
+          fileSizeLimit: 5242880, // 5MB limit
         });
+        
+        if (error) {
+          console.log('Could not update bucket settings:', error);
+        }
       } catch (error) {
-        // Policy might already exist, which is fine
-        console.log('Policy may already exist:', error);
+        console.log('Error updating bucket settings:', error);
       }
       
       const { error: uploadError, data } = await supabase.storage

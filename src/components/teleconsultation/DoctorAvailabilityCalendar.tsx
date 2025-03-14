@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +18,12 @@ interface DoctorAvailabilityCalendarProps {
   isManagementMode?: boolean;
 }
 
+// Define time slot type
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+}
+
 // Define the structure for doctor availability
 interface DoctorAvailability {
   id?: string;
@@ -28,12 +33,7 @@ interface DoctorAvailability {
   end_time: string;
   is_available: boolean;
   time_slots?: TimeSlot[];
-}
-
-// Define time slot type
-interface TimeSlot {
-  startTime: string;
-  endTime: string;
+  additional_time_slots?: string | null;
 }
 
 const DAYS_OF_WEEK = [
@@ -97,7 +97,7 @@ const DoctorAvailabilityCalendar = ({
           let allTimeSlots = [defaultSlot];
           if (item.additional_time_slots) {
             try {
-              const additionalSlots = JSON.parse(item.additional_time_slots);
+              const additionalSlots = JSON.parse(item.additional_time_slots as string);
               allTimeSlots = [defaultSlot, ...additionalSlots];
             } catch (e) {
               console.error('Error parsing additional time slots:', e);
