@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -90,6 +89,7 @@ const DoctorAvailabilityCalendar = ({
           let additionalTimeSlots: string | null = null;
           
           try {
+            // Handle the case where additional_time_slots might not exist in the database yet
             if (item.additional_time_slots) {
               console.log('Parsing additional time slots:', item.additional_time_slots);
               // Handle both string and already parsed object
