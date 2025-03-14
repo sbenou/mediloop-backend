@@ -45,7 +45,10 @@ const SuperAdminDashboard = () => {
         </TabsList>
 
         <TabsContent value="dashboard">
-          <AdminTabs />
+          <AdminTabs 
+            isLoading={false} 
+            updateUserRole={async () => {}} 
+          />
         </TabsContent>
 
         <TabsContent value="users">

@@ -34,9 +34,10 @@ interface Teleconsultation {
 
 interface TeleconsultationListProps {
   onJoinMeeting: (consultation: Teleconsultation) => void;
+  filterRole?: string; // Add this optional property
 }
 
-const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeting }) => {
+const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeting, filterRole }) => {
   const { userRole, profile } = useAuth();
   const [consultations, setConsultations] = useState<Teleconsultation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,10 +79,12 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({ onJoinMeeti
           doctor:profiles!doctor_id(full_name, email)
         `);
 
-      // Filter based on user role
-      if (userRole === 'patient') {
+      // Filter based on user role or filterRole parameter if provided
+      const roleToFilter = filterRole || userRole;
+      
+      if (roleToFilter === 'patient') {
         query = query.eq('patient_id', profile.id);
-      } else if (userRole === 'doctor') {
+      } else if (roleToFilter === 'doctor') {
         query = query.eq('doctor_id', profile.id);
       }
 

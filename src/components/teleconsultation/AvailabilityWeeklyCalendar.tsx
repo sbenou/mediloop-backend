@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ import {
 import { format, addDays, startOfWeek, isSameDay, parseISO, isWithinInterval } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { BankHoliday, DoctorAvailability, TimeSlot, SupportedCountry } from "@/types/supabase";
+import { BankHoliday, DoctorAvailability, TimeSlot, SupportedCountry, isTimeSlot } from "@/types/supabase";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/auth/useAuth";
 
@@ -84,7 +83,7 @@ const AvailabilityWeeklyCalendar = ({
                 
               if (Array.isArray(additionalSlots)) {
                 additionalSlots.forEach(slot => {
-                  if (slot && typeof slot === 'object' && 'startTime' in slot && 'endTime' in slot) {
+                  if (isTimeSlot(slot)) {
                     timeSlots.push({
                       startTime: slot.startTime,
                       endTime: slot.endTime
@@ -97,10 +96,16 @@ const AvailabilityWeeklyCalendar = ({
             }
           }
           
-          return {
+          // Create proper DoctorAvailability object to fix type issues
+          const availabilityItem: DoctorAvailability = {
             ...item,
+            additional_time_slots: typeof item.additional_time_slots === 'object' 
+              ? JSON.stringify(item.additional_time_slots) 
+              : item.additional_time_slots,
             time_slots: timeSlots
           };
+          
+          return availabilityItem;
         });
         
         setDoctorAvailability(processedData);
