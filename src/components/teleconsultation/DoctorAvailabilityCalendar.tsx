@@ -92,16 +92,38 @@ const DoctorAvailabilityCalendar = ({
             // Handle the case where additional_time_slots might not exist in the database yet
             if ('additional_time_slots' in item && item.additional_time_slots) {
               console.log('Parsing additional time slots:', item.additional_time_slots);
-              // Handle both string and already parsed object
+              
+              // Parse the JSON string if it's a string
               if (typeof item.additional_time_slots === 'string') {
                 const parsedSlots = JSON.parse(item.additional_time_slots);
                 if (Array.isArray(parsedSlots)) {
-                  allTimeSlots = [defaultSlot, ...parsedSlots];
+                  // Make sure each slot has the correct structure
+                  const validSlots = parsedSlots.filter(slot => 
+                    typeof slot === 'object' && 
+                    'startTime' in slot && 
+                    'endTime' in slot
+                  );
+                  allTimeSlots = [defaultSlot, ...validSlots];
                 }
                 additionalTimeSlots = item.additional_time_slots;
-              } else if (Array.isArray(item.additional_time_slots)) {
-                allTimeSlots = [defaultSlot, ...item.additional_time_slots];
-                additionalTimeSlots = JSON.stringify(item.additional_time_slots);
+              } 
+              // Handle case where it might already be parsed as an object
+              else if (typeof item.additional_time_slots === 'object') {
+                const slots = Array.isArray(item.additional_time_slots) 
+                  ? item.additional_time_slots
+                  : [item.additional_time_slots];
+                  
+                // Validate the structure of each slot
+                const validSlots = slots.filter(slot => 
+                  typeof slot === 'object' && 
+                  'startTime' in slot && 
+                  'endTime' in slot
+                );
+                
+                if (validSlots.length > 0) {
+                  allTimeSlots = [defaultSlot, ...validSlots];
+                  additionalTimeSlots = JSON.stringify(validSlots);
+                }
               }
             }
           } catch (e) {
