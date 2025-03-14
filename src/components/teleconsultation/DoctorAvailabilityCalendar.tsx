@@ -11,7 +11,7 @@ import { Loader2, Plus, X, Save, Clock } from "lucide-react";
 import { format, parse, addMinutes } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { DoctorAvailability } from "@/types/supabase";
+import { DoctorAvailability, TimeSlot } from "@/types/supabase";
 
 interface DoctorAvailabilityCalendarProps {
   doctorId: string;
@@ -20,12 +20,7 @@ interface DoctorAvailabilityCalendarProps {
   isManagementMode?: boolean;
 }
 
-// Define time slot type
-interface TimeSlot {
-  startTime: string;
-  endTime: string;
-}
-
+// Define constant for days of week
 const DAYS_OF_WEEK = [
   'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 ];
@@ -64,6 +59,7 @@ const DoctorAvailabilityCalendar = ({
   const loadAvailability = async () => {
     try {
       setIsLoading(true);
+      console.log('Loading availability for doctor:', doctorId);
       
       const { data, error } = await supabase
         .from('doctor_availability')
@@ -71,8 +67,11 @@ const DoctorAvailabilityCalendar = ({
         .eq('doctor_id', doctorId);
       
       if (error) {
+        console.error('Error fetching doctor availability:', error);
         throw error;
       }
+      
+      console.log('Received doctor availability data:', data);
       
       if (data && data.length > 0) {
         // Transform data to include time_slots array
@@ -85,38 +84,52 @@ const DoctorAvailabilityCalendar = ({
           
           // If additional_time_slots exists, parse it
           let allTimeSlots = [defaultSlot];
+          let additionalSlotsString = null;
+          
           if (item.additional_time_slots) {
             try {
+              console.log('Parsing additional time slots:', item.additional_time_slots);
               const additionalSlots = JSON.parse(item.additional_time_slots as string);
               allTimeSlots = [defaultSlot, ...additionalSlots];
+              additionalSlotsString = item.additional_time_slots;
             } catch (e) {
               console.error('Error parsing additional time slots:', e);
             }
           }
           
           return {
-            ...item,
-            time_slots: allTimeSlots,
-            additional_time_slots: item.additional_time_slots
+            id: item.id,
+            doctor_id: item.doctor_id,
+            day_of_week: item.day_of_week,
+            start_time: item.start_time,
+            end_time: item.end_time,
+            is_available: item.is_available,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            additional_time_slots: additionalSlotsString,
+            time_slots: allTimeSlots
           } as DoctorAvailability;
         });
         
+        console.log('Processed availability data:', processedData);
         setAvailabilityData(processedData);
       } else {
+        console.log('No availability data found, creating defaults');
         // Initialize default availability for all days if none exists
         const defaultAvailability: DoctorAvailability[] = DAYS_OF_WEEK.map((_, index) => ({
+          id: `temp-${index}`,
           doctor_id: doctorId,
           day_of_week: index,
           start_time: '09:00',
           end_time: '17:00',
           is_available: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          additional_time_slots: null,
           time_slots: [{
             startTime: '09:00',
             endTime: '17:00'
-          }],
-          id: `temp-${index}`,  // Temporary ID for new records
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          }]
         }));
         setAvailabilityData(defaultAvailability);
       }
@@ -142,15 +155,18 @@ const DoctorAvailabilityCalendar = ({
         
         // Set time slots if they exist in the data
         if (currentDayData.time_slots && currentDayData.time_slots.length > 0) {
+          console.log('Setting time slots from data:', currentDayData.time_slots);
           setTimeSlots(currentDayData.time_slots);
         } else if (currentDayData.start_time && currentDayData.end_time) {
           // Create a single time slot from start and end times
+          console.log('Creating time slot from start/end times:', currentDayData.start_time, currentDayData.end_time);
           setTimeSlots([{
             startTime: currentDayData.start_time,
             endTime: currentDayData.end_time
           }]);
         } else {
           // Default time slot
+          console.log('Using default time slot');
           setTimeSlots([{
             startTime: '09:00',
             endTime: '17:00'
@@ -158,6 +174,7 @@ const DoctorAvailabilityCalendar = ({
         }
       } else {
         // Default values if no data for this day
+        console.log('No data for selected day, using defaults');
         setIsAvailable(false);
         setTimeSlots([{
           startTime: '09:00',
@@ -200,6 +217,7 @@ const DoctorAvailabilityCalendar = ({
 
     try {
       setIsSaving(true);
+      console.log('Saving availability for day:', DAYS_OF_WEEK[selectedDay]);
 
       // We'll just use the first time slot for the main start/end time fields
       // for backward compatibility
@@ -214,6 +232,7 @@ const DoctorAvailabilityCalendar = ({
       
       if (existingDay?.id && !existingDay.id.includes('temp-')) {
         // Update existing record
+        console.log('Updating existing availability record:', existingDay.id);
         const { error } = await supabase
           .from('doctor_availability')
           .update({
@@ -225,9 +244,15 @@ const DoctorAvailabilityCalendar = ({
           })
           .eq('id', existingDay.id);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating availability:', error);
+          throw error;
+        }
+        
+        console.log('Successfully updated availability');
       } else {
         // Insert new record
+        console.log('Creating new availability record');
         const { error, data } = await supabase
           .from('doctor_availability')
           .insert([{
@@ -240,7 +265,12 @@ const DoctorAvailabilityCalendar = ({
           }])
           .select();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating availability:', error);
+          throw error;
+        }
+        
+        console.log('Successfully created availability:', data);
       }
 
       // Reload data after update
@@ -266,6 +296,7 @@ const DoctorAvailabilityCalendar = ({
   const updateAllDaysAtOnce = async () => {
     try {
       setIsSaving(true);
+      console.log('Updating availability for all days');
       
       // First, delete all existing availability records
       const { error: deleteError } = await supabase
@@ -273,7 +304,10 @@ const DoctorAvailabilityCalendar = ({
         .delete()
         .eq('doctor_id', doctorId);
         
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error('Error deleting existing availability:', deleteError);
+        throw deleteError;
+      }
       
       // Get additional time slots if any
       const primaryTimeSlot = timeSlots[0];
@@ -289,11 +323,16 @@ const DoctorAvailabilityCalendar = ({
         is_available: isAvailable
       }));
       
+      console.log('Creating availability records for all days:', newAvailabilityRecords);
+      
       const { error: insertError } = await supabase
         .from('doctor_availability')
         .insert(newAvailabilityRecords);
         
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error creating availability records:', insertError);
+        throw insertError;
+      }
       
       // Reload the data to ensure we have the correct IDs and timestamps
       await loadAvailability();

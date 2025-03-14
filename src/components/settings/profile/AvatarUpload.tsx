@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,32 +30,49 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
   const uploadAvatar = async (file: File) => {
     try {
       setIsUploading(true);
+      console.log('Starting avatar upload process...');
       
       const optimizedFile = await optimizeImage(file);
+      console.log('Image optimized, file size:', optimizedFile.size);
       
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      if (!userId) throw new Error('User not authenticated');
+      if (!userId) {
+        console.error('No user ID found');
+        throw new Error('User not authenticated');
+      }
+      
+      console.log('Uploading avatar for user:', userId);
 
       const filePath = `${userId}/${crypto.randomUUID()}`;
       const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 'avatars';
       
+      console.log(`Uploading to ${bucketName} bucket:`, filePath);
+      console.log('File type:', optimizedFile.type);
+      console.log('File size:', optimizedFile.size);
+      
       // Create the bucket if it doesn't exist
-      const { data: bucketExists } = await supabase.storage.getBucket(bucketName);
-      if (!bucketExists) {
-        const { error: bucketError } = await supabase.storage.createBucket(bucketName, {
-          public: true
+      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucketName);
+      console.log('Bucket check result:', bucketData, bucketError);
+      
+      if (bucketError) {
+        console.log('Creating bucket:', bucketName);
+        const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
+          public: true,
+          fileSizeLimit: 5242880 // 5MB
         });
-        if (bucketError) {
+        
+        if (createBucketError) {
           // If bucket already exists, ignore the error
-          if (!bucketError.message.includes('already exists')) {
-            console.error('Error creating bucket:', bucketError);
-            throw bucketError;
+          if (!createBucketError.message.includes('already exists')) {
+            console.error('Error creating bucket:', createBucketError);
+            throw createBucketError;
           }
         }
       }
       
       // Add policy directly via updateBucket if it doesn't exist
       try {
+        console.log('Updating bucket settings for', bucketName);
         const { error } = await supabase.storage.updateBucket(bucketName, {
           public: true,
           fileSizeLimit: 5242880, // 5MB limit
@@ -67,33 +85,45 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
         console.log('Error updating bucket settings:', error);
       }
       
-      const { error: uploadError, data } = await supabase.storage
+      console.log('Uploading file to storage...');
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from(bucketName)
         .upload(filePath, optimizedFile, {
           upsert: true,
           contentType: 'image/jpeg'
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+      
+      console.log('Upload successful, getting public URL');
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: urlData } = supabase.storage
         .from(bucketName)
         .getPublicUrl(filePath);
 
+      console.log('Public URL:', urlData.publicUrl);
+      
       const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'avatar_url';
       
+      console.log(`Updating profile with ${fieldToUpdate}:`, urlData.publicUrl);
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ [fieldToUpdate]: publicUrl })
+        .update({ [fieldToUpdate]: urlData.publicUrl })
         .eq('id', userId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        throw updateError;
+      }
 
       // Set the local avatar URL for immediate display
-      setLocalAvatarUrl(publicUrl);
+      setLocalAvatarUrl(urlData.publicUrl);
       
       // Update the UI through the parent component
-      onAvatarUpdate(publicUrl);
+      onAvatarUpdate(urlData.publicUrl);
       
       // Invalidate the profile query to refresh the data
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -102,12 +132,12 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
         title: "Success",
         description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : 'Avatar'} updated successfully`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to upload ${userRole === 'pharmacist' ? 'pharmacy logo' : 'avatar'}`,
+        description: `Failed to upload ${userRole === 'pharmacist' ? 'pharmacy logo' : 'avatar'}: ${error.message}`,
       });
     } finally {
       setIsUploading(false);
@@ -115,6 +145,7 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
   };
 
   const optimizeImage = async (file: File): Promise<Blob> => {
+    console.log('Optimizing image:', file.name, file.type, file.size);
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -124,6 +155,8 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
         let width = img.width;
         let height = img.height;
 
+        console.log('Original dimensions:', width, 'x', height);
+        
         if (width > height) {
           if (width > MAX_WIDTH) {
             height *= MAX_WIDTH / width;
@@ -135,6 +168,8 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
             height = MAX_HEIGHT;
           }
         }
+        
+        console.log('Resized dimensions:', width, 'x', height);
 
         canvas.width = width;
         canvas.height = height;
@@ -143,14 +178,22 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
 
         canvas.toBlob(
           (blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error('Failed to convert canvas to blob'));
+            if (blob) {
+              console.log('Optimized blob size:', blob.size);
+              resolve(blob);
+            } else {
+              console.error('Failed to convert canvas to blob');
+              reject(new Error('Failed to convert canvas to blob'));
+            }
           },
           'image/jpeg',
           0.8
         );
       };
-      img.onerror = reject;
+      img.onerror = (e) => {
+        console.error('Error loading image:', e);
+        reject(new Error('Failed to load image'));
+      };
       img.src = URL.createObjectURL(file);
     });
   };
@@ -158,6 +201,7 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('File selected:', file.name, file.type, file.size);
       // Show a temporary preview before uploading
       setLocalAvatarUrl(URL.createObjectURL(file));
       await uploadAvatar(file);
@@ -168,11 +212,13 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
+        console.log('Captured webcam image');
         // Show a temporary preview before uploading
         setLocalAvatarUrl(imageSrc);
         
         const response = await fetch(imageSrc);
         const blob = await response.blob();
+        console.log('Webcam image blob size:', blob.size);
         const file = new File([blob], 'webcam-photo.jpg', { type: 'image/jpeg' });
         await uploadAvatar(file);
         setShowCamera(false);

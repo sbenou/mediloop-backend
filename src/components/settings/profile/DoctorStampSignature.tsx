@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
-import { Canvas as FabricCanvas } from "fabric/fabric-impl";
+import { Canvas } from "fabric/fabric-impl";
 import { Pencil, Save, Trash2, Upload } from "lucide-react";
 import * as fabric from 'fabric';
 
@@ -32,6 +32,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   const [isLoadingStamp, setIsLoadingStamp] = useState(false);
   const [isLoadingSignature, setIsLoadingSignature] = useState(false);
   
+  const [penColor, setPenColor] = useState('#000000');
+  
   const stampFileInputRef = useRef<HTMLInputElement>(null);
   const signatureFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,7 +42,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     if (stampCanvasRef.current && !stampCanvas) {
       const canvas = new fabric.Canvas(stampCanvasRef.current, {
         backgroundColor: '#ffffff',
-        width: 300,
+        width: 290,
         height: 200,
         isDrawingMode: false
       });
@@ -51,7 +53,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     if (signatureCanvasRef.current && !signatureCanvas) {
       const canvas = new fabric.Canvas(signatureCanvasRef.current, {
         backgroundColor: '#ffffff',
-        width: 300,
+        width: 290,
         height: 200,
         isDrawingMode: false
       });
@@ -79,9 +81,10 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   const loadImageToCanvas = (canvas: fabric.Canvas, url: string) => {
     fabric.Image.fromURL(url, (img) => {
       canvas.clear();
+      canvas.backgroundColor = '#ffffff';
       
       // Scale image to fit canvas while maintaining aspect ratio
-      const canvasWidth = canvas.getWidth() || 300;
+      const canvasWidth = canvas.getWidth() || 290;
       const canvasHeight = canvas.getHeight() || 200;
       
       const imgWidth = img.width || 100;
@@ -113,7 +116,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     
     stampCanvas.isDrawingMode = newMode;
     if (newMode) {
-      stampCanvas.freeDrawingBrush.color = '#000000';
+      stampCanvas.freeDrawingBrush.color = penColor;
       stampCanvas.freeDrawingBrush.width = 3;
     }
   };
@@ -126,7 +129,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     
     signatureCanvas.isDrawingMode = newMode;
     if (newMode) {
-      signatureCanvas.freeDrawingBrush.color = '#000000';
+      signatureCanvas.freeDrawingBrush.color = penColor;
       signatureCanvas.freeDrawingBrush.width = 2;
     }
   };
@@ -167,6 +170,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
         if (event.target?.result) {
           fabric.Image.fromURL(event.target.result.toString(), (img) => {
             stampCanvas.clear();
+            stampCanvas.backgroundColor = '#ffffff';
             
             // Scale image to fit canvas
             const scale = Math.min(
@@ -199,6 +203,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
         if (event.target?.result) {
           fabric.Image.fromURL(event.target.result.toString(), (img) => {
             signatureCanvas.clear();
+            signatureCanvas.backgroundColor = '#ffffff';
             
             // Scale image to fit canvas
             const scale = Math.min(
@@ -228,6 +233,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     
     setIsLoadingStamp(true);
     try {
+      console.log('Starting stamp save process...');
+      
       // Convert canvas to data URL
       const dataUrl = stampCanvas.toDataURL({
         format: 'png',
@@ -235,48 +242,73 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
         quality: 1
       });
       
+      console.log('Stamp canvas converted to data URL');
+      
       // Convert data URL to blob
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       
+      console.log(`Stamp blob created: ${blob.size} bytes, type: ${blob.type}`);
+      
       // Upload to Supabase storage
       const filePath = `stamps/${profile.id}/${Date.now()}.png`;
+      console.log(`Preparing to upload stamp to: ${filePath}`);
       
       // Ensure the bucket exists
       const { error: bucketError } = await supabase.storage.getBucket('doctor-images');
-      if (bucketError && bucketError.message.includes('not found')) {
-        const { error: createBucketError } = await supabase.storage.createBucket('doctor-images', {
-          public: true,
-          fileSizeLimit: 5242880, // 5MB
-          allowedMimeTypes: ['image/png', 'image/jpeg']
-        });
-        
-        if (createBucketError) {
-          throw createBucketError;
+      if (bucketError) {
+        console.log('Error getting bucket:', bucketError);
+        if (bucketError.message.includes('not found')) {
+          console.log('Bucket not found, creating it...');
+          const { error: createBucketError } = await supabase.storage.createBucket('doctor-images', {
+            public: true,
+            fileSizeLimit: 5242880, // 5MB
+            allowedMimeTypes: ['image/png', 'image/jpeg']
+          });
+          
+          if (createBucketError) {
+            console.error('Error creating bucket:', createBucketError);
+            throw createBucketError;
+          }
+          console.log('Bucket created successfully');
+        } else {
+          throw bucketError;
         }
       }
       
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from('doctor-images')
         .upload(filePath, blob, {
           contentType: 'image/png',
           upsert: true
         });
       
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Error uploading stamp:', uploadError);
+        throw uploadError;
+      }
+      
+      console.log('Stamp uploaded successfully, getting public URL');
       
       // Get the public URL
-      const { data } = supabase.storage
+      const { data: urlData } = supabase.storage
         .from('doctor-images')
         .getPublicUrl(filePath);
+      
+      console.log(`Public URL obtained: ${urlData.publicUrl}`);
       
       // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ doctor_stamp_url: data.publicUrl })
+        .update({ doctor_stamp_url: urlData.publicUrl })
         .eq('id', profile.id);
       
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating profile with stamp URL:', updateError);
+        throw updateError;
+      }
+      
+      console.log('Profile updated with new stamp URL');
       
       // Invalidate query cache
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -302,6 +334,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     
     setIsLoadingSignature(true);
     try {
+      console.log('Starting signature save process...');
+      
       // Convert canvas to data URL
       const dataUrl = signatureCanvas.toDataURL({
         format: 'png',
@@ -309,16 +343,22 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
         quality: 1
       });
       
+      console.log('Signature canvas converted to data URL');
+      
       // Convert data URL to blob
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       
+      console.log(`Signature blob created: ${blob.size} bytes, type: ${blob.type}`);
+      
       // Upload to Supabase storage
       const filePath = `signatures/${profile.id}/${Date.now()}.png`;
+      console.log(`Preparing to upload signature to: ${filePath}`);
       
       // Ensure the bucket exists
       const { error: bucketError } = await supabase.storage.getBucket('doctor-images');
       if (bucketError && bucketError.message.includes('not found')) {
+        console.log('Bucket not found, creating it...');
         const { error: createBucketError } = await supabase.storage.createBucket('doctor-images', {
           public: true,
           fileSizeLimit: 5242880, // 5MB
@@ -326,8 +366,10 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
         });
         
         if (createBucketError) {
+          console.error('Error creating bucket:', createBucketError);
           throw createBucketError;
         }
+        console.log('Bucket created successfully');
       }
       
       const { error: uploadError } = await supabase.storage
@@ -337,20 +379,32 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
           upsert: true
         });
       
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Error uploading signature:', uploadError);
+        throw uploadError;
+      }
+      
+      console.log('Signature uploaded successfully, getting public URL');
       
       // Get the public URL
-      const { data } = supabase.storage
+      const { data: urlData } = supabase.storage
         .from('doctor-images')
         .getPublicUrl(filePath);
+      
+      console.log(`Public URL obtained: ${urlData.publicUrl}`);
       
       // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ doctor_signature_url: data.publicUrl })
+        .update({ doctor_signature_url: urlData.publicUrl })
         .eq('id', profile.id);
       
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating profile with signature URL:', updateError);
+        throw updateError;
+      }
+      
+      console.log('Profile updated with new signature URL');
       
       // Invalidate query cache
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -399,6 +453,36 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
           <div className="space-y-4">
             <div className="border rounded-md overflow-hidden bg-white" style={{ width: '300px', height: '200px' }}>
               <canvas ref={stampCanvasRef} />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="text-sm">Pen color:</div>
+                <input 
+                  type="color" 
+                  value={penColor} 
+                  onChange={(e) => {
+                    setPenColor(e.target.value);
+                    if (stampCanvas && stampCanvas.isDrawingMode) {
+                      stampCanvas.freeDrawingBrush.color = e.target.value;
+                    }
+                    if (signatureCanvas && signatureCanvas.isDrawingMode) {
+                      signatureCanvas.freeDrawingBrush.color = e.target.value;
+                    }
+                  }}
+                  className="w-8 h-8 rounded-md border border-gray-300"
+                />
+                <button 
+                  onClick={() => setPenColor('#000000')}
+                  className={`w-8 h-8 rounded-md ${penColor === '#000000' ? 'ring-2 ring-primary' : 'border border-gray-300'}`}
+                  style={{ backgroundColor: '#000000' }}
+                />
+                <button 
+                  onClick={() => setPenColor('#0000FF')}
+                  className={`w-8 h-8 rounded-md ${penColor === '#0000FF' ? 'ring-2 ring-primary' : 'border border-gray-300'}`}
+                  style={{ backgroundColor: '#0000FF' }}
+                />
+              </div>
             </div>
             
             <div className="flex flex-wrap gap-2">

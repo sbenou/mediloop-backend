@@ -24,13 +24,24 @@ export type UserPharmacy = Tables<'user_pharmacies'>
 export type Notification = Tables<'notifications'>
 export type Teleconsultation = Tables<'teleconsultations'>
 
+// Define TimeSlot interface for doctor availability
+export interface TimeSlot {
+  startTime: string;
+  endTime: string;
+}
+
 // Define DoctorAvailability type with additional_time_slots
-export type DoctorAvailability = Tables<'doctor_availability'> & {
-  additional_time_slots?: string | null;
-  time_slots?: Array<{ startTime: string; endTime: string }>;
+export interface DoctorAvailability {
+  id: string;
+  doctor_id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
   created_at: string;
   updated_at: string;
-  id: string;
+  additional_time_slots?: string | null;
+  time_slots?: TimeSlot[];
 }
 
 // Define a custom type for doctor workplace since it's not in the generated types yet
