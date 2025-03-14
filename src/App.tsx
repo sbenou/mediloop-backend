@@ -14,6 +14,9 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import EmailConfirmationHandler from './components/auth/EmailConfirmationHandler';
+import CreatePrescription from './pages/CreatePrescription';
+import MyPrescriptions from './pages/MyPrescriptions';
+import Teleconsultations from './pages/Teleconsultations';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -34,6 +37,7 @@ const AdminDashboard = () => <PlaceholderPage title="Admin Dashboard" />;
 const SuperAdminDashboard = () => <PlaceholderPage title="Super Admin Dashboard" />;
 const SearchPharmacy = () => <PlaceholderPage title="Search Pharmacy" />;
 const Prescription = () => <PlaceholderPage title="Prescription" />;
+const EditPrescription = () => <PlaceholderPage title="Edit Prescription" />;
 const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
 const PharmacyProfile = () => <PlaceholderPage title="Pharmacy Profile" />;
@@ -58,6 +62,12 @@ function App() {
                   <Route path="/superadmin/*" element={<SuperAdminDashboard />} />
                   <Route path="/search-pharmacy" element={<SearchPharmacy />} />
                   <Route path="/prescription" element={<Prescription />} />
+                  <Route path="/create-prescription" element={<CreatePrescription />} />
+                  <Route path="/edit-prescription/:id" element={<EditPrescription />} />
+                  <Route path="/prescriptions/:id" element={<Prescription />} />
+                  <Route path="/my-prescriptions" element={<MyPrescriptions />} />
+                  <Route path="/my-prescriptions/:id" element={<Prescription />} />
+                  <Route path="/teleconsultations" element={<Teleconsultations />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/admin-settings" element={<AdminSettings />} />
                   <Route path="/pharmacy/profile" element={<PharmacyProfile />} />

@@ -54,8 +54,8 @@ interface HealthStateIndicatorProps {
 }
 
 const HealthStateIndicator: React.FC<HealthStateIndicatorProps> = ({ userRole }) => {
-  // Only display for patients or doctors viewing a patient
-  if (userRole !== 'patient' && userRole !== 'doctor') {
+  // Only display for patients, not for doctors viewing dashboard
+  if (userRole !== 'patient') {
     return null;
   }
 

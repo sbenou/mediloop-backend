@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { FileEdit, FilePlus, Trash2, Send } from "lucide-react";
 
@@ -6,9 +7,18 @@ interface PrescriptionActionsProps {
   onEdit: () => void;
   onDelete: () => void;
   onSend: () => void;
+  sentToPharmacy?: boolean;
+  isDoctor?: boolean;
 }
 
-const PrescriptionActions = ({ onNew, onEdit, onDelete, onSend }: PrescriptionActionsProps) => {
+const PrescriptionActions = ({ 
+  onNew, 
+  onEdit, 
+  onDelete, 
+  onSend, 
+  sentToPharmacy = false,
+  isDoctor = false
+}: PrescriptionActionsProps) => {
   return (
     <div className="flex flex-wrap gap-4 justify-end pt-4 border-t">
       <Button
@@ -19,29 +29,47 @@ const PrescriptionActions = ({ onNew, onEdit, onDelete, onSend }: PrescriptionAc
         <FilePlus className="w-4 h-4" />
         New Prescription
       </Button>
-      <Button
-        variant="outline"
-        onClick={onEdit}
-        className="gap-2"
-      >
-        <FileEdit className="w-4 h-4" />
-        Modify
-      </Button>
-      <Button
-        variant="destructive"
-        onClick={onDelete}
-        className="gap-2"
-      >
-        <Trash2 className="w-4 h-4" />
-        Delete
-      </Button>
-      <Button
-        onClick={onSend}
-        className="gap-2"
-      >
-        <Send className="w-4 h-4" />
-        Send to Pharmacy
-      </Button>
+      
+      {isDoctor && (
+        <>
+          <Button
+            variant="outline"
+            onClick={onEdit}
+            className="gap-2"
+            disabled={sentToPharmacy}
+          >
+            <FileEdit className="w-4 h-4" />
+            Modify
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={onDelete}
+            className="gap-2"
+            disabled={sentToPharmacy}
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete
+          </Button>
+          <Button
+            onClick={onSend}
+            className="gap-2"
+            disabled={sentToPharmacy}
+          >
+            <Send className="w-4 h-4" />
+            Send to Pharmacy
+          </Button>
+        </>
+      )}
+      
+      {!isDoctor && (
+        <Button
+          onClick={onSend}
+          className="gap-2"
+        >
+          <Send className="w-4 h-4" />
+          Send to Pharmacy
+        </Button>
+      )}
     </div>
   );
 };

@@ -60,8 +60,8 @@ interface WearableDataDisplayProps {
 }
 
 const WearableDataDisplay: React.FC<WearableDataDisplayProps> = ({ userRole }) => {
-  // Only display for patients or doctors viewing a patient
-  if (userRole !== 'patient' && userRole !== 'doctor') {
+  // Only display for patients, not for doctors
+  if (userRole !== 'patient') {
     return null;
   }
 

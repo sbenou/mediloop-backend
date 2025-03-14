@@ -5,11 +5,11 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   ProfileView, 
   SettingsView, 
-  PrescriptionsView,
   HomeView
 } from "@/components/dashboard/views";
-import TeleconsultationsView from "@/components/dashboard/views/TeleconsultationsView";
 import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatientView";
+import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorPrescriptionsView";
+import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/DoctorTeleconsultationsView";
 import DoctorLayout from "@/components/layout/DoctorLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,11 +88,11 @@ const DoctorDashboard = () => {
       case "settings":
         return <SettingsView userRole={userRole} />;
       case "prescriptions":
-        return <PrescriptionsView userRole={userRole} />;
+        return <DoctorPrescriptionsView />;
       case "patients":
         return <DoctorPatientView />;
       case "teleconsultations":
-        return <TeleconsultationsView userRole={userRole} />;
+        return <DoctorTeleconsultationsView />;
       case "dashboard":
       default:
         return <HomeView userRole={userRole} />;
