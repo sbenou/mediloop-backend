@@ -9,7 +9,7 @@ import { CreateRoleModal } from "./role/CreateRoleModal";
 import { DeleteRoleDialog } from "./role/DeleteRoleDialog";
 import { RolePermissionsDialog } from "./role/RolePermissionsDialog";
 import { useRoleManagement } from "@/hooks/admin/useRoleManagement";
-import { Role } from "@/types/supabase";
+import { Role } from "@/types/role";
 
 export const RoleManagementTable = () => {
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +89,11 @@ export const RoleManagementTable = () => {
               {allRoles.map((role) => (
                 <RoleTableRow
                   key={role.id}
-                  role={role as { id: string; name: string; description: string }}
+                  role={{
+                    id: role.id,
+                    name: role.name,
+                    description: role.description || '',
+                  }}
                   isEditing={isEditing === role.id}
                   editName={editName}
                   editDescription={editDescription}

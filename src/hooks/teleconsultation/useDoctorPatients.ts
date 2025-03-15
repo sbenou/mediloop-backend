@@ -40,7 +40,7 @@ export const useDoctorPatients = (doctorId?: string) => {
             patient_id,
             doctor_id,
             status,
-            patient:profiles(
+            patient:profiles!patient_id(
               id,
               full_name,
               email
@@ -51,16 +51,18 @@ export const useDoctorPatients = (doctorId?: string) => {
 
         if (error) throw error;
 
-        // Type casting to handle potential Supabase errors properly
-        const connections = data as unknown as any[];
+        // Filter out connections with invalid patient data
+        const validConnections = (data || []).filter(connection => {
+          return connection.patient && 
+                 typeof connection.patient === 'object' && 
+                 !('error' in connection.patient);
+        });
         
-        // Format patients data
-        const formattedPatients = connections
-          .filter(connection => connection.patient && !connection.patient.error)
-          .map(connection => ({
-            id: connection.patient_id,
-            name: connection.patient.full_name || 'Unknown Patient'
-          }));
+        // Format patients data from valid connections
+        const formattedPatients = validConnections.map(connection => ({
+          id: connection.patient_id,
+          name: connection.patient.full_name || 'Unknown Patient'
+        }));
 
         setPatients(formattedPatients);
       } catch (err) {

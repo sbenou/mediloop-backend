@@ -58,9 +58,10 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
                                  typeof consultation.doctor === 'object' && 
                                  !('error' in consultation.doctor);
           return hasValidPatient && hasValidDoctor;
-        }) as Teleconsultation[];
+        });
         
-        setConsultations(validConsultations);
+        // Cast to Teleconsultation[] after filtering out invalid data
+        setConsultations(validConsultations as Teleconsultation[]);
         
         // Check if user has connections (for patients only)
         if (profile.role === 'patient') {
