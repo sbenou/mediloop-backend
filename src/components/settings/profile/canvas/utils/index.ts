@@ -38,7 +38,8 @@ export const toggleGrid = (canvas: Canvas, showGrid: boolean) => {
       // In Fabric.js v6, use the canvas item positioning methods
       canvas.getObjects().forEach(obj => {
         if (obj !== line && obj.get('data')?.isGrid !== true) {
-          obj.bringToFront();
+          // Move non-grid objects to the front instead of sending grid lines to back
+          canvas.bringObjectToFront(obj);
         }
       });
     }
@@ -55,7 +56,8 @@ export const toggleGrid = (canvas: Canvas, showGrid: boolean) => {
       // In Fabric.js v6, use the canvas item positioning methods
       canvas.getObjects().forEach(obj => {
         if (obj !== line && obj.get('data')?.isGrid !== true) {
-          obj.bringToFront();
+          // Move non-grid objects to the front instead of sending grid lines to back
+          canvas.bringObjectToFront(obj);
         }
       });
     }
