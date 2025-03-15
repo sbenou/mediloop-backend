@@ -1,12 +1,13 @@
 
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Teleconsultation } from "@/types/supabase";
 import { useConsultations } from "./hooks/useConsultations";
 import TabContent from "./TabContent";
 import EmptyState from "./EmptyState";
+import ConsultationTabs from "./ConsultationTabs";
+import ConsultationsLoading from "./ConsultationsLoading";
 
 interface TeleconsultationListProps {
   onJoinMeeting: (consultation: Teleconsultation) => void;
@@ -30,12 +31,7 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
   } = useConsultations(profile?.id, filterRole);
   
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center p-10">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <span className="ml-2">Loading teleconsultations...</span>
-      </div>
-    );
+    return <ConsultationsLoading />;
   }
   
   // Show connect with doctors message only for patients without connections
@@ -89,67 +85,15 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
   
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="today">
-        <TabsList>
-          <TabsTrigger value="today">
-            Today {todayConsultations.length > 0 && 
-              <Badge variant="secondary" className="ml-1">{todayConsultations.length}</Badge>
-            }
-          </TabsTrigger>
-          <TabsTrigger value="upcoming">
-            Upcoming {upcomingConsultations.length > 0 && 
-              <Badge variant="secondary" className="ml-1">{upcomingConsultations.length}</Badge>
-            }
-          </TabsTrigger>
-          <TabsTrigger value="pending">
-            Pending {pendingConsultations.length > 0 && 
-              <Badge variant="secondary" className="ml-1">{pendingConsultations.length}</Badge>
-            }
-          </TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-        </TabsList>
-        
-        <TabContent
-          value="today"
-          consultations={todayConsultations}
-          userRole={profile?.role}
-          emptyMessage="No teleconsultations scheduled for today."
-          onJoinMeeting={onJoinMeeting}
-        />
-        
-        <TabContent
-          value="upcoming"
-          consultations={upcomingConsultations}
-          userRole={profile?.role}
-          emptyMessage="No upcoming teleconsultations scheduled."
-          onJoinMeeting={onJoinMeeting}
-        />
-        
-        <TabContent
-          value="pending"
-          consultations={pendingConsultations}
-          userRole={profile?.role}
-          emptyMessage="No pending teleconsultation requests."
-          onJoinMeeting={onJoinMeeting}
-        />
-        
-        <TabContent
-          value="past"
-          consultations={pastConsultations}
-          userRole={profile?.role}
-          emptyMessage="No past teleconsultations."
-          onJoinMeeting={onJoinMeeting}
-        />
-        
-        <TabContent
-          value="cancelled"
-          consultations={cancelledConsultations}
-          userRole={profile?.role}
-          emptyMessage="No cancelled teleconsultations."
-          onJoinMeeting={onJoinMeeting}
-        />
-      </Tabs>
+      <ConsultationTabs
+        todayConsultations={todayConsultations}
+        upcomingConsultations={upcomingConsultations}
+        pendingConsultations={pendingConsultations}
+        pastConsultations={pastConsultations}
+        cancelledConsultations={cancelledConsultations}
+        profile={profile}
+        onJoinMeeting={onJoinMeeting}
+      />
     </div>
   );
 };
