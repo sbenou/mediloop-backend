@@ -104,6 +104,9 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     }).then((img) => {
       canvas.clear();
       
+      // Explicitly set background to white before adding the image
+      canvas.backgroundColor = '#ffffff';
+      
       // Scale image to fit canvas while maintaining aspect ratio
       const canvasWidth = canvas.getWidth() || 290;
       const canvasHeight = canvas.getHeight() || 200;
@@ -144,10 +147,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       stampCanvas.freeDrawingBrush.width = 3;
     }
 
-    // Make sure background remains white
-    if (stampCanvas.backgroundColor !== '#ffffff') {
-      stampCanvas.backgroundColor = '#ffffff';
-    }
+    // Always ensure background is white regardless of mode change
+    stampCanvas.backgroundColor = '#ffffff';
     stampCanvas.renderAll();
   };
   
@@ -164,10 +165,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       signatureCanvas.freeDrawingBrush.width = 2;
     }
 
-    // Make sure background remains white
-    if (signatureCanvas.backgroundColor !== '#ffffff') {
-      signatureCanvas.backgroundColor = '#ffffff';
-    }
+    // Always ensure background is white regardless of mode change
+    signatureCanvas.backgroundColor = '#ffffff';
     signatureCanvas.renderAll();
   };
   
@@ -217,6 +216,9 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
           }).then((img) => {
             stampCanvas.clear();
             
+            // Explicitly set background to white before adding the image
+            stampCanvas.backgroundColor = '#ffffff';
+            
             // Scale image to fit canvas
             const scale = Math.min(
               stampCanvas.getWidth()! / (img.width || 100),
@@ -232,7 +234,6 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             });
             
             stampCanvas.add(img);
-            stampCanvas.backgroundColor = '#ffffff';
             stampCanvas.renderAll();
           }).catch(err => {
             console.error("Error loading image:", err);
@@ -257,6 +258,9 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
           }).then((img) => {
             signatureCanvas.clear();
             
+            // Explicitly set background to white before adding the image
+            signatureCanvas.backgroundColor = '#ffffff';
+            
             // Scale image to fit canvas
             const scale = Math.min(
               signatureCanvas.getWidth()! / (img.width || 100),
@@ -272,7 +276,6 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             });
             
             signatureCanvas.add(img);
-            signatureCanvas.backgroundColor = '#ffffff';
             signatureCanvas.renderAll();
           }).catch(err => {
             console.error("Error loading image:", err);
@@ -503,25 +506,31 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     }
   };
 
-  // Add canvas event listeners for the stamp and signature canvases
+  // Add extensive event listeners to ensure canvas stays white
   useEffect(() => {
     if (stampCanvas) {
       // Set initial background color
       stampCanvas.backgroundColor = '#ffffff';
       stampCanvas.renderAll();
       
-      // Add event listener for mouse up event
-      stampCanvas.on('mouse:up', () => {
-        // Ensure background is set to white
+      // Add event listeners to ensure background stays white
+      const ensureWhiteBackground = () => {
         stampCanvas.backgroundColor = '#ffffff';
         stampCanvas.renderAll();
-      });
+      };
       
-      // Add drawing event listener
-      stampCanvas.on('path:created', () => {
-        stampCanvas.backgroundColor = '#ffffff';
-        stampCanvas.renderAll();
-      });
+      // Apply on all relevant events
+      stampCanvas.on('mouse:up', ensureWhiteBackground);
+      stampCanvas.on('mouse:down', ensureWhiteBackground);
+      stampCanvas.on('path:created', ensureWhiteBackground);
+      stampCanvas.on('object:added', ensureWhiteBackground);
+      stampCanvas.on('object:modified', ensureWhiteBackground);
+      stampCanvas.on('object:removed', ensureWhiteBackground);
+      
+      // Also apply every time drawing mode changes
+      stampCanvas.on('selection:created', ensureWhiteBackground);
+      stampCanvas.on('selection:updated', ensureWhiteBackground);
+      stampCanvas.on('selection:cleared', ensureWhiteBackground);
     }
 
     if (signatureCanvas) {
@@ -529,29 +538,49 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       signatureCanvas.backgroundColor = '#ffffff';
       signatureCanvas.renderAll();
       
-      // Add event listener for mouse up event
-      signatureCanvas.on('mouse:up', () => {
-        // Ensure background is set to white
+      // Add event listeners to ensure background stays white
+      const ensureWhiteBackground = () => {
         signatureCanvas.backgroundColor = '#ffffff';
         signatureCanvas.renderAll();
-      });
+      };
       
-      // Add drawing event listener
-      signatureCanvas.on('path:created', () => {
-        signatureCanvas.backgroundColor = '#ffffff';
-        signatureCanvas.renderAll();
-      });
+      // Apply on all relevant events
+      signatureCanvas.on('mouse:up', ensureWhiteBackground);
+      signatureCanvas.on('mouse:down', ensureWhiteBackground);
+      signatureCanvas.on('path:created', ensureWhiteBackground);
+      signatureCanvas.on('object:added', ensureWhiteBackground);
+      signatureCanvas.on('object:modified', ensureWhiteBackground);
+      signatureCanvas.on('object:removed', ensureWhiteBackground);
+      
+      // Also apply every time drawing mode changes
+      signatureCanvas.on('selection:created', ensureWhiteBackground);
+      signatureCanvas.on('selection:updated', ensureWhiteBackground);
+      signatureCanvas.on('selection:cleared', ensureWhiteBackground);
     }
 
     // Clean up event listeners
     return () => {
       if (stampCanvas) {
         stampCanvas.off('mouse:up');
+        stampCanvas.off('mouse:down');
         stampCanvas.off('path:created');
+        stampCanvas.off('object:added');
+        stampCanvas.off('object:modified');
+        stampCanvas.off('object:removed');
+        stampCanvas.off('selection:created');
+        stampCanvas.off('selection:updated');
+        stampCanvas.off('selection:cleared');
       }
       if (signatureCanvas) {
         signatureCanvas.off('mouse:up');
+        signatureCanvas.off('mouse:down');
         signatureCanvas.off('path:created');
+        signatureCanvas.off('object:added');
+        signatureCanvas.off('object:modified');
+        signatureCanvas.off('object:removed');
+        signatureCanvas.off('selection:created');
+        signatureCanvas.off('selection:updated');
+        signatureCanvas.off('selection:cleared');
       }
     };
   }, [stampCanvas, signatureCanvas]);
