@@ -70,7 +70,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     canvasElement.width = container.clientWidth;
     canvasElement.height = container.clientHeight;
     
-    // Initialize fabric canvas
+    // Initialize fabric canvas with explicitly set white background
     const canvas = new FabricCanvas(canvasElement, {
       backgroundColor: '#ffffff',
       isDrawingMode: false,
@@ -81,22 +81,51 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     canvas.freeDrawingBrush.color = penColor;
     canvas.freeDrawingBrush.width = 3;
     
+    // Ensure background is white
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
+    
     return canvas;
   };
+  
+  // Explicitly enforce white background on all canvases whenever they are accessed
+  useEffect(() => {
+    if (stampCanvas) {
+      stampCanvas.backgroundColor = '#ffffff';
+      stampCanvas.renderAll();
+    }
+    
+    if (signatureCanvas) {
+      signatureCanvas.backgroundColor = '#ffffff';
+      signatureCanvas.renderAll();
+    }
+  }, [stampCanvas, signatureCanvas]);
   
   // Load existing stamp and signature URLs if available
   useEffect(() => {
     if (stampCanvas && stampUrl) {
       loadImageToCanvas(stampCanvas, stampUrl);
+    } else if (stampCanvas) {
+      // If no URL but canvas exists, ensure it's white
+      stampCanvas.backgroundColor = '#ffffff';
+      stampCanvas.renderAll();
     }
     
     if (signatureCanvas && signatureUrl) {
       loadImageToCanvas(signatureCanvas, signatureUrl);
+    } else if (signatureCanvas) {
+      // If no URL but canvas exists, ensure it's white
+      signatureCanvas.backgroundColor = '#ffffff';
+      signatureCanvas.renderAll();
     }
   }, [stampCanvas, signatureCanvas, stampUrl, signatureUrl]);
   
   // Load an image to a canvas
   const loadImageToCanvas = (canvas: FabricCanvas, url: string) => {
+    // Set background to white immediately before loading image
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
+    
     // Fix: Use the correct API for Fabric.js v6
     FabricImage.fromURL(url, {
       // Options object
@@ -128,9 +157,15 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       });
       
       canvas.add(img);
+      
+      // Ensure background is white after adding image
+      canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
     }).catch(err => {
       console.error("Error loading image:", err);
+      // Even on error, ensure canvas is white
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
     });
   };
   
@@ -206,6 +241,10 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   const handleStampFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && stampCanvas) {
+      // Ensure white background before processing
+      stampCanvas.backgroundColor = '#ffffff';
+      stampCanvas.renderAll();
+      
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -234,9 +273,15 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             });
             
             stampCanvas.add(img);
+            
+            // Ensure white background after adding image
+            stampCanvas.backgroundColor = '#ffffff';
             stampCanvas.renderAll();
           }).catch(err => {
             console.error("Error loading image:", err);
+            // Ensure white background even on error
+            stampCanvas.backgroundColor = '#ffffff';
+            stampCanvas.renderAll();
           });
         }
       };
@@ -248,6 +293,10 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   const handleSignatureFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && signatureCanvas) {
+      // Ensure white background before processing
+      signatureCanvas.backgroundColor = '#ffffff';
+      signatureCanvas.renderAll();
+      
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -276,9 +325,15 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             });
             
             signatureCanvas.add(img);
+            
+            // Ensure white background after adding image
+            signatureCanvas.backgroundColor = '#ffffff';
             signatureCanvas.renderAll();
           }).catch(err => {
             console.error("Error loading image:", err);
+            // Ensure white background even on error
+            signatureCanvas.backgroundColor = '#ffffff';
+            signatureCanvas.renderAll();
           });
         }
       };
@@ -504,69 +559,69 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     if (signatureCanvas && signatureCanvas.isDrawingMode) {
       signatureCanvas.freeDrawingBrush.color = color;
     }
+    
+    // Ensure background stays white when changing colors
+    if (stampCanvas) {
+      stampCanvas.backgroundColor = '#ffffff';
+      stampCanvas.renderAll();
+    }
+    if (signatureCanvas) {
+      signatureCanvas.backgroundColor = '#ffffff';
+      signatureCanvas.renderAll();
+    }
   };
 
   // Add extensive event listeners to ensure canvas stays white
   useEffect(() => {
-    if (stampCanvas) {
-      // Set initial background color
-      stampCanvas.backgroundColor = '#ffffff';
-      stampCanvas.renderAll();
+    const ensureWhiteBackground = (canvas: FabricCanvas | null) => {
+      if (!canvas) return;
       
-      // Add event listeners to ensure background stays white
-      const ensureWhiteBackground = () => {
-        stampCanvas.backgroundColor = '#ffffff';
-        stampCanvas.renderAll();
+      // Set initial background color
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
+      
+      // Force rendering with white background
+      const forceWhiteBackground = () => {
+        if (canvas.backgroundColor !== '#ffffff') {
+          console.log('Enforcing white background on canvas');
+          canvas.backgroundColor = '#ffffff';
+          canvas.renderAll();
+        }
       };
       
       // Apply on all relevant events
-      stampCanvas.on('mouse:up', ensureWhiteBackground);
-      stampCanvas.on('mouse:down', ensureWhiteBackground);
-      stampCanvas.on('path:created', ensureWhiteBackground);
-      stampCanvas.on('object:added', ensureWhiteBackground);
-      stampCanvas.on('object:modified', ensureWhiteBackground);
-      stampCanvas.on('object:removed', ensureWhiteBackground);
+      canvas.on('mouse:up', forceWhiteBackground);
+      canvas.on('mouse:down', forceWhiteBackground);
+      canvas.on('mouse:move', forceWhiteBackground);
+      canvas.on('path:created', forceWhiteBackground);
+      canvas.on('object:added', forceWhiteBackground);
+      canvas.on('object:modified', forceWhiteBackground);
+      canvas.on('object:removed', forceWhiteBackground);
+      canvas.on('before:render', forceWhiteBackground);
+      canvas.on('after:render', forceWhiteBackground);
       
       // Also apply every time drawing mode changes
-      stampCanvas.on('selection:created', ensureWhiteBackground);
-      stampCanvas.on('selection:updated', ensureWhiteBackground);
-      stampCanvas.on('selection:cleared', ensureWhiteBackground);
-    }
-
-    if (signatureCanvas) {
-      // Set initial background color
-      signatureCanvas.backgroundColor = '#ffffff';
-      signatureCanvas.renderAll();
-      
-      // Add event listeners to ensure background stays white
-      const ensureWhiteBackground = () => {
-        signatureCanvas.backgroundColor = '#ffffff';
-        signatureCanvas.renderAll();
-      };
-      
-      // Apply on all relevant events
-      signatureCanvas.on('mouse:up', ensureWhiteBackground);
-      signatureCanvas.on('mouse:down', ensureWhiteBackground);
-      signatureCanvas.on('path:created', ensureWhiteBackground);
-      signatureCanvas.on('object:added', ensureWhiteBackground);
-      signatureCanvas.on('object:modified', ensureWhiteBackground);
-      signatureCanvas.on('object:removed', ensureWhiteBackground);
-      
-      // Also apply every time drawing mode changes
-      signatureCanvas.on('selection:created', ensureWhiteBackground);
-      signatureCanvas.on('selection:updated', ensureWhiteBackground);
-      signatureCanvas.on('selection:cleared', ensureWhiteBackground);
-    }
+      canvas.on('selection:created', forceWhiteBackground);
+      canvas.on('selection:updated', forceWhiteBackground);
+      canvas.on('selection:cleared', forceWhiteBackground);
+    };
+    
+    // Apply to both canvases
+    ensureWhiteBackground(stampCanvas);
+    ensureWhiteBackground(signatureCanvas);
 
     // Clean up event listeners
     return () => {
       if (stampCanvas) {
         stampCanvas.off('mouse:up');
         stampCanvas.off('mouse:down');
+        stampCanvas.off('mouse:move');
         stampCanvas.off('path:created');
         stampCanvas.off('object:added');
         stampCanvas.off('object:modified');
         stampCanvas.off('object:removed');
+        stampCanvas.off('before:render');
+        stampCanvas.off('after:render');
         stampCanvas.off('selection:created');
         stampCanvas.off('selection:updated');
         stampCanvas.off('selection:cleared');
@@ -574,15 +629,35 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       if (signatureCanvas) {
         signatureCanvas.off('mouse:up');
         signatureCanvas.off('mouse:down');
+        signatureCanvas.off('mouse:move');
         signatureCanvas.off('path:created');
         signatureCanvas.off('object:added');
         signatureCanvas.off('object:modified');
         signatureCanvas.off('object:removed');
+        signatureCanvas.off('before:render');
+        signatureCanvas.off('after:render');
         signatureCanvas.off('selection:created');
         signatureCanvas.off('selection:updated');
         signatureCanvas.off('selection:cleared');
       }
     };
+  }, [stampCanvas, signatureCanvas]);
+  
+  // Additional effect to force white background when component mounts or rerenders
+  useEffect(() => {
+    // Force white background on both canvases after a short delay
+    const timer = setTimeout(() => {
+      if (stampCanvas) {
+        stampCanvas.backgroundColor = '#ffffff';
+        stampCanvas.renderAll();
+      }
+      if (signatureCanvas) {
+        signatureCanvas.backgroundColor = '#ffffff';
+        signatureCanvas.renderAll();
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [stampCanvas, signatureCanvas]);
   
   return (
