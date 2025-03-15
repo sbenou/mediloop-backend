@@ -51,36 +51,49 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
         
         // Filter out records where patient or doctor might be null or have an error
         const validConsultations = (data || []).filter(consultation => {
-          const hasValidPatient = consultation.patient && 
+          // Check if patient data is valid (not null and doesn't contain error)
+          const hasValidPatient = consultation.patient != null && 
                                   typeof consultation.patient === 'object' && 
                                   !('error' in consultation.patient);
-          const hasValidDoctor = consultation.doctor && 
+                                  
+          // Check if doctor data is valid (not null and doesn't contain error)
+          const hasValidDoctor = consultation.doctor != null && 
                                  typeof consultation.doctor === 'object' && 
                                  !('error' in consultation.doctor);
+                                 
           return hasValidPatient && hasValidDoctor;
         });
         
         // Create properly typed objects from filtered data
         const typedConsultations: Teleconsultation[] = validConsultations.map(consultation => {
-          // Create safe references to potentially problematic properties
-          // We've already filtered for valid data, but we'll add extra safety here
-          const patientData = consultation.patient && 
-                             typeof consultation.patient === 'object' && 
-                             !('error' in consultation.patient)
-            ? { 
-                full_name: consultation.patient.full_name || 'Unknown Patient',
-                email: consultation.patient.email || null
-              }
-            : { full_name: 'Unknown Patient', email: null };
-            
-          const doctorData = consultation.doctor && 
-                            typeof consultation.doctor === 'object' && 
-                            !('error' in consultation.doctor)
-            ? { 
-                full_name: consultation.doctor.full_name || 'Unknown Doctor',
-                email: consultation.doctor.email || null
-              }
-            : { full_name: 'Unknown Doctor', email: null };
+          // We're extracting the patient data safely with proper null checks
+          // We already filtered for null values above, but add extra type safety
+          const patientData = {
+            full_name: consultation.patient && 
+                      typeof consultation.patient === 'object' && 
+                      'full_name' in consultation.patient
+              ? consultation.patient.full_name || 'Unknown Patient'
+              : 'Unknown Patient',
+            email: consultation.patient && 
+                  typeof consultation.patient === 'object' && 
+                  'email' in consultation.patient
+              ? consultation.patient.email
+              : null
+          };
+          
+          // Similarly for doctor data
+          const doctorData = {
+            full_name: consultation.doctor && 
+                      typeof consultation.doctor === 'object' && 
+                      'full_name' in consultation.doctor
+              ? consultation.doctor.full_name || 'Unknown Doctor'
+              : 'Unknown Doctor',
+            email: consultation.doctor && 
+                  typeof consultation.doctor === 'object' && 
+                  'email' in consultation.doctor
+              ? consultation.doctor.email 
+              : null
+          };
           
           return {
             id: consultation.id,
@@ -333,9 +346,10 @@ const ConsultationCard: React.FC<ConsultationCardProps> = ({
   const formattedStartTime = format(startTime, 'h:mm a');
   const formattedEndTime = format(endTime, 'h:mm a');
   
+  // Get the name safely with a fallback
   const consultationWithName = isDoctor ? 
-    consultation.patient?.full_name : 
-    consultation.doctor?.full_name;
+    consultation.patient?.full_name || 'Patient' : 
+    consultation.doctor?.full_name || 'Doctor';
 
   return (
     <Card className="overflow-hidden">
@@ -364,7 +378,7 @@ const ConsultationCard: React.FC<ConsultationCardProps> = ({
           <div className="flex items-center">
             <Video className="h-4 w-4 mr-2 text-muted-foreground" />
             <span>
-              With {consultationWithName || (isDoctor ? 'Patient' : 'Doctor')}
+              With {consultationWithName}
             </span>
           </div>
         </div>
