@@ -1,15 +1,18 @@
-import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle, Rect, Text, Line } from "fabric";
+
+import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle, Rect, Text, Line, Object as FabricObject, Color } from "fabric";
 
 // Initialize a fabric canvas with white background
-export const initializeCanvas = (container: HTMLDivElement): FabricCanvas => {
+export const initializeCanvas = (container: HTMLDivElement, width?: number, height?: number): FabricCanvas => {
   // Create a canvas element
   const canvasElement = document.createElement('canvas');
   container.innerHTML = ''; // Clear any existing content
   container.appendChild(canvasElement);
   
-  // Set canvas dimensions to match container
-  canvasElement.width = container.clientWidth;
-  canvasElement.height = container.clientHeight;
+  // Set canvas dimensions to match container or use custom dimensions
+  const canvasWidth = width || container.clientWidth;
+  const canvasHeight = height || container.clientHeight;
+  canvasElement.width = canvasWidth;
+  canvasElement.height = canvasHeight;
   
   // Initialize fabric canvas with explicitly set white background
   const canvas = new FabricCanvas(canvasElement, {
@@ -33,7 +36,7 @@ export const initializeCanvas = (container: HTMLDivElement): FabricCanvas => {
 };
 
 // Load an image to a canvas
-export const loadImageToCanvas = (canvas: FabricCanvas, url: string) => {
+export const loadImageToCanvas = (canvas: FabricCanvas, url: string, applyFilter?: boolean) => {
   // Set background to white immediately before loading image
   canvas.backgroundColor = '#ffffff';
   canvas.renderAll();
@@ -69,6 +72,11 @@ export const loadImageToCanvas = (canvas: FabricCanvas, url: string) => {
     });
     
     canvas.add(img);
+    
+    // Apply default filter if requested
+    if (applyFilter) {
+      applyImageFilter(canvas, img, 'contrast', 0.1);
+    }
     
     // Ensure background is white after adding image
     canvas.backgroundColor = '#ffffff';
@@ -360,4 +368,312 @@ export const cleanupCanvasListeners = (canvas: FabricCanvas | null) => {
   canvas.off('selection:created');
   canvas.off('selection:updated');
   canvas.off('selection:cleared');
+};
+
+// NEW FEATURES
+
+// Templates for stamps and signatures
+export interface StampTemplate {
+  id: string;
+  name: string;
+  applyTemplate: (canvas: FabricCanvas, doctorName?: string) => void;
+  thumbnail: string;
+}
+
+// Predefined templates
+export const stampTemplates: StampTemplate[] = [
+  {
+    id: 'circular',
+    name: 'Circular Stamp',
+    thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSIjMDAwIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIiLz48dGV4dCB4PSI1MCIgeT0iNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIj5ET0NUT1I8L3RleHQ+PC9zdmc+',
+    applyTemplate: (canvas, doctorName) => {
+      canvas.clear();
+      
+      // Outer circle
+      const outerCircle = new Circle({
+        radius: Math.min(canvas.getWidth(), canvas.getHeight()) * 0.4,
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
+        originX: 'center',
+        originY: 'center',
+        fill: 'transparent',
+        stroke: '#000000',
+        strokeWidth: 2
+      });
+      
+      // Inner circle
+      const innerCircle = new Circle({
+        radius: Math.min(canvas.getWidth(), canvas.getHeight()) * 0.35,
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
+        originX: 'center',
+        originY: 'center',
+        fill: 'transparent',
+        stroke: '#000000',
+        strokeWidth: 1
+      });
+      
+      // Text for doctor name
+      const nameText = new Text(doctorName || 'Dr. Name', {
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2 - 15,
+        fontSize: 16,
+        fontWeight: 'bold',
+        fill: '#000000',
+        originX: 'center',
+        originY: 'center'
+      });
+      
+      // Text for "M.D."
+      const designationText = new Text('M.D.', {
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2 + 15,
+        fontSize: 12,
+        fill: '#000000',
+        originX: 'center',
+        originY: 'center'
+      });
+      
+      canvas.add(outerCircle);
+      canvas.add(innerCircle);
+      canvas.add(nameText);
+      canvas.add(designationText);
+      canvas.renderAll();
+      saveCanvasState(canvas);
+    }
+  },
+  {
+    id: 'rectangular',
+    name: 'Rectangular Stamp',
+    thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSIxMCIgeT0iMjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI2MCIgc3Ryb2tlPSIjMDAwIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIiLz48dGV4dCB4PSI1MCIgeT0iNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIj5ET0NUT1I8L3RleHQ+PC9zdmc+',
+    applyTemplate: (canvas, doctorName) => {
+      canvas.clear();
+      
+      // Rectangle
+      const rect = new Rect({
+        width: canvas.getWidth() * 0.8,
+        height: canvas.getHeight() * 0.6,
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
+        originX: 'center',
+        originY: 'center',
+        fill: 'transparent',
+        stroke: '#000000',
+        strokeWidth: 2
+      });
+      
+      // Line separator
+      const line = new Line([
+        canvas.getWidth() * 0.2, 
+        canvas.getHeight() / 2,
+        canvas.getWidth() * 0.8, 
+        canvas.getHeight() / 2
+      ], {
+        stroke: '#000000',
+        strokeWidth: 1
+      });
+      
+      // Text for doctor name
+      const nameText = new Text(doctorName || 'Dr. Name', {
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2 - 20,
+        fontSize: 16,
+        fontWeight: 'bold',
+        fill: '#000000',
+        originX: 'center',
+        originY: 'center'
+      });
+      
+      // Text for license
+      const licenseText = new Text('License #: 12345', {
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2 + 20,
+        fontSize: 12,
+        fill: '#000000',
+        originX: 'center',
+        originY: 'center'
+      });
+      
+      canvas.add(rect);
+      canvas.add(line);
+      canvas.add(nameText);
+      canvas.add(licenseText);
+      canvas.renderAll();
+      saveCanvasState(canvas);
+    }
+  },
+  {
+    id: 'signature',
+    name: 'Signature Template',
+    thumbnail: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0xMCwyNSBDMjAsMTAgNDAsMTAgNTAsMjUgQzYwLDQwIDgwLDQwIDkwLDI1IiBzdHJva2U9IiMwMDAiIGZpbGw9Im5vbmUiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==',
+    applyTemplate: (canvas, doctorName) => {
+      canvas.clear();
+      
+      // Signature line
+      const line = new Line([
+        canvas.getWidth() * 0.2, 
+        canvas.getHeight() * 0.7,
+        canvas.getWidth() * 0.8, 
+        canvas.getHeight() * 0.7
+      ], {
+        stroke: '#000000',
+        strokeWidth: 1
+      });
+      
+      // Text for doctor name
+      const nameText = new Text(doctorName || 'Dr. Name', {
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() * 0.85,
+        fontSize: 14,
+        fontWeight: 'bold',
+        fill: '#000000',
+        originX: 'center',
+        originY: 'center'
+      });
+      
+      canvas.add(line);
+      canvas.add(nameText);
+      canvas.renderAll();
+      saveCanvasState(canvas);
+    }
+  }
+];
+
+// Apply image filters (contrast, brightness, etc.) to an image on the canvas
+export const applyImageFilter = (canvas: FabricCanvas, targetObject: FabricImage, filterType: 'brightness' | 'contrast' | 'grayscale' | 'sepia', value: number) => {
+  if (!canvas || !targetObject) return;
+  
+  // Remove any existing filters
+  targetObject.filters = [];
+  
+  // Apply the requested filter
+  switch (filterType) {
+    case 'brightness':
+      targetObject.filters.push(new fabric.Image.filters.Brightness({ brightness: value }));
+      break;
+    case 'contrast':
+      targetObject.filters.push(new fabric.Image.filters.Contrast({ contrast: value }));
+      break;
+    case 'grayscale':
+      targetObject.filters.push(new fabric.Image.filters.Grayscale());
+      break;
+    case 'sepia':
+      targetObject.filters.push(new fabric.Image.filters.Sepia());
+      break;
+  }
+  
+  // Apply the filters and render
+  targetObject.applyFilters();
+  canvas.renderAll();
+  saveCanvasState(canvas);
+};
+
+// Layer management (bring forward, send backward, etc.)
+export const bringObjectForward = (canvas: FabricCanvas) => {
+  if (!canvas) return;
+  
+  const activeObject = canvas.getActiveObject();
+  if (!activeObject) return;
+  
+  canvas.bringForward(activeObject);
+  canvas.renderAll();
+  saveCanvasState(canvas);
+};
+
+export const sendObjectBackward = (canvas: FabricCanvas) => {
+  if (!canvas) return;
+  
+  const activeObject = canvas.getActiveObject();
+  if (!activeObject) return;
+  
+  canvas.sendBackwards(activeObject);
+  canvas.renderAll();
+  saveCanvasState(canvas);
+};
+
+export const bringObjectToFront = (canvas: FabricCanvas) => {
+  if (!canvas) return;
+  
+  const activeObject = canvas.getActiveObject();
+  if (!activeObject) return;
+  
+  canvas.bringToFront(activeObject);
+  canvas.renderAll();
+  saveCanvasState(canvas);
+};
+
+export const sendObjectToBack = (canvas: FabricCanvas) => {
+  if (!canvas) return;
+  
+  const activeObject = canvas.getActiveObject();
+  if (!activeObject) return;
+  
+  canvas.sendToBack(activeObject);
+  canvas.renderAll();
+  saveCanvasState(canvas);
+};
+
+// Resize canvas dimensions
+export const resizeCanvas = (canvas: FabricCanvas, width: number, height: number) => {
+  if (!canvas) return;
+  
+  // Save the current state before resizing
+  const originalWidth = canvas.getWidth();
+  const originalHeight = canvas.getHeight();
+  const scaleFactor = Math.min(width / originalWidth, height / originalHeight);
+  
+  // Resize the canvas
+  canvas.setDimensions({ width, height });
+  
+  // Scale objects if needed
+  if (scaleFactor !== 1) {
+    const objects = canvas.getObjects();
+    objects.forEach(obj => {
+      const scaleX = obj.scaleX || 1;
+      const scaleY = obj.scaleY || 1;
+      const left = obj.left || 0;
+      const top = obj.top || 0;
+      
+      obj.scaleX = scaleX * scaleFactor;
+      obj.scaleY = scaleY * scaleFactor;
+      obj.left = left * (width / originalWidth);
+      obj.top = top * (height / originalHeight);
+      obj.setCoords();
+    });
+  }
+  
+  canvas.renderAll();
+  saveCanvasState(canvas);
+};
+
+// Export canvas to different formats
+export const exportCanvas = (canvas: FabricCanvas, format: 'png' | 'jpeg' | 'svg' | 'pdf'): string | Blob | null => {
+  if (!canvas) return null;
+  
+  switch (format) {
+    case 'png':
+      return canvas.toDataURL({ format: 'png', quality: 1 });
+    case 'jpeg':
+      return canvas.toDataURL({ format: 'jpeg', quality: 0.9 });
+    case 'svg':
+      const svgData = canvas.toSVG();
+      const blob = new Blob([svgData], { type: 'image/svg+xml' });
+      return blob;
+    case 'pdf':
+      // Simple PDF generation using canvas data URL
+      // For production use, consider using a library like jsPDF
+      const dataUrl = canvas.toDataURL({ format: 'png', quality: 1 });
+      
+      // Create a link to download
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'stamp-or-signature.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      return dataUrl;
+    default:
+      return null;
+  }
 };

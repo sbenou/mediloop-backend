@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCanvasManager } from './useCanvasManager';
@@ -46,7 +47,21 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     handleToggleGrid,
     handleAddShape,
     handleAddText,
-    handleRotate
+    handleRotate,
+    // New functionality
+    availableTemplates,
+    handleApplyTemplate,
+    canvasWidth,
+    canvasHeight,
+    handleResizeCanvas,
+    selectedImage,
+    filterOptions,
+    handleApplyFilter,
+    handleBringForward,
+    handleSendBackward,
+    handleBringToFront,
+    handleSendToBack,
+    handleExport
   } = useCanvasManager({ imageUrl });
 
   const triggerUpload = () => {
@@ -231,6 +246,20 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             handleRotate={handleRotate}
             selectedTool={selectedTool}
             selectedShape={selectedShape}
+            // New functionality
+            availableTemplates={availableTemplates}
+            handleApplyTemplate={handleApplyTemplate}
+            canvasWidth={canvasWidth}
+            canvasHeight={canvasHeight}
+            handleResizeCanvas={handleResizeCanvas}
+            selectedImage={selectedImage}
+            filterOptions={filterOptions}
+            handleApplyFilter={handleApplyFilter}
+            handleBringForward={handleBringForward}
+            handleSendBackward={handleSendBackward}
+            handleBringToFront={handleBringToFront}
+            handleSendToBack={handleSendToBack}
+            handleExport={handleExport}
           />
         </div>
       </CardContent>

@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Canvas as FabricCanvas } from 'fabric';
+import { Canvas as FabricCanvas, Image as FabricImage } from 'fabric';
 import { 
   initializeCanvas, 
   ensureWhiteBackground, 
@@ -16,7 +16,16 @@ import {
   addLine,
   changeBrushSize,
   toggleGrid,
-  rotateObject
+  rotateObject,
+  StampTemplate,
+  stampTemplates,
+  applyImageFilter,
+  bringObjectForward,
+  sendObjectBackward,
+  bringObjectToFront,
+  sendObjectToBack,
+  resizeCanvas,
+  exportCanvas
 } from './canvasUtils';
 
 interface UseCanvasManagerProps {
@@ -34,11 +43,29 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
   const [canRedoState, setCanRedoState] = useState(false);
   const [selectedTool, setSelectedTool] = useState<'draw' | 'select' | 'shape' | 'text'>('draw');
   const [selectedShape, setSelectedShape] = useState<'circle' | 'rectangle' | 'line' | null>(null);
+  
+  // New state variables for added features
+  const [availableTemplates] = useState<StampTemplate[]>(stampTemplates);
+  const [canvasWidth, setCanvasWidth] = useState(0);
+  const [canvasHeight, setCanvasHeight] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<FabricImage | null>(null);
+  const [filterOptions, setFilterOptions] = useState({
+    brightness: 0,
+    contrast: 0,
+    grayscale: false,
+    sepia: false
+  });
 
   // Initialize canvas
   useEffect(() => {
     if (canvasContainerRef.current && !canvas) {
-      const fabricCanvas = initializeCanvas(canvasContainerRef.current);
+      const containerWidth = canvasContainerRef.current.clientWidth;
+      const containerHeight = canvasContainerRef.current.clientHeight;
+      
+      setCanvasWidth(containerWidth);
+      setCanvasHeight(containerHeight);
+      
+      const fabricCanvas = initializeCanvas(canvasContainerRef.current, containerWidth, containerHeight);
       setCanvas(fabricCanvas);
     }
     
@@ -104,6 +131,34 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
       toggleGrid(canvas, showGrid);
     }
   }, [canvas, showGrid]);
+
+  // Track selected image on the canvas
+  useEffect(() => {
+    if (!canvas) return;
+    
+    const handleSelectionCreated = (e: any) => {
+      const selectedObject = e.selected?.[0];
+      if (selectedObject && selectedObject.type === 'image') {
+        setSelectedImage(selectedObject as FabricImage);
+      } else {
+        setSelectedImage(null);
+      }
+    };
+    
+    const handleSelectionCleared = () => {
+      setSelectedImage(null);
+    };
+    
+    canvas.on('selection:created', handleSelectionCreated);
+    canvas.on('selection:updated', handleSelectionCreated);
+    canvas.on('selection:cleared', handleSelectionCleared);
+    
+    return () => {
+      canvas.off('selection:created', handleSelectionCreated);
+      canvas.off('selection:updated', handleSelectionCreated);
+      canvas.off('selection:cleared', handleSelectionCleared);
+    };
+  }, [canvas]);
 
   // Toggle drawing mode
   const toggleDrawMode = () => {
@@ -224,6 +279,73 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     }
   };
 
+  // NEW FEATURE HANDLERS
+
+  // Apply a template
+  const handleApplyTemplate = (templateId: string, doctorName?: string) => {
+    if (!canvas) return;
+    
+    const template = availableTemplates.find(t => t.id === templateId);
+    if (template) {
+      template.applyTemplate(canvas, doctorName);
+    }
+  };
+
+  // Apply image filter
+  const handleApplyFilter = (filterType: 'brightness' | 'contrast' | 'grayscale' | 'sepia', value: number) => {
+    if (!canvas || !selectedImage) return;
+    
+    applyImageFilter(canvas, selectedImage, filterType, value);
+    
+    // Update filter options state
+    setFilterOptions(prev => ({
+      ...prev,
+      [filterType]: filterType === 'grayscale' || filterType === 'sepia' ? true : value
+    }));
+  };
+
+  // Layer management
+  const handleBringForward = () => {
+    if (canvas) {
+      bringObjectForward(canvas);
+    }
+  };
+  
+  const handleSendBackward = () => {
+    if (canvas) {
+      sendObjectBackward(canvas);
+    }
+  };
+  
+  const handleBringToFront = () => {
+    if (canvas) {
+      bringObjectToFront(canvas);
+    }
+  };
+  
+  const handleSendToBack = () => {
+    if (canvas) {
+      sendObjectToBack(canvas);
+    }
+  };
+
+  // Canvas resizing
+  const handleResizeCanvas = (width: number, height: number) => {
+    if (canvas) {
+      resizeCanvas(canvas, width, height);
+      setCanvasWidth(width);
+      setCanvasHeight(height);
+    }
+  };
+
+  // Export to different formats
+  const handleExport = (format: 'png' | 'jpeg' | 'svg' | 'pdf') => {
+    if (canvas) {
+      return exportCanvas(canvas, format);
+    }
+    return null;
+  };
+
   return {
     canvasContainerRef,
     canvas,
@@ -244,6 +366,20 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleToggleGrid,
     handleAddShape,
     handleAddText,
-    handleRotate
+    handleRotate,
+    // New functionality
+    availableTemplates,
+    handleApplyTemplate,
+    canvasWidth,
+    canvasHeight,
+    handleResizeCanvas,
+    selectedImage,
+    filterOptions,
+    handleApplyFilter,
+    handleBringForward,
+    handleSendBackward,
+    handleBringToFront,
+    handleSendToBack,
+    handleExport
   };
 };
