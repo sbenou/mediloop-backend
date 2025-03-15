@@ -220,7 +220,10 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
           <div 
             ref={canvasContainerRef}
             className="border rounded-md overflow-hidden bg-white w-full" 
-            style={{ height: '200px' }}
+            style={{ 
+              height: '200px',
+              backgroundColor: '#ffffff' // Force white background in the container
+            }}
           ></div>
           
           <CanvasControls 

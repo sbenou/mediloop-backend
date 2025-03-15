@@ -1,4 +1,3 @@
-
 import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle, Rect, Text, Line, Object as FabricObject, filters } from "fabric";
 
 // Initialize a fabric canvas with white background
@@ -19,6 +18,10 @@ export const initializeCanvas = (container: HTMLDivElement, width?: number, heig
     backgroundColor: '#ffffff',
     isDrawingMode: false,
   });
+  
+  // Force background to white immediately after initialization
+  canvas.backgroundColor = '#ffffff';
+  canvas.renderAll();
   
   // Set up drawing brush
   canvas.freeDrawingBrush = new PencilBrush(canvas);
@@ -267,6 +270,8 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
   existingGrid.forEach(obj => canvas.remove(obj));
   
   if (!showGrid) {
+    // Ensure background is white after removing grid
+    canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
     return;
   }
@@ -302,6 +307,8 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
     canvas.sendObjectToBack(line);
   }
   
+  // Ensure background is white after adding grid
+  canvas.backgroundColor = '#ffffff';
   canvas.renderAll();
 };
 
@@ -322,16 +329,18 @@ export const rotateObject = (canvas: FabricCanvas, angle: number) => {
 export const ensureWhiteBackground = (canvas: FabricCanvas | null) => {
   if (!canvas) return;
   
-  // Set initial background color
+  // Force white background immediately
   canvas.backgroundColor = '#ffffff';
   canvas.renderAll();
   
   // Force rendering with white background
   const forceWhiteBackground = () => {
-    if (canvas.backgroundColor !== '#ffffff') {
+    if (!canvas || canvas.backgroundColor !== '#ffffff') {
       console.log('Enforcing white background on canvas');
-      canvas.backgroundColor = '#ffffff';
-      canvas.renderAll();
+      if (canvas) {
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+      }
     }
   };
   
@@ -350,6 +359,9 @@ export const ensureWhiteBackground = (canvas: FabricCanvas | null) => {
   canvas.on('selection:created', forceWhiteBackground);
   canvas.on('selection:updated', forceWhiteBackground);
   canvas.on('selection:cleared', forceWhiteBackground);
+  
+  // Force white background once more after a short delay
+  setTimeout(forceWhiteBackground, 100);
 };
 
 // Clean up canvas event listeners
@@ -564,6 +576,9 @@ export const applyImageFilter = (canvas: FabricCanvas, targetObject: FabricImage
   
   // Apply the filters and render
   targetObject.applyFilters();
+  
+  // Ensure white background after applying filters
+  canvas.backgroundColor = '#ffffff';
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -585,6 +600,7 @@ export const bringObjectForward = (canvas: FabricCanvas) => {
     objects[currentIndex] = nextObject;
     // Reapply objects in the new order
     canvas.clear();
+    canvas.backgroundColor = '#ffffff'; // Ensure white background
     objects.forEach(obj => canvas.add(obj));
   }
   
@@ -608,6 +624,7 @@ export const sendObjectBackward = (canvas: FabricCanvas) => {
     objects[currentIndex] = prevObject;
     // Reapply objects in the new order
     canvas.clear();
+    canvas.backgroundColor = '#ffffff'; // Ensure white background
     objects.forEach(obj => canvas.add(obj));
   }
   
@@ -629,6 +646,7 @@ export const bringObjectToFront = (canvas: FabricCanvas) => {
   
   // Reapply objects in the new order
   canvas.clear();
+  canvas.backgroundColor = '#ffffff'; // Ensure white background
   filteredObjects.forEach(obj => canvas.add(obj));
   
   canvas.renderAll();
@@ -649,6 +667,7 @@ export const sendObjectToBack = (canvas: FabricCanvas) => {
   
   // Reapply objects in the new order
   canvas.clear();
+  canvas.backgroundColor = '#ffffff'; // Ensure white background
   filteredObjects.forEach(obj => canvas.add(obj));
   
   canvas.renderAll();
@@ -666,6 +685,9 @@ export const resizeCanvas = (canvas: FabricCanvas, width: number, height: number
   
   // Resize the canvas
   canvas.setDimensions({ width, height });
+  
+  // Ensure white background after resizing
+  canvas.backgroundColor = '#ffffff';
   
   // Scale objects if needed
   if (scaleFactor !== 1) {
@@ -691,6 +713,10 @@ export const resizeCanvas = (canvas: FabricCanvas, width: number, height: number
 // Export canvas to different formats
 export const exportCanvas = (canvas: FabricCanvas, format: 'png' | 'jpeg' | 'svg' | 'pdf'): string | Blob | null => {
   if (!canvas) return null;
+  
+  // Ensure white background before exporting
+  canvas.backgroundColor = '#ffffff';
+  canvas.renderAll();
   
   switch (format) {
     case 'png':

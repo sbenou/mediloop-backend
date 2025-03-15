@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Canvas as FabricCanvas, Image as FabricImage } from 'fabric';
 import { 
@@ -66,6 +65,9 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
       setCanvasHeight(containerHeight);
       
       const fabricCanvas = initializeCanvas(canvasContainerRef.current, containerWidth, containerHeight);
+      // Force white background
+      fabricCanvas.backgroundColor = '#ffffff';
+      fabricCanvas.renderAll();
       setCanvas(fabricCanvas);
     }
     
@@ -79,11 +81,22 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
 
   // Apply event listeners to ensure white background
   useEffect(() => {
-    ensureWhiteBackground(canvas);
-    
-    return () => {
-      cleanupCanvasListeners(canvas);
-    };
+    if (canvas) {
+      ensureWhiteBackground(canvas);
+      
+      // Force white background after a short delay
+      const timer = setTimeout(() => {
+        if (canvas) {
+          canvas.backgroundColor = '#ffffff';
+          canvas.renderAll();
+        }
+      }, 50);
+      
+      return () => {
+        clearTimeout(timer);
+        cleanupCanvasListeners(canvas);
+      };
+    }
   }, [canvas]);
 
   // Load image URL if available
@@ -108,6 +121,18 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     }, 100);
     
     return () => clearTimeout(timer);
+  }, [canvas]);
+
+  // Force white background periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (canvas) {
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+      }
+    }, 500);
+    
+    return () => clearInterval(interval);
   }, [canvas]);
 
   // Update undo/redo state
