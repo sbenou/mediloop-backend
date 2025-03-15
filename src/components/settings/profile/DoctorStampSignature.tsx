@@ -97,7 +97,11 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   
   // Load an image to a canvas
   const loadImageToCanvas = (canvas: FabricCanvas, url: string) => {
-    FabricImage.fromURL(url, (img) => {
+    // Fix: Use the correct API for Fabric.js v6
+    FabricImage.fromURL(url, {
+      // Options object
+      crossOrigin: 'anonymous',
+    }).then((img) => {
       canvas.clear();
       
       // Scale image to fit canvas while maintaining aspect ratio
@@ -122,6 +126,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       
       canvas.add(img);
       canvas.renderAll();
+    }).catch(err => {
+      console.error("Error loading image:", err);
     });
   };
   
@@ -193,7 +199,10 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          FabricImage.fromURL(imgUrl, (img) => {
+          // Fix: Use the correct API for Fabric.js v6
+          FabricImage.fromURL(imgUrl, {
+            crossOrigin: 'anonymous',
+          }).then((img) => {
             stampCanvas.clear();
             
             // Scale image to fit canvas
@@ -212,6 +221,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             
             stampCanvas.add(img);
             stampCanvas.renderAll();
+          }).catch(err => {
+            console.error("Error loading image:", err);
           });
         }
       };
@@ -227,7 +238,10 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          FabricImage.fromURL(imgUrl, (img) => {
+          // Fix: Use the correct API for Fabric.js v6
+          FabricImage.fromURL(imgUrl, {
+            crossOrigin: 'anonymous',
+          }).then((img) => {
             signatureCanvas.clear();
             
             // Scale image to fit canvas
@@ -246,6 +260,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             
             signatureCanvas.add(img);
             signatureCanvas.renderAll();
+          }).catch(err => {
+            console.error("Error loading image:", err);
           });
         }
       };
@@ -261,10 +277,11 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     try {
       console.log('Starting stamp save process...');
       
-      // Convert canvas to data URL
+      // Convert canvas to data URL with the required multiplier option
       const dataUrl = stampCanvas.toDataURL({
         format: 'png',
-        quality: 1
+        quality: 1,
+        multiplier: 1 // Add the required multiplier property
       });
       
       console.log('Stamp canvas converted to data URL');
@@ -367,10 +384,11 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     try {
       console.log('Starting signature save process...');
       
-      // Convert canvas to data URL
+      // Convert canvas to data URL with the required multiplier option
       const dataUrl = signatureCanvas.toDataURL({
         format: 'png',
-        quality: 1
+        quality: 1,
+        multiplier: 1 // Add the required multiplier property
       });
       
       console.log('Signature canvas converted to data URL');
