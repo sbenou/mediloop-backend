@@ -5,13 +5,15 @@ import {
   addRectangle as addRectangleUtil,
   addText as addTextUtil,
   addLine as addLineUtil,
+  addDateField as addDateFieldUtil,
+  addCheckbox as addCheckboxUtil,
   rotateObject as rotateObjectUtil
 } from '../utils';
 
 export interface UseShapeToolsProps {
   canvas: FabricCanvas | null;
   penColor: string;
-  setSelectedTool: (tool: 'draw' | 'select' | 'shape' | 'text') => void;
+  setSelectedTool: (tool: 'draw' | 'select' | 'shape' | 'text' | 'date' | 'checkbox') => void;
   setSelectedShape: (shape: 'circle' | 'rectangle' | 'line' | null) => void;
   setIsDrawMode: (isDrawing: boolean) => void;
 }
@@ -65,6 +67,28 @@ export const useShapeTools = ({
     addTextUtil(canvas, 'Text', penColor);
   };
 
+  // Add date field to the canvas
+  const handleAddDateField = () => {
+    if (!canvas) return;
+    
+    setSelectedTool('date');
+    canvas.isDrawingMode = false;
+    setIsDrawMode(false);
+    
+    addDateFieldUtil(canvas, penColor);
+  };
+
+  // Add checkbox to the canvas
+  const handleAddCheckbox = (checked: boolean = false) => {
+    if (!canvas) return;
+    
+    setSelectedTool('checkbox');
+    canvas.isDrawingMode = false;
+    setIsDrawMode(false);
+    
+    addCheckboxUtil(canvas, penColor, checked);
+  };
+
   // Rotate selected object
   const handleRotate = (angle: number) => {
     if (canvas) {
@@ -76,6 +100,8 @@ export const useShapeTools = ({
     clearCanvas,
     handleAddShape,
     handleAddText,
+    handleAddDateField,
+    handleAddCheckbox,
     handleRotate
   };
 };

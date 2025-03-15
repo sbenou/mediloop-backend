@@ -12,14 +12,25 @@ interface TemplatesTabProps {
   handleApplyTemplate?: (templateId: string, doctorName?: string) => void;
   doctorName: string;
   setDoctorName: (name: string) => void;
+  type: 'stamp' | 'signature';
 }
 
 const TemplatesTab: React.FC<TemplatesTabProps> = ({
   availableTemplates,
   handleApplyTemplate,
   doctorName,
-  setDoctorName
+  setDoctorName,
+  type
 }) => {
+  // Only show template options for stamps
+  if (type !== 'stamp') {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        Templates are only available for stamps, not signatures.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

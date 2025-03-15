@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Pencil, Circle, Square, Type, Minus as LineIcon } from "lucide-react";
+import { Pencil, Circle, Square, Type, Minus as LineIcon, CalendarDays, CheckSquare } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -9,6 +9,8 @@ interface DrawingToolsProps {
   toggleDrawMode: () => void;
   handleAddShape: (shape: 'circle' | 'rectangle' | 'line') => void;
   handleAddText: () => void;
+  handleAddDateField?: () => void;
+  handleAddCheckbox?: (checked: boolean) => void;
   selectedTool: string;
   selectedShape: 'circle' | 'rectangle' | 'line' | null;
 }
@@ -18,6 +20,8 @@ const DrawingTools: React.FC<DrawingToolsProps> = ({
   toggleDrawMode,
   handleAddShape,
   handleAddText,
+  handleAddDateField,
+  handleAddCheckbox,
   selectedTool,
   selectedShape
 }) => {
@@ -95,6 +99,38 @@ const DrawingTools: React.FC<DrawingToolsProps> = ({
           </TooltipTrigger>
           <TooltipContent side="bottom">Add Text</TooltipContent>
         </Tooltip>
+
+        {handleAddDateField && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ToggleGroupItem 
+                value="date" 
+                aria-label="Add date field"
+                data-state={selectedTool === 'date' ? "on" : "off"}
+                onClick={handleAddDateField}
+              >
+                <CalendarDays className="h-4 w-4" />
+              </ToggleGroupItem>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Add Date Field</TooltipContent>
+          </Tooltip>
+        )}
+
+        {handleAddCheckbox && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ToggleGroupItem 
+                value="checkbox" 
+                aria-label="Add checkbox"
+                data-state={selectedTool === 'checkbox' ? "on" : "off"}
+                onClick={() => handleAddCheckbox(false)}
+              >
+                <CheckSquare className="h-4 w-4" />
+              </ToggleGroupItem>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Add Checkbox</TooltipContent>
+          </Tooltip>
+        )}
       </TooltipProvider>
     </ToggleGroup>
   );

@@ -10,7 +10,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
   const [isDrawMode, setIsDrawMode] = useState(false);
   const [penColor, setPenColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(3);
-  const [selectedTool, setSelectedTool] = useState<'draw' | 'select' | 'shape' | 'text'>('draw');
+  const [selectedTool, setSelectedTool] = useState<'draw' | 'select' | 'shape' | 'text' | 'date' | 'checkbox'>('draw');
   const [selectedShape, setSelectedShape] = useState<'circle' | 'rectangle' | 'line' | null>(null);
 
   // Toggle drawing mode

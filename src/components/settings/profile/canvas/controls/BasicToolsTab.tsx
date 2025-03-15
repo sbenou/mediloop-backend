@@ -29,6 +29,8 @@ interface BasicToolsTabProps {
   handleRotate: (angle: number) => void;
   selectedTool: string;
   selectedShape: 'circle' | 'rectangle' | 'line' | null;
+  handleAddDateField?: () => void;
+  handleAddCheckbox?: (checked: boolean) => void;
 }
 
 const BasicToolsTab: React.FC<BasicToolsTabProps> = (props) => {
@@ -51,7 +53,9 @@ const BasicToolsTab: React.FC<BasicToolsTabProps> = (props) => {
     handleAddText,
     handleRotate,
     selectedTool,
-    selectedShape
+    selectedShape,
+    handleAddDateField,
+    handleAddCheckbox
   } = props;
 
   return (
@@ -84,6 +88,8 @@ const BasicToolsTab: React.FC<BasicToolsTabProps> = (props) => {
             handleAddText={handleAddText}
             selectedTool={selectedTool}
             selectedShape={selectedShape}
+            handleAddDateField={handleAddDateField}
+            handleAddCheckbox={handleAddCheckbox}
           />
         </div>
 

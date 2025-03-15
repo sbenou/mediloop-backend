@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCanvasManager } from './useCanvasManager';
 import CanvasControls from './CanvasControls';
@@ -23,6 +23,8 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   type,
   userId
 }) => {
+  const [doctorName, setDoctorName] = useState("");
+  
   // Initialize canvas and get canvas functionality
   const {
     canvasContainerRef,
@@ -58,7 +60,9 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     handleSendBackward,
     handleBringToFront,
     handleSendToBack,
-    handleExport
+    handleExport,
+    handleAddDateField,
+    handleAddCheckbox
   } = useCanvasManager({ imageUrl });
 
   // File upload functionality
@@ -151,6 +155,8 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             handleBringToFront={handleBringToFront}
             handleSendToBack={handleSendToBack}
             handleExport={handleExport}
+            handleAddDateField={handleAddDateField}
+            handleAddCheckbox={handleAddCheckbox}
           />
           
           <CanvasContainer canvasRef={canvasContainerRef} />
@@ -173,10 +179,16 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             triggerUpload={triggerUpload}
             saveCanvas={saveCanvas}
             isLoading={isLoading}
-            // Add template props to QuickToolbar
+            // Template props
             type={type}
             availableTemplates={availableTemplates}
             handleApplyTemplate={handleApplyTemplate}
+            doctorName={doctorName}
+            setDoctorName={setDoctorName}
+            // Add new functionality
+            handleAddDateField={handleAddDateField}
+            handleAddCheckbox={handleAddCheckbox}
+            handleExport={handleExport}
           />
         </div>
       </CardContent>

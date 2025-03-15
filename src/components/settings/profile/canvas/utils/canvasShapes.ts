@@ -1,161 +1,170 @@
-
-import { Canvas as FabricCanvas, Circle, Rect, Text, Line } from "fabric";
+import { Canvas as FabricCanvas, Circle, Rect, Text, Line, Path, Group } from "fabric";
 import { saveCanvasState } from "./canvasHistory";
 
-// Create a circle on canvas
-export const addCircle = (canvas: FabricCanvas, color: string) => {
+// Add a circle to canvas
+export const addCircle = (canvas: FabricCanvas, penColor: string) => {
   if (!canvas) return;
   
   const circle = new Circle({
-    radius: 30,
+    radius: 50,
     fill: 'transparent',
-    stroke: color,
-    strokeWidth: 2,
-    left: canvas.getWidth() / 2 - 30,
-    top: canvas.getHeight() / 2 - 30
+    stroke: penColor,
+    strokeWidth: 3,
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
+    originX: 'center',
+    originY: 'center'
   });
   
   canvas.add(circle);
+  canvas.setActiveObject(circle);
   canvas.renderAll();
   saveCanvasState(canvas);
 };
 
-// Create a rectangle on canvas
-export const addRectangle = (canvas: FabricCanvas, color: string) => {
+// Add a rectangle to canvas
+export const addRectangle = (canvas: FabricCanvas, penColor: string) => {
   if (!canvas) return;
   
   const rect = new Rect({
-    width: 60,
-    height: 60,
+    width: 100,
+    height: 80,
     fill: 'transparent',
-    stroke: color,
-    strokeWidth: 2,
-    left: canvas.getWidth() / 2 - 30,
-    top: canvas.getHeight() / 2 - 30
+    stroke: penColor,
+    strokeWidth: 3,
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
+    originX: 'center',
+    originY: 'center'
   });
   
   canvas.add(rect);
-  canvas.renderAll();
-  saveCanvasState(canvas);
-};
-
-// Add text to canvas
-export const addText = (canvas: FabricCanvas, text: string, color: string) => {
-  if (!canvas) return;
-  
-  const textObj = new Text(text || 'Text', {
-    left: canvas.getWidth() / 2 - 25,
-    top: canvas.getHeight() / 2 - 10,
-    fontSize: 20,
-    fill: color
-  });
-  
-  canvas.add(textObj);
+  canvas.setActiveObject(rect);
   canvas.renderAll();
   saveCanvasState(canvas);
 };
 
 // Add a line to canvas
-export const addLine = (canvas: FabricCanvas, color: string) => {
+export const addLine = (canvas: FabricCanvas, penColor: string) => {
   if (!canvas) return;
   
-  const line = new Line([
-    canvas.getWidth() / 2 - 40, 
-    canvas.getHeight() / 2,
-    canvas.getWidth() / 2 + 40, 
-    canvas.getHeight() / 2
-  ], {
-    stroke: color,
-    strokeWidth: 2
+  const line = new Line([50, 100, 150, 100], {
+    strokeWidth: 3,
+    stroke: penColor,
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
+    originX: 'center',
+    originY: 'center'
   });
   
   canvas.add(line);
+  canvas.setActiveObject(line);
   canvas.renderAll();
   saveCanvasState(canvas);
 };
 
-// Change brush size
-export const changeBrushSize = (canvas: FabricCanvas, size: number) => {
-  if (!canvas || !canvas.freeDrawingBrush) return;
-  
-  canvas.freeDrawingBrush.width = size;
-};
-
-// Toggle grid display
-export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: number = 20) => {
+// Add text to canvas
+export const addText = (canvas: FabricCanvas, text: string, penColor: string) => {
   if (!canvas) return;
   
-  // Remove any existing grid first
-  const existingGrid = canvas.getObjects().filter(obj => {
-    return obj.get('isGrid') === true;
+  const textSample = new Text(text, {
+    fontSize: 20,
+    fill: penColor,
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
+    originX: 'center',
+    originY: 'center'
   });
   
-  existingGrid.forEach(obj => canvas.remove(obj));
-  
-  if (!showGrid) {
-    // Ensure background is white after removing grid
-    canvas.backgroundColor = '#ffffff';
-    canvas.renderAll();
-    return;
-  }
-  
-  const width = canvas.getWidth();
-  const height = canvas.getHeight();
-  
-  // Create vertical lines
-  for (let i = gridSize; i < width; i += gridSize) {
-    const line = new Line([i, 0, i, height], {
-      stroke: '#cccccc',
-      strokeWidth: 0.5,
-      selectable: false,
-      evented: false,
-      isGrid: true
-    });
-    canvas.add(line);
-    // Move grid lines to back
-    const objects = canvas.getObjects();
-    const index = objects.indexOf(line);
-    if (index > 0) {
-      objects.splice(index, 1);
-      objects.unshift(line);
-      canvas.renderAll();
-    }
-  }
-  
-  // Create horizontal lines
-  for (let i = gridSize; i < height; i += gridSize) {
-    const line = new Line([0, i, width, i], {
-      stroke: '#cccccc',
-      strokeWidth: 0.5,
-      selectable: false,
-      evented: false,
-      isGrid: true
-    });
-    canvas.add(line);
-    // Move grid lines to back
-    const objects = canvas.getObjects();
-    const index = objects.indexOf(line);
-    if (index > 0) {
-      objects.splice(index, 1);
-      objects.unshift(line);
-      canvas.renderAll();
-    }
-  }
-  
-  // Ensure background is white after adding grid
-  canvas.backgroundColor = '#ffffff';
+  canvas.add(textSample);
+  canvas.setActiveObject(textSample);
   canvas.renderAll();
+  saveCanvasState(canvas);
 };
 
-// Rotate selected object
+// Rotate object
 export const rotateObject = (canvas: FabricCanvas, angle: number) => {
-  if (!canvas) return;
+  if (!canvas || !canvas.getActiveObject()) return;
   
   const activeObject = canvas.getActiveObject();
-  if (!activeObject) return;
+  activeObject.rotate((activeObject.angle || 0) + angle);
+  canvas.renderAll();
+  saveCanvasState(canvas);
+};
+
+// Add a date field to canvas
+export const addDateField = (canvas: FabricCanvas, penColor: string) => {
+  if (!canvas) return;
+
+  const now = new Date();
+  const dateString = now.toLocaleDateString();
   
-  const currentAngle = activeObject.angle || 0;
-  activeObject.rotate(currentAngle + angle);
+  // Create text object with date
+  const dateText = new Text(dateString, {
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
+    fontSize: 16,
+    fill: penColor,
+    originX: 'center',
+    originY: 'center',
+    editable: true
+  });
+  
+  canvas.add(dateText);
+  canvas.setActiveObject(dateText);
+  canvas.renderAll();
+  saveCanvasState(canvas);
+};
+
+// Add a checkbox to canvas
+export const addCheckbox = (canvas: FabricCanvas, penColor: string, checked: boolean = false) => {
+  if (!canvas) return;
+  
+  // Create the checkbox square
+  const boxSize = 20;
+  const checkboxRect = new Rect({
+    left: canvas.getWidth() / 2 - boxSize / 2,
+    top: canvas.getHeight() / 2 - boxSize / 2,
+    width: boxSize,
+    height: boxSize,
+    fill: 'transparent',
+    stroke: penColor,
+    strokeWidth: 1,
+    rx: 2,
+    ry: 2
+  });
+  
+  // If checked, add checkmark inside
+  let checkmark;
+  if (checked) {
+    checkmark = new Path('M 5,10 L 8,15 L 15,5', {
+      left: canvas.getWidth() / 2 - boxSize / 2,
+      top: canvas.getHeight() / 2 - boxSize / 2,
+      stroke: penColor,
+      strokeWidth: 2,
+      fill: 'transparent',
+      strokeLineCap: 'round',
+      strokeLineJoin: 'round'
+    });
+  }
+  
+  // Add to canvas
+  canvas.add(checkboxRect);
+  if (checkmark) canvas.add(checkmark);
+  
+  // Group checkbox and checkmark if needed
+  if (checkmark) {
+    const checkboxGroup = new Group([checkboxRect, checkmark], {
+      left: canvas.getWidth() / 2 - boxSize / 2,
+      top: canvas.getHeight() / 2 - boxSize / 2
+    });
+    canvas.remove(checkboxRect, checkmark);
+    canvas.add(checkboxGroup);
+    canvas.setActiveObject(checkboxGroup);
+  } else {
+    canvas.setActiveObject(checkboxRect);
+  }
+  
   canvas.renderAll();
   saveCanvasState(canvas);
 };

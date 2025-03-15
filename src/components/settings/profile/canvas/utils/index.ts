@@ -1,9 +1,9 @@
 
-// Export all canvas utilities from their respective modules
-export * from './canvasInitialization';
+// Re-export all utilities from the utils folder
 export * from './canvasHistory';
-export * from './canvasShapes';
+export * from './canvasInitialization';
 export * from './canvasImageHandling';
+export * from './canvasShapes';
 export * from './canvasLayerManagement';
-export * from './canvasExportOptions';
 export * from './canvasTemplates';
+export * from './canvasExportOptions';

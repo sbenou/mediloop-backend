@@ -46,6 +46,8 @@ interface CanvasControlsProps {
   handleBringToFront?: () => void;
   handleSendToBack?: () => void;
   handleExport?: (format: 'png' | 'jpeg' | 'svg' | 'pdf') => string | Blob | null;
+  handleAddDateField?: () => void;
+  handleAddCheckbox?: (checked: boolean) => void;
 }
 
 const CanvasControls: React.FC<CanvasControlsProps> = ({
@@ -84,7 +86,9 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
   handleSendBackward,
   handleBringToFront,
   handleSendToBack,
-  handleExport
+  handleExport,
+  handleAddDateField,
+  handleAddCheckbox
 }) => {
   return (
     <div className="space-y-3">
@@ -122,6 +126,8 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
         handleBringToFront={handleBringToFront}
         handleSendToBack={handleSendToBack}
         handleExport={handleExport}
+        handleAddDateField={handleAddDateField}
+        handleAddCheckbox={handleAddCheckbox}
       />
       
       <SaveButton 

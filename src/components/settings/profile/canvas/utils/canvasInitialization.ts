@@ -1,3 +1,4 @@
+
 import { Canvas as FabricCanvas } from "fabric";
 import { loadImageToCanvas } from "./canvasImageHandling";
 
@@ -34,6 +35,9 @@ export const initializeCanvas = (
   
   // Apply explicit white background
   ensureWhiteBackground(canvas);
+
+  // Customize the drawing cursor to look like a pen
+  canvas.freeDrawingCursor = 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXBlbiI+PHBhdGggZD0iTTEyIDIwaDkiLz48cGF0aCBkPSJNMTYuNSAzLjVhMi4xMjEgMi4xMjEgMCAwIDEgMyAzTDcgMTlsLTQgMSAxLTQgMTIuNS0xMi41eiIvPjwvc3ZnPg==), auto';
 
   // If an image URL is provided, load it to the canvas
   if (imageUrl) {

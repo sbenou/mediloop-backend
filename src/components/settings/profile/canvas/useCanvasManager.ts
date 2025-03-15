@@ -41,6 +41,8 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleToggleGrid,
     handleAddShape,
     handleAddText,
+    handleAddDateField,
+    handleAddCheckbox,
     handleRotate,
     handleApplyTemplate,
     handleResizeCanvas
@@ -99,6 +101,8 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleSendBackward,
     handleBringToFront,
     handleSendToBack,
-    handleExport
+    handleExport,
+    handleAddDateField,
+    handleAddCheckbox
   };
 };

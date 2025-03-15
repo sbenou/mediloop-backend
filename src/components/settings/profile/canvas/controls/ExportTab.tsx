@@ -31,7 +31,7 @@ const ExportTab: React.FC<ExportTabProps> = ({ handleExport }) => {
         </Button>
         <Button onClick={() => exportToFormat('pdf')} disabled={!handleExport}>
           <Download className="h-4 w-4 mr-2" />
-          Download As Image
+          PDF
         </Button>
       </div>
     </div>

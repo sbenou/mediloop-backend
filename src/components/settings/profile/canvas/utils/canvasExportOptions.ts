@@ -27,8 +27,7 @@ export const exportCanvas = (canvas: FabricCanvas, format: 'png' | 'jpeg' | 'svg
       const blob = new Blob([svgData], { type: 'image/svg+xml' });
       return blob;
     case 'pdf':
-      // Simple PDF generation using canvas data URL
-      // For production use, consider using a library like jsPDF
+      // Simplified PDF generation using canvas data URL
       const dataUrl = canvas.toDataURL({ 
         format: 'png',
         quality: 1,
@@ -38,7 +37,8 @@ export const exportCanvas = (canvas: FabricCanvas, format: 'png' | 'jpeg' | 'svg
       // Create a link to download
       const a = document.createElement('a');
       a.href = dataUrl;
-      a.download = 'stamp-or-signature.png';
+      const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
+      a.download = `canvas-export-${timestamp}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

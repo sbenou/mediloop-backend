@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Menubar, 
@@ -24,7 +23,9 @@ import {
   Download,
   LayoutTemplate,
   ShieldQuestion,
-  Scale
+  Scale,
+  CalendarDays,
+  CheckSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -86,6 +87,11 @@ interface MenuBarProps {
   
   // Export
   handleExport?: (format: 'png' | 'jpeg' | 'svg' | 'pdf') => string | Blob | null;
+  
+  // New props
+  handleAddDateField?: () => void;
+  handleAddCheckbox?: (checked: boolean) => void;
+  type: 'stamp' | 'signature';
 }
 
 const MenuBar: React.FC<MenuBarProps> = ({
@@ -121,7 +127,9 @@ const MenuBar: React.FC<MenuBarProps> = ({
   handleSendBackward,
   handleBringToFront,
   handleSendToBack,
-  handleExport
+  handleExport,
+  handleAddDateField,
+  handleAddCheckbox
 }) => {
   const [doctorName, setDoctorName] = useState("");
   
@@ -248,6 +256,25 @@ const MenuBar: React.FC<MenuBarProps> = ({
             <Type className="mr-2 h-4 w-4" />
             Text
           </MenubarItem>
+          <MenubarSeparator />
+          {handleAddDateField && (
+            <MenubarItem onClick={handleAddDateField}>
+              <CalendarDays className="mr-2 h-4 w-4" />
+              Date Field
+            </MenubarItem>
+          )}
+          {handleAddCheckbox && (
+            <>
+              <MenubarItem onClick={() => handleAddCheckbox(false)}>
+                <CheckSquare className="mr-2 h-4 w-4" />
+                Checkbox (Unchecked)
+              </MenubarItem>
+              <MenubarItem onClick={() => handleAddCheckbox(true)}>
+                <CheckSquare className="mr-2 h-4 w-4 text-primary" />
+                Checkbox (Checked)
+              </MenubarItem>
+            </>
+          )}
         </MenubarContent>
       </MenubarMenu>
 

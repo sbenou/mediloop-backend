@@ -59,6 +59,8 @@ export const useCanvasTools = ({ canvas, templates }: UseCanvasToolsProps) => {
     clearCanvas,
     handleAddShape,
     handleAddText,
+    handleAddDateField,
+    handleAddCheckbox,
     handleRotate
   } = useShapeTools({ 
     canvas, 
@@ -87,6 +89,8 @@ export const useCanvasTools = ({ canvas, templates }: UseCanvasToolsProps) => {
     handleToggleGrid,
     handleAddShape,
     handleAddText,
+    handleAddDateField,
+    handleAddCheckbox,
     handleRotate,
     handleApplyTemplate,
     handleResizeCanvas
