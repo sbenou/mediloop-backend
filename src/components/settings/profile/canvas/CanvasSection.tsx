@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCanvasManager } from './useCanvasManager';
@@ -231,6 +230,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             handleAddText={handleAddText}
             handleRotate={handleRotate}
             selectedTool={selectedTool}
+            selectedShape={selectedShape}
           />
         </div>
       </CardContent>

@@ -1,4 +1,3 @@
-
 import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle, Rect, Text, Line } from "fabric";
 
 // Initialize a fabric canvas with white background
@@ -254,7 +253,7 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
   
   // Remove any existing grid first
   const existingGrid = canvas.getObjects().filter(obj => {
-    return obj.data && obj.data.isGrid === true;
+    return obj.get('isGrid') === true;
   });
   
   existingGrid.forEach(obj => canvas.remove(obj));
@@ -274,10 +273,11 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
       strokeWidth: 0.5,
       selectable: false,
       evented: false,
-      data: { isGrid: true }
+      isGrid: true
     });
     canvas.add(line);
-    canvas.bringToBack(line);
+    // Use lower-level API to move grid lines to back
+    line.moveTo(0);
   }
   
   // Create horizontal lines
@@ -287,10 +287,11 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
       strokeWidth: 0.5,
       selectable: false,
       evented: false,
-      data: { isGrid: true }
+      isGrid: true
     });
     canvas.add(line);
-    canvas.bringToBack(line);
+    // Use lower-level API to move grid lines to back
+    line.moveTo(0);
   }
   
   canvas.renderAll();
