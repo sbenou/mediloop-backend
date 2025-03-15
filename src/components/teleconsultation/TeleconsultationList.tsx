@@ -41,15 +41,26 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
           .from('teleconsultations')
           .select(`
             *,
-            patient:patient_id(full_name, email),
-            doctor:doctor_id(full_name, email)
+            patient:profiles!teleconsultations_patient_id_fkey(full_name, email),
+            doctor:profiles!teleconsultations_doctor_id_fkey(full_name, email)
           `)
           .eq(filterField, profile.id)
           .order('start_time', { ascending: true });
           
         if (error) throw error;
         
-        setConsultations(data || []);
+        // Filter out records where patient or doctor might be null or have an error
+        const validConsultations = (data || []).filter(consultation => {
+          const hasValidPatient = consultation.patient && 
+                                  typeof consultation.patient === 'object' && 
+                                  !('error' in consultation.patient);
+          const hasValidDoctor = consultation.doctor && 
+                                 typeof consultation.doctor === 'object' && 
+                                 !('error' in consultation.doctor);
+          return hasValidPatient && hasValidDoctor;
+        }) as Teleconsultation[];
+        
+        setConsultations(validConsultations);
         
         // Check if user has connections (for patients only)
         if (profile.role === 'patient') {

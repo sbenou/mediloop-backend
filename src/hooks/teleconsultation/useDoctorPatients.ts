@@ -40,7 +40,7 @@ export const useDoctorPatients = (doctorId?: string) => {
             patient_id,
             doctor_id,
             status,
-            patient:patient_id(
+            patient:profiles(
               id,
               full_name,
               email
@@ -51,8 +51,12 @@ export const useDoctorPatients = (doctorId?: string) => {
 
         if (error) throw error;
 
+        // Type casting to handle potential Supabase errors properly
+        const connections = data as unknown as any[];
+        
         // Format patients data
-        const formattedPatients = (data as DoctorPatientConnection[])
+        const formattedPatients = connections
+          .filter(connection => connection.patient && !connection.patient.error)
           .map(connection => ({
             id: connection.patient_id,
             name: connection.patient.full_name || 'Unknown Patient'

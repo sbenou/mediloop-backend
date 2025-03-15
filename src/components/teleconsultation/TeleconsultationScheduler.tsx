@@ -8,13 +8,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
-import { TeleconsultationStatus } from '@/types/supabase';
-
-interface TeleconsultationSchedulerProps {
-  doctorId: string;
-  doctorName: string;
-  onScheduled: () => void;
-}
 
 // Define consult time slot interface
 interface TimeSlot {
@@ -23,7 +16,11 @@ interface TimeSlot {
   disabled: boolean;
 }
 
-const TeleconsultationScheduler: React.FC<TeleconsultationSchedulerProps> = ({ 
+const TeleconsultationScheduler: React.FC<{
+  doctorId: string;
+  doctorName: string;
+  onScheduled: () => void;
+}> = ({ 
   doctorId, 
   doctorName, 
   onScheduled 
@@ -147,7 +144,7 @@ const TeleconsultationScheduler: React.FC<TeleconsultationSchedulerProps> = ({
           doctor_id: doctorId,
           start_time: selectedTimeSlot.value.toISOString(),
           end_time: endTime.toISOString(),
-          status: 'pending' as TeleconsultationStatus,
+          status: 'pending',
           reason: reason.trim() || 'General consultation'
         });
 

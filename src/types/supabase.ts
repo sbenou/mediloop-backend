@@ -70,6 +70,54 @@ export interface Notification {
   meta?: Json | null;
 }
 
+// Adding the missing types reported in the errors
+export type TeleconsultationStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+export type ConnectionStatus = 'pending' | 'accepted' | 'rejected';
+
+export interface Address {
+  id: string;
+  user_id: string;
+  street: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  is_default: boolean;
+  type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  requires_license: boolean;
+}
+
+export interface Profile {
+  id: string;
+  role: string;
+  role_id: string | null;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  date_of_birth: string | null;
+  city: string | null;
+  auth_method: string | null;
+  is_blocked: boolean | null;
+  doctor_stamp_url: string | null;
+  doctor_signature_url: string | null;
+  cns_card_front: string | null;
+  cns_card_back: string | null;
+  cns_number: string | null;
+  deleted_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  license_number: string | null;
+}
+
 export function isTimeSlot(obj: any): obj is TimeSlot {
   return (
     typeof obj === 'object' &&
