@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,6 +142,10 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       stampCanvas.freeDrawingBrush.color = penColor;
       stampCanvas.freeDrawingBrush.width = 3;
     }
+
+    // Ensure the background color is properly set 
+    stampCanvas.backgroundColor = '#ffffff';
+    stampCanvas.renderAll();
   };
   
   // Toggle signature drawing mode
@@ -157,6 +160,10 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       signatureCanvas.freeDrawingBrush.color = penColor;
       signatureCanvas.freeDrawingBrush.width = 2;
     }
+
+    // Ensure the background color is properly set 
+    signatureCanvas.backgroundColor = '#ffffff';
+    signatureCanvas.renderAll();
   };
   
   // Clear the stamp canvas
@@ -220,6 +227,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             });
             
             stampCanvas.add(img);
+            stampCanvas.backgroundColor = '#ffffff';
             stampCanvas.renderAll();
           }).catch(err => {
             console.error("Error loading image:", err);
@@ -259,6 +267,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
             });
             
             signatureCanvas.add(img);
+            signatureCanvas.backgroundColor = '#ffffff';
             signatureCanvas.renderAll();
           }).catch(err => {
             console.error("Error loading image:", err);
@@ -488,6 +497,37 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       signatureCanvas.freeDrawingBrush.color = color;
     }
   };
+
+  // Add canvas event listeners for the stamp and signature canvases
+  useEffect(() => {
+    if (stampCanvas) {
+      // Add event listener for mouse up event
+      stampCanvas.on('mouse:up', () => {
+        // Ensure background is set to white
+        stampCanvas.backgroundColor = '#ffffff';
+        stampCanvas.renderAll();
+      });
+    }
+
+    if (signatureCanvas) {
+      // Add event listener for mouse up event
+      signatureCanvas.on('mouse:up', () => {
+        // Ensure background is set to white
+        signatureCanvas.backgroundColor = '#ffffff';
+        signatureCanvas.renderAll();
+      });
+    }
+
+    // Clean up event listeners
+    return () => {
+      if (stampCanvas) {
+        stampCanvas.off('mouse:up');
+      }
+      if (signatureCanvas) {
+        signatureCanvas.off('mouse:up');
+      }
+    };
+  }, [stampCanvas, signatureCanvas]);
   
   return (
     <div className="space-y-6">
