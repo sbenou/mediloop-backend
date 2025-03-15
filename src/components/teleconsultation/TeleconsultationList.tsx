@@ -51,48 +51,66 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
         
         // Filter out records where patient or doctor might be null or have an error
         const validConsultations = (data || []).filter(consultation => {
-          // Properly check if patient data is valid (not null and doesn't contain error)
+          // Properly check if patient data is valid
           const hasValidPatient = consultation.patient !== null && 
                                  consultation.patient !== undefined && 
                                  typeof consultation.patient === 'object' && 
-                                 !('error' in consultation.patient);
+                                 !('error' in (consultation.patient as object));
                                   
-          // Properly check if doctor data is valid (not null and doesn't contain error)
+          // Properly check if doctor data is valid
           const hasValidDoctor = consultation.doctor !== null && 
                                 consultation.doctor !== undefined && 
                                 typeof consultation.doctor === 'object' && 
-                                !('error' in consultation.doctor);
+                                !('error' in (consultation.doctor as object));
                                  
           return hasValidPatient && hasValidDoctor;
         });
         
         // Create properly typed objects from filtered data
         const typedConsultations: Teleconsultation[] = validConsultations.map(consultation => {
-          // We're extracting the patient data safely with proper null checks
-          const patientData = consultation.patient ? {
-            full_name: typeof consultation.patient === 'object' && 
-                      'full_name' in consultation.patient &&
-                      consultation.patient.full_name !== null
-              ? consultation.patient.full_name 
-              : 'Unknown Patient',
-            email: typeof consultation.patient === 'object' && 
-                  'email' in consultation.patient
-              ? consultation.patient.email
-              : null
-          } : { full_name: 'Unknown Patient', email: null };
+          // Default values for patient data
+          const defaultPatientData = { full_name: 'Unknown Patient', email: null };
           
-          // Similarly for doctor data
-          const doctorData = consultation.doctor ? {
-            full_name: typeof consultation.doctor === 'object' && 
-                      'full_name' in consultation.doctor &&
-                      consultation.doctor.full_name !== null
-              ? consultation.doctor.full_name 
-              : 'Unknown Doctor',
-            email: typeof consultation.doctor === 'object' && 
-                  'email' in consultation.doctor
-              ? consultation.doctor.email 
-              : null
-          } : { full_name: 'Unknown Doctor', email: null };
+          // Extract patient data safely with proper null checks
+          const patientData = (() => {
+            if (!consultation.patient) return defaultPatientData;
+            
+            const patientObj = consultation.patient as Record<string, any>;
+            
+            return {
+              full_name: typeof patientObj === 'object' && 
+                        'full_name' in patientObj &&
+                        patientObj.full_name !== null
+                ? patientObj.full_name 
+                : 'Unknown Patient',
+              email: typeof patientObj === 'object' && 
+                    'email' in patientObj
+                ? patientObj.email
+                : null
+            };
+          })();
+          
+          // Default values for doctor data
+          const defaultDoctorData = { full_name: 'Unknown Doctor', email: null };
+          
+          // Extract doctor data safely with proper null checks
+          const doctorData = (() => {
+            if (!consultation.doctor) return defaultDoctorData;
+            
+            const doctorObj = consultation.doctor as Record<string, any>;
+            
+            return {
+              full_name: typeof doctorObj === 'object' && 
+                        'full_name' in doctorObj &&
+                        doctorObj.full_name !== null
+                ? doctorObj.full_name 
+                : 'Unknown Doctor',
+              email: typeof doctorObj === 'object' && 
+                    'email' in doctorObj
+                ? doctorObj.email 
+                : null
+            };
+          })();
           
           return {
             id: consultation.id,
@@ -347,8 +365,8 @@ const ConsultationCard: React.FC<ConsultationCardProps> = ({
   
   // Get the name safely with fallbacks
   const consultationWithName = isDoctor 
-    ? (consultation.patient && consultation.patient.full_name) || 'Patient'
-    : (consultation.doctor && consultation.doctor.full_name) || 'Doctor';
+    ? (consultation.patient && typeof consultation.patient === 'object' ? consultation.patient.full_name : null) || 'Patient'
+    : (consultation.doctor && typeof consultation.doctor === 'object' ? consultation.doctor.full_name : null) || 'Doctor';
 
   return (
     <Card className="overflow-hidden">
