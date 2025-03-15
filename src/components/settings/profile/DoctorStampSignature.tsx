@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Pencil, Save, Trash2, Upload } from "lucide-react";
-import { fabric } from 'fabric';
+import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage } from "fabric";
 
 interface DoctorStampSignatureProps {
   stampUrl: string | null;
@@ -24,8 +24,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   const signatureCanvasContainerRef = useRef<HTMLDivElement>(null);
   
   // Fabric canvas states
-  const [stampCanvas, setStampCanvas] = useState<fabric.Canvas | null>(null);
-  const [signatureCanvas, setSignatureCanvas] = useState<fabric.Canvas | null>(null);
+  const [stampCanvas, setStampCanvas] = useState<FabricCanvas | null>(null);
+  const [signatureCanvas, setSignatureCanvas] = useState<FabricCanvas | null>(null);
   
   // UI states
   const [isStampDrawMode, setIsStampDrawMode] = useState(false);
@@ -60,7 +60,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   }, []);
   
   // Initialize a fabric canvas
-  const initializeCanvas = (container: HTMLDivElement): fabric.Canvas => {
+  const initializeCanvas = (container: HTMLDivElement): FabricCanvas => {
     // Create a canvas element
     const canvasElement = document.createElement('canvas');
     container.innerHTML = ''; // Clear any existing content
@@ -71,13 +71,13 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     canvasElement.height = container.clientHeight;
     
     // Initialize fabric canvas
-    const canvas = new fabric.Canvas(canvasElement, {
+    const canvas = new FabricCanvas(canvasElement, {
       backgroundColor: '#ffffff',
       isDrawingMode: false,
     });
     
     // Set up drawing brush
-    canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+    canvas.freeDrawingBrush = new PencilBrush(canvas);
     canvas.freeDrawingBrush.color = penColor;
     canvas.freeDrawingBrush.width = 3;
     
@@ -96,8 +96,8 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   }, [stampCanvas, signatureCanvas, stampUrl, signatureUrl]);
   
   // Load an image to a canvas
-  const loadImageToCanvas = (canvas: fabric.Canvas, url: string) => {
-    fabric.Image.fromURL(url, (img) => {
+  const loadImageToCanvas = (canvas: FabricCanvas, url: string) => {
+    FabricImage.fromURL(url, (img) => {
       canvas.clear();
       
       // Scale image to fit canvas while maintaining aspect ratio
@@ -193,7 +193,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          fabric.Image.fromURL(imgUrl, (img) => {
+          FabricImage.fromURL(imgUrl, (img) => {
             stampCanvas.clear();
             
             // Scale image to fit canvas
@@ -227,7 +227,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
       reader.onload = (event) => {
         if (event.target?.result) {
           const imgUrl = event.target.result.toString();
-          fabric.Image.fromURL(imgUrl, (img) => {
+          FabricImage.fromURL(imgUrl, (img) => {
             signatureCanvas.clear();
             
             // Scale image to fit canvas
