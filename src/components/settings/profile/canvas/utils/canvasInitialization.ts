@@ -76,7 +76,7 @@ export const initializeCanvas = (
 };
 
 // Helper function to ensure canvas has white background
-const ensureWhiteBackground = (canvas: FabricCanvas) => {
+export const ensureWhiteBackground = (canvas: FabricCanvas) => {
   // Set explicit white background
   canvas.backgroundColor = '#ffffff';
   
@@ -88,5 +88,25 @@ const ensureWhiteBackground = (canvas: FabricCanvas) => {
   if (ctx) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+  }
+};
+
+// Cleanup function for canvas event listeners
+export const cleanupCanvasListeners = (canvas: FabricCanvas) => {
+  // Remove all event listeners attached to the canvas
+  canvas.dispose();
+};
+
+// Canvas resize utility
+export const resizeCanvas = (canvas: FabricCanvas, width: number, height: number) => {
+  if (canvas) {
+    // Set new dimensions
+    canvas.setDimensions({ width, height });
+    
+    // Re-ensure white background after resize
+    ensureWhiteBackground(canvas);
+    
+    // Force a re-render
+    canvas.renderAll();
   }
 };

@@ -33,7 +33,8 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         setCanvasWidth(containerWidth);
         setCanvasHeight(containerHeight);
         
-        const fabricCanvas = initializeCanvas(canvasContainerRef.current, containerWidth, containerHeight);
+        // Fix: Only pass the container, not the width and height
+        const fabricCanvas = initializeCanvas(canvasContainerRef.current, imageUrl);
         
         // Explicitly force white background multiple times to ensure it's set
         fabricCanvas.backgroundColor = '#ffffff';
@@ -70,7 +71,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         canvas.dispose();
       }
     };
-  }, [forcedRenderId]);
+  }, [forcedRenderId, imageUrl]);
 
   // Apply event listeners to ensure white background
   useEffect(() => {
