@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { addDays, startOfWeek, format } from "date-fns";
+import { addDays, startOfWeek } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { BankHoliday, DoctorAvailability, Teleconsultation, TimeSlot, SupportedCountry, isTimeSlot } from "@/types/supabase";
+import { BankHoliday, DoctorAvailability, Teleconsultation, SupportedCountry } from "@/types/supabase";
 import { useAvailabilityData } from "./useAvailabilityData";
 import { useAvailabilityHelpers } from "./useAvailabilityHelpers";
 

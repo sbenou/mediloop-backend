@@ -1,6 +1,5 @@
 
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { BankHoliday, DoctorAvailability, Teleconsultation, TimeSlot, SupportedCountry, isTimeSlot } from "@/types/supabase";
