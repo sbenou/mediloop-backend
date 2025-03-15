@@ -32,9 +32,22 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     canvas,
     isDrawMode,
     penColor,
+    brushSize,
+    showGrid,
+    canUndo,
+    canRedo,
+    selectedTool,
+    selectedShape,
     toggleDrawMode,
     clearCanvas,
-    handleColorChange
+    handleColorChange,
+    handleBrushSizeChange,
+    handleUndo,
+    handleRedo,
+    handleToggleGrid,
+    handleAddShape,
+    handleAddText,
+    handleRotate
   } = useCanvasManager({ imageUrl });
 
   const triggerUpload = () => {
@@ -204,8 +217,20 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             saveCanvas={saveCanvas}
             isLoading={isLoading}
             penColor={penColor}
+            brushSize={brushSize}
             handleColorChange={handleColorChange}
+            handleBrushSizeChange={handleBrushSizeChange}
             type={type}
+            handleUndo={handleUndo}
+            handleRedo={handleRedo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            handleToggleGrid={handleToggleGrid}
+            showGrid={showGrid}
+            handleAddShape={handleAddShape}
+            handleAddText={handleAddText}
+            handleRotate={handleRotate}
+            selectedTool={selectedTool}
           />
         </div>
       </CardContent>
