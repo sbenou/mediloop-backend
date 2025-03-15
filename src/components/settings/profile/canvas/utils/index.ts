@@ -1,4 +1,6 @@
 
+import { Canvas, Line } from "fabric";
+
 // Re-export all utilities from the utils folder
 export * from './canvasHistory';
 export * from './canvasInitialization';
@@ -9,7 +11,7 @@ export * from './canvasTemplates';
 export * from './canvasExportOptions';
 
 // Add grid utility function
-export const toggleGrid = (canvas: fabric.Canvas, showGrid: boolean) => {
+export const toggleGrid = (canvas: Canvas, showGrid: boolean) => {
   // Remove any existing grid
   const existingGrid = canvas.getObjects().filter(obj => obj.data?.isGrid);
   existingGrid.forEach(obj => canvas.remove(obj));
@@ -21,7 +23,7 @@ export const toggleGrid = (canvas: fabric.Canvas, showGrid: boolean) => {
     
     // Create vertical lines
     for (let i = 0; i <= width; i += gridSize) {
-      const line = new fabric.Line([i, 0, i, height], {
+      const line = new Line([i, 0, i, height], {
         stroke: '#ccc',
         selectable: false,
         evented: false,
@@ -33,7 +35,7 @@ export const toggleGrid = (canvas: fabric.Canvas, showGrid: boolean) => {
     
     // Create horizontal lines
     for (let i = 0; i <= height; i += gridSize) {
-      const line = new fabric.Line([0, i, width, i], {
+      const line = new Line([0, i, width, i], {
         stroke: '#ccc',
         selectable: false,
         evented: false,

@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react';
-import { Canvas as FabricCanvas } from 'fabric';
+import { Canvas } from 'fabric';
 import { toggleGrid as toggleGridUtil } from '../utils';
 
 export interface UseGridControlProps {
-  canvas: FabricCanvas | null;
+  canvas: Canvas | null;
 }
 
 export const useGridControl = ({ canvas }: UseGridControlProps) => {
