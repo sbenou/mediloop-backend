@@ -351,7 +351,7 @@ const AvailabilityWeeklyCalendar = ({
         <div className="flex justify-between items-center">
           <div>
             <CardTitle>Weekly Availability Calendar</CardTitle>
-            <CardDescription>
+            <CardDescription className="mb-8">
               View {doctorName} schedule including available time slots and booked consultations
             </CardDescription>
           </div>
