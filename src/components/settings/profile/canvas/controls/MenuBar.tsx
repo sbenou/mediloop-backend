@@ -1,10 +1,6 @@
-
 import React, { useState } from 'react';
 import { 
-  Menubar, 
-  MenubarMenu, 
-  MenubarTrigger, 
-  MenubarContent
+  Menubar
 } from "@/components/ui/menubar";
 import FileMenu from './menuComponents/FileMenu';
 import EditMenu from './menuComponents/EditMenu';
@@ -13,6 +9,7 @@ import InsertMenu from './menuComponents/InsertMenu';
 import TemplatesMenu from './menuComponents/TemplatesMenu';
 import AdvancedMenu from './menuComponents/AdvancedMenu';
 import HelpMenu from './menuComponents/HelpMenu';
+import MenuSection from './components/MenuSection';
 import { StampTemplate } from '../utils';
 
 interface MenuBarProps {
@@ -83,96 +80,75 @@ const MenuBar: React.FC<MenuBarProps> = (props) => {
   return (
     <Menubar className="border-none shadow-sm bg-gray-50 rounded-md p-1">
       {/* File Menu */}
-      <MenubarMenu>
-        <MenubarTrigger className="font-medium">File</MenubarTrigger>
-        <MenubarContent>
-          <FileMenu 
-            clearCanvas={props.clearCanvas}
-            triggerUpload={props.triggerUpload}
-            handleExport={props.handleExport}
-          />
-        </MenubarContent>
-      </MenubarMenu>
+      <MenuSection title="File">
+        <FileMenu 
+          clearCanvas={props.clearCanvas}
+          triggerUpload={props.triggerUpload}
+          handleExport={props.handleExport}
+        />
+      </MenuSection>
 
       {/* Edit Menu */}
-      <MenubarMenu>
-        <MenubarTrigger className="font-medium">Edit</MenubarTrigger>
-        <MenubarContent>
-          <EditMenu 
-            handleUndo={props.handleUndo}
-            handleRedo={props.handleRedo}
-            canUndo={props.canUndo}
-            canRedo={props.canRedo}
-            handleToggleGrid={props.handleToggleGrid}
-            showGrid={props.showGrid}
-          />
-        </MenubarContent>
-      </MenubarMenu>
+      <MenuSection title="Edit">
+        <EditMenu 
+          handleUndo={props.handleUndo}
+          handleRedo={props.handleRedo}
+          canUndo={props.canUndo}
+          canRedo={props.canRedo}
+          handleToggleGrid={props.handleToggleGrid}
+          showGrid={props.showGrid}
+        />
+      </MenuSection>
 
       {/* Draw Menu */}
-      <MenubarMenu>
-        <MenubarTrigger className="font-medium">Draw</MenubarTrigger>
-        <MenubarContent>
-          <DrawMenu 
-            isDrawMode={props.isDrawMode}
-            toggleDrawMode={props.toggleDrawMode}
-            brushSize={props.brushSize}
-            handleBrushSizeChange={props.handleBrushSizeChange}
-            penColor={props.penColor}
-            handleColorChange={props.handleColorChange}
-          />
-        </MenubarContent>
-      </MenubarMenu>
+      <MenuSection title="Draw">
+        <DrawMenu 
+          isDrawMode={props.isDrawMode}
+          toggleDrawMode={props.toggleDrawMode}
+          brushSize={props.brushSize}
+          handleBrushSizeChange={props.handleBrushSizeChange}
+          penColor={props.penColor}
+          handleColorChange={props.handleColorChange}
+        />
+      </MenuSection>
 
       {/* Insert Menu */}
-      <MenubarMenu>
-        <MenubarTrigger className="font-medium">Insert</MenubarTrigger>
-        <MenubarContent>
-          <InsertMenu 
-            handleAddShape={props.handleAddShape}
-            handleAddText={props.handleAddText}
-            handleAddDateField={props.handleAddDateField}
-            handleAddCheckbox={props.handleAddCheckbox}
-          />
-        </MenubarContent>
-      </MenubarMenu>
+      <MenuSection title="Insert">
+        <InsertMenu 
+          handleAddShape={props.handleAddShape}
+          handleAddText={props.handleAddText}
+          handleAddDateField={props.handleAddDateField}
+          handleAddCheckbox={props.handleAddCheckbox}
+        />
+      </MenuSection>
 
       {/* Templates Menu - only for stamps */}
       {props.type === 'stamp' && props.availableTemplates && props.handleApplyTemplate && (
-        <MenubarMenu>
-          <MenubarTrigger className="font-medium">Templates</MenubarTrigger>
-          <MenubarContent>
-            <TemplatesMenu 
-              doctorName={doctorName}
-              setDoctorName={setDoctorName}
-              availableTemplates={props.availableTemplates}
-              handleApplyTemplate={props.handleApplyTemplate}
-            />
-          </MenubarContent>
-        </MenubarMenu>
+        <MenuSection title="Templates">
+          <TemplatesMenu 
+            doctorName={doctorName}
+            setDoctorName={setDoctorName}
+            availableTemplates={props.availableTemplates}
+            handleApplyTemplate={props.handleApplyTemplate}
+          />
+        </MenuSection>
       )}
 
       {/* Advanced Menu */}
-      <MenubarMenu>
-        <MenubarTrigger className="font-medium">Advanced</MenubarTrigger>
-        <MenubarContent>
-          <AdvancedMenu 
-            handleBringForward={props.handleBringForward}
-            handleSendBackward={props.handleSendBackward}
-            handleBringToFront={props.handleBringToFront}
-            handleSendToBack={props.handleSendToBack}
-            handleRotate={props.handleRotate}
-          />
-        </MenubarContent>
-      </MenubarMenu>
+      <MenuSection title="Advanced">
+        <AdvancedMenu 
+          handleBringForward={props.handleBringForward}
+          handleSendBackward={props.handleSendBackward}
+          handleBringToFront={props.handleBringToFront}
+          handleSendToBack={props.handleSendToBack}
+          handleRotate={props.handleRotate}
+        />
+      </MenuSection>
 
       {/* Help Menu */}
-      <MenubarMenu>
-        <MenubarTrigger className="font-medium">Help</MenubarTrigger>
-        <MenubarContent>
-          <HelpMenu />
-        </MenubarContent>
-      </MenubarMenu>
+      <MenuSection title="Help">
+        <HelpMenu />
+      </MenuSection>
     </Menubar>
   );
 };
