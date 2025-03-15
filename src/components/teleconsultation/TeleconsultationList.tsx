@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -60,26 +61,37 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
         });
         
         // Create properly typed objects from filtered data
-        const typedConsultations: Teleconsultation[] = validConsultations.map(consultation => ({
-          id: consultation.id,
-          patient_id: consultation.patient_id,
-          doctor_id: consultation.doctor_id,
-          start_time: consultation.start_time,
-          end_time: consultation.end_time,
-          status: consultation.status,
-          reason: consultation.reason,
-          room_id: consultation.room_id,
-          created_at: consultation.created_at,
-          updated_at: consultation.updated_at,
-          patient: {
-            full_name: consultation.patient?.full_name || 'Unknown Patient',
-            email: consultation.patient?.email || null
-          },
-          doctor: {
-            full_name: consultation.doctor?.full_name || 'Unknown Doctor',
-            email: consultation.doctor?.email || null
-          }
-        }));
+        const typedConsultations: Teleconsultation[] = validConsultations.map(consultation => {
+          // Create safe references to potentially problematic properties
+          const patientData = consultation.patient && typeof consultation.patient === 'object' && !('error' in consultation.patient)
+            ? consultation.patient
+            : { full_name: 'Unknown Patient', email: null };
+            
+          const doctorData = consultation.doctor && typeof consultation.doctor === 'object' && !('error' in consultation.doctor)
+            ? consultation.doctor
+            : { full_name: 'Unknown Doctor', email: null };
+          
+          return {
+            id: consultation.id,
+            patient_id: consultation.patient_id,
+            doctor_id: consultation.doctor_id,
+            start_time: consultation.start_time,
+            end_time: consultation.end_time,
+            status: consultation.status,
+            reason: consultation.reason,
+            room_id: consultation.room_id,
+            created_at: consultation.created_at,
+            updated_at: consultation.updated_at,
+            patient: {
+              full_name: patientData.full_name || 'Unknown Patient',
+              email: patientData.email || null
+            },
+            doctor: {
+              full_name: doctorData.full_name || 'Unknown Doctor',
+              email: doctorData.email || null
+            }
+          };
+        });
         
         setConsultations(typedConsultations);
         
