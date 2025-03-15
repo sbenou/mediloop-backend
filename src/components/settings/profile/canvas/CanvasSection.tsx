@@ -73,37 +73,23 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     }
   };
 
-  // Force white background refreshing
+  // Force white background but with safeguards against recursion
   useEffect(() => {
     if (!canvas) return;
     
-    // Initial forced white background
+    // Initial forced white background - just once
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
     
-    const refreshInterval = setInterval(() => {
+    // Instead of an interval which could cause recursion, use a single timeout
+    const timeout = setTimeout(() => {
       if (canvas) {
         canvas.backgroundColor = '#ffffff';
         canvas.renderAll();
       }
-    }, 100);
+    }, 200);
     
-    return () => clearInterval(refreshInterval);
-  }, [canvas]);
-
-  // If canvas is mounted but turns black, force refresh
-  useEffect(() => {
-    if (!canvas) return;
-    
-    // Additional check to force white background after a slight delay
-    const timeoutId = setTimeout(() => {
-      if (canvas) {
-        canvas.backgroundColor = '#ffffff';
-        canvas.renderAll();
-      }
-    }, 500);
-    
-    return () => clearTimeout(timeoutId);
+    return () => clearTimeout(timeout);
   }, [canvas]);
 
   return (

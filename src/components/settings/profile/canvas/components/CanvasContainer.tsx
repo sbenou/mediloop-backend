@@ -7,6 +7,7 @@ interface CanvasContainerProps {
 
 const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
   const initialized = useRef(false);
+  const lastAppliedTime = useRef(0);
 
   // Force white background immediately on mount and when component updates
   useEffect(() => {
@@ -23,8 +24,8 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
       initialized.current = true;
     }
     
-    // Force white background on any canvas element that appears
-    const forceWhiteBackground = () => {
+    // Force white background - only once after mount
+    const applyWhiteBackground = () => {
       if (canvasRef.current) {
         const canvasElement = canvasRef.current.querySelector('canvas');
         if (canvasElement) {
@@ -38,13 +39,13 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
     };
     
     // Initial call
-    forceWhiteBackground();
+    applyWhiteBackground();
     
-    // Set up a periodic check to ensure white background
-    const interval = setInterval(forceWhiteBackground, 100);
+    // Instead of an interval that could cause recursion, use a single timeout
+    const timeout = setTimeout(applyWhiteBackground, 150);
     
     return () => {
-      clearInterval(interval);
+      clearTimeout(timeout);
     };
   }, [canvasRef]);
 

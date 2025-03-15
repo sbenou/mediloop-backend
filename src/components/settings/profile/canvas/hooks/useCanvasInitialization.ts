@@ -19,6 +19,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
   const [canvasHeight, setCanvasHeight] = useState(0);
   const [forcedRenderId, setForcedRenderId] = useState(0);
   const initAttempts = useRef(0);
+  const renderAttemptRef = useRef(0);
 
   // Initialize canvas
   useEffect(() => {
@@ -38,17 +39,14 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         
         setCanvas(fabricCanvas);
         
-        // Force multiple re-renders to ensure the canvas is properly initialized
-        const refreshIntervals = [100, 300, 500, 1000];
-        refreshIntervals.forEach(delay => {
-          setTimeout(() => {
-            setForcedRenderId(id => id + 1);
-            if (fabricCanvas) {
-              fabricCanvas.backgroundColor = '#ffffff';
-              fabricCanvas.renderAll();
-            }
-          }, delay);
-        });
+        // We'll do just one forced render after a delay, not multiple
+        setTimeout(() => {
+          setForcedRenderId(id => id + 1);
+          if (fabricCanvas) {
+            fabricCanvas.backgroundColor = '#ffffff';
+            fabricCanvas.renderAll();
+          }
+        }, 300);
       } catch (error) {
         console.error('Error initializing canvas:', error);
         initAttempts.current++;
@@ -71,12 +69,12 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     };
   }, [forcedRenderId]);
 
-  // Apply event listeners to ensure white background
+  // Apply event listeners to ensure white background - with recursion safeguard
   useEffect(() => {
     if (canvas) {
       ensureWhiteBackground(canvas);
       
-      // Force white background after a short delay
+      // Force white background after a short delay - just once
       const timer = setTimeout(() => {
         if (canvas) {
           canvas.backgroundColor = '#ffffff';
@@ -89,7 +87,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         cleanupCanvasListeners(canvas);
       };
     }
-  }, [canvas, forcedRenderId]);
+  }, [canvas]);
 
   // Load image URL if available
   useEffect(() => {
@@ -100,9 +98,9 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
     }
-  }, [canvas, imageUrl, forcedRenderId]);
+  }, [canvas, imageUrl]);
 
-  // Enhanced force white background effect
+  // Enhanced force white background effect - with safeguards against recursion
   useEffect(() => {
     if (!canvas) return;
     
@@ -110,16 +108,16 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
     
-    // Force white background on canvas periodically
-    const interval = setInterval(() => {
+    // Instead of a frequent interval, use a single timeout
+    const timeout = setTimeout(() => {
       if (canvas) {
         canvas.backgroundColor = '#ffffff';
         canvas.renderAll();
       }
     }, 200);
     
-    return () => clearInterval(interval);
-  }, [canvas, forcedRenderId]);
+    return () => clearTimeout(timeout);
+  }, [canvas]);
 
   return {
     canvasContainerRef,
