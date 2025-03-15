@@ -13,7 +13,12 @@ export * from './canvasExportOptions';
 // Add grid utility function
 export const toggleGrid = (canvas: Canvas, showGrid: boolean) => {
   // Remove any existing grid
-  const existingGrid = canvas.getObjects().filter(obj => obj.data?.isGrid);
+  // In Fabric.js v6, we need to use object.get() for custom properties
+  const existingGrid = canvas.getObjects().filter(obj => {
+    // Check if the object has a "isGrid" custom data property
+    return obj.get('data')?.isGrid === true;
+  });
+  
   existingGrid.forEach(obj => canvas.remove(obj));
   
   if (showGrid) {
@@ -30,7 +35,12 @@ export const toggleGrid = (canvas: Canvas, showGrid: boolean) => {
         data: { isGrid: true }
       });
       canvas.add(line);
-      canvas.sendToBack(line);
+      // In Fabric.js v6, use the canvas item positioning methods
+      canvas.getObjects().forEach(obj => {
+        if (obj !== line && obj.get('data')?.isGrid !== true) {
+          obj.bringToFront();
+        }
+      });
     }
     
     // Create horizontal lines
@@ -42,7 +52,12 @@ export const toggleGrid = (canvas: Canvas, showGrid: boolean) => {
         data: { isGrid: true }
       });
       canvas.add(line);
-      canvas.sendToBack(line);
+      // In Fabric.js v6, use the canvas item positioning methods
+      canvas.getObjects().forEach(obj => {
+        if (obj !== line && obj.get('data')?.isGrid !== true) {
+          obj.bringToFront();
+        }
+      });
     }
   }
   
