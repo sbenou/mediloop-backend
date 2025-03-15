@@ -1,9 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from "@/hooks/auth/useAuth";
 import CanvasSection from './canvas/CanvasSection';
 import { toast } from "@/components/ui/use-toast";
 import { Loader } from "lucide-react";
+import { supabase } from '@/lib/supabase';
 
 interface DoctorStampSignatureProps {
   stampUrl: string | null;
@@ -13,48 +14,86 @@ interface DoctorStampSignatureProps {
 const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, signatureUrl }) => {
   const { profile, isAuthenticated, isLoading, refreshSession } = useAuth();
   const [localLoading, setLocalLoading] = useState(true);
+  const [localAuth, setLocalAuth] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Direct session check for improved reliability
+  const checkSessionDirectly = useCallback(async () => {
+    try {
+      console.log("DoctorStampSignature: Performing direct session check");
+      const { data } = await supabase.auth.getSession();
+      
+      if (data?.session?.user?.id) {
+        console.log(`DoctorStampSignature: Direct session check found user: ${data.session.user.id}`);
+        setLocalAuth(true);
+        setUserId(data.session.user.id);
+        return data.session.user.id;
+      } else {
+        console.log("DoctorStampSignature: Direct session check - no active session");
+        setLocalAuth(false);
+        return null;
+      }
+    } catch (error) {
+      console.error("DoctorStampSignature: Direct session check error:", error);
+      return null;
+    }
+  }, []);
 
   // Ensure we have a valid session before rendering
   useEffect(() => {
     const checkAuth = async () => {
+      console.log("DoctorStampSignature: Initial auth check, isAuthenticated =", isAuthenticated);
+      
       if (!isAuthenticated && !isLoading) {
-        console.log("DoctorStampSignature: Not authenticated, attempting session refresh");
-        try {
-          // Try to refresh session
-          const session = await refreshSession();
-          if (!session) {
-            console.warn('DoctorStampSignature: Authentication refresh failed');
-            toast({
-              title: "Authentication Required",
-              description: "Please ensure you're logged in to access this feature",
-              variant: "destructive"
-            });
+        console.log("DoctorStampSignature: Not authenticated via hook, checking directly");
+        const directUserId = await checkSessionDirectly();
+        
+        if (!directUserId) {
+          console.log("DoctorStampSignature: No direct session found, attempting refresh");
+          try {
+            // Try to refresh session
+            const session = await refreshSession();
+            if (session?.user?.id) {
+              console.log(`DoctorStampSignature: Session refresh successful: ${session.user.id}`);
+              setLocalAuth(true);
+              setUserId(session.user.id);
+            } else {
+              console.warn('DoctorStampSignature: Authentication refresh failed');
+              toast({
+                title: "Authentication Required",
+                description: "Please ensure you're logged in to access this feature",
+                variant: "destructive"
+              });
+            }
+          } catch (error) {
+            console.error("DoctorStampSignature: Session refresh error:", error);
           }
-        } catch (error) {
-          console.error("Session refresh error:", error);
         }
+      } else if (isAuthenticated && profile?.id) {
+        console.log(`DoctorStampSignature: User authenticated via hook: ${profile.id}`);
+        setLocalAuth(true);
+        setUserId(profile.id);
       }
+      
       setLocalLoading(false);
     };
 
     checkAuth();
-  }, [isAuthenticated, isLoading, refreshSession]);
-  
-  // Handle authentication checks
-  useEffect(() => {
-    if (!isLoading && !localLoading) {
-      if (!isAuthenticated || !profile?.id) {
-        console.warn('DoctorStampSignature: Authentication check failed');
-        toast({
-          title: "Authentication Required",
-          description: "Please ensure you're logged in to access this feature",
-          variant: "destructive"
-        });
-      } else {
-        console.log('DoctorStampSignature: Authentication successful, profile ID:', profile.id);
+    
+    // Check again when visibility state changes
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("DoctorStampSignature: Tab visible, rechecking auth");
+        checkAuth();
       }
-    }
-  }, [isAuthenticated, profile, isLoading, localLoading]);
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, isLoading, refreshSession, profile, checkSessionDirectly]);
   
   // Show loading state when authentication status is being determined
   if (isLoading || localLoading) {
@@ -69,7 +108,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
   }
   
   // Fallback if no profile is available
-  if (!isAuthenticated || !profile?.id) {
+  if (!isAuthenticated && !localAuth) {
     return (
       <div className="p-6 border rounded-md bg-muted">
         <p className="text-center text-muted-foreground">
@@ -82,6 +121,22 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
     );
   }
 
+  // Use either the profile ID from the auth hook or the locally detected user ID
+  const effectiveUserId = profile?.id || userId;
+  
+  if (!effectiveUserId) {
+    return (
+      <div className="p-6 border rounded-md bg-muted">
+        <p className="text-center text-muted-foreground">
+          Unable to determine user identity.
+        </p>
+        <p className="text-center text-muted-foreground mt-2">
+          Please try refreshing the page.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <CanvasSection
@@ -89,7 +144,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
         description="This stamp will appear on your prescriptions and official documents"
         imageUrl={stampUrl}
         type="stamp"
-        userId={profile.id}
+        userId={effectiveUserId}
       />
       
       <CanvasSection
@@ -97,7 +152,7 @@ const DoctorStampSignature: React.FC<DoctorStampSignatureProps> = ({ stampUrl, s
         description="This signature will appear on your prescriptions and official documents"
         imageUrl={signatureUrl}
         type="signature"
-        userId={profile.id}
+        userId={effectiveUserId}
       />
     </div>
   );
