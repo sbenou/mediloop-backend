@@ -12,7 +12,10 @@ import {
   Save, 
   Trash2,
   LayoutTemplate,
-  Minus
+  Minus,
+  Calendar,
+  CheckSquare,
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,10 +41,16 @@ interface QuickToolbarProps {
   triggerUpload: () => void;
   saveCanvas: () => void;
   isLoading: boolean;
-  // Add template props
+  // Template props
   type?: 'stamp' | 'signature';
   availableTemplates?: StampTemplate[];
   handleApplyTemplate?: (templateId: string, doctorName?: string) => void;
+  doctorName?: string;
+  setDoctorName?: (name: string) => void;
+  // New props for additional functionality
+  handleAddDateField?: () => void;
+  handleAddCheckbox?: (checked: boolean) => void;
+  handleExport?: (format: 'png' | 'jpeg' | 'svg' | 'pdf') => string | Blob | null;
 }
 
 const QuickToolbar: React.FC<QuickToolbarProps> = ({
@@ -64,9 +73,23 @@ const QuickToolbar: React.FC<QuickToolbarProps> = ({
   // Template props
   type,
   availableTemplates,
-  handleApplyTemplate
+  handleApplyTemplate,
+  doctorName = "",
+  setDoctorName,
+  // New functionality
+  handleAddDateField,
+  handleAddCheckbox,
+  handleExport
 }) => {
-  const [doctorName, setDoctorName] = useState("");
+  const [localDoctorName, setLocalDoctorName] = useState(doctorName || "");
+  
+  // Update parent state when local state changes
+  const updateDoctorName = (value: string) => {
+    setLocalDoctorName(value);
+    if (setDoctorName) {
+      setDoctorName(value);
+    }
+  };
   
   // Available colors for quick selection
   const colors = [
@@ -77,6 +100,9 @@ const QuickToolbar: React.FC<QuickToolbarProps> = ({
   // Show templates only for stamp type with available templates
   const showTemplates = type === 'stamp' && availableTemplates && handleApplyTemplate;
 
+  // Show export options only when handleExport is available
+  const showExport = !!handleExport;
+
   return (
     <div className="rounded-md border bg-card">
       <Tabs defaultValue="tools">
@@ -85,6 +111,9 @@ const QuickToolbar: React.FC<QuickToolbarProps> = ({
           <TabsTrigger value="draw" className="flex-1">Drawing</TabsTrigger>
           {showTemplates && (
             <TabsTrigger value="templates" className="flex-1">Templates</TabsTrigger>
+          )}
+          {showExport && (
+            <TabsTrigger value="export" className="flex-1">Export</TabsTrigger>
           )}
         </TabsList>
         
@@ -134,6 +163,28 @@ const QuickToolbar: React.FC<QuickToolbarProps> = ({
             >
               <Type className="h-4 w-4" />
             </Button>
+            
+            {handleAddDateField && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleAddDateField}
+                title="Add Date Field"
+              >
+                <Calendar className="h-4 w-4" />
+              </Button>
+            )}
+            
+            {handleAddCheckbox && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handleAddCheckbox(false)}
+                title="Add Checkbox"
+              >
+                <CheckSquare className="h-4 w-4" />
+              </Button>
+            )}
             
             <Separator orientation="vertical" className="h-8" />
             
@@ -233,8 +284,8 @@ const QuickToolbar: React.FC<QuickToolbarProps> = ({
                 <Label htmlFor="doctor-name">Doctor Name (for templates)</Label>
                 <Input
                   id="doctor-name"
-                  value={doctorName}
-                  onChange={(e) => setDoctorName(e.target.value)}
+                  value={localDoctorName}
+                  onChange={(e) => updateDoctorName(e.target.value)}
                   placeholder="Dr. Name"
                   className="mb-4"
                 />
@@ -246,12 +297,37 @@ const QuickToolbar: React.FC<QuickToolbarProps> = ({
                     key={template.id}
                     variant="outline"
                     className="justify-start"
-                    onClick={() => handleApplyTemplate?.(template.id, doctorName || undefined)}
+                    onClick={() => handleApplyTemplate?.(template.id, localDoctorName || undefined)}
                   >
                     <LayoutTemplate className="h-4 w-4 mr-2" />
                     {template.name}
                   </Button>
                 ))}
+              </div>
+            </div>
+          </TabsContent>
+        )}
+        
+        {showExport && (
+          <TabsContent value="export" className="p-3">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Button onClick={() => handleExport?.('png')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  PNG
+                </Button>
+                <Button onClick={() => handleExport?.('jpeg')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  JPEG
+                </Button>
+                <Button onClick={() => handleExport?.('svg')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  SVG
+                </Button>
+                <Button onClick={() => handleExport?.('pdf')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  PDF
+                </Button>
               </div>
             </div>
           </TabsContent>

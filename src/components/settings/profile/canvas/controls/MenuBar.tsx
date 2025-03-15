@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Menubar, 
@@ -91,7 +92,6 @@ interface MenuBarProps {
   // New props
   handleAddDateField?: () => void;
   handleAddCheckbox?: (checked: boolean) => void;
-  type: 'stamp' | 'signature';
 }
 
 const MenuBar: React.FC<MenuBarProps> = ({
