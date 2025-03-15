@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +42,7 @@ const AvailabilityWeeklyCalendar = ({
   const [doctorAvailability, setDoctorAvailability] = useState<DoctorAvailability[]>([]);
   const [teleconsultations, setTeleconsultations] = useState<Teleconsultation[]>([]);
   const [bankHolidays, setBankHolidays] = useState<BankHoliday[]>([]);
+  // Keep the country state but remove the dropdown selector
   const [selectedCountry, setSelectedCountry] = useState<SupportedCountry>("Luxembourg");
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | undefined>(doctorId);
   const [doctors, setDoctors] = useState<Array<{ id: string, name: string }>>([]);
@@ -355,44 +355,27 @@ const AvailabilityWeeklyCalendar = ({
               View {doctorName} schedule including available time slots and booked consultations
             </CardDescription>
           </div>
-          
-          <div className="flex space-x-2">
-            <Button variant="outline" size="icon" onClick={previousWeek} title="Previous week">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              className="whitespace-nowrap"
-              onClick={() => setCurrentWeek(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-            >
-              <CalendarIcon className="h-4 w-4 mr-2" />
-              Current Week
-            </Button>
-            <Button variant="outline" size="icon" onClick={nextWeek} title="Next week">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
         
         <div className="flex flex-wrap justify-between gap-3 mt-4">
           <div className="flex flex-wrap gap-3">
-            {showBankHolidays && (
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="country">Country:</Label>
-                <Select
-                  value={selectedCountry}
-                  onValueChange={(value) => setSelectedCountry(value as SupportedCountry)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select a country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Luxembourg">Luxembourg</SelectItem>
-                    <SelectItem value="France">France</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Move week navigation here, replacing the country dropdown */}
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="icon" onClick={previousWeek} title="Previous week">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                className="whitespace-nowrap"
+                onClick={() => setCurrentWeek(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+              >
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                Current Week
+              </Button>
+              <Button variant="outline" size="icon" onClick={nextWeek} title="Next week">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
             
             {isManagementMode && (
               <div className="flex items-center space-x-2">
