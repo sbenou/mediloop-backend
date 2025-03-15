@@ -91,8 +91,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             onChange={handleFileChange}
           />
           
-          <CanvasContainer canvasRef={canvasContainerRef} />
-          
+          {/* Menu bar now appears above the canvas */}
           <CanvasControls 
             isDrawMode={isDrawMode}
             toggleDrawMode={toggleDrawMode}
@@ -131,6 +130,8 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             handleSendToBack={handleSendToBack}
             handleExport={handleExport}
           />
+          
+          <CanvasContainer canvasRef={canvasContainerRef} />
         </div>
       </CardContent>
     </Card>
