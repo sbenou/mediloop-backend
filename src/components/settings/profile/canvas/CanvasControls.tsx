@@ -16,7 +16,7 @@ import {
   RotateCcw, 
   Minus, 
   Plus, 
-  LineHorizontal3
+  Minus as LineIcon // Using Minus icon as a substitute for line
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -45,6 +45,7 @@ interface CanvasControlsProps {
   handleAddText: () => void;
   handleRotate: (angle: number) => void;
   selectedTool: string;
+  selectedShape: 'circle' | 'rectangle' | 'line' | null;
 }
 
 const CanvasControls: React.FC<CanvasControlsProps> = ({
@@ -68,7 +69,8 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
   handleAddShape,
   handleAddText,
   handleRotate,
-  selectedTool
+  selectedTool,
+  selectedShape
 }) => {
   const [showBrushSizeSlider, setShowBrushSizeSlider] = useState(false);
 
@@ -169,7 +171,7 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
                   <ToggleGroupItem 
                     value="circle" 
                     aria-label="Add circle"
-                    data-state={selectedTool === 'shape' && selectedTool === 'circle' ? "on" : "off"}
+                    data-state={selectedTool === 'shape' && selectedShape === 'circle' ? "on" : "off"}
                     onClick={() => handleAddShape('circle')}
                   >
                     <Circle className="h-4 w-4" />
@@ -183,7 +185,7 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
                   <ToggleGroupItem 
                     value="rectangle" 
                     aria-label="Add rectangle"
-                    data-state={selectedTool === 'shape' && selectedTool === 'rectangle' ? "on" : "off"}
+                    data-state={selectedTool === 'shape' && selectedShape === 'rectangle' ? "on" : "off"}
                     onClick={() => handleAddShape('rectangle')}
                   >
                     <Square className="h-4 w-4" />
@@ -197,10 +199,10 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
                   <ToggleGroupItem 
                     value="line" 
                     aria-label="Add line"
-                    data-state={selectedTool === 'shape' && selectedTool === 'line' ? "on" : "off"}
+                    data-state={selectedTool === 'shape' && selectedShape === 'line' ? "on" : "off"}
                     onClick={() => handleAddShape('line')}
                   >
-                    <LineHorizontal3 className="h-4 w-4" />
+                    <LineIcon className="h-4 w-4" />
                   </ToggleGroupItem>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">Add Line</TooltipContent>

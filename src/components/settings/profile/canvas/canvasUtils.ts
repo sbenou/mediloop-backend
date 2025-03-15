@@ -1,5 +1,5 @@
 
-import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage } from "fabric";
+import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle, Rect, Text, Line } from "fabric";
 
 // Initialize a fabric canvas with white background
 export const initializeCanvas = (container: HTMLDivElement): FabricCanvas => {
@@ -125,7 +125,7 @@ export const saveCanvasState = (canvas: FabricCanvas) => {
   }
   
   const newState: CanvasHistoryState = {
-    objects: JSON.stringify(canvas.toJSON(['id'])),
+    objects: JSON.stringify(canvas.toJSON()),
     background: canvas.backgroundColor?.toString() || '#ffffff'
   };
   
@@ -173,7 +173,7 @@ const loadCanvasState = (canvas: FabricCanvas, index: number) => {
 export const addCircle = (canvas: FabricCanvas, color: string) => {
   if (!canvas) return;
   
-  const circle = new fabric.Circle({
+  const circle = new Circle({
     radius: 30,
     fill: 'transparent',
     stroke: color,
@@ -191,7 +191,7 @@ export const addCircle = (canvas: FabricCanvas, color: string) => {
 export const addRectangle = (canvas: FabricCanvas, color: string) => {
   if (!canvas) return;
   
-  const rect = new fabric.Rect({
+  const rect = new Rect({
     width: 60,
     height: 60,
     fill: 'transparent',
@@ -210,7 +210,7 @@ export const addRectangle = (canvas: FabricCanvas, color: string) => {
 export const addText = (canvas: FabricCanvas, text: string, color: string) => {
   if (!canvas) return;
   
-  const textObj = new fabric.Text(text || 'Text', {
+  const textObj = new Text(text || 'Text', {
     left: canvas.getWidth() / 2 - 25,
     top: canvas.getHeight() / 2 - 10,
     fontSize: 20,
@@ -226,7 +226,7 @@ export const addText = (canvas: FabricCanvas, text: string, color: string) => {
 export const addLine = (canvas: FabricCanvas, color: string) => {
   if (!canvas) return;
   
-  const line = new fabric.Line([
+  const line = new Line([
     canvas.getWidth() / 2 - 40, 
     canvas.getHeight() / 2,
     canvas.getWidth() / 2 + 40, 
@@ -253,7 +253,10 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
   if (!canvas) return;
   
   // Remove any existing grid first
-  const existingGrid = canvas.getObjects().filter(obj => obj.data?.isGrid);
+  const existingGrid = canvas.getObjects().filter(obj => {
+    return obj.data && obj.data.isGrid === true;
+  });
+  
   existingGrid.forEach(obj => canvas.remove(obj));
   
   if (!showGrid) {
@@ -266,7 +269,7 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
   
   // Create vertical lines
   for (let i = gridSize; i < width; i += gridSize) {
-    const line = new fabric.Line([i, 0, i, height], {
+    const line = new Line([i, 0, i, height], {
       stroke: '#cccccc',
       strokeWidth: 0.5,
       selectable: false,
@@ -274,12 +277,12 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
       data: { isGrid: true }
     });
     canvas.add(line);
-    canvas.sendToBack(line);
+    canvas.bringToBack(line);
   }
   
   // Create horizontal lines
   for (let i = gridSize; i < height; i += gridSize) {
-    const line = new fabric.Line([0, i, width, i], {
+    const line = new Line([0, i, width, i], {
       stroke: '#cccccc',
       strokeWidth: 0.5,
       selectable: false,
@@ -287,7 +290,7 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
       data: { isGrid: true }
     });
     canvas.add(line);
-    canvas.sendToBack(line);
+    canvas.bringToBack(line);
   }
   
   canvas.renderAll();
