@@ -97,24 +97,49 @@ const QuickToolbar: React.FC<QuickToolbarProps> = ({
     "#FFA500", "#800080", "#A52A2A", "#808080"
   ];
 
-  // Show templates only for stamp type with available templates
-  const showTemplates = type === 'stamp' && availableTemplates && handleApplyTemplate;
+  // Only show templates tab for stamps OR signatures
+  const showTemplates = (type === 'stamp' || type === 'signature') && availableTemplates && handleApplyTemplate;
 
   // Show export options only when handleExport is available
   const showExport = !!handleExport;
+
+  // Define tabs based on the type
+  const getTabList = () => {
+    const tabs = [
+      <TabsTrigger key="tools" value="tools" className="flex-1">Basic Tools</TabsTrigger>,
+      <TabsTrigger key="draw" value="draw" className="flex-1">Drawing</TabsTrigger>
+    ];
+
+    // Add Templates tab for both types
+    if (showTemplates) {
+      tabs.push(<TabsTrigger key="templates" value="templates" className="flex-1">Templates</TabsTrigger>);
+    }
+
+    if (showExport) {
+      tabs.push(<TabsTrigger key="export" value="export" className="flex-1">Export</TabsTrigger>);
+    }
+
+    return tabs;
+  };
+
+  // Filter templates based on type
+  const getTemplatesForType = () => {
+    if (!availableTemplates) return [];
+    
+    if (type === 'signature') {
+      // Only show signature templates for signature type
+      return availableTemplates.filter(template => template.id === 'signature');
+    } else {
+      // For stamp type, show all except signature templates
+      return availableTemplates.filter(template => template.id !== 'signature');
+    }
+  };
 
   return (
     <div className="rounded-md border bg-card">
       <Tabs defaultValue="tools">
         <TabsList className="w-full border-b rounded-none">
-          <TabsTrigger value="tools" className="flex-1">Basic Tools</TabsTrigger>
-          <TabsTrigger value="draw" className="flex-1">Drawing</TabsTrigger>
-          {showTemplates && (
-            <TabsTrigger value="templates" className="flex-1">Templates</TabsTrigger>
-          )}
-          {showExport && (
-            <TabsTrigger value="export" className="flex-1">Export</TabsTrigger>
-          )}
+          {getTabList()}
         </TabsList>
         
         <TabsContent value="tools" className="p-3">
@@ -292,7 +317,7 @@ const QuickToolbar: React.FC<QuickToolbarProps> = ({
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {availableTemplates?.map((template) => (
+                {getTemplatesForType().map((template) => (
                   <Button
                     key={template.id}
                     variant="outline"
@@ -304,6 +329,14 @@ const QuickToolbar: React.FC<QuickToolbarProps> = ({
                   </Button>
                 ))}
               </div>
+              
+              {getTemplatesForType().length === 0 && (
+                <div className="text-center p-4 text-muted-foreground">
+                  {type === 'signature' 
+                    ? "Signature templates available." 
+                    : "Stamp templates available."}
+                </div>
+              )}
             </div>
           </TabsContent>
         )}

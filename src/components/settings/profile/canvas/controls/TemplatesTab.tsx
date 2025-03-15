@@ -22,14 +22,10 @@ const TemplatesTab: React.FC<TemplatesTabProps> = ({
   setDoctorName,
   type
 }) => {
-  // Only show template options for stamps
-  if (type !== 'stamp') {
-    return (
-      <div className="p-4 text-center text-muted-foreground">
-        Templates are only available for stamps, not signatures.
-      </div>
-    );
-  }
+  // Filter templates based on type
+  const filteredTemplates = type === 'signature' 
+    ? availableTemplates.filter(template => template.id === 'signature')
+    : availableTemplates.filter(template => template.id !== 'signature');
 
   return (
     <div className="space-y-4">
@@ -46,7 +42,7 @@ const TemplatesTab: React.FC<TemplatesTabProps> = ({
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {availableTemplates.map(template => (
+        {filteredTemplates.map(template => (
           <Card key={template.id} className="overflow-hidden">
             <CardContent className="p-3">
               <div className="aspect-video bg-gray-100 rounded-md overflow-hidden mb-2">
@@ -68,6 +64,14 @@ const TemplatesTab: React.FC<TemplatesTabProps> = ({
           </Card>
         ))}
       </div>
+      
+      {filteredTemplates.length === 0 && (
+        <div className="p-4 text-center text-muted-foreground">
+          {type === 'signature' 
+            ? "No signature templates available." 
+            : "No stamp templates available."}
+        </div>
+      )}
     </div>
   );
 };

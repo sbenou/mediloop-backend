@@ -23,8 +23,24 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       canvas.freeDrawingBrush.shadow = null;
       canvas.freeDrawingBrush.strokeLineCap = 'round';
       canvas.freeDrawingBrush.strokeLineJoin = 'round';
+
+      // Force a render to ensure settings are applied
+      canvas.renderAll();
     }
   }, [canvas, penColor, brushSize]);
+
+  // Apply drawing mode state when it changes
+  useEffect(() => {
+    if (canvas) {
+      canvas.isDrawingMode = isDrawMode;
+      if (isDrawMode && canvas.freeDrawingBrush) {
+        // Reapply brush settings when entering drawing mode
+        canvas.freeDrawingBrush.color = penColor;
+        canvas.freeDrawingBrush.width = brushSize;
+      }
+      canvas.renderAll();
+    }
+  }, [canvas, isDrawMode, penColor, brushSize]);
 
   // Toggle drawing mode
   const toggleDrawMode = () => {

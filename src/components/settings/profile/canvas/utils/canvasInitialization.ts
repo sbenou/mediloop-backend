@@ -44,6 +44,9 @@ export const initializeCanvas = (
     canvas.freeDrawingBrush.shadow = null;
     canvas.freeDrawingBrush.strokeLineCap = 'round';
     canvas.freeDrawingBrush.strokeLineJoin = 'round';
+    
+    // Force render to apply brush settings
+    canvas.renderAll();
   }
 
   // Customize the drawing cursor to look like a pen
