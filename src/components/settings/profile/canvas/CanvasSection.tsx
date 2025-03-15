@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCanvasManager } from './useCanvasManager';
@@ -6,7 +5,7 @@ import CanvasControls from './CanvasControls';
 import CanvasContainer from './components/CanvasContainer';
 import { useFileUpload } from './hooks/useFileUpload';
 import { useSaveCanvas } from './hooks/useSaveCanvas';
-import QuickToolbar from './components/QuickToolbar';
+import QuickToolbar from './components/quicktoolbar';
 
 interface CanvasSectionProps {
   title: string;
