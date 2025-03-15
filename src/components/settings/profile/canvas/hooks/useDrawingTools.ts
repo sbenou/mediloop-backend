@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Canvas as FabricCanvas } from 'fabric';
 
 export interface UseDrawingToolsProps {
@@ -13,6 +13,19 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
   const [selectedTool, setSelectedTool] = useState<'draw' | 'select' | 'shape' | 'text' | 'date' | 'checkbox'>('draw');
   const [selectedShape, setSelectedShape] = useState<'circle' | 'rectangle' | 'line' | null>(null);
 
+  // Ensure brush settings are properly applied whenever relevant props change
+  useEffect(() => {
+    if (canvas && canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = penColor;
+      canvas.freeDrawingBrush.width = brushSize;
+      
+      // Make sure objects created are visible and interactive
+      canvas.freeDrawingBrush.shadow = null;
+      canvas.freeDrawingBrush.strokeLineCap = 'round';
+      canvas.freeDrawingBrush.strokeLineJoin = 'round';
+    }
+  }, [canvas, penColor, brushSize]);
+
   // Toggle drawing mode
   const toggleDrawMode = () => {
     if (!canvas) return;
@@ -22,9 +35,13 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     
     canvas.isDrawingMode = newMode;
     if (newMode) {
+      // Ensure brush settings are applied when entering draw mode
       canvas.freeDrawingBrush.color = penColor;
       canvas.freeDrawingBrush.width = brushSize;
       setSelectedTool('draw');
+      
+      // Force a render to ensure the drawing mode takes effect
+      canvas.renderAll();
     } else {
       setSelectedTool('select');
     }
@@ -37,8 +54,10 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
   // Handle color change
   const handleColorChange = (color: string) => {
     setPenColor(color);
-    if (canvas && canvas.isDrawingMode) {
+    if (canvas && canvas.freeDrawingBrush) {
       canvas.freeDrawingBrush.color = color;
+      // Force a render after changing brush color
+      canvas.renderAll();
     }
     
     // Ensure background stays white when changing colors
@@ -53,6 +72,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     setBrushSize(size);
     if (canvas) {
       changeBrushSizeUtil(canvas, size);
+      // Force a render after changing brush size
+      canvas.renderAll();
     }
   };
 
@@ -75,4 +96,6 @@ const changeBrushSizeUtil = (canvas: FabricCanvas, size: number) => {
   if (!canvas || !canvas.freeDrawingBrush) return;
   
   canvas.freeDrawingBrush.width = size;
+  // Force a render after changing brush size
+  canvas.renderAll();
 };

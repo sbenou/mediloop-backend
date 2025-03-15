@@ -27,6 +27,7 @@ export const initializeCanvas = (
     preserveObjectStacking: true,
     selection: true, // Enable selection
     renderOnAddRemove: true,
+    isDrawingMode: false, // Start with drawing mode off
   });
   
   // Explicitly set canvas element width/height
@@ -35,6 +36,15 @@ export const initializeCanvas = (
   
   // Apply explicit white background
   ensureWhiteBackground(canvas);
+
+  // Set up free drawing brush with default settings
+  if (canvas.freeDrawingBrush) {
+    canvas.freeDrawingBrush.color = '#000000';
+    canvas.freeDrawingBrush.width = 3;
+    canvas.freeDrawingBrush.shadow = null;
+    canvas.freeDrawingBrush.strokeLineCap = 'round';
+    canvas.freeDrawingBrush.strokeLineJoin = 'round';
+  }
 
   // Customize the drawing cursor to look like a pen
   canvas.freeDrawingCursor = 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXBlbiI+PHBhdGggZD0iTTEyIDIwaDkiLz48cGF0aCBkPSJNMTYuNSAzLjVhMi4xMjEgMi4xMjEgMCAwIDEgMyAzTDcgMTlsLTQgMSAxLTQgMTIuNS0xMi41eiIvPjwvc3ZnPg==), auto';

@@ -81,7 +81,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     }
   };
 
-  // Force white background whenever canvas changes
+  // Force white background whenever canvas changes and ensure proper drawing setup
   useEffect(() => {
     if (canvas) {
       const enforceWhiteBackground = () => {
@@ -95,9 +95,27 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
       // Also set it after a short delay to make sure it's applied
       const timeoutId = setTimeout(enforceWhiteBackground, 100);
       
+      // Ensure drawing brush is properly configured
+      if (canvas.freeDrawingBrush) {
+        canvas.freeDrawingBrush.color = penColor;
+        canvas.freeDrawingBrush.width = brushSize;
+        // Ensure stroke is visible
+        canvas.freeDrawingBrush.shadow = null;
+        canvas.freeDrawingBrush.strokeLineCap = 'round';
+        canvas.freeDrawingBrush.strokeLineJoin = 'round';
+      }
+      
       return () => clearTimeout(timeoutId);
     }
-  }, [canvas]);
+  }, [canvas, penColor, brushSize]);
+
+  // Additional effect to monitor drawing mode changes
+  useEffect(() => {
+    if (canvas) {
+      canvas.isDrawingMode = isDrawMode;
+      canvas.renderAll();
+    }
+  }, [canvas, isDrawMode]);
 
   return (
     <Card>
