@@ -63,12 +63,23 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
         // Create properly typed objects from filtered data
         const typedConsultations: Teleconsultation[] = validConsultations.map(consultation => {
           // Create safe references to potentially problematic properties
-          const patientData = consultation.patient && typeof consultation.patient === 'object' && !('error' in consultation.patient)
-            ? consultation.patient
+          // We've already filtered for valid data, but we'll add extra safety here
+          const patientData = consultation.patient && 
+                             typeof consultation.patient === 'object' && 
+                             !('error' in consultation.patient)
+            ? { 
+                full_name: consultation.patient.full_name || 'Unknown Patient',
+                email: consultation.patient.email || null
+              }
             : { full_name: 'Unknown Patient', email: null };
             
-          const doctorData = consultation.doctor && typeof consultation.doctor === 'object' && !('error' in consultation.doctor)
-            ? consultation.doctor
+          const doctorData = consultation.doctor && 
+                            typeof consultation.doctor === 'object' && 
+                            !('error' in consultation.doctor)
+            ? { 
+                full_name: consultation.doctor.full_name || 'Unknown Doctor',
+                email: consultation.doctor.email || null
+              }
             : { full_name: 'Unknown Doctor', email: null };
           
           return {
@@ -82,14 +93,8 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
             room_id: consultation.room_id,
             created_at: consultation.created_at,
             updated_at: consultation.updated_at,
-            patient: {
-              full_name: patientData.full_name || 'Unknown Patient',
-              email: patientData.email || null
-            },
-            doctor: {
-              full_name: doctorData.full_name || 'Unknown Doctor',
-              email: doctorData.email || null
-            }
+            patient: patientData,
+            doctor: doctorData
           };
         });
         
