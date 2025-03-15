@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -7,8 +6,7 @@ import { ProfileDisplay } from "./profile/ProfileDisplay";
 import { DefaultAddress } from "./profile/DefaultAddress";
 import { toast } from "@/components/ui/use-toast";
 import CNSCardScanner from "./CNSCardScanner";
-// Fix import to use default import
-import DoctorStampSignature from "./profile/DoctorStampSignature";
+// We're keeping the import but will conditionally render it only in specific views
 
 const PersonalDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -132,12 +130,7 @@ const PersonalDetails = () => {
             onAvatarUpdate={handleAvatarUpdate}
           />
           <DefaultAddress />
-          {profile?.role === 'doctor' && (
-            <DoctorStampSignature
-              stampUrl={profile.doctor_stamp_url}
-              signatureUrl={profile.doctor_signature_url}
-            />
-          )}
+          {/* Removed DoctorStampSignature from here as it will only be shown in the dedicated tab */}
         </>
       )}
 
