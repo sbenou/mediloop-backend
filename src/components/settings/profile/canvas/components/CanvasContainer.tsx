@@ -8,10 +8,10 @@ interface CanvasContainerProps {
 const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
   const initialized = useRef(false);
 
-  // Force white background immediately on mount
+  // Force white background on mount
   useEffect(() => {
     if (!initialized.current && canvasRef.current) {
-      // Set initial white background
+      // Set initial white background using direct DOM manipulation
       const canvasElement = canvasRef.current.querySelector('canvas');
       if (canvasElement) {
         const ctx = canvasElement.getContext('2d');
@@ -22,34 +22,32 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
       }
       initialized.current = true;
     }
-    
-    // Apply white background only once - no intervals or repeated timeouts
-    const applyWhiteBackground = () => {
-      if (canvasRef.current) {
-        const canvasElement = canvasRef.current.querySelector('canvas');
-        if (canvasElement) {
-          const ctx = canvasElement.getContext('2d');
-          if (ctx) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
-          }
-        }
-      }
-    };
-    
-    // Initial call - just once
-    applyWhiteBackground();
   }, [canvasRef]);
 
   return (
     <div 
       ref={canvasRef}
-      className="border rounded-md overflow-hidden bg-white w-full" 
+      className="border rounded-md overflow-hidden w-full" 
       style={{ 
         height: '200px',
-        backgroundColor: '#ffffff', // Force white background in the container
+        backgroundColor: '#ffffff', // Explicit white background
+        position: 'relative', // For proper canvas positioning
       }}
-    ></div>
+      data-testid="canvas-container"
+    >
+      {/* Add an explicit white background layer */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#ffffff',
+          zIndex: -1
+        }}
+      />
+    </div>
   );
 };
 

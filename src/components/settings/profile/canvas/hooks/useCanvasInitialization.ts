@@ -19,7 +19,6 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
   const [canvasHeight, setCanvasHeight] = useState(0);
   const [forcedRenderId, setForcedRenderId] = useState(0);
   const initAttempts = useRef(0);
-  const renderAttemptRef = useRef(0);
   const isInitializing = useRef(false);
 
   // Initialize canvas
@@ -36,9 +35,17 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         
         const fabricCanvas = initializeCanvas(canvasContainerRef.current, containerWidth, containerHeight);
         
-        // Explicitly set white background immediately
+        // Explicitly force white background multiple times to ensure it's set
         fabricCanvas.backgroundColor = '#ffffff';
         fabricCanvas.renderAll();
+        
+        // Force it again after a tiny delay to ensure rendering issues don't cause problems
+        setTimeout(() => {
+          if (fabricCanvas) {
+            fabricCanvas.backgroundColor = '#ffffff';
+            fabricCanvas.renderAll();
+          }
+        }, 50);
         
         setCanvas(fabricCanvas);
         isInitializing.current = false;
@@ -65,9 +72,14 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     };
   }, [forcedRenderId]);
 
-  // Apply event listeners to ensure white background - with recursion safeguard
+  // Apply event listeners to ensure white background
   useEffect(() => {
     if (canvas) {
+      // Force white background immediately
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
+      
+      // Then set up ongoing enforcement
       ensureWhiteBackground(canvas);
       
       return () => {
@@ -76,14 +88,16 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     }
   }, [canvas]);
 
-  // Load image URL if available
+  // Load image URL if available, or enforce white canvas
   useEffect(() => {
-    if (canvas && imageUrl) {
-      loadImageToCanvas(canvas, imageUrl);
-    } else if (canvas) {
-      // If no URL but canvas exists, ensure it's white
-      canvas.backgroundColor = '#ffffff';
-      canvas.renderAll();
+    if (canvas) {
+      if (imageUrl) {
+        loadImageToCanvas(canvas, imageUrl);
+      } else {
+        // If no URL but canvas exists, ensure it's white
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+      }
     }
   }, [canvas, imageUrl]);
 

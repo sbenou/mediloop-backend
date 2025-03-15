@@ -10,7 +10,6 @@ export const loadImageToCanvas = (canvas: FabricCanvas, url: string, applyFilter
   
   // Use the correct API for Fabric.js v6
   FabricImage.fromURL(url, {
-    // Options object
     crossOrigin: 'anonymous',
   }).then((img) => {
     canvas.clear();

@@ -15,13 +15,13 @@ export const initializeCanvas = (container: HTMLDivElement, width?: number, heig
   canvasElement.width = canvasWidth;
   canvasElement.height = canvasHeight;
   
-  // Initialize fabric canvas with explicitly set white background
+  // Initialize fabric canvas with explicit white background
   const canvas = new FabricCanvas(canvasElement, {
     backgroundColor: '#ffffff',
     isDrawingMode: false,
   });
   
-  // Apply white background immediately
+  // Force white background with immediate rendering
   canvas.backgroundColor = '#ffffff';
   canvas.renderAll();
   
@@ -36,25 +36,26 @@ export const initializeCanvas = (container: HTMLDivElement, width?: number, heig
   return canvas;
 };
 
-// Ensure white background on canvas through event listeners - simplified to prevent recursion
+// Ensure white background on canvas through simplified event listeners
 export const ensureWhiteBackground = (canvas: FabricCanvas | null) => {
   if (!canvas) return;
   
   // Force white background immediately
   canvas.backgroundColor = '#ffffff';
-  
-  // A single render is enough
   canvas.renderAll();
   
-  // Add safer event handlers that don't cause recursion
+  // Add a simpler event handler that won't cause recursion
   const onObjectChange = () => {
-    if (canvas.backgroundColor !== '#ffffff') {
-      canvas.backgroundColor = '#ffffff';
-      canvas.renderAll(); // Use the standard renderAll method instead of __renderAll
-    }
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
   };
   
-  // Apply only essential event handlers
+  // Clear any existing handlers to prevent duplicates
+  canvas.off('object:added');
+  canvas.off('object:modified');
+  canvas.off('path:created');
+  
+  // Add fresh event handlers
   canvas.on('object:added', onObjectChange);
   canvas.on('object:modified', onObjectChange);
   canvas.on('path:created', onObjectChange);

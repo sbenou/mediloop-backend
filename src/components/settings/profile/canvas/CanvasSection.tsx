@@ -70,17 +70,29 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   // Save canvas wrapper function
   const saveCanvas = () => {
     if (canvas) {
+      // Force white background before saving
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
       saveCanvasToServer(canvas);
     }
   };
 
-  // Force white background but simplified to prevent recursion
+  // Force white background whenever canvas changes
   useEffect(() => {
-    if (!canvas) return;
-    
-    // Initial forced white background
-    canvas.backgroundColor = '#ffffff';
-    canvas.renderAll();
+    if (canvas) {
+      const enforceWhiteBackground = () => {
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+      };
+      
+      // Set white background immediately
+      enforceWhiteBackground();
+      
+      // Also set it after a short delay to make sure it's applied
+      const timeoutId = setTimeout(enforceWhiteBackground, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
   }, [canvas]);
 
   return (
@@ -91,7 +103,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
           {description}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="bg-white">
         <div className="space-y-4">
           <input
             type="file"
