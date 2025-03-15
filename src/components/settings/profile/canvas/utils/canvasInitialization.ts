@@ -50,7 +50,7 @@ export const ensureWhiteBackground = (canvas: FabricCanvas | null) => {
   const onObjectChange = () => {
     if (canvas.backgroundColor !== '#ffffff') {
       canvas.backgroundColor = '#ffffff';
-      canvas.__renderAll(); // Use the internal method to avoid triggering events
+      canvas.renderAll(); // Use the standard renderAll method instead of __renderAll
     }
   };
   
