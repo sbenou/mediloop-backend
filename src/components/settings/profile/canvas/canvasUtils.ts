@@ -1,5 +1,5 @@
 
-import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle, Rect, Text, Line, Object as FabricObject, Color } from "fabric";
+import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle, Rect, Text, Line, Object as FabricObject, filters } from "fabric";
 
 // Initialize a fabric canvas with white background
 export const initializeCanvas = (container: HTMLDivElement, width?: number, height?: number): FabricCanvas => {
@@ -284,7 +284,7 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
       isGrid: true
     });
     canvas.add(line);
-    // Use sendToBack to move grid lines to back
+    // Use sendObjectToBack to move grid lines to back
     canvas.sendObjectToBack(line);
   }
   
@@ -298,7 +298,7 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
       isGrid: true
     });
     canvas.add(line);
-    // Use sendToBack to move grid lines to back
+    // Use sendObjectToBack to move grid lines to back
     canvas.sendObjectToBack(line);
   }
   
@@ -549,16 +549,16 @@ export const applyImageFilter = (canvas: FabricCanvas, targetObject: FabricImage
   // Apply the requested filter
   switch (filterType) {
     case 'brightness':
-      targetObject.filters.push(new fabric.Image.filters.Brightness({ brightness: value }));
+      targetObject.filters.push(new filters.Brightness({ brightness: value }));
       break;
     case 'contrast':
-      targetObject.filters.push(new fabric.Image.filters.Contrast({ contrast: value }));
+      targetObject.filters.push(new filters.Contrast({ contrast: value }));
       break;
     case 'grayscale':
-      targetObject.filters.push(new fabric.Image.filters.Grayscale());
+      targetObject.filters.push(new filters.Grayscale());
       break;
     case 'sepia':
-      targetObject.filters.push(new fabric.Image.filters.Sepia());
+      targetObject.filters.push(new filters.Sepia());
       break;
   }
   
@@ -575,7 +575,19 @@ export const bringObjectForward = (canvas: FabricCanvas) => {
   const activeObject = canvas.getActiveObject();
   if (!activeObject) return;
   
-  canvas.bringForward(activeObject);
+  // Get all objects and find the active object's index
+  const objects = canvas.getObjects();
+  const currentIndex = objects.indexOf(activeObject);
+  if (currentIndex < objects.length - 1) {
+    // Swap with the next object
+    const nextObject = objects[currentIndex + 1];
+    objects[currentIndex + 1] = activeObject;
+    objects[currentIndex] = nextObject;
+    // Reapply objects in the new order
+    canvas.clear();
+    objects.forEach(obj => canvas.add(obj));
+  }
+  
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -586,7 +598,19 @@ export const sendObjectBackward = (canvas: FabricCanvas) => {
   const activeObject = canvas.getActiveObject();
   if (!activeObject) return;
   
-  canvas.sendBackwards(activeObject);
+  // Get all objects and find the active object's index
+  const objects = canvas.getObjects();
+  const currentIndex = objects.indexOf(activeObject);
+  if (currentIndex > 0) {
+    // Swap with the previous object
+    const prevObject = objects[currentIndex - 1];
+    objects[currentIndex - 1] = activeObject;
+    objects[currentIndex] = prevObject;
+    // Reapply objects in the new order
+    canvas.clear();
+    objects.forEach(obj => canvas.add(obj));
+  }
+  
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -597,7 +621,16 @@ export const bringObjectToFront = (canvas: FabricCanvas) => {
   const activeObject = canvas.getActiveObject();
   if (!activeObject) return;
   
-  canvas.bringToFront(activeObject);
+  // Get all objects and remove the active object
+  const objects = canvas.getObjects();
+  const filteredObjects = objects.filter(obj => obj !== activeObject);
+  // Add it back at the end (top)
+  filteredObjects.push(activeObject);
+  
+  // Reapply objects in the new order
+  canvas.clear();
+  filteredObjects.forEach(obj => canvas.add(obj));
+  
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -608,7 +641,16 @@ export const sendObjectToBack = (canvas: FabricCanvas) => {
   const activeObject = canvas.getActiveObject();
   if (!activeObject) return;
   
-  canvas.sendToBack(activeObject);
+  // Get all objects and remove the active object
+  const objects = canvas.getObjects();
+  const filteredObjects = objects.filter(obj => obj !== activeObject);
+  // Add it back at the beginning (bottom)
+  filteredObjects.unshift(activeObject);
+  
+  // Reapply objects in the new order
+  canvas.clear();
+  filteredObjects.forEach(obj => canvas.add(obj));
+  
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -652,9 +694,17 @@ export const exportCanvas = (canvas: FabricCanvas, format: 'png' | 'jpeg' | 'svg
   
   switch (format) {
     case 'png':
-      return canvas.toDataURL({ format: 'png', quality: 1 });
+      return canvas.toDataURL({ 
+        format: 'png',
+        quality: 1,
+        multiplier: 1 
+      });
     case 'jpeg':
-      return canvas.toDataURL({ format: 'jpeg', quality: 0.9 });
+      return canvas.toDataURL({ 
+        format: 'jpeg',
+        quality: 0.9,
+        multiplier: 1 
+      });
     case 'svg':
       const svgData = canvas.toSVG();
       const blob = new Blob([svgData], { type: 'image/svg+xml' });
@@ -662,7 +712,11 @@ export const exportCanvas = (canvas: FabricCanvas, format: 'png' | 'jpeg' | 'svg
     case 'pdf':
       // Simple PDF generation using canvas data URL
       // For production use, consider using a library like jsPDF
-      const dataUrl = canvas.toDataURL({ format: 'png', quality: 1 });
+      const dataUrl = canvas.toDataURL({ 
+        format: 'png',
+        quality: 1,
+        multiplier: 1 
+      });
       
       // Create a link to download
       const a = document.createElement('a');
