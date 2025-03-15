@@ -1,107 +1,92 @@
+import { Canvas as FabricCanvas } from "fabric";
+import { loadImageToCanvas } from "./canvasImageHandling";
 
-import { Canvas as FabricCanvas, PencilBrush } from "fabric";
-import { saveCanvasState, setupUndoRedoHistory } from "./canvasHistory";
-
-// Initialize a fabric canvas with white background
-export const initializeCanvas = (container: HTMLDivElement, width?: number, height?: number): FabricCanvas => {
-  // Create a canvas element
-  const canvasElement = document.createElement('canvas');
-  container.innerHTML = ''; // Clear any existing content
-  container.appendChild(canvasElement);
+// Initialize canvas and set up initial setup for drawing
+export const initializeCanvas = (
+  canvasContainer: HTMLDivElement, 
+  imageUrl: string | null = null
+): FabricCanvas => {
+  // Find or create canvas element
+  let canvasElement = canvasContainer.querySelector('canvas');
   
-  // Set canvas dimensions to match container or use custom dimensions
-  const canvasWidth = width || container.clientWidth;
-  const canvasHeight = height || container.clientHeight;
-  canvasElement.width = canvasWidth;
-  canvasElement.height = canvasHeight;
+  if (!canvasElement) {
+    canvasElement = document.createElement('canvas');
+    canvasContainer.appendChild(canvasElement);
+  }
   
-  // Initialize fabric canvas with explicit white background
+  // Get container dimensions
+  const width = canvasContainer.clientWidth;
+  const height = canvasContainer.clientHeight;
+  
+  // Initialize Fabric Canvas with container size
   const canvas = new FabricCanvas(canvasElement, {
-    backgroundColor: '#ffffff',
-    isDrawingMode: false,
+    width: width,
+    height: height,
+    backgroundColor: '#ffffff', // Start with white background
+    preserveObjectStacking: true,
+    selection: true, // Enable selection
+    renderOnAddRemove: true,
   });
   
-  // Force white background with immediate rendering
-  canvas.backgroundColor = '#ffffff';
-  canvas.renderAll();
+  // Explicitly set canvas element width/height
+  canvasElement.width = width;
+  canvasElement.height = height;
   
-  // Set up drawing brush
-  canvas.freeDrawingBrush = new PencilBrush(canvas);
-  canvas.freeDrawingBrush.color = '#000000';
-  canvas.freeDrawingBrush.width = 3;
+  // Apply explicit white background
+  ensureWhiteBackground(canvas);
+
+  // If an image URL is provided, load it to the canvas
+  if (imageUrl) {
+    loadImageToCanvas(canvas, imageUrl);
+  } else {
+    // Otherwise, render a blank white canvas
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
+  }
+
+  // Setup window resize handler
+  const handleResize = () => {
+    // Only resize if container dimensions changed
+    if (
+      canvasContainer.clientWidth !== canvas.getWidth() ||
+      canvasContainer.clientHeight !== canvas.getHeight()
+    ) {
+      canvas.setDimensions({
+        width: canvasContainer.clientWidth,
+        height: canvasContainer.clientHeight
+      });
+      
+      // Re-ensure white background after resize
+      ensureWhiteBackground(canvas);
+    }
+  };
+
+  window.addEventListener('resize', handleResize);
   
-  // Set up history for undo/redo functionality
-  setupUndoRedoHistory(canvas);
+  // Return cleanup function
+  const cleanup = () => {
+    window.removeEventListener('resize', handleResize);
+    canvas.dispose();
+  };
+  
+  // One more explicit white background enforcement after short delay
+  setTimeout(() => ensureWhiteBackground(canvas), 100);
   
   return canvas;
 };
 
-// Ensure white background on canvas through simplified event listeners
-export const ensureWhiteBackground = (canvas: FabricCanvas | null) => {
-  if (!canvas) return;
-  
-  // Force white background immediately
+// Helper function to ensure canvas has white background
+const ensureWhiteBackground = (canvas: FabricCanvas) => {
+  // Set explicit white background
   canvas.backgroundColor = '#ffffff';
+  
+  // Render the canvas
   canvas.renderAll();
   
-  // Add a simpler event handler that won't cause recursion
-  const onObjectChange = () => {
-    canvas.backgroundColor = '#ffffff';
-    canvas.renderAll();
-  };
-  
-  // Clear any existing handlers to prevent duplicates
-  canvas.off('object:added');
-  canvas.off('object:modified');
-  canvas.off('path:created');
-  
-  // Add fresh event handlers
-  canvas.on('object:added', onObjectChange);
-  canvas.on('object:modified', onObjectChange);
-  canvas.on('path:created', onObjectChange);
-};
-
-// Clean up canvas event listeners
-export const cleanupCanvasListeners = (canvas: FabricCanvas | null) => {
-  if (!canvas) return;
-  
-  canvas.off('object:added');
-  canvas.off('object:modified');
-  canvas.off('path:created');
-};
-
-// Resize canvas dimensions
-export const resizeCanvas = (canvas: FabricCanvas, width: number, height: number) => {
-  if (!canvas) return;
-  
-  // Save the current state before resizing
-  const originalWidth = canvas.getWidth();
-  const originalHeight = canvas.getHeight();
-  const scaleFactor = Math.min(width / originalWidth, height / originalHeight);
-  
-  // Resize the canvas
-  canvas.setDimensions({ width, height });
-  
-  // Ensure white background after resizing
-  canvas.backgroundColor = '#ffffff';
-  
-  // Scale objects if needed
-  if (scaleFactor !== 1) {
-    const objects = canvas.getObjects();
-    objects.forEach(obj => {
-      const scaleX = obj.scaleX || 1;
-      const scaleY = obj.scaleY || 1;
-      const left = obj.left || 0;
-      const top = obj.top || 0;
-      
-      obj.scaleX = scaleX * scaleFactor;
-      obj.scaleY = scaleY * scaleFactor;
-      obj.left = left * (width / originalWidth);
-      obj.top = top * (height / originalHeight);
-      obj.setCoords();
-    });
+  // For older browsers, also set the lower-level canvas background
+  const ctx = canvas.getElement().getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
   }
-  
-  canvas.renderAll();
-  saveCanvasState(canvas);
 };

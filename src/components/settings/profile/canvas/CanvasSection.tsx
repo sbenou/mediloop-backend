@@ -173,6 +173,10 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             triggerUpload={triggerUpload}
             saveCanvas={saveCanvas}
             isLoading={isLoading}
+            // Add template props to QuickToolbar
+            type={type}
+            availableTemplates={availableTemplates}
+            handleApplyTemplate={handleApplyTemplate}
           />
         </div>
       </CardContent>
