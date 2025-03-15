@@ -4,32 +4,15 @@ import {
   Menubar, 
   MenubarMenu, 
   MenubarTrigger, 
-  MenubarContent, 
-  MenubarItem,
-  MenubarSeparator,
-  MenubarCheckboxItem,
+  MenubarContent
 } from "@/components/ui/menubar";
-import { 
-  Pencil, 
-  Image, 
-  CircleOff, 
-  RotateCcw, 
-  RotateCw, 
-  Grid, 
-  Square, 
-  Circle,
-  Type,
-  Minus,
-  Layers,
-  Download,
-  LayoutTemplate,
-  ShieldQuestion,
-  Scale,
-  CalendarDays,
-  CheckSquare
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import FileMenu from './menuComponents/FileMenu';
+import EditMenu from './menuComponents/EditMenu';
+import DrawMenu from './menuComponents/DrawMenu';
+import InsertMenu from './menuComponents/InsertMenu';
+import TemplatesMenu from './menuComponents/TemplatesMenu';
+import AdvancedMenu from './menuComponents/AdvancedMenu';
+import HelpMenu from './menuComponents/HelpMenu';
 import { StampTemplate } from '../utils';
 
 interface MenuBarProps {
@@ -94,86 +77,20 @@ interface MenuBarProps {
   handleAddCheckbox?: (checked: boolean) => void;
 }
 
-const MenuBar: React.FC<MenuBarProps> = ({
-  isDrawMode,
-  toggleDrawMode,
-  clearCanvas,
-  penColor,
-  brushSize,
-  handleColorChange,
-  handleBrushSizeChange,
-  handleUndo,
-  handleRedo,
-  canUndo,
-  canRedo,
-  handleToggleGrid,
-  showGrid,
-  handleAddShape,
-  handleAddText,
-  handleRotate,
-  selectedTool,
-  selectedShape,
-  triggerUpload,
-  type,
-  availableTemplates,
-  handleApplyTemplate,
-  canvasWidth,
-  canvasHeight,
-  handleResizeCanvas,
-  selectedImage,
-  filterOptions,
-  handleApplyFilter,
-  handleBringForward,
-  handleSendBackward,
-  handleBringToFront,
-  handleSendToBack,
-  handleExport,
-  handleAddDateField,
-  handleAddCheckbox
-}) => {
+const MenuBar: React.FC<MenuBarProps> = (props) => {
   const [doctorName, setDoctorName] = useState("");
   
-  // Available colors for quick selection
-  const colors = [
-    "#000000", "#FF0000", "#0000FF", "#008000", 
-    "#FFA500", "#800080", "#A52A2A", "#808080"
-  ];
-
   return (
     <Menubar className="border-none shadow-sm bg-gray-50 rounded-md p-1">
       {/* File Menu */}
       <MenubarMenu>
         <MenubarTrigger className="font-medium">File</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={clearCanvas}>
-            <CircleOff className="mr-2 h-4 w-4" />
-            Clear Canvas
-          </MenubarItem>
-          <MenubarItem onClick={triggerUpload}>
-            <Image className="mr-2 h-4 w-4" />
-            Import Image
-          </MenubarItem>
-          <MenubarSeparator />
-          {handleExport && (
-            <>
-              <MenubarItem onClick={() => handleExport('png')}>
-                <Download className="mr-2 h-4 w-4" />
-                Export as PNG
-              </MenubarItem>
-              <MenubarItem onClick={() => handleExport('jpeg')}>
-                <Download className="mr-2 h-4 w-4" />
-                Export as JPEG
-              </MenubarItem>
-              <MenubarItem onClick={() => handleExport('svg')}>
-                <Download className="mr-2 h-4 w-4" />
-                Export as SVG
-              </MenubarItem>
-              <MenubarItem onClick={() => handleExport('pdf')}>
-                <Download className="mr-2 h-4 w-4" />
-                Export as PDF
-              </MenubarItem>
-            </>
-          )}
+          <FileMenu 
+            clearCanvas={props.clearCanvas}
+            triggerUpload={props.triggerUpload}
+            handleExport={props.handleExport}
+          />
         </MenubarContent>
       </MenubarMenu>
 
@@ -181,19 +98,14 @@ const MenuBar: React.FC<MenuBarProps> = ({
       <MenubarMenu>
         <MenubarTrigger className="font-medium">Edit</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={handleUndo} disabled={!canUndo}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Undo
-          </MenubarItem>
-          <MenubarItem onClick={handleRedo} disabled={!canRedo}>
-            <RotateCw className="mr-2 h-4 w-4" />
-            Redo
-          </MenubarItem>
-          <MenubarSeparator />
-          <MenubarCheckboxItem checked={showGrid} onCheckedChange={handleToggleGrid}>
-            <Grid className="mr-2 h-4 w-4" />
-            Show Grid
-          </MenubarCheckboxItem>
+          <EditMenu 
+            handleUndo={props.handleUndo}
+            handleRedo={props.handleRedo}
+            canUndo={props.canUndo}
+            canRedo={props.canRedo}
+            handleToggleGrid={props.handleToggleGrid}
+            showGrid={props.showGrid}
+          />
         </MenubarContent>
       </MenubarMenu>
 
@@ -201,38 +113,14 @@ const MenuBar: React.FC<MenuBarProps> = ({
       <MenubarMenu>
         <MenubarTrigger className="font-medium">Draw</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={toggleDrawMode} className={isDrawMode ? "bg-muted" : ""}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Drawing Mode {isDrawMode ? "(On)" : "(Off)"}
-          </MenubarItem>
-          <MenubarSeparator />
-          <div className="px-2 py-1.5">
-            <div className="mb-2 text-sm font-medium">Brush Size: {brushSize}px</div>
-            <Slider
-              value={[brushSize]}
-              min={1}
-              max={50}
-              step={1}
-              onValueChange={(value) => handleBrushSizeChange(value[0])}
-              className="w-48"
-            />
-          </div>
-          <MenubarSeparator />
-          <div className="px-2 py-1.5">
-            <div className="mb-2 text-sm font-medium">Color</div>
-            <div className="grid grid-cols-4 gap-1">
-              {colors.map((color) => (
-                <div
-                  key={color}
-                  className={`h-6 w-6 rounded-full cursor-pointer border ${
-                    penColor === color ? "ring-2 ring-primary" : ""
-                  }`}
-                  style={{ backgroundColor: color }}
-                  onClick={() => handleColorChange(color)}
-                />
-              ))}
-            </div>
-          </div>
+          <DrawMenu 
+            isDrawMode={props.isDrawMode}
+            toggleDrawMode={props.toggleDrawMode}
+            brushSize={props.brushSize}
+            handleBrushSizeChange={props.handleBrushSizeChange}
+            penColor={props.penColor}
+            handleColorChange={props.handleColorChange}
+          />
         </MenubarContent>
       </MenubarMenu>
 
@@ -240,67 +128,26 @@ const MenuBar: React.FC<MenuBarProps> = ({
       <MenubarMenu>
         <MenubarTrigger className="font-medium">Insert</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={() => handleAddShape('rectangle')}>
-            <Square className="mr-2 h-4 w-4" />
-            Rectangle
-          </MenubarItem>
-          <MenubarItem onClick={() => handleAddShape('circle')}>
-            <Circle className="mr-2 h-4 w-4" />
-            Circle
-          </MenubarItem>
-          <MenubarItem onClick={() => handleAddShape('line')}>
-            <Minus className="mr-2 h-4 w-4" />
-            Line
-          </MenubarItem>
-          <MenubarItem onClick={handleAddText}>
-            <Type className="mr-2 h-4 w-4" />
-            Text
-          </MenubarItem>
-          <MenubarSeparator />
-          {handleAddDateField && (
-            <MenubarItem onClick={handleAddDateField}>
-              <CalendarDays className="mr-2 h-4 w-4" />
-              Date Field
-            </MenubarItem>
-          )}
-          {handleAddCheckbox && (
-            <>
-              <MenubarItem onClick={() => handleAddCheckbox(false)}>
-                <CheckSquare className="mr-2 h-4 w-4" />
-                Checkbox (Unchecked)
-              </MenubarItem>
-              <MenubarItem onClick={() => handleAddCheckbox(true)}>
-                <CheckSquare className="mr-2 h-4 w-4 text-primary" />
-                Checkbox (Checked)
-              </MenubarItem>
-            </>
-          )}
+          <InsertMenu 
+            handleAddShape={props.handleAddShape}
+            handleAddText={props.handleAddText}
+            handleAddDateField={props.handleAddDateField}
+            handleAddCheckbox={props.handleAddCheckbox}
+          />
         </MenubarContent>
       </MenubarMenu>
 
       {/* Templates Menu - only for stamps */}
-      {type === 'stamp' && availableTemplates && handleApplyTemplate && (
+      {props.type === 'stamp' && props.availableTemplates && props.handleApplyTemplate && (
         <MenubarMenu>
           <MenubarTrigger className="font-medium">Templates</MenubarTrigger>
           <MenubarContent>
-            <div className="px-2 py-1.5 mb-2">
-              <input
-                type="text"
-                placeholder="Doctor Name"
-                value={doctorName}
-                onChange={(e) => setDoctorName(e.target.value)}
-                className="w-full p-1 text-sm border rounded"
-              />
-            </div>
-            {availableTemplates.map((template) => (
-              <MenubarItem 
-                key={template.id}
-                onClick={() => handleApplyTemplate(template.id, doctorName || undefined)}
-              >
-                <LayoutTemplate className="mr-2 h-4 w-4" />
-                {template.name}
-              </MenubarItem>
-            ))}
+            <TemplatesMenu 
+              doctorName={doctorName}
+              setDoctorName={setDoctorName}
+              availableTemplates={props.availableTemplates}
+              handleApplyTemplate={props.handleApplyTemplate}
+            />
           </MenubarContent>
         </MenubarMenu>
       )}
@@ -309,38 +156,13 @@ const MenuBar: React.FC<MenuBarProps> = ({
       <MenubarMenu>
         <MenubarTrigger className="font-medium">Advanced</MenubarTrigger>
         <MenubarContent>
-          {/* Layer Management */}
-          {handleBringForward && handleSendBackward && handleBringToFront && handleSendToBack && (
-            <>
-              <MenubarItem onClick={handleBringForward}>
-                <Layers className="mr-2 h-4 w-4" />
-                Bring Forward
-              </MenubarItem>
-              <MenubarItem onClick={handleSendBackward}>
-                <Layers className="mr-2 h-4 w-4" />
-                Send Backward
-              </MenubarItem>
-              <MenubarItem onClick={handleBringToFront}>
-                <Layers className="mr-2 h-4 w-4" />
-                Bring to Front
-              </MenubarItem>
-              <MenubarItem onClick={handleSendToBack}>
-                <Layers className="mr-2 h-4 w-4" />
-                Send to Back
-              </MenubarItem>
-              <MenubarSeparator />
-            </>
-          )}
-          
-          {/* Rotation */}
-          <MenubarItem onClick={() => handleRotate(90)}>
-            <RotateCw className="mr-2 h-4 w-4" />
-            Rotate 90° Clockwise
-          </MenubarItem>
-          <MenubarItem onClick={() => handleRotate(-90)}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Rotate 90° Counter-Clockwise
-          </MenubarItem>
+          <AdvancedMenu 
+            handleBringForward={props.handleBringForward}
+            handleSendBackward={props.handleSendBackward}
+            handleBringToFront={props.handleBringToFront}
+            handleSendToBack={props.handleSendToBack}
+            handleRotate={props.handleRotate}
+          />
         </MenubarContent>
       </MenubarMenu>
 
@@ -348,10 +170,7 @@ const MenuBar: React.FC<MenuBarProps> = ({
       <MenubarMenu>
         <MenubarTrigger className="font-medium">Help</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem>
-            <ShieldQuestion className="mr-2 h-4 w-4" />
-            How to use
-          </MenubarItem>
+          <HelpMenu />
         </MenubarContent>
       </MenubarMenu>
     </Menubar>
