@@ -17,6 +17,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
   const [canvas, setCanvas] = useState<FabricCanvas | null>(null);
   const [canvasWidth, setCanvasWidth] = useState(0);
   const [canvasHeight, setCanvasHeight] = useState(0);
+  const [forcedRenderId, setForcedRenderId] = useState(0);
 
   // Initialize canvas
   useEffect(() => {
@@ -28,10 +29,17 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       setCanvasHeight(containerHeight);
       
       const fabricCanvas = initializeCanvas(canvasContainerRef.current, containerWidth, containerHeight);
+      
       // Force white background
       fabricCanvas.backgroundColor = '#ffffff';
       fabricCanvas.renderAll();
+      
       setCanvas(fabricCanvas);
+      
+      // Force a re-render after a short delay
+      setTimeout(() => {
+        setForcedRenderId(id => id + 1);
+      }, 100);
     }
     
     return () => {
@@ -60,7 +68,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         cleanupCanvasListeners(canvas);
       };
     }
-  }, [canvas]);
+  }, [canvas, forcedRenderId]);
 
   // Load image URL if available
   useEffect(() => {
@@ -71,7 +79,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
     }
-  }, [canvas, imageUrl]);
+  }, [canvas, imageUrl, forcedRenderId]);
 
   // Additional effect to force white background when component mounts or rerenders
   useEffect(() => {
@@ -84,7 +92,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     }, 100);
     
     return () => clearTimeout(timer);
-  }, [canvas]);
+  }, [canvas, forcedRenderId]);
 
   // Force white background periodically
   useEffect(() => {

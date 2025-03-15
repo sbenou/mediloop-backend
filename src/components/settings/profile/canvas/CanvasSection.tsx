@@ -73,6 +73,18 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     }
   };
 
+  // Force white background refreshing
+  React.useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      if (canvas) {
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+      }
+    }, 100);
+    
+    return () => clearInterval(refreshInterval);
+  }, [canvas]);
+
   return (
     <Card>
       <CardHeader>
@@ -91,7 +103,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             onChange={handleFileChange}
           />
           
-          {/* Menu bar now appears above the canvas */}
+          {/* Menu bar appears above the canvas */}
           <CanvasControls 
             isDrawMode={isDrawMode}
             toggleDrawMode={toggleDrawMode}

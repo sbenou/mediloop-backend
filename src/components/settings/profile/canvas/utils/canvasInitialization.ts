@@ -21,7 +21,7 @@ export const initializeCanvas = (container: HTMLDivElement, width?: number, heig
     isDrawingMode: false,
   });
   
-  // Force background to white immediately after initialization
+  // Apply white background immediately and ensure it's really white
   canvas.backgroundColor = '#ffffff';
   canvas.renderAll();
   
@@ -30,12 +30,20 @@ export const initializeCanvas = (container: HTMLDivElement, width?: number, heig
   canvas.freeDrawingBrush.color = '#000000';
   canvas.freeDrawingBrush.width = 3;
   
-  // Ensure background is white
+  // Ensure background is white again to be extra sure
   canvas.backgroundColor = '#ffffff';
   canvas.renderAll();
   
   // Set up history for undo/redo functionality
   setupUndoRedoHistory(canvas);
+  
+  // Force a final white background render
+  setTimeout(() => {
+    if (canvas) {
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
+    }
+  }, 50);
   
   return canvas;
 };
@@ -50,12 +58,9 @@ export const ensureWhiteBackground = (canvas: FabricCanvas | null) => {
   
   // Force rendering with white background
   const forceWhiteBackground = () => {
-    if (!canvas || canvas.backgroundColor !== '#ffffff') {
-      console.log('Enforcing white background on canvas');
-      if (canvas) {
-        canvas.backgroundColor = '#ffffff';
-        canvas.renderAll();
-      }
+    if (canvas) {
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
     }
   };
   
@@ -131,4 +136,12 @@ export const resizeCanvas = (canvas: FabricCanvas, width: number, height: number
   
   canvas.renderAll();
   saveCanvasState(canvas);
+  
+  // Force white background again after resizing
+  setTimeout(() => {
+    if (canvas) {
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
+    }
+  }, 100);
 };
