@@ -1,0 +1,132 @@
+
+import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage } from "fabric";
+
+// Initialize a fabric canvas with white background
+export const initializeCanvas = (container: HTMLDivElement): FabricCanvas => {
+  // Create a canvas element
+  const canvasElement = document.createElement('canvas');
+  container.innerHTML = ''; // Clear any existing content
+  container.appendChild(canvasElement);
+  
+  // Set canvas dimensions to match container
+  canvasElement.width = container.clientWidth;
+  canvasElement.height = container.clientHeight;
+  
+  // Initialize fabric canvas with explicitly set white background
+  const canvas = new FabricCanvas(canvasElement, {
+    backgroundColor: '#ffffff',
+    isDrawingMode: false,
+  });
+  
+  // Set up drawing brush
+  canvas.freeDrawingBrush = new PencilBrush(canvas);
+  canvas.freeDrawingBrush.color = '#000000';
+  canvas.freeDrawingBrush.width = 3;
+  
+  // Ensure background is white
+  canvas.backgroundColor = '#ffffff';
+  canvas.renderAll();
+  
+  return canvas;
+};
+
+// Load an image to a canvas
+export const loadImageToCanvas = (canvas: FabricCanvas, url: string) => {
+  // Set background to white immediately before loading image
+  canvas.backgroundColor = '#ffffff';
+  canvas.renderAll();
+  
+  // Use the correct API for Fabric.js v6
+  FabricImage.fromURL(url, {
+    // Options object
+    crossOrigin: 'anonymous',
+  }).then((img) => {
+    canvas.clear();
+    
+    // Explicitly set background to white before adding the image
+    canvas.backgroundColor = '#ffffff';
+    
+    // Scale image to fit canvas while maintaining aspect ratio
+    const canvasWidth = canvas.getWidth() || 290;
+    const canvasHeight = canvas.getHeight() || 200;
+    
+    const imgWidth = img.width || 100;
+    const imgHeight = img.height || 100;
+    
+    const scale = Math.min(
+      canvasWidth / imgWidth,
+      canvasHeight / imgHeight
+    );
+    
+    img.scale(scale);
+    
+    // Center the image on the canvas
+    img.set({
+      left: (canvasWidth - (imgWidth * scale)) / 2,
+      top: (canvasHeight - (imgHeight * scale)) / 2
+    });
+    
+    canvas.add(img);
+    
+    // Ensure background is white after adding image
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
+  }).catch(err => {
+    console.error("Error loading image:", err);
+    // Even on error, ensure canvas is white
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
+  });
+};
+
+// Ensure white background on canvas through event listeners
+export const ensureWhiteBackground = (canvas: FabricCanvas | null) => {
+  if (!canvas) return;
+  
+  // Set initial background color
+  canvas.backgroundColor = '#ffffff';
+  canvas.renderAll();
+  
+  // Force rendering with white background
+  const forceWhiteBackground = () => {
+    if (canvas.backgroundColor !== '#ffffff') {
+      console.log('Enforcing white background on canvas');
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
+    }
+  };
+  
+  // Apply on all relevant events
+  canvas.on('mouse:up', forceWhiteBackground);
+  canvas.on('mouse:down', forceWhiteBackground);
+  canvas.on('mouse:move', forceWhiteBackground);
+  canvas.on('path:created', forceWhiteBackground);
+  canvas.on('object:added', forceWhiteBackground);
+  canvas.on('object:modified', forceWhiteBackground);
+  canvas.on('object:removed', forceWhiteBackground);
+  canvas.on('before:render', forceWhiteBackground);
+  canvas.on('after:render', forceWhiteBackground);
+  
+  // Also apply every time drawing mode changes
+  canvas.on('selection:created', forceWhiteBackground);
+  canvas.on('selection:updated', forceWhiteBackground);
+  canvas.on('selection:cleared', forceWhiteBackground);
+};
+
+// Clean up canvas event listeners
+export const cleanupCanvasListeners = (canvas: FabricCanvas | null) => {
+  if (!canvas) return;
+  
+  canvas.off('mouse:up');
+  canvas.off('mouse:down');
+  canvas.off('mouse:move');
+  canvas.off('path:created');
+  canvas.off('object:added');
+  canvas.off('object:modified');
+  canvas.off('object:removed');
+  canvas.off('before:render');
+  canvas.off('after:render');
+  canvas.off('selection:created');
+  canvas.off('selection:updated');
+  canvas.off('selection:cleared');
+};
