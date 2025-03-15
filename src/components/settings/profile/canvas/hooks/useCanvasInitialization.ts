@@ -20,17 +20,20 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
   const [forcedRenderId, setForcedRenderId] = useState(0);
   const initAttempts = useRef(0);
   const renderAttemptRef = useRef(0);
+  const isInitializing = useRef(false);
 
   // Initialize canvas
   useEffect(() => {
-    if (canvasContainerRef.current && !canvas) {
-      const containerWidth = canvasContainerRef.current.clientWidth;
-      const containerHeight = canvasContainerRef.current.clientHeight;
-      
-      setCanvasWidth(containerWidth);
-      setCanvasHeight(containerHeight);
+    if (canvasContainerRef.current && !canvas && !isInitializing.current) {
+      isInitializing.current = true;
       
       try {
+        const containerWidth = canvasContainerRef.current.clientWidth;
+        const containerHeight = canvasContainerRef.current.clientHeight;
+        
+        setCanvasWidth(containerWidth);
+        setCanvasHeight(containerHeight);
+        
         const fabricCanvas = initializeCanvas(canvasContainerRef.current, containerWidth, containerHeight);
         
         // Explicitly set white background immediately
@@ -38,18 +41,11 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         fabricCanvas.renderAll();
         
         setCanvas(fabricCanvas);
-        
-        // We'll do just one forced render after a delay, not multiple
-        setTimeout(() => {
-          setForcedRenderId(id => id + 1);
-          if (fabricCanvas) {
-            fabricCanvas.backgroundColor = '#ffffff';
-            fabricCanvas.renderAll();
-          }
-        }, 300);
+        isInitializing.current = false;
       } catch (error) {
         console.error('Error initializing canvas:', error);
         initAttempts.current++;
+        isInitializing.current = false;
         
         // If we've tried too many times, stop trying
         if (initAttempts.current < 3) {
@@ -74,16 +70,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     if (canvas) {
       ensureWhiteBackground(canvas);
       
-      // Force white background after a short delay - just once
-      const timer = setTimeout(() => {
-        if (canvas) {
-          canvas.backgroundColor = '#ffffff';
-          canvas.renderAll();
-        }
-      }, 50);
-      
       return () => {
-        clearTimeout(timer);
         cleanupCanvasListeners(canvas);
       };
     }
@@ -99,25 +86,6 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       canvas.renderAll();
     }
   }, [canvas, imageUrl]);
-
-  // Enhanced force white background effect - with safeguards against recursion
-  useEffect(() => {
-    if (!canvas) return;
-    
-    // Force white background on canvas immediately
-    canvas.backgroundColor = '#ffffff';
-    canvas.renderAll();
-    
-    // Instead of a frequent interval, use a single timeout
-    const timeout = setTimeout(() => {
-      if (canvas) {
-        canvas.backgroundColor = '#ffffff';
-        canvas.renderAll();
-      }
-    }, 200);
-    
-    return () => clearTimeout(timeout);
-  }, [canvas]);
 
   return {
     canvasContainerRef,

@@ -6,6 +6,7 @@ import CanvasControls from './CanvasControls';
 import CanvasContainer from './components/CanvasContainer';
 import { useFileUpload } from './hooks/useFileUpload';
 import { useSaveCanvas } from './hooks/useSaveCanvas';
+import QuickToolbar from './components/QuickToolbar';
 
 interface CanvasSectionProps {
   title: string;
@@ -73,23 +74,13 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     }
   };
 
-  // Force white background but with safeguards against recursion
+  // Force white background but simplified to prevent recursion
   useEffect(() => {
     if (!canvas) return;
     
-    // Initial forced white background - just once
+    // Initial forced white background
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
-    
-    // Instead of an interval which could cause recursion, use a single timeout
-    const timeout = setTimeout(() => {
-      if (canvas) {
-        canvas.backgroundColor = '#ffffff';
-        canvas.renderAll();
-      }
-    }, 200);
-    
-    return () => clearTimeout(timeout);
   }, [canvas]);
 
   return (
@@ -151,6 +142,26 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
           />
           
           <CanvasContainer canvasRef={canvasContainerRef} />
+          
+          {/* Quick access toolbar below the canvas */}
+          <QuickToolbar
+            isDrawMode={isDrawMode}
+            toggleDrawMode={toggleDrawMode}
+            clearCanvas={clearCanvas}
+            handleUndo={handleUndo}
+            handleRedo={handleRedo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            handleAddShape={handleAddShape}
+            handleAddText={handleAddText}
+            penColor={penColor}
+            handleColorChange={handleColorChange}
+            brushSize={brushSize}
+            handleBrushSizeChange={handleBrushSizeChange}
+            triggerUpload={triggerUpload}
+            saveCanvas={saveCanvas}
+            isLoading={isLoading}
+          />
         </div>
       </CardContent>
     </Card>

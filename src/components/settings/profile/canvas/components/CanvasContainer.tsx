@@ -7,9 +7,8 @@ interface CanvasContainerProps {
 
 const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
   const initialized = useRef(false);
-  const lastAppliedTime = useRef(0);
 
-  // Force white background immediately on mount and when component updates
+  // Force white background immediately on mount
   useEffect(() => {
     if (!initialized.current && canvasRef.current) {
       // Set initial white background
@@ -24,7 +23,7 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
       initialized.current = true;
     }
     
-    // Force white background - only once after mount
+    // Apply white background only once - no intervals or repeated timeouts
     const applyWhiteBackground = () => {
       if (canvasRef.current) {
         const canvasElement = canvasRef.current.querySelector('canvas');
@@ -38,15 +37,8 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
       }
     };
     
-    // Initial call
+    // Initial call - just once
     applyWhiteBackground();
-    
-    // Instead of an interval that could cause recursion, use a single timeout
-    const timeout = setTimeout(applyWhiteBackground, 150);
-    
-    return () => {
-      clearTimeout(timeout);
-    };
   }, [canvasRef]);
 
   return (

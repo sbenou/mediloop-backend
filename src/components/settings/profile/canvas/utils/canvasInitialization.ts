@@ -21,7 +21,7 @@ export const initializeCanvas = (container: HTMLDivElement, width?: number, heig
     isDrawingMode: false,
   });
   
-  // Apply white background immediately and ensure it's really white
+  // Apply white background immediately
   canvas.backgroundColor = '#ffffff';
   canvas.renderAll();
   
@@ -33,50 +33,31 @@ export const initializeCanvas = (container: HTMLDivElement, width?: number, heig
   // Set up history for undo/redo functionality
   setupUndoRedoHistory(canvas);
   
-  // Force a final white background render
-  setTimeout(() => {
-    if (canvas) {
-      canvas.backgroundColor = '#ffffff';
-      canvas.renderAll();
-    }
-  }, 50);
-  
   return canvas;
 };
 
-// Ensure white background on canvas through event listeners - fixed to prevent recursion
+// Ensure white background on canvas through event listeners - simplified to prevent recursion
 export const ensureWhiteBackground = (canvas: FabricCanvas | null) => {
   if (!canvas) return;
   
   // Force white background immediately
   canvas.backgroundColor = '#ffffff';
   
-  // A single render is enough - we'll avoid adding event handlers that could cause recursion
+  // A single render is enough
   canvas.renderAll();
   
-  // Instead of many event handlers, we'll use a flag to prevent recursion
-  let isRendering = false;
-  
-  // Simplified approach with fewer event handlers
-  const safeWhiteBackgroundRender = () => {
-    if (isRendering) return;
-    
-    try {
-      isRendering = true;
+  // Add safer event handlers that don't cause recursion
+  const onObjectChange = () => {
+    if (canvas.backgroundColor !== '#ffffff') {
       canvas.backgroundColor = '#ffffff';
-      canvas.renderAll();
-    } finally {
-      isRendering = false;
+      canvas.__renderAll(); // Use the internal method to avoid triggering events
     }
   };
   
   // Apply only essential event handlers
-  canvas.on('object:added', safeWhiteBackgroundRender);
-  canvas.on('object:modified', safeWhiteBackgroundRender);
-  canvas.on('path:created', safeWhiteBackgroundRender);
-  
-  // Force a single render after a short delay
-  setTimeout(safeWhiteBackgroundRender, 100);
+  canvas.on('object:added', onObjectChange);
+  canvas.on('object:modified', onObjectChange);
+  canvas.on('path:created', onObjectChange);
 };
 
 // Clean up canvas event listeners
@@ -122,12 +103,4 @@ export const resizeCanvas = (canvas: FabricCanvas, width: number, height: number
   
   canvas.renderAll();
   saveCanvasState(canvas);
-  
-  // Force white background again after resizing - once is enough
-  setTimeout(() => {
-    if (canvas) {
-      canvas.backgroundColor = '#ffffff';
-      canvas.renderAll();
-    }
-  }, 100);
 };
