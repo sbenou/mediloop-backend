@@ -22,6 +22,30 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
       }
       initialized.current = true;
     }
+    
+    // Force white background on any canvas element that appears
+    const forceWhiteBackground = () => {
+      if (canvasRef.current) {
+        const canvasElement = canvasRef.current.querySelector('canvas');
+        if (canvasElement) {
+          const ctx = canvasElement.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+          }
+        }
+      }
+    };
+    
+    // Initial call
+    forceWhiteBackground();
+    
+    // Set up a periodic check to ensure white background
+    const interval = setInterval(forceWhiteBackground, 100);
+    
+    return () => {
+      clearInterval(interval);
+    };
   }, [canvasRef]);
 
   return (

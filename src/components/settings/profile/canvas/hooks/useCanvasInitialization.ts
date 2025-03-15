@@ -18,6 +18,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
   const [canvasWidth, setCanvasWidth] = useState(0);
   const [canvasHeight, setCanvasHeight] = useState(0);
   const [forcedRenderId, setForcedRenderId] = useState(0);
+  const initAttempts = useRef(0);
 
   // Initialize canvas
   useEffect(() => {
@@ -28,18 +29,38 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       setCanvasWidth(containerWidth);
       setCanvasHeight(containerHeight);
       
-      const fabricCanvas = initializeCanvas(canvasContainerRef.current, containerWidth, containerHeight);
-      
-      // Force white background
-      fabricCanvas.backgroundColor = '#ffffff';
-      fabricCanvas.renderAll();
-      
-      setCanvas(fabricCanvas);
-      
-      // Force a re-render after a short delay
-      setTimeout(() => {
-        setForcedRenderId(id => id + 1);
-      }, 100);
+      try {
+        const fabricCanvas = initializeCanvas(canvasContainerRef.current, containerWidth, containerHeight);
+        
+        // Explicitly set white background immediately
+        fabricCanvas.backgroundColor = '#ffffff';
+        fabricCanvas.renderAll();
+        
+        setCanvas(fabricCanvas);
+        
+        // Force multiple re-renders to ensure the canvas is properly initialized
+        const refreshIntervals = [100, 300, 500, 1000];
+        refreshIntervals.forEach(delay => {
+          setTimeout(() => {
+            setForcedRenderId(id => id + 1);
+            if (fabricCanvas) {
+              fabricCanvas.backgroundColor = '#ffffff';
+              fabricCanvas.renderAll();
+            }
+          }, delay);
+        });
+      } catch (error) {
+        console.error('Error initializing canvas:', error);
+        initAttempts.current++;
+        
+        // If we've tried too many times, stop trying
+        if (initAttempts.current < 3) {
+          // Try again in a moment
+          setTimeout(() => {
+            setForcedRenderId(id => id + 1);
+          }, 500);
+        }
+      }
     }
     
     return () => {
@@ -48,7 +69,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         canvas.dispose();
       }
     };
-  }, []);
+  }, [forcedRenderId]);
 
   // Apply event listeners to ensure white background
   useEffect(() => {
@@ -81,30 +102,24 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     }
   }, [canvas, imageUrl, forcedRenderId]);
 
-  // Additional effect to force white background when component mounts or rerenders
+  // Enhanced force white background effect
   useEffect(() => {
-    // Force white background on canvas after a short delay
-    const timer = setTimeout(() => {
-      if (canvas) {
-        canvas.backgroundColor = '#ffffff';
-        canvas.renderAll();
-      }
-    }, 100);
+    if (!canvas) return;
     
-    return () => clearTimeout(timer);
-  }, [canvas, forcedRenderId]);
-
-  // Force white background periodically
-  useEffect(() => {
+    // Force white background on canvas immediately
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
+    
+    // Force white background on canvas periodically
     const interval = setInterval(() => {
       if (canvas) {
         canvas.backgroundColor = '#ffffff';
         canvas.renderAll();
       }
-    }, 500);
+    }, 200);
     
     return () => clearInterval(interval);
-  }, [canvas]);
+  }, [canvas, forcedRenderId]);
 
   return {
     canvasContainerRef,

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCanvasManager } from './useCanvasManager';
 import CanvasControls from './CanvasControls';
@@ -74,7 +74,13 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   };
 
   // Force white background refreshing
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!canvas) return;
+    
+    // Initial forced white background
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
+    
     const refreshInterval = setInterval(() => {
       if (canvas) {
         canvas.backgroundColor = '#ffffff';
@@ -83,6 +89,21 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     }, 100);
     
     return () => clearInterval(refreshInterval);
+  }, [canvas]);
+
+  // If canvas is mounted but turns black, force refresh
+  useEffect(() => {
+    if (!canvas) return;
+    
+    // Additional check to force white background after a slight delay
+    const timeoutId = setTimeout(() => {
+      if (canvas) {
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+      }
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
   }, [canvas]);
 
   return (
