@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -60,8 +59,29 @@ const TeleconsultationList: React.FC<TeleconsultationListProps> = ({
           return hasValidPatient && hasValidDoctor;
         });
         
-        // Cast to Teleconsultation[] after filtering out invalid data
-        setConsultations(validConsultations as Teleconsultation[]);
+        // Create properly typed objects from filtered data
+        const typedConsultations: Teleconsultation[] = validConsultations.map(consultation => ({
+          id: consultation.id,
+          patient_id: consultation.patient_id,
+          doctor_id: consultation.doctor_id,
+          start_time: consultation.start_time,
+          end_time: consultation.end_time,
+          status: consultation.status,
+          reason: consultation.reason,
+          room_id: consultation.room_id,
+          created_at: consultation.created_at,
+          updated_at: consultation.updated_at,
+          patient: {
+            full_name: consultation.patient?.full_name || 'Unknown Patient',
+            email: consultation.patient?.email || null
+          },
+          doctor: {
+            full_name: consultation.doctor?.full_name || 'Unknown Doctor',
+            email: consultation.doctor?.email || null
+          }
+        }));
+        
+        setConsultations(typedConsultations);
         
         // Check if user has connections (for patients only)
         if (profile.role === 'patient') {
