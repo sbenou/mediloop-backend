@@ -276,8 +276,8 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
       isGrid: true
     });
     canvas.add(line);
-    // Use lower-level API to move grid lines to back
-    line.moveTo(0);
+    // Use sendToBack to move grid lines to back
+    canvas.sendObjectToBack(line);
   }
   
   // Create horizontal lines
@@ -290,8 +290,8 @@ export const toggleGrid = (canvas: FabricCanvas, showGrid: boolean, gridSize: nu
       isGrid: true
     });
     canvas.add(line);
-    // Use lower-level API to move grid lines to back
-    line.moveTo(0);
+    // Use sendToBack to move grid lines to back
+    canvas.sendObjectToBack(line);
   }
   
   canvas.renderAll();
