@@ -1,35 +1,51 @@
 
 import React from 'react';
 import MenuBar from './controls/MenuBar';
-import SaveButton from './controls/SaveButton';
+import ControlsContainer from './controls/ControlsContainer';
 import { StampTemplate } from './canvasUtils';
 
 interface CanvasControlsProps {
+  // Drawing tools
   isDrawMode: boolean;
   toggleDrawMode: () => void;
   clearCanvas: () => void;
-  triggerUpload: () => void;
-  saveCanvas: () => void;
-  isLoading: boolean;
   penColor: string;
   brushSize: number;
   handleColorChange: (color: string) => void;
   handleBrushSizeChange: (size: number) => void;
-  type: 'stamp' | 'signature';
+  
+  // History
   handleUndo: () => void;
   handleRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  
+  // Grid
   handleToggleGrid: () => void;
   showGrid: boolean;
+  
+  // Shapes
   handleAddShape: (shape: 'circle' | 'rectangle' | 'line') => void;
   handleAddText: () => void;
   handleRotate: (angle: number) => void;
   selectedTool: string;
   selectedShape: 'circle' | 'rectangle' | 'line' | null;
-  // New props for advanced features
+  
+  // Upload
+  triggerUpload: () => void;
+  
+  // Save
+  saveCanvas: () => void;
+  isLoading: boolean;
+  
+  // Type specific
+  type: 'stamp' | 'signature';
+  
+  // Templates - only for stamps
   availableTemplates?: StampTemplate[];
   handleApplyTemplate?: (templateId: string, doctorName?: string) => void;
+  
+  // Advanced
   canvasWidth?: number;
   canvasHeight?: number;
   handleResizeCanvas?: (width: number, height: number) => void;
@@ -45,97 +61,62 @@ interface CanvasControlsProps {
   handleSendBackward?: () => void;
   handleBringToFront?: () => void;
   handleSendToBack?: () => void;
+  
+  // Export
   handleExport?: (format: 'png' | 'jpeg' | 'svg' | 'pdf') => string | Blob | null;
+  
+  // New props
   handleAddDateField?: () => void;
   handleAddCheckbox?: (checked: boolean) => void;
 }
 
-const CanvasControls: React.FC<CanvasControlsProps> = ({
-  isDrawMode,
-  toggleDrawMode,
-  clearCanvas,
-  triggerUpload,
-  saveCanvas,
-  isLoading,
-  penColor,
-  brushSize,
-  handleColorChange,
-  handleBrushSizeChange,
-  type,
-  handleUndo,
-  handleRedo,
-  canUndo,
-  canRedo,
-  handleToggleGrid,
-  showGrid,
-  handleAddShape,
-  handleAddText,
-  handleRotate,
-  selectedTool,
-  selectedShape,
-  // New props
-  availableTemplates,
-  handleApplyTemplate,
-  canvasWidth,
-  canvasHeight,
-  handleResizeCanvas,
-  selectedImage,
-  filterOptions,
-  handleApplyFilter,
-  handleBringForward,
-  handleSendBackward,
-  handleBringToFront,
-  handleSendToBack,
-  handleExport,
-  handleAddDateField,
-  handleAddCheckbox
-}) => {
+const CanvasControls: React.FC<CanvasControlsProps> = (props) => {
+  // Pass all menubar-related props to the MenuBar component
+  // Use the ControlsContainer to wrap everything
   return (
-    <div className="space-y-3">
+    <ControlsContainer 
+      saveCanvas={props.saveCanvas}
+      isLoading={props.isLoading}
+      type={props.type}
+    >
       <MenuBar
-        isDrawMode={isDrawMode}
-        toggleDrawMode={toggleDrawMode}
-        clearCanvas={clearCanvas}
-        penColor={penColor}
-        brushSize={brushSize}
-        handleColorChange={handleColorChange}
-        handleBrushSizeChange={handleBrushSizeChange}
-        handleUndo={handleUndo}
-        handleRedo={handleRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        handleToggleGrid={handleToggleGrid}
-        showGrid={showGrid}
-        handleAddShape={handleAddShape}
-        handleAddText={handleAddText}
-        handleRotate={handleRotate}
-        selectedTool={selectedTool}
-        selectedShape={selectedShape}
-        triggerUpload={triggerUpload}
-        type={type}
-        availableTemplates={availableTemplates}
-        handleApplyTemplate={handleApplyTemplate}
-        canvasWidth={canvasWidth}
-        canvasHeight={canvasHeight}
-        handleResizeCanvas={handleResizeCanvas}
-        selectedImage={selectedImage}
-        filterOptions={filterOptions}
-        handleApplyFilter={handleApplyFilter}
-        handleBringForward={handleBringForward}
-        handleSendBackward={handleSendBackward}
-        handleBringToFront={handleBringToFront}
-        handleSendToBack={handleSendToBack}
-        handleExport={handleExport}
-        handleAddDateField={handleAddDateField}
-        handleAddCheckbox={handleAddCheckbox}
+        isDrawMode={props.isDrawMode}
+        toggleDrawMode={props.toggleDrawMode}
+        clearCanvas={props.clearCanvas}
+        penColor={props.penColor}
+        brushSize={props.brushSize}
+        handleColorChange={props.handleColorChange}
+        handleBrushSizeChange={props.handleBrushSizeChange}
+        handleUndo={props.handleUndo}
+        handleRedo={props.handleRedo}
+        canUndo={props.canUndo}
+        canRedo={props.canRedo}
+        handleToggleGrid={props.handleToggleGrid}
+        showGrid={props.showGrid}
+        handleAddShape={props.handleAddShape}
+        handleAddText={props.handleAddText}
+        handleRotate={props.handleRotate}
+        selectedTool={props.selectedTool}
+        selectedShape={props.selectedShape}
+        triggerUpload={props.triggerUpload}
+        type={props.type}
+        availableTemplates={props.availableTemplates}
+        handleApplyTemplate={props.handleApplyTemplate}
+        canvasWidth={props.canvasWidth}
+        canvasHeight={props.canvasHeight}
+        handleResizeCanvas={props.handleResizeCanvas}
+        selectedImage={props.selectedImage}
+        filterOptions={props.filterOptions}
+        handleApplyFilter={props.handleApplyFilter}
+        handleBringForward={props.handleBringForward}
+        handleSendBackward={props.handleSendBackward}
+        handleBringToFront={props.handleBringToFront}
+        handleSendToBack={props.handleSendToBack}
+        handleExport={props.handleExport}
+        handleAddDateField={props.handleAddDateField}
+        handleAddCheckbox={props.handleAddCheckbox}
       />
-      
-      <SaveButton 
-        saveCanvas={saveCanvas} 
-        isLoading={isLoading} 
-        type={type} 
-      />
-    </div>
+    </ControlsContainer>
   );
 };
 
