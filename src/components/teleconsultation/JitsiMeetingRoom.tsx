@@ -1,127 +1,226 @@
 
-import React, { useEffect, useState } from 'react';
-import { JitsiMeeting } from '@jitsi/react-sdk';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { JitsiMeeting } from "@jitsi/react-sdk";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, Video, User, Users } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { supabase } from "@/lib/supabase";
 
 interface JitsiMeetingRoomProps {
   roomName: string;
-  onClose: () => void;
   consultationId: string;
+  onClose: () => void;
   patientName?: string;
   doctorName?: string;
 }
 
-const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({ 
-  roomName, 
-  onClose, 
+const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
+  roomName,
   consultationId,
+  onClose,
   patientName,
   doctorName
 }) => {
-  const { profile, userRole } = useAuth();
-  const [isCallEnded, setIsCallEnded] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Generate a secure domain-specific room name using the consultationId
-  const secureRoomName = `consultation-${consultationId}`;
+  const [isLoading, setIsLoading] = useState(true);
+  const [consultationDetails, setConsultationDetails] = useState<{
+    startTime: Date;
+    endTime: Date;
+    reason: string;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
-  // Configuration for the Jitsi meeting
+  // Fetch consultation details
+  useEffect(() => {
+    const fetchConsultationDetails = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const { data, error } = await supabase
+          .from('teleconsultations')
+          .select('start_time, end_time, reason')
+          .eq('id', consultationId)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          setConsultationDetails({
+            startTime: new Date(data.start_time),
+            endTime: new Date(data.end_time),
+            reason: data.reason
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching consultation details:', err);
+        setError('Failed to load consultation details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchConsultationDetails();
+  }, [consultationId]);
+  
+  // Mark consultation as completed when component unmounts
+  useEffect(() => {
+    return () => {
+      // Update status to completed when leaving the meeting
+      supabase
+        .from('teleconsultations')
+        .update({ status: 'completed' })
+        .eq('id', consultationId)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error marking consultation as completed:', error);
+          }
+        });
+    };
+  }, [consultationId]);
+  
+  // Configuration for Jitsi
   const jitsiConfig = {
-    startWithAudioMuted: false,
-    startWithVideoMuted: false,
+    prejoinConfig: {
+      enabled: false
+    },
     disableDeepLinking: true,
-    prejoinPageEnabled: true,
-    disableInviteFunctions: true,
-    enableClosePage: false
+    startWithAudioMuted: false,
+    startWithVideoMuted: false
   };
-
-  // User information to display in the meeting
-  const userInfo = {
-    displayName: profile?.full_name || 'User',
-    email: profile?.email || '',
+  
+  const handleMeetingClose = () => {
+    onClose();
   };
-
-  // Handle API events when the component is mounted
-  const handleAPILoad = (api: any) => {
-    // Event handlers for the Jitsi Meet API
-    api.addEventListener('videoConferenceLeft', () => {
-      console.log('User has left the meeting');
-      setIsCallEnded(true);
-    });
-
-    api.addEventListener('connectionFailed', () => {
-      console.error('Connection to the conference failed');
-      setErrorMessage('Failed to connect to the video call. Please try again.');
-    });
-
-    api.addEventListener('participantJoined', (participant: any) => {
-      console.log(`${participant.displayName} has joined the meeting`);
-    });
-
-    api.addEventListener('participantLeft', (participant: any) => {
-      console.log(`${participant.displayName} has left the meeting`);
-    });
+  
+  const handleApiReady = (apiObj: any) => {
+    apiObj.executeCommand('displayName', doctorName || patientName || 'User');
+    setIsLoading(false);
   };
-
+  
   return (
-    <div className="h-full flex flex-col">
-      {errorMessage && (
-        <Card className="mb-4 border-red-300 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              <p>{errorMessage}</p>
+    <div className="flex flex-col h-screen">
+      <header className="bg-background border-b py-2 px-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <Button variant="ghost" size="sm" onClick={handleMeetingClose}>
+            <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          </Button>
+          
+          <div className="font-medium text-sm">
+            {consultationDetails?.reason || 'Teleconsultation'}
+          </div>
+          
+          <div className="flex items-center space-x-2 text-sm">
+            {consultationDetails && (
+              <span>
+                {format(consultationDetails.startTime, 'MMM d, h:mm a')} - 
+                {format(consultationDetails.endTime, 'h:mm a')}
+              </span>
+            )}
+          </div>
+        </div>
+      </header>
+      
+      <div className="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-4 p-4">
+        {/* Jitsi Meeting Container */}
+        <div className="lg:col-span-3 bg-gray-900 rounded-lg overflow-hidden relative min-h-[400px]">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mr-2"></div>
+              <span>Loading meeting room...</span>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card className="mb-4">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex justify-between items-center">
-            <span>
-              {userRole === 'doctor' 
-                ? `Consultation with ${patientName || 'Patient'}`
-                : `Consultation with Dr. ${doctorName || 'Doctor'}`}
-            </span>
-            <Button variant="outline" size="sm" onClick={onClose} className="h-8">
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back
-            </Button>
-          </CardTitle>
-          <CardDescription>
-            Consultation ID: {consultationId}
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
-      {isCallEnded ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Call Ended</CardTitle>
-            <CardDescription>Your teleconsultation has ended.</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button onClick={onClose}>Return to Dashboard</Button>
-          </CardFooter>
-        </Card>
-      ) : (
-        <div className="flex-1 h-[600px] border rounded-md overflow-hidden">
+          )}
+          
           <JitsiMeeting
             domain="meet.jit.si"
-            roomName={secureRoomName}
+            roomName={roomName}
             configOverwrite={jitsiConfig}
-            userInfo={userInfo}
-            onApiReady={handleAPILoad}
-            getIFrameRef={(iframeRef) => {
-              iframeRef.style.height = '100%';
-              iframeRef.style.width = '100%';
+            interfaceConfigOverwrite={{
+              SHOW_JITSI_WATERMARK: false,
+              SHOW_WATERMARK_FOR_GUESTS: false,
+              TOOLBAR_BUTTONS: [
+                'microphone', 'camera', 'closedcaptions', 'desktop', 
+                'fullscreen', 'fodeviceselection', 'hangup', 'profile', 
+                'chat', 'recording', 'livestreaming', 'etherpad', 
+                'settings', 'raisehand', 'videoquality', 'filmstrip', 
+                'feedback', 'stats', 'shortcuts', 'tileview', 'select-background'
+              ]
+            }}
+            onApiReady={handleApiReady}
+            getIFrameRef={(node) => {
+              // Adjust iframe styles if needed
+              if (node) {
+                node.style.width = '100%';
+                node.style.height = '100%';
+                node.style.minHeight = '500px';
+              }
             }}
           />
         </div>
-      )}
+        
+        {/* Info Panel */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Teleconsultation</CardTitle>
+              <CardDescription>
+                {consultationDetails?.reason || 'Online appointment'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Time</p>
+                  <p className="font-medium">
+                    {consultationDetails && (
+                      <>
+                        {format(consultationDetails.startTime, 'MMMM d, yyyy')}
+                        <br />
+                        {format(consultationDetails.startTime, 'h:mm a')} - 
+                        {format(consultationDetails.endTime, 'h:mm a')}
+                      </>
+                    )}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Doctor</p>
+                  <div className="flex items-center">
+                    <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <p className="font-medium">{doctorName || 'Doctor'}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Patient</p>
+                  <div className="flex items-center">
+                    <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <p className="font-medium">{patientName || 'Patient'}</p>
+                  </div>
+                </div>
+                
+                <div className="pt-2 border-t">
+                  <p className="text-sm font-medium mb-2">Meeting Controls</p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Use the toolbar at the bottom to control your camera and microphone</p>
+                    <p>• Click the red button to leave the meeting</p>
+                    <p>• Chat is available from the toolbar</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                variant="destructive" 
+                className="w-full"
+                onClick={handleMeetingClose}
+              >
+                End Consultation
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

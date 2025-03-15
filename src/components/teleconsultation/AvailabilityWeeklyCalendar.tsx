@@ -18,6 +18,8 @@ import { toast } from "@/components/ui/use-toast";
 import { BankHoliday, DoctorAvailability, TimeSlot, SupportedCountry, isTimeSlot, Teleconsultation } from "@/types/supabase";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/auth/useAuth";
+import TeleconsultationBookingDialog from "./TeleconsultationBookingDialog";
+import { useDoctorPatients } from "@/hooks/teleconsultation/useDoctorPatients";
 
 interface AvailabilityWeeklyCalendarProps {
   doctorId?: string;
@@ -44,6 +46,14 @@ const AvailabilityWeeklyCalendar = ({
   const [selectedCountry, setSelectedCountry] = useState<SupportedCountry>("Luxembourg");
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | undefined>(doctorId);
   const [doctors, setDoctors] = useState<Array<{ id: string, name: string }>>([]);
+  
+  // Add states for booking functionality
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedTime, setSelectedTime] = useState<string | undefined>();
+  
+  // Get the patients connected to the doctor
+  const { patients } = useDoctorPatients(selectedDoctorId);
   
   // Calculate days of current week
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeek, i));
@@ -299,6 +309,42 @@ const AvailabilityWeeklyCalendar = ({
     });
   };
 
+  // Handle clicking on a time slot to open booking dialog
+  const handleTimeSlotClick = (day: Date, hour: number) => {
+    // Only allow booking on available slots
+    if (isTimeSlotAvailable(day, hour) && !getTeleconsultationAtTime(day, hour)) {
+      setSelectedDate(day);
+      setSelectedTime(`${hour.toString().padStart(2, '0')}:00`);
+      setIsBookingDialogOpen(true);
+    }
+  };
+
+  // Handle creating a new appointment
+  const handleNewAppointment = () => {
+    setSelectedDate(undefined);
+    setSelectedTime(undefined);
+    setIsBookingDialogOpen(true);
+  };
+  
+  // Handle successful booking creation
+  const handleBookingCreated = () => {
+    // Refresh teleconsultations data
+    if (selectedDoctorId) {
+      supabase
+        .from('teleconsultations')
+        .select('*')
+        .eq('doctor_id', selectedDoctorId)
+        .eq('status', 'confirmed')
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setTeleconsultations(data);
+          }
+        });
+    }
+  };
+
+  const showBookingControls = profile?.role === 'doctor' || profile?.role === 'pharmacist' || isManagementMode;
+
   return (
     <Card className="shadow-md">
       <CardHeader>
@@ -328,45 +374,57 @@ const AvailabilityWeeklyCalendar = ({
           </div>
         </div>
         
-        <div className="flex flex-wrap gap-3 mt-4">
-          {showBankHolidays && (
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="country">Country:</Label>
-              <Select
-                value={selectedCountry}
-                onValueChange={(value) => setSelectedCountry(value as SupportedCountry)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select a country" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Luxembourg">Luxembourg</SelectItem>
-                  <SelectItem value="France">France</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+        <div className="flex flex-wrap justify-between gap-3 mt-4">
+          <div className="flex flex-wrap gap-3">
+            {showBankHolidays && (
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="country">Country:</Label>
+                <Select
+                  value={selectedCountry}
+                  onValueChange={(value) => setSelectedCountry(value as SupportedCountry)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Luxembourg">Luxembourg</SelectItem>
+                    <SelectItem value="France">France</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {isManagementMode && (
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="doctorSelect">Doctor:</Label>
+                <Select
+                  value={selectedDoctorId}
+                  onValueChange={setSelectedDoctorId}
+                  disabled={doctors.length === 0}
+                >
+                  <SelectTrigger className="w-[220px]" id="doctorSelect">
+                    <SelectValue placeholder="Select a doctor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {doctors.map(doctor => (
+                      <SelectItem key={doctor.id} value={doctor.id}>
+                        {doctor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
           
-          {isManagementMode && (
-            <div className="flex items-center space-x-2 ml-auto">
-              <Label htmlFor="doctorSelect">Doctor:</Label>
-              <Select
-                value={selectedDoctorId}
-                onValueChange={setSelectedDoctorId}
-                disabled={doctors.length === 0}
-              >
-                <SelectTrigger className="w-[220px]" id="doctorSelect">
-                  <SelectValue placeholder="Select a doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {doctors.map(doctor => (
-                    <SelectItem key={doctor.id} value={doctor.id}>
-                      {doctor.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Add New Appointment button */}
+          {showBookingControls && (
+            <Button 
+              onClick={handleNewAppointment} 
+              className="flex items-center gap-1"
+            >
+              <Plus className="h-4 w-4" /> New Appointment
+            </Button>
           )}
         </div>
 
@@ -444,11 +502,21 @@ const AvailabilityWeeklyCalendar = ({
                           p-2 border-r h-16 relative
                           ${holiday ? 'bg-gray-50' : isAvailable ? 'bg-green-100' : 'bg-gray-50'}
                           ${teleconsultation ? 'bg-red-100' : ''}
+                          ${isAvailable && !teleconsultation && !holiday && showBookingControls ? 'cursor-pointer hover:bg-green-200' : ''}
                         `}
+                        onClick={() => {
+                          if (isAvailable && !teleconsultation && !holiday && showBookingControls) {
+                            handleTimeSlotClick(day, hour);
+                          }
+                        }}
                       >
                         {teleconsultation && (
                           <div className="text-xs p-1 bg-red-200 rounded">
-                            Teleconsultation
+                            <div className="font-semibold">{teleconsultation.reason || 'Teleconsultation'}</div>
+                            <div>
+                              {format(new Date(teleconsultation.start_time), 'HH:mm')} - 
+                              {format(new Date(teleconsultation.end_time), 'HH:mm')}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -460,6 +528,19 @@ const AvailabilityWeeklyCalendar = ({
           </div>
         )}
       </CardContent>
+
+      {/* Booking Dialog */}
+      {isBookingDialogOpen && (
+        <TeleconsultationBookingDialog
+          isOpen={isBookingDialogOpen}
+          onClose={() => setIsBookingDialogOpen(false)}
+          selectedDate={selectedDate}
+          selectedTime={selectedTime}
+          doctorId={selectedDoctorId || profile?.id || ''}
+          patients={patients}
+          onBookingCreated={handleBookingCreated}
+        />
+      )}
     </Card>
   );
 };
