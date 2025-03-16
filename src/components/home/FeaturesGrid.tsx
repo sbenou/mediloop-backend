@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, Pill, FileText, Users } from "lucide-react";
 import { useInView } from "react-intersection-observer";
