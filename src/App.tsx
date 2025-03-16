@@ -19,6 +19,7 @@ import MyPrescriptions from './pages/MyPrescriptions';
 import Teleconsultations from './pages/Teleconsultations';
 import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
+import Products from './pages/Products';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -88,6 +89,7 @@ function App() {
                   <Route path="/doctor/profile" element={<DoctorProfilePage />} />
                   <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
+                  <Route path="/products" element={<Products />} />
                 </Routes>
                 <Toaster />
               </Router>
