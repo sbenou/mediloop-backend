@@ -51,7 +51,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         const canvasElement = fabricCanvas.getElement();
         if (canvasElement) {
           canvasElement.style.position = 'absolute'; // Absolute positioning
-          canvasElement.style.zIndex = '500'; // Much higher z-index to ensure visibility
+          canvasElement.style.zIndex = '1000'; // Even higher z-index to ensure visibility
           canvasElement.style.pointerEvents = 'auto'; // Ensure it captures mouse events
           canvasElement.style.cursor = fabricCanvas.isDrawingMode ? penCursor : 'default';
           canvasElement.style.top = '0';
@@ -59,7 +59,16 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
           canvasElement.style.width = '100%';
           canvasElement.style.height = '100%';
           
-          // Force cursor with !important flag
+          // Apply cursor style separately using inline stylesheet
+          const style = document.createElement('style');
+          style.innerHTML = `
+            #${canvasElement.id} {
+              cursor: ${fabricCanvas.isDrawingMode ? penCursor : 'default'} !important;
+            }
+          `;
+          document.head.appendChild(style);
+          
+          // Force cursor with !important flag directly
           canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + (fabricCanvas.isDrawingMode ? penCursor : 'default') + ' !important');
         }
         
@@ -142,10 +151,34 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         if (canvasElement) {
           if (canvas.isDrawingMode) {
             canvasElement.style.position = 'absolute';
-            canvasElement.style.zIndex = '500'; // Much higher z-index
+            canvasElement.style.zIndex = '1000'; // Increased z-index for visibility
             canvasElement.style.cursor = penCursor;
-            // Force cursor with !important
+            
+            // Add !important to cursor style
             canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important');
+            
+            // Also add a class to force cursor visibility
+            canvasElement.classList.add('pen-cursor-active');
+            
+            // Add a direct style element for this specific canvas
+            if (canvasElement.id) {
+              const existingStyle = document.getElementById(`style-${canvasElement.id}`);
+              if (!existingStyle) {
+                const style = document.createElement('style');
+                style.id = `style-${canvasElement.id}`;
+                style.innerHTML = `
+                  #${canvasElement.id} {
+                    cursor: ${penCursor} !important;
+                    z-index: 1000 !important;
+                    position: absolute !important;
+                  }
+                  .pen-cursor-active {
+                    cursor: ${penCursor} !important;
+                  }
+                `;
+                document.head.appendChild(style);
+              }
+            }
           }
         }
       });
@@ -166,6 +199,9 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         if (canvasElement && canvas.isDrawingMode) {
           canvasElement.style.cursor = penCursor;
           canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important');
+          
+          // Ensure z-index is high
+          canvasElement.style.zIndex = '1000';
         }
       });
       
@@ -173,11 +209,29 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       const canvasElement = canvas.getElement();
       if (canvasElement) {
         canvasElement.style.position = 'absolute';
-        canvasElement.style.zIndex = '500';
+        canvasElement.style.zIndex = '1000'; // Increased z-index
         canvasElement.style.top = '0';
         canvasElement.style.left = '0';
         canvasElement.style.width = '100%'; 
         canvasElement.style.height = '100%';
+        
+        // Apply a unique ID if not already present
+        if (!canvasElement.id) {
+          canvasElement.id = `canvas-${Date.now()}`;
+        }
+        
+        // Add a style tag specific to this canvas element to ensure cursor visibility
+        const style = document.createElement('style');
+        style.id = `style-${canvasElement.id}`;
+        style.innerHTML = `
+          #${canvasElement.id} {
+            cursor: ${canvas.isDrawingMode ? penCursor : 'default'} !important;
+            z-index: 1000 !important;
+            position: absolute !important;
+            pointer-events: auto !important;
+          }
+        `;
+        document.head.appendChild(style);
       }
       
       // Set up cursor enforcement on a timer
@@ -186,14 +240,27 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
           const canvasEl = canvas.getElement();
           if (canvasEl) {
             canvasEl.style.cursor = penCursor;
+            canvasEl.style.zIndex = '1000';
+            
+            // Force cursor with !important
+            canvasEl.setAttribute('style', canvasEl.getAttribute('style') + ' cursor: ' + penCursor + ' !important');
           }
         }
-      }, 1000);
+      }, 300); // More frequent enforcement
       
       // Clean up event listeners
       return () => {
         clearInterval(cursorEnforcementInterval);
         cleanupCanvasListeners(canvas);
+        
+        // Clean up any style elements we created
+        const canvasEl = canvas.getElement();
+        if (canvasEl && canvasEl.id) {
+          const styleElement = document.getElementById(`style-${canvasEl.id}`);
+          if (styleElement) {
+            styleElement.remove();
+          }
+        }
       };
     }
   }, [canvas]);
