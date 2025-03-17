@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { supabase, getSessionFromStorage, clearAllAuthStorage } from '@/lib/supabase';
 import { useProfileFetch } from './useProfileFetch';
@@ -36,7 +35,7 @@ export const useSessionManagement = () => {
       // Before trying to fetch the profile, verify that the token is still valid
       try {
         // Perform a lightweight check to verify token validity
-        const { data: userData, error: userError } = await supabase.auth.getUser(session.access_token);
+        const { data: userData, error: userError } = await supabase.auth.getUser();
         
         if (userError) {
           console.error('Token validation error:', userError);
@@ -168,69 +167,55 @@ export const useSessionManagement = () => {
     try {
       console.log('Attempting to refresh session...');
       
-      // First try to completely refresh token to get a clean session
+      // First, attempt to get the current session
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error fetching session:', error);
+        // Try to get from storage as fallback
+        const storedSession = getSessionFromStorage();
+        return storedSession;
+      }
+      
+      if (data.session) {
+        console.log('Session found via API');
+        return data.session;
+      }
+      
+      // If no session from API, try storage
+      const storedSession = getSessionFromStorage();
+      
+      if (storedSession) {
+        console.log('Session found in storage');
+        
+        // Validate stored session
+        try {
+          const { data: userData, error: userError } = await supabase.auth.getUser(storedSession.access_token);
+          
+          if (!userError && userData.user) {
+            console.log('Stored session is valid');
+            return storedSession;
+          }
+        } catch (validateErr) {
+          console.error('Error validating stored session:', validateErr);
+        }
+      }
+      
+      // As a last resort, try to refresh
+      console.log('Attempting to refresh token...');
       try {
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         
         if (!refreshError && refreshData.session) {
-          console.log('Session refreshed successfully via API');
+          console.log('Session refreshed successfully');
           return refreshData.session;
         }
       } catch (refreshErr) {
-        console.error('Error during initial refresh attempt:', refreshErr);
+        console.error('Session refresh error:', refreshErr);
       }
       
-      // Check in storage if refresh failed
-      const storedSession = getSessionFromStorage();
-      
-      if (!storedSession) {
-        // Try to get from Supabase
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error fetching session:', error);
-          return null;
-        }
-        
-        if (!data.session) {
-          console.log('No session found, attempting refresh one more time...');
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError || !refreshData.session) {
-            console.warn('Unable to refresh session:', refreshError);
-            return null;
-          }
-          
-          console.log('Session refreshed successfully on second attempt');
-          return refreshData.session;
-        }
-        
-        return data.session;
-      }
-      
-      // Validate that the stored session is actually usable
-      try {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        
-        if (userError || !userData.user) {
-          console.error('Stored session invalid, attempting refresh');
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError || !refreshData.session) {
-            console.warn('Unable to refresh invalid session:', refreshError);
-            // Clear any potentially bad session data
-            clearAllAuthStorage();
-            return null;
-          }
-          
-          return refreshData.session;
-        }
-        
-        return storedSession;
-      } catch (validateErr) {
-        console.error('Error validating stored session:', validateErr);
-        return null;
-      }
+      console.log('No valid session found after all attempts');
+      return null;
     } catch (err) {
       console.error('Session refresh error:', err);
       return null;
