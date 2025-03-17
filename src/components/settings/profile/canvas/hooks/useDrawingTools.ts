@@ -39,8 +39,6 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       
       // Explicitly set cursor based on drawing mode
       if (isDrawMode) {
-        canvas.freeDrawingCursor = penCursor;
-        
         // Apply freeDrawingCursor to the Canvas DOM element as well
         if (canvas.getElement()) {
           canvas.getElement().style.cursor = penCursor;
@@ -51,6 +49,9 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
           canvas.freeDrawingBrush.color = penColor;
           canvas.freeDrawingBrush.width = brushSize;
         }
+        
+        // Set the canvas property
+        canvas.freeDrawingCursor = penCursor;
       } else {
         // Default cursor for selection mode
         canvas.defaultCursor = 'default';
@@ -80,18 +81,24 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         canvas.freeDrawingBrush.width = brushSize;
       }
       
-      // Explicitly set cursor for drawing mode
+      // Explicitly set cursor for drawing mode both to canvas property and DOM element
       canvas.freeDrawingCursor = penCursor;
-      if (canvas.getElement()) {
-        canvas.getElement().style.cursor = penCursor;
+      
+      // Apply directly to the HTML element to ensure cursor visibility
+      const canvasElement = canvas.getElement();
+      if (canvasElement) {
+        canvasElement.style.cursor = penCursor;
       }
       
       setSelectedTool('draw');
     } else {
       // Reset to default cursor for selection mode
       canvas.defaultCursor = 'default';
-      if (canvas.getElement()) {
-        canvas.getElement().style.cursor = 'default';
+      
+      // Apply directly to the HTML element
+      const canvasElement = canvas.getElement();
+      if (canvasElement) {
+        canvasElement.style.cursor = 'default';
       }
       
       setSelectedTool('select');
