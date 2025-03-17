@@ -52,8 +52,10 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     canvas.isDrawingMode = newMode;
     if (newMode) {
       // Ensure brush settings are applied when entering draw mode
-      canvas.freeDrawingBrush.color = penColor;
-      canvas.freeDrawingBrush.width = brushSize;
+      if (canvas.freeDrawingBrush) {
+        canvas.freeDrawingBrush.color = penColor;
+        canvas.freeDrawingBrush.width = brushSize;
+      }
       setSelectedTool('draw');
       
       // Force a render to ensure the drawing mode takes effect
@@ -86,7 +88,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
   // Handle brush size change
   const handleBrushSizeChange = (size: number) => {
     setBrushSize(size);
-    if (canvas) {
+    if (canvas && canvas.freeDrawingBrush) {
       changeBrushSizeUtil(canvas, size);
       // Force a render after changing brush size
       canvas.renderAll();
