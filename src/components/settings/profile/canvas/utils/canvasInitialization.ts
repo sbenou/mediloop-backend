@@ -35,8 +35,8 @@ export const initializeCanvas = (
   canvasElement.height = height;
   
   // Set canvas element styles for better cursor handling
-  canvasElement.style.position = 'absolute'; // Changed to absolute
-  canvasElement.style.zIndex = '9999'; // Extremely high z-index for visibility
+  canvasElement.style.position = 'absolute'; // Absolute positioning
+  canvasElement.style.zIndex = '99999'; // Extremely high z-index for visibility
   canvasElement.style.pointerEvents = 'auto'; // Ensure it captures mouse events
   canvasElement.style.top = '0';
   canvasElement.style.left = '0';
@@ -70,11 +70,15 @@ export const initializeCanvas = (
   if (canvasElement) {
     // Add a listener to update cursor when drawing mode changes
     canvas.on('mouse:over', () => {
-      if (canvas.isDrawingMode) {
-        canvasElement.style.cursor = penCursor;
-        canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
-      } else {
-        canvasElement.style.cursor = 'default';
+      try {
+        if (canvas.isDrawingMode) {
+          canvasElement.style.cursor = penCursor;
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
+        } else {
+          canvasElement.style.cursor = 'default';
+        }
+      } catch (e) {
+        console.error('Canvas cursor update error:', e);
       }
     });
     
@@ -83,17 +87,37 @@ export const initializeCanvas = (
     
     // Force cursor application with higher z-index
     const updateCursor = () => {
-      if (canvas.isDrawingMode) {
-        canvasElement.style.cursor = penCursor;
-        canvasElement.style.zIndex = '9999'; // Ensure high z-index
-        canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
+      try {
+        if (canvasElement && canvas.isDrawingMode) {
+          canvasElement.style.cursor = penCursor;
+          canvasElement.style.zIndex = '99999'; // Even higher z-index
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
+        }
+      } catch (e) {
+        console.error('Cursor update error:', e);
       }
     };
     
-    // Apply cursor immediately and after a delay to catch any race conditions
+    // Apply cursor immediately and after delays to catch race conditions
     updateCursor();
     setTimeout(updateCursor, 100);
     setTimeout(updateCursor, 500);
+    setTimeout(updateCursor, 1000);
+    
+    // Add a style element to enforce cursor
+    try {
+      const style = document.createElement('style');
+      style.innerHTML = `
+        canvas.upper-canvas {
+          cursor: ${canvas.isDrawingMode ? penCursor : 'default'} !important;
+          z-index: 99999 !important;
+          position: absolute !important;
+        }
+      `;
+      document.head.appendChild(style);
+    } catch (e) {
+      console.error('Style element creation error:', e);
+    }
   }
 
   // If an image URL is provided, load it to the canvas
@@ -107,26 +131,31 @@ export const initializeCanvas = (
 
   // Setup window resize handler
   const handleResize = () => {
-    // Only resize if container dimensions changed
-    if (
-      canvasContainer.clientWidth !== canvas.getWidth() ||
-      canvasContainer.clientHeight !== canvas.getHeight()
-    ) {
-      canvas.setDimensions({
-        width: canvasContainer.clientWidth,
-        height: canvasContainer.clientHeight
-      });
-      
-      // Re-ensure white background after resize
-      ensureWhiteBackground(canvas);
-      
-      // Also re-enforce cursor and z-index after resize
-      const canvasEl = canvas.getElement();
-      if (canvasEl && canvas.isDrawingMode) {
-        canvasEl.style.zIndex = '9999';
-        canvasEl.style.cursor = penCursor;
-        canvasEl.setAttribute('style', canvasEl.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
+    try {
+      // Only resize if container dimensions changed and canvas still exists
+      if (
+        canvas && 
+        canvasContainer.clientWidth !== canvas.getWidth() ||
+        canvasContainer.clientHeight !== canvas.getHeight()
+      ) {
+        canvas.setDimensions({
+          width: canvasContainer.clientWidth,
+          height: canvasContainer.clientHeight
+        });
+        
+        // Re-ensure white background after resize
+        ensureWhiteBackground(canvas);
+        
+        // Also re-enforce cursor and z-index after resize
+        const canvasEl = canvas.getElement();
+        if (canvasEl && canvas.isDrawingMode) {
+          canvasEl.style.zIndex = '99999';
+          canvasEl.style.cursor = penCursor;
+          canvasEl.setAttribute('style', canvasEl.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
+        }
       }
+    } catch (e) {
+      console.error('Canvas resize error:', e);
     }
   };
 
@@ -135,18 +164,28 @@ export const initializeCanvas = (
   // Return cleanup function
   const cleanup = () => {
     window.removeEventListener('resize', handleResize);
-    canvas.off('mouse:over');
-    canvas.dispose();
+    try {
+      canvas.off('mouse:over');
+      canvas.dispose();
+    } catch (e) {
+      console.error('Canvas cleanup error:', e);
+    }
   };
   
   // One more explicit white background enforcement after short delay
   setTimeout(() => {
-    ensureWhiteBackground(canvas);
-    
-    // Also ensure z-index is high after initial setup
-    if (canvasElement) {
-      canvasElement.style.zIndex = '9999';
-      canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' z-index: 9999 !important;');
+    try {
+      if (canvas) {
+        ensureWhiteBackground(canvas);
+      }
+      
+      // Also ensure z-index is high after initial setup
+      if (canvasElement) {
+        canvasElement.style.zIndex = '99999';
+        canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' z-index: 99999 !important;');
+      }
+    } catch (e) {
+      console.error('Delayed canvas setup error:', e);
     }
   }, 100);
   
@@ -155,36 +194,50 @@ export const initializeCanvas = (
 
 // Helper function to ensure canvas has white background
 export const ensureWhiteBackground = (canvas: FabricCanvas) => {
-  // Set explicit white background
-  canvas.backgroundColor = '#ffffff';
-  
-  // Render the canvas
-  canvas.renderAll();
-  
-  // For older browsers, also set the lower-level canvas background
-  const ctx = canvas.getElement()?.getContext('2d');
-  if (ctx) {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+  try {
+    // Set explicit white background
+    canvas.backgroundColor = '#ffffff';
+    
+    // Render the canvas
+    canvas.renderAll();
+    
+    // For older browsers, also set the lower-level canvas background
+    const ctx = canvas.getElement()?.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+    }
+  } catch (e) {
+    console.error('Background setup error:', e);
   }
 };
 
 // Cleanup function for canvas event listeners
 export const cleanupCanvasListeners = (canvas: FabricCanvas) => {
   // Remove all event listeners attached to the canvas
-  canvas.dispose();
+  try {
+    if (canvas) {
+      canvas.dispose();
+    }
+  } catch (e) {
+    console.error('Canvas listener cleanup error:', e);
+  }
 };
 
 // Canvas resize utility
 export const resizeCanvas = (canvas: FabricCanvas, width: number, height: number) => {
-  if (canvas) {
-    // Set new dimensions
-    canvas.setDimensions({ width, height });
-    
-    // Re-ensure white background after resize
-    ensureWhiteBackground(canvas);
-    
-    // Force a re-render
-    canvas.renderAll();
+  try {
+    if (canvas) {
+      // Set new dimensions
+      canvas.setDimensions({ width, height });
+      
+      // Re-ensure white background after resize
+      ensureWhiteBackground(canvas);
+      
+      // Force a re-render
+      canvas.renderAll();
+    }
+  } catch (e) {
+    console.error('Canvas resize error:', e);
   }
 };

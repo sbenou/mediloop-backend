@@ -56,15 +56,15 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         const canvasElement = canvas.getElement();
         if (canvasElement) {
           canvasElement.style.position = 'absolute'; // Absolute positioning
-          canvasElement.style.zIndex = '9999'; // Higher z-index
+          canvasElement.style.zIndex = '99999'; // Higher z-index
           canvasElement.style.cursor = penCursor;
           canvasElement.style.top = '0';
           canvasElement.style.left = '0';
           canvasElement.style.width = '100%';
           canvasElement.style.height = '100%';
           
-          // Force cursor by adding an inline style
-          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
+          // Force cursor by adding an inline style with !important
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
         }
         
         // Reapply brush settings when entering drawing mode
@@ -88,17 +88,29 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       
       // Apply cursor with a delay to catch any race conditions
       setTimeout(() => {
-        if (canvas && isDrawMode) {
-          const canvasElement = canvas.getElement();
-          if (canvasElement) {
-            canvasElement.style.cursor = penCursor;
+        try {
+          if (canvas && isDrawMode) {
+            const canvasElement = canvas.getElement();
+            if (canvasElement) {
+              canvasElement.style.cursor = penCursor;
+              canvasElement.style.zIndex = '99999'; // Higher z-index
+            }
           }
+        } catch (e) {
+          console.error("Delayed cursor update error:", e);
         }
       }, 100);
     } catch (error) {
       console.error("Error updating drawing mode:", error);
     }
   }, [canvas, isDrawMode, penColor, brushSize, penCursor]);
+
+  // Cleanup effect - important to prevent errors on logout
+  useEffect(() => {
+    return () => {
+      // No canvas operations on cleanup to prevent errors
+    };
+  }, []);
 
   // Toggle drawing mode
   const toggleDrawMode = () => {
@@ -120,7 +132,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         const canvasElement = canvas.getElement();
         if (canvasElement) {
           canvasElement.style.position = 'absolute';
-          canvasElement.style.zIndex = '9999';
+          canvasElement.style.zIndex = '99999';
           canvasElement.style.cursor = penCursor;
           canvasElement.style.top = '0';
           canvasElement.style.left = '0';
@@ -128,7 +140,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
           canvasElement.style.height = '100%';
           
           // Force cursor by adding !important
-          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
         }
         
         // Ensure brush settings are applied
@@ -141,11 +153,16 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         
         // Force cursor update with a delay
         setTimeout(() => {
-          if (!canvas) return;
-          
-          const canvasElement = canvas.getElement();
-          if (canvasElement) {
-            canvasElement.style.cursor = penCursor;
+          try {
+            if (!canvas) return;
+            
+            const canvasElement = canvas.getElement();
+            if (canvasElement) {
+              canvasElement.style.cursor = penCursor;
+              canvasElement.style.zIndex = '99999';
+            }
+          } catch (e) {
+            console.error("Delayed toggle cursor update error:", e);
           }
         }, 100);
       } else {
