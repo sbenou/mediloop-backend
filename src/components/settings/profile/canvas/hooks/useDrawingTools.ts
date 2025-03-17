@@ -47,7 +47,16 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         // Apply directly to the HTML element to ensure cursor visibility
         const canvasElement = canvas.getElement();
         if (canvasElement) {
+          canvasElement.style.position = 'absolute'; // Absolute positioning
+          canvasElement.style.zIndex = '500'; // Higher z-index
           canvasElement.style.cursor = penCursor;
+          canvasElement.style.top = '0';
+          canvasElement.style.left = '0';
+          canvasElement.style.width = '100%';
+          canvasElement.style.height = '100%';
+          
+          // Force cursor by adding an inline style
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important');
         }
         
         // Reapply brush settings when entering drawing mode
@@ -68,6 +77,16 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       
       // Force a render to apply changes
       canvas.renderAll();
+      
+      // Apply cursor with a delay to catch any race conditions
+      setTimeout(() => {
+        if (canvas && isDrawMode) {
+          const canvasElement = canvas.getElement();
+          if (canvasElement) {
+            canvasElement.style.cursor = penCursor;
+          }
+        }
+      }, 100);
     }
   }, [canvas, isDrawMode, penColor, brushSize, penCursor]);
 
@@ -89,7 +108,16 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       // Apply directly to the HTML element for immediate visibility
       const canvasElement = canvas.getElement();
       if (canvasElement) {
+        canvasElement.style.position = 'absolute';
+        canvasElement.style.zIndex = '500';
         canvasElement.style.cursor = penCursor;
+        canvasElement.style.top = '0';
+        canvasElement.style.left = '0';
+        canvasElement.style.width = '100%';
+        canvasElement.style.height = '100%';
+        
+        // Force cursor by adding !important
+        canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important');
       }
       
       // Ensure brush settings are applied
@@ -99,6 +127,16 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       }
       
       setSelectedTool('draw');
+      
+      // Force cursor update with a delay
+      setTimeout(() => {
+        if (canvas) {
+          const canvasElement = canvas.getElement();
+          if (canvasElement) {
+            canvasElement.style.cursor = penCursor;
+          }
+        }
+      }, 100);
     } else {
       // Reset to default cursor for selection mode
       canvas.defaultCursor = 'default';

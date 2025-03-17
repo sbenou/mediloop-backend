@@ -35,9 +35,13 @@ export const initializeCanvas = (
   canvasElement.height = height;
   
   // Set canvas element styles for better cursor handling
-  canvasElement.style.position = 'relative';
-  canvasElement.style.zIndex = '200'; // Higher z-index to ensure visibility
+  canvasElement.style.position = 'absolute'; // Changed to absolute
+  canvasElement.style.zIndex = '500'; // Significantly higher z-index
   canvasElement.style.pointerEvents = 'auto'; // Ensure it captures mouse events
+  canvasElement.style.top = '0';
+  canvasElement.style.left = '0';
+  canvasElement.style.width = '100%';
+  canvasElement.style.height = '100%';
   
   // Apply explicit white background
   ensureWhiteBackground(canvas);
@@ -75,6 +79,18 @@ export const initializeCanvas = (
     
     // Initially set cursor based on drawing mode
     canvasElement.style.cursor = canvas.isDrawingMode ? penCursor : 'default';
+    
+    // Force cursor application
+    const updateCursor = () => {
+      if (canvas.isDrawingMode) {
+        canvasElement.style.cursor = penCursor;
+      }
+    };
+    
+    // Apply cursor immediately and after a delay to catch any race conditions
+    updateCursor();
+    setTimeout(updateCursor, 100);
+    setTimeout(updateCursor, 500);
   }
 
   // If an image URL is provided, load it to the canvas
