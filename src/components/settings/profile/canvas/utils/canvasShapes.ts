@@ -1,10 +1,10 @@
-import { Canvas, Line } from "fabric";
+
+import { Canvas, Line, Circle, Rect, IText, Text } from "fabric";
 
 // Re-export all utilities from the utils folder
 export * from './canvasHistory';
 export * from './canvasInitialization';
 export * from './canvasImageHandling';
-export * from './canvasShapes';
 export * from './canvasLayerManagement';
 export * from './canvasTemplates';
 export * from './canvasExportOptions';
@@ -92,5 +92,172 @@ export const resizeCanvas = (canvas: Canvas, width: number, height: number) => {
     obj.setCoords();
   });
   
+  canvas.renderAll();
+};
+
+// Add shape creation utility functions
+export const addCircle = (canvas: Canvas, color: string) => {
+  if (!canvas) return;
+  
+  const circle = new Circle({
+    left: 100,
+    top: 100,
+    radius: 50,
+    fill: 'transparent',
+    stroke: color,
+    strokeWidth: 2,
+    selectable: true,
+    hasControls: true
+  });
+  
+  canvas.add(circle);
+  // Force the control points to be positioned correctly
+  circle.setCoords();
+  canvas.setActiveObject(circle);
+  canvas.renderAll();
+};
+
+export const addRectangle = (canvas: Canvas, color: string) => {
+  if (!canvas) return;
+  
+  const rect = new Rect({
+    left: 100,
+    top: 100,
+    width: 100,
+    height: 80,
+    fill: 'transparent',
+    stroke: color,
+    strokeWidth: 2,
+    selectable: true,
+    hasControls: true
+  });
+  
+  canvas.add(rect);
+  // Force the control points to be positioned correctly
+  rect.setCoords();
+  canvas.setActiveObject(rect);
+  canvas.renderAll();
+};
+
+export const addLine = (canvas: Canvas, color: string) => {
+  if (!canvas) return;
+  
+  const line = new Line([50, 50, 200, 50], {
+    stroke: color,
+    strokeWidth: 2,
+    selectable: true,
+    hasControls: true
+  });
+  
+  canvas.add(line);
+  // Force the control points to be positioned correctly
+  line.setCoords();
+  canvas.setActiveObject(line);
+  canvas.renderAll();
+};
+
+export const addText = (canvas: Canvas, text: string, color: string) => {
+  if (!canvas) return;
+  
+  const textObj = new Text(text, {
+    left: 100,
+    top: 100,
+    fill: color,
+    fontSize: 20,
+    fontFamily: 'Arial',
+    selectable: true,
+    hasControls: true
+  });
+  
+  canvas.add(textObj);
+  // Force the control points to be positioned correctly
+  textObj.setCoords();
+  canvas.setActiveObject(textObj);
+  canvas.renderAll();
+};
+
+export const addDateField = (canvas: Canvas, color: string) => {
+  if (!canvas) return;
+  
+  const currentDate = new Date().toLocaleDateString();
+  const dateField = new Text(currentDate, {
+    left: 100,
+    top: 100,
+    fill: color,
+    fontSize: 16,
+    fontFamily: 'Arial',
+    selectable: true,
+    hasControls: true,
+    data: { isDateField: true }
+  });
+  
+  canvas.add(dateField);
+  // Force the control points to be positioned correctly
+  dateField.setCoords();
+  canvas.setActiveObject(dateField);
+  canvas.renderAll();
+};
+
+export const addCheckbox = (canvas: Canvas, color: string, checked: boolean = false) => {
+  if (!canvas) return;
+  
+  // Create a group for checkbox consisting of a square and optional checkmark
+  const boxSize = 20;
+  
+  // Create the checkbox square
+  const box = new Rect({
+    width: boxSize,
+    height: boxSize,
+    fill: 'transparent',
+    stroke: color,
+    strokeWidth: 2,
+    selectable: true,
+    hasControls: true
+  });
+  
+  // If checked, add a checkmark
+  if (checked) {
+    // Simple checkmark using a line
+    const checkmark1 = new Line([5, 10, 10, 15], {
+      stroke: color,
+      strokeWidth: 2
+    });
+    
+    const checkmark2 = new Line([10, 15, 15, 5], {
+      stroke: color,
+      strokeWidth: 2
+    });
+    
+    // Add both elements to canvas
+    canvas.add(box);
+    canvas.add(checkmark1);
+    canvas.add(checkmark2);
+    
+    // Position them together
+    checkmark1.setCoords();
+    checkmark2.setCoords();
+  } else {
+    // Just add the empty box
+    canvas.add(box);
+  }
+  
+  // Force the control points to be positioned correctly
+  box.setCoords();
+  canvas.setActiveObject(box);
+  canvas.renderAll();
+};
+
+export const rotateObject = (canvas: Canvas, angle: number) => {
+  if (!canvas) return;
+  
+  const activeObject = canvas.getActiveObject();
+  if (!activeObject) return;
+  
+  // Get current angle and add the rotation
+  const currentAngle = activeObject.angle || 0;
+  activeObject.rotate((currentAngle + angle) % 360);
+  
+  // Force the control points to be positioned correctly
+  activeObject.setCoords();
   canvas.renderAll();
 };
