@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -17,10 +16,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import PharmacyTeam from "@/components/pharmacy/PharmacyTeam";
 import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
-import PharmacyMap from "@/components/pharmacy/PharmacyInfo";
-import PharmacyInfo from "@/components/pharmacy/PharmacyStaff";
-// Fixing the import for PharmacyHours
+import PharmacyMap from "@/components/pharmacy/PharmacyMap";
+import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import PharmacyHours from "@/components/pharmacy/PharmacyHours";
+import { getOTPEmail } from "@/utils/auth";
 
 interface ProfessionalData {
   id: string;
@@ -445,7 +444,6 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
                     </DropdownMenu>
                   </CardHeader>
                   <CardContent>
-                    {/* Fixed: Changed pharmacy to pharmacyId */}
                     <PharmacyInfo pharmacyId={professionalData.id} />
                   </CardContent>
                 </Card>
@@ -476,7 +474,6 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
                     </DropdownMenu>
                   </CardHeader>
                   <CardContent>
-                    {/* Fixed: Now using the properly imported PharmacyHours component */}
                     <PharmacyHours hours={professionalData.hours} pharmacyId={professionalData.id} />
                   </CardContent>
                 </Card>
@@ -510,7 +507,6 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           
           <TabsContent value="staff" className="mt-6">
             <div className="container mx-auto px-4">
-              {/* Fixed: Removed entityType prop since it doesn't exist on PharmacyStaff interface */}
               <PharmacyStaff 
                 pharmacyId={professionalData.id}
               />
