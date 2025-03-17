@@ -162,7 +162,7 @@ export const ensureWhiteBackground = (canvas: FabricCanvas) => {
   canvas.renderAll();
   
   // For older browsers, also set the lower-level canvas background
-  const ctx = canvas.getElement().getContext('2d');
+  const ctx = canvas.getElement()?.getContext('2d');
   if (ctx) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());

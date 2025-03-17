@@ -18,23 +18,31 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
 
   // Ensure brush settings are properly applied whenever relevant props change
   useEffect(() => {
-    if (canvas && canvas.freeDrawingBrush) {
-      canvas.freeDrawingBrush.color = penColor;
-      canvas.freeDrawingBrush.width = brushSize;
-      
-      // Make sure objects created are visible and interactive
-      canvas.freeDrawingBrush.shadow = null;
-      canvas.freeDrawingBrush.strokeLineCap = 'round';
-      canvas.freeDrawingBrush.strokeLineJoin = 'round';
+    if (!canvas) return;
+    
+    try {
+      if (canvas.freeDrawingBrush) {
+        canvas.freeDrawingBrush.color = penColor;
+        canvas.freeDrawingBrush.width = brushSize;
+        
+        // Make sure objects created are visible and interactive
+        canvas.freeDrawingBrush.shadow = null;
+        canvas.freeDrawingBrush.strokeLineCap = 'round';
+        canvas.freeDrawingBrush.strokeLineJoin = 'round';
 
-      // Force a render to ensure settings are applied
-      canvas.renderAll();
+        // Force a render to ensure settings are applied
+        canvas.renderAll();
+      }
+    } catch (error) {
+      console.error("Error applying brush settings:", error);
     }
   }, [canvas, penColor, brushSize]);
 
   // Apply drawing mode state when it changes
   useEffect(() => {
-    if (canvas) {
+    if (!canvas) return;
+    
+    try {
       // Update canvas drawing mode
       canvas.isDrawingMode = isDrawMode;
       
@@ -48,7 +56,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         const canvasElement = canvas.getElement();
         if (canvasElement) {
           canvasElement.style.position = 'absolute'; // Absolute positioning
-          canvasElement.style.zIndex = '500'; // Higher z-index
+          canvasElement.style.zIndex = '9999'; // Higher z-index
           canvasElement.style.cursor = penCursor;
           canvasElement.style.top = '0';
           canvasElement.style.left = '0';
@@ -56,7 +64,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
           canvasElement.style.height = '100%';
           
           // Force cursor by adding an inline style
-          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important');
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
         }
         
         // Reapply brush settings when entering drawing mode
@@ -87,6 +95,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
           }
         }
       }, 100);
+    } catch (error) {
+      console.error("Error updating drawing mode:", error);
     }
   }, [canvas, isDrawMode, penColor, brushSize, penCursor]);
 
@@ -94,96 +104,112 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
   const toggleDrawMode = () => {
     if (!canvas) return;
     
-    const newMode = !isDrawMode;
-    setIsDrawMode(newMode);
-    
-    // Update canvas drawing mode
-    canvas.isDrawingMode = newMode;
-    
-    if (newMode) {
-      // Set cursor for drawing mode
-      canvas.freeDrawingCursor = penCursor;
-      canvas.hoverCursor = penCursor;
+    try {
+      const newMode = !isDrawMode;
+      setIsDrawMode(newMode);
       
-      // Apply directly to the HTML element for immediate visibility
-      const canvasElement = canvas.getElement();
-      if (canvasElement) {
-        canvasElement.style.position = 'absolute';
-        canvasElement.style.zIndex = '500';
-        canvasElement.style.cursor = penCursor;
-        canvasElement.style.top = '0';
-        canvasElement.style.left = '0';
-        canvasElement.style.width = '100%';
-        canvasElement.style.height = '100%';
+      // Update canvas drawing mode
+      canvas.isDrawingMode = newMode;
+      
+      if (newMode) {
+        // Set cursor for drawing mode
+        canvas.freeDrawingCursor = penCursor;
+        canvas.hoverCursor = penCursor;
         
-        // Force cursor by adding !important
-        canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important');
-      }
-      
-      // Ensure brush settings are applied
-      if (canvas.freeDrawingBrush) {
-        canvas.freeDrawingBrush.color = penColor;
-        canvas.freeDrawingBrush.width = brushSize;
-      }
-      
-      setSelectedTool('draw');
-      
-      // Force cursor update with a delay
-      setTimeout(() => {
-        if (canvas) {
+        // Apply directly to the HTML element for immediate visibility
+        const canvasElement = canvas.getElement();
+        if (canvasElement) {
+          canvasElement.style.position = 'absolute';
+          canvasElement.style.zIndex = '9999';
+          canvasElement.style.cursor = penCursor;
+          canvasElement.style.top = '0';
+          canvasElement.style.left = '0';
+          canvasElement.style.width = '100%';
+          canvasElement.style.height = '100%';
+          
+          // Force cursor by adding !important
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
+        }
+        
+        // Ensure brush settings are applied
+        if (canvas.freeDrawingBrush) {
+          canvas.freeDrawingBrush.color = penColor;
+          canvas.freeDrawingBrush.width = brushSize;
+        }
+        
+        setSelectedTool('draw');
+        
+        // Force cursor update with a delay
+        setTimeout(() => {
+          if (!canvas) return;
+          
           const canvasElement = canvas.getElement();
           if (canvasElement) {
             canvasElement.style.cursor = penCursor;
           }
+        }, 100);
+      } else {
+        // Reset to default cursor for selection mode
+        canvas.defaultCursor = 'default';
+        canvas.hoverCursor = 'default';
+        
+        // Apply to HTML element
+        const canvasElement = canvas.getElement();
+        if (canvasElement) {
+          canvasElement.style.cursor = 'default';
         }
-      }, 100);
-    } else {
-      // Reset to default cursor for selection mode
-      canvas.defaultCursor = 'default';
-      canvas.hoverCursor = 'default';
-      
-      // Apply to HTML element
-      const canvasElement = canvas.getElement();
-      if (canvasElement) {
-        canvasElement.style.cursor = 'default';
+        
+        setSelectedTool('select');
       }
-      
-      setSelectedTool('select');
-    }
 
-    // Force a render to ensure cursor and mode changes take effect
-    canvas.renderAll();
-
-    // Always ensure background is white regardless of mode change
-    if (canvas) {
-      canvas.backgroundColor = '#ffffff';
+      // Force a render to ensure cursor and mode changes take effect
       canvas.renderAll();
+
+      // Always ensure background is white regardless of mode change
+      if (canvas) {
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+      }
+    } catch (error) {
+      console.error("Error toggling draw mode:", error);
     }
   };
 
   // Handle color change
   const handleColorChange = (color: string) => {
     setPenColor(color);
-    if (canvas && canvas.freeDrawingBrush) {
-      canvas.freeDrawingBrush.color = color;
-      // Force a render after changing brush color
-      canvas.renderAll();
-    }
+    if (!canvas) return;
     
-    // Ensure background stays white when changing colors
-    if (canvas) {
-      canvas.backgroundColor = '#ffffff';
-      canvas.renderAll();
+    try {
+      if (canvas.freeDrawingBrush) {
+        canvas.freeDrawingBrush.color = color;
+        // Force a render after changing brush color
+        canvas.renderAll();
+      }
+      
+      // Ensure background stays white when changing colors
+      if (canvas) {
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+      }
+    } catch (error) {
+      console.error("Error changing brush color:", error);
     }
   };
 
   // Handle brush size change
   const handleBrushSizeChange = (size: number) => {
     setBrushSize(size);
-    if (canvas && canvas.freeDrawingBrush) {
-      changeBrushSizeUtil(canvas, size);
-      // Force a render after changing brush size
-      canvas.renderAll();
+    if (!canvas) return;
+    
+    try {
+      if (canvas.freeDrawingBrush) {
+        changeBrushSizeUtil(canvas, size);
+        // Force a render after changing brush size
+        canvas.renderAll();
+      }
+    } catch (error) {
+      console.error("Error changing brush size:", error);
     }
   };
 
@@ -205,7 +231,11 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
 const changeBrushSizeUtil = (canvas: FabricCanvas, size: number) => {
   if (!canvas || !canvas.freeDrawingBrush) return;
   
-  canvas.freeDrawingBrush.width = size;
-  // Force a render after changing brush size
-  canvas.renderAll();
+  try {
+    canvas.freeDrawingBrush.width = size;
+    // Force a render after changing brush size
+    canvas.renderAll();
+  } catch (error) {
+    console.error("Error in changeBrushSizeUtil:", error);
+  }
 };
