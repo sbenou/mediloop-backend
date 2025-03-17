@@ -11,31 +11,64 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
   // Force white background on mount
   useEffect(() => {
     if (!initialized.current && canvasRef.current) {
-      // Set initial white background using direct DOM manipulation
-      const canvasElement = canvasRef.current.querySelector('canvas');
-      if (canvasElement) {
-        const ctx = canvasElement.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+      try {
+        // Set initial white background using direct DOM manipulation
+        const canvasElement = canvasRef.current.querySelector('canvas');
+        if (canvasElement) {
+          const ctx = canvasElement.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+          }
+          
+          // Ensure canvas is properly positioned for cursor visibility
+          if (canvasElement.style) {
+            canvasElement.style.position = 'absolute !important'; // Force absolute positioning
+            canvasElement.style.zIndex = '9999999 !important'; // Extremely high z-index
+            canvasElement.style.pointerEvents = 'auto !important'; // Force pointer events
+            canvasElement.style.top = '0';
+            canvasElement.style.left = '0';
+            canvasElement.style.width = '100%';
+            canvasElement.style.height = '100%';
+            canvasElement.style.cursor = 'crosshair !important'; // Force cursor
+            
+            // Apply styles directly to the DOM element
+            canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' pointer-events: auto !important; z-index: 9999999 !important; cursor: crosshair !important;');
+          }
         }
         
-        // Ensure canvas is properly positioned for cursor visibility
-        if (canvasElement.style) {
-          canvasElement.style.position = 'absolute'; // Change to absolute positioning
-          canvasElement.style.zIndex = '999999'; // Significantly higher z-index
-          canvasElement.style.pointerEvents = 'auto'; // Ensure it captures mouse events
-          canvasElement.style.top = '0';
-          canvasElement.style.left = '0';
-          canvasElement.style.width = '100%';
-          canvasElement.style.height = '100%';
-          
-          // Force cursor to be visible with important flag
-          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' pointer-events: auto !important; z-index: 999999 !important;');
+        // Add a global CSS rule for canvas elements to ensure visibility
+        const styleSheet = document.createElement('style');
+        styleSheet.id = 'canvas-visibility-fix';
+        styleSheet.textContent = `
+          canvas {
+            position: absolute !important;
+            z-index: 9999999 !important;
+            pointer-events: auto !important;
+            cursor: crosshair !important;
+          }
+        `;
+        if (!document.getElementById('canvas-visibility-fix')) {
+          document.head.appendChild(styleSheet);
         }
+        
+        initialized.current = true;
+      } catch (error) {
+        console.error('Error initializing canvas:', error);
       }
-      initialized.current = true;
     }
+    
+    return () => {
+      // Cleanup global styles when component unmounts
+      try {
+        const styleElement = document.getElementById('canvas-visibility-fix');
+        if (styleElement) {
+          styleElement.remove();
+        }
+      } catch (error) {
+        console.error('Error cleaning up canvas styles:', error);
+      }
+    };
   }, [canvasRef]);
 
   return (

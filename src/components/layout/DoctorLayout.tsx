@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import DoctorSidebar from "@/components/sidebar/DoctorSidebar";
@@ -20,16 +20,31 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const redirectAttempted = useRef(false);
 
   useEffect(() => {
-    // Check if user is authenticated
-    if (!isLoading && !isAuthenticated) {
-      navigate("/login", { replace: true });
-    }
+    // Only perform the check when loading is complete
+    if (!isLoading) {
+      console.log("DoctorLayout: Auth check - isAuthenticated:", isAuthenticated, "profile:", profile);
+      
+      // Check if user is authenticated
+      if (!isAuthenticated) {
+        if (!redirectAttempted.current) {
+          console.log("DoctorLayout: User not authenticated, redirecting to login");
+          redirectAttempted.current = true;
+          navigate("/login", { replace: true });
+        }
+        return;
+      }
 
-    // Check if user has the doctor role
-    if (!isLoading && isAuthenticated && profile && profile.role !== "doctor") {
-      navigate("/dashboard", { replace: true });
+      // Check if user has the doctor role, but only if profile exists
+      if (isAuthenticated && profile && profile.role !== "doctor") {
+        if (!redirectAttempted.current) {
+          console.log("DoctorLayout: User is not a doctor, redirecting to dashboard");
+          redirectAttempted.current = true;
+          navigate("/dashboard", { replace: true });
+        }
+      }
     }
 
     // Handle window resize for mobile detection
@@ -46,6 +61,15 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // If not authenticated or not a doctor, don't render anything until redirect happens
+  if (!isAuthenticated || (profile && profile.role !== "doctor")) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Checking permissions...</p>
       </div>
     );
   }

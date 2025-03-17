@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
@@ -20,16 +20,31 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const redirectAttempted = useRef(false);
 
   useEffect(() => {
-    // Check if user is authenticated
-    if (!isLoading && !isAuthenticated) {
-      navigate("/login", { replace: true });
-    }
+    // Only perform the check when loading is complete and not during initial load
+    if (!isLoading) {
+      console.log("PharmacistLayout: Auth check - isAuthenticated:", isAuthenticated, "profile:", profile);
+      
+      // Check if user is authenticated
+      if (!isAuthenticated) {
+        if (!redirectAttempted.current) {
+          console.log("PharmacistLayout: User not authenticated, redirecting to login");
+          redirectAttempted.current = true;
+          navigate("/login", { replace: true });
+        }
+        return;
+      }
 
-    // Check if user has the pharmacist role
-    if (!isLoading && isAuthenticated && profile && profile.role !== "pharmacist") {
-      navigate("/dashboard", { replace: true });
+      // Check if user has the pharmacist role, but only if profile exists
+      if (isAuthenticated && profile && profile.role !== "pharmacist") {
+        if (!redirectAttempted.current) {
+          console.log("PharmacistLayout: User is not a pharmacist, redirecting to dashboard");
+          redirectAttempted.current = true;
+          navigate("/dashboard", { replace: true });
+        }
+      }
     }
 
     // Handle window resize for mobile detection
@@ -46,6 +61,15 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // If not authenticated or not a pharmacist, don't render anything until redirect happens
+  if (!isAuthenticated || (profile && profile.role !== "pharmacist")) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Checking permissions...</p>
       </div>
     );
   }
