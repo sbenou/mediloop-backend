@@ -50,88 +50,86 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
       console.log('File type:', optimizedFile.type);
       console.log('File size:', optimizedFile.size);
       
-      // Create the bucket if it doesn't exist
-      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucketName);
-      console.log('Bucket check result:', bucketData, bucketError);
-      
-      if (bucketError) {
-        console.log('Creating bucket:', bucketName);
-        const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
-          public: true,
-          fileSizeLimit: 5242880 // 5MB
-        });
+      // Create the bucket if it doesn't exist (with better error handling)
+      try {
+        const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucketName);
+        console.log('Bucket check result:', bucketData, bucketError);
         
-        if (createBucketError) {
-          // If bucket already exists, ignore the error
-          if (!createBucketError.message.includes('already exists')) {
+        if (bucketError && bucketError.message.includes('not found')) {
+          console.log('Creating bucket:', bucketName);
+          const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
+            public: true,
+            fileSizeLimit: 5242880 // 5MB
+          });
+          
+          if (createBucketError && !createBucketError.message.includes('already exists')) {
             console.error('Error creating bucket:', createBucketError);
             throw createBucketError;
           }
         }
-      }
-      
-      // Add policy directly via updateBucket if it doesn't exist
-      try {
-        console.log('Updating bucket settings for', bucketName);
-        const { error } = await supabase.storage.updateBucket(bucketName, {
-          public: true,
-          fileSizeLimit: 5242880, // 5MB limit
-        });
-        
-        if (error) {
-          console.log('Could not update bucket settings:', error);
-        }
       } catch (error) {
-        console.log('Error updating bucket settings:', error);
+        console.error('Bucket operation error:', error);
+        // Continue anyway as the bucket might still exist or be created automatically
       }
       
-      console.log('Uploading file to storage...');
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, optimizedFile, {
-          upsert: true,
-          contentType: 'image/jpeg'
+      // Make sure the file is treated as an image
+      const contentType = 'image/jpeg';
+      
+      try {
+        console.log('Uploading file to storage...');
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from(bucketName)
+          .upload(filePath, optimizedFile, {
+            upsert: true,
+            contentType: contentType
+          });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw uploadError;
+        }
+        
+        console.log('Upload successful, getting public URL');
+
+        const { data: urlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(filePath);
+
+        console.log('Public URL:', urlData.publicUrl);
+        
+        // Add cache-busting query parameter to force reload
+        const publicUrlWithCacheBust = `${urlData.publicUrl}?t=${Date.now()}`;
+        
+        const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'avatar_url';
+        
+        console.log(`Updating profile with ${fieldToUpdate}:`, publicUrlWithCacheBust);
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ [fieldToUpdate]: publicUrlWithCacheBust })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
+          throw updateError;
+        }
+
+        // Set the local avatar URL for immediate display
+        setLocalAvatarUrl(publicUrlWithCacheBust);
+        
+        // Update the UI through the parent component
+        onAvatarUpdate(publicUrlWithCacheBust);
+        
+        // Invalidate the profile query to refresh the data
+        await queryClient.invalidateQueries({ queryKey: ['profile'] });
+
+        toast({
+          title: "Success",
+          description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : 'Avatar'} updated successfully`,
         });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
+      } catch (uploadErr) {
+        console.error('File upload error:', uploadErr);
+        throw new Error(`Error uploading file: ${uploadErr.message}`);
       }
-      
-      console.log('Upload successful, getting public URL');
-
-      const { data: urlData } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(filePath);
-
-      console.log('Public URL:', urlData.publicUrl);
-      
-      const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'avatar_url';
-      
-      console.log(`Updating profile with ${fieldToUpdate}:`, urlData.publicUrl);
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ [fieldToUpdate]: urlData.publicUrl })
-        .eq('id', userId);
-
-      if (updateError) {
-        console.error('Error updating profile:', updateError);
-        throw updateError;
-      }
-
-      // Set the local avatar URL for immediate display
-      setLocalAvatarUrl(urlData.publicUrl);
-      
-      // Update the UI through the parent component
-      onAvatarUpdate(urlData.publicUrl);
-      
-      // Invalidate the profile query to refresh the data
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
-
-      toast({
-        title: "Success",
-        description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : 'Avatar'} updated successfully`,
-      });
     } catch (error: any) {
       console.error('Error uploading image:', error);
       toast({
@@ -203,7 +201,8 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
     if (file) {
       console.log('File selected:', file.name, file.type, file.size);
       // Show a temporary preview before uploading
-      setLocalAvatarUrl(URL.createObjectURL(file));
+      const localObjectUrl = URL.createObjectURL(file);
+      setLocalAvatarUrl(localObjectUrl);
       await uploadAvatar(file);
     }
   };
@@ -233,7 +232,7 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <Avatar className="h-24 w-24">
-          <AvatarImage src={displayAvatarUrl || undefined} alt="Profile" />
+          <AvatarImage src={displayAvatarUrl || undefined} alt="Profile" crossOrigin="anonymous" />
           <AvatarFallback className="bg-primary/10">
             <User className="h-12 w-12 text-primary" />
           </AvatarFallback>

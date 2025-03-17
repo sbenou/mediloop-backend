@@ -53,18 +53,22 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         canvas.hoverCursor = penCursor;
         
         // Apply directly to the HTML element to ensure cursor visibility
-        const canvasElement = canvas.getElement();
-        if (canvasElement) {
-          canvasElement.style.position = 'absolute'; // Absolute positioning
-          canvasElement.style.zIndex = '99999'; // Higher z-index
-          canvasElement.style.cursor = penCursor;
-          canvasElement.style.top = '0';
-          canvasElement.style.left = '0';
-          canvasElement.style.width = '100%';
-          canvasElement.style.height = '100%';
-          
-          // Force cursor by adding an inline style with !important
-          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
+        try {
+          const canvasElement = canvas.getElement();
+          if (canvasElement) {
+            canvasElement.style.position = 'absolute'; // Absolute positioning
+            canvasElement.style.zIndex = '999999'; // Higher z-index
+            canvasElement.style.cursor = penCursor;
+            canvasElement.style.top = '0';
+            canvasElement.style.left = '0';
+            canvasElement.style.width = '100%';
+            canvasElement.style.height = '100%';
+            
+            // Force cursor by adding an inline style with !important
+            canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 999999 !important;');
+          }
+        } catch (elemError) {
+          console.error("Error getting canvas element:", elemError);
         }
         
         // Reapply brush settings when entering drawing mode
@@ -77,9 +81,13 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         canvas.defaultCursor = 'default';
         canvas.hoverCursor = 'default';
         
-        const canvasElement = canvas.getElement();
-        if (canvasElement) {
-          canvasElement.style.cursor = 'default';
+        try {
+          const canvasElement = canvas.getElement();
+          if (canvasElement) {
+            canvasElement.style.cursor = 'default';
+          }
+        } catch (elemError) {
+          console.error("Error getting canvas element:", elemError);
         }
       }
       
@@ -90,10 +98,14 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       setTimeout(() => {
         try {
           if (canvas && isDrawMode) {
-            const canvasElement = canvas.getElement();
-            if (canvasElement) {
-              canvasElement.style.cursor = penCursor;
-              canvasElement.style.zIndex = '99999'; // Higher z-index
+            try {
+              const canvasElement = canvas.getElement();
+              if (canvasElement) {
+                canvasElement.style.cursor = penCursor;
+                canvasElement.style.zIndex = '999999'; // Higher z-index
+              }
+            } catch (elemError) {
+              console.error("Error getting canvas element in delayed update:", elemError);
             }
           }
         } catch (e) {
@@ -108,9 +120,17 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
   // Cleanup effect - important to prevent errors on logout
   useEffect(() => {
     return () => {
-      // No canvas operations on cleanup to prevent errors
+      // Safely handle cleanup without trying to access canvas which might not exist anymore
+      try {
+        if (canvas) {
+          // Remove any event listeners that might cause errors on unmount
+          canvas.off();
+        }
+      } catch (error) {
+        console.error("Error in canvas cleanup:", error);
+      }
     };
-  }, []);
+  }, [canvas]);
 
   // Toggle drawing mode
   const toggleDrawMode = () => {
@@ -129,18 +149,22 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         canvas.hoverCursor = penCursor;
         
         // Apply directly to the HTML element for immediate visibility
-        const canvasElement = canvas.getElement();
-        if (canvasElement) {
-          canvasElement.style.position = 'absolute';
-          canvasElement.style.zIndex = '99999';
-          canvasElement.style.cursor = penCursor;
-          canvasElement.style.top = '0';
-          canvasElement.style.left = '0';
-          canvasElement.style.width = '100%';
-          canvasElement.style.height = '100%';
-          
-          // Force cursor by adding !important
-          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
+        try {
+          const canvasElement = canvas.getElement();
+          if (canvasElement) {
+            canvasElement.style.position = 'absolute';
+            canvasElement.style.zIndex = '999999';
+            canvasElement.style.cursor = penCursor;
+            canvasElement.style.top = '0';
+            canvasElement.style.left = '0';
+            canvasElement.style.width = '100%';
+            canvasElement.style.height = '100%';
+            
+            // Force cursor by adding !important
+            canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 999999 !important;');
+          }
+        } catch (elemError) {
+          console.error("Error getting canvas element in toggleDrawMode:", elemError);
         }
         
         // Ensure brush settings are applied
@@ -156,10 +180,14 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
           try {
             if (!canvas) return;
             
-            const canvasElement = canvas.getElement();
-            if (canvasElement) {
-              canvasElement.style.cursor = penCursor;
-              canvasElement.style.zIndex = '99999';
+            try {
+              const canvasElement = canvas.getElement();
+              if (canvasElement) {
+                canvasElement.style.cursor = penCursor;
+                canvasElement.style.zIndex = '999999';
+              }
+            } catch (elemError) {
+              console.error("Error getting canvas element in delayed toggle update:", elemError);
             }
           } catch (e) {
             console.error("Delayed toggle cursor update error:", e);
@@ -171,9 +199,13 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         canvas.hoverCursor = 'default';
         
         // Apply to HTML element
-        const canvasElement = canvas.getElement();
-        if (canvasElement) {
-          canvasElement.style.cursor = 'default';
+        try {
+          const canvasElement = canvas.getElement();
+          if (canvasElement) {
+            canvasElement.style.cursor = 'default';
+          }
+        } catch (elemError) {
+          console.error("Error getting canvas element when resetting cursor:", elemError);
         }
         
         setSelectedTool('select');

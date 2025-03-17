@@ -36,7 +36,7 @@ export const initializeCanvas = (
   
   // Set canvas element styles for better cursor handling
   canvasElement.style.position = 'absolute'; // Absolute positioning
-  canvasElement.style.zIndex = '99999'; // Extremely high z-index for visibility
+  canvasElement.style.zIndex = '999999'; // Extremely high z-index
   canvasElement.style.pointerEvents = 'auto'; // Ensure it captures mouse events
   canvasElement.style.top = '0';
   canvasElement.style.left = '0';
@@ -73,7 +73,7 @@ export const initializeCanvas = (
       try {
         if (canvas.isDrawingMode) {
           canvasElement.style.cursor = penCursor;
-          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 999999 !important;');
         } else {
           canvasElement.style.cursor = 'default';
         }
@@ -90,8 +90,8 @@ export const initializeCanvas = (
       try {
         if (canvasElement && canvas.isDrawingMode) {
           canvasElement.style.cursor = penCursor;
-          canvasElement.style.zIndex = '99999'; // Even higher z-index
-          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
+          canvasElement.style.zIndex = '999999'; // Even higher z-index
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 999999 !important;');
         }
       } catch (e) {
         console.error('Cursor update error:', e);
@@ -110,7 +110,7 @@ export const initializeCanvas = (
       style.innerHTML = `
         canvas.upper-canvas {
           cursor: ${canvas.isDrawingMode ? penCursor : 'default'} !important;
-          z-index: 99999 !important;
+          z-index: 999999 !important;
           position: absolute !important;
         }
       `;
@@ -128,6 +128,19 @@ export const initializeCanvas = (
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
   }
+
+  // Fix for control points misalignment - ensure proper object controls
+  canvas.on('object:added', (e) => {
+    try {
+      const obj = e.target;
+      if (obj && obj.setControlsVisibility) {
+        obj.setCoords(); // Force recalculation of coordinates
+        canvas.renderAll();
+      }
+    } catch (err) {
+      console.error('Error setting object controls:', err);
+    }
+  });
 
   // Setup window resize handler
   const handleResize = () => {
@@ -149,9 +162,9 @@ export const initializeCanvas = (
         // Also re-enforce cursor and z-index after resize
         const canvasEl = canvas.getElement();
         if (canvasEl && canvas.isDrawingMode) {
-          canvasEl.style.zIndex = '99999';
+          canvasEl.style.zIndex = '999999';
           canvasEl.style.cursor = penCursor;
-          canvasEl.setAttribute('style', canvasEl.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 99999 !important;');
+          canvasEl.setAttribute('style', canvasEl.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 999999 !important;');
         }
       }
     } catch (e) {
@@ -165,8 +178,11 @@ export const initializeCanvas = (
   const cleanup = () => {
     window.removeEventListener('resize', handleResize);
     try {
-      canvas.off('mouse:over');
-      canvas.dispose();
+      if (canvas) {
+        canvas.off('mouse:over');
+        canvas.off('object:added');
+        canvas.dispose();
+      }
     } catch (e) {
       console.error('Canvas cleanup error:', e);
     }
@@ -181,8 +197,8 @@ export const initializeCanvas = (
       
       // Also ensure z-index is high after initial setup
       if (canvasElement) {
-        canvasElement.style.zIndex = '99999';
-        canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' z-index: 99999 !important;');
+        canvasElement.style.zIndex = '999999';
+        canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' z-index: 999999 !important;');
       }
     } catch (e) {
       console.error('Delayed canvas setup error:', e);

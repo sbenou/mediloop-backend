@@ -1,3 +1,4 @@
+
 import { Canvas as FabricCanvas, Circle, Rect, Text, Line, Path, Group } from "fabric";
 import { saveCanvasState } from "./canvasHistory";
 
@@ -18,6 +19,9 @@ export const addCircle = (canvas: FabricCanvas, penColor: string) => {
   
   canvas.add(circle);
   canvas.setActiveObject(circle);
+  
+  // Force calculation of control points
+  circle.setCoords();
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -40,6 +44,9 @@ export const addRectangle = (canvas: FabricCanvas, penColor: string) => {
   
   canvas.add(rect);
   canvas.setActiveObject(rect);
+  
+  // Force calculation of control points
+  rect.setCoords();
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -59,6 +66,9 @@ export const addLine = (canvas: FabricCanvas, penColor: string) => {
   
   canvas.add(line);
   canvas.setActiveObject(line);
+  
+  // Force calculation of control points
+  line.setCoords();
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -78,6 +88,9 @@ export const addText = (canvas: FabricCanvas, text: string, penColor: string) =>
   
   canvas.add(textSample);
   canvas.setActiveObject(textSample);
+  
+  // Force calculation of control points
+  textSample.setCoords();
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -88,6 +101,9 @@ export const rotateObject = (canvas: FabricCanvas, angle: number) => {
   
   const activeObject = canvas.getActiveObject();
   activeObject.rotate((activeObject.angle || 0) + angle);
+  
+  // Force calculation of control points after rotation
+  activeObject.setCoords();
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -112,6 +128,9 @@ export const addDateField = (canvas: FabricCanvas, penColor: string) => {
   
   canvas.add(dateText);
   canvas.setActiveObject(dateText);
+  
+  // Force calculation of control points
+  dateText.setCoords();
   canvas.renderAll();
   saveCanvasState(canvas);
 };
@@ -160,8 +179,10 @@ export const addCheckbox = (canvas: FabricCanvas, penColor: string, checked: boo
     });
     canvas.remove(checkboxRect, checkmark);
     canvas.add(checkboxGroup);
+    checkboxGroup.setCoords(); // Force calculation of control points
     canvas.setActiveObject(checkboxGroup);
   } else {
+    checkboxRect.setCoords(); // Force calculation of control points
     canvas.setActiveObject(checkboxRect);
   }
   
