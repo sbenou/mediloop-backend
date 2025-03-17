@@ -23,7 +23,7 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
         // Ensure canvas is properly positioned for cursor visibility
         if (canvasElement.style) {
           canvasElement.style.position = 'absolute'; // Change to absolute positioning
-          canvasElement.style.zIndex = '1000'; // Significantly higher z-index
+          canvasElement.style.zIndex = '9999'; // Significantly higher z-index
           canvasElement.style.pointerEvents = 'auto'; // Ensure it captures mouse events
           canvasElement.style.top = '0';
           canvasElement.style.left = '0';
@@ -31,7 +31,7 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
           canvasElement.style.height = '100%';
           
           // Force cursor to be visible with important flag
-          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' pointer-events: auto !important;');
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' pointer-events: auto !important; z-index: 9999 !important;');
         }
       }
       initialized.current = true;

@@ -36,7 +36,7 @@ export const initializeCanvas = (
   
   // Set canvas element styles for better cursor handling
   canvasElement.style.position = 'absolute'; // Changed to absolute
-  canvasElement.style.zIndex = '500'; // Significantly higher z-index
+  canvasElement.style.zIndex = '9999'; // Extremely high z-index for visibility
   canvasElement.style.pointerEvents = 'auto'; // Ensure it captures mouse events
   canvasElement.style.top = '0';
   canvasElement.style.left = '0';
@@ -66,12 +66,13 @@ export const initializeCanvas = (
   canvas.freeDrawingCursor = penCursor;
   canvas.hoverCursor = penCursor;
   
-  // Also apply cursor to the DOM element for better visibility
+  // Apply cursor to the DOM element for better visibility
   if (canvasElement) {
     // Add a listener to update cursor when drawing mode changes
     canvas.on('mouse:over', () => {
       if (canvas.isDrawingMode) {
         canvasElement.style.cursor = penCursor;
+        canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
       } else {
         canvasElement.style.cursor = 'default';
       }
@@ -80,10 +81,12 @@ export const initializeCanvas = (
     // Initially set cursor based on drawing mode
     canvasElement.style.cursor = canvas.isDrawingMode ? penCursor : 'default';
     
-    // Force cursor application
+    // Force cursor application with higher z-index
     const updateCursor = () => {
       if (canvas.isDrawingMode) {
         canvasElement.style.cursor = penCursor;
+        canvasElement.style.zIndex = '9999'; // Ensure high z-index
+        canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
       }
     };
     
@@ -116,6 +119,14 @@ export const initializeCanvas = (
       
       // Re-ensure white background after resize
       ensureWhiteBackground(canvas);
+      
+      // Also re-enforce cursor and z-index after resize
+      const canvasEl = canvas.getElement();
+      if (canvasEl && canvas.isDrawingMode) {
+        canvasEl.style.zIndex = '9999';
+        canvasEl.style.cursor = penCursor;
+        canvasEl.setAttribute('style', canvasEl.getAttribute('style') + ' cursor: ' + penCursor + ' !important; z-index: 9999 !important;');
+      }
     }
   };
 
@@ -129,7 +140,15 @@ export const initializeCanvas = (
   };
   
   // One more explicit white background enforcement after short delay
-  setTimeout(() => ensureWhiteBackground(canvas), 100);
+  setTimeout(() => {
+    ensureWhiteBackground(canvas);
+    
+    // Also ensure z-index is high after initial setup
+    if (canvasElement) {
+      canvasElement.style.zIndex = '9999';
+      canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' z-index: 9999 !important;');
+    }
+  }, 100);
   
   return canvas;
 };
