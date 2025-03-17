@@ -23,7 +23,7 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
         // Ensure canvas is properly positioned for cursor visibility
         if (canvasElement.style) {
           canvasElement.style.position = 'relative';
-          canvasElement.style.zIndex = '10';
+          canvasElement.style.zIndex = '20'; // Increased z-index for better visibility
         }
       }
       initialized.current = true;
