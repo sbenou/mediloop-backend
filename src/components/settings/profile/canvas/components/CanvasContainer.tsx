@@ -19,6 +19,12 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
         }
+        
+        // Ensure canvas is properly positioned for cursor visibility
+        if (canvasElement.style) {
+          canvasElement.style.position = 'relative';
+          canvasElement.style.zIndex = '10';
+        }
       }
       initialized.current = true;
     }
@@ -32,10 +38,11 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
         height: '200px',
         backgroundColor: '#ffffff', // Explicit white background
         position: 'relative', // For proper canvas positioning
+        cursor: 'inherit', // Inherit cursor from children
       }}
       data-testid="canvas-container"
     >
-      {/* Add an explicit white background layer */}
+      {/* Add an explicit white background layer with lower z-index */}
       <div 
         style={{
           position: 'absolute',
@@ -44,7 +51,7 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasRef }) => {
           right: 0,
           bottom: 0,
           backgroundColor: '#ffffff',
-          zIndex: -1
+          zIndex: 1 // Keep this below the canvas
         }}
       />
     </div>
