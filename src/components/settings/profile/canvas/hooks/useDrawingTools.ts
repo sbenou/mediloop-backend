@@ -65,8 +65,10 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     }
 
     // Always ensure background is white regardless of mode change
-    canvas.backgroundColor = '#ffffff';
-    canvas.renderAll();
+    if (canvas) {
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
+    }
   };
 
   // Handle color change
