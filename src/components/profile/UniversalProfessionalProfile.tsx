@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -30,6 +31,7 @@ interface ProfessionalData {
   phone: string | null;
   hours: string | null;
   logo_url?: string | null;
+  email?: string | null;
 }
 
 interface UniversalProfessionalProfileProps {
@@ -444,7 +446,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
                     </DropdownMenu>
                   </CardHeader>
                   <CardContent>
-                    <PharmacyInfo pharmacyId={professionalData.id} />
+                    <PharmacyInfo pharmacy={professionalData} />
                   </CardContent>
                 </Card>
 
