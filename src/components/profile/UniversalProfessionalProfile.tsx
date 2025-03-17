@@ -190,27 +190,31 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       console.log("File type:", file.type);
       console.log("File size:", file.size);
       
-      // Mock successful upload for doctor since the bucket might not exist yet
-      if (userRole === 'doctor') {
-        setTimeout(() => {
-          const mockUrl = "https://example.com/mock-doctor-image.png";
-          setProfessionalData({
-            ...professionalData,
-            logo_url: mockUrl
+      // Ensure the bucket exists
+      try {
+        const { error: bucketError } = await supabase.storage.getBucket(storageBucket);
+        if (bucketError && bucketError.message.includes('not found')) {
+          console.log(`${storageBucket} bucket not found, creating it...`);
+          const { error: createBucketError } = await supabase.storage.createBucket(storageBucket, {
+            public: true,
+            fileSizeLimit: 5242880, // 5MB
+            allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp']
           });
           
-          toast({
-            title: "Success",
-            description: `Doctor image uploaded successfully (mock)`,
-          });
-          setIsUploading(false);
-        }, 1000);
-        return;
+          if (createBucketError) {
+            console.error(`Error creating ${storageBucket} bucket:`, createBucketError);
+            throw new Error(`Failed to create storage bucket: ${createBucketError.message}`);
+          }
+          console.log(`${storageBucket} bucket created successfully`);
+        }
+      } catch (bucketError) {
+        console.error('Bucket check failed:', bucketError);
+        // Continue with upload attempt
       }
       
-      // Real upload for pharmacy
+      // Real upload for all user types
       const { error: uploadError, data } = await supabase.storage
-        .from('pharmacy-images')
+        .from(storageBucket)
         .upload(filePath, file, {
           upsert: true,
           contentType: file.type
@@ -224,12 +228,12 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       console.log("Upload successful, getting public URL");
       
       const { data: { publicUrl } } = supabase.storage
-        .from('pharmacy-images')
+        .from(storageBucket)
         .getPublicUrl(filePath);
 
       console.log("Public URL obtained:", publicUrl);
       
-      // Only update metadata for pharmacies, since the doctor_metadata table doesn't exist yet
+      // Update metadata for the appropriate entity
       if (userRole === 'pharmacist') {
         const { error: metadataError } = await supabase
           .from('pharmacy_metadata')
@@ -242,8 +246,21 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           console.error('Metadata update error:', metadataError);
           throw new Error(`Metadata update failed: ${metadataError.message}`);
         }
-
         console.log(`Pharmacy metadata updated successfully`);
+      } else {
+        // For doctors, update the doctor's profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ 
+            avatar_url: publicUrl 
+          })
+          .eq('id', professionalData.id);
+          
+        if (profileError) {
+          console.error('Doctor profile update error:', profileError);
+          throw new Error(`Profile update failed: ${profileError.message}`);
+        }
+        console.log(`Doctor profile updated successfully`);
       }
 
       setProfessionalData({
@@ -253,7 +270,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
 
       toast({
         title: "Success",
-        description: `${entityType} image updated successfully`,
+        description: `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} image updated successfully`,
       });
     } catch (error) {
       console.error(`Error uploading ${entityType} image:`, error);

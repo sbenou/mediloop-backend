@@ -6,26 +6,88 @@ import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
 import UserMenu from "@/components/UserMenu";
 import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, AlertTriangle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/use-toast";
 
 interface PharmacistLayoutProps {
   children: React.ReactNode;
 }
 
 const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
-  const { isAuthenticated, isLoading, profile } = useAuth();
+  const { isAuthenticated, isLoading, profile, userRole } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
   const redirectAttempted = useRef(false);
+  const sessionCheckAttempted = useRef(false);
 
+  useEffect(() => {
+    // Handle window resize for mobile detection
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    // Verify session directly with Supabase to ensure we have a valid session
+    const verifySession = async () => {
+      if (sessionCheckAttempted.current) return;
+      sessionCheckAttempted.current = true;
+      
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error || !data.session) {
+          console.error("PharmacistLayout: Session verification failed:", error);
+          setSessionCheckFailed(true);
+          return;
+        }
+        
+        // Verify user role directly from the database
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.session.user.id)
+          .single();
+          
+        if (profileError || !profileData) {
+          console.error("PharmacistLayout: Failed to verify user role:", profileError);
+          setSessionCheckFailed(true);
+          return;
+        }
+        
+        if (profileData.role !== 'pharmacist') {
+          console.log("PharmacistLayout: User is not a pharmacist, confirmed from database");
+          navigate("/dashboard", { replace: true });
+          redirectAttempted.current = true;
+          return;
+        }
+        
+        console.log("PharmacistLayout: Session and role verification successful");
+        setSessionCheckFailed(false);
+      } catch (error) {
+        console.error("PharmacistLayout: Session check error:", error);
+        setSessionCheckFailed(true);
+      }
+    };
+    
+    if (!isLoading && isAuthenticated) {
+      verifySession();
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+  
   useEffect(() => {
     // Only perform the check when loading is complete and not during initial load
     if (!isLoading) {
-      console.log("PharmacistLayout: Auth check - isAuthenticated:", isAuthenticated, "profile:", profile);
+      console.log("PharmacistLayout: Auth check - isAuthenticated:", isAuthenticated, "profile:", profile, "userRole:", userRole);
       
       // Check if user is authenticated
       if (!isAuthenticated) {
@@ -46,30 +108,68 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
         }
       }
     }
+  }, [isAuthenticated, isLoading, navigate, profile, userRole]);
 
-    // Handle window resize for mobile detection
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isAuthenticated, isLoading, navigate, profile]);
+  // Handle session recovery
+  const handleRetrySession = async () => {
+    try {
+      toast({
+        title: "Reconnecting...",
+        description: "Attempting to reconnect your session",
+      });
+      
+      // Force sign out first to clear any bad state
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Redirect to login
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Error during session recovery:", error);
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Could not recover your session. Please try again.",
+      });
+    }
+  };
 
   // Show loading state
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
 
-  // If not authenticated or not a pharmacist, don't render anything until redirect happens
+  // If session check failed, show recovery option
+  if (sessionCheckFailed) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center px-6">
+          <AlertTriangle className="h-12 w-12 text-amber-500" />
+          <h2 className="text-xl font-semibold">Session Error</h2>
+          <p className="text-muted-foreground mb-4">
+            There was a problem with your session. This could be due to an expired token or network issue.
+          </p>
+          <Button onClick={handleRetrySession}>
+            Reconnect Session
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated or not a pharmacist, show minimal loading until redirect happens
   if (!isAuthenticated || (profile && profile.role !== "pharmacist")) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p>Checking permissions...</p>
+        <div className="flex flex-col items-center gap-2">
+          <p>Checking permissions...</p>
+        </div>
       </div>
     );
   }

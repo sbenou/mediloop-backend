@@ -36,7 +36,7 @@ export const useSessionManagement = () => {
       // Before trying to fetch the profile, verify that the token is still valid
       try {
         // Perform a lightweight check to verify token validity
-        const { data: userData, error: userError } = await supabase.auth.getUser();
+        const { data: userData, error: userError } = await supabase.auth.getUser(session.access_token);
         
         if (userError) {
           console.error('Token validation error:', userError);
@@ -117,7 +117,7 @@ export const useSessionManagement = () => {
         // Clear session as well to force a new login
         try {
           clearAllAuthStorage();
-          await supabase.auth.signOut();
+          await supabase.auth.signOut({ scope: 'global' });
         } catch (signOutError) {
           console.error('Error signing out after profile fetch failure:', signOutError);
         }
@@ -218,6 +218,8 @@ export const useSessionManagement = () => {
           
           if (refreshError || !refreshData.session) {
             console.warn('Unable to refresh invalid session:', refreshError);
+            // Clear any potentially bad session data
+            clearAllAuthStorage();
             return null;
           }
           

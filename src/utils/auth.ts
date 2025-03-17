@@ -3,8 +3,15 @@ export const getOTPEmail = () => {
   console.log("Getting OTP email from available sources...");
   
   try {
-    // Try to get email from location state first
+    // Try to get email from URL search params first
     const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get('email');
+    if (emailParam) {
+      console.log("Email found in URL params:", emailParam);
+      return emailParam;
+    }
+    
+    // Try to get email from location state 
     const stateEmail = history.state?.usr?.email;
     if (stateEmail) {
       console.log("Email found in location state:", stateEmail);
@@ -22,6 +29,10 @@ export const getOTPEmail = () => {
         return storedEmail;
       }
       console.log("Stored email expired");
+      
+      // Clear expired email
+      localStorage.removeItem('otp_email');
+      localStorage.removeItem('otp_email_expiry');
     }
 
     console.log("No valid email found");
