@@ -36,7 +36,8 @@ export const initializeCanvas = (
   
   // Set canvas element styles for better cursor handling
   canvasElement.style.position = 'relative';
-  canvasElement.style.zIndex = '100'; // High z-index to ensure visibility
+  canvasElement.style.zIndex = '200'; // Higher z-index to ensure visibility
+  canvasElement.style.pointerEvents = 'auto'; // Ensure it captures mouse events
   
   // Apply explicit white background
   ensureWhiteBackground(canvas);
@@ -59,12 +60,10 @@ export const initializeCanvas = (
   // Set cursor properties for both canvas object and DOM element
   canvas.defaultCursor = 'default';
   canvas.freeDrawingCursor = penCursor;
+  canvas.hoverCursor = penCursor;
   
   // Also apply cursor to the DOM element for better visibility
   if (canvasElement) {
-    // Default cursor when not in drawing mode
-    canvasElement.style.cursor = 'default';
-    
     // Add a listener to update cursor when drawing mode changes
     canvas.on('mouse:over', () => {
       if (canvas.isDrawingMode) {
@@ -73,6 +72,9 @@ export const initializeCanvas = (
         canvasElement.style.cursor = 'default';
       }
     });
+    
+    // Initially set cursor based on drawing mode
+    canvasElement.style.cursor = canvas.isDrawingMode ? penCursor : 'default';
   }
 
   // If an image URL is provided, load it to the canvas
