@@ -150,11 +150,22 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         }
       });
       
-      // Special handler for touch events/mobile 
-      canvas.on('touch:drag', () => {
+      // Handle pointer/touch events for mobile without using the invalid 'touch:drag' event
+      canvas.on('mouse:down', () => {
+        // This runs for both mouse and touch events
         const canvasElement = canvas.getElement();
         if (canvasElement && canvas.isDrawingMode) {
           canvasElement.style.cursor = penCursor;
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important');
+        }
+      });
+      
+      canvas.on('mouse:move', () => {
+        // This runs during both mouse moves and touch drags
+        const canvasElement = canvas.getElement();
+        if (canvasElement && canvas.isDrawingMode) {
+          canvasElement.style.cursor = penCursor;
+          canvasElement.setAttribute('style', canvasElement.getAttribute('style') + ' cursor: ' + penCursor + ' !important');
         }
       });
       
