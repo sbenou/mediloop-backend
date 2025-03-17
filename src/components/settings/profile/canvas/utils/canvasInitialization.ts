@@ -1,5 +1,5 @@
 
-import { Canvas, Object as FabricObject } from 'fabric';
+import { Canvas, Image as FabricImage, Object as FabricObject } from 'fabric';
 
 export const initializeCanvas = (
   container: HTMLDivElement,
@@ -25,8 +25,9 @@ export const initializeCanvas = (
   canvas.setHeight(height);
   canvas.setDimensions({ width, height });
   
-  // Set white background
-  canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas));
+  // Set white background (using the correct property)
+  canvas.backgroundColor = '#ffffff';
+  canvas.renderAll();
   
   // Apply CSS overrides to ensure visibility
   const canvasEl = canvas.getElement();
@@ -57,7 +58,10 @@ export const initializeCanvas = (
   // Load initial image if provided
   if (initialImageUrl) {
     try {
-      fabric.Image.fromURL(initialImageUrl, (img) => {
+      // Use FabricImage instead of fabric.Image
+      FabricImage.fromURL(initialImageUrl, {
+        crossOrigin: 'anonymous',
+      }).then((img) => {
         img.set({
           left: 0,
           top: 0,
@@ -65,8 +69,8 @@ export const initializeCanvas = (
         });
         canvas.add(img);
         canvas.renderAll();
-      }, {
-        crossOrigin: 'anonymous'
+      }).catch(error => {
+        console.error('Error loading initial image:', error);
       });
     } catch (error) {
       console.error('Error loading initial image:', error);

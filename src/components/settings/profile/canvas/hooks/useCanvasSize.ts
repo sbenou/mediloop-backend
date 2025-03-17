@@ -1,6 +1,6 @@
 
 import { Canvas as FabricCanvas } from 'fabric';
-import { resizeCanvas } from '../utils';
+import { resizeCanvas } from '../utils/canvasShapes';
 
 export interface UseCanvasSizeProps {
   canvas: FabricCanvas | null;
