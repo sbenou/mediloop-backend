@@ -14,6 +14,7 @@ interface PharmacyTeamProps {
 
 interface TeamMember extends UserProfile {
   teamRole?: string;
+  phone?: string | null; // Add phone property to satisfy the usage below
 }
 
 const PharmacyTeam = ({ pharmacyId, entityType = 'pharmacy' }: PharmacyTeamProps) => {
@@ -43,10 +44,32 @@ const PharmacyTeam = ({ pharmacyId, entityType = 'pharmacy' }: PharmacyTeamProps
         }
         
         if (data) {
-          setTeam([{
-            ...data,
-            teamRole: 'Primary Doctor'
-          }]);
+          // Ensure we're creating a proper TeamMember object
+          const memberData: TeamMember = {
+            id: data.id,
+            role: data.role || '',
+            role_id: data.role_id,
+            full_name: data.full_name,
+            email: data.email,
+            avatar_url: data.avatar_url,
+            date_of_birth: data.date_of_birth,
+            city: data.city,
+            auth_method: data.auth_method,
+            is_blocked: data.is_blocked,
+            doctor_stamp_url: data.doctor_stamp_url,
+            doctor_signature_url: data.doctor_signature_url,
+            cns_card_front: data.cns_card_front,
+            cns_card_back: data.cns_card_back,
+            cns_number: data.cns_number,
+            deleted_at: data.deleted_at,
+            created_at: data.created_at,
+            updated_at: data.updated_at,
+            license_number: data.license_number,
+            teamRole: 'Primary Doctor',
+            phone: null // Adding phone property with null value
+          };
+          
+          setTeam([memberData]);
         }
       } else {
         // For pharmacies, fetch the team
@@ -55,7 +78,7 @@ const PharmacyTeam = ({ pharmacyId, entityType = 'pharmacy' }: PharmacyTeamProps
           .select(`
             id,
             role,
-            profiles:user_id(*)
+            user_id
           `)
           .eq('pharmacy_id', pharmacyId)
           .is('deleted_at', null);
@@ -64,13 +87,48 @@ const PharmacyTeam = ({ pharmacyId, entityType = 'pharmacy' }: PharmacyTeamProps
           throw error;
         }
 
+        if (!data || data.length === 0) {
+          setTeam([]);
+          setLoading(false);
+          return;
+        }
+
+        // Now fetch the user profiles separately
+        const userIds = data.map(item => item.user_id).filter(Boolean);
+        
+        if (userIds.length === 0) {
+          setTeam([]);
+          setLoading(false);
+          return;
+        }
+        
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('id', userIds);
+          
+        if (profilesError) {
+          throw profilesError;
+        }
+
         // Transform data to expected format
         const formattedTeam = data
-          .filter(item => item.profiles) // Filter out any items without profile data
-          .map(item => ({
-            ...item.profiles,
-            teamRole: item.role
-          }));
+          .filter(item => item.user_id) // Filter out any items without user_id
+          .map(item => {
+            const profileData = profiles?.find(profile => profile.id === item.user_id);
+            
+            if (!profileData) return null;
+            
+            // Create a proper TeamMember object with all required fields
+            const member: TeamMember = {
+              ...profileData,
+              teamRole: item.role,
+              phone: null // Adding phone property with null value
+            };
+            
+            return member;
+          })
+          .filter(Boolean) as TeamMember[]; // Filter out any null values
 
         setTeam(formattedTeam);
       }

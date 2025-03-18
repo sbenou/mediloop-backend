@@ -8,8 +8,9 @@ import { toast } from "@/components/ui/use-toast";
 import UserAvatar from "../user-menu/UserAvatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { UserProfile } from "@/types/user";
 
-interface User {
+interface StaffProfile {
   id: string;
   full_name: string | null;
   email: string | null;
@@ -19,7 +20,7 @@ interface User {
 
 interface StaffMember {
   id: string;
-  user: User;
+  user: StaffProfile;
   role: string;
 }
 
@@ -62,42 +63,75 @@ const PharmacyStaff = ({ pharmacyId }: PharmacyStaffProps) => {
       }
 
       // For pharmacy, fetch actual staff
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from('pharmacy_team_members')
         .select(`
           id,
           role,
-          profiles:user_id(
-            id,
-            full_name,
-            email,
-            role,
-            avatar_url
-          )
+          user_id,
+          pharmacy_id
         `)
         .eq('pharmacy_id', pharmacyId)
         .is('deleted_at', null);
 
-      if (error) {
-        console.error("Error fetching staff:", error);
+      if (queryError) {
+        console.error("Error fetching staff:", queryError);
         setError("Failed to load staff members");
+        setLoading(false);
         return;
       }
       
-      // Transform the data to match our expected format
-      const formattedStaff = data
-        .filter(item => item.profiles) // Ensure we have valid profile data
-        .map(item => ({
-          id: item.id,
-          role: item.role,
+      if (!data || data.length === 0) {
+        setStaff([]);
+        setLoading(false);
+        return;
+      }
+
+      // Now fetch the user profiles separately
+      const userIds = data.map(item => item.user_id).filter(Boolean);
+      
+      if (userIds.length === 0) {
+        setStaff([]);
+        setLoading(false);
+        return;
+      }
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          full_name,
+          email,
+          role,
+          avatar_url
+        `)
+        .in('id', userIds);
+        
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        setError("Failed to load staff profiles");
+        setLoading(false);
+        return;
+      }
+      
+      // Map profiles to team members
+      const formattedStaff = data.map(member => {
+        const userProfile = profiles?.find(profile => profile.id === member.user_id);
+        
+        if (!userProfile) return null;
+        
+        return {
+          id: member.id,
+          role: member.role,
           user: {
-            id: item.profiles.id,
-            full_name: item.profiles.full_name,
-            email: item.profiles.email,
-            role: item.profiles.role,
-            avatar_url: item.profiles.avatar_url
+            id: userProfile.id,
+            full_name: userProfile.full_name,
+            email: userProfile.email,
+            role: userProfile.role,
+            avatar_url: userProfile.avatar_url
           }
-        }));
+        };
+      }).filter(Boolean) as StaffMember[];
         
       setStaff(formattedStaff);
     } catch (err) {
@@ -204,7 +238,22 @@ const PharmacyStaff = ({ pharmacyId }: PharmacyStaffProps) => {
                       id: member.user.id,
                       full_name: member.user.full_name || '',
                       avatar_url: member.user.avatar_url,
-                      role: member.user.role || ''
+                      role: member.user.role || '',
+                      role_id: null, // Adding missing required properties
+                      email: member.user.email,
+                      date_of_birth: null,
+                      city: null,
+                      auth_method: null,
+                      is_blocked: null,
+                      doctor_stamp_url: null,
+                      doctor_signature_url: null,
+                      cns_card_front: null,
+                      cns_card_back: null,
+                      cns_number: null,
+                      deleted_at: null,
+                      created_at: null,
+                      updated_at: null,
+                      license_number: null
                     }} 
                   />
                   <div>
