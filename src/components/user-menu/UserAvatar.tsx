@@ -4,7 +4,6 @@ import { UserProfile } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { useRecoilValue } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
-import { useAuth } from "@/hooks/auth/useAuth";
 
 export interface UserAvatarProps {
   userProfile?: UserProfile;
@@ -24,7 +23,6 @@ const UserAvatar = ({
   isSquare = false
 }: UserAvatarProps) => {
   const globalAvatarUrl = useRecoilValue(userAvatarState);
-  const { profile } = useAuth();
   
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
@@ -54,11 +52,8 @@ const UserAvatar = ({
     }
   };
 
-  // Check if this is the current user's avatar
-  const isCurrentUser = userProfile?.id && profile?.id && userProfile.id === profile.id;
-  
   // Use global avatar URL from Recoil if we're displaying the current user's avatar
-  const avatarUrl = isCurrentUser && globalAvatarUrl
+  const avatarUrl = userProfile?.id && globalAvatarUrl && userProfile.id === globalAvatarUrl.split('/').slice(-2)[0]
     ? globalAvatarUrl
     : userProfile?.avatar_url;
 
@@ -67,7 +62,6 @@ const UserAvatar = ({
       <AvatarImage 
         src={avatarUrl || undefined} 
         alt={userProfile?.full_name || "User"} 
-        crossOrigin="anonymous"
       />
       <AvatarFallback className={isSquare ? "rounded-md" : "rounded-full"}>
         {initials}

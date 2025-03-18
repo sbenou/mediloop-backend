@@ -1,158 +1,134 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Mail, Phone, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import UserAvatar from "../user-menu/UserAvatar";
-import { UserProfile } from "@/types/user";
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { UserPlus } from 'lucide-react'; 
+import { usePharmacyTeam } from './team/usePharmacyTeam';
+import { TeamMemberDialog } from './team/TeamMemberDialog';
+import { TeamMemberCard } from './team/TeamMemberCard';
+import { EmptyTeamState } from './team/EmptyTeamState';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
-  entityType?: 'pharmacy' | 'doctor';
+  entityType?: 'doctor' | 'pharmacy';
 }
 
-interface TeamMember extends UserProfile {
-  teamRole?: string;
-}
+const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'pharmacy' }) => {
+  const { profile } = useAuth();
+  const {
+    teamMembers,
+    loading,
+    addUserOpen,
+    setAddUserOpen,
+    handleToggleActive,
+    handleAddMember,
+    phoneValue,
+    setPhoneValue,
+    nokPhoneValue,
+    setNokPhoneValue
+  } = usePharmacyTeam(pharmacyId);
 
-const PharmacyTeam = ({ pharmacyId, entityType = 'pharmacy' }: PharmacyTeamProps) => {
-  const [team, setTeam] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchTeam();
-  }, [pharmacyId]);
-
-  const fetchTeam = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (entityType === 'doctor') {
-        // For doctors, just fetch their profile
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', pharmacyId)
-          .single();
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data) {
-          setTeam([{
-            ...data,
-            teamRole: 'Primary Doctor'
-          }]);
-        }
-      } else {
-        // For pharmacies, fetch the team
-        const { data, error } = await supabase
-          .from('pharmacy_team_members')
-          .select(`
-            id,
-            role,
-            profiles:user_id(*)
-          `)
-          .eq('pharmacy_id', pharmacyId)
-          .is('deleted_at', null);
-        
-        if (error) {
-          throw error;
-        }
-
-        // Transform data to expected format
-        const formattedTeam = data
-          .filter(item => item.profiles) // Filter out any items without profile data
-          .map(item => ({
-            ...item.profiles,
-            teamRole: item.role
-          }));
-
-        setTeam(formattedTeam);
-      }
-    } catch (err) {
-      console.error("Error fetching team:", err);
-      setError("Failed to load team members");
-    } finally {
-      setLoading(false);
-    }
+  // Function to transform TeamMember from the hook to the format expected by TeamMemberCard
+  const mapTeamMemberToCardMember = (member: any) => {
+    return {
+      id: member.id,
+      full_name: member.full_name,
+      email: member.email,
+      phone_number: member.phone_number || '',
+      role: member.role,
+      pharmacy_id: pharmacyId,
+      status: member.is_active ? 'active' : 'inactive' as 'active' | 'inactive',
+      profile_image: member.avatar_url,
+    };
   };
 
-  if (loading) {
-    return (
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Team</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center items-center h-40">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Function to adapt the handleToggleActive function to match expected signature
+  const handleCardToggleActive = (memberId: string, currentStatus: 'active' | 'inactive') => {
+    const isActive = currentStatus === 'active';
+    handleToggleActive(memberId, !isActive);
+  };
 
   return (
-    <div className="container mx-auto px-4">
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>{entityType === 'doctor' ? 'Doctor' : 'Pharmacy'} Team</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : team.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {team.map((member) => (
-                <div key={member.id} className="bg-white border rounded-md shadow-sm p-4">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <UserAvatar 
-                      userProfile={member} 
-                    />
-                    <div>
-                      <h3 className="font-medium">{member.full_name || 'Team Member'}</h3>
-                      <p className="text-sm text-muted-foreground">{member.teamRole || member.role || 'Staff'}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    {member.email && (
-                      <div className="flex items-center text-muted-foreground">
-                        <Mail className="h-4 w-4 mr-2" />
-                        <a href={`mailto:${member.email}`} className="hover:underline">
-                          {member.email}
-                        </a>
-                      </div>
-                    )}
-                    {member.phone && (
-                      <div className="flex items-center text-muted-foreground">
-                        <Phone className="h-4 w-4 mr-2" />
-                        <a href={`tel:${member.phone}`} className="hover:underline">
-                          {member.phone}
-                        </a>
-                      </div>
-                    )}
-                  </div>
+    <div className="space-y-6 container mx-auto px-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-semibold">{entityType === 'doctor' ? 'Doctor Team' : 'Pharmacy Team'}</h3>
+        <Button onClick={() => setAddUserOpen(true)}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Add Team Member
+        </Button>
+      </div>
+      
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <p>Loading team members...</p>
+        </div>
+      ) : (
+        <div className="w-full">
+          {entityType === 'doctor' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {profile && (
+                <TeamMemberCard 
+                  key="doctor-profile"
+                  member={{
+                    id: profile.id,
+                    full_name: profile.full_name || 'Doctor',
+                    email: profile.email || '',
+                    phone_number: '',
+                    role: 'doctor',
+                    pharmacy_id: pharmacyId,
+                    status: 'active',
+                    profile_image: profile.avatar_url,
+                  }}
+                  onToggleActive={() => {}}
+                  showMainDoctorBadge={false}
+                />
+              )}
+              
+              {teamMembers.length > 0 ? (
+                teamMembers.map(member => (
+                  <TeamMemberCard 
+                    key={member.id}
+                    member={mapTeamMemberToCardMember(member)}
+                    onToggleActive={handleCardToggleActive}
+                    showMainDoctorBadge={false}
+                  />
+                ))
+              ) : profile ? (
+                <div className="col-span-full">
+                  <EmptyTeamState entityType={entityType} />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-muted-foreground">No team members found.</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Team information will be displayed here when available.
-              </p>
+              ) : null}
             </div>
           )}
-        </CardContent>
-      </Card>
+
+          {(entityType !== 'doctor' && teamMembers.length === 0) ? (
+            <EmptyTeamState entityType={entityType} />
+          ) : (entityType !== 'doctor') ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {teamMembers.map(member => (
+                <TeamMemberCard 
+                  key={member.id}
+                  member={mapTeamMemberToCardMember(member)}
+                  onToggleActive={handleCardToggleActive}
+                  showMainDoctorBadge={false}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      <TeamMemberDialog
+        open={addUserOpen}
+        onOpenChange={setAddUserOpen}
+        onSubmit={handleAddMember}
+        phoneValue={phoneValue}
+        setPhoneValue={setPhoneValue}
+        nokPhoneValue={nokPhoneValue}
+        setNokPhoneValue={setNokPhoneValue}
+        entityType={entityType}
+        showAllTabs={true}
+      />
     </div>
   );
 };
