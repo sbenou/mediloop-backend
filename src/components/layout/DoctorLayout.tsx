@@ -60,8 +60,7 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
-        <p className="ml-2">Loading...</p>
+        <p>Loading...</p>
       </div>
     );
   }
@@ -117,7 +116,9 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
 
         {/* Main Content */}
         <main className="flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll">
-          {children}
+          <ScrollArea className="h-full w-full">
+            {children}
+          </ScrollArea>
         </main>
       </div>
     </div>
