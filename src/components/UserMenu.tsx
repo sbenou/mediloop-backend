@@ -16,6 +16,7 @@ import { getSessionFromStorage } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { useRecoilState } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
+import { useQueryClient } from "@tanstack/react-query";
 
 const UserMenu = memo(() => {
   const { isAuthenticated, isLoading, profile, user, userRole, isPharmacist } = useAuth();
@@ -25,10 +26,11 @@ const UserMenu = memo(() => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useRecoilState(userAvatarState);
+  const queryClient = useQueryClient();
   
   // Set initial avatar URL from profile
   useEffect(() => {
-    if (profile?.avatar_url && !avatarUrl) {
+    if (profile?.avatar_url && (!avatarUrl || profile.avatar_url !== avatarUrl)) {
       setAvatarUrl(profile.avatar_url);
     }
   }, [profile?.avatar_url, setAvatarUrl, avatarUrl]);
@@ -156,25 +158,21 @@ const UserMenu = memo(() => {
           return;
         }
 
-        // Check if avatars bucket exists, create if not
-        const { error: bucketError } = await supabase.storage.getBucket('avatars');
-        if (bucketError && bucketError.message.includes('not found')) {
-          const { error: createBucketError } = await supabase.storage.createBucket('avatars', {
-            public: true,
-            fileSizeLimit: 5242880, // 5MB
-            allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp']
-          });
-          
-          if (createBucketError) {
-            console.error('Error creating bucket:', createBucketError);
-            throw new Error('Failed to create storage bucket');
-          }
+        // Check if avatars bucket exists
+        try {
+          await supabase.storage.getBucket('avatars');
+        } catch (bucketError) {
+          // If bucket doesn't exist, we'll use the doctor-images bucket
+          console.log('Using doctor-images bucket instead');
         }
+        
+        // Determine which bucket to use
+        const bucketName = 'doctor-images';
         
         const filePath = `${userId}/${crypto.randomUUID()}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('avatars')
+          .from(bucketName)
           .upload(filePath, file, {
             upsert: true,
           });
@@ -185,12 +183,15 @@ const UserMenu = memo(() => {
         }
 
         const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
+          .from(bucketName)
           .getPublicUrl(filePath);
+
+        // Add cache busting
+        const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
 
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ avatar_url: publicUrl })
+          .update({ avatar_url: cacheBustedUrl })
           .eq('id', userId);
           
         if (updateError) {
@@ -199,7 +200,12 @@ const UserMenu = memo(() => {
         }
 
         // Update Recoil state
-        setAvatarUrl(publicUrl);
+        setAvatarUrl(cacheBustedUrl);
+
+        // Invalidate queries to force refresh
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+        queryClient.invalidateQueries({ queryKey: ['pharmacy-staff'] });
+        queryClient.invalidateQueries({ queryKey: ['pharmacy-team'] });
 
         toast({
           title: "Success",

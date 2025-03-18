@@ -21,6 +21,9 @@ import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import { getOTPEmail } from "@/utils/auth";
+import { useRecoilState } from "recoil";
+import { userAvatarState } from "@/store/user/atoms";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProfessionalData {
   id: string;
@@ -48,6 +51,8 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingHours, setIsEditingHours] = useState(false);
+  const [, setAvatarUrl] = useRecoilState(userAvatarState);
+  const queryClient = useQueryClient();
 
   const entityType = userRole === 'doctor' ? 'doctor' : 'pharmacy';
   const Layout = userRole === 'doctor' ? DoctorLayout : PharmacistLayout;
@@ -74,11 +79,10 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       // Get the relation between user and professional entity
       let relationQuery;
       if (userRole === 'doctor') {
-        // For doctors, we'll mock the data since the table doesn't exist yet
-        // In a real scenario, we'd query the user_doctors table
-        const doctorId = profile.id; // Use profile ID as doctor ID for demo
+        // For doctors, we'll use their profile data
+        const doctorId = profile.id;
         
-        // For now, in our demo, we'll create a mock doctor record that matches pharmacy structure
+        // Create a mock doctor record based on profile data
         const mockDoctorData: ProfessionalData = {
           id: doctorId,
           name: profile.full_name || 'Doctor Practice',
@@ -87,6 +91,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           postal_code: '12345',
           phone: null,
           hours: null,
+          logo_url: profile.avatar_url, // Use avatar_url for logo consistency
         };
         
         setProfessionalData(mockDoctorData);
@@ -193,100 +198,77 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       console.log("File type:", file.type);
       console.log("File size:", file.size);
       
-      // Try to upload the file, gracefully handle missing bucket
-      try {
-        const { error: uploadError, data } = await supabase.storage
-          .from(storageBucket)
-          .upload(filePath, file, {
-            upsert: true,
-            contentType: file.type
+      // Upload the file
+      const { error: uploadError, data } = await supabase.storage
+        .from(storageBucket)
+        .upload(filePath, file, {
+          upsert: true,
+          contentType: file.type
+        });
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      console.log("Upload successful, getting public URL");
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from(storageBucket)
+        .getPublicUrl(filePath);
+
+      console.log("Public URL obtained:", publicUrl);
+      
+      // Add a cache-busting parameter to ensure fresh image loading
+      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+      
+      if (userRole === 'pharmacist') {
+        const { error: metadataError } = await supabase
+          .from('pharmacy_metadata')
+          .upsert({ 
+            pharmacy_id: professionalData.id,
+            logo_url: cacheBustedUrl
           });
 
-        if (uploadError) {
-          // Check if error is due to missing bucket
-          if (uploadError.message.includes('Bucket not found') || 
-              uploadError.message.includes('violates row-level security policy')) {
-            console.error('Storage bucket not available:', uploadError);
-            // Simulate a successful operation for demo purposes
-            toast({
-              title: "Success",
-              description: `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} image uploaded successfully (demo mode - bucket not configured)`,
-            });
-            
-            // Create a temporary object URL for immediate display
-            const tempUrl = URL.createObjectURL(file);
-            setProfessionalData({
-              ...professionalData,
-              logo_url: tempUrl
-            });
-            
-            setIsUploading(false);
-            return;
-          } else {
-            throw new Error(`Upload failed: ${uploadError.message}`);
-          }
+        if (metadataError) {
+          console.error('Metadata update error:', metadataError);
+          throw new Error(`Metadata update failed: ${metadataError.message}`);
         }
-
-        console.log("Upload successful, getting public URL");
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from(storageBucket)
-          .getPublicUrl(filePath);
-
-        console.log("Public URL obtained:", publicUrl);
-        
-        if (userRole === 'pharmacist') {
-          const { error: metadataError } = await supabase
-            .from('pharmacy_metadata')
-            .upsert({ 
-              pharmacy_id: professionalData.id,
-              logo_url: publicUrl
-            });
-
-          if (metadataError) {
-            console.error('Metadata update error:', metadataError);
-            throw new Error(`Metadata update failed: ${metadataError.message}`);
-          }
-          console.log(`Pharmacy metadata updated successfully`);
-        } else {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ 
-              avatar_url: publicUrl 
-            })
-            .eq('id', professionalData.id);
-            
-          if (profileError) {
-            console.error('Doctor profile update error:', profileError);
-            throw new Error(`Profile update failed: ${profileError.message}`);
-          }
-          console.log(`Doctor profile updated successfully`);
+        console.log(`Pharmacy metadata updated successfully`);
+      } else {
+        // For doctor, update both avatar_url and doctor_profile_image fields
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ 
+            avatar_url: cacheBustedUrl 
+          })
+          .eq('id', professionalData.id);
+          
+        if (profileError) {
+          console.error('Doctor profile update error:', profileError);
+          throw new Error(`Profile update failed: ${profileError.message}`);
         }
-
-        setProfessionalData({
-          ...professionalData,
-          logo_url: publicUrl
-        });
-
-        toast({
-          title: "Success",
-          description: `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} image updated successfully`,
-        });
-      } catch (storageError) {
-        console.error('Storage operation error:', storageError);
-        // Fallback for demo purposes
-        toast({
-          title: "Success",
-          description: `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} image uploaded successfully (demo mode)`,
-        });
         
-        // Create a temporary object URL for immediate display
-        const tempUrl = URL.createObjectURL(file);
-        setProfessionalData({
-          ...professionalData,
-          logo_url: tempUrl
-        });
+        // Update Recoil state to ensure global avatar consistency
+        setAvatarUrl(cacheBustedUrl);
+        
+        console.log(`Doctor profile updated successfully`);
       }
+
+      // Update the local state
+      setProfessionalData({
+        ...professionalData,
+        logo_url: cacheBustedUrl
+      });
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['pharmacy-staff'] });
+      queryClient.invalidateQueries({ queryKey: ['pharmacy-team'] });
+
+      toast({
+        title: "Success",
+        description: `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} image updated successfully`,
+      });
     } catch (error) {
       console.error(`Error uploading ${entityType} image:`, error);
       toast({
