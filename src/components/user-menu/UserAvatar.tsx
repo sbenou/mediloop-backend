@@ -30,7 +30,7 @@ const UserAvatar = ({
     sm: "h-8 w-8 text-xs",
     md: "h-10 w-10 text-sm",
     lg: "h-16 w-16 text-lg",
-    xl: "h-24 w-24 text-2xl" // Increased size for xl option (4x larger than md)
+    xl: "h-24 w-24 text-2xl"
   };
 
   const avatarClass = cn(

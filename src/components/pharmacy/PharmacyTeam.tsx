@@ -14,7 +14,7 @@ interface PharmacyTeamProps {
 
 interface TeamMember extends UserProfile {
   teamRole?: string;
-  phone?: string | null; // Add phone property to satisfy the usage below
+  phone?: string | null;
 }
 
 const PharmacyTeam = ({ pharmacyId, entityType = 'pharmacy' }: PharmacyTeamProps) => {
@@ -66,7 +66,7 @@ const PharmacyTeam = ({ pharmacyId, entityType = 'pharmacy' }: PharmacyTeamProps
             updated_at: data.updated_at,
             license_number: data.license_number,
             teamRole: 'Primary Doctor',
-            phone: null // Adding phone property with null value
+            phone: null
           };
           
           setTeam([memberData]);
@@ -123,12 +123,12 @@ const PharmacyTeam = ({ pharmacyId, entityType = 'pharmacy' }: PharmacyTeamProps
             const member: TeamMember = {
               ...profileData,
               teamRole: item.role,
-              phone: null // Adding phone property with null value
+              phone: null
             };
             
             return member;
           })
-          .filter(Boolean) as TeamMember[]; // Filter out any null values
+          .filter(Boolean) as TeamMember[];
 
         setTeam(formattedTeam);
       }

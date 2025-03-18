@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -92,6 +91,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           phone: null,
           hours: null,
           logo_url: profile.avatar_url, // Use avatar_url for logo consistency
+          email: profile.email
         };
         
         setProfessionalData(mockDoctorData);
