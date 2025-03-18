@@ -15,11 +15,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import PharmacyTeam from "@/components/pharmacy/PharmacyTeam";
-import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
-import PharmacyMap from "@/components/pharmacy/PharmacyMap";
-import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
-import PharmacyHours from "@/components/pharmacy/PharmacyHours";
-import { getOTPEmail } from "@/utils/auth";
+import PharmacyStaff from "@/components/pharmacy/PharmacyHours";
+import PharmacyMap from "@/components/pharmacy/PharmacyInfo";
+import PharmacyInfo from "@/components/pharmacy/PharmacyStaff";
 
 interface ProfessionalData {
   id: string;
@@ -444,7 +442,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
                     </DropdownMenu>
                   </CardHeader>
                   <CardContent>
-                    <PharmacyInfo pharmacyId={professionalData.id} />
+                    <PharmacyInfo pharmacy={professionalData} />
                   </CardContent>
                 </Card>
 
@@ -509,6 +507,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
             <div className="container mx-auto px-4">
               <PharmacyStaff 
                 pharmacyId={professionalData.id}
+                entityType={entityType}
               />
             </div>
           </TabsContent>
