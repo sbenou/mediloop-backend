@@ -31,14 +31,6 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const section = searchParams.get("section") || initialParams?.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
   
-  // Set URL params on initial load if initialParams was provided
-  useEffect(() => {
-    if (initialParams && isInitialLoad && !isLoading) {
-      console.log("Setting initial params from props:", Object.fromEntries(initialParams.entries()));
-      setSearchParams(initialParams);
-    }
-  }, [initialParams, isInitialLoad, isLoading, setSearchParams]);
-  
   // Console logging for debugging
   useEffect(() => {
     console.log("DoctorDashboard render:", { 
@@ -51,6 +43,14 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       hasInitialParams: !!initialParams
     });
   }, [userRole, currentView, section, profileTab, searchParams, location, initialParams]);
+  
+  // Set URL params on initial load if initialParams was provided
+  useEffect(() => {
+    if (initialParams && isInitialLoad && !isLoading) {
+      console.log("Setting initial params from props:", Object.fromEntries(initialParams.entries()));
+      setSearchParams(initialParams);
+    }
+  }, [initialParams, isInitialLoad, isLoading, setSearchParams]);
   
   // Make sure we have a default section for doctors
   useEffect(() => {
@@ -132,6 +132,8 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       </DoctorLayout>
     );
   }
+  
+  console.log("Rendering doctor dashboard content with section:", section);
   
   return (
     <DoctorLayout>

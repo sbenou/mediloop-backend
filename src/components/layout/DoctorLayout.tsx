@@ -60,7 +60,8 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+        <p className="ml-2">Loading...</p>
       </div>
     );
   }
