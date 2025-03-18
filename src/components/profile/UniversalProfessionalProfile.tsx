@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -15,9 +16,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import PharmacyTeam from "@/components/pharmacy/PharmacyTeam";
-import PharmacyStaff from "@/components/pharmacy/PharmacyHours";
-import PharmacyMap from "@/components/pharmacy/PharmacyInfo";
-import PharmacyInfo from "@/components/pharmacy/PharmacyStaff";
+import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
+import PharmacyMap from "@/components/pharmacy/PharmacyMap";
+import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
+import PharmacyHours from "@/components/pharmacy/PharmacyHours";
+import { getOTPEmail } from "@/utils/auth";
 
 interface ProfessionalData {
   id: string;
@@ -28,6 +31,7 @@ interface ProfessionalData {
   phone: string | null;
   hours: string | null;
   logo_url?: string | null;
+  email?: string | null;
 }
 
 interface UniversalProfessionalProfileProps {
@@ -507,7 +511,6 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
             <div className="container mx-auto px-4">
               <PharmacyStaff 
                 pharmacyId={professionalData.id}
-                entityType={entityType}
               />
             </div>
           </TabsContent>
