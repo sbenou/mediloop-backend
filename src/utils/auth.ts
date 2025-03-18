@@ -12,37 +12,29 @@ export const getOTPEmail = () => {
     }
     
     // Try to get email from location state safely
-    try {
-      if (history.state && typeof history.state === 'object' && history.state.usr && typeof history.state.usr === 'object') {
-        const stateEmail = history.state.usr.email;
-        if (stateEmail) {
-          console.log("Email found in location state:", stateEmail);
-          return stateEmail;
-        }
+    if (history.state && typeof history.state === 'object' && history.state.usr && typeof history.state.usr === 'object') {
+      const stateEmail = history.state.usr.email;
+      if (stateEmail) {
+        console.log("Email found in location state:", stateEmail);
+        return stateEmail;
       }
-    } catch (stateError) {
-      console.warn("Error accessing location state:", stateError);
     }
 
     // Fallback to localStorage
-    try {
-      const storedEmail = localStorage.getItem('otp_email');
-      const expiryTime = localStorage.getItem('otp_email_expiry');
+    const storedEmail = localStorage.getItem('otp_email');
+    const expiryTime = localStorage.getItem('otp_email_expiry');
 
-      if (storedEmail && expiryTime) {
-        const expiry = parseInt(expiryTime);
-        if (!isNaN(expiry) && new Date().getTime() <= expiry) {
-          console.log("Email found in localStorage:", storedEmail);
-          return storedEmail;
-        }
-        console.log("Stored email expired");
-        
-        // Clear expired email
-        localStorage.removeItem('otp_email');
-        localStorage.removeItem('otp_email_expiry');
+    if (storedEmail && expiryTime) {
+      const expiry = parseInt(expiryTime);
+      if (new Date().getTime() <= expiry) {
+        console.log("Email found in localStorage:", storedEmail);
+        return storedEmail;
       }
-    } catch (storageError) {
-      console.warn("Error accessing localStorage:", storageError);
+      console.log("Stored email expired");
+      
+      // Clear expired email
+      localStorage.removeItem('otp_email');
+      localStorage.removeItem('otp_email_expiry');
     }
 
     console.log("No valid email found");
