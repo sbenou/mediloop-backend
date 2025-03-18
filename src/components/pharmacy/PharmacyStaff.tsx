@@ -9,6 +9,14 @@ import UserAvatar from "../user-menu/UserAvatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { UserProfile } from "@/types/user";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow 
+} from "@/components/ui/table";
 
 interface StaffProfile {
   id: string;
@@ -226,65 +234,74 @@ const PharmacyStaff = ({ pharmacyId }: PharmacyStaffProps) => {
         ) : null}
 
         {staff.length > 0 ? (
-          <div className="space-y-4">
-            {staff.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-3 bg-white border rounded-md shadow-sm"
-              >
-                <div className="flex items-center space-x-3">
-                  <UserAvatar 
-                    userProfile={{
-                      id: member.user.id,
-                      full_name: member.user.full_name || '',
-                      avatar_url: member.user.avatar_url,
-                      role: member.user.role || '',
-                      role_id: null, // Adding missing required properties
-                      email: member.user.email,
-                      date_of_birth: null,
-                      city: null,
-                      auth_method: null,
-                      is_blocked: null,
-                      doctor_stamp_url: null,
-                      doctor_signature_url: null,
-                      cns_card_front: null,
-                      cns_card_back: null,
-                      cns_number: null,
-                      deleted_at: null,
-                      created_at: null,
-                      updated_at: null,
-                      license_number: null
-                    }} 
-                  />
-                  <div>
-                    <p className="font-medium">{member.user.full_name || 'Unnamed Staff'}</p>
-                    <p className="text-sm text-muted-foreground">{member.role}</p>
-                    <p className="text-xs text-muted-foreground">{member.user.email}</p>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEditStaff(member.id)}
-                    title="Edit staff member"
-                  >
-                    <PenSquare className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveStaff(member.id)}
-                    title="Remove staff member"
-                    className="hover:text-red-500"
-                    disabled={member.id === 'self'}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Staff Member</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {staff.map((member) => (
+                <TableRow key={member.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center space-x-3">
+                      <UserAvatar 
+                        userProfile={{
+                          id: member.user.id,
+                          full_name: member.user.full_name || '',
+                          avatar_url: member.user.avatar_url,
+                          role: member.user.role || '',
+                          role_id: null, // Adding missing required properties
+                          email: member.user.email,
+                          date_of_birth: null,
+                          city: null,
+                          auth_method: null,
+                          is_blocked: null,
+                          doctor_stamp_url: null,
+                          doctor_signature_url: null,
+                          cns_card_front: null,
+                          cns_card_back: null,
+                          cns_number: null,
+                          deleted_at: null,
+                          created_at: null,
+                          updated_at: null,
+                          license_number: null
+                        }} 
+                      />
+                      <span>{member.user.full_name || 'Unnamed Staff'}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{member.role}</TableCell>
+                  <TableCell>{member.user.email}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditStaff(member.id)}
+                        title="Edit staff member"
+                      >
+                        <PenSquare className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveStaff(member.id)}
+                        title="Remove staff member"
+                        className="hover:text-red-500"
+                        disabled={member.id === 'self'}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <div className="text-center py-6">
             <p className="text-muted-foreground">No staff members found.</p>
