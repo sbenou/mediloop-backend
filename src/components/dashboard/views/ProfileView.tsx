@@ -2,6 +2,8 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useRecoilValue } from "recoil";
+import { doctorStampUrlState, doctorSignatureUrlState } from "@/store/images/atoms";
 
 // Import the components for each section
 import PersonalDetails from "@/components/settings/PersonalDetails";
@@ -22,6 +24,10 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
   const location = useLocation();
   const { profile } = useAuth();
   const [searchParams] = useSearchParams();
+  
+  // Use Recoil state for doctor images
+  const doctorStampUrl = useRecoilValue(doctorStampUrlState);
+  const doctorSignatureUrl = useRecoilValue(doctorSignatureUrlState);
 
   // Handle tab change
   const handleTabChange = (value: string) => {
@@ -144,17 +150,17 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
         </TabsContent>
         
         {/* Stamp & Signature Tab - Only for doctors */}
-    {userRole === 'doctor' && (
-      <TabsContent value="stamp" className="mt-4">
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
-          <DoctorStampSignature 
-            stampUrl={profile?.doctor_stamp_url || null} 
-            signatureUrl={profile?.doctor_signature_url || null} 
-          />
-        </div>
-      </TabsContent>
-    )}
+      {userRole === 'doctor' && (
+        <TabsContent value="stamp" className="mt-4">
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
+            <DoctorStampSignature 
+              stampUrl={doctorStampUrl || profile?.doctor_stamp_url || null} 
+              signatureUrl={doctorSignatureUrl || profile?.doctor_signature_url || null} 
+            />
+          </div>
+        </TabsContent>
+      )}
         
         {/* Additional role-specific tabs */}
         {userRole === 'doctor' && (

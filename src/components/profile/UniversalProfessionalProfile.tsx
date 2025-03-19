@@ -20,6 +20,8 @@ import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
 
 interface ProfessionalData {
   id: string;
@@ -47,6 +49,10 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingHours, setIsEditingHours] = useState(false);
   const queryClient = useQueryClient();
+  
+  // Use Recoil state for images
+  const [doctorStampUrl, setDoctorStampUrl] = useRecoilState(doctorStampUrlState);
+  const [pharmacyLogoUrl, setPharmacyLogoUrl] = useRecoilState(pharmacyLogoUrlState);
 
   const entityType = userRole === 'doctor' ? 'doctor' : 'pharmacy';
   const Layout = userRole === 'doctor' ? DoctorLayout : PharmacistLayout;
@@ -54,6 +60,15 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
   useEffect(() => {
     fetchProfessionalData();
   }, [profile?.id]);
+
+  // Initialize Recoil state from profile when it loads
+  useEffect(() => {
+    if (profile) {
+      if (userRole === 'doctor' && profile.doctor_stamp_url) {
+        setDoctorStampUrl(profile.doctor_stamp_url);
+      }
+    }
+  }, [profile, userRole]);
 
   const fetchProfessionalData = async () => {
     if (!profile?.id) {
@@ -167,6 +182,15 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       setError("An unexpected error occurred");
       setIsLoading(false);
     }
+    
+    // After fetching data, update relevant Recoil state with logo URLs
+    if (!isLoading && !error && professionalData) {
+      if (userRole === 'doctor' && professionalData.logo_url) {
+        setDoctorStampUrl(professionalData.logo_url);
+      } else if (userRole === 'pharmacist' && professionalData.logo_url) {
+        setPharmacyLogoUrl(professionalData.logo_url);
+      }
+    }
   };
 
   const handleImageClick = () => {
@@ -229,6 +253,9 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           throw new Error(`Metadata update failed: ${metadataError.message}`);
         }
         console.log(`Pharmacy metadata updated successfully`);
+        
+        // Update Recoil state for pharmacy logo
+        setPharmacyLogoUrl(cachebustedUrl);
       } else {
         // For doctors, update the doctor's profile with the image URL
         const { error: profileError } = await supabase
@@ -243,6 +270,9 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           throw new Error(`Profile update failed: ${profileError.message}`);
         }
         console.log(`Doctor profile updated successfully`);
+        
+        // Update Recoil state for doctor stamp
+        setDoctorStampUrl(cachebustedUrl);
       }
 
       // Update local state with the new URL for immediate display
@@ -363,11 +393,14 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
                 onClick={handleImageClick}
                 className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
               >
-                {professionalData?.logo_url ? (
+                {/* Use Recoil state for image URL when available, fall back to local state */}
+                {(userRole === 'doctor' && doctorStampUrl) || 
+                 (userRole === 'pharmacist' && pharmacyLogoUrl) || 
+                 professionalData?.logo_url ? (
                   <div className="w-full h-full relative">
                     <img 
-                      src={professionalData.logo_url} 
-                      alt={professionalData.name} 
+                      src={userRole === 'doctor' ? doctorStampUrl : pharmacyLogoUrl || professionalData?.logo_url} 
+                      alt={professionalData?.name || entityType} 
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">

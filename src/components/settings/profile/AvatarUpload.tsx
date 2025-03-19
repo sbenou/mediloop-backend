@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,6 +9,9 @@ import { toast } from '@/components/ui/use-toast';
 import Webcam from 'react-webcam';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { userAvatarState } from '@/store/user/atoms';
+import { doctorStampUrlState, doctorSignatureUrlState, pharmacyLogoUrlState } from '@/store/images/atoms';
 
 interface AvatarUploadProps {
   currentAvatarUrl: string | null;
@@ -24,8 +27,29 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
   const queryClient = useQueryClient();
   const { userRole, user } = useAuth();
   
+  // Use Recoil state for image URLs
+  const [avatarUrl, setAvatarUrl] = useRecoilState(userAvatarState);
+  const setDoctorStampUrl = useSetRecoilState(doctorStampUrlState);
+  const setDoctorSignatureUrl = useSetRecoilState(doctorSignatureUrlState);
+  const setPharmacyLogoUrl = useSetRecoilState(pharmacyLogoUrlState);
+  
   // Add a state to track the local avatar URL for immediate display
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(currentAvatarUrl);
+
+  // Set initial Recoil state from props
+  useEffect(() => {
+    if (currentAvatarUrl) {
+      if (label.toLowerCase().includes('stamp')) {
+        setDoctorStampUrl(currentAvatarUrl);
+      } else if (label.toLowerCase().includes('signature')) {
+        setDoctorSignatureUrl(currentAvatarUrl);
+      } else if (userRole === 'pharmacist' && label.toLowerCase().includes('logo')) {
+        setPharmacyLogoUrl(currentAvatarUrl);
+      } else if (!avatarUrl) {
+        setAvatarUrl(currentAvatarUrl);
+      }
+    }
+  }, [currentAvatarUrl, label, userRole]);
 
   const uploadAvatar = async (file: File) => {
     try {
@@ -120,6 +144,21 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
 
         // Set the local avatar URL for immediate display
         setLocalAvatarUrl(publicUrlWithCacheBust);
+        
+        // Update the appropriate Recoil state
+        if (userRole === 'pharmacist' && label.toLowerCase().includes('logo')) {
+          setPharmacyLogoUrl(publicUrlWithCacheBust);
+        } else if (userRole === 'doctor') {
+          if (label.toLowerCase().includes('stamp')) {
+            setDoctorStampUrl(publicUrlWithCacheBust);
+          } else if (label.toLowerCase().includes('signature')) {
+            setDoctorSignatureUrl(publicUrlWithCacheBust);
+          } else {
+            setAvatarUrl(publicUrlWithCacheBust);
+          }
+        } else {
+          setAvatarUrl(publicUrlWithCacheBust);
+        }
         
         // Update the UI through the parent component
         onAvatarUpdate(publicUrlWithCacheBust);

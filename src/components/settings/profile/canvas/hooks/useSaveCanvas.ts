@@ -4,11 +4,17 @@ import { Canvas as FabricCanvas } from 'fabric';
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSetRecoilState } from "recoil";
+import { doctorStampUrlState, doctorSignatureUrlState } from "@/store/images/atoms";
 
 export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Add Recoil state setters
+  const setDoctorStampUrl = useSetRecoilState(doctorStampUrlState);
+  const setDoctorSignatureUrl = useSetRecoilState(doctorSignatureUrlState);
 
   const saveCanvas = async (canvas: FabricCanvas | null) => {
     if (!canvas || !userId) return;
@@ -74,6 +80,13 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       }
       
       console.log(`Profile updated with new ${type} URL`);
+      
+      // Update Recoil state
+      if (type === 'stamp') {
+        setDoctorStampUrl(cachebustedUrl);
+      } else {
+        setDoctorSignatureUrl(cachebustedUrl);
+      }
       
       // Invalidate query cache for both profile and specific user-related queries
       queryClient.invalidateQueries({ queryKey: ['profile'] });
