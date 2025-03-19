@@ -190,29 +190,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       console.log("File type:", file.type);
       console.log("File size:", file.size);
       
-      // Ensure the bucket exists
-      try {
-        const { error: bucketError } = await supabase.storage.getBucket(storageBucket);
-        if (bucketError && bucketError.message.includes('not found')) {
-          console.log(`${storageBucket} bucket not found, creating it...`);
-          const { error: createBucketError } = await supabase.storage.createBucket(storageBucket, {
-            public: true,
-            fileSizeLimit: 5242880, // 5MB
-            allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp']
-          });
-          
-          if (createBucketError) {
-            console.error(`Error creating ${storageBucket} bucket:`, createBucketError);
-            throw new Error(`Failed to create storage bucket: ${createBucketError.message}`);
-          }
-          console.log(`${storageBucket} bucket created successfully`);
-        }
-      } catch (bucketError) {
-        console.error('Bucket check failed:', bucketError);
-        // Continue with upload attempt
-      }
-      
-      // Real upload for all user types
+      // Real upload for all user types - the buckets are already created with SQL
       const { error: uploadError, data } = await supabase.storage
         .from(storageBucket)
         .upload(filePath, file, {
@@ -230,8 +208,11 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       const { data: { publicUrl } } = supabase.storage
         .from(storageBucket)
         .getPublicUrl(filePath);
+        
+      // Add cache-busting parameter to prevent caching issues
+      const cachebustedUrl = `${publicUrl}?t=${Date.now()}`;
 
-      console.log("Public URL obtained:", publicUrl);
+      console.log("Public URL obtained:", cachebustedUrl);
       
       // Update metadata for the appropriate entity
       if (userRole === 'pharmacist') {
@@ -239,7 +220,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           .from('pharmacy_metadata')
           .upsert({ 
             pharmacy_id: professionalData.id,
-            logo_url: publicUrl
+            logo_url: cachebustedUrl
           });
 
         if (metadataError) {
@@ -252,7 +233,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
-            avatar_url: publicUrl 
+            avatar_url: cachebustedUrl 
           })
           .eq('id', professionalData.id);
           
@@ -265,7 +246,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
 
       setProfessionalData({
         ...professionalData,
-        logo_url: publicUrl
+        logo_url: cachebustedUrl
       });
 
       toast({

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,31 +45,20 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
       const filePath = `${userId}/${crypto.randomUUID()}`;
       const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 'avatars';
       
+      if (userRole === 'doctor') {
+        const doctorAssetType = label.toLowerCase().includes('stamp') ? 'stamps' : 
+                               (label.toLowerCase().includes('signature') ? 'signatures' : 'avatars');
+        const filePath = `${doctorAssetType}/${userId}/${crypto.randomUUID()}`;
+        const bucketName = 'doctor-images';
+        
+        console.log(`Doctor asset upload - type: ${doctorAssetType}, bucket: ${bucketName}`);
+      }
+      
       console.log(`Uploading to ${bucketName} bucket:`, filePath);
       console.log('File type:', optimizedFile.type);
       console.log('File size:', optimizedFile.size);
       
-      // Create the bucket if it doesn't exist (with better error handling)
-      try {
-        const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucketName);
-        console.log('Bucket check result:', bucketData, bucketError);
-        
-        if (bucketError && bucketError.message.includes('not found')) {
-          console.log('Creating bucket:', bucketName);
-          const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
-            public: true,
-            fileSizeLimit: 5242880 // 5MB
-          });
-          
-          if (createBucketError && !createBucketError.message.includes('already exists')) {
-            console.error('Error creating bucket:', createBucketError);
-            throw createBucketError;
-          }
-        }
-      } catch (error) {
-        console.error('Bucket operation error:', error);
-        // Continue anyway as the bucket might still exist or be created automatically
-      }
+      // No need to create bucket - we've already created it with SQL
       
       // Make sure the file is treated as an image
       const contentType = 'image/jpeg';

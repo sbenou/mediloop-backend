@@ -36,33 +36,7 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       const filePath = `${type === 'stamp' ? 'stamps' : 'signatures'}/${userId}/${Date.now()}.png`;
       console.log(`Preparing to upload ${type} to: ${filePath}`);
       
-      // Ensure the bucket exists
-      try {
-        const { error: bucketError } = await supabase.storage.getBucket('doctor-images');
-        if (bucketError) {
-          console.log('Error getting bucket:', bucketError);
-          if (bucketError.message.includes('not found')) {
-            console.log('Bucket not found, creating it...');
-            const { error: createBucketError } = await supabase.storage.createBucket('doctor-images', {
-              public: true,
-              fileSizeLimit: 5242880, // 5MB
-              allowedMimeTypes: ['image/png', 'image/jpeg']
-            });
-            
-            if (createBucketError) {
-              console.error('Error creating bucket:', createBucketError);
-              throw createBucketError;
-            }
-            console.log('Bucket created successfully');
-          } else {
-            throw bucketError;
-          }
-        }
-      } catch (error) {
-        console.error('Bucket error check failed:', error);
-        // Continue with upload attempt even if bucket check fails
-      }
-      
+      // Upload the file - no need to check or create the bucket since we already did that with SQL
       const { error: uploadError } = await supabase.storage
         .from('doctor-images')
         .upload(filePath, blob, {
@@ -84,11 +58,14 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       
       console.log(`Public URL obtained: ${urlData.publicUrl}`);
       
+      // Add cache-busting query parameter to force reload
+      const cachebustedUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      
       // Update profile
       const fieldName = type === 'stamp' ? 'doctor_stamp_url' : 'doctor_signature_url';
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ [fieldName]: urlData.publicUrl })
+        .update({ [fieldName]: cachebustedUrl })
         .eq('id', userId);
       
       if (updateError) {
