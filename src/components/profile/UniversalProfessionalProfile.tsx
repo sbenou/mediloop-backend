@@ -190,6 +190,29 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       console.log("File type:", file.type);
       console.log("File size:", file.size);
       
+      // Ensure the bucket exists
+      try {
+        const { error: bucketError } = await supabase.storage.getBucket(storageBucket);
+        if (bucketError && bucketError.message.includes('not found')) {
+          console.log(`${storageBucket} bucket not found, creating it...`);
+          const { error: createBucketError } = await supabase.storage.createBucket(storageBucket, {
+            public: true,
+            fileSizeLimit: 5242880, // 5MB
+            allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp']
+          });
+          
+          if (createBucketError) {
+            console.error(`Error creating ${storageBucket} bucket:`, createBucketError);
+            throw new Error(`Failed to create storage bucket: ${createBucketError.message}`);
+          }
+          console.log(`${storageBucket} bucket created successfully`);
+        }
+      } catch (bucketError) {
+        console.error('Bucket check failed:', bucketError);
+        // Continue with upload attempt
+      }
+      
+      // Real upload for all user types
       const { error: uploadError, data } = await supabase.storage
         .from(storageBucket)
         .upload(filePath, file, {
@@ -210,6 +233,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
 
       console.log("Public URL obtained:", publicUrl);
       
+      // Update metadata for the appropriate entity
       if (userRole === 'pharmacist') {
         const { error: metadataError } = await supabase
           .from('pharmacy_metadata')
@@ -224,6 +248,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
         }
         console.log(`Pharmacy metadata updated successfully`);
       } else {
+        // For doctors, update the doctor's profile
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
@@ -319,6 +344,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           </p>
         </div>
 
+        {/* Tabs with centered list */}
         <Tabs defaultValue="profile" value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="flex justify-center mb-4">
             <TabsList>
@@ -337,6 +363,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
             </TabsList>
           </div>
           
+          {/* Profile Tab Content */}
           <TabsContent value="profile" className="mt-6">
             <div className="container mx-auto px-4">
               <div className="flex justify-between items-center mb-6">
@@ -460,6 +487,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
             </div>
           </TabsContent>
           
+          {/* Team Tab Content */}
           <TabsContent value="team" className="mt-6">
             <PharmacyTeam 
               pharmacyId={professionalData.id}
@@ -467,6 +495,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
             />
           </TabsContent>
           
+          {/* Staff Management Tab Content */}
           <TabsContent value="staff" className="mt-6">
             <div className="container mx-auto px-4">
               <PharmacyStaff 

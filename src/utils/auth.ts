@@ -11,13 +11,11 @@ export const getOTPEmail = () => {
       return emailParam;
     }
     
-    // Try to get email from location state safely
-    if (history.state && typeof history.state === 'object' && history.state.usr && typeof history.state.usr === 'object') {
-      const stateEmail = history.state.usr.email;
-      if (stateEmail) {
-        console.log("Email found in location state:", stateEmail);
-        return stateEmail;
-      }
+    // Try to get email from location state 
+    const stateEmail = history.state?.usr?.email;
+    if (stateEmail) {
+      console.log("Email found in location state:", stateEmail);
+      return stateEmail;
     }
 
     // Fallback to localStorage
