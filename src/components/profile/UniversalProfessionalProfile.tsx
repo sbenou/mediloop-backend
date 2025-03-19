@@ -19,6 +19,7 @@ import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
 import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProfessionalData {
   id: string;
@@ -45,6 +46,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingHours, setIsEditingHours] = useState(false);
+  const queryClient = useQueryClient();
 
   const entityType = userRole === 'doctor' ? 'doctor' : 'pharmacy';
   const Layout = userRole === 'doctor' ? DoctorLayout : PharmacistLayout;
@@ -71,12 +73,11 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       // Get the relation between user and professional entity
       let relationQuery;
       if (userRole === 'doctor') {
-        // For doctors, we'll mock the data since the table doesn't exist yet
-        // In a real scenario, we'd query the user_doctors table
-        const doctorId = profile.id; // Use profile ID as doctor ID for demo
+        // For doctors, we'll use the profile data directly
+        const doctorId = profile.id;
         
-        // For now, in our demo, we'll create a mock doctor record that matches pharmacy structure
-        const mockDoctorData: ProfessionalData = {
+        // Create a representation of the doctor data from profile
+        const doctorData: ProfessionalData = {
           id: doctorId,
           name: profile.full_name || 'Doctor Practice',
           address: '123 Doctor Street',
@@ -84,14 +85,14 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           postal_code: '12345',
           phone: null,
           hours: null,
+          logo_url: profile.doctor_stamp_url || profile.avatar_url // Use stamp or avatar as logo
         };
         
-        setProfessionalData(mockDoctorData);
+        setProfessionalData(doctorData);
         setIsLoading(false);
         return;
         
       } else {
-        // For pharmacists, use the existing table
         relationQuery = await supabase
           .from('user_pharmacies')
           .select('pharmacy_id')
@@ -181,16 +182,16 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
     try {
       setIsUploading(true);
       
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${entityType}s/${professionalData.id}/${crypto.randomUUID()}.${fileExt}`;
-      
+      // Determine the correct bucket based on user role
       const storageBucket = userRole === 'doctor' ? 'doctor-images' : 'pharmacy-images';
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${entityType}s/${professionalData.id}/${Date.now()}.${fileExt}`;
       
       console.log(`Uploading to ${storageBucket} bucket:`, filePath);
       console.log("File type:", file.type);
       console.log("File size:", file.size);
       
-      // Real upload for all user types - the buckets are already created with SQL
+      // Real upload for all user types
       const { error: uploadError, data } = await supabase.storage
         .from(storageBucket)
         .upload(filePath, file, {
@@ -229,13 +230,13 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
         }
         console.log(`Pharmacy metadata updated successfully`);
       } else {
-        // For doctors, update the doctor's profile
+        // For doctors, update the doctor's profile with the image URL
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
-            avatar_url: cachebustedUrl 
+            avatar_url: cachebustedUrl  // This could also be doctor_stamp_url depending on requirements
           })
-          .eq('id', professionalData.id);
+          .eq('id', profile.id);
           
         if (profileError) {
           console.error('Doctor profile update error:', profileError);
@@ -244,10 +245,17 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
         console.log(`Doctor profile updated successfully`);
       }
 
+      // Update local state with the new URL for immediate display
       setProfessionalData({
         ...professionalData,
         logo_url: cachebustedUrl
       });
+
+      // Invalidate any relevant queries to ensure data consistency
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      if (profile?.id) {
+        queryClient.invalidateQueries({ queryKey: ['userProfile', profile.id] });
+      }
 
       toast({
         title: "Success",

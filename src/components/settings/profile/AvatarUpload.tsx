@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
   
   // Add a state to track the local avatar URL for immediate display
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(currentAvatarUrl);
@@ -42,23 +43,28 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
       
       console.log('Uploading avatar for user:', userId);
 
-      const filePath = `${userId}/${crypto.randomUUID()}`;
-      const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 'avatars';
+      // Determine correct bucket and path based on role and asset type
+      let bucketName = 'avatars';
+      let filePath = `${userId}/${Date.now()}`;
       
-      if (userRole === 'doctor') {
-        const doctorAssetType = label.toLowerCase().includes('stamp') ? 'stamps' : 
-                               (label.toLowerCase().includes('signature') ? 'signatures' : 'avatars');
-        const filePath = `${doctorAssetType}/${userId}/${crypto.randomUUID()}`;
-        const bucketName = 'doctor-images';
-        
-        console.log(`Doctor asset upload - type: ${doctorAssetType}, bucket: ${bucketName}`);
+      if (userRole === 'pharmacist') {
+        bucketName = label.toLowerCase().includes('logo') ? 'pharmacy-logos' : 'avatars';
+      } else if (userRole === 'doctor') {
+        if (label.toLowerCase().includes('stamp')) {
+          bucketName = 'doctor-images';
+          filePath = `stamps/${userId}/${Date.now()}`;
+        } else if (label.toLowerCase().includes('signature')) {
+          bucketName = 'doctor-images';
+          filePath = `signatures/${userId}/${Date.now()}`;
+        } else {
+          bucketName = 'doctor-images';
+          filePath = `avatars/${userId}/${Date.now()}`;
+        }
       }
       
       console.log(`Uploading to ${bucketName} bucket:`, filePath);
       console.log('File type:', optimizedFile.type);
       console.log('File size:', optimizedFile.size);
-      
-      // No need to create bucket - we've already created it with SQL
       
       // Make sure the file is treated as an image
       const contentType = 'image/jpeg';
@@ -88,7 +94,18 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
         // Add cache-busting query parameter to force reload
         const publicUrlWithCacheBust = `${urlData.publicUrl}?t=${Date.now()}`;
         
-        const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'avatar_url';
+        // Determine the correct field to update based on label and role
+        let fieldToUpdate = 'avatar_url';
+        
+        if (userRole === 'pharmacist' && label.toLowerCase().includes('logo')) {
+          fieldToUpdate = 'pharmacy_logo_url';
+        } else if (userRole === 'doctor') {
+          if (label.toLowerCase().includes('stamp')) {
+            fieldToUpdate = 'doctor_stamp_url';
+          } else if (label.toLowerCase().includes('signature')) {
+            fieldToUpdate = 'doctor_signature_url';
+          }
+        }
         
         console.log(`Updating profile with ${fieldToUpdate}:`, publicUrlWithCacheBust);
         const { error: updateError } = await supabase
@@ -107,12 +124,15 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
         // Update the UI through the parent component
         onAvatarUpdate(publicUrlWithCacheBust);
         
-        // Invalidate the profile query to refresh the data
+        // Invalidate the profile queries to refresh the data
         await queryClient.invalidateQueries({ queryKey: ['profile'] });
+        if (userId) {
+          await queryClient.invalidateQueries({ queryKey: ['userProfile', userId] });
+        }
 
         toast({
           title: "Success",
-          description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : 'Avatar'} updated successfully`,
+          description: `${label} updated successfully`,
         });
       } catch (uploadErr) {
         console.error('File upload error:', uploadErr);
@@ -123,7 +143,7 @@ const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, label = "Profile Photo
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to upload ${userRole === 'pharmacist' ? 'pharmacy logo' : 'avatar'}: ${error.message}`,
+        description: `Failed to upload ${label}: ${error.message}`,
       });
     } finally {
       setIsUploading(false);

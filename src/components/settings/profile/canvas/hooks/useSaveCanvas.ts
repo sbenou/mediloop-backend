@@ -36,7 +36,7 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       const filePath = `${type === 'stamp' ? 'stamps' : 'signatures'}/${userId}/${Date.now()}.png`;
       console.log(`Preparing to upload ${type} to: ${filePath}`);
       
-      // Upload the file - no need to check or create the bucket since we already did that with SQL
+      // Upload the file to the doctor-images bucket
       const { error: uploadError } = await supabase.storage
         .from('doctor-images')
         .upload(filePath, blob, {
@@ -75,8 +75,9 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       
       console.log(`Profile updated with new ${type} URL`);
       
-      // Invalidate query cache
+      // Invalidate query cache for both profile and specific user-related queries
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', userId] });
       
       toast({
         title: "Success",
