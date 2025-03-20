@@ -1,211 +1,188 @@
 
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User, LogOut, Settings, CreditCard, Bell, LayoutDashboard, FileText, Users, Store, Home } from "lucide-react";
+import { useRecoilValue } from "recoil";
+import { userAvatarState } from "@/store/user/atoms";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
   DropdownMenuItem,
-  DropdownMenuGroup,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  ChevronDown, 
-  Home, 
-  User, 
-  ShoppingBag,
-  Settings, 
-  Pill, 
-  Calendar,
-  LogOut,
-  Users,
-  Store,
-  FileText
-} from "lucide-react";
-import UserAvatar from "./UserAvatar";
-import { useAuth } from "@/hooks/auth/useAuth";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
+import { supabase, clearAllAuthStorage } from "@/lib/supabase";
 
-const EnhancedUserMenu = () => {
-  const { profile, user, userRole } = useAuth();
+interface MenuOption {
+  label: string;
+  icon: React.ReactNode;
+  path: string;
+}
+
+interface EnhancedUserMenuProps {
+  variant?: "header" | "sidebar";
+}
+
+const EnhancedUserMenu = ({ variant = "header" }: EnhancedUserMenuProps) => {
+  const { user, profile, isAuthenticated, isPharmacist } = useAuth();
   const navigate = useNavigate();
-
-  if (!user || !profile) {
-    return null;
+  const location = useLocation();
+  const userAvatar = useRecoilValue(userAvatarState);
+  const [open, setOpen] = useState(false);
+  
+  if (!isAuthenticated || !profile) {
+    return (
+      <Button variant="outline" onClick={() => navigate('/login')}>
+        Login
+      </Button>
+    );
   }
 
-  // Handle logout
+  const getInitials = (name: string) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log("Logout initiated");
+      
+      // Clear country selection to force the country selector on next visit
+      try {
+        localStorage.removeItem('selectedCountry');
+      } catch (e) {
+        console.error("Error removing selectedCountry:", e);
+      }
+      
+      // Force clear all auth storage
+      clearAllAuthStorage();
+      
+      // Broadcast logout event to other tabs
+      try {
+        const logoutEvent = { type: 'LOGOUT', timestamp: Date.now() };
+        localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
+      } catch (eventError) {
+        console.error('Error broadcasting logout event:', eventError);
+      }
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.error("Supabase signOut error:", error);
+        throw error;
+      }
+      
       toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of the system"
+        title: "Logged out",
+        description: "You have been successfully logged out",
       });
-      navigate('/login');
+      
+      // Force a hard redirect to ensure complete logout
+      window.location.href = "/login";
     } catch (error) {
-      console.error("Error logging out:", error);
+      console.error("Logout error:", error);
       toast({
         variant: "destructive",
         title: "Logout failed",
-        description: "There was a problem logging you out"
+        description: "There was an error logging out. Please try again.",
       });
     }
   };
 
-  // Function to navigate to different dashboard views
-  const navigateToView = (view: string, section?: string, tab?: string) => {
-    const params = new URLSearchParams();
-    
-    if (view) params.set('view', view);
-    if (section) params.set('section', section);
-    if (tab) params.set(`${view}Tab`, tab);
-    
-    navigate(`/dashboard?${params.toString()}`);
-  };
-
-  // Get navigation items based on user role
-  const getNavigationItems = () => {
-    // Common items for all roles
-    const commonItems = [
-      {
-        icon: <Home className="mr-2 h-4 w-4" />,
-        label: "Dashboard",
-        onClick: () => navigate('/dashboard')
-      }
+  // Get navigation menu items based on user role
+  const getHeaderMenuItems = (): MenuOption[] => {
+    // Default items for all users
+    const items: MenuOption[] = [
+      { label: "Home", icon: <Home className="mr-2 h-4 w-4" />, path: "/dashboard" },
     ];
-
-    // Role-specific navigation items
-    if (userRole === 'pharmacist') {
+    
+    if (profile.role === 'pharmacist' || isPharmacist) {
       return [
-        ...commonItems,
-        {
-          icon: <Users className="mr-2 h-4 w-4" />,
-          label: "Patients",
-          onClick: () => navigateToView('pharmacy', 'patients')
-        },
-        {
-          icon: <ShoppingBag className="mr-2 h-4 w-4" />,
-          label: "Orders",
-          onClick: () => navigateToView('pharmacy', 'orders')
-        },
-        {
-          icon: <FileText className="mr-2 h-4 w-4" />,
-          label: "Prescriptions",
-          onClick: () => navigateToView('pharmacy', 'prescriptions')
-        },
-        {
-          icon: <User className="mr-2 h-4 w-4" />,
-          label: "Profile",
-          onClick: () => navigateToView('pharmacy', 'profile')
-        },
-        {
-          icon: <Store className="mr-2 h-4 w-4" />,
-          label: "Pharmacy Profile",
-          onClick: () => navigate('/pharmacy/profile')
-        },
-        {
-          icon: <Settings className="mr-2 h-4 w-4" />,
-          label: "Settings",
-          onClick: () => navigateToView('pharmacy', 'settings')
-        }
+        { label: "Dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" />, path: "/pharmacy" },
+        { label: "Patients", icon: <Users className="mr-2 h-4 w-4" />, path: "/dashboard?view=pharmacy&section=patients" },
+        { label: "Orders", icon: <CreditCard className="mr-2 h-4 w-4" />, path: "/dashboard?view=pharmacy&section=orders" },
+        { label: "Prescriptions", icon: <FileText className="mr-2 h-4 w-4" />, path: "/dashboard?view=pharmacy&section=prescriptions" },
+        { label: "Profile", icon: <User className="mr-2 h-4 w-4" />, path: "/dashboard?view=pharmacy&section=profile" },
+        { label: "Pharmacy Profile", icon: <Store className="mr-2 h-4 w-4" />, path: "/pharmacy/profile" },
+        { label: "Settings", icon: <Settings className="mr-2 h-4 w-4" />, path: "/dashboard?view=pharmacy&section=settings" },
       ];
-    } else if (userRole === 'doctor') {
+    } else if (profile.role === 'doctor') {
       return [
-        ...commonItems,
-        {
-          icon: <Users className="mr-2 h-4 w-4" />,
-          label: "Patients",
-          onClick: () => navigateToView('doctor', 'patients')
-        },
-        {
-          icon: <FileText className="mr-2 h-4 w-4" />,
-          label: "Prescriptions",
-          onClick: () => navigateToView('doctor', 'prescriptions')
-        },
-        {
-          icon: <Calendar className="mr-2 h-4 w-4" />,
-          label: "Teleconsultations",
-          onClick: () => navigateToView('doctor', 'teleconsultations')
-        },
-        {
-          icon: <User className="mr-2 h-4 w-4" />,
-          label: "Profile",
-          onClick: () => navigateToView('doctor', 'profile')
-        },
-        {
-          icon: <Settings className="mr-2 h-4 w-4" />,
-          label: "Settings",
-          onClick: () => navigateToView('doctor', 'settings')
-        }
+        { label: "Dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" />, path: "/doctor" },
+        { label: "Patients", icon: <Users className="mr-2 h-4 w-4" />, path: "/dashboard?view=doctor&section=patients" },
+        { label: "Prescriptions", icon: <FileText className="mr-2 h-4 w-4" />, path: "/dashboard?view=doctor&section=prescriptions" },
+        { label: "Teleconsultations", icon: <Bell className="mr-2 h-4 w-4" />, path: "/dashboard?view=doctor&section=teleconsultations" },
+        { label: "Profile", icon: <User className="mr-2 h-4 w-4" />, path: "/dashboard?view=doctor&section=profile" },
+        { label: "Settings", icon: <Settings className="mr-2 h-4 w-4" />, path: "/dashboard?view=doctor&section=settings" },
       ];
     } else {
-      // Default user items
+      // For patients or other roles
       return [
-        ...commonItems,
-        {
-          icon: <User className="mr-2 h-4 w-4" />,
-          label: "Profile",
-          onClick: () => navigateToView('profile', null, 'personal')
-        },
-        {
-          icon: <ShoppingBag className="mr-2 h-4 w-4" />,
-          label: "Orders",
-          onClick: () => navigateToView('orders', null, 'orders')
-        },
-        {
-          icon: <Pill className="mr-2 h-4 w-4" />,
-          label: "Prescriptions",
-          onClick: () => navigateToView('prescriptions')
-        },
-        {
-          icon: <Calendar className="mr-2 h-4 w-4" />,
-          label: "Teleconsultations",
-          onClick: () => navigateToView('teleconsultations')
-        },
-        {
-          icon: <Settings className="mr-2 h-4 w-4" />,
-          label: "Settings",
-          onClick: () => navigateToView('settings')
-        }
+        { label: "Dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" />, path: "/dashboard?view=home" },
+        { label: "Orders", icon: <CreditCard className="mr-2 h-4 w-4" />, path: "/dashboard?view=orders" },
+        { label: "Prescriptions", icon: <FileText className="mr-2 h-4 w-4" />, path: "/dashboard?view=prescriptions" },
+        { label: "Teleconsultations", icon: <Bell className="mr-2 h-4 w-4" />, path: "/dashboard?view=teleconsultations" },
+        { label: "Profile", icon: <User className="mr-2 h-4 w-4" />, path: "/dashboard?view=profile" },
+        { label: "Settings", icon: <Settings className="mr-2 h-4 w-4" />, path: "/dashboard?view=settings" },
       ];
     }
   };
 
-  const navigationItems = getNavigationItems();
+  // Get menu items based on variant (header or sidebar)
+  const menuItems = variant === "header" ? getHeaderMenuItems() : [];
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative flex items-center space-x-2">
-          <UserAvatar userProfile={profile} />
-          <span>{profile.full_name}</span>
-          <ChevronDown className="h-4 w-4 opacity-50" />
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarImage 
+              src={userAvatar || profile?.avatar_url || ""} 
+              alt={profile?.full_name || "User avatar"} 
+            />
+            <AvatarFallback>{getInitials(profile?.full_name || "User")}</AvatarFallback>
+          </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{profile.full_name}</p>
+            <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {profile.email}
+              {profile?.email}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          {navigationItems.map((item, index) => (
-            <DropdownMenuItem key={index} onClick={item.onClick}>
-              {item.icon}
-              <span>{item.label}</span>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          className="text-red-600 focus:text-red-600" 
+        
+        {variant === "header" && (
+          <>
+            {menuItems.map((item, index) => (
+              <DropdownMenuItem 
+                key={`menu-item-${index}`}
+                onClick={() => navigate(item.path)}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+          </>
+        )}
+        
+        <DropdownMenuItem
+          className="text-red-600 focus:text-red-600"
           onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
