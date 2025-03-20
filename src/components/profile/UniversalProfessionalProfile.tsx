@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -20,7 +21,7 @@ import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState } from "recoil";
 import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
 
 interface ProfessionalData {
@@ -69,6 +70,23 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       }
     }
   }, [profile, userRole]);
+
+  // Update professional data when Recoil state changes
+  useEffect(() => {
+    if (professionalData) {
+      if (userRole === 'doctor' && doctorStampUrl) {
+        setProfessionalData({
+          ...professionalData,
+          logo_url: doctorStampUrl
+        });
+      } else if (userRole === 'pharmacist' && pharmacyLogoUrl) {
+        setProfessionalData({
+          ...professionalData,
+          logo_url: pharmacyLogoUrl
+        });
+      }
+    }
+  }, [doctorStampUrl, pharmacyLogoUrl, userRole]);
 
   const fetchProfessionalData = async () => {
     if (!profile?.id) {
@@ -212,11 +230,9 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
       const filePath = `${entityType}s/${professionalData.id}/${Date.now()}.${fileExt}`;
       
       console.log(`Uploading to ${storageBucket} bucket:`, filePath);
-      console.log("File type:", file.type);
-      console.log("File size:", file.size);
       
-      // Real upload for all user types
-      const { error: uploadError, data } = await supabase.storage
+      // Upload the file
+      const { error: uploadError } = await supabase.storage
         .from(storageBucket)
         .upload(filePath, file, {
           upsert: true,
@@ -227,19 +243,15 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
         console.error('Upload error:', uploadError);
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
-
-      console.log("Upload successful, getting public URL");
       
+      // Get the public URL with cache busting
       const { data: { publicUrl } } = supabase.storage
         .from(storageBucket)
         .getPublicUrl(filePath);
         
-      // Add cache-busting parameter to prevent caching issues
       const cachebustedUrl = `${publicUrl}?t=${Date.now()}`;
 
-      console.log("Public URL obtained:", cachebustedUrl);
-      
-      // Update metadata for the appropriate entity
+      // Update metadata for the appropriate entity and Recoil state
       if (userRole === 'pharmacist') {
         const { error: metadataError } = await supabase
           .from('pharmacy_metadata')
@@ -249,10 +261,8 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           });
 
         if (metadataError) {
-          console.error('Metadata update error:', metadataError);
           throw new Error(`Metadata update failed: ${metadataError.message}`);
         }
-        console.log(`Pharmacy metadata updated successfully`);
         
         // Update Recoil state for pharmacy logo
         setPharmacyLogoUrl(cachebustedUrl);
@@ -261,15 +271,13 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
-            avatar_url: cachebustedUrl  // This could also be doctor_stamp_url depending on requirements
+            doctor_stamp_url: cachebustedUrl  // Update doctor stamp URL
           })
           .eq('id', profile.id);
           
         if (profileError) {
-          console.error('Doctor profile update error:', profileError);
           throw new Error(`Profile update failed: ${profileError.message}`);
         }
-        console.log(`Doctor profile updated successfully`);
         
         // Update Recoil state for doctor stamp
         setDoctorStampUrl(cachebustedUrl);
@@ -281,7 +289,7 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
         logo_url: cachebustedUrl
       });
 
-      // Invalidate any relevant queries to ensure data consistency
+      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       if (profile?.id) {
         queryClient.invalidateQueries({ queryKey: ['userProfile', profile.id] });

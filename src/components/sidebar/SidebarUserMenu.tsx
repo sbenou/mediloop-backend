@@ -12,6 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RefObject, useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
+import { userAvatarState } from "@/store/user/atoms";
+import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
 
 interface SidebarUserMenuProps {
   profile: UserProfile | null;
@@ -24,7 +27,7 @@ interface SidebarUserMenuProps {
   navigateToBilling: () => void;
   navigateToUpgrade: () => void;
   navigateToPharmacyProfile?: () => void;
-  navigateToDoctorProfile?: () => void; // Add this line to include the missing prop
+  navigateToDoctorProfile?: () => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
@@ -39,11 +42,27 @@ const SidebarUserMenu = ({
   navigateToBilling,
   navigateToUpgrade,
   navigateToPharmacyProfile,
-  navigateToDoctorProfile, // Add this to destructure the new prop
+  navigateToDoctorProfile,
   handleFileChange
 }: SidebarUserMenuProps) => {
   // State to track if the pharmacy link has been rendered
   const [hasRenderedPharmacyLink, setHasRenderedPharmacyLink] = useState(false);
+  
+  // Get relevant image URLs from Recoil state
+  const userAvatar = useRecoilValue(userAvatarState);
+  const doctorStampUrl = useRecoilValue(doctorStampUrlState);
+  const pharmacyLogoUrl = useRecoilValue(pharmacyLogoUrlState);
+  
+  // Determine which avatar URL to use based on user role
+  const getAvatarUrl = () => {
+    if (userRole === 'pharmacist' && pharmacyLogoUrl) {
+      return pharmacyLogoUrl;
+    } else if (userRole === 'doctor' && doctorStampUrl) {
+      return doctorStampUrl;
+    } else {
+      return userAvatar || profile?.avatar_url;
+    }
+  };
   
   // Determine display name based on user role
   const displayName = userRole === 'pharmacist' 
@@ -94,14 +113,17 @@ const SidebarUserMenu = ({
           className="cursor-pointer hover:opacity-80 transition-opacity"
         >
           <UserAvatar 
-            userProfile={profile} 
+            userProfile={profile ? {
+              ...profile,
+              avatar_url: getAvatarUrl() || undefined
+            } : undefined} 
             canUpload={true}
             onAvatarClick={(e) => {
               e.stopPropagation();
               handleAvatarClick(e);
             }}
             fallbackText={getUserInitials()} 
-            isSquare={userRole === 'pharmacist'}
+            isSquare={true} // Make all avatars square in the sidebar
           />
         </div>
         

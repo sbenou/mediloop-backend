@@ -4,6 +4,7 @@ import { UserProfile } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { useRecoilValue } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
+import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
 
 export interface UserAvatarProps {
   userProfile?: UserProfile;
@@ -22,7 +23,10 @@ const UserAvatar = ({
   onAvatarClick,
   isSquare = false
 }: UserAvatarProps) => {
+  // Get image URLs from Recoil state
   const globalAvatarUrl = useRecoilValue(userAvatarState);
+  const doctorStampUrl = useRecoilValue(doctorStampUrlState);
+  const pharmacyLogoUrl = useRecoilValue(pharmacyLogoUrlState);
   
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
@@ -52,15 +56,28 @@ const UserAvatar = ({
     }
   };
 
-  // Use global avatar URL from Recoil if we're displaying the current user's avatar
-  const avatarUrl = userProfile?.id && globalAvatarUrl && userProfile.id === globalAvatarUrl.split('/').slice(-2)[0]
-    ? globalAvatarUrl
-    : userProfile?.avatar_url;
+  // Determine which avatar URL to use based on user role and context
+  let displayAvatarUrl = userProfile?.avatar_url;
+  
+  // If we're in a sidebar menu and have a specific role
+  if (isSquare && userProfile?.role) {
+    if (userProfile.role === 'pharmacist' && pharmacyLogoUrl) {
+      displayAvatarUrl = pharmacyLogoUrl;
+    } else if (userProfile.role === 'doctor' && doctorStampUrl) {
+      displayAvatarUrl = doctorStampUrl;
+    } else if (globalAvatarUrl) {
+      displayAvatarUrl = globalAvatarUrl;
+    }
+  } 
+  // For non-squared (regular) avatars, use the standard user avatar
+  else if (!isSquare && globalAvatarUrl && userProfile?.id === globalAvatarUrl.split('/').slice(-2)[0]) {
+    displayAvatarUrl = globalAvatarUrl;
+  }
 
   return (
     <Avatar className={avatarClass} onClick={handleClick}>
       <AvatarImage 
-        src={avatarUrl || undefined} 
+        src={displayAvatarUrl || undefined} 
         alt={userProfile?.full_name || "User"} 
       />
       <AvatarFallback className={isSquare ? "rounded-md" : "rounded-full"}>
