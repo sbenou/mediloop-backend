@@ -1,10 +1,11 @@
-
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRecoilValue } from 'recoil';
+import { userAvatarState } from '@/store/user/atoms';
 
 interface PatientTableProps {
   patients: Array<{
@@ -24,6 +25,9 @@ const PatientTable: React.FC<PatientTableProps> = ({
   onViewPatient,
   limit 
 }) => {
+  // Get user avatar from Recoil state
+  const userAvatar = useRecoilValue(userAvatarState);
+  
   // Split full name into first and last name
   const getNameParts = (fullName: string) => {
     const parts = fullName ? fullName.split(' ') : ['', ''];
@@ -62,11 +66,18 @@ const PatientTable: React.FC<PatientTableProps> = ({
           ) : (
             displayPatients.map((patient) => {
               const { firstName, lastName } = getNameParts(patient.full_name || '');
+              
+              // Determine which avatar URL to use
+              // If this patient is the logged-in user (matches ID in avatar URL), use global avatar
+              const avatarUrl = userAvatar && 
+                userAvatar.includes(`/${patient.id}/`) ? 
+                userAvatar : patient.avatar_url;
+                
               return (
                 <TableRow key={patient.id}>
                   <TableCell className="font-medium">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={patient.avatar_url || undefined} alt={patient.full_name || 'Patient'} />
+                      <AvatarImage src={avatarUrl || undefined} alt={patient.full_name || 'Patient'} />
                       <AvatarFallback>{firstName.charAt(0)}{lastName.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </TableCell>

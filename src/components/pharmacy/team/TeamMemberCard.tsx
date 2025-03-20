@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
+import { useRecoilValue } from 'recoil';
+import { userAvatarState } from '@/store/user/atoms';
 
 interface TeamMember {
   id: string;
@@ -38,6 +40,8 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   showMainDoctorBadge = true
 }) => {
   const isActive = member.status === 'active';
+  // Get user avatar from Recoil state for the current user
+  const globalUserAvatar = useRecoilValue(userAvatarState);
   
   const getInitials = (name: string) => {
     return name
@@ -47,6 +51,12 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
       .toUpperCase()
       .substring(0, 2);
   };
+  
+  // Determine which avatar URL to use
+  // If this card represents the current user (by matching ID in the avatar URL), use the global avatar
+  const displayAvatarUrl = globalUserAvatar && 
+    globalUserAvatar.includes(`/${member.id}/`) ? 
+    globalUserAvatar : member.profile_image;
   
   const handleStatusToggle = () => {
     onToggleActive(member.id, member.status);
@@ -96,7 +106,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
       <CardContent className="pt-0 pb-4">
         <div className="flex flex-col items-center -mt-12">
           <Avatar className="h-24 w-24 border-4 border-white rounded-full">
-            <AvatarImage src={member.profile_image || undefined} alt={member.full_name} className="rounded-full" />
+            <AvatarImage src={displayAvatarUrl || undefined} alt={member.full_name} className="rounded-full" />
             <AvatarFallback className="text-lg rounded-full">{getInitials(member.full_name)}</AvatarFallback>
           </Avatar>
           

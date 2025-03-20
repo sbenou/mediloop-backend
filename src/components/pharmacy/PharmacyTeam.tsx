@@ -7,6 +7,8 @@ import { TeamMemberDialog } from './team/TeamMemberDialog';
 import { TeamMemberCard } from './team/TeamMemberCard';
 import { EmptyTeamState } from './team/EmptyTeamState';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useRecoilValue } from 'recoil';
+import { userAvatarState } from '@/store/user/atoms';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -15,6 +17,7 @@ interface PharmacyTeamProps {
 
 const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'pharmacy' }) => {
   const { profile } = useAuth();
+  const userAvatar = useRecoilValue(userAvatarState);
   const {
     teamMembers,
     loading,
@@ -30,6 +33,11 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
 
   // Function to transform TeamMember from the hook to the format expected by TeamMemberCard
   const mapTeamMemberToCardMember = (member: any) => {
+    // Check if this member is the current user to use the correct avatar
+    const avatarUrl = userAvatar && 
+      profile?.id === member.id ? 
+      userAvatar : member.avatar_url;
+      
     return {
       id: member.id,
       full_name: member.full_name,
@@ -38,7 +46,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
       role: member.role,
       pharmacy_id: pharmacyId,
       status: member.is_active ? 'active' : 'inactive' as 'active' | 'inactive',
-      profile_image: member.avatar_url,
+      profile_image: avatarUrl,
     };
   };
 
@@ -77,7 +85,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                     role: 'doctor',
                     pharmacy_id: pharmacyId,
                     status: 'active',
-                    profile_image: profile.avatar_url,
+                    profile_image: userAvatar || profile.avatar_url,
                   }}
                   onToggleActive={() => {}}
                   showMainDoctorBadge={false}
