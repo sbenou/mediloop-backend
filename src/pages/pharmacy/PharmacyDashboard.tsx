@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
@@ -25,18 +25,23 @@ const PharmacyDashboard = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, profile, isPharmacist } = useAuth();
   const { data: stats, isLoading: isStatsLoading } = usePharmacyDashboardStats();
-  const [patients, setPatients] = React.useState<Patient[]>([]);
-  const [isLoadingPatients, setIsLoadingPatients] = React.useState(true);
-  const [isInitialLoad, setIsInitialLoad] = React.useState(true);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoadingPatients, setIsLoadingPatients] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const redirectAttempted = React.useRef(false);
+  const dashboardMounted = React.useRef(true);
 
   useEffect(() => {
     // Debug log for tracking
     console.log("PharmacyDashboard component mounted");
+    dashboardMounted.current = true;
+    
     console.log("Auth state:", { isAuthenticated, isLoading, isPharmacist });
     
     const fetchPatients = async () => {
       try {
+        if (!dashboardMounted.current) return;
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url, created_at')
@@ -44,11 +49,16 @@ const PharmacyDashboard = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setPatients(data || []);
+        
+        if (dashboardMounted.current) {
+          setPatients(data || []);
+        }
       } catch (error) {
         console.error('Error fetching patients:', error);
       } finally {
-        setIsLoadingPatients(false);
+        if (dashboardMounted.current) {
+          setIsLoadingPatients(false);
+        }
       }
     };
 
@@ -59,15 +69,17 @@ const PharmacyDashboard = () => {
 
     return () => {
       console.log("PharmacyDashboard component unmounted");
+      dashboardMounted.current = false;
     };
   }, [isAuthenticated, isLoading, isPharmacist]);
 
-  // Check authentication status when it changes
+  // Check authentication status when it changes, with improved stability
   useEffect(() => {
     if (!isLoading) {
       setIsInitialLoad(false);
       
       // Only redirect if we're sure the user is not authenticated (after initial load)
+      // And don't redirect if we've already attempted a redirect
       if (!isAuthenticated && !redirectAttempted.current) {
         console.log("User not authenticated, redirecting to login");
         redirectAttempted.current = true;
@@ -80,7 +92,7 @@ const PharmacyDashboard = () => {
         return;
       }
 
-      // Check if user is a pharmacist
+      // Check if user is a pharmacist, but only if not already redirected
       if (isAuthenticated && profile && profile.role !== "pharmacist" && !redirectAttempted.current) {
         console.log("User is not a pharmacist, redirecting to dashboard");
         redirectAttempted.current = true;
@@ -107,7 +119,8 @@ const PharmacyDashboard = () => {
   }
 
   // Safety check - don't render if not authenticated or not a pharmacist
-  if (!isAuthenticated || (profile && profile.role !== "pharmacist")) {
+  // But use isPharmacist as well to be more permissive with the check
+  if (!isAuthenticated || (!isPharmacist && profile && profile.role !== "pharmacist")) {
     return null;
   }
 
