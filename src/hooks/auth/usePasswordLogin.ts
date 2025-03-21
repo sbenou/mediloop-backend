@@ -41,8 +41,10 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
         email,
         password,
         options: {
-          // Set longer expiry for remember me
-          expiresIn: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days vs 1 day
+          // Set longer expiry for remember me in the session options
+          session: {
+            expiresIn: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days vs 1 day
+          }
         }
       });
 
