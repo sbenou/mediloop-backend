@@ -36,15 +36,12 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
         console.error('Error clearing existing session:', clearError);
       }
 
-      // Attempt login
+      // Attempt login - Fixed options format
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: {
-          // Set longer expiry for remember me in the session options
-          session: {
-            expiresIn: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days vs 1 day
-          }
+          captchaToken: undefined
         }
       });
 
@@ -64,6 +61,15 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
       }
 
       console.log('Sign in successful:', data.user.id);
+      
+      // Set session expiry based on remember me preference
+      if (rememberMe) {
+        // For longer session (30 days)
+        data.session.expires_at = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30;
+      } else {
+        // For shorter session (1 day)
+        data.session.expires_at = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
+      }
       
       // Ensure session is stored with maximum reliability
       storeSession(data.session);

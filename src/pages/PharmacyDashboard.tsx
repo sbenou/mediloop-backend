@@ -96,14 +96,14 @@ const PharmacyDashboard = () => {
       case "inventory":
         return <InventoryView />;
       case "prescriptions":
-        return <PrescriptionsView />;
+        return <PrescriptionsView userRole="pharmacist" />;
       case "orders":
-        return <OrdersView />;
+        return <OrdersView userRole="pharmacist" activeTab="pending" />;
       case "settings":
         return <PharmacySettingsView />;
       case "dashboard":
       default:
-        return <HomeView />;
+        return <HomeView userRole="pharmacist" />;
     }
   };
   
