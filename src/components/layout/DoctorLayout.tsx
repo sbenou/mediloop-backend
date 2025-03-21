@@ -1,27 +1,20 @@
 
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/auth/useAuth";
+import { useState, useEffect } from "react";
 import DoctorSidebar from "@/components/sidebar/DoctorSidebar";
 import EnhancedUserMenu from "@/components/user-menu/EnhancedUserMenu";
 import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
-import { Search, Menu, X, AlertTriangle } from "lucide-react";
+import { Search, Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
-import { toast } from "@/components/ui/use-toast";
 
 interface DoctorLayoutProps {
   children: React.ReactNode;
 }
 
 const DoctorLayout = ({ children }: DoctorLayoutProps) => {
-  const { isAuthenticated, profile } = useAuth();
-  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
 
   useEffect(() => {
     // Handle window resize for mobile detection
@@ -32,47 +25,6 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  // Handle session recovery
-  const handleRetrySession = async () => {
-    try {
-      toast({
-        title: "Reconnecting...",
-        description: "Attempting to reconnect your session",
-      });
-      
-      // Force sign out first to clear any bad state
-      await supabase.auth.signOut({ scope: 'local' });
-      
-      // Redirect to login
-      navigate("/login", { replace: true });
-    } catch (error) {
-      console.error("Error during session recovery:", error);
-      toast({
-        variant: "destructive",
-        title: "Connection Error",
-        description: "Could not recover your session. Please try again.",
-      });
-    }
-  };
-
-  // If session check failed, show recovery option
-  if (sessionCheckFailed) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4 max-w-md text-center px-6">
-          <AlertTriangle className="h-12 w-12 text-amber-500" />
-          <h2 className="text-xl font-semibold">Session Error</h2>
-          <p className="text-muted-foreground mb-4">
-            There was a problem with your session. This could be due to an expired token or network issue.
-          </p>
-          <Button onClick={handleRetrySession}>
-            Reconnect Session
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">

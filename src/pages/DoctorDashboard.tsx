@@ -25,13 +25,27 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const { isAuthenticated, userRole, isLoading, profile } = useAuth();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectAttempted = useRef(false);
-  const initialLoadComplete = useRef(false);
-  const hasRenderedOnce = useRef(false);
+  
+  // Store whether we've ever displayed content
+  const hasShownContentBefore = useRef(false);
   
   // Get parameters from URL or use initialParams if provided
   const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
   const section = searchParams.get("section") || initialParams?.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
+  
+  // If we've already shown content, don't go back to showing loading state
+  if (hasShownContentBefore.current && isAuthenticated && userRole === "doctor") {
+    return (
+      <DoctorLayout>
+        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+          <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+            {getContent()}
+          </ScrollArea>
+        </div>
+      </DoctorLayout>
+    );
+  }
   
   // Set URL params on initial load if initialParams was provided
   useEffect(() => {
@@ -53,8 +67,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       hasInitialParams: !!initialParams,
       isLoading,
       isAuthenticated,
-      initialLoadComplete: initialLoadComplete.current,
-      hasRenderedOnce: hasRenderedOnce.current
+      hasShownContentBefore: hasShownContentBefore.current
     });
   }, [userRole, currentView, section, profileTab, searchParams, location, initialParams, isLoading, isAuthenticated]);
   
@@ -97,21 +110,11 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   }, [isAuthenticated, isLoading, navigate, userRole]);
 
-  // Mark initial load as complete once authenticated
+  // Once we've shown content, remember it
   useEffect(() => {
     if (!isLoading && isAuthenticated && userRole === "doctor") {
-      // Use a short timeout to ensure the component is fully loaded before marking complete
-      const timer = setTimeout(() => {
-        initialLoadComplete.current = true;
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, isAuthenticated, userRole]);
-
-  // Lock in the rendered state once we've shown the dashboard
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && userRole === "doctor") {
-      hasRenderedOnce.current = true;
+      // Mark that we've shown content at least once
+      hasShownContentBefore.current = true;
     }
   }, [isLoading, isAuthenticated, userRole]);
   
@@ -134,9 +137,8 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   };
   
-  // Show a single unified loading state - but only if initial load not complete and we haven't rendered before
-  if ((isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) && 
-      !initialLoadComplete.current && !hasRenderedOnce.current) {
+  // Show a single unified loading state - but only if we haven't shown content before
+  if (isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">

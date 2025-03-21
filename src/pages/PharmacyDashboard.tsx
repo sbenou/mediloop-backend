@@ -8,16 +8,30 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/components/ui/use-toast";
 
 const PharmacyDashboard = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated, userRole, isLoading, profile, isPharmacist } = useAuth();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectAttempted = useRef(false);
-  const initialLoadComplete = useRef(false);
-  const hasRenderedOnce = useRef(false);
   
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
+  
+  // Store whether we've ever displayed content
+  const hasShownContentBefore = useRef(false);
+  
+  // If we've already shown content, don't go back to showing loading state
+  if (hasShownContentBefore.current && isAuthenticated && isPharmacist) {
+    return (
+      <PharmacistLayout>
+        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+          <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+            <PharmacyView userRole={userRole} section={section} />
+          </ScrollArea>
+        </div>
+      </PharmacistLayout>
+    );
+  }
   
   // Console logging for debugging
   useEffect(() => {
@@ -29,8 +43,7 @@ const PharmacyDashboard = () => {
       profile,
       isLoading,
       isAuthenticated,
-      initialLoadComplete: initialLoadComplete.current,
-      hasRenderedOnce: hasRenderedOnce.current
+      hasShownContentBefore: hasShownContentBefore.current
     });
   }, [userRole, section, searchParams, isPharmacist, profile, isLoading, isAuthenticated]);
   
@@ -61,27 +74,16 @@ const PharmacyDashboard = () => {
     }
   }, [isAuthenticated, isLoading, navigate, isPharmacist]);
   
-  // Mark initial load as complete once authenticated
+  // Once we've shown content, remember it
   useEffect(() => {
     if (!isLoading && isAuthenticated && isPharmacist) {
-      // Use a short timeout to ensure the component is fully loaded before marking complete
-      const timer = setTimeout(() => {
-        initialLoadComplete.current = true;
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, isAuthenticated, isPharmacist]);
-
-  // Lock in the rendered state once we've shown the dashboard
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && isPharmacist) {
-      hasRenderedOnce.current = true;
+      // Mark that we've shown content at least once
+      hasShownContentBefore.current = true;
     }
   }, [isLoading, isAuthenticated, isPharmacist]);
   
-  // Show a single unified loading state - but only if initial load not complete and we haven't rendered before
-  if ((isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && !isPharmacist)) && 
-      !initialLoadComplete.current && !hasRenderedOnce.current) {
+  // Show loading state - but only if we've never shown content before
+  if (isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && !isPharmacist)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">
