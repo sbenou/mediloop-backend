@@ -34,6 +34,26 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const section = searchParams.get("section") || initialParams?.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
   
+  // Define getContent function before using it
+  const getContent = () => {
+    // For the doctor dashboard, show content based on the section
+    switch (section) {
+      case "profile":
+        return <ProfileView activeTab={profileTab} userRole={userRole} />;
+      case "settings":
+        return <SettingsView userRole={userRole} />;
+      case "prescriptions":
+        return <DoctorPrescriptionsView />;
+      case "patients":
+        return <DoctorPatientView />;
+      case "teleconsultations":
+        return <DoctorTeleconsultationsView />;
+      case "dashboard":
+      default:
+        return <HomeView userRole={userRole} />;
+    }
+  };
+  
   // If we've already shown content, don't go back to showing loading state
   if (hasShownContentBefore.current && isAuthenticated && userRole === "doctor") {
     return (
@@ -117,25 +137,6 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       hasShownContentBefore.current = true;
     }
   }, [isLoading, isAuthenticated, userRole]);
-  
-  const getContent = () => {
-    // For the doctor dashboard, show content based on the section
-    switch (section) {
-      case "profile":
-        return <ProfileView activeTab={profileTab} userRole={userRole} />;
-      case "settings":
-        return <SettingsView userRole={userRole} />;
-      case "prescriptions":
-        return <DoctorPrescriptionsView />;
-      case "patients":
-        return <DoctorPatientView />;
-      case "teleconsultations":
-        return <DoctorTeleconsultationsView />;
-      case "dashboard":
-      default:
-        return <HomeView userRole={userRole} />;
-    }
-  };
   
   // Show a single unified loading state - but only if we haven't shown content before
   if (isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) {
