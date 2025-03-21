@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -10,44 +9,62 @@ const PharmacyDashboard = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated, userRole, isLoading, profile, isPharmacist } = useAuth();
-  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [visibleContent, setVisibleContent] = useState<'loading' | 'content' | 'initial'>('initial');
   const redirectAttempted = useRef(false);
+  const firstContentShown = useRef(false);
   const initialRenderComplete = useRef(false);
   
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
   
-  // Record when we first show the dashboard content
-  const hasShownContentBefore = useRef(false);
-  
-  // Ensure we don't go back to loading state after showing content
+  console.log('PharmacyDashboard render:', {
+    isAuthenticated,
+    isLoading,
+    isPharmacist,
+    visibleContent: visibleContent,
+    firstContentShown: firstContentShown.current,
+    initialRender: initialRenderComplete.current
+  });
+
+  // Mark initial render as complete after a brief delay
   useEffect(() => {
-    // Only set this once - on first successful auth
-    if (!hasShownContentBefore.current && !isLoading && isAuthenticated && isPharmacist) {
-      console.log("Dashboard content shown - locking UI state");
-      hasShownContentBefore.current = true;
-    }
-    
-    // Mark initial render as complete after a brief delay
     if (!initialRenderComplete.current) {
       const timer = setTimeout(() => {
         initialRenderComplete.current = true;
-      }, 100);
+      }, 50);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, isAuthenticated, isPharmacist]);
+  }, []);
   
-  // Redirect to login if not authenticated
+  // Set content to be visible once authenticated
   useEffect(() => {
-    // Skip during initial loading or if we've already shown content
-    if (hasShownContentBefore.current || redirectAttempted.current) {
+    // If we've shown content before, keep showing it
+    if (firstContentShown.current) {
+      if (visibleContent !== 'content') {
+        setVisibleContent('content');
+      }
+      return;
+    }
+    
+    // Only change to content if authenticated and appropriate role
+    if (!isLoading && isAuthenticated && isPharmacist) {
+      firstContentShown.current = true;
+      setVisibleContent('content');
+      console.log('Dashboard content shown - marking as visible permanently');
+    } else if (!isLoading && initialRenderComplete.current && visibleContent === 'initial') {
+      setVisibleContent('loading');
+    }
+  }, [isLoading, isAuthenticated, isPharmacist, visibleContent]);
+  
+  // Redirect to login if not authenticated - but only after initial loading and if we've never shown content
+  useEffect(() => {
+    if (firstContentShown.current || redirectAttempted.current) {
       return;
     }
     
     // Only redirect if we're sure authentication has failed (not just loading)
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && initialRenderComplete.current && !isAuthenticated) {
       redirectAttempted.current = true;
-      setIsRedirecting(true);
       toast({
         variant: "destructive",
         title: "Authentication required",
@@ -55,29 +72,27 @@ const PharmacyDashboard = () => {
       });
       navigate("/login");
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, initialRenderComplete]);
   
-  // Redirect to regular dashboard if not a pharmacist
+  // Redirect to regular dashboard if not a pharmacist - but only after initial loading and if we've never shown content
   useEffect(() => {
-    // Skip during initial loading or if we've already shown content
-    if (hasShownContentBefore.current || redirectAttempted.current) {
+    if (firstContentShown.current || redirectAttempted.current) {
       return;
     }
     
     // Only redirect if we're sure user is not a pharmacist (not just loading)
-    if (!isLoading && isAuthenticated && !isPharmacist) {
+    if (!isLoading && initialRenderComplete.current && isAuthenticated && !isPharmacist) {
       redirectAttempted.current = true;
-      setIsRedirecting(true);
       toast({
         title: "Access restricted",
         description: "Only pharmacists can access this dashboard.",
       });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, isLoading, navigate, isPharmacist]);
+  }, [isAuthenticated, isLoading, navigate, isPharmacist, initialRenderComplete]);
 
-  // If we've shown content before or completed initial render, always show the dashboard
-  if (hasShownContentBefore.current || (initialRenderComplete.current && isAuthenticated && isPharmacist)) {
+  // If content is designated to be visible, always show the dashboard
+  if (visibleContent === 'content') {
     return (
       <PharmacistLayout>
         <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
@@ -87,8 +102,8 @@ const PharmacyDashboard = () => {
     );
   }
   
-  // Show loading state but not if we've previously shown content
-  if (!hasShownContentBefore.current && (isLoading || isRedirecting)) {
+  // Show loading state
+  if (visibleContent === 'loading' || visibleContent === 'initial') {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">
@@ -99,15 +114,8 @@ const PharmacyDashboard = () => {
     );
   }
   
-  // Default loading state for very first render
-  return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
-        <p className="text-muted-foreground">Loading dashboard...</p>
-      </div>
-    </div>
-  );
+  // Fallback (should not reach here)
+  return null;
 };
 
 export default PharmacyDashboard;

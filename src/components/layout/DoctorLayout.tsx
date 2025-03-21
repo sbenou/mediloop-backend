@@ -67,7 +67,7 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto hover-scroll main-content-scroll">
+        <main className="flex-1">
           {children}
         </main>
       </div>
