@@ -5,33 +5,41 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useRef } from "react";
 import { Loader } from "lucide-react";
+import { useRecoilValue } from "recoil";
+import { authState } from "@/store/auth/atoms";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, user, profile, isPharmacist } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const auth = useRecoilValue(authState);
   const navigate = useNavigate();
   const redirectAttempted = useRef(false);
 
+  // Enhanced logging for debugging
+  console.log("Login page render:", {
+    isAuthenticated,
+    isLoading,
+    profileRole: auth.profile?.role,
+    userId: auth.user?.id,
+    redirectAttempted: redirectAttempted.current
+  });
+
   useEffect(() => {
     const checkUserRole = async () => {
-      if (isAuthenticated && user && !redirectAttempted.current) {
+      // Only redirect if authenticated, not loading, profile exists, and we haven't already redirected
+      if (isAuthenticated && !isLoading && auth.profile && !redirectAttempted.current) {
         redirectAttempted.current = true;
         
-        if (!profile) {
-          console.error('No profile found, cannot redirect');
-          return;
-        }
-        
-        console.log('User role found:', profile.role, 'Is pharmacist:', isPharmacist);
+        console.log('User role found for redirect:', auth.profile.role);
 
         // Special handling for pharmacists - directly go to the pharmacy page
-        if (profile.role === 'pharmacist' || isPharmacist) {
+        if (auth.profile.role === 'pharmacist') {
           console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
           navigate('/pharmacy', { replace: true });
           return;
         }
         
         // Special handling for doctors
-        if (profile.role === 'doctor') {
+        if (auth.profile.role === 'doctor') {
           console.log('Already authenticated as doctor, redirecting to doctor dashboard');
           navigate('/doctor', { replace: true });
           return;
@@ -43,7 +51,7 @@ const Login = () => {
     };
     
     checkUserRole();
-  }, [isAuthenticated, user, profile, navigate, isPharmacist]);
+  }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
   // Show loading state
   if (isLoading) {
