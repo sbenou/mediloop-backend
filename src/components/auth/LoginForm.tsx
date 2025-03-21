@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -67,9 +66,11 @@ export const LoginForm = () => {
         if (profile?.role === 'superadmin') {
           navigate('/superadmin/dashboard', { replace: true });
         } else if (profile?.role === 'pharmacist') {
-          // Use direct window.location.href instead of navigate for pharmacists
+          // For pharmacist, we need more aggressive approach to avoid navigation issues
           console.log('Redirecting pharmacist using direct location change');
+          // Force immediate navigation with a full page load
           window.location.href = '/pharmacy';
+          return; // Early return to prevent further code execution
         } else if (profile?.role === 'doctor') {
           navigate('/doctor', { replace: true });
         } else {

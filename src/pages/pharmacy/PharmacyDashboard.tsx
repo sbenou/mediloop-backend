@@ -29,9 +29,11 @@ const PharmacyDashboard = () => {
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isPageMounted, setIsPageMounted] = useState(true);
+  const [forceRender, setForceRender] = useState(false); // Add a state to force rerender
   const redirectAttempted = React.useRef(false);
   const dashboardMounted = React.useRef(true);
   const authCheckComplete = React.useRef(false);
+  const initialRender = React.useRef(true);
 
   // Set up dashboardMounted ref for tracking component lifecycle
   useEffect(() => {
@@ -39,22 +41,35 @@ const PharmacyDashboard = () => {
     console.log("PharmacyDashboard component mounted");
     dashboardMounted.current = true;
     setIsPageMounted(true);
+    initialRender.current = true;
     
     console.log("Auth state:", { isAuthenticated, isLoading, isPharmacist });
+    
+    // Force a rerender after a short delay to ensure state is fresh
+    const timer = setTimeout(() => {
+      if (dashboardMounted.current) {
+        setForceRender(prev => !prev);
+        initialRender.current = false;
+      }
+    }, 50);
     
     return () => {
       console.log("PharmacyDashboard component unmounted");
       dashboardMounted.current = false;
       setIsPageMounted(false);
+      clearTimeout(timer);
     };
   }, []);
 
-  // Fetch patients data
+  // Fetch patients data - only after initial render/auth is complete
   useEffect(() => {
     const fetchPatients = async () => {
       if (!dashboardMounted.current || !isPageMounted) return;
+      if (initialRender.current) return; // Skip during initial render
       
       try {
+        setIsLoadingPatients(true);
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url, created_at')
@@ -75,15 +90,15 @@ const PharmacyDashboard = () => {
       }
     };
 
-    // Only fetch data if authenticated
-    if (isAuthenticated && !isLoading && isPageMounted) {
+    // Only fetch data if authenticated and auth check complete
+    if (isAuthenticated && !isLoading && isPageMounted && !initialRender.current) {
       fetchPatients();
     }
-  }, [isAuthenticated, isLoading, isPharmacist, isPageMounted]);
+  }, [isAuthenticated, isLoading, isPharmacist, isPageMounted, forceRender]);
 
   // Set initial load state
   useEffect(() => {
-    if (!isLoading && isPageMounted) {
+    if (!isLoading && isPageMounted && dashboardMounted.current) {
       setIsInitialLoad(false);
     }
   }, [isLoading, isPageMounted]);
@@ -100,7 +115,7 @@ const PharmacyDashboard = () => {
         
         // Only redirect if we're sure the user is not authenticated (after initial load)
         // And don't redirect if we've already attempted a redirect
-        if (!isAuthenticated && !redirectAttempted.current && isPageMounted) {
+        if (!isAuthenticated && !redirectAttempted.current && isPageMounted && dashboardMounted.current) {
           console.log("User not authenticated, redirecting to login");
           redirectAttempted.current = true;
           
