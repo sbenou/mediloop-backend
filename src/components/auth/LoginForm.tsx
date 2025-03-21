@@ -67,7 +67,11 @@ export const LoginForm = () => {
         if (profile?.role === 'superadmin') {
           navigate('/superadmin/dashboard', { replace: true });
         } else if (profile?.role === 'pharmacist') {
-          navigate('/pharmacy/dashboard', { replace: true });
+          // Use window.location.href for a hard redirect to ensure complete page refresh
+          window.location.href = '/pharmacy';
+        } else if (profile?.role === 'doctor') {
+          // Use window.location.href for a hard redirect to ensure complete page refresh
+          window.location.href = '/doctor';
         } else {
           navigate('/dashboard', { replace: true });
         }
