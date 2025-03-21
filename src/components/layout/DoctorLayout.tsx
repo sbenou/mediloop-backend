@@ -118,9 +118,7 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
 
         {/* Main Content */}
         <main className="flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll">
-          <ScrollArea className="h-full w-full">
-            {children}
-          </ScrollArea>
+          {children}
         </main>
       </div>
     </div>

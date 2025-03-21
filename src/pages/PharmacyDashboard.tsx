@@ -13,6 +13,7 @@ const PharmacyDashboard = () => {
   const { isAuthenticated, userRole, isLoading, profile, isPharmacist } = useAuth();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectAttempted = useRef(false);
+  const initialLoadComplete = useRef(false);
   
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
@@ -24,9 +25,11 @@ const PharmacyDashboard = () => {
       isPharmacist,
       section,
       searchParams: Object.fromEntries(searchParams.entries()),
-      profile
+      profile,
+      isLoading,
+      isAuthenticated
     });
-  }, [userRole, section, searchParams, isPharmacist, profile]);
+  }, [userRole, section, searchParams, isPharmacist, profile, isLoading, isAuthenticated]);
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -55,8 +58,15 @@ const PharmacyDashboard = () => {
     }
   }, [isAuthenticated, isLoading, navigate, isPharmacist]);
   
-  // Show a single unified loading state
-  if (isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && !isPharmacist)) {
+  // Mark initial load as complete once authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && isPharmacist && !initialLoadComplete.current) {
+      initialLoadComplete.current = true;
+    }
+  }, [isLoading, isAuthenticated, isPharmacist]);
+  
+  // Show a single unified loading state - but only if initial load not complete
+  if ((isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && !isPharmacist)) && !initialLoadComplete.current) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">

@@ -25,6 +25,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const { isAuthenticated, userRole, isLoading, profile } = useAuth();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectAttempted = useRef(false);
+  const initialLoadComplete = useRef(false);
   
   // Get parameters from URL or use initialParams if provided
   const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
@@ -48,9 +49,11 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       profileTab,
       searchParams: Object.fromEntries(searchParams.entries()),
       location: location.pathname + location.search,
-      hasInitialParams: !!initialParams
+      hasInitialParams: !!initialParams,
+      isLoading,
+      isAuthenticated
     });
-  }, [userRole, currentView, section, profileTab, searchParams, location, initialParams]);
+  }, [userRole, currentView, section, profileTab, searchParams, location, initialParams, isLoading, isAuthenticated]);
   
   // Make sure we have a default section for doctors
   useEffect(() => {
@@ -90,6 +93,13 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       navigate("/dashboard");
     }
   }, [isAuthenticated, isLoading, navigate, userRole]);
+
+  // Mark initial load as complete once authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && userRole === "doctor" && !initialLoadComplete.current) {
+      initialLoadComplete.current = true;
+    }
+  }, [isLoading, isAuthenticated, userRole]);
   
   const getContent = () => {
     // For the doctor dashboard, show content based on the section
@@ -110,8 +120,8 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   };
   
-  // Show a single unified loading state
-  if (isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) {
+  // Show a single unified loading state - but only if initial load not complete
+  if ((isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) && !initialLoadComplete.current) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">
