@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Loader } from "lucide-react";
 
@@ -11,13 +11,16 @@ const Login = () => {
   const { isAuthenticated, isLoading, user, profile, isPharmacist } = useAuth();
   const navigate = useNavigate();
   const redirectAttempted = useRef(false);
+  const [navLock, setNavLock] = useState(false);
 
   useEffect(() => {
     const checkUserRole = async () => {
-      if (isAuthenticated && user && !redirectAttempted.current) {
+      // Prevent multiple redirects - only attempt once
+      if (isAuthenticated && user && !redirectAttempted.current && !navLock) {
         try {
           console.log('Checking user role for:', user.id);
           redirectAttempted.current = true;
+          setNavLock(true);
           
           if (!profile) {
             console.error('No profile found, cannot redirect');
@@ -64,25 +67,29 @@ const Login = () => {
             console.error('Error getting/storing session:', sessionError);
           }
           
-          // Special handling for pharmacists - use replace: true to avoid history issues
+          // Use a longer delay and ensure we use window.location.href for pharmacists to prevent React Router conflicts
           if (profile.role === 'pharmacist' || isPharmacist) {
-            console.log('Redirecting pharmacist to pharmacy dashboard view');
+            console.log('Redirecting pharmacist to pharmacy dashboard view using direct navigation');
             setTimeout(() => {
-              navigate('/pharmacy', { replace: true });
-            }, 100);
+              window.location.href = '/pharmacy';
+            }, 500);
             return;
           }
           
           // Special handling for doctors
           if (profile.role === 'doctor') {
             console.log('Redirecting doctor to doctor dashboard view');
-            navigate('/doctor', { replace: true });
+            setTimeout(() => {
+              navigate('/doctor', { replace: true });
+            }, 300);
             return;
           }
           
           // For all other users, redirect to the universal dashboard
           console.log('Redirecting to universal dashboard...');
-          navigate('/dashboard', { replace: true });
+          setTimeout(() => {
+            navigate('/dashboard', { replace: true });
+          }, 300);
         } catch (err) {
           console.error('Error checking role:', err);
           navigate('/dashboard');
@@ -91,7 +98,7 @@ const Login = () => {
     };
     
     checkUserRole();
-  }, [isAuthenticated, user, profile, navigate, isPharmacist]);
+  }, [isAuthenticated, user, profile, navigate, isPharmacist, navLock]);
 
   // Show loading state
   if (isLoading) {
@@ -119,16 +126,20 @@ const Login = () => {
     // Check if the user is a pharmacist
     if (profile?.role === 'pharmacist' || isPharmacist) {
       console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
-      // Use setTimeout to defer the navigation and avoid race conditions
+      // Use direct window location for pharmacist to avoid React Router conflicts
       setTimeout(() => {
-        navigate('/pharmacy', { replace: true });
-      }, 100);
+        window.location.href = '/pharmacy';
+      }, 500);
     } else if (profile?.role === 'doctor') {
       console.log('Already authenticated as doctor, redirecting to doctor dashboard');
-      navigate('/doctor', { replace: true });
+      setTimeout(() => {
+        navigate('/doctor', { replace: true });
+      }, 300);
     } else {
       // For all other users
-      navigate('/dashboard', { replace: true });
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 300);
     }
     
     // Show a temporary loading state while redirecting

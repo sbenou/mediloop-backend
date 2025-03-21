@@ -28,20 +28,33 @@ const PharmacyDashboard = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isPageMounted, setIsPageMounted] = useState(true);
   const redirectAttempted = React.useRef(false);
   const dashboardMounted = React.useRef(true);
+  const authCheckComplete = React.useRef(false);
 
+  // Set up dashboardMounted ref for tracking component lifecycle
   useEffect(() => {
     // Debug log for tracking
     console.log("PharmacyDashboard component mounted");
     dashboardMounted.current = true;
+    setIsPageMounted(true);
     
     console.log("Auth state:", { isAuthenticated, isLoading, isPharmacist });
     
+    return () => {
+      console.log("PharmacyDashboard component unmounted");
+      dashboardMounted.current = false;
+      setIsPageMounted(false);
+    };
+  }, []);
+
+  // Fetch patients data
+  useEffect(() => {
     const fetchPatients = async () => {
+      if (!dashboardMounted.current || !isPageMounted) return;
+      
       try {
-        if (!dashboardMounted.current) return;
-        
         const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url, created_at')
@@ -50,61 +63,77 @@ const PharmacyDashboard = () => {
 
         if (error) throw error;
         
-        if (dashboardMounted.current) {
+        if (dashboardMounted.current && isPageMounted) {
           setPatients(data || []);
+          setIsLoadingPatients(false);
         }
       } catch (error) {
         console.error('Error fetching patients:', error);
-      } finally {
-        if (dashboardMounted.current) {
+        if (dashboardMounted.current && isPageMounted) {
           setIsLoadingPatients(false);
         }
       }
     };
 
     // Only fetch data if authenticated
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated && !isLoading && isPageMounted) {
       fetchPatients();
     }
+  }, [isAuthenticated, isLoading, isPharmacist, isPageMounted]);
 
-    return () => {
-      console.log("PharmacyDashboard component unmounted");
-      dashboardMounted.current = false;
-    };
-  }, [isAuthenticated, isLoading, isPharmacist]);
-
-  // Check authentication status when it changes, with improved stability
+  // Set initial load state
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && isPageMounted) {
       setIsInitialLoad(false);
-      
-      // Only redirect if we're sure the user is not authenticated (after initial load)
-      // And don't redirect if we've already attempted a redirect
-      if (!isAuthenticated && !redirectAttempted.current) {
-        console.log("User not authenticated, redirecting to login");
-        redirectAttempted.current = true;
-        toast({
-          variant: "destructive",
-          title: "Authentication required",
-          description: "Please login to access the pharmacy dashboard.",
-        });
-        navigate("/login");
-        return;
-      }
+    }
+  }, [isLoading, isPageMounted]);
 
-      // Check if user is a pharmacist, but only if not already redirected
-      if (isAuthenticated && profile && profile.role !== "pharmacist" && !redirectAttempted.current) {
-        console.log("User is not a pharmacist, redirecting to dashboard");
-        redirectAttempted.current = true;
-        toast({
-          variant: "destructive",
-          title: "Access denied",
-          description: "Only pharmacists can access the pharmacy dashboard.",
-        });
-        navigate("/dashboard");
+  // Check authentication status when it changes - with improved stability
+  useEffect(() => {
+    // Skip if we've already checked auth and attempted redirect
+    if (authCheckComplete.current || !dashboardMounted.current || !isPageMounted) return;
+    
+    if (!isLoading) {
+      // Only perform auth check once
+      if (!authCheckComplete.current) {
+        authCheckComplete.current = true;
+        
+        // Only redirect if we're sure the user is not authenticated (after initial load)
+        // And don't redirect if we've already attempted a redirect
+        if (!isAuthenticated && !redirectAttempted.current && isPageMounted) {
+          console.log("User not authenticated, redirecting to login");
+          redirectAttempted.current = true;
+          
+          // If we need to redirect away, do it safely
+          if (dashboardMounted.current && isPageMounted) {
+            toast({
+              variant: "destructive",
+              title: "Authentication required",
+              description: "Please login to access the pharmacy dashboard.",
+            });
+            navigate("/login", { replace: true });
+          }
+          return;
+        }
+
+        // Check if user is a pharmacist, but only if not already redirected
+        if (isAuthenticated && profile && profile.role !== "pharmacist" && !redirectAttempted.current && isPageMounted) {
+          console.log("User is not a pharmacist, redirecting to dashboard");
+          redirectAttempted.current = true;
+          
+          // If we need to redirect away, do it safely
+          if (dashboardMounted.current && isPageMounted) {
+            toast({
+              variant: "destructive",
+              title: "Access denied",
+              description: "Only pharmacists can access the pharmacy dashboard.",
+            });
+            navigate("/dashboard", { replace: true });
+          }
+        }
       }
     }
-  }, [isAuthenticated, isLoading, navigate, profile, isPharmacist]);
+  }, [isAuthenticated, isLoading, navigate, profile, isPharmacist, isPageMounted]);
 
   // Show loading state during initial load
   if (isLoading || isInitialLoad) {
@@ -125,10 +154,12 @@ const PharmacyDashboard = () => {
   }
 
   const viewPatient = (patientId: string) => {
+    if (!dashboardMounted.current || !isPageMounted) return;
     navigate(`/dashboard?view=pharmacy&section=patients&id=${patientId}`);
   };
 
   const navigateToPharmacyPage = (path: string) => {
+    if (!dashboardMounted.current || !isPageMounted) return;
     navigate(`/dashboard?view=pharmacy&section=${path}`);
   };
 
