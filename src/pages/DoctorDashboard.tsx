@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
@@ -25,6 +25,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const navigate = useNavigate();
   const { isAuthenticated, userRole, isLoading, profile } = useAuth();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const redirectAttempted = useRef(false);
   
   // Get parameters from URL or use initialParams if provided
   const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
@@ -67,14 +68,17 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
     if (!isLoading) {
-      setIsInitialLoad(false);
+      setTimeout(() => {
+        setIsInitialLoad(false);
+      }, 300); // Small timeout to prevent flickering
     }
   }, [isLoading]);
   
   // Redirect to login if not authenticated
   useEffect(() => {
     // Only redirect if we're sure the user is not authenticated (after initial load)
-    if (!isInitialLoad && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !redirectAttempted.current) {
+      redirectAttempted.current = true;
       toast({
         variant: "destructive",
         title: "Authentication required",
@@ -82,18 +86,19 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       });
       navigate("/login");
     }
-  }, [isAuthenticated, isInitialLoad, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
   
   // Redirect to regular dashboard if not a doctor
   useEffect(() => {
-    if (!isInitialLoad && isAuthenticated && userRole !== "doctor") {
+    if (!isLoading && isAuthenticated && userRole !== "doctor" && !redirectAttempted.current) {
+      redirectAttempted.current = true;
       toast({
         title: "Access restricted",
         description: "Only doctors can access this dashboard.",
       });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, isInitialLoad, navigate, userRole]);
+  }, [isAuthenticated, isLoading, navigate, userRole]);
   
   const getContent = () => {
     // For the doctor dashboard, show content based on the section
@@ -114,22 +119,15 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   };
   
-  // Show loading skeleton only on initial load, not during navigation
-  if (isInitialLoad && isLoading) {
+  // If we're still loading or there's a redirect in progress, show the loading state
+  if ((isInitialLoad && isLoading) || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) {
     return (
-      <DoctorLayout>
-        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-          <div className="space-y-4">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-64 w-full" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          </div>
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
         </div>
-      </DoctorLayout>
+      </div>
     );
   }
   

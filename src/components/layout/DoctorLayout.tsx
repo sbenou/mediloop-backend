@@ -6,47 +6,26 @@ import DoctorSidebar from "@/components/sidebar/DoctorSidebar";
 import EnhancedUserMenu from "@/components/user-menu/EnhancedUserMenu";
 import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, AlertTriangle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/use-toast";
 
 interface DoctorLayoutProps {
   children: React.ReactNode;
 }
 
 const DoctorLayout = ({ children }: DoctorLayoutProps) => {
-  const { isAuthenticated, isLoading, profile } = useAuth();
+  const { isAuthenticated, profile } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const redirectAttempted = useRef(false);
+  const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
+  const sessionCheckAttempted = useRef(false);
 
   useEffect(() => {
-    // Only perform the check when loading is complete
-    if (!isLoading) {
-      console.log("DoctorLayout: Auth check - isAuthenticated:", isAuthenticated, "profile:", profile);
-      
-      // Check if user is authenticated
-      if (!isAuthenticated) {
-        if (!redirectAttempted.current) {
-          console.log("DoctorLayout: User not authenticated, redirecting to login");
-          redirectAttempted.current = true;
-          navigate("/login", { replace: true });
-        }
-        return;
-      }
-
-      // Check if user has the doctor role, but only if profile exists
-      if (isAuthenticated && profile && profile.role !== "doctor") {
-        if (!redirectAttempted.current) {
-          console.log("DoctorLayout: User is not a doctor, redirecting to dashboard");
-          redirectAttempted.current = true;
-          navigate("/dashboard", { replace: true });
-        }
-      }
-    }
-
     // Handle window resize for mobile detection
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -54,22 +33,92 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [isAuthenticated, isLoading, navigate, profile]);
+  }, []);
 
-  // Show loading state
-  if (isLoading) {
+  useEffect(() => {
+    // Verify session directly with Supabase to ensure we have a valid session
+    const verifySession = async () => {
+      if (sessionCheckAttempted.current) return;
+      sessionCheckAttempted.current = true;
+      
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error || !data.session) {
+          console.error("DoctorLayout: Session verification failed:", error);
+          setSessionCheckFailed(true);
+          return;
+        }
+        
+        // Verify user role directly from the database
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.session.user.id)
+          .single();
+          
+        if (profileError || !profileData) {
+          console.error("DoctorLayout: Failed to verify user role:", profileError);
+          setSessionCheckFailed(true);
+          return;
+        }
+        
+        if (profileData.role !== 'doctor') {
+          console.log("DoctorLayout: User is not a doctor, confirmed from database");
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+        
+        console.log("DoctorLayout: Session and role verification successful");
+        setSessionCheckFailed(false);
+      } catch (error) {
+        console.error("DoctorLayout: Session check error:", error);
+        setSessionCheckFailed(true);
+      }
+    };
+    
+    if (isAuthenticated) {
+      verifySession();
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Handle session recovery
+  const handleRetrySession = async () => {
+    try {
+      toast({
+        title: "Reconnecting...",
+        description: "Attempting to reconnect your session",
+      });
+      
+      // Force sign out first to clear any bad state
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Redirect to login
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Error during session recovery:", error);
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Could not recover your session. Please try again.",
+      });
+    }
+  };
+
+  // If session check failed, show recovery option
+  if (sessionCheckFailed) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  // If not authenticated or not a doctor, don't render anything until redirect happens
-  if (!isAuthenticated || (profile && profile.role !== "doctor")) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p>Checking permissions...</p>
+        <div className="flex flex-col items-center gap-4 max-w-md text-center px-6">
+          <AlertTriangle className="h-12 w-12 text-amber-500" />
+          <h2 className="text-xl font-semibold">Session Error</h2>
+          <p className="text-muted-foreground mb-4">
+            There was a problem with your session. This could be due to an expired token or network issue.
+          </p>
+          <Button onClick={handleRetrySession}>
+            Reconnect Session
+          </Button>
+        </div>
       </div>
     );
   }

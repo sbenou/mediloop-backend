@@ -18,12 +18,11 @@ interface PharmacistLayoutProps {
 }
 
 const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
-  const { isAuthenticated, isLoading, profile, userRole } = useAuth();
+  const { isAuthenticated, profile, userRole } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
-  const redirectAttempted = useRef(false);
   const sessionCheckAttempted = useRef(false);
 
   useEffect(() => {
@@ -67,7 +66,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
         if (profileData.role !== 'pharmacist') {
           console.log("PharmacistLayout: User is not a pharmacist, confirmed from database");
           navigate("/dashboard", { replace: true });
-          redirectAttempted.current = true;
           return;
         }
         
@@ -79,36 +77,10 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
       }
     };
     
-    if (!isLoading && isAuthenticated) {
+    if (isAuthenticated) {
       verifySession();
     }
-  }, [isAuthenticated, isLoading, navigate]);
-  
-  useEffect(() => {
-    // Only perform the check when loading is complete and not during initial load
-    if (!isLoading) {
-      console.log("PharmacistLayout: Auth check - isAuthenticated:", isAuthenticated, "profile:", profile, "userRole:", userRole);
-      
-      // Check if user is authenticated
-      if (!isAuthenticated) {
-        if (!redirectAttempted.current) {
-          console.log("PharmacistLayout: User not authenticated, redirecting to login");
-          redirectAttempted.current = true;
-          navigate("/login", { replace: true });
-        }
-        return;
-      }
-
-      // Check if user has the pharmacist role, but only if profile exists
-      if (isAuthenticated && profile && profile.role !== "pharmacist") {
-        if (!redirectAttempted.current) {
-          console.log("PharmacistLayout: User is not a pharmacist, redirecting to dashboard");
-          redirectAttempted.current = true;
-          navigate("/dashboard", { replace: true });
-        }
-      }
-    }
-  }, [isAuthenticated, isLoading, navigate, profile, userRole]);
+  }, [isAuthenticated, navigate]);
 
   // Handle session recovery
   const handleRetrySession = async () => {
@@ -133,18 +105,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
     }
   };
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   // If session check failed, show recovery option
   if (sessionCheckFailed) {
     return (
@@ -158,17 +118,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
           <Button onClick={handleRetrySession}>
             Reconnect Session
           </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // If not authenticated or not a pharmacist, show minimal loading until redirect happens
-  if (!isAuthenticated || (profile && profile.role !== "pharmacist")) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <p>Checking permissions...</p>
         </div>
       </div>
     );

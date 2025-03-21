@@ -32,14 +32,16 @@ const PharmacyDashboard = () => {
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
     if (!isLoading) {
-      setIsInitialLoad(false);
+      setTimeout(() => {
+        setIsInitialLoad(false);
+      }, 300); // Small timeout to prevent flickering
     }
   }, [isLoading]);
   
   // Redirect to login if not authenticated
   useEffect(() => {
     // Only redirect if we're sure the user is not authenticated (after initial load)
-    if (!isInitialLoad && !isAuthenticated && !redirectAttempted.current) {
+    if (!isLoading && !isAuthenticated && !redirectAttempted.current) {
       redirectAttempted.current = true;
       toast({
         variant: "destructive",
@@ -48,11 +50,11 @@ const PharmacyDashboard = () => {
       });
       navigate("/login");
     }
-  }, [isAuthenticated, isInitialLoad, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
   
   // Redirect to regular dashboard if not a pharmacist
   useEffect(() => {
-    if (!isInitialLoad && isAuthenticated && !isPharmacist && !redirectAttempted.current) {
+    if (!isLoading && isAuthenticated && !isPharmacist && !redirectAttempted.current) {
       redirectAttempted.current = true;
       toast({
         title: "Access restricted",
@@ -60,33 +62,15 @@ const PharmacyDashboard = () => {
       });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, isInitialLoad, navigate, isPharmacist]);
+  }, [isAuthenticated, isLoading, navigate, isPharmacist]);
   
-  // Show loading skeleton only on initial load, not during navigation
-  if (isInitialLoad && isLoading) {
-    return (
-      <PharmacistLayout>
-        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-          <div className="space-y-4">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-64 w-full" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          </div>
-        </div>
-      </PharmacistLayout>
-    );
-  }
-  
-  // If not authenticated or not a pharmacist, show minimal loading until redirect happens
-  if (!isAuthenticated || (isAuthenticated && !isPharmacist)) {
+  // If we're still loading or there's a redirect in progress, show the loading state
+  if ((isInitialLoad && isLoading) || !isAuthenticated || (isAuthenticated && !isPharmacist)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">
-          <p>Checking permissions...</p>
+          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
     );
