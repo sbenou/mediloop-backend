@@ -66,7 +66,7 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
           </div>
         </header>
 
-        {/* Main Content */}
+        {/* Main Content - Removed ScrollArea to prevent unnecessary re-renders */}
         <main className="flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll">
           {children}
         </main>

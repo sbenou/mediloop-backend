@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
 import EnhancedUserMenu from "@/components/user-menu/EnhancedUserMenu";
 import NotificationBell from "@/components/NotificationBell";
@@ -67,7 +66,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
           </div>
         </header>
 
-        {/* Main Content */}
+        {/* Main Content - Removed ScrollArea to prevent unnecessary re-renders */}
         <main className="flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll">
           {children}
         </main>

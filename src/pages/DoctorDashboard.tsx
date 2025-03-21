@@ -25,9 +25,13 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const { isAuthenticated, userRole, isLoading, profile } = useAuth();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectAttempted = useRef(false);
+  const [internalLoading, setInternalLoading] = useState(true);
   
   // Store whether we've ever displayed content
   const hasShownContentBefore = useRef(false);
+  
+  // Initial load state
+  const initialLoadCompleted = useRef(false);
   
   // Get parameters from URL or use initialParams if provided
   const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
@@ -54,18 +58,15 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   };
   
-  // If we've already shown content, don't go back to showing loading state
-  if (hasShownContentBefore.current && isAuthenticated && userRole === "doctor") {
-    return (
-      <DoctorLayout>
-        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-          <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-            {getContent()}
-          </ScrollArea>
-        </div>
-      </DoctorLayout>
-    );
-  }
+  // Mark initial render as completed after a short delay to ensure we don't flicker
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      initialLoadCompleted.current = true;
+      setInternalLoading(false);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Set URL params on initial load if initialParams was provided
   useEffect(() => {
@@ -86,10 +87,12 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       location: location.pathname + location.search,
       hasInitialParams: !!initialParams,
       isLoading,
+      internalLoading,
       isAuthenticated,
-      hasShownContentBefore: hasShownContentBefore.current
+      hasShownContentBefore: hasShownContentBefore.current,
+      initialLoadCompleted: initialLoadCompleted.current
     });
-  }, [userRole, currentView, section, profileTab, searchParams, location, initialParams, isLoading, isAuthenticated]);
+  }, [userRole, currentView, section, profileTab, searchParams, location, initialParams, isLoading, internalLoading, isAuthenticated]);
   
   // Make sure we have a default section for doctors
   useEffect(() => {
@@ -138,8 +141,21 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   }, [isLoading, isAuthenticated, userRole]);
   
+  // Return the main content if we've shown it before
+  // This prevents the UI from going back to the loading state
+  if (hasShownContentBefore.current) {
+    return (
+      <DoctorLayout>
+        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+          {getContent()}
+        </div>
+      </DoctorLayout>
+    );
+  }
+  
   // Show a single unified loading state - but only if we haven't shown content before
-  if (isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) {
+  // AND we're still in the initial loading phase
+  if (!initialLoadCompleted.current || isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">
@@ -150,12 +166,11 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     );
   }
   
+  // Default render when we haven't shown content before but we're ready to show it
   return (
     <DoctorLayout>
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-        <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-          {getContent()}
-        </ScrollArea>
+        {getContent()}
       </div>
     </DoctorLayout>
   );
