@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Loader } from "lucide-react";
 
@@ -11,34 +11,16 @@ const Login = () => {
   const { isAuthenticated, isLoading, user, profile, isPharmacist } = useAuth();
   const navigate = useNavigate();
   const redirectAttempted = useRef(false);
-  const [redirecting, setRedirecting] = useState(false);
-  const isMounted = useRef(true);
-
-  // Setup effect cleanup
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     const checkUserRole = async () => {
-      // Prevent multiple redirects - only attempt once
-      if (isAuthenticated && user && !redirectAttempted.current && !redirecting && isMounted.current) {
+      if (isAuthenticated && user && !redirectAttempted.current) {
         try {
           console.log('Checking user role for:', user.id);
           redirectAttempted.current = true;
           
-          if (isMounted.current) {
-            setRedirecting(true);
-          }
-          
           if (!profile) {
             console.error('No profile found, cannot redirect');
-            if (isMounted.current) {
-              setRedirecting(false);
-            }
             return;
           }
           
@@ -59,6 +41,21 @@ const Login = () => {
                 // Set in session storage too for redundancy
                 window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
                 console.log('Session also stored in sessionStorage for redundancy');
+                
+                // Broadcast the login event to other tabs
+                try {
+                  const loginEvent = { 
+                    type: 'LOGIN', 
+                    userId: session.user.id, 
+                    timestamp: Date.now() 
+                  };
+                  localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
+                  // Force the event to trigger
+                  localStorage.removeItem('last_auth_event');
+                  localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
+                } catch (eventError) {
+                  console.error('Error broadcasting login event:', eventError);
+                }
               } catch (storageError) {
                 console.error('Error storing session:', storageError);
               }
@@ -67,56 +64,45 @@ const Login = () => {
             console.error('Error getting/storing session:', sessionError);
           }
           
-          // Handle specific roles with direct navigation
+          // Special handling for pharmacists
           if (profile.role === 'pharmacist' || isPharmacist) {
-            console.log('Redirecting pharmacist to pharmacy dashboard with direct navigation');
-            window.location.href = '/pharmacy';
+            console.log('Redirecting pharmacist to pharmacy dashboard view');
+            // For pharmacist, use pharmacy route instead of dashboard
+            navigate('/pharmacy', { replace: true });
             return;
           }
           
+          // Special handling for doctors
           if (profile.role === 'doctor') {
-            console.log('Redirecting doctor to doctor dashboard with direct navigation');
-            window.location.href = '/doctor';
+            console.log('Redirecting doctor to doctor dashboard view');
+            navigate('/doctor', { replace: true });
             return;
           }
           
-          // For all other users
-          console.log('Redirecting to dashboard...');
+          // For all other users, redirect to the universal dashboard
+          console.log('Redirecting to universal dashboard...');
           navigate('/dashboard', { replace: true });
-          
         } catch (err) {
           console.error('Error checking role:', err);
-          if (isMounted.current) {
-            setRedirecting(false);
-          }
           navigate('/dashboard');
         }
       }
     };
     
-    // Add a small delay to ensure authentication state is stable
-    const timerId = setTimeout(() => {
-      checkUserRole();
-    }, 150);
-    
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [isAuthenticated, user, profile, navigate, isPharmacist, redirecting]);
+    checkUserRole();
+  }, [isAuthenticated, user, profile, navigate, isPharmacist]);
 
   // Show loading state
-  if (isLoading || redirecting) {
+  if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex flex-col items-center justify-center space-y-4">
               <Loader className="h-8 w-8 animate-spin text-primary" />
-              <CardTitle className="text-2xl">{redirecting ? "Redirecting..." : "Loading..."}</CardTitle>
+              <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
-                {redirecting 
-                  ? "Please wait while we redirect you to the appropriate dashboard" 
-                  : "Please wait while we load your profile"}
+                Please wait while we load your profile
               </CardDescription>
             </div>
           </CardHeader>
@@ -125,18 +111,17 @@ const Login = () => {
     );
   }
 
-  // If user is already authenticated, prevent showing the login page
-  if (isAuthenticated && !redirecting) {
+  // If user is already authenticated, prevent showing the login page but avoid recursive redirects
+  if (isAuthenticated && !redirectAttempted.current) {
     redirectAttempted.current = true;
-    setRedirecting(true);
     
     // Check if the user is a pharmacist
     if (profile?.role === 'pharmacist' || isPharmacist) {
       console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
-      window.location.href = '/pharmacy';
+      navigate('/pharmacy', { replace: true });
     } else if (profile?.role === 'doctor') {
       console.log('Already authenticated as doctor, redirecting to doctor dashboard');
-      window.location.href = '/doctor';
+      navigate('/doctor', { replace: true });
     } else {
       // For all other users
       navigate('/dashboard', { replace: true });

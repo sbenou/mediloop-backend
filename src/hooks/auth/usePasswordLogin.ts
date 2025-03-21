@@ -1,138 +1,195 @@
-
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { storeSession } from "@/lib/auth/sessionUtils";
+import { supabase, clearAllAuthStorage } from "@/lib/supabase";
+import { useSetRecoilState } from 'recoil';
+import { authState } from '@/store/auth/atoms';
+import { useNavigate } from 'react-router-dom';
 
 interface UsePasswordLoginProps {
   email: string;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const setAuth = useSetRecoilState(authState);
+  const navigate = useNavigate();
 
-  const handleLogin = async (password: string, rememberMe: boolean = true) => {
-    if (!email || !password) {
-      toast({
-        variant: "destructive",
-        title: "Missing credentials",
-        description: "Please provide both email and password",
-      });
-      return;
-    }
-
+  const handleLogin = async (password: string, rememberMe: boolean) => {
+    if (isLoading) return;
+    
     setIsLoading(true);
     console.log('Starting login process...', { email, rememberMe });
 
     try {
-      // Clear any existing sessions to prevent conflicts
-      try {
-        const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-        localStorage.removeItem(STORAGE_KEY);
-        sessionStorage.removeItem(STORAGE_KEY);
-      } catch (clearError) {
-        console.error('Error clearing existing session:', clearError);
-      }
-
-      // Attempt login - Fixed options format
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Clear any existing sessions to avoid conflicts
+      clearAllAuthStorage();
+      
+      // First, sign in with password
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          captchaToken: undefined
-        }
       });
 
-      if (error) {
-        handleLoginError(error);
-        return;
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        throw signInError;
       }
 
-      if (!data.session || !data.user) {
-        setIsLoading(false);
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: "We couldn't authenticate you. Please try again.",
+      if (!signInData.user || !signInData.session) {
+        console.error('No user or session data received');
+        throw new Error('Authentication failed - missing user or session data');
+      }
+
+      console.log('Sign in successful:', signInData.user.id);
+      
+      // Validate session immediately
+      const { data: userData, error: userValidationError } = await supabase.auth.getUser();
+      
+      if (userValidationError || !userData.user) {
+        console.error('Session validation failed:', userValidationError);
+        throw new Error('Session validation failed');
+      }
+      
+      console.log('Session validation successful');
+
+      // If rememberMe is checked, update the session 
+      if (rememberMe && signInData.session) {
+        console.log('Setting extended session duration due to Remember Me');
+        // We'll update the session cookie manually
+        const { error: sessionError } = await supabase.auth.updateUser({
+          data: { rememberMe: true }
         });
-        return;
-      }
-
-      console.log('Sign in successful:', data.user.id);
-      
-      // Set session expiry based on remember me preference
-      if (rememberMe) {
-        // For longer session (30 days)
-        data.session.expires_at = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30;
-      } else {
-        // For shorter session (1 day)
-        data.session.expires_at = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
-      }
-      
-      // Ensure session is stored with maximum reliability
-      storeSession(data.session);
-      
-      // Verify that the session is valid by making a simple request
-      try {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
         
-        if (userError || !userData.user) {
-          throw new Error('Session validation failed');
+        if (sessionError) {
+          console.error('Failed to update session preferences:', sessionError);
         }
-        
-        console.log('Session validation successful');
-      } catch (validationError) {
-        console.error('Error validating session:', validationError);
-        // Continue anyway, the onSuccess handler will check again
       }
 
-      setIsLoading(false);
-      
+      // Explicitly store session data to ensure persistence
+      const session = signInData.session;
+      const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        console.log('Session explicitly stored in both localStorage and sessionStorage');
+      } catch (storageError) {
+        console.error('Error storing session data:', storageError);
+      }
+
+      // Fetch user profile
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          
+          // If profile doesn't exist, create it
+          if (profileError.code === 'PGRST116') {
+            console.log('No profile found, creating one...');
+            try {
+              // Extract role from user metadata if available
+              const role = session.user.user_metadata?.role || 'patient';
+              const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User';
+              
+              const { error: createError } = await supabase.rpc('create_profile_secure', {
+                user_id: session.user.id,
+                user_role: role,
+                user_full_name: fullName,
+                user_email: session.user.email || '',
+                user_license_number: session.user.user_metadata?.license_number || null,
+              });
+              
+              if (createError) {
+                console.error('Error creating profile:', createError);
+                throw new Error('Failed to create user profile');
+              }
+              
+              // Fetch the newly created profile
+              const { data: newProfile, error: newProfileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle();
+                
+              if (newProfileError || !newProfile) {
+                console.error('Error fetching newly created profile:', newProfileError);
+                throw new Error('Failed to fetch newly created profile');
+              }
+              
+              console.log('Profile created and fetched successfully');
+              
+              // Update global auth state with new profile
+              setAuth({
+                user: session.user,
+                profile: newProfile,
+                permissions: [],
+                isLoading: false,
+              });
+            } catch (createError) {
+              console.error('Error in profile creation flow:', createError);
+              throw new Error('Failed to create user profile');
+            }
+          } else {
+            throw profileError;
+          }
+        } else if (profile) {
+          // Update global auth state with existing profile
+          setAuth({
+            user: session.user,
+            profile,
+            permissions: [],
+            isLoading: false,
+          });
+          console.log('Successfully updated auth state with existing profile');
+        }
+      } catch (profileError) {
+        console.error('Profile handling error:', profileError);
+        throw new Error('Profile error: ' + profileError.message);
+      }
+
+      // Show success message
       toast({
-        title: "Login Successful",
-        description: "You have been logged in successfully.",
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
+
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Otherwise, directly redirect to dashboard
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      
+      // Reset auth state
+      setAuth({
+        user: null,
+        profile: null,
+        permissions: [],
+        isLoading: false,
       });
       
-      // Call success handler to trigger redirect
-      onSuccess();
-      
-    } catch (err) {
-      console.error('Unexpected error during login:', err);
-      setIsLoading(false);
+      // Clear any potentially corrupted session data
+      clearAllAuthStorage();
+
+      // Show error message
       toast({
         variant: "destructive",
-        title: "Login Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Login failed",
+        description: error.message || "An error occurred during login. Please try again.",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleLoginError = (error: any) => {
-    console.error('Login error:', error);
-    
-    let errorMessage = "Invalid email or password. Please try again.";
-    
-    if (error.message.includes('Email not confirmed')) {
-      errorMessage = "Please confirm your email address before logging in. Check your inbox for a confirmation link.";
-    } else if (error.message.includes('Invalid login credentials')) {
-      errorMessage = "Invalid email or password. Please check your credentials and try again.";
-    } else if (error.status === 429 || error.message.includes('Too many requests')) {
-      errorMessage = "Too many login attempts. Please try again later.";
-    }
-    
-    toast({
-      variant: "destructive",
-      title: "Login Failed",
-      description: errorMessage,
-    });
-    
-    setIsLoading(false);
-  };
-
-  return {
-    isLoading,
-    handleLogin
-  };
+  return { handleLogin, isLoading };
 };
