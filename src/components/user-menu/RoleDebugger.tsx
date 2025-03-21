@@ -15,7 +15,7 @@ export const RoleDebugger = () => {
   
   useEffect(() => {
     // Only log once after auth is loaded
-    if (!hasLoggedRef.current && auth.profile) {
+    if (!hasLoggedRef.current && auth.profile && !auth.isLoading) {
       hasLoggedRef.current = true;
       
       console.log("============= ROLE DEBUGGER INFO =============");
@@ -26,31 +26,21 @@ export const RoleDebugger = () => {
       console.log("Auth state from recoil:", auth);
       console.log("Raw profile role:", auth.profile?.role);
       console.log("Direct pharmacist check:", auth.profile?.role === 'pharmacist');
-      console.log("Is on pharmacy route:", window.location.pathname.includes('/pharmacy'));
+      console.log("Direct doctor check:", auth.profile?.role === 'doctor');
+      console.log("Current route:", window.location.pathname);
       
       // Simulation of UserMenuItems logic
       const shouldShowPharmacyLink = auth.profile?.role === 'pharmacist' || isPharmacist;
+      const shouldShowDoctorLink = auth.profile?.role === 'doctor' || userRole === 'doctor';
       console.log("Should show Pharmacy Profile link:", shouldShowPharmacyLink);
+      console.log("Should show Doctor Profile link:", shouldShowDoctorLink);
       
       // Check if the role is actually a string
       console.log("Role type:", typeof auth.profile?.role);
-      console.log("Role strict equality check:", auth.profile?.role === 'pharmacist');
-      console.log("Role loose equality check:", auth.profile?.role == 'pharmacist');
-      console.log("Role toLowerCase check:", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'pharmacist' : false);
-      
-      // Force navigation attempt if user is a pharmacist but link isn't showing
-      if (shouldShowPharmacyLink) {
-        console.log("Pharmacist detected - Pharmacy Profile link SHOULD be visible");
-        try {
-          setTimeout(() => {
-            const pharmacyLinkEl = document.querySelector('.pharmacy-profile-link');
-            console.log("Pharmacy link element found after delay:", !!pharmacyLinkEl);
-            console.log("Full dropdown menu items:", document.querySelectorAll('[class*="dropdown-menu"]').length);
-          }, 2000); // Check after a delay to allow rendering
-        } catch (e) {
-          console.error("Error checking for pharmacy link:", e);
-        }
-      }
+      console.log("Role strict equality check (pharmacist):", auth.profile?.role === 'pharmacist');
+      console.log("Role strict equality check (doctor):", auth.profile?.role === 'doctor');
+      console.log("Role toLowerCase check (pharmacist):", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'pharmacist' : false);
+      console.log("Role toLowerCase check (doctor):", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'doctor' : false);
       
       console.log("=============================================");
     }

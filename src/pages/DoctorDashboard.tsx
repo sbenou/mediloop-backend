@@ -11,6 +11,8 @@ import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorP
 import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/DoctorTeleconsultationsView";
 import DoctorLayout from "@/components/layout/DoctorLayout";
 import { toast } from "@/components/ui/use-toast";
+import { useRecoilValue } from "recoil";
+import { authState } from "@/store/auth/atoms";
 
 interface DoctorDashboardProps {
   initialParams?: URLSearchParams;
@@ -21,11 +23,13 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, userRole, isLoading, profile } = useAuth();
+  const auth = useRecoilValue(authState);
   const [visibleContent, setVisibleContent] = useState<'loading' | 'content' | 'initial'>('initial');
   const redirectAttempted = useRef(false);
   const firstContentShown = useRef(false);
   const initialRenderComplete = useRef(false);
-  const stableAuthStateReceived = useRef(false);
+  const sessionCheckComplete = useRef(false);
+  const authStateStable = useRef(false);
   
   // Get parameters from URL or use initialParams if provided
   const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
@@ -36,10 +40,12 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     isAuthenticated,
     isLoading,
     userRole,
+    userRoleDirect: auth.profile?.role,
     visibleContent: visibleContent,
     firstContentShown: firstContentShown.current,
     initialRender: initialRenderComplete.current,
-    stableAuthState: stableAuthStateReceived.current
+    stableAuthState: authStateStable.current,
+    sessionCheckComplete: sessionCheckComplete.current
   });
   
   // Define getContent function
@@ -72,6 +78,35 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   }, []);
   
+  // Detect a stable auth state - this needs to happen BEFORE any redirect logic
+  useEffect(() => {
+    // We have a stable auth state when:
+    // 1. isLoading has completed (is false)
+    // 2. We have either successfully authenticated or definitely failed
+    // 3. If authenticated, we have loaded the profile data
+    if (!authStateStable.current && !isLoading) {
+      if (!isAuthenticated) {
+        // Definitely not authenticated - stable state
+        authStateStable.current = true;
+        console.log("Auth state stable: Not authenticated");
+      } else if (auth.profile) {
+        // Authenticated with profile - stable state
+        authStateStable.current = true;
+        console.log("Auth state stable: Authenticated with profile", auth.profile);
+      }
+    }
+  }, [isLoading, isAuthenticated, auth.profile]);
+  
+  // After a brief delay, check if the session is complete
+  useEffect(() => {
+    if (!sessionCheckComplete.current && initialRenderComplete.current) {
+      const timer = setTimeout(() => {
+        sessionCheckComplete.current = true;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [initialRenderComplete]);
+  
   // Set URL params on initial load if initialParams was provided
   useEffect(() => {
     if (initialParams && !isLoading) {
@@ -94,12 +129,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   
   // Set content to be visible once authenticated
   useEffect(() => {
-    // Once stable auth state is received, we can make decisions
-    if (!isLoading) {
-      stableAuthStateReceived.current = true;
-    }
-    
-    // If we've shown content before, keep showing it regardless of auth state changes
+    // If we've shown content before, always keep showing it
     if (firstContentShown.current) {
       if (visibleContent !== 'content') {
         setVisibleContent('content');
@@ -107,26 +137,31 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       return;
     }
     
-    // Only change to content if authenticated and appropriate role
-    if (stableAuthStateReceived.current && isAuthenticated && userRole === "doctor") {
+    // Show content if authenticated as a doctor
+    if (authStateStable.current && isAuthenticated && 
+        (userRole === "doctor" || auth.profile?.role === "doctor")) {
       firstContentShown.current = true;
       setVisibleContent('content');
       console.log('Dashboard content shown - marking as visible permanently');
     } 
-    // Only show loading if we're past initial render and have a stable auth state
-    else if (stableAuthStateReceived.current && initialRenderComplete.current && visibleContent === 'initial') {
+    // Show loading if we're past initial render but don't have stable auth yet
+    else if (sessionCheckComplete.current && visibleContent === 'initial') {
       setVisibleContent('loading');
     }
-  }, [isLoading, isAuthenticated, userRole, visibleContent, stableAuthStateReceived]);
+  }, [
+    isLoading, isAuthenticated, userRole, 
+    visibleContent, auth.profile, 
+    authStateStable, sessionCheckComplete
+  ]);
   
-  // Redirect to login if not authenticated - but only after initial loading and if we've never shown content
+  // Redirect to login if not authenticated
   useEffect(() => {
-    if (firstContentShown.current || redirectAttempted.current || !stableAuthStateReceived.current) {
+    if (firstContentShown.current || redirectAttempted.current || !authStateStable.current) {
       return;
     }
     
-    // Only redirect if we're sure authentication has failed (not just loading)
-    if (!isLoading && initialRenderComplete.current && !isAuthenticated) {
+    // Only redirect if we're sure authentication has failed
+    if (authStateStable.current && !isAuthenticated) {
       redirectAttempted.current = true;
       toast({
         variant: "destructive",
@@ -135,16 +170,17 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       });
       navigate("/login");
     }
-  }, [isAuthenticated, isLoading, navigate, initialRenderComplete, stableAuthStateReceived]);
+  }, [isAuthenticated, navigate, authStateStable]);
   
-  // Redirect to regular dashboard if not a doctor - but only after initial loading and if we've never shown content
+  // Redirect to regular dashboard if not a doctor
   useEffect(() => {
-    if (firstContentShown.current || redirectAttempted.current || !stableAuthStateReceived.current) {
+    if (firstContentShown.current || redirectAttempted.current || !authStateStable.current) {
       return;
     }
     
-    // Only redirect if we're sure user is not a doctor (not just loading)
-    if (!isLoading && initialRenderComplete.current && isAuthenticated && userRole !== "doctor") {
+    // Only redirect if we're sure user is not a doctor
+    if (authStateStable.current && isAuthenticated && 
+        userRole !== "doctor" && auth.profile?.role !== "doctor") {
       redirectAttempted.current = true;
       toast({
         title: "Access restricted",
@@ -152,7 +188,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, isLoading, navigate, userRole, initialRenderComplete, stableAuthStateReceived]);
+  }, [isAuthenticated, navigate, userRole, authStateStable, auth.profile]);
   
   // If content is designated to be visible, always show the dashboard
   if (visibleContent === 'content') {
