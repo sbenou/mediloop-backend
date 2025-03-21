@@ -41,74 +41,69 @@ export const LoginForm = () => {
 
   const handleLoginSuccess = async () => {
     console.log('Login success, checking session...');
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('Session check error after login:', error);
-      return;
-    }
-
-    if (session?.user) {
-      console.log('Valid session found, proceeding with success callback');
-      // Check user role and redirect accordingly
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          navigate('/dashboard');
-          return;
-        }
-        
-        // Store session explicitly in localStorage for best persistence
-        try {
-          const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-          console.log('Session explicitly stored in localStorage and sessionStorage');
-        } catch (storageError) {
-          console.error('Error storing session:', storageError);
-        }
-        
-        // Use different navigation strategies based on role
-        if (profile?.role === 'superadmin') {
-          // setTimeout to ensure state updates complete before navigation
-          setTimeout(() => {
-            navigate('/superadmin/dashboard', { replace: true });
-          }, 100);
-        } else if (profile?.role === 'pharmacist') {
-          // For pharmacist, use direct location change for most reliable navigation
-          console.log('Redirecting pharmacist using direct location change');
-          setTimeout(() => {
-            window.location.href = '/pharmacy';
-          }, 100);
-        } else if (profile?.role === 'doctor') {
-          // For doctor, use direct location change for consistency with pharmacist
-          console.log('Redirecting doctor using direct location change');
-          setTimeout(() => {
-            window.location.href = '/doctor';
-          }, 100);
-        } else {
-          // For other users, normal navigation is fine
-          setTimeout(() => {
-            navigate('/dashboard', { replace: true });
-          }, 100);
-        }
-      } catch (err) {
-        console.error('Error during role check:', err);
-        navigate('/dashboard'); // Fallback redirect
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Session check error after login:', error);
+        return;
       }
-    } else {
-      console.error('No session found after successful login');
-      toast({
-        variant: "destructive",
-        title: "Login Error",
-        description: "Failed to establish session. Please try again.",
-      });
+
+      if (session?.user) {
+        console.log('Valid session found, proceeding with success callback');
+        // Check user role and redirect accordingly
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            navigate('/dashboard', { replace: true });
+            return;
+          }
+          
+          // Store session explicitly in localStorage for best persistence
+          try {
+            const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+            console.log('Session explicitly stored in localStorage and sessionStorage');
+          } catch (storageError) {
+            console.error('Error storing session:', storageError);
+          }
+          
+          console.log('User role detected:', profile?.role);
+          
+          // Use different navigation strategies based on role
+          if (profile?.role === 'superadmin') {
+            navigate('/superadmin/dashboard', { replace: true });
+          } else if (profile?.role === 'pharmacist') {
+            // Use direct browser navigation for pharmacist role
+            window.location.href = '/pharmacy';
+          } else if (profile?.role === 'doctor') {
+            // Use direct browser navigation for doctor role
+            window.location.href = '/doctor';
+          } else {
+            navigate('/dashboard', { replace: true });
+          }
+        } catch (err) {
+          console.error('Error during role check:', err);
+          navigate('/dashboard'); // Fallback redirect
+        }
+      } else {
+        console.error('No session found after successful login');
+        toast({
+          variant: "destructive",
+          title: "Login Error",
+          description: "Failed to establish session. Please try again.",
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error during login success handling:', err);
+      navigate('/dashboard'); // Fallback redirect
     }
   };
 

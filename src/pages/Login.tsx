@@ -11,7 +11,6 @@ const Login = () => {
   const { isAuthenticated, isLoading, user, profile, isPharmacist } = useAuth();
   const navigate = useNavigate();
   const redirectAttempted = useRef(false);
-  const [navLock, setNavLock] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const isMounted = useRef(true);
 
@@ -26,20 +25,18 @@ const Login = () => {
   useEffect(() => {
     const checkUserRole = async () => {
       // Prevent multiple redirects - only attempt once
-      if (isAuthenticated && user && !redirectAttempted.current && !navLock && !redirecting && isMounted.current) {
+      if (isAuthenticated && user && !redirectAttempted.current && !redirecting && isMounted.current) {
         try {
           console.log('Checking user role for:', user.id);
           redirectAttempted.current = true;
           
           if (isMounted.current) {
-            setNavLock(true);
             setRedirecting(true);
           }
           
           if (!profile) {
             console.error('No profile found, cannot redirect');
             if (isMounted.current) {
-              setNavLock(false);
               setRedirecting(false);
             }
             return;
@@ -62,21 +59,6 @@ const Login = () => {
                 // Set in session storage too for redundancy
                 window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
                 console.log('Session also stored in sessionStorage for redundancy');
-                
-                // Broadcast the login event to other tabs
-                try {
-                  const loginEvent = { 
-                    type: 'LOGIN', 
-                    userId: session.user.id, 
-                    timestamp: Date.now() 
-                  };
-                  localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
-                  // Force the event to trigger
-                  localStorage.removeItem('last_auth_event');
-                  localStorage.setItem('last_auth_event', JSON.stringify(loginEvent));
-                } catch (eventError) {
-                  console.error('Error broadcasting login event:', eventError);
-                }
               } catch (storageError) {
                 console.error('Error storing session:', storageError);
               }
@@ -85,38 +67,26 @@ const Login = () => {
             console.error('Error getting/storing session:', sessionError);
           }
           
-          // Handle pharmacy role with completely separate approach
+          // Handle specific roles with direct navigation
           if (profile.role === 'pharmacist' || isPharmacist) {
             console.log('Redirecting pharmacist to pharmacy dashboard with direct navigation');
-            // Use a hard redirect with window.location to avoid React Router issues
-            // Allow enough time for session storage to complete
-            setTimeout(() => {
-              window.location.href = '/pharmacy';
-            }, 300);
+            window.location.href = '/pharmacy';
             return;
           }
           
-          // Special handling for doctors
           if (profile.role === 'doctor') {
             console.log('Redirecting doctor to doctor dashboard with direct navigation');
-            // Use the same approach as pharmacist for consistency
-            setTimeout(() => {
-              window.location.href = '/doctor';
-            }, 300);
+            window.location.href = '/doctor';
             return;
           }
           
-          // For all other users, redirect to the universal dashboard
-          console.log('Redirecting to universal dashboard...');
-          setTimeout(() => {
-            if (isMounted.current) {
-              navigate('/dashboard', { replace: true });
-            }
-          }, 100);
+          // For all other users
+          console.log('Redirecting to dashboard...');
+          navigate('/dashboard', { replace: true });
+          
         } catch (err) {
           console.error('Error checking role:', err);
           if (isMounted.current) {
-            setNavLock(false);
             setRedirecting(false);
           }
           navigate('/dashboard');
@@ -127,12 +97,12 @@ const Login = () => {
     // Add a small delay to ensure authentication state is stable
     const timerId = setTimeout(() => {
       checkUserRole();
-    }, 50);
+    }, 150);
     
     return () => {
       clearTimeout(timerId);
     };
-  }, [isAuthenticated, user, profile, navigate, isPharmacist, navLock, redirecting]);
+  }, [isAuthenticated, user, profile, navigate, isPharmacist, redirecting]);
 
   // Show loading state
   if (isLoading || redirecting) {
@@ -155,33 +125,21 @@ const Login = () => {
     );
   }
 
-  // If user is already authenticated, prevent showing the login page but avoid recursive redirects
-  if (isAuthenticated && !redirectAttempted.current) {
+  // If user is already authenticated, prevent showing the login page
+  if (isAuthenticated && !redirecting) {
     redirectAttempted.current = true;
-    
-    if (isMounted.current) {
-      setRedirecting(true);
-    }
+    setRedirecting(true);
     
     // Check if the user is a pharmacist
     if (profile?.role === 'pharmacist' || isPharmacist) {
       console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
-      // Use direct window location for pharmacist to avoid React Router conflicts
-      setTimeout(() => {
-        window.location.href = '/pharmacy';
-      }, 200);
+      window.location.href = '/pharmacy';
     } else if (profile?.role === 'doctor') {
       console.log('Already authenticated as doctor, redirecting to doctor dashboard');
-      setTimeout(() => {
-        window.location.href = '/doctor';
-      }, 200);
+      window.location.href = '/doctor';
     } else {
       // For all other users
-      setTimeout(() => {
-        if (isMounted.current) {
-          navigate('/dashboard', { replace: true });
-        }
-      }, 100);
+      navigate('/dashboard', { replace: true });
     }
     
     // Show a temporary loading state while redirecting
