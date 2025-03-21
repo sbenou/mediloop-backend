@@ -13,6 +13,7 @@ const PharmacyDashboard = () => {
   const redirectAttempted = useRef(false);
   const firstContentShown = useRef(false);
   const initialRenderComplete = useRef(false);
+  const stableAuthStateReceived = useRef(false);
   
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
@@ -23,7 +24,8 @@ const PharmacyDashboard = () => {
     isPharmacist,
     visibleContent: visibleContent,
     firstContentShown: firstContentShown.current,
-    initialRender: initialRenderComplete.current
+    initialRender: initialRenderComplete.current,
+    stableAuthState: stableAuthStateReceived.current
   });
 
   // Mark initial render as complete after a brief delay
@@ -38,7 +40,12 @@ const PharmacyDashboard = () => {
   
   // Set content to be visible once authenticated
   useEffect(() => {
-    // If we've shown content before, keep showing it
+    // Once stable auth state is received, we can make decisions
+    if (!isLoading) {
+      stableAuthStateReceived.current = true;
+    }
+    
+    // If we've shown content before, keep showing it regardless of auth state changes
     if (firstContentShown.current) {
       if (visibleContent !== 'content') {
         setVisibleContent('content');
@@ -47,18 +54,20 @@ const PharmacyDashboard = () => {
     }
     
     // Only change to content if authenticated and appropriate role
-    if (!isLoading && isAuthenticated && isPharmacist) {
+    if (stableAuthStateReceived.current && isAuthenticated && isPharmacist) {
       firstContentShown.current = true;
       setVisibleContent('content');
       console.log('Dashboard content shown - marking as visible permanently');
-    } else if (!isLoading && initialRenderComplete.current && visibleContent === 'initial') {
+    } 
+    // Only show loading if we're past initial render and have a stable auth state
+    else if (stableAuthStateReceived.current && initialRenderComplete.current && visibleContent === 'initial') {
       setVisibleContent('loading');
     }
-  }, [isLoading, isAuthenticated, isPharmacist, visibleContent]);
+  }, [isLoading, isAuthenticated, isPharmacist, visibleContent, stableAuthStateReceived]);
   
   // Redirect to login if not authenticated - but only after initial loading and if we've never shown content
   useEffect(() => {
-    if (firstContentShown.current || redirectAttempted.current) {
+    if (firstContentShown.current || redirectAttempted.current || !stableAuthStateReceived.current) {
       return;
     }
     
@@ -72,11 +81,11 @@ const PharmacyDashboard = () => {
       });
       navigate("/login");
     }
-  }, [isAuthenticated, isLoading, navigate, initialRenderComplete]);
+  }, [isAuthenticated, isLoading, navigate, initialRenderComplete, stableAuthStateReceived]);
   
   // Redirect to regular dashboard if not a pharmacist - but only after initial loading and if we've never shown content
   useEffect(() => {
-    if (firstContentShown.current || redirectAttempted.current) {
+    if (firstContentShown.current || redirectAttempted.current || !stableAuthStateReceived.current) {
       return;
     }
     
@@ -89,7 +98,7 @@ const PharmacyDashboard = () => {
       });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, isLoading, navigate, isPharmacist, initialRenderComplete]);
+  }, [isAuthenticated, isLoading, navigate, isPharmacist, initialRenderComplete, stableAuthStateReceived]);
 
   // If content is designated to be visible, always show the dashboard
   if (visibleContent === 'content') {
