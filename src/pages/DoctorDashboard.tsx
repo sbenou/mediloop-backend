@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -186,7 +187,8 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
         <p className="text-muted-foreground">Loading dashboard...</p>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 export default DoctorDashboard;
