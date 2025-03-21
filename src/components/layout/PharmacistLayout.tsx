@@ -35,53 +35,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    // Verify session directly with Supabase to ensure we have a valid session
-    const verifySession = async () => {
-      if (sessionCheckAttempted.current) return;
-      sessionCheckAttempted.current = true;
-      
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error || !data.session) {
-          console.error("PharmacistLayout: Session verification failed:", error);
-          setSessionCheckFailed(true);
-          return;
-        }
-        
-        // Verify user role directly from the database
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.session.user.id)
-          .single();
-          
-        if (profileError || !profileData) {
-          console.error("PharmacistLayout: Failed to verify user role:", profileError);
-          setSessionCheckFailed(true);
-          return;
-        }
-        
-        if (profileData.role !== 'pharmacist') {
-          console.log("PharmacistLayout: User is not a pharmacist, confirmed from database");
-          navigate("/dashboard", { replace: true });
-          return;
-        }
-        
-        console.log("PharmacistLayout: Session and role verification successful");
-        setSessionCheckFailed(false);
-      } catch (error) {
-        console.error("PharmacistLayout: Session check error:", error);
-        setSessionCheckFailed(true);
-      }
-    };
-    
-    if (isAuthenticated) {
-      verifySession();
-    }
-  }, [isAuthenticated, navigate]);
-
   // Handle session recovery
   const handleRetrySession = async () => {
     try {

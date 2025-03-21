@@ -35,53 +35,6 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    // Verify session directly with Supabase to ensure we have a valid session
-    const verifySession = async () => {
-      if (sessionCheckAttempted.current) return;
-      sessionCheckAttempted.current = true;
-      
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error || !data.session) {
-          console.error("DoctorLayout: Session verification failed:", error);
-          setSessionCheckFailed(true);
-          return;
-        }
-        
-        // Verify user role directly from the database
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.session.user.id)
-          .single();
-          
-        if (profileError || !profileData) {
-          console.error("DoctorLayout: Failed to verify user role:", profileError);
-          setSessionCheckFailed(true);
-          return;
-        }
-        
-        if (profileData.role !== 'doctor') {
-          console.log("DoctorLayout: User is not a doctor, confirmed from database");
-          navigate("/dashboard", { replace: true });
-          return;
-        }
-        
-        console.log("DoctorLayout: Session and role verification successful");
-        setSessionCheckFailed(false);
-      } catch (error) {
-        console.error("DoctorLayout: Session check error:", error);
-        setSessionCheckFailed(true);
-      }
-    };
-    
-    if (isAuthenticated) {
-      verifySession();
-    }
-  }, [isAuthenticated, navigate]);
-
   // Handle session recovery
   const handleRetrySession = async () => {
     try {
