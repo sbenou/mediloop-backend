@@ -64,11 +64,12 @@ const Login = () => {
             console.error('Error getting/storing session:', sessionError);
           }
           
-          // Special handling for pharmacists
+          // Special handling for pharmacists - use replace: true to avoid history issues
           if (profile.role === 'pharmacist' || isPharmacist) {
             console.log('Redirecting pharmacist to pharmacy dashboard view');
-            // For pharmacist, use pharmacy route instead of dashboard
-            navigate('/pharmacy', { replace: true });
+            setTimeout(() => {
+              navigate('/pharmacy', { replace: true });
+            }, 100);
             return;
           }
           
@@ -118,7 +119,10 @@ const Login = () => {
     // Check if the user is a pharmacist
     if (profile?.role === 'pharmacist' || isPharmacist) {
       console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
-      navigate('/pharmacy', { replace: true });
+      // Use setTimeout to defer the navigation and avoid race conditions
+      setTimeout(() => {
+        navigate('/pharmacy', { replace: true });
+      }, 100);
     } else if (profile?.role === 'doctor') {
       console.log('Already authenticated as doctor, redirecting to doctor dashboard');
       navigate('/doctor', { replace: true });

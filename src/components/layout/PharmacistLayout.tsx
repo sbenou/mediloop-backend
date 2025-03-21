@@ -25,21 +25,29 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
   const redirectAttempted = useRef(false);
   const sessionCheckAttempted = useRef(false);
+  const layoutMounted = useRef(true);
 
   useEffect(() => {
+    layoutMounted.current = true;
+    
     // Handle window resize for mobile detection
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      if (layoutMounted.current) {
+        setIsMobile(window.innerWidth < 768);
+      }
     };
 
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      layoutMounted.current = false;
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   useEffect(() => {
     // Verify session directly with Supabase to ensure we have a valid session
     const verifySession = async () => {
-      if (sessionCheckAttempted.current) return;
+      if (sessionCheckAttempted.current || !layoutMounted.current) return;
       sessionCheckAttempted.current = true;
       
       try {
@@ -47,7 +55,9 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
         
         if (error || !data.session) {
           console.error("PharmacistLayout: Session verification failed:", error);
-          setSessionCheckFailed(true);
+          if (layoutMounted.current) {
+            setSessionCheckFailed(true);
+          }
           return;
         }
         
@@ -60,38 +70,50 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
           
         if (profileError || !profileData) {
           console.error("PharmacistLayout: Failed to verify user role:", profileError);
-          setSessionCheckFailed(true);
+          if (layoutMounted.current) {
+            setSessionCheckFailed(true);
+          }
           return;
         }
         
         if (profileData.role !== 'pharmacist') {
           console.log("PharmacistLayout: User is not a pharmacist, confirmed from database");
-          navigate("/dashboard", { replace: true });
-          redirectAttempted.current = true;
+          if (!redirectAttempted.current && layoutMounted.current) {
+            redirectAttempted.current = true;
+            navigate("/dashboard", { replace: true });
+          }
           return;
         }
         
         console.log("PharmacistLayout: Session and role verification successful");
-        setSessionCheckFailed(false);
+        if (layoutMounted.current) {
+          setSessionCheckFailed(false);
+        }
       } catch (error) {
         console.error("PharmacistLayout: Session check error:", error);
-        setSessionCheckFailed(true);
+        if (layoutMounted.current) {
+          setSessionCheckFailed(true);
+        }
       }
     };
     
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated && layoutMounted.current) {
       verifySession();
     }
+    
+    return () => {
+      layoutMounted.current = false;
+    };
   }, [isAuthenticated, isLoading, navigate]);
   
   useEffect(() => {
     // Only perform the check when loading is complete and not during initial load
-    if (!isLoading) {
+    if (!isLoading && layoutMounted.current) {
       console.log("PharmacistLayout: Auth check - isAuthenticated:", isAuthenticated, "profile:", profile, "userRole:", userRole);
       
       // Check if user is authenticated
       if (!isAuthenticated) {
-        if (!redirectAttempted.current) {
+        if (!redirectAttempted.current && layoutMounted.current) {
           console.log("PharmacistLayout: User not authenticated, redirecting to login");
           redirectAttempted.current = true;
           navigate("/login", { replace: true });
@@ -101,7 +123,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
 
       // Check if user has the pharmacist role, but only if profile exists
       if (isAuthenticated && profile && profile.role !== "pharmacist") {
-        if (!redirectAttempted.current) {
+        if (!redirectAttempted.current && layoutMounted.current) {
           console.log("PharmacistLayout: User is not a pharmacist, redirecting to dashboard");
           redirectAttempted.current = true;
           navigate("/dashboard", { replace: true });
