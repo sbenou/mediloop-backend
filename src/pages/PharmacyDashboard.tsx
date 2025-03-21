@@ -14,6 +14,7 @@ const PharmacyDashboard = () => {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectAttempted = useRef(false);
   const initialLoadComplete = useRef(false);
+  const hasRenderedOnce = useRef(false);
   
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
@@ -27,7 +28,9 @@ const PharmacyDashboard = () => {
       searchParams: Object.fromEntries(searchParams.entries()),
       profile,
       isLoading,
-      isAuthenticated
+      isAuthenticated,
+      initialLoadComplete: initialLoadComplete.current,
+      hasRenderedOnce: hasRenderedOnce.current
     });
   }, [userRole, section, searchParams, isPharmacist, profile, isLoading, isAuthenticated]);
   
@@ -60,13 +63,25 @@ const PharmacyDashboard = () => {
   
   // Mark initial load as complete once authenticated
   useEffect(() => {
-    if (!isLoading && isAuthenticated && isPharmacist && !initialLoadComplete.current) {
-      initialLoadComplete.current = true;
+    if (!isLoading && isAuthenticated && isPharmacist) {
+      // Use a short timeout to ensure the component is fully loaded before marking complete
+      const timer = setTimeout(() => {
+        initialLoadComplete.current = true;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, isAuthenticated, isPharmacist]);
+
+  // Lock in the rendered state once we've shown the dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && isPharmacist) {
+      hasRenderedOnce.current = true;
     }
   }, [isLoading, isAuthenticated, isPharmacist]);
   
-  // Show a single unified loading state - but only if initial load not complete
-  if ((isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && !isPharmacist)) && !initialLoadComplete.current) {
+  // Show a single unified loading state - but only if initial load not complete and we haven't rendered before
+  if ((isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && !isPharmacist)) && 
+      !initialLoadComplete.current && !hasRenderedOnce.current) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">

@@ -26,6 +26,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectAttempted = useRef(false);
   const initialLoadComplete = useRef(false);
+  const hasRenderedOnce = useRef(false);
   
   // Get parameters from URL or use initialParams if provided
   const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
@@ -51,7 +52,9 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       location: location.pathname + location.search,
       hasInitialParams: !!initialParams,
       isLoading,
-      isAuthenticated
+      isAuthenticated,
+      initialLoadComplete: initialLoadComplete.current,
+      hasRenderedOnce: hasRenderedOnce.current
     });
   }, [userRole, currentView, section, profileTab, searchParams, location, initialParams, isLoading, isAuthenticated]);
   
@@ -96,8 +99,19 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
 
   // Mark initial load as complete once authenticated
   useEffect(() => {
-    if (!isLoading && isAuthenticated && userRole === "doctor" && !initialLoadComplete.current) {
-      initialLoadComplete.current = true;
+    if (!isLoading && isAuthenticated && userRole === "doctor") {
+      // Use a short timeout to ensure the component is fully loaded before marking complete
+      const timer = setTimeout(() => {
+        initialLoadComplete.current = true;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, isAuthenticated, userRole]);
+
+  // Lock in the rendered state once we've shown the dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && userRole === "doctor") {
+      hasRenderedOnce.current = true;
     }
   }, [isLoading, isAuthenticated, userRole]);
   
@@ -120,8 +134,9 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   };
   
-  // Show a single unified loading state - but only if initial load not complete
-  if ((isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) && !initialLoadComplete.current) {
+  // Show a single unified loading state - but only if initial load not complete and we haven't rendered before
+  if ((isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && userRole !== "doctor")) && 
+      !initialLoadComplete.current && !hasRenderedOnce.current) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">

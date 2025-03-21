@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Search, Menu, X, AlertTriangle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 
@@ -23,7 +22,6 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
-  const sessionCheckAttempted = useRef(false);
 
   useEffect(() => {
     // Handle window resize for mobile detection
