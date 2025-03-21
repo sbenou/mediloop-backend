@@ -13,6 +13,7 @@ import DoctorLayout from "@/components/layout/DoctorLayout";
 import { toast } from "@/components/ui/use-toast";
 import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
+import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
 
 interface DoctorDashboardProps {
   initialParams?: URLSearchParams;
@@ -25,11 +26,11 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const { isAuthenticated, userRole, isLoading, profile } = useAuth();
   const auth = useRecoilValue(authState);
   const [visibleContent, setVisibleContent] = useState<'loading' | 'content' | 'initial'>('initial');
+  
+  // Tracking refs
   const redirectAttempted = useRef(false);
   const firstContentShown = useRef(false);
-  const initialRenderComplete = useRef(false);
-  const sessionCheckComplete = useRef(false);
-  const authStateStable = useRef(false);
+  const authStateReady = useRef(false);
   
   // Get parameters from URL or use initialParams if provided
   const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
@@ -41,11 +42,10 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     isLoading,
     userRole,
     userRoleDirect: auth.profile?.role,
-    visibleContent: visibleContent,
+    visibleContent,
     firstContentShown: firstContentShown.current,
-    initialRender: initialRenderComplete.current,
-    stableAuthState: authStateStable.current,
-    sessionCheckComplete: sessionCheckComplete.current
+    authStateReady: authStateReady.current,
+    profileLoaded: !!auth.profile
   });
   
   // Define getContent function
@@ -68,44 +68,15 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   };
   
-  // Mark initial render as complete after a brief delay
+  // CRITICAL: Wait for profile data to be loaded before making decisions
   useEffect(() => {
-    if (!initialRenderComplete.current) {
-      const timer = setTimeout(() => {
-        initialRenderComplete.current = true;
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-  
-  // Detect a stable auth state - this needs to happen BEFORE any redirect logic
-  useEffect(() => {
-    // We have a stable auth state when:
-    // 1. isLoading has completed (is false)
-    // 2. We have either successfully authenticated or definitely failed
-    // 3. If authenticated, we have loaded the profile data
-    if (!authStateStable.current && !isLoading) {
-      if (!isAuthenticated) {
-        // Definitely not authenticated - stable state
-        authStateStable.current = true;
-        console.log("Auth state stable: Not authenticated");
-      } else if (auth.profile) {
-        // Authenticated with profile - stable state
-        authStateStable.current = true;
-        console.log("Auth state stable: Authenticated with profile", auth.profile);
-      }
+    // We consider the auth state ready when loading is complete AND
+    // either we have a profile (authenticated) or we're definitely not authenticated
+    if (!authStateReady.current && !isLoading && (auth.profile || !isAuthenticated)) {
+      authStateReady.current = true;
+      console.log("Auth state is ready, profile loaded:", !!auth.profile);
     }
   }, [isLoading, isAuthenticated, auth.profile]);
-  
-  // After a brief delay, check if the session is complete
-  useEffect(() => {
-    if (!sessionCheckComplete.current && initialRenderComplete.current) {
-      const timer = setTimeout(() => {
-        sessionCheckComplete.current = true;
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [initialRenderComplete]);
   
   // Set URL params on initial load if initialParams was provided
   useEffect(() => {
@@ -127,9 +98,9 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   }, [userRole, setSearchParams, currentView, section, isLoading, isAuthenticated]);
   
-  // Set content to be visible once authenticated
+  // Set content visibility once auth state is ready
   useEffect(() => {
-    // If we've shown content before, always keep showing it
+    // If content is already shown, keep showing it
     if (firstContentShown.current) {
       if (visibleContent !== 'content') {
         setVisibleContent('content');
@@ -137,31 +108,40 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       return;
     }
     
+    // Only proceed if auth state is ready
+    if (!authStateReady.current) {
+      if (visibleContent !== 'loading' && !isLoading) {
+        setVisibleContent('loading');
+      }
+      return;
+    }
+
     // Show content if authenticated as a doctor
-    if (authStateStable.current && isAuthenticated && 
-        (userRole === "doctor" || auth.profile?.role === "doctor")) {
+    if (authStateReady.current && isAuthenticated && auth.profile &&
+        (auth.profile.role === 'doctor' || userRole === 'doctor')) {
+      console.log('Showing doctor dashboard content - user is a doctor');
       firstContentShown.current = true;
       setVisibleContent('content');
-      console.log('Dashboard content shown - marking as visible permanently');
-    } 
-    // Show loading if we're past initial render but don't have stable auth yet
-    else if (sessionCheckComplete.current && visibleContent === 'initial') {
+    }
+    // Show loading while waiting for auth state
+    else if (visibleContent === 'initial' && !isLoading) {
       setVisibleContent('loading');
     }
   }, [
-    isLoading, isAuthenticated, userRole, 
-    visibleContent, auth.profile, 
-    authStateStable, sessionCheckComplete
+    isLoading, isAuthenticated, userRole,
+    visibleContent, auth.profile
   ]);
   
-  // Redirect to login if not authenticated
+  // Handle redirects when auth state is ready
   useEffect(() => {
-    if (firstContentShown.current || redirectAttempted.current || !authStateStable.current) {
+    // Only process redirects if auth state is ready and we haven't shown content or attempted redirect
+    if (!authStateReady.current || firstContentShown.current || redirectAttempted.current) {
       return;
     }
-    
-    // Only redirect if we're sure authentication has failed
-    if (authStateStable.current && !isAuthenticated) {
+
+    // Handle not authenticated case
+    if (!isAuthenticated) {
+      console.log('Not authenticated, redirecting to login');
       redirectAttempted.current = true;
       toast({
         variant: "destructive",
@@ -169,31 +149,28 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         description: "Please login to access the dashboard.",
       });
       navigate("/login");
-    }
-  }, [isAuthenticated, navigate, authStateStable]);
-  
-  // Redirect to regular dashboard if not a doctor
-  useEffect(() => {
-    if (firstContentShown.current || redirectAttempted.current || !authStateStable.current) {
       return;
     }
     
-    // Only redirect if we're sure user is not a doctor
-    if (authStateStable.current && isAuthenticated && 
-        userRole !== "doctor" && auth.profile?.role !== "doctor") {
+    // Handle not a doctor case
+    if (isAuthenticated && auth.profile && 
+        auth.profile.role !== 'doctor' && userRole !== 'doctor') {
+      console.log('Not a doctor, redirecting to dashboard');
       redirectAttempted.current = true;
       toast({
         title: "Access restricted",
         description: "Only doctors can access this dashboard.",
       });
       navigate("/dashboard");
+      return;
     }
-  }, [isAuthenticated, navigate, userRole, authStateStable, auth.profile]);
+  }, [isAuthenticated, navigate, userRole, auth.profile, authStateReady]);
   
-  // If content is designated to be visible, always show the dashboard
+  // If content is designated to be visible, show the dashboard
   if (visibleContent === 'content') {
     return (
       <DoctorLayout>
+        <RoleDebugger />
         <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
           {getContent()}
         </div>
@@ -202,19 +179,14 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   }
   
   // Show loading state
-  if (visibleContent === 'loading' || visibleContent === 'initial') {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <RoleDebugger />
+      <div className="flex flex-col items-center gap-2">
+        <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
+        <p className="text-muted-foreground">Loading dashboard...</p>
       </div>
     );
-  }
-  
-  // Fallback (should not reach here)
-  return null;
-};
+  };
 
 export default DoctorDashboard;

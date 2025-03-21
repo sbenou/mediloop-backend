@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useRef } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
 
 /**
@@ -10,12 +10,12 @@ import { authState } from "@/store/auth/atoms";
  */
 export const RoleDebugger = () => {
   const { userRole, isPharmacist, isAuthenticated, profile } = useAuth();
-  const [auth] = useRecoilState(authState);
+  const auth = useRecoilValue(authState);
   const hasLoggedRef = useRef(false);
   
   useEffect(() => {
-    // Only log once after auth is loaded
-    if (!hasLoggedRef.current && auth.profile && !auth.isLoading) {
+    // Always log on auth state changes to help with debugging
+    if (auth.profile || (!auth.isLoading && hasLoggedRef.current === false)) {
       hasLoggedRef.current = true;
       
       console.log("============= ROLE DEBUGGER INFO =============");
@@ -29,6 +29,13 @@ export const RoleDebugger = () => {
       console.log("Direct doctor check:", auth.profile?.role === 'doctor');
       console.log("Current route:", window.location.pathname);
       
+      // Additional detailed auth state debugging
+      console.log("Auth state loading:", auth.isLoading);
+      console.log("Auth state has user:", !!auth.user);
+      console.log("Auth state has profile:", !!auth.profile);
+      console.log("Auth state user ID:", auth.user?.id);
+      console.log("Auth state profile ID:", auth.profile?.id);
+      
       // Simulation of UserMenuItems logic
       const shouldShowPharmacyLink = auth.profile?.role === 'pharmacist' || isPharmacist;
       const shouldShowDoctorLink = auth.profile?.role === 'doctor' || userRole === 'doctor';
@@ -41,6 +48,15 @@ export const RoleDebugger = () => {
       console.log("Role strict equality check (doctor):", auth.profile?.role === 'doctor');
       console.log("Role toLowerCase check (pharmacist):", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'pharmacist' : false);
       console.log("Role toLowerCase check (doctor):", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'doctor' : false);
+      
+      // Additional debugging for session and redirects
+      console.log("Internal session state:", {
+        auth: {
+          isLoading: auth.isLoading,
+          user: auth.user ? "exists" : "null",
+          profile: auth.profile ? "exists" : "null",
+        }
+      });
       
       console.log("=============================================");
     }

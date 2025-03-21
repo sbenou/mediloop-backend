@@ -6,6 +6,7 @@ import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { toast } from "@/components/ui/use-toast";
 import { authState } from "@/store/auth/atoms";
 import { useRecoilValue } from "recoil";
+import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
 
 const PharmacyDashboard = () => {
   const [searchParams] = useSearchParams();
@@ -13,11 +14,11 @@ const PharmacyDashboard = () => {
   const { isAuthenticated, userRole, isLoading, profile, isPharmacist } = useAuth();
   const auth = useRecoilValue(authState);
   const [visibleContent, setVisibleContent] = useState<'loading' | 'content' | 'initial'>('initial');
+  
+  // Tracking refs
   const redirectAttempted = useRef(false);
   const firstContentShown = useRef(false);
-  const initialRenderComplete = useRef(false);
-  const sessionCheckComplete = useRef(false);
-  const authStateStable = useRef(false);
+  const authStateReady = useRef(false);
   
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
@@ -27,55 +28,25 @@ const PharmacyDashboard = () => {
     isLoading,
     isPharmacist,
     isPharmacistDirect: auth.profile?.role === 'pharmacist',
-    visibleContent: visibleContent,
+    visibleContent,
     firstContentShown: firstContentShown.current,
-    initialRender: initialRenderComplete.current,
-    stableAuthState: authStateStable.current,
-    sessionCheckComplete: sessionCheckComplete.current
+    authStateReady: authStateReady.current,
+    profileLoaded: !!auth.profile
   });
 
-  // Mark initial render as complete after a brief delay
+  // CRITICAL: Wait for profile data to be loaded before making decisions
   useEffect(() => {
-    if (!initialRenderComplete.current) {
-      const timer = setTimeout(() => {
-        initialRenderComplete.current = true;
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-  
-  // Detect a stable auth state - this needs to happen BEFORE any redirect logic
-  useEffect(() => {
-    // We have a stable auth state when:
-    // 1. isLoading has completed (is false)
-    // 2. We have either successfully authenticated or definitely failed
-    // 3. If authenticated, we have loaded the profile data
-    if (!authStateStable.current && !isLoading) {
-      if (!isAuthenticated) {
-        // Definitely not authenticated - stable state
-        authStateStable.current = true;
-        console.log("Auth state stable: Not authenticated");
-      } else if (auth.profile) {
-        // Authenticated with profile - stable state
-        authStateStable.current = true;
-        console.log("Auth state stable: Authenticated with profile", auth.profile);
-      }
+    // We consider the auth state ready when loading is complete AND
+    // either we have a profile (authenticated) or we're definitely not authenticated
+    if (!authStateReady.current && !isLoading && (auth.profile || !isAuthenticated)) {
+      authStateReady.current = true;
+      console.log("Auth state is ready, profile loaded:", !!auth.profile);
     }
   }, [isLoading, isAuthenticated, auth.profile]);
-  
-  // After a brief delay, check if the session is complete
+
+  // Set content visibility once auth state is ready
   useEffect(() => {
-    if (!sessionCheckComplete.current && initialRenderComplete.current) {
-      const timer = setTimeout(() => {
-        sessionCheckComplete.current = true;
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [initialRenderComplete]);
-  
-  // Set content to be visible once authenticated
-  useEffect(() => {
-    // If we've shown content before, always keep showing it
+    // If content is already shown, keep showing it
     if (firstContentShown.current) {
       if (visibleContent !== 'content') {
         setVisibleContent('content');
@@ -83,31 +54,40 @@ const PharmacyDashboard = () => {
       return;
     }
     
+    // Only proceed if auth state is ready
+    if (!authStateReady.current) {
+      if (visibleContent !== 'loading' && !isLoading) {
+        setVisibleContent('loading');
+      }
+      return;
+    }
+
     // Show content if authenticated as a pharmacist
-    if (authStateStable.current && isAuthenticated && 
-        (isPharmacist || auth.profile?.role === 'pharmacist')) {
+    if (authStateReady.current && isAuthenticated && auth.profile &&
+        (auth.profile.role === 'pharmacist' || isPharmacist)) {
+      console.log('Showing pharmacy dashboard content - user is a pharmacist');
       firstContentShown.current = true;
       setVisibleContent('content');
-      console.log('Dashboard content shown - marking as visible permanently');
-    } 
-    // Show loading if we're past initial render but don't have stable auth yet
-    else if (sessionCheckComplete.current && visibleContent === 'initial') {
+    }
+    // Show loading while waiting for auth state
+    else if (visibleContent === 'initial' && !isLoading) {
       setVisibleContent('loading');
     }
   }, [
-    isLoading, isAuthenticated, isPharmacist, 
-    visibleContent, auth.profile, 
-    authStateStable, sessionCheckComplete
+    isLoading, isAuthenticated, isPharmacist,
+    visibleContent, auth.profile
   ]);
   
-  // Redirect to login if not authenticated
+  // Handle redirects when auth state is ready
   useEffect(() => {
-    if (firstContentShown.current || redirectAttempted.current || !authStateStable.current) {
+    // Only process redirects if auth state is ready and we haven't shown content or attempted redirect
+    if (!authStateReady.current || firstContentShown.current || redirectAttempted.current) {
       return;
     }
-    
-    // Only redirect if we're sure authentication has failed
-    if (authStateStable.current && !isAuthenticated) {
+
+    // Handle not authenticated case
+    if (!isAuthenticated) {
+      console.log('Not authenticated, redirecting to login');
       redirectAttempted.current = true;
       toast({
         variant: "destructive",
@@ -115,31 +95,28 @@ const PharmacyDashboard = () => {
         description: "Please login to access the pharmacy dashboard.",
       });
       navigate("/login");
-    }
-  }, [isAuthenticated, navigate, authStateStable]);
-  
-  // Redirect to regular dashboard if not a pharmacist
-  useEffect(() => {
-    if (firstContentShown.current || redirectAttempted.current || !authStateStable.current) {
       return;
     }
     
-    // Only redirect if we're sure user is not a pharmacist
-    if (authStateStable.current && isAuthenticated && 
-        !isPharmacist && auth.profile?.role !== 'pharmacist') {
+    // Handle not a pharmacist case
+    if (isAuthenticated && auth.profile && 
+        auth.profile.role !== 'pharmacist' && !isPharmacist) {
+      console.log('Not a pharmacist, redirecting to dashboard');
       redirectAttempted.current = true;
       toast({
         title: "Access restricted",
         description: "Only pharmacists can access this dashboard.",
       });
       navigate("/dashboard");
+      return;
     }
-  }, [isAuthenticated, navigate, isPharmacist, authStateStable, auth.profile]);
+  }, [isAuthenticated, navigate, isPharmacist, auth.profile, authStateReady]);
 
-  // If content is designated to be visible, always show the dashboard
+  // If content is designated to be visible, show the dashboard
   if (visibleContent === 'content') {
     return (
       <PharmacistLayout>
+        <RoleDebugger />
         <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
           <PharmacyView userRole={userRole} section={section} />
         </div>
@@ -148,19 +125,15 @@ const PharmacyDashboard = () => {
   }
   
   // Show loading state
-  if (visibleContent === 'loading' || visibleContent === 'initial') {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <RoleDebugger />
+      <div className="flex flex-col items-center gap-2">
+        <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
+        <p className="text-muted-foreground">Loading dashboard...</p>
       </div>
-    );
-  }
-  
-  // Fallback (should not reach here)
-  return null;
+    </div>
+  );
 };
 
 export default PharmacyDashboard;
