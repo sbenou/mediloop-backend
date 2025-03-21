@@ -66,8 +66,8 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
           </div>
         </header>
 
-        {/* Main Content - Removed ScrollArea to prevent unnecessary re-renders */}
-        <main className="flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll">
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto hover-scroll main-content-scroll">
           {children}
         </main>
       </div>
