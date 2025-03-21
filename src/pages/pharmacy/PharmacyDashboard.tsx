@@ -29,7 +29,8 @@ const PharmacyDashboard = () => {
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isPageMounted, setIsPageMounted] = useState(true);
-  const [forceRender, setForceRender] = useState(false); // Add a state to force rerender
+  const [forceRender, setForceRender] = useState(false);
+  const [initialRenderComplete, setInitialRenderComplete] = useState(false);
   const redirectAttempted = React.useRef(false);
   const dashboardMounted = React.useRef(true);
   const authCheckComplete = React.useRef(false);
@@ -50,8 +51,9 @@ const PharmacyDashboard = () => {
       if (dashboardMounted.current) {
         setForceRender(prev => !prev);
         initialRender.current = false;
+        setInitialRenderComplete(true);
       }
-    }, 50);
+    }, 100);
     
     return () => {
       console.log("PharmacyDashboard component unmounted");
@@ -91,10 +93,10 @@ const PharmacyDashboard = () => {
     };
 
     // Only fetch data if authenticated and auth check complete
-    if (isAuthenticated && !isLoading && isPageMounted && !initialRender.current) {
+    if (isAuthenticated && !isLoading && isPageMounted && initialRenderComplete) {
       fetchPatients();
     }
-  }, [isAuthenticated, isLoading, isPharmacist, isPageMounted, forceRender]);
+  }, [isAuthenticated, isLoading, isPharmacist, isPageMounted, forceRender, initialRenderComplete]);
 
   // Set initial load state
   useEffect(() => {
@@ -110,41 +112,39 @@ const PharmacyDashboard = () => {
     
     if (!isLoading) {
       // Only perform auth check once
-      if (!authCheckComplete.current) {
-        authCheckComplete.current = true;
+      authCheckComplete.current = true;
+      
+      // Only redirect if we're sure the user is not authenticated (after initial load)
+      // And don't redirect if we've already attempted a redirect
+      if (!isAuthenticated && !redirectAttempted.current && isPageMounted && dashboardMounted.current) {
+        console.log("User not authenticated, redirecting to login");
+        redirectAttempted.current = true;
         
-        // Only redirect if we're sure the user is not authenticated (after initial load)
-        // And don't redirect if we've already attempted a redirect
-        if (!isAuthenticated && !redirectAttempted.current && isPageMounted && dashboardMounted.current) {
-          console.log("User not authenticated, redirecting to login");
-          redirectAttempted.current = true;
-          
-          // If we need to redirect away, do it safely
-          if (dashboardMounted.current && isPageMounted) {
-            toast({
-              variant: "destructive",
-              title: "Authentication required",
-              description: "Please login to access the pharmacy dashboard.",
-            });
-            navigate("/login", { replace: true });
-          }
-          return;
+        // If we need to redirect away, do it safely
+        if (dashboardMounted.current && isPageMounted) {
+          toast({
+            variant: "destructive",
+            title: "Authentication required",
+            description: "Please login to access the pharmacy dashboard.",
+          });
+          navigate("/login", { replace: true });
         }
+        return;
+      }
 
-        // Check if user is a pharmacist, but only if not already redirected
-        if (isAuthenticated && profile && profile.role !== "pharmacist" && !redirectAttempted.current && isPageMounted) {
-          console.log("User is not a pharmacist, redirecting to dashboard");
-          redirectAttempted.current = true;
-          
-          // If we need to redirect away, do it safely
-          if (dashboardMounted.current && isPageMounted) {
-            toast({
-              variant: "destructive",
-              title: "Access denied",
-              description: "Only pharmacists can access the pharmacy dashboard.",
-            });
-            navigate("/dashboard", { replace: true });
-          }
+      // Check if user is a pharmacist, but only if not already redirected
+      if (isAuthenticated && profile && profile.role !== "pharmacist" && !redirectAttempted.current && isPageMounted) {
+        console.log("User is not a pharmacist, redirecting to dashboard");
+        redirectAttempted.current = true;
+        
+        // If we need to redirect away, do it safely
+        if (dashboardMounted.current && isPageMounted) {
+          toast({
+            variant: "destructive",
+            title: "Access denied",
+            description: "Only pharmacists can access the pharmacy dashboard.",
+          });
+          navigate("/dashboard", { replace: true });
         }
       }
     }

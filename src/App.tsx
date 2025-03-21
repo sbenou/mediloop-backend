@@ -88,6 +88,8 @@ function App() {
                   <Route path="/pharmacy" element={<PharmacyDashboard />} />
                   <Route path="/pharmacy/*" element={<PharmacyDashboard />} />
                   <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
+                  <Route path="/doctor" element={<DoctorDashboard />} />
+                  <Route path="/doctor/*" element={<DoctorDashboard />} />
                   <Route path="/doctor/profile" element={<DoctorProfilePage />} />
                   <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />

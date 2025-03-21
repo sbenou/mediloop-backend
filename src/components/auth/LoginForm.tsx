@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -63,18 +64,39 @@ export const LoginForm = () => {
           return;
         }
         
+        // Store session explicitly in localStorage for best persistence
+        try {
+          const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+          console.log('Session explicitly stored in localStorage and sessionStorage');
+        } catch (storageError) {
+          console.error('Error storing session:', storageError);
+        }
+        
+        // Use different navigation strategies based on role
         if (profile?.role === 'superadmin') {
-          navigate('/superadmin/dashboard', { replace: true });
+          // setTimeout to ensure state updates complete before navigation
+          setTimeout(() => {
+            navigate('/superadmin/dashboard', { replace: true });
+          }, 100);
         } else if (profile?.role === 'pharmacist') {
-          // For pharmacist, we need more aggressive approach to avoid navigation issues
+          // For pharmacist, use direct location change for most reliable navigation
           console.log('Redirecting pharmacist using direct location change');
-          // Force immediate navigation with a full page load
-          window.location.href = '/pharmacy';
-          return; // Early return to prevent further code execution
+          setTimeout(() => {
+            window.location.href = '/pharmacy';
+          }, 100);
         } else if (profile?.role === 'doctor') {
-          navigate('/doctor', { replace: true });
+          // For doctor, use direct location change for consistency with pharmacist
+          console.log('Redirecting doctor using direct location change');
+          setTimeout(() => {
+            window.location.href = '/doctor';
+          }, 100);
         } else {
-          navigate('/dashboard', { replace: true });
+          // For other users, normal navigation is fine
+          setTimeout(() => {
+            navigate('/dashboard', { replace: true });
+          }, 100);
         }
       } catch (err) {
         console.error('Error during role check:', err);

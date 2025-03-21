@@ -13,21 +13,35 @@ const Login = () => {
   const redirectAttempted = useRef(false);
   const [navLock, setNavLock] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const isMounted = useRef(true);
+
+  // Setup effect cleanup
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const checkUserRole = async () => {
       // Prevent multiple redirects - only attempt once
-      if (isAuthenticated && user && !redirectAttempted.current && !navLock && !redirecting) {
+      if (isAuthenticated && user && !redirectAttempted.current && !navLock && !redirecting && isMounted.current) {
         try {
           console.log('Checking user role for:', user.id);
           redirectAttempted.current = true;
-          setNavLock(true);
-          setRedirecting(true);
+          
+          if (isMounted.current) {
+            setNavLock(true);
+            setRedirecting(true);
+          }
           
           if (!profile) {
             console.error('No profile found, cannot redirect');
-            setNavLock(false);
-            setRedirecting(false);
+            if (isMounted.current) {
+              setNavLock(false);
+              setRedirecting(false);
+            }
             return;
           }
           
@@ -75,30 +89,49 @@ const Login = () => {
           if (profile.role === 'pharmacist' || isPharmacist) {
             console.log('Redirecting pharmacist to pharmacy dashboard with direct navigation');
             // Use a hard redirect with window.location to avoid React Router issues
-            window.location.href = '/pharmacy';
+            // Allow enough time for session storage to complete
+            setTimeout(() => {
+              window.location.href = '/pharmacy';
+            }, 300);
             return;
           }
           
           // Special handling for doctors
           if (profile.role === 'doctor') {
-            console.log('Redirecting doctor to doctor dashboard view');
-            navigate('/doctor', { replace: true });
+            console.log('Redirecting doctor to doctor dashboard with direct navigation');
+            // Use the same approach as pharmacist for consistency
+            setTimeout(() => {
+              window.location.href = '/doctor';
+            }, 300);
             return;
           }
           
           // For all other users, redirect to the universal dashboard
           console.log('Redirecting to universal dashboard...');
-          navigate('/dashboard', { replace: true });
+          setTimeout(() => {
+            if (isMounted.current) {
+              navigate('/dashboard', { replace: true });
+            }
+          }, 100);
         } catch (err) {
           console.error('Error checking role:', err);
-          setNavLock(false);
-          setRedirecting(false);
+          if (isMounted.current) {
+            setNavLock(false);
+            setRedirecting(false);
+          }
           navigate('/dashboard');
         }
       }
     };
     
-    checkUserRole();
+    // Add a small delay to ensure authentication state is stable
+    const timerId = setTimeout(() => {
+      checkUserRole();
+    }, 50);
+    
+    return () => {
+      clearTimeout(timerId);
+    };
   }, [isAuthenticated, user, profile, navigate, isPharmacist, navLock, redirecting]);
 
   // Show loading state
@@ -125,19 +158,30 @@ const Login = () => {
   // If user is already authenticated, prevent showing the login page but avoid recursive redirects
   if (isAuthenticated && !redirectAttempted.current) {
     redirectAttempted.current = true;
-    setRedirecting(true);
+    
+    if (isMounted.current) {
+      setRedirecting(true);
+    }
     
     // Check if the user is a pharmacist
     if (profile?.role === 'pharmacist' || isPharmacist) {
       console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
       // Use direct window location for pharmacist to avoid React Router conflicts
-      window.location.href = '/pharmacy';
+      setTimeout(() => {
+        window.location.href = '/pharmacy';
+      }, 200);
     } else if (profile?.role === 'doctor') {
       console.log('Already authenticated as doctor, redirecting to doctor dashboard');
-      navigate('/doctor', { replace: true });
+      setTimeout(() => {
+        window.location.href = '/doctor';
+      }, 200);
     } else {
       // For all other users
-      navigate('/dashboard', { replace: true });
+      setTimeout(() => {
+        if (isMounted.current) {
+          navigate('/dashboard', { replace: true });
+        }
+      }, 100);
     }
     
     // Show a temporary loading state while redirecting

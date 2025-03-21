@@ -25,19 +25,46 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const navigate = useNavigate();
   const { isAuthenticated, userRole, isLoading, profile } = useAuth();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isPageMounted, setIsPageMounted] = useState(true);
+  const [initialSetupComplete, setInitialSetupComplete] = useState(false);
+  const redirectAttempted = React.useRef(false);
+  const dashboardMounted = React.useRef(true);
   
   // Get parameters from URL or use initialParams if provided
   const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
   const section = searchParams.get("section") || initialParams?.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
   
+  // Component lifecycle management
+  useEffect(() => {
+    console.log("DoctorDashboard component mounted");
+    dashboardMounted.current = true;
+    setIsPageMounted(true);
+    
+    return () => {
+      console.log("DoctorDashboard component unmounted");
+      dashboardMounted.current = false;
+      setIsPageMounted(false);
+    };
+  }, []);
+  
   // Set URL params on initial load if initialParams was provided
   useEffect(() => {
-    if (initialParams && isInitialLoad && !isLoading) {
+    if (initialParams && isInitialLoad && !isLoading && dashboardMounted.current && isPageMounted) {
       console.log("Setting initial params from props:", Object.fromEntries(initialParams.entries()));
       setSearchParams(initialParams);
+      
+      // Delay setting initialSetupComplete to ensure state updates complete
+      setTimeout(() => {
+        if (dashboardMounted.current && isPageMounted) {
+          setInitialSetupComplete(true);
+        }
+      }, 100);
+    } else if (!initialParams && dashboardMounted.current && isPageMounted) {
+      // If no initialParams, we can mark setup as complete immediately
+      setInitialSetupComplete(true);
     }
-  }, [initialParams, isInitialLoad, isLoading, setSearchParams]);
+  }, [initialParams, isInitialLoad, isLoading, setSearchParams, isPageMounted]);
   
   // Console logging for debugging
   useEffect(() => {
@@ -54,7 +81,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   
   // Make sure we have a default section for doctors
   useEffect(() => {
-    if (userRole === "doctor" && !isInitialLoad && isAuthenticated) {
+    if (userRole === "doctor" && !isInitialLoad && isAuthenticated && dashboardMounted.current && isPageMounted && initialSetupComplete) {
       console.log("Checking doctor params:", { currentView, section });
       
       if (currentView !== 'doctor' || !section) {
@@ -62,38 +89,40 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         setSearchParams({ view: 'doctor', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, setSearchParams, currentView, section, isInitialLoad, isAuthenticated]);
+  }, [userRole, setSearchParams, currentView, section, isInitialLoad, isAuthenticated, initialSetupComplete, isPageMounted]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && dashboardMounted.current && isPageMounted) {
       setIsInitialLoad(false);
     }
-  }, [isLoading]);
+  }, [isLoading, isPageMounted]);
   
   // Redirect to login if not authenticated
   useEffect(() => {
     // Only redirect if we're sure the user is not authenticated (after initial load)
-    if (!isInitialLoad && !isAuthenticated) {
+    if (!isInitialLoad && !isAuthenticated && !redirectAttempted.current && dashboardMounted.current && isPageMounted) {
+      redirectAttempted.current = true;
       toast({
         variant: "destructive",
         title: "Authentication required",
         description: "Please login to access the dashboard.",
       });
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
-  }, [isAuthenticated, isInitialLoad, navigate]);
+  }, [isAuthenticated, isInitialLoad, navigate, isPageMounted]);
   
   // Redirect to regular dashboard if not a doctor
   useEffect(() => {
-    if (!isInitialLoad && isAuthenticated && userRole !== "doctor") {
+    if (!isInitialLoad && isAuthenticated && userRole !== "doctor" && !redirectAttempted.current && dashboardMounted.current && isPageMounted) {
+      redirectAttempted.current = true;
       toast({
         title: "Access restricted",
         description: "Only doctors can access this dashboard.",
       });
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     }
-  }, [isAuthenticated, isInitialLoad, navigate, userRole]);
+  }, [isAuthenticated, isInitialLoad, navigate, userRole, isPageMounted]);
   
   const getContent = () => {
     // For the doctor dashboard, show content based on the section
@@ -131,6 +160,11 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         </div>
       </DoctorLayout>
     );
+  }
+  
+  // Security check - only render if authenticated and a doctor
+  if (!isAuthenticated || userRole !== "doctor") {
+    return null;
   }
   
   return (
