@@ -12,23 +12,40 @@ const PharmacyDashboard = () => {
   const { isAuthenticated, userRole, isLoading, profile, isPharmacist } = useAuth();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectAttempted = useRef(false);
+  const initialRenderComplete = useRef(false);
   
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
   
-  // Never revert to loading state once content is shown
+  // Record when we first show the dashboard content
   const hasShownContentBefore = useRef(false);
   
-  // Ensure we don't go back to loading state
+  // Ensure we don't go back to loading state after showing content
   useEffect(() => {
-    if (!isLoading && isAuthenticated && isPharmacist) {
+    // Only set this once - on first successful auth
+    if (!hasShownContentBefore.current && !isLoading && isAuthenticated && isPharmacist) {
+      console.log("Dashboard content shown - locking UI state");
       hasShownContentBefore.current = true;
+    }
+    
+    // Mark initial render as complete after a brief delay
+    if (!initialRenderComplete.current) {
+      const timer = setTimeout(() => {
+        initialRenderComplete.current = true;
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isLoading, isAuthenticated, isPharmacist]);
   
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !redirectAttempted.current) {
+    // Skip during initial loading or if we've already shown content
+    if (hasShownContentBefore.current || redirectAttempted.current) {
+      return;
+    }
+    
+    // Only redirect if we're sure authentication has failed (not just loading)
+    if (!isLoading && !isAuthenticated) {
       redirectAttempted.current = true;
       setIsRedirecting(true);
       toast({
@@ -42,7 +59,13 @@ const PharmacyDashboard = () => {
   
   // Redirect to regular dashboard if not a pharmacist
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !isPharmacist && !redirectAttempted.current) {
+    // Skip during initial loading or if we've already shown content
+    if (hasShownContentBefore.current || redirectAttempted.current) {
+      return;
+    }
+    
+    // Only redirect if we're sure user is not a pharmacist (not just loading)
+    if (!isLoading && isAuthenticated && !isPharmacist) {
       redirectAttempted.current = true;
       setIsRedirecting(true);
       toast({
@@ -52,9 +75,9 @@ const PharmacyDashboard = () => {
       navigate("/dashboard");
     }
   }, [isAuthenticated, isLoading, navigate, isPharmacist]);
-  
-  // Return the main content if we've shown it before
-  if (hasShownContentBefore.current) {
+
+  // If we've shown content before or completed initial render, always show the dashboard
+  if (hasShownContentBefore.current || (initialRenderComplete.current && isAuthenticated && isPharmacist)) {
     return (
       <PharmacistLayout>
         <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
@@ -64,8 +87,8 @@ const PharmacyDashboard = () => {
     );
   }
   
-  // Show loading state only if we're still in initial loading
-  if (isLoading || isRedirecting || !isAuthenticated || (isAuthenticated && !isPharmacist)) {
+  // Show loading state but not if we've previously shown content
+  if (!hasShownContentBefore.current && (isLoading || isRedirecting)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">
@@ -76,13 +99,14 @@ const PharmacyDashboard = () => {
     );
   }
   
-  // Default render when authenticated and is pharmacist
+  // Default loading state for very first render
   return (
-    <PharmacistLayout>
-      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-        <PharmacyView userRole={userRole} section={section} />
+    <div className="flex h-screen items-center justify-center">
+      <div className="flex flex-col items-center gap-2">
+        <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
+        <p className="text-muted-foreground">Loading dashboard...</p>
       </div>
-    </PharmacistLayout>
+    </div>
   );
 };
 
