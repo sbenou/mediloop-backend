@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useRef } from "react";
-import { Loader } from "lucide-react";
 import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
 
