@@ -24,9 +24,27 @@ const Login = () => {
       console.log('User authenticated with role:', userRole);
       
       // Use the common service to ensure user is on the correct dashboard
-      ensureCorrectDashboard(userRole, isAuthenticated);
+      const dashboardPath = getDashboardPath(userRole);
+      console.log('Redirecting to dashboard:', dashboardPath);
+      
+      // Use navigate for SPA navigation instead of hard refresh
+      navigate(dashboardPath, { replace: true });
     }
   }, [isAuthenticated, isLoading, userRole, navigate]);
+
+  // Helper function to get the correct dashboard path based on role
+  const getDashboardPath = (role: string): string => {
+    switch (role) {
+      case 'pharmacist':
+        return '/pharmacy';
+      case 'doctor':
+        return '/doctor';
+      case 'superadmin':
+        return '/superadmin/dashboard';
+      default:
+        return '/dashboard';
+    }
+  };
 
   // Show loading state with the spinner component
   if (isLoading) {

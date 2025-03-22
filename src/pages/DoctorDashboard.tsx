@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
@@ -26,6 +26,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, userRole } = useAuth();
   const auth = useRecoilValue(authState);
+  const [accessChecked, setAccessChecked] = useState(false);
   
   // Use initialParams if provided, otherwise use URL params
   const searchParams = initialParams || searchParamsFromUrl;
@@ -42,13 +43,21 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
     profileRole: auth.profile?.role,
     isDoctor: auth.profile?.role === 'doctor',
     section,
-    profileTab
+    profileTab,
+    accessChecked
   });
   
   // Handle authentication and authorization with the centralized service
   useEffect(() => {
     if (!isLoading) {
-      checkDashboardAccess(isAuthenticated, userRole, 'doctor', navigate);
+      const hasAccess = checkDashboardAccess(isAuthenticated, userRole, 'doctor', navigate);
+      setAccessChecked(true);
+      
+      if (!hasAccess) {
+        console.log('User does not have access to doctor dashboard');
+      } else {
+        console.log('User has access to doctor dashboard');
+      }
     }
   }, [isAuthenticated, isLoading, userRole, navigate]);
   
@@ -73,18 +82,21 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   };
   
   // Show loading state while auth is being verified
-  if (isLoading || !auth.profile) {
+  if (isLoading || (isAuthenticated && !auth.profile)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <RoleDebugger />
-        <ConsultationsLoading />
+        <div className="flex flex-col items-center justify-center">
+          <ConsultationsLoading />
+          <p className="mt-4 text-lg">Loading doctor dashboard...</p>
+        </div>
       </div>
     );
   }
   
-  // If not authenticated or not a doctor, don't render content
-  // The useEffect will handle the redirect
-  if (!isAuthenticated || auth.profile?.role !== 'doctor') {
+  // If access check completed and user is not authenticated or not a doctor,
+  // don't render content - the useEffect redirect will handle navigation
+  if (accessChecked && (!isAuthenticated || userRole !== 'doctor')) {
     return null;
   }
   

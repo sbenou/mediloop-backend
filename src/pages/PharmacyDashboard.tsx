@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { PharmacyView } from "@/components/dashboard/views";
@@ -19,6 +19,7 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, userRole } = useAuth();
   const auth = useRecoilValue(authState);
+  const [accessChecked, setAccessChecked] = useState(false);
   
   // Use initialParams if provided, otherwise use URL params
   const searchParams = initialParams || searchParamsFromUrl;
@@ -33,29 +34,40 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
     userRole,
     profileRole: auth.profile?.role,
     isPharmacist: auth.profile?.role === 'pharmacist',
-    section
+    section,
+    accessChecked
   });
 
   // Handle authentication and authorization with the centralized service
   useEffect(() => {
     if (!isLoading) {
-      checkDashboardAccess(isAuthenticated, userRole, 'pharmacist', navigate);
+      const hasAccess = checkDashboardAccess(isAuthenticated, userRole, 'pharmacist', navigate);
+      setAccessChecked(true);
+      
+      if (!hasAccess) {
+        console.log('User does not have access to pharmacy dashboard');
+      } else {
+        console.log('User has access to pharmacy dashboard');
+      }
     }
   }, [isAuthenticated, isLoading, userRole, navigate]);
 
   // Show loading state while auth is being verified
-  if (isLoading || !auth.profile) {
+  if (isLoading || (isAuthenticated && !auth.profile)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <RoleDebugger />
-        <ConsultationsLoading />
+        <div className="flex flex-col items-center justify-center">
+          <ConsultationsLoading />
+          <p className="mt-4 text-lg">Loading pharmacy dashboard...</p>
+        </div>
       </div>
     );
   }
   
-  // If not authenticated or not a pharmacist, don't render content
-  // The useEffect will handle the redirect
-  if (!isAuthenticated || auth.profile?.role !== 'pharmacist') {
+  // If access check completed and user is not authenticated or not a pharmacist,
+  // don't render content - the useEffect redirect will handle navigation
+  if (accessChecked && (!isAuthenticated || userRole !== 'pharmacist')) {
     return null;
   }
   

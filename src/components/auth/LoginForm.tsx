@@ -51,8 +51,34 @@ export const LoginForm = () => {
 
     if (session?.user) {
       console.log('Valid session found, proceeding with success callback');
-      // Use the common redirect service
-      await handleRoleBasedRedirect(session.user.id);
+      
+      try {
+        // Store session in localStorage for easy access
+        const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        console.log('Session explicitly stored in localStorage', STORAGE_KEY);
+        
+        // Store login event in localStorage for cross-tab sync
+        localStorage.setItem('last_auth_event', JSON.stringify({
+          type: 'LOGIN',
+          timestamp: new Date().toISOString(),
+          userId: session.user.id
+        }));
+        
+        // Emit custom event for session update
+        window.dispatchEvent(new CustomEvent('supabase:auth:token:update', { 
+          detail: { 
+            timestamp: new Date().toISOString(),
+            userId: session.user.id,
+            expiresAt: session.expires_at
+          } 
+        }));
+        
+        // Use the common redirect service
+        await handleRoleBasedRedirect(session.user.id);
+      } catch (storageError) {
+        console.error('Error storing session data:', storageError);
+      }
     } else {
       console.error('No session found after successful login');
       toast({
