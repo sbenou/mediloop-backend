@@ -46,7 +46,7 @@ export const handleRoleBasedRedirect = async (userId: string) => {
       window.location.href = '/doctor';
       return true;
     } else {
-      // Regular patients go to the universal dashboard, which was working before
+      // Regular patients go to the dashboard (was working before)
       window.location.href = '/dashboard';
       return true;
     }
