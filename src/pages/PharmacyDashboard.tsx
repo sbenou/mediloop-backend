@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { PharmacyView } from "@/components/dashboard/views";
@@ -19,7 +19,7 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
-  const [showContent, setShowContent] = useState(false);
+  const [isPageReady, setIsPageReady] = useState(false);
   
   // Use initialParams if provided, otherwise use URL params
   const searchParams = initialParams || searchParamsFromUrl;
@@ -36,54 +36,57 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
   });
 
   useEffect(() => {
-    // If not authenticated and not currently loading, redirect to login
-    if (!isAuthenticated && !isLoading) {
-      console.log('Not authenticated, redirecting to login');
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please login to access the pharmacy dashboard.",
-      });
-      navigate("/login");
-      return;
-    }
-    
-    // If authenticated but not a pharmacist, redirect to dashboard
-    if (isAuthenticated && !isLoading && auth.profile && auth.profile.role !== 'pharmacist') {
-      console.log('Not a pharmacist, redirecting to dashboard');
-      toast({
-        title: "Access restricted",
-        description: "Only pharmacists can access this dashboard.",
-      });
-      navigate("/dashboard");
-      return;
-    }
-    
-    // If authenticated and is a pharmacist, show content
-    if (isAuthenticated && !isLoading && auth.profile?.role === 'pharmacist') {
-      console.log('Showing pharmacy content - user is a pharmacist');
-      setShowContent(true);
+    // Only proceed when auth state is confirmed (not loading)
+    if (!isLoading) {
+      // If not authenticated, redirect to login
+      if (!isAuthenticated) {
+        console.log('Not authenticated, redirecting to login');
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please login to access the pharmacy dashboard.",
+        });
+        navigate("/login");
+        return;
+      }
+      
+      // If authenticated but not a pharmacist, redirect to dashboard
+      if (isAuthenticated && auth.profile && auth.profile.role !== 'pharmacist') {
+        console.log('Not a pharmacist, redirecting to dashboard');
+        toast({
+          title: "Access restricted",
+          description: "Only pharmacists can access this dashboard.",
+        });
+        navigate("/dashboard");
+        return;
+      }
+      
+      // If we get here, user is authenticated and is a pharmacist
+      if (isAuthenticated && auth.profile?.role === 'pharmacist') {
+        console.log('Showing pharmacy content - user is a pharmacist');
+        setIsPageReady(true);
+      }
     }
   }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
-  // If content should be visible, show the dashboard
-  if (showContent) {
+  // Show loading state while auth is being verified
+  if (isLoading || !isPageReady) {
     return (
-      <PharmacistLayout>
+      <div className="flex h-screen items-center justify-center">
         <RoleDebugger />
-        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-          <PharmacyView userRole={auth.profile?.role || 'pharmacist'} section={section} />
-        </div>
-      </PharmacistLayout>
+        <ConsultationsLoading />
+      </div>
     );
   }
   
-  // Show loading state or redirect (handled by useEffect)
+  // If we reach here, content should be displayed
   return (
-    <div className="flex h-screen items-center justify-center">
+    <PharmacistLayout>
       <RoleDebugger />
-      <ConsultationsLoading />
-    </div>
+      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+        <PharmacyView userRole={auth.profile?.role || 'pharmacist'} section={section} />
+      </div>
+    </PharmacistLayout>
   );
 };
 

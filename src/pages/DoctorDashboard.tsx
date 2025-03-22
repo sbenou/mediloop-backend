@@ -26,7 +26,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
-  const [showContent, setShowContent] = useState(false);
+  const [isPageReady, setIsPageReady] = useState(false);
   
   // Use initialParams if provided, otherwise use URL params
   const searchParams = initialParams || searchParamsFromUrl;
@@ -44,33 +44,36 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   });
   
   useEffect(() => {
-    // If not authenticated and not currently loading, redirect to login
-    if (!isAuthenticated && !isLoading) {
-      console.log('Not authenticated, redirecting to login');
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please login to access the doctor dashboard.",
-      });
-      navigate("/login");
-      return;
-    }
-    
-    // If authenticated but not a doctor, redirect to dashboard
-    if (isAuthenticated && !isLoading && auth.profile && auth.profile.role !== 'doctor') {
-      console.log('Not a doctor, redirecting to dashboard');
-      toast({
-        title: "Access restricted",
-        description: "Only doctors can access this dashboard.",
-      });
-      navigate("/dashboard");
-      return;
-    }
-    
-    // If authenticated and is a doctor, show content
-    if (isAuthenticated && !isLoading && auth.profile?.role === 'doctor') {
-      console.log('Showing doctor content - user is a doctor');
-      setShowContent(true);
+    // Only proceed when auth state is confirmed (not loading)
+    if (!isLoading) {
+      // If not authenticated, redirect to login
+      if (!isAuthenticated) {
+        console.log('Not authenticated, redirecting to login');
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please login to access the doctor dashboard.",
+        });
+        navigate("/login");
+        return;
+      }
+      
+      // If authenticated but not a doctor, redirect to dashboard
+      if (isAuthenticated && auth.profile && auth.profile.role !== 'doctor') {
+        console.log('Not a doctor, redirecting to dashboard');
+        toast({
+          title: "Access restricted",
+          description: "Only doctors can access this dashboard.",
+        });
+        navigate("/dashboard");
+        return;
+      }
+      
+      // If authenticated and is a doctor, show content
+      if (isAuthenticated && auth.profile?.role === 'doctor') {
+        console.log('Showing doctor content - user is a doctor');
+        setIsPageReady(true);
+      }
     }
   }, [isAuthenticated, isLoading, auth.profile, navigate]);
   
@@ -94,24 +97,24 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
     }
   };
   
-  // If content should be visible, show the dashboard
-  if (showContent) {
+  // Show loading state while auth is being verified
+  if (isLoading || !isPageReady) {
     return (
-      <DoctorLayout>
+      <div className="flex h-screen items-center justify-center">
         <RoleDebugger />
-        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-          {getContent()}
-        </div>
-      </DoctorLayout>
+        <ConsultationsLoading />
+      </div>
     );
   }
   
-  // Show loading state (handled by useEffect)
+  // If we reach here, content should be displayed
   return (
-    <div className="flex h-screen items-center justify-center">
+    <DoctorLayout>
       <RoleDebugger />
-      <ConsultationsLoading />
-    </div>
+      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+        {getContent()}
+      </div>
+    </DoctorLayout>
   );
 };
 

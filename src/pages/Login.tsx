@@ -43,13 +43,13 @@ const Login = () => {
       
       if (role === 'pharmacist') {
         console.log('Redirecting pharmacist to pharmacy dashboard');
-        navigate('/pharmacy', { replace: true });
+        window.location.href = '/pharmacy';
         return;
       }
       
       if (role === 'doctor') {
         console.log('Redirecting doctor to doctor dashboard');
-        navigate('/doctor', { replace: true });
+        window.location.href = '/doctor';
         return;
       }
       
@@ -59,7 +59,7 @@ const Login = () => {
     }
   }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
-  // Show loading state with the new two-circle spinner component
+  // Show loading state with the spinner component
   if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">

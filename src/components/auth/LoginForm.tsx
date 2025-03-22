@@ -64,6 +64,18 @@ export const LoginForm = () => {
           return;
         }
         
+        // Store login event in localStorage for cross-tab sync
+        try {
+          localStorage.setItem('last_auth_event', JSON.stringify({
+            type: 'LOGIN',
+            timestamp: new Date().toISOString(),
+            role: profile.role,
+            userId: session.user.id
+          }));
+        } catch (e) {
+          console.error('Error storing auth event:', e);
+        }
+        
         if (profile?.role === 'superadmin') {
           navigate('/superadmin/dashboard', { replace: true });
         } else if (profile?.role === 'pharmacist') {
@@ -153,4 +165,4 @@ export const LoginForm = () => {
       )}
     </div>
   );
-}
+};
