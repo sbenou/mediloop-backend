@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   ProfileView, 
@@ -16,39 +16,30 @@ import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
 
-interface DoctorDashboardProps {
-  initialParams?: URLSearchParams;
-}
-
-const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
+const DoctorDashboard = () => {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
-  const [visibleContent, setVisibleContent] = useState<'loading' | 'content' | 'initial'>('initial');
+  const [showContent, setShowContent] = useState(false);
   
-  // Tracking refs
+  // Tracking refs to prevent duplicate actions
   const redirectAttempted = useRef(false);
-  const firstContentShown = useRef(false);
-  const authReady = useRef(false);
+  const contentShown = useRef(false);
   
-  // Get parameters from URL or use initialParams if provided
-  const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
-  const section = searchParams.get("section") || initialParams?.get("section") || "dashboard";
-  const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
+  // Get parameters from URL
+  const section = searchParams.get("section") || "dashboard";
+  const profileTab = searchParams.get("profileTab") || "personal";
   
   // Enhanced logging for debugging purposes
   console.log('DoctorDashboard render:', {
     isAuthenticated,
     isLoading,
-    profileLoaded: !!auth.profile,
     profileRole: auth.profile?.role,
     isDoctor: auth.profile?.role === 'doctor',
-    visibleContent,
-    authReady: authReady.current,
-    recoilUser: !!auth.user,
-    recoilProfile: !!auth.profile
+    showContent,
+    contentShownRef: contentShown.current,
+    redirectRef: redirectAttempted.current
   });
   
   // Define getContent function
@@ -71,97 +62,46 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   };
   
-  // Mark authentication as ready once auth state is definitive (with profile)
+  // Handle showing content or redirect based on auth state
   useEffect(() => {
-    if (!authReady.current && !isLoading) {
-      if (isAuthenticated && auth.profile) {
-        // Auth is ready with profile - this is the definitive state we need
-        console.log("Auth is ready with profile:", { 
-          isAuthenticated, 
-          role: auth.profile.role 
+    // Only take action when auth is ready (not loading)
+    if (!isLoading) {
+      // Handle not authenticated case
+      if (!isAuthenticated && !redirectAttempted.current) {
+        console.log('Not authenticated, redirecting to login');
+        redirectAttempted.current = true;
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please login to access the doctor dashboard.",
         });
-        authReady.current = true;
-      } else if (!isAuthenticated && !auth.user) {
-        // Auth is definitely not authenticated
-        console.log("Auth is ready - user is not authenticated");
-        authReady.current = true;
+        navigate("/login");
+        return;
       }
-    }
-  }, [isLoading, isAuthenticated, auth.profile, auth.user]);
-  
-  // Set URL params on initial load if initialParams was provided
-  useEffect(() => {
-    if (initialParams && !isLoading) {
-      console.log("Setting initial params from props:", Object.fromEntries(initialParams.entries()));
-      setSearchParams(initialParams);
-    }
-  }, [initialParams, isLoading, setSearchParams]);
-  
-  // Make sure we have a default section for doctors
-  useEffect(() => {
-    if (authReady.current && isAuthenticated && auth.profile?.role === 'doctor') {
-      console.log("Checking doctor params:", { currentView, section });
       
-      if (currentView !== 'doctor' || !section) {
-        console.log("Setting default doctor params");
-        setSearchParams({ view: 'doctor', section: 'dashboard' }, { replace: true });
+      // Handle wrong role case
+      if (isAuthenticated && auth.profile && auth.profile.role !== 'doctor' && !redirectAttempted.current) {
+        console.log('Not a doctor, redirecting to dashboard');
+        redirectAttempted.current = true;
+        toast({
+          title: "Access restricted",
+          description: "Only doctors can access this dashboard.",
+        });
+        navigate("/dashboard");
+        return;
+      }
+      
+      // Show content if authenticated with doctor role
+      if (isAuthenticated && auth.profile?.role === 'doctor' && !contentShown.current) {
+        console.log('Showing doctor content - user is a doctor');
+        contentShown.current = true;
+        setShowContent(true);
       }
     }
-  }, [authReady.current, setSearchParams, currentView, section, isAuthenticated, auth.profile]);
+  }, [isAuthenticated, isLoading, auth.profile, navigate]);
   
-  // Show content or redirect based on auth state
-  useEffect(() => {
-    // Only proceed if auth state is ready
-    if (!authReady.current) {
-      if (visibleContent !== 'loading' && !isLoading) {
-        setVisibleContent('loading');
-      }
-      return;
-    }
-
-    // If we've already shown content or attempted redirect, don't do it again
-    if (firstContentShown.current || redirectAttempted.current) {
-      return;
-    }
-
-    // Handle not authenticated case
-    if (!isAuthenticated) {
-      console.log('Not authenticated, redirecting to login');
-      redirectAttempted.current = true;
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please login to access the doctor dashboard.",
-      });
-      navigate("/login");
-      return;
-    }
-    
-    // Handle not a doctor case - this is critical
-    if (isAuthenticated && auth.profile && auth.profile.role !== 'doctor') {
-      console.log('Not a doctor, redirecting to dashboard');
-      redirectAttempted.current = true;
-      toast({
-        title: "Access restricted",
-        description: "Only doctors can access this dashboard.",
-      });
-      navigate("/dashboard");
-      return;
-    }
-
-    // If we reach here and auth is ready with a doctor role, show content
-    if (isAuthenticated && auth.profile?.role === 'doctor') {
-      console.log('Showing doctor dashboard content - user is a doctor');
-      firstContentShown.current = true;
-      setVisibleContent('content');
-    }
-  }, [
-    isAuthenticated, navigate, auth.profile, authReady.current, isLoading, 
-    redirectAttempted.current, firstContentShown.current, visibleContent
-  ]);
-  
-  // If content is designated to be visible, show the dashboard
-  if (visibleContent === 'content') {
+  // If content should be visible, show the dashboard
+  if (showContent) {
     return (
       <DoctorLayout>
         <RoleDebugger />
@@ -172,12 +112,12 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     );
   }
   
-  // Show loading state
+  // Show standardized loading state
   return (
     <div className="flex h-screen items-center justify-center">
       <RoleDebugger />
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
         <p className="text-muted-foreground">Loading dashboard...</p>
       </div>
     </div>

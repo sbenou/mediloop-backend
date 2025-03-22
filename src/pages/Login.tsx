@@ -24,43 +24,39 @@ const Login = () => {
   });
 
   useEffect(() => {
-    const checkUserRole = async () => {
-      // Only redirect if authenticated, not loading, profile exists, and we haven't already redirected
-      if (isAuthenticated && !isLoading && auth.profile && !redirectAttempted.current) {
-        redirectAttempted.current = true;
-        
-        console.log('User role found for redirect:', auth.profile.role);
-
-        // Special handling for pharmacists - directly go to the pharmacy page
-        if (auth.profile.role === 'pharmacist') {
-          console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
-          navigate('/pharmacy', { replace: true });
-          return;
-        }
-        
-        // Special handling for doctors
-        if (auth.profile.role === 'doctor') {
-          console.log('Already authenticated as doctor, redirecting to doctor dashboard');
-          navigate('/doctor', { replace: true });
-          return;
-        }
-        
-        // For all other users, redirect to the universal dashboard
-        navigate('/dashboard', { replace: true });
+    // Only redirect if authenticated, not loading, profile exists, and we haven't already redirected
+    if (isAuthenticated && !isLoading && auth.profile && !redirectAttempted.current) {
+      redirectAttempted.current = true;
+      
+      console.log('User authenticated with role:', auth.profile.role);
+      
+      // Direct role-based routing using profile.role directly
+      if (auth.profile.role === 'pharmacist') {
+        console.log('Redirecting pharmacist to pharmacy dashboard');
+        navigate('/pharmacy', { replace: true });
+        return;
       }
-    };
-    
-    checkUserRole();
+      
+      if (auth.profile.role === 'doctor') {
+        console.log('Redirecting doctor to doctor dashboard');
+        navigate('/doctor', { replace: true });
+        return;
+      }
+      
+      // Default redirection for all other authenticated users
+      console.log('Redirecting to general dashboard');
+      navigate('/dashboard', { replace: true });
+    }
   }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
-  // Show loading state
+  // Show loading state with standardized spinner
   if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader className="h-8 w-8 animate-spin text-primary" />
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
               <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
                 Please wait while we load your profile
