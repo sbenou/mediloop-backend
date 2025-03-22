@@ -33,6 +33,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   // Tracking refs to prevent duplicate actions
   const redirectAttempted = useRef(false);
   const contentShown = useRef(false);
+  const authCheckComplete = useRef(false);
   
   // Get parameters from URL
   const section = searchParams.get("section") || "dashboard";
@@ -46,8 +47,73 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
     isDoctor: auth.profile?.role === 'doctor',
     showContent,
     contentShownRef: contentShown.current,
-    redirectRef: redirectAttempted.current
+    redirectRef: redirectAttempted.current,
+    authCheckCompleteRef: authCheckComplete.current,
+    authStateIsLoading: auth.isLoading
   });
+  
+  // Reset refs when auth loading state changes to completed
+  useEffect(() => {
+    if (!isLoading && authCheckComplete.current === false) {
+      authCheckComplete.current = true;
+      
+      // Now that auth is ready, we can make access control decisions
+      handleAccessControl();
+    }
+  }, [isLoading]);
+  
+  // Separate function to handle access control logic
+  const handleAccessControl = () => {
+    if (!isAuthenticated && !redirectAttempted.current) {
+      console.log('Not authenticated, redirecting to login');
+      redirectAttempted.current = true;
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "Please login to access the doctor dashboard.",
+      });
+      navigate("/login");
+      return;
+    }
+    
+    if (isAuthenticated && auth.profile && auth.profile.role !== 'doctor' && !redirectAttempted.current) {
+      console.log('Not a doctor, redirecting to dashboard');
+      redirectAttempted.current = true;
+      toast({
+        title: "Access restricted",
+        description: "Only doctors can access this dashboard.",
+      });
+      navigate("/dashboard");
+      return;
+    }
+    
+    if (isAuthenticated && auth.profile?.role === 'doctor' && !contentShown.current) {
+      console.log('Showing doctor content - user is a doctor');
+      contentShown.current = true;
+      setShowContent(true);
+    }
+  };
+  
+  // Handle profile changes separately
+  useEffect(() => {
+    if (auth.profile) {
+      console.log('Profile loaded, role:', auth.profile.role);
+      
+      if (auth.profile.role === 'doctor' && !contentShown.current) {
+        console.log('Profile confirmed as doctor, showing content');
+        contentShown.current = true;
+        setShowContent(true);
+      } else if (auth.profile.role !== 'doctor' && !redirectAttempted.current) {
+        console.log('Profile is not doctor, redirecting');
+        redirectAttempted.current = true;
+        toast({
+          title: "Access restricted",
+          description: "Only doctors can access this dashboard.",
+        });
+        navigate("/dashboard");
+      }
+    }
+  }, [auth.profile, navigate]);
   
   // Define getContent function
   const getContent = () => {
@@ -68,44 +134,6 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
         return <HomeView userRole="doctor" />;
     }
   };
-  
-  // Handle showing content or redirect based on auth state
-  useEffect(() => {
-    // Only take action when auth is ready (not loading)
-    if (!isLoading) {
-      // Handle not authenticated case
-      if (!isAuthenticated && !redirectAttempted.current) {
-        console.log('Not authenticated, redirecting to login');
-        redirectAttempted.current = true;
-        toast({
-          variant: "destructive",
-          title: "Authentication required",
-          description: "Please login to access the doctor dashboard.",
-        });
-        navigate("/login");
-        return;
-      }
-      
-      // Handle wrong role case
-      if (isAuthenticated && auth.profile && auth.profile.role !== 'doctor' && !redirectAttempted.current) {
-        console.log('Not a doctor, redirecting to dashboard');
-        redirectAttempted.current = true;
-        toast({
-          title: "Access restricted",
-          description: "Only doctors can access this dashboard.",
-        });
-        navigate("/dashboard");
-        return;
-      }
-      
-      // Show content if authenticated with doctor role
-      if (isAuthenticated && auth.profile?.role === 'doctor' && !contentShown.current) {
-        console.log('Showing doctor content - user is a doctor');
-        contentShown.current = true;
-        setShowContent(true);
-      }
-    }
-  }, [isAuthenticated, isLoading, auth.profile, navigate]);
   
   // If content should be visible, show the dashboard
   if (showContent) {

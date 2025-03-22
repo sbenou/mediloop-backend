@@ -23,20 +23,24 @@ const Login = () => {
   });
 
   useEffect(() => {
-    // Only redirect if authenticated, not loading, profile exists, and we haven't already redirected
-    if (isAuthenticated && !isLoading && auth.profile && !redirectAttempted.current) {
+    // Only redirect when we have confirmed auth state: authenticated, not loading, profile exists
+    const canRedirect = isAuthenticated && !isLoading && auth.profile && !redirectAttempted.current;
+    
+    if (canRedirect) {
       redirectAttempted.current = true;
       
       console.log('User authenticated with role:', auth.profile.role);
       
-      // Direct role-based routing using profile.role directly
-      if (auth.profile.role === 'pharmacist') {
+      // Direct role-based routing using profile.role
+      const role = auth.profile.role;
+      
+      if (role === 'pharmacist') {
         console.log('Redirecting pharmacist to pharmacy dashboard');
         navigate('/pharmacy', { replace: true });
         return;
       }
       
-      if (auth.profile.role === 'doctor') {
+      if (role === 'doctor') {
         console.log('Redirecting doctor to doctor dashboard');
         navigate('/doctor', { replace: true });
         return;
