@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect } from "react";
-import { ensureCorrectDashboard } from "@/services/authRedirectService";
+import { getDashboardPath } from "@/services/authRedirectService";
 import ConsultationsLoading from "@/components/teleconsultation/ConsultationsLoading";
 
 const Login = () => {
@@ -31,20 +31,6 @@ const Login = () => {
       navigate(dashboardPath, { replace: true });
     }
   }, [isAuthenticated, isLoading, userRole, navigate]);
-
-  // Helper function to get the correct dashboard path based on role
-  const getDashboardPath = (role: string): string => {
-    switch (role) {
-      case 'pharmacist':
-        return '/pharmacy';
-      case 'doctor':
-        return '/doctor';
-      case 'superadmin':
-        return '/superadmin/dashboard';
-      default:
-        return '/dashboard';
-    }
-  };
 
   // Show loading state with the spinner component
   if (isLoading) {

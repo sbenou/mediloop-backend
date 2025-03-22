@@ -40,15 +40,12 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
 
   // Handle authentication and authorization with the centralized service
   useEffect(() => {
+    // Only check access when auth state is loaded
     if (!isLoading) {
       const hasAccess = checkDashboardAccess(isAuthenticated, userRole, 'pharmacist', navigate);
       setAccessChecked(true);
       
-      if (!hasAccess) {
-        console.log('User does not have access to pharmacy dashboard');
-      } else {
-        console.log('User has access to pharmacy dashboard');
-      }
+      console.log('Access check result:', hasAccess ? 'User has access' : 'User does not have access');
     }
   }, [isAuthenticated, isLoading, userRole, navigate]);
 

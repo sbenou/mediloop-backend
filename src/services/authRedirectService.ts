@@ -46,6 +46,7 @@ export const handleRoleBasedRedirect = async (userId: string) => {
       window.location.href = '/doctor';
       return true;
     } else {
+      // Regular patients go to the universal dashboard, which was working before
       window.location.href = '/dashboard';
       return true;
     }
@@ -117,4 +118,20 @@ export const checkDashboardAccess = (
   }
   
   return true;
+};
+
+/**
+ * Get the correct dashboard path based on role - used in Login component
+ */
+export const getDashboardPath = (role: string): string => {
+  switch (role) {
+    case 'pharmacist':
+      return '/pharmacy';
+    case 'doctor':
+      return '/doctor';
+    case 'superadmin':
+      return '/superadmin/dashboard';
+    default:
+      return '/dashboard'; // Default path for patients
+  }
 };
