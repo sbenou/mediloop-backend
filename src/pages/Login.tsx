@@ -32,6 +32,18 @@ const Login = () => {
       
       console.log('User authenticated with role:', auth.profile.role);
       
+      // Store redirect info in localStorage for cross-tab sync
+      try {
+        localStorage.setItem('last_auth_event', JSON.stringify({
+          type: 'LOGIN',
+          timestamp: new Date().toISOString(),
+          role: auth.profile.role,
+          userId: auth.user?.id
+        }));
+      } catch (e) {
+        console.error('Error storing auth event:', e);
+      }
+      
       // Direct role-based routing using profile.role
       const role = auth.profile.role;
       

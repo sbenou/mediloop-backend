@@ -69,6 +69,26 @@ export const useStorageEvents = () => {
         console.error("Error processing auth event:", error);
       }
     }
+    
+    // Check for auth check events
+    if (e.key === 'last_auth_check' && e.newValue) {
+      try {
+        const checkData = JSON.parse(e.newValue);
+        console.log("Auth check event from another tab:", checkData);
+        
+        // If we're on the same route, make sure our state is in sync
+        if (checkData.route === window.location.pathname && checkData.authenticated) {
+          // Force refresh to make sure our state is in sync
+          supabase.auth.getSession().then(({ data }) => {
+            if (data.session) {
+              updateAuthState(data.session);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error processing auth check event:", error);
+      }
+    }
   }, [updateAuthState, setAuth]);
 
   const handleTokenUpdate = useCallback((e: Event) => {

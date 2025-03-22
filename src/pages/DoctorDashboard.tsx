@@ -60,6 +60,18 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
       
       // Now that auth is ready, we can make access control decisions
       handleAccessControl();
+      
+      // Store the last auth check in localStorage to sync across tabs
+      try {
+        localStorage.setItem('last_auth_check', JSON.stringify({
+          timestamp: new Date().toISOString(),
+          route: window.location.pathname,
+          authenticated: isAuthenticated,
+          profileRole: auth.profile?.role || null
+        }));
+      } catch (e) {
+        console.error('Error storing auth check:', e);
+      }
     }
   }, [isLoading]);
   
