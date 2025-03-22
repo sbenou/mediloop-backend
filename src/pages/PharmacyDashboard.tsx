@@ -8,7 +8,6 @@ import { toast } from "@/components/ui/use-toast";
 import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
-import { Skeleton } from "@/components/ui/skeleton";
 import ConsultationsLoading from "@/components/teleconsultation/ConsultationsLoading";
 
 interface PharmacyDashboardProps {
@@ -25,11 +24,6 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
   // Use initialParams if provided, otherwise use URL params
   const searchParams = initialParams || searchParamsFromUrl;
   
-  // Tracking refs to prevent duplicate actions
-  const redirectAttempted = useRef(false);
-  const contentShown = useRef(false);
-  const authCheckComplete = useRef(false);
-  
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
   
@@ -38,41 +32,13 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
     isAuthenticated,
     isLoading,
     profileRole: auth.profile?.role,
-    isPharmacist: auth.profile?.role === 'pharmacist',
-    showContent,
-    contentShownRef: contentShown.current,
-    redirectRef: redirectAttempted.current,
-    authCheckCompleteRef: authCheckComplete.current,
-    authStateIsLoading: auth.isLoading
+    isPharmacist: auth.profile?.role === 'pharmacist'
   });
 
-  // Reset refs when auth loading state changes to completed
   useEffect(() => {
-    if (!isLoading && authCheckComplete.current === false) {
-      authCheckComplete.current = true;
-      
-      // Now that auth is ready, we can make access control decisions
-      handleAccessControl();
-      
-      // Store the last auth check in localStorage to sync across tabs
-      try {
-        localStorage.setItem('last_auth_check', JSON.stringify({
-          timestamp: new Date().toISOString(),
-          route: window.location.pathname,
-          authenticated: isAuthenticated,
-          profileRole: auth.profile?.role || null
-        }));
-      } catch (e) {
-        console.error('Error storing auth check:', e);
-      }
-    }
-  }, [isLoading]);
-  
-  // Separate function to handle access control logic
-  const handleAccessControl = () => {
-    if (!isAuthenticated && !redirectAttempted.current) {
+    // If not authenticated and not currently loading, redirect to login
+    if (!isAuthenticated && !isLoading) {
       console.log('Not authenticated, redirecting to login');
-      redirectAttempted.current = true;
       toast({
         variant: "destructive",
         title: "Authentication required",
@@ -82,9 +48,9 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
       return;
     }
     
-    if (isAuthenticated && auth.profile && auth.profile.role !== 'pharmacist' && !redirectAttempted.current) {
+    // If authenticated but not a pharmacist, redirect to dashboard
+    if (isAuthenticated && !isLoading && auth.profile && auth.profile.role !== 'pharmacist') {
       console.log('Not a pharmacist, redirecting to dashboard');
-      redirectAttempted.current = true;
       toast({
         title: "Access restricted",
         description: "Only pharmacists can access this dashboard.",
@@ -93,33 +59,12 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
       return;
     }
     
-    if (isAuthenticated && auth.profile?.role === 'pharmacist' && !contentShown.current) {
+    // If authenticated and is a pharmacist, show content
+    if (isAuthenticated && !isLoading && auth.profile?.role === 'pharmacist') {
       console.log('Showing pharmacy content - user is a pharmacist');
-      contentShown.current = true;
       setShowContent(true);
     }
-  };
-  
-  // Handle profile changes separately
-  useEffect(() => {
-    if (auth.profile) {
-      console.log('Profile loaded, role:', auth.profile.role);
-      
-      if (auth.profile.role === 'pharmacist' && !contentShown.current) {
-        console.log('Profile confirmed as pharmacist, showing content');
-        contentShown.current = true;
-        setShowContent(true);
-      } else if (auth.profile.role !== 'pharmacist' && !redirectAttempted.current) {
-        console.log('Profile is not pharmacist, redirecting');
-        redirectAttempted.current = true;
-        toast({
-          title: "Access restricted",
-          description: "Only pharmacists can access this dashboard.",
-        });
-        navigate("/dashboard");
-      }
-    }
-  }, [auth.profile, navigate]);
+  }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
   // If content should be visible, show the dashboard
   if (showContent) {
@@ -133,7 +78,7 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
     );
   }
   
-  // Show standardized loading state with the ConsultationsLoading component
+  // Show loading state or redirect (handled by useEffect)
   return (
     <div className="flex h-screen items-center justify-center">
       <RoleDebugger />

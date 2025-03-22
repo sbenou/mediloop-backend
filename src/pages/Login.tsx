@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import ConsultationsLoading from "@/components/teleconsultation/ConsultationsLoading";
@@ -12,24 +12,18 @@ const Login = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
   const navigate = useNavigate();
-  const redirectAttempted = useRef(false);
 
   // Enhanced logging for debugging
   console.log("Login page render:", {
     isAuthenticated,
     isLoading,
     profileRole: auth.profile?.role,
-    userId: auth.user?.id,
-    redirectAttempted: redirectAttempted.current
+    userId: auth.user?.id
   });
 
   useEffect(() => {
     // Only redirect when we have confirmed auth state: authenticated, not loading, profile exists
-    const canRedirect = isAuthenticated && !isLoading && auth.profile && !redirectAttempted.current;
-    
-    if (canRedirect) {
-      redirectAttempted.current = true;
-      
+    if (isAuthenticated && !isLoading && auth.profile) {
       console.log('User authenticated with role:', auth.profile.role);
       
       // Store redirect info in localStorage for cross-tab sync

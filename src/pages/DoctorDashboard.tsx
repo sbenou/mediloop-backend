@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
@@ -31,11 +31,6 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   // Use initialParams if provided, otherwise use URL params
   const searchParams = initialParams || searchParamsFromUrl;
   
-  // Tracking refs to prevent duplicate actions
-  const redirectAttempted = useRef(false);
-  const contentShown = useRef(false);
-  const authCheckComplete = useRef(false);
-  
   // Get parameters from URL
   const section = searchParams.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || "personal";
@@ -45,41 +40,13 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
     isAuthenticated,
     isLoading,
     profileRole: auth.profile?.role,
-    isDoctor: auth.profile?.role === 'doctor',
-    showContent,
-    contentShownRef: contentShown.current,
-    redirectRef: redirectAttempted.current,
-    authCheckCompleteRef: authCheckComplete.current,
-    authStateIsLoading: auth.isLoading
+    isDoctor: auth.profile?.role === 'doctor'
   });
   
-  // Reset refs when auth loading state changes to completed
   useEffect(() => {
-    if (!isLoading && authCheckComplete.current === false) {
-      authCheckComplete.current = true;
-      
-      // Now that auth is ready, we can make access control decisions
-      handleAccessControl();
-      
-      // Store the last auth check in localStorage to sync across tabs
-      try {
-        localStorage.setItem('last_auth_check', JSON.stringify({
-          timestamp: new Date().toISOString(),
-          route: window.location.pathname,
-          authenticated: isAuthenticated,
-          profileRole: auth.profile?.role || null
-        }));
-      } catch (e) {
-        console.error('Error storing auth check:', e);
-      }
-    }
-  }, [isLoading]);
-  
-  // Separate function to handle access control logic
-  const handleAccessControl = () => {
-    if (!isAuthenticated && !redirectAttempted.current) {
+    // If not authenticated and not currently loading, redirect to login
+    if (!isAuthenticated && !isLoading) {
       console.log('Not authenticated, redirecting to login');
-      redirectAttempted.current = true;
       toast({
         variant: "destructive",
         title: "Authentication required",
@@ -89,9 +56,9 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
       return;
     }
     
-    if (isAuthenticated && auth.profile && auth.profile.role !== 'doctor' && !redirectAttempted.current) {
+    // If authenticated but not a doctor, redirect to dashboard
+    if (isAuthenticated && !isLoading && auth.profile && auth.profile.role !== 'doctor') {
       console.log('Not a doctor, redirecting to dashboard');
-      redirectAttempted.current = true;
       toast({
         title: "Access restricted",
         description: "Only doctors can access this dashboard.",
@@ -100,33 +67,12 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
       return;
     }
     
-    if (isAuthenticated && auth.profile?.role === 'doctor' && !contentShown.current) {
+    // If authenticated and is a doctor, show content
+    if (isAuthenticated && !isLoading && auth.profile?.role === 'doctor') {
       console.log('Showing doctor content - user is a doctor');
-      contentShown.current = true;
       setShowContent(true);
     }
-  };
-  
-  // Handle profile changes separately
-  useEffect(() => {
-    if (auth.profile) {
-      console.log('Profile loaded, role:', auth.profile.role);
-      
-      if (auth.profile.role === 'doctor' && !contentShown.current) {
-        console.log('Profile confirmed as doctor, showing content');
-        contentShown.current = true;
-        setShowContent(true);
-      } else if (auth.profile.role !== 'doctor' && !redirectAttempted.current) {
-        console.log('Profile is not doctor, redirecting');
-        redirectAttempted.current = true;
-        toast({
-          title: "Access restricted",
-          description: "Only doctors can access this dashboard.",
-        });
-        navigate("/dashboard");
-      }
-    }
-  }, [auth.profile, navigate]);
+  }, [isAuthenticated, isLoading, auth.profile, navigate]);
   
   // Define getContent function
   const getContent = () => {
@@ -160,7 +106,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
     );
   }
   
-  // Show loading state with the ConsultationsLoading component
+  // Show loading state (handled by useEffect)
   return (
     <div className="flex h-screen items-center justify-center">
       <RoleDebugger />
