@@ -26,7 +26,6 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
-  const [isPageReady, setIsPageReady] = useState(false);
   
   // Use initialParams if provided, otherwise use URL params
   const searchParams = initialParams || searchParamsFromUrl;
@@ -43,10 +42,9 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
     isDoctor: auth.profile?.role === 'doctor'
   });
   
+  // Handle authentication and authorization
   useEffect(() => {
-    // Only proceed when auth state is confirmed (not loading)
     if (!isLoading) {
-      // If not authenticated, redirect to login
       if (!isAuthenticated) {
         console.log('Not authenticated, redirecting to login');
         toast({
@@ -58,7 +56,6 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
         return;
       }
       
-      // If authenticated but not a doctor, redirect to dashboard
       if (isAuthenticated && auth.profile && auth.profile.role !== 'doctor') {
         console.log('Not a doctor, redirecting to dashboard');
         toast({
@@ -69,10 +66,8 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
         return;
       }
       
-      // If authenticated and is a doctor, show content
       if (isAuthenticated && auth.profile?.role === 'doctor') {
         console.log('Showing doctor content - user is a doctor');
-        setIsPageReady(true);
       }
     }
   }, [isAuthenticated, isLoading, auth.profile, navigate]);
@@ -98,13 +93,23 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   };
   
   // Show loading state while auth is being verified
-  if (isLoading || !isPageReady) {
+  if (isLoading || (isAuthenticated && !auth.profile)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <RoleDebugger />
         <ConsultationsLoading />
       </div>
     );
+  }
+  
+  // If not authenticated, don't render anything (redirect will happen in useEffect)
+  if (!isAuthenticated) {
+    return null;
+  }
+  
+  // If authenticated but not a doctor, don't render anything (redirect will happen in useEffect)
+  if (auth.profile?.role !== 'doctor') {
+    return null;
   }
   
   // If we reach here, content should be displayed

@@ -19,7 +19,6 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
-  const [isPageReady, setIsPageReady] = useState(false);
   
   // Use initialParams if provided, otherwise use URL params
   const searchParams = initialParams || searchParamsFromUrl;
@@ -35,10 +34,9 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
     isPharmacist: auth.profile?.role === 'pharmacist'
   });
 
+  // Handle authentication and authorization
   useEffect(() => {
-    // Only proceed when auth state is confirmed (not loading)
     if (!isLoading) {
-      // If not authenticated, redirect to login
       if (!isAuthenticated) {
         console.log('Not authenticated, redirecting to login');
         toast({
@@ -50,7 +48,6 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
         return;
       }
       
-      // If authenticated but not a pharmacist, redirect to dashboard
       if (isAuthenticated && auth.profile && auth.profile.role !== 'pharmacist') {
         console.log('Not a pharmacist, redirecting to dashboard');
         toast({
@@ -61,22 +58,30 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
         return;
       }
       
-      // If we get here, user is authenticated and is a pharmacist
       if (isAuthenticated && auth.profile?.role === 'pharmacist') {
         console.log('Showing pharmacy content - user is a pharmacist');
-        setIsPageReady(true);
       }
     }
   }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
   // Show loading state while auth is being verified
-  if (isLoading || !isPageReady) {
+  if (isLoading || (isAuthenticated && !auth.profile)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <RoleDebugger />
         <ConsultationsLoading />
       </div>
     );
+  }
+  
+  // If not authenticated, don't render anything (redirect will happen in useEffect)
+  if (!isAuthenticated) {
+    return null;
+  }
+  
+  // If authenticated but not a pharmacist, don't render anything (redirect will happen in useEffect)
+  if (auth.profile?.role !== 'pharmacist') {
+    return null;
   }
   
   // If we reach here, content should be displayed
