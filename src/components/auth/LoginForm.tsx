@@ -9,7 +9,6 @@ import { PasswordFields } from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";
-import { handleRoleBasedRedirect } from "@/services/authRedirectService";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -51,33 +50,34 @@ export const LoginForm = () => {
 
     if (session?.user) {
       console.log('Valid session found, proceeding with success callback');
-      
+      // Check user role and redirect accordingly
       try {
-        // Store session in localStorage for easy access
-        const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-        console.log('Session explicitly stored in localStorage', STORAGE_KEY);
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
         
-        // Store login event in localStorage for cross-tab sync
-        localStorage.setItem('last_auth_event', JSON.stringify({
-          type: 'LOGIN',
-          timestamp: new Date().toISOString(),
-          userId: session.user.id
-        }));
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          navigate('/dashboard');
+          return;
+        }
         
-        // Emit custom event for session update
-        window.dispatchEvent(new CustomEvent('supabase:auth:token:update', { 
-          detail: { 
-            timestamp: new Date().toISOString(),
-            userId: session.user.id,
-            expiresAt: session.expires_at
-          } 
-        }));
-        
-        // Use the common redirect service
-        await handleRoleBasedRedirect(session.user.id);
-      } catch (storageError) {
-        console.error('Error storing session data:', storageError);
+        if (profile?.role === 'superadmin') {
+          navigate('/superadmin/dashboard', { replace: true });
+        } else if (profile?.role === 'pharmacist') {
+          // Use window.location.href for a hard redirect to ensure complete page refresh
+          window.location.href = '/pharmacy';
+        } else if (profile?.role === 'doctor') {
+          // Use window.location.href for a hard redirect to ensure complete page refresh
+          window.location.href = '/doctor';
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+      } catch (err) {
+        console.error('Error during role check:', err);
+        navigate('/dashboard'); // Fallback redirect
       }
     } else {
       console.error('No session found after successful login');
@@ -153,4 +153,4 @@ export const LoginForm = () => {
       )}
     </div>
   );
-};
+}

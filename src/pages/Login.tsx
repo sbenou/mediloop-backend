@@ -3,65 +3,62 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useEffect } from "react";
-import { getDashboardPath } from "@/services/authRedirectService";
-import ConsultationsLoading from "@/components/teleconsultation/ConsultationsLoading";
+import { useEffect, useRef } from "react";
+import { useRecoilValue } from "recoil";
+import { authState } from "@/store/auth/atoms";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, userRole } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const auth = useRecoilValue(authState);
   const navigate = useNavigate();
+  const redirectAttempted = useRef(false);
 
   // Enhanced logging for debugging
   console.log("Login page render:", {
     isAuthenticated,
     isLoading,
-    userRole
+    profileRole: auth.profile?.role,
+    userId: auth.user?.id,
+    redirectAttempted: redirectAttempted.current
   });
 
   useEffect(() => {
-    // Only redirect when we have confirmed auth state: authenticated and role is known
-    if (isAuthenticated && !isLoading && userRole) {
-      console.log('User authenticated with role:', userRole);
+    // Only redirect if authenticated, not loading, profile exists, and we haven't already redirected
+    if (isAuthenticated && !isLoading && auth.profile && !redirectAttempted.current) {
+      redirectAttempted.current = true;
       
-      // Use the common service to ensure user is on the correct dashboard
-      const dashboardPath = getDashboardPath(userRole);
-      console.log('Redirecting to dashboard:', dashboardPath);
+      console.log('User authenticated with role:', auth.profile.role);
       
-      // Use navigate for SPA navigation instead of hard refresh
-      navigate(dashboardPath, { replace: true });
+      // Direct role-based routing using profile.role directly
+      if (auth.profile.role === 'pharmacist') {
+        console.log('Redirecting pharmacist to pharmacy dashboard');
+        navigate('/pharmacy', { replace: true });
+        return;
+      }
+      
+      if (auth.profile.role === 'doctor') {
+        console.log('Redirecting doctor to doctor dashboard');
+        navigate('/doctor', { replace: true });
+        return;
+      }
+      
+      // Default redirection for all other authenticated users
+      console.log('Redirecting to general dashboard');
+      navigate('/dashboard', { replace: true });
     }
-  }, [isAuthenticated, isLoading, userRole, navigate]);
+  }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
-  // Show loading state with the spinner component
+  // Show loading state with standardized spinner
   if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex flex-col items-center justify-center space-y-4">
-              <ConsultationsLoading />
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
               <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
                 Please wait while we load your profile
-              </CardDescription>
-            </div>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
-  // If already authenticated, don't show login form
-  if (isAuthenticated && userRole) {
-    return (
-      <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-lg">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <ConsultationsLoading />
-              <CardTitle className="text-2xl">Redirecting...</CardTitle>
-              <CardDescription>
-                Taking you to your dashboard
               </CardDescription>
             </div>
           </CardHeader>

@@ -1,14 +1,13 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { PharmacyView } from "@/components/dashboard/views";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
-import { useRecoilValue } from "recoil";
+import { toast } from "@/components/ui/use-toast";
 import { authState } from "@/store/auth/atoms";
+import { useRecoilValue } from "recoil";
 import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
-import ConsultationsLoading from "@/components/teleconsultation/ConsultationsLoading";
-import { checkDashboardAccess } from "@/services/authRedirectService";
 
 interface PharmacyDashboardProps {
   initialParams?: URLSearchParams;
@@ -17,12 +16,16 @@ interface PharmacyDashboardProps {
 const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
   const [searchParamsFromUrl] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading, userRole } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
-  const [accessChecked, setAccessChecked] = useState(false);
+  const [showContent, setShowContent] = useState(false);
   
   // Use initialParams if provided, otherwise use URL params
   const searchParams = initialParams || searchParamsFromUrl;
+  
+  // Tracking refs to prevent duplicate actions
+  const redirectAttempted = useRef(false);
+  const contentShown = useRef(false);
   
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
@@ -31,51 +34,72 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
   console.log('PharmacyDashboard render:', {
     isAuthenticated,
     isLoading,
-    userRole,
     profileRole: auth.profile?.role,
     isPharmacist: auth.profile?.role === 'pharmacist',
-    section,
-    accessChecked
+    showContent,
+    contentShownRef: contentShown.current,
+    redirectRef: redirectAttempted.current
   });
-
-  // Handle authentication and authorization with the centralized service
+  
+  // Handle showing content or redirect based on auth state
   useEffect(() => {
-    // Only check access when auth state is loaded
+    // Only take action when auth is ready (not loading)
     if (!isLoading) {
-      const hasAccess = checkDashboardAccess(isAuthenticated, userRole, 'pharmacist', navigate);
-      setAccessChecked(true);
+      // Handle not authenticated case
+      if (!isAuthenticated && !redirectAttempted.current) {
+        console.log('Not authenticated, redirecting to login');
+        redirectAttempted.current = true;
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please login to access the pharmacy dashboard.",
+        });
+        navigate("/login");
+        return;
+      }
       
-      console.log('Access check result:', hasAccess ? 'User has access' : 'User does not have access');
+      // Handle wrong role case
+      if (isAuthenticated && auth.profile && auth.profile.role !== 'pharmacist' && !redirectAttempted.current) {
+        console.log('Not a pharmacist, redirecting to dashboard');
+        redirectAttempted.current = true;
+        toast({
+          title: "Access restricted",
+          description: "Only pharmacists can access this dashboard.",
+        });
+        navigate("/dashboard");
+        return;
+      }
+      
+      // Show content if authenticated with pharmacist role
+      if (isAuthenticated && auth.profile?.role === 'pharmacist' && !contentShown.current) {
+        console.log('Showing pharmacy content - user is a pharmacist');
+        contentShown.current = true;
+        setShowContent(true);
+      }
     }
-  }, [isAuthenticated, isLoading, userRole, navigate]);
+  }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
-  // Show loading state while auth is being verified
-  if (isLoading || (isAuthenticated && !auth.profile)) {
+  // If content should be visible, show the dashboard
+  if (showContent) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <PharmacistLayout>
         <RoleDebugger />
-        <div className="flex flex-col items-center justify-center">
-          <ConsultationsLoading />
-          <p className="mt-4 text-lg">Loading pharmacy dashboard...</p>
+        <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+          <PharmacyView userRole={auth.profile?.role || 'pharmacist'} section={section} />
         </div>
-      </div>
+      </PharmacistLayout>
     );
   }
   
-  // If access check completed and user is not authenticated or not a pharmacist,
-  // don't render content - the useEffect redirect will handle navigation
-  if (accessChecked && (!isAuthenticated || userRole !== 'pharmacist')) {
-    return null;
-  }
-  
-  // If we reach here, user is authenticated and is a pharmacist
+  // Show standardized loading state
   return (
-    <PharmacistLayout>
+    <div className="flex h-screen items-center justify-center">
       <RoleDebugger />
-      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-        <PharmacyView userRole={auth.profile?.role || 'pharmacist'} section={section} />
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <p className="text-muted-foreground">Loading dashboard...</p>
       </div>
-    </PharmacistLayout>
+    </div>
   );
 };
 
