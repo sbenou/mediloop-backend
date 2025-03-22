@@ -9,6 +9,7 @@ import { PasswordFields } from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";
+import { handleRoleBasedRedirect } from "@/services/authRedirectService";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -50,47 +51,8 @@ export const LoginForm = () => {
 
     if (session?.user) {
       console.log('Valid session found, proceeding with success callback');
-      // Check user role and redirect accordingly
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          navigate('/dashboard');
-          return;
-        }
-        
-        // Store login event in localStorage for cross-tab sync
-        try {
-          localStorage.setItem('last_auth_event', JSON.stringify({
-            type: 'LOGIN',
-            timestamp: new Date().toISOString(),
-            role: profile.role,
-            userId: session.user.id
-          }));
-        } catch (e) {
-          console.error('Error storing auth event:', e);
-        }
-        
-        if (profile?.role === 'superadmin') {
-          navigate('/superadmin/dashboard', { replace: true });
-        } else if (profile?.role === 'pharmacist') {
-          // Use window.location.href for a hard redirect to ensure complete page refresh
-          window.location.href = '/pharmacy';
-        } else if (profile?.role === 'doctor') {
-          // Use window.location.href for a hard redirect to ensure complete page refresh
-          window.location.href = '/doctor';
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
-      } catch (err) {
-        console.error('Error during role check:', err);
-        navigate('/dashboard'); // Fallback redirect
-      }
+      // Use the common redirect service
+      await handleRoleBasedRedirect(session.user.id);
     } else {
       console.error('No session found after successful login');
       toast({

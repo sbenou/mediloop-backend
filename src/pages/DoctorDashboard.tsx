@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
@@ -11,11 +11,11 @@ import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatient
 import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorPrescriptionsView";
 import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/DoctorTeleconsultationsView";
 import DoctorLayout from "@/components/layout/DoctorLayout";
-import { toast } from "@/components/ui/use-toast";
 import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
 import ConsultationsLoading from "@/components/teleconsultation/ConsultationsLoading";
+import { checkDashboardAccess } from "@/services/authRedirectService";
 
 interface DoctorDashboardProps {
   initialParams?: URLSearchParams;
@@ -24,7 +24,7 @@ interface DoctorDashboardProps {
 const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   const [searchParamsFromUrl] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, userRole } = useAuth();
   const auth = useRecoilValue(authState);
   
   // Use initialParams if provided, otherwise use URL params
@@ -38,39 +38,19 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   console.log('DoctorDashboard render:', {
     isAuthenticated,
     isLoading,
+    userRole,
     profileRole: auth.profile?.role,
-    isDoctor: auth.profile?.role === 'doctor'
+    isDoctor: auth.profile?.role === 'doctor',
+    section,
+    profileTab
   });
   
-  // Handle authentication and authorization
+  // Handle authentication and authorization with the centralized service
   useEffect(() => {
     if (!isLoading) {
-      if (!isAuthenticated) {
-        console.log('Not authenticated, redirecting to login');
-        toast({
-          variant: "destructive",
-          title: "Authentication required",
-          description: "Please login to access the doctor dashboard.",
-        });
-        navigate("/login");
-        return;
-      }
-      
-      if (isAuthenticated && auth.profile && auth.profile.role !== 'doctor') {
-        console.log('Not a doctor, redirecting to dashboard');
-        toast({
-          title: "Access restricted",
-          description: "Only doctors can access this dashboard.",
-        });
-        navigate("/dashboard");
-        return;
-      }
-      
-      if (isAuthenticated && auth.profile?.role === 'doctor') {
-        console.log('Showing doctor content - user is a doctor');
-      }
+      checkDashboardAccess(isAuthenticated, userRole, 'doctor', navigate);
     }
-  }, [isAuthenticated, isLoading, auth.profile, navigate]);
+  }, [isAuthenticated, isLoading, userRole, navigate]);
   
   // Define getContent function
   const getContent = () => {
@@ -93,7 +73,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
   };
   
   // Show loading state while auth is being verified
-  if (isLoading || (isAuthenticated && !auth.profile)) {
+  if (isLoading || !auth.profile) {
     return (
       <div className="flex h-screen items-center justify-center">
         <RoleDebugger />
@@ -102,17 +82,13 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
     );
   }
   
-  // If not authenticated, don't render anything (redirect will happen in useEffect)
-  if (!isAuthenticated) {
+  // If not authenticated or not a doctor, don't render content
+  // The useEffect will handle the redirect
+  if (!isAuthenticated || auth.profile?.role !== 'doctor') {
     return null;
   }
   
-  // If authenticated but not a doctor, don't render anything (redirect will happen in useEffect)
-  if (auth.profile?.role !== 'doctor') {
-    return null;
-  }
-  
-  // If we reach here, content should be displayed
+  // If we reach here, user is authenticated and is a doctor
   return (
     <DoctorLayout>
       <RoleDebugger />

@@ -12,6 +12,7 @@ import { authState } from '@/store/auth/atoms';
 import { supabase } from '@/lib/supabase';
 import { getSessionFromStorage } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
+import { ensureCorrectDashboard } from '@/services/authRedirectService';
 
 export const useAuth = () => {
   // Get all state values first
@@ -37,6 +38,14 @@ export const useAuth = () => {
       isPharmacistFromSelector
     });
   }, [isAuthenticated, userRole, auth.profile, isPharmacist, isPharmacistFromSelector]);
+  
+  // Check if user should be on a different page based on their role
+  useEffect(() => {
+    if (isAuthenticated && !isLoading && userRole) {
+      // This will only redirect if user is on the wrong dashboard
+      ensureCorrectDashboard(userRole, isAuthenticated);
+    }
+  }, [isAuthenticated, isLoading, userRole]);
   
   // Define hasPermission function outside the returned values to ensure it's stable
   const hasPermission = useCallback((permission: string) => {
@@ -155,33 +164,6 @@ export const useAuth = () => {
         console.log('Selector check:', isPharmacistFromSelector);
         console.log('Combined check:', isPharmacist);
         console.log('Full auth profile:', auth.profile);
-      }
-      
-      // Check if a superadmin is on a non-superadmin page
-      if (userRole === 'superadmin' && 
-          !currentPath.startsWith('/superadmin') && 
-          !currentPath.startsWith('/admin-settings') &&
-          currentPath !== '/login' &&
-          currentPath !== '/dashboard') {
-        console.warn(`Warning: Superadmin user accessing non-superadmin route: ${currentPath}`);
-      }
-      
-      // Check if a pharmacist is on a non-pharmacy page
-      if (userRole === 'pharmacist' && 
-          !currentPath.startsWith('/pharmacy') && 
-          currentPath !== '/login' &&
-          currentPath !== '/dashboard') {
-        console.warn(`Warning: Pharmacist user accessing non-pharmacy route: ${currentPath}`);
-      }
-      
-      // Check if a patient is on a non-patient page - exclude unified-profile and patient-dashboard routes
-      if (userRole === 'patient' && 
-          !currentPath.startsWith('/patient') && 
-          currentPath !== '/login' &&
-          currentPath !== '/patient-dashboard' &&
-          currentPath !== '/unified-profile' &&
-          currentPath !== '/dashboard') {
-        console.warn(`Warning: Patient user accessing non-patient route: ${currentPath}`);
       }
       
       // Log the current role and path for debugging

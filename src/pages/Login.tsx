@@ -4,60 +4,29 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect } from "react";
-import { useRecoilValue } from "recoil";
-import { authState } from "@/store/auth/atoms";
+import { ensureCorrectDashboard } from "@/services/authRedirectService";
 import ConsultationsLoading from "@/components/teleconsultation/ConsultationsLoading";
 
 const Login = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const auth = useRecoilValue(authState);
+  const { isAuthenticated, isLoading, userRole } = useAuth();
   const navigate = useNavigate();
 
   // Enhanced logging for debugging
   console.log("Login page render:", {
     isAuthenticated,
     isLoading,
-    profileRole: auth.profile?.role,
-    userId: auth.user?.id
+    userRole
   });
 
   useEffect(() => {
-    // Only redirect when we have confirmed auth state: authenticated, not loading, profile exists
-    if (isAuthenticated && !isLoading && auth.profile) {
-      console.log('User authenticated with role:', auth.profile.role);
+    // Only redirect when we have confirmed auth state: authenticated and role is known
+    if (isAuthenticated && !isLoading && userRole) {
+      console.log('User authenticated with role:', userRole);
       
-      // Store redirect info in localStorage for cross-tab sync
-      try {
-        localStorage.setItem('last_auth_event', JSON.stringify({
-          type: 'LOGIN',
-          timestamp: new Date().toISOString(),
-          role: auth.profile.role,
-          userId: auth.user?.id
-        }));
-      } catch (e) {
-        console.error('Error storing auth event:', e);
-      }
-      
-      // Direct role-based routing using profile.role
-      const role = auth.profile.role;
-      
-      if (role === 'pharmacist') {
-        console.log('Redirecting pharmacist to pharmacy dashboard');
-        window.location.href = '/pharmacy';
-        return;
-      }
-      
-      if (role === 'doctor') {
-        console.log('Redirecting doctor to doctor dashboard');
-        window.location.href = '/doctor';
-        return;
-      }
-      
-      // Default redirection for all other authenticated users
-      console.log('Redirecting to general dashboard');
-      navigate('/dashboard', { replace: true });
+      // Use the common service to ensure user is on the correct dashboard
+      ensureCorrectDashboard(userRole, isAuthenticated);
     }
-  }, [isAuthenticated, isLoading, auth.profile, navigate]);
+  }, [isAuthenticated, isLoading, userRole, navigate]);
 
   // Show loading state with the spinner component
   if (isLoading) {
@@ -70,6 +39,25 @@ const Login = () => {
               <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
                 Please wait while we load your profile
+              </CardDescription>
+            </div>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  // If already authenticated, don't show login form
+  if (isAuthenticated && userRole) {
+    return (
+      <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-lg">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <ConsultationsLoading />
+              <CardTitle className="text-2xl">Redirecting...</CardTitle>
+              <CardDescription>
+                Taking you to your dashboard
               </CardDescription>
             </div>
           </CardHeader>
