@@ -8,14 +8,20 @@ import { toast } from "@/components/ui/use-toast";
 import { authState } from "@/store/auth/atoms";
 import { useRecoilValue } from "recoil";
 import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
-import { Skeleton } from "@/components/ui/skeleton";
 
-const PharmacyDashboard = () => {
-  const [searchParams] = useSearchParams();
+interface PharmacyDashboardProps {
+  initialParams?: URLSearchParams;
+}
+
+const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
+  const [searchParamsFromUrl] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
   const [showContent, setShowContent] = useState(false);
+  
+  // Use initialParams if provided, otherwise use URL params
+  const searchParams = initialParams || searchParamsFromUrl;
   
   // Tracking refs to prevent duplicate actions
   const redirectAttempted = useRef(false);

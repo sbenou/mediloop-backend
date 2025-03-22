@@ -16,12 +16,19 @@ import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
 
-const DoctorDashboard = () => {
-  const [searchParams] = useSearchParams();
+interface DoctorDashboardProps {
+  initialParams?: URLSearchParams;
+}
+
+const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
+  const [searchParamsFromUrl] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
   const [showContent, setShowContent] = useState(false);
+  
+  // Use initialParams if provided, otherwise use URL params
+  const searchParams = initialParams || searchParamsFromUrl;
   
   // Tracking refs to prevent duplicate actions
   const redirectAttempted = useRef(false);
