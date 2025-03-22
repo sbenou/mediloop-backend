@@ -8,6 +8,8 @@ import { toast } from "@/components/ui/use-toast";
 import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
+import { Skeleton } from "@/components/ui/skeleton";
+import ConsultationsLoading from "@/components/teleconsultation/ConsultationsLoading";
 
 interface PharmacyDashboardProps {
   initialParams?: URLSearchParams;
@@ -119,14 +121,11 @@ const PharmacyDashboard = ({ initialParams }: PharmacyDashboardProps) => {
     );
   }
   
-  // Show standardized loading state
+  // Show standardized loading state with the ConsultationsLoading component
   return (
     <div className="flex h-screen items-center justify-center">
       <RoleDebugger />
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <p className="text-muted-foreground">Loading dashboard...</p>
-      </div>
+      <ConsultationsLoading />
     </div>
   );
 };

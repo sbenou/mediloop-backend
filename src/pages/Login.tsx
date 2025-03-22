@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useRef } from "react";
 import { useRecoilValue } from "recoil";
 import { authState } from "@/store/auth/atoms";
+import ConsultationsLoading from "@/components/teleconsultation/ConsultationsLoading";
 
 const Login = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -52,14 +53,14 @@ const Login = () => {
     }
   }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
-  // Show loading state with standardized spinner
+  // Show loading state with the new two-circle spinner component
   if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <ConsultationsLoading />
               <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
                 Please wait while we load your profile
