@@ -13,15 +13,6 @@ export const RoleDebugger = () => {
   const auth = useRecoilValue(authState);
   const hasLoggedRef = useRef(false);
   
-  // Log essential auth state on every render
-  console.log("Role Debugger render:", {
-    isAuthenticated, 
-    userRole,
-    profileId: auth.profile?.id,
-    profileRole: auth.profile?.role,
-    isLoading: auth.isLoading
-  });
-  
   useEffect(() => {
     // Always log on auth state changes to help with debugging
     if ((auth.profile || !auth.isLoading) && !hasLoggedRef.current) {
@@ -67,6 +58,15 @@ export const RoleDebugger = () => {
       console.log("=============================================");
     }
   }, [isAuthenticated, userRole, isPharmacist, profile, auth]);
+  
+  // Log auth state changes on each render to help troubleshoot
+  console.log("Role Debugger render:", {
+    isAuthenticated, 
+    userRole,
+    profileId: auth.profile?.id,
+    profileRole: auth.profile?.role,
+    isLoading: auth.isLoading
+  });
   
   // This component doesn't render anything visible
   return null;
