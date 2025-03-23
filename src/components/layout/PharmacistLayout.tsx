@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
-import EnhancedUserMenu from "@/components/user-menu/EnhancedUserMenu";
+import UserMenu from "@/components/UserMenu";
 import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Search, Menu, X, AlertTriangle } from "lucide-react";
@@ -210,7 +210,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
               />
             </div>
             <NotificationBell />
-            <EnhancedUserMenu />
+            <UserMenu />
           </div>
         </header>
 

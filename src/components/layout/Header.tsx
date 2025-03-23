@@ -1,5 +1,6 @@
 
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import UserMenu from '@/components/UserMenu';
 import { ArrowLeft, User } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -15,8 +16,6 @@ import CartButton from './navigation/CartButton';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import NotificationBell from '../NotificationBell';
-import EnhancedUserMenu from '../user-menu/EnhancedUserMenu';
-import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   showUserMenu?: boolean;
@@ -114,16 +113,15 @@ const Header = ({ showUserMenu = true, showBackLink = false, onBackClick }: Head
                 ) : isAuthenticated ? (
                   <>
                     <NotificationBell />
-                    <EnhancedUserMenu />
+                    <UserMenu />
                   </>
                 ) : (
-                  <Button
-                    variant="outline"
+                  <button
                     onClick={handleNavigateToLogin}
                     className="text-primary hover:text-primary/80 transition-colors"
                   >
                     Connection
-                  </Button>
+                  </button>
                 )}
                 <CartButton 
                   isOpen={isCartOpen}

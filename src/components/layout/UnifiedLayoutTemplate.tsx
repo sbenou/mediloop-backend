@@ -1,5 +1,5 @@
+
 import { ReactNode, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import UnifiedSidebar from "../sidebar/UnifiedSidebar";
 import NotificationBell from "../NotificationBell";
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
@@ -12,8 +12,6 @@ import { Advertisements } from "@/components/activity/Advertisements";
 import { mockActivities } from "@/components/activity/mockActivities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
-import EnhancedUserMenu from "../user-menu/EnhancedUserMenu";
-import { useAuth } from "@/hooks/auth/useAuth";
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -24,8 +22,6 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [activities, setActivities] = useState(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   
   const handleMarkRead = (id: string) => {
     setActivities(prevActivities => 
@@ -69,13 +65,11 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
           <div className="flex items-center space-x-4">
             <NotificationBell />
             <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
-            {isAuthenticated ? (
-              <EnhancedUserMenu />
-            ) : (
-              <Button variant="outline" onClick={() => navigate('/login')}>
-                Login
-              </Button>
-            )}
+            <div className="flex items-center space-x-2">
+              <button className="text-primary hover:text-primary/80 transition-colors">
+                Connection
+              </button>
+            </div>
           </div>
         </header>
         
