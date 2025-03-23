@@ -13,9 +13,18 @@ export const RoleDebugger = () => {
   const auth = useRecoilValue(authState);
   const hasLoggedRef = useRef(false);
   
+  // Log essential auth state on every render
+  console.log("Role Debugger render:", {
+    isAuthenticated, 
+    userRole,
+    profileId: auth.profile?.id,
+    profileRole: auth.profile?.role,
+    isLoading: auth.isLoading
+  });
+  
   useEffect(() => {
     // Always log on auth state changes to help with debugging
-    if (auth.profile || (!auth.isLoading && hasLoggedRef.current === false)) {
+    if ((auth.profile || !auth.isLoading) && !hasLoggedRef.current) {
       hasLoggedRef.current = true;
       
       console.log("============= ROLE DEBUGGER INFO =============");
@@ -35,13 +44,18 @@ export const RoleDebugger = () => {
       console.log("Direct doctor check:", auth.profile?.role === 'doctor');
       console.log("Current route:", window.location.pathname);
       
-      // Additional detailed auth state debugging
-      console.log("Auth state loading:", auth.isLoading);
-      console.log("Auth state has user:", !!auth.user);
-      console.log("Auth state has profile:", !!auth.profile);
-      console.log("Auth state user ID:", auth.user?.id);
-      console.log("Auth state profile ID:", auth.profile?.id);
-      console.log("Auth state profile role:", auth.profile?.role);
+      // Print the exact user and profile objects for debugging
+      console.log("Auth user object:", auth.user);
+      console.log("Auth profile object:", auth.profile);
+      
+      // Track auth state changes with timestamps
+      console.log("Auth state logged at:", new Date().toISOString());
+      console.log("Auth loading:", auth.isLoading);
+      console.log("User exists:", !!auth.user);
+      console.log("Profile exists:", !!auth.profile);
+      console.log("User ID:", auth.user?.id);
+      console.log("Profile ID:", auth.profile?.id);
+      console.log("Profile role:", auth.profile?.role);
       
       // Role equality checks with type information
       console.log("Role type:", typeof auth.profile?.role);

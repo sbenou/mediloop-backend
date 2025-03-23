@@ -4,55 +4,58 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useRef } from "react";
-import { Loader } from "lucide-react";
+import { useRecoilValue } from "recoil";
+import { authState } from "@/store/auth/atoms";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, user, profile, isPharmacist } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const auth = useRecoilValue(authState);
   const navigate = useNavigate();
   const redirectAttempted = useRef(false);
 
+  // Enhanced logging for debugging
+  console.log("Login page render:", {
+    isAuthenticated,
+    isLoading,
+    profileRole: auth.profile?.role,
+    userId: auth.user?.id,
+    redirectAttempted: redirectAttempted.current
+  });
+
   useEffect(() => {
-    const checkUserRole = async () => {
-      if (isAuthenticated && user && !redirectAttempted.current) {
-        redirectAttempted.current = true;
-        
-        if (!profile) {
-          console.error('No profile found, cannot redirect');
-          return;
-        }
-        
-        console.log('User role found:', profile.role, 'Is pharmacist:', isPharmacist);
-
-        // Special handling for pharmacists - directly go to the pharmacy page
-        if (profile.role === 'pharmacist' || isPharmacist) {
-          console.log('Already authenticated as pharmacist, redirecting to pharmacy dashboard');
-          navigate('/pharmacy', { replace: true });
-          return;
-        }
-        
-        // Special handling for doctors
-        if (profile.role === 'doctor') {
-          console.log('Already authenticated as doctor, redirecting to doctor dashboard');
-          navigate('/doctor', { replace: true });
-          return;
-        }
-        
-        // For all other users, redirect to the universal dashboard
-        navigate('/dashboard', { replace: true });
+    // Only redirect if authenticated, not loading, profile exists, and we haven't already redirected
+    if (isAuthenticated && !isLoading && auth.profile && !redirectAttempted.current) {
+      redirectAttempted.current = true;
+      
+      console.log('User authenticated with role:', auth.profile.role);
+      
+      // Direct role-based routing using profile.role directly
+      if (auth.profile.role === 'pharmacist') {
+        console.log('Redirecting pharmacist to pharmacy dashboard');
+        navigate('/pharmacy', { replace: true });
+        return;
       }
-    };
-    
-    checkUserRole();
-  }, [isAuthenticated, user, profile, navigate, isPharmacist]);
+      
+      if (auth.profile.role === 'doctor') {
+        console.log('Redirecting doctor to doctor dashboard');
+        navigate('/doctor', { replace: true });
+        return;
+      }
+      
+      // Default redirection for all other authenticated users
+      console.log('Redirecting to general dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, auth.profile, navigate]);
 
-  // Show loading state
+  // Show loading state with standardized spinner
   if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader className="h-8 w-8 animate-spin text-primary" />
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
               <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
                 Please wait while we load your profile
