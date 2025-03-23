@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -24,7 +23,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, userRole, isLoading } = useAuth();
   const auth = useRecoilValue(authState);
   const [visibleContent, setVisibleContent] = useState<'loading' | 'content' | 'initial'>('initial');
   
@@ -38,17 +37,17 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const section = searchParams.get("section") || initialParams?.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
   
-  // Enhanced logging for debugging purposes
+  // Enhanced logging
   console.log('DoctorDashboard render:', {
     isAuthenticated,
     isLoading,
+    userRole,
     profileLoaded: !!auth.profile,
     profileRole: auth.profile?.role,
-    isDoctor: auth.profile?.role === 'doctor',
-    visibleContent,
     authReady: authReady.current,
-    recoilUser: !!auth.user,
-    recoilProfile: !!auth.profile
+    redirectAttempted: redirectAttempted.current,
+    contentShown: firstContentShown.current,
+    visibleContent
   });
   
   // Define getContent function
@@ -56,9 +55,9 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     // For the doctor dashboard, show content based on the section
     switch (section) {
       case "profile":
-        return <ProfileView activeTab={profileTab} userRole="doctor" />;
+        return <ProfileView activeTab={profileTab} userRole={userRole} />;
       case "settings":
-        return <SettingsView userRole="doctor" />;
+        return <SettingsView userRole={userRole} />;
       case "prescriptions":
         return <DoctorPrescriptionsView />;
       case "patients":
@@ -67,25 +66,22 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         return <DoctorTeleconsultationsView />;
       case "dashboard":
       default:
-        return <HomeView userRole="doctor" />;
+        return <HomeView userRole={userRole} />;
     }
   };
   
-  // Mark authentication as ready once auth state is definitive (with profile)
+  // Mark authentication as ready when profile data is loaded or we have definitive auth state
   useEffect(() => {
-    if (!authReady.current && !isLoading) {
-      if (isAuthenticated && auth.profile) {
-        // Auth is ready with profile - this is the definitive state we need
-        console.log("Auth is ready with profile:", { 
-          isAuthenticated, 
-          role: auth.profile.role 
-        });
-        authReady.current = true;
-      } else if (!isAuthenticated && !auth.user) {
-        // Auth is definitely not authenticated
-        console.log("Auth is ready - user is not authenticated");
-        authReady.current = true;
-      }
+    const profileExists = !!auth.profile;
+    const definiteAuthState = !isLoading && (isAuthenticated || (!isAuthenticated && !auth.user));
+    
+    if (!authReady.current && definiteAuthState) {
+      console.log("Auth state is ready:", { 
+        isAuthenticated, 
+        profileLoaded: profileExists,
+        profileRole: auth.profile?.role
+      });
+      authReady.current = true;
     }
   }, [isLoading, isAuthenticated, auth.profile, auth.user]);
   
@@ -109,8 +105,16 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   }, [authReady.current, setSearchParams, currentView, section, isAuthenticated, auth.profile]);
   
-  // Show content or redirect based on auth state
+  // Set content visibility once auth state is ready
   useEffect(() => {
+    // If content is already shown, keep showing it
+    if (firstContentShown.current) {
+      if (visibleContent !== 'content') {
+        setVisibleContent('content');
+      }
+      return;
+    }
+    
     // Only proceed if auth state is ready
     if (!authReady.current) {
       if (visibleContent !== 'loading' && !isLoading) {
@@ -119,8 +123,25 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       return;
     }
 
-    // If we've already shown content or attempted redirect, don't do it again
-    if (firstContentShown.current || redirectAttempted.current) {
+    // Show content if authenticated as a doctor
+    if (authReady.current && isAuthenticated && auth.profile &&
+        auth.profile.role === 'doctor') {
+      console.log('Showing doctor dashboard content - user is a doctor');
+      firstContentShown.current = true;
+      setVisibleContent('content');
+    }
+    // Show loading while waiting for auth state
+    else if (visibleContent === 'initial' && !isLoading) {
+      setVisibleContent('loading');
+    }
+  }, [
+    isLoading, isAuthenticated, visibleContent, auth.profile
+  ]);
+  
+  // Handle redirects when auth state is ready
+  useEffect(() => {
+    // Only process redirects if auth state is ready and we haven't shown content or attempted redirect
+    if (!authReady.current || firstContentShown.current || redirectAttempted.current) {
       return;
     }
 
@@ -131,7 +152,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       toast({
         variant: "destructive",
         title: "Authentication required",
-        description: "Please login to access the doctor dashboard.",
+        description: "Please login to access the dashboard.",
       });
       navigate("/login");
       return;
@@ -148,17 +169,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       navigate("/dashboard");
       return;
     }
-
-    // If we reach here and auth is ready with a doctor role, show content
-    if (isAuthenticated && auth.profile?.role === 'doctor') {
-      console.log('Showing doctor dashboard content - user is a doctor');
-      firstContentShown.current = true;
-      setVisibleContent('content');
-    }
-  }, [
-    isAuthenticated, navigate, auth.profile, authReady.current, isLoading, 
-    redirectAttempted.current, firstContentShown.current, visibleContent
-  ]);
+  }, [isAuthenticated, navigate, auth.profile, authReady.current]);
   
   // If content is designated to be visible, show the dashboard
   if (visibleContent === 'content') {

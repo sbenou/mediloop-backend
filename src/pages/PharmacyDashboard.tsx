@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -24,39 +23,44 @@ const PharmacyDashboard = () => {
   // Get the section parameter or default to dashboard
   const section = searchParams.get("section") || "dashboard";
   
-  // Enhanced logging for debugging purposes
+  // Enhanced logging
   console.log('PharmacyDashboard render:', {
     isAuthenticated,
     isLoading,
     profileLoaded: !!auth.profile,
     profileRole: auth.profile?.role,
     isPharmacist: auth.profile?.role === 'pharmacist',
-    visibleContent,
     authReady: authReady.current,
-    recoilUser: !!auth.user,
-    recoilProfile: !!auth.profile
+    redirectAttempted: redirectAttempted.current,
+    contentShown: firstContentShown.current,
+    visibleContent
   });
   
-  // Mark authentication as ready once auth state is definitive (with profile)
+  // Mark authentication as ready when profile data is loaded or we have definitive auth state
   useEffect(() => {
-    if (!authReady.current && !isLoading) {
-      if (isAuthenticated && auth.profile) {
-        // Auth is ready with profile - this is the definitive state we need
-        console.log("Auth is ready with profile:", { 
-          isAuthenticated, 
-          role: auth.profile.role 
-        });
-        authReady.current = true;
-      } else if (!isAuthenticated && !auth.user) {
-        // Auth is definitely not authenticated
-        console.log("Auth is ready - user is not authenticated");
-        authReady.current = true;
-      }
+    const profileExists = !!auth.profile;
+    const definiteAuthState = !isLoading && (isAuthenticated || (!isAuthenticated && !auth.user));
+    
+    if (!authReady.current && definiteAuthState) {
+      console.log("Auth state is ready:", { 
+        isAuthenticated, 
+        profileLoaded: profileExists,
+        profileRole: auth.profile?.role
+      });
+      authReady.current = true;
     }
   }, [isLoading, isAuthenticated, auth.profile, auth.user]);
   
-  // Show content or redirect based on auth state
+  // Set content visibility once auth state is ready
   useEffect(() => {
+    // If content is already shown, keep showing it
+    if (firstContentShown.current) {
+      if (visibleContent !== 'content') {
+        setVisibleContent('content');
+      }
+      return;
+    }
+    
     // Only proceed if auth state is ready
     if (!authReady.current) {
       if (visibleContent !== 'loading' && !isLoading) {
@@ -65,8 +69,25 @@ const PharmacyDashboard = () => {
       return;
     }
 
-    // If we've already shown content or attempted redirect, don't do it again
-    if (firstContentShown.current || redirectAttempted.current) {
+    // Show content if authenticated as a pharmacist
+    if (authReady.current && isAuthenticated && auth.profile &&
+        auth.profile.role === 'pharmacist') {
+      console.log('Showing pharmacy dashboard content - user is a pharmacist');
+      firstContentShown.current = true;
+      setVisibleContent('content');
+    }
+    // Show loading while waiting for auth state
+    else if (visibleContent === 'initial' && !isLoading) {
+      setVisibleContent('loading');
+    }
+  }, [
+    isLoading, isAuthenticated, visibleContent, auth.profile
+  ]);
+  
+  // Handle redirects when auth state is ready
+  useEffect(() => {
+    // Only process redirects if auth state is ready and we haven't shown content or attempted redirect
+    if (!authReady.current || firstContentShown.current || redirectAttempted.current) {
       return;
     }
 
@@ -94,17 +115,7 @@ const PharmacyDashboard = () => {
       navigate("/dashboard");
       return;
     }
-
-    // If we reach here and auth is ready with a pharmacist role, show content
-    if (isAuthenticated && auth.profile?.role === 'pharmacist') {
-      console.log('Showing pharmacy dashboard content - user is a pharmacist');
-      firstContentShown.current = true;
-      setVisibleContent('content');
-    }
-  }, [
-    isAuthenticated, navigate, auth.profile, authReady.current, isLoading, 
-    redirectAttempted.current, firstContentShown.current, visibleContent
-  ]);
+  }, [isAuthenticated, navigate, auth.profile, authReady.current]);
 
   // If content is designated to be visible, show the dashboard
   if (visibleContent === 'content') {
