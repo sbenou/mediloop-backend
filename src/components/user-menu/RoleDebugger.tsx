@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useRef } from "react";
-import { useRecoilValue } from "recoil";
+import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
 
 /**
@@ -10,59 +10,47 @@ import { authState } from "@/store/auth/atoms";
  */
 export const RoleDebugger = () => {
   const { userRole, isPharmacist, isAuthenticated, profile } = useAuth();
-  const auth = useRecoilValue(authState);
+  const [auth] = useRecoilState(authState);
   const hasLoggedRef = useRef(false);
   
-  // Log essential auth state on every render
-  console.log("Role Debugger render:", {
-    isAuthenticated, 
-    userRole,
-    profileId: auth.profile?.id,
-    profileRole: auth.profile?.role,
-    isLoading: auth.isLoading
-  });
-  
   useEffect(() => {
-    // Always log on auth state changes to help with debugging
-    if ((auth.profile || !auth.isLoading) && !hasLoggedRef.current) {
+    // Only log once after auth is loaded
+    if (!hasLoggedRef.current && auth.profile) {
       hasLoggedRef.current = true;
       
       console.log("============= ROLE DEBUGGER INFO =============");
       console.log("Is authenticated:", isAuthenticated);
-      console.log("Is loading:", auth.isLoading);
       console.log("User role from hook:", userRole);
       console.log("Is pharmacist from hook:", isPharmacist);
       console.log("Profile data from hook:", profile);
-      console.log("Auth state from recoil:", {
-        user: auth.user ? "exists" : "null",
-        profile: auth.profile ? "exists" : "null",
-        isLoading: auth.isLoading,
-        permissions: auth.permissions.length
-      });
+      console.log("Auth state from recoil:", auth);
       console.log("Raw profile role:", auth.profile?.role);
       console.log("Direct pharmacist check:", auth.profile?.role === 'pharmacist');
-      console.log("Direct doctor check:", auth.profile?.role === 'doctor');
-      console.log("Current route:", window.location.pathname);
+      console.log("Is on pharmacy route:", window.location.pathname.includes('/pharmacy'));
       
-      // Print the exact user and profile objects for debugging
-      console.log("Auth user object:", auth.user);
-      console.log("Auth profile object:", auth.profile);
+      // Simulation of UserMenuItems logic
+      const shouldShowPharmacyLink = auth.profile?.role === 'pharmacist' || isPharmacist;
+      console.log("Should show Pharmacy Profile link:", shouldShowPharmacyLink);
       
-      // Track auth state changes with timestamps
-      console.log("Auth state logged at:", new Date().toISOString());
-      console.log("Auth loading:", auth.isLoading);
-      console.log("User exists:", !!auth.user);
-      console.log("Profile exists:", !!auth.profile);
-      console.log("User ID:", auth.user?.id);
-      console.log("Profile ID:", auth.profile?.id);
-      console.log("Profile role:", auth.profile?.role);
-      
-      // Role equality checks with type information
+      // Check if the role is actually a string
       console.log("Role type:", typeof auth.profile?.role);
-      console.log("Role strict equality check (pharmacist):", auth.profile?.role === 'pharmacist');
-      console.log("Role strict equality check (doctor):", auth.profile?.role === 'doctor');
-      console.log("Role toLowerCase check (pharmacist):", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'pharmacist' : false);
-      console.log("Role toLowerCase check (doctor):", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'doctor' : false);
+      console.log("Role strict equality check:", auth.profile?.role === 'pharmacist');
+      console.log("Role loose equality check:", auth.profile?.role == 'pharmacist');
+      console.log("Role toLowerCase check:", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'pharmacist' : false);
+      
+      // Force navigation attempt if user is a pharmacist but link isn't showing
+      if (shouldShowPharmacyLink) {
+        console.log("Pharmacist detected - Pharmacy Profile link SHOULD be visible");
+        try {
+          setTimeout(() => {
+            const pharmacyLinkEl = document.querySelector('.pharmacy-profile-link');
+            console.log("Pharmacy link element found after delay:", !!pharmacyLinkEl);
+            console.log("Full dropdown menu items:", document.querySelectorAll('[class*="dropdown-menu"]').length);
+          }, 2000); // Check after a delay to allow rendering
+        } catch (e) {
+          console.error("Error checking for pharmacy link:", e);
+        }
+      }
       
       console.log("=============================================");
     }

@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   ProfileView, 
@@ -11,52 +11,97 @@ import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatient
 import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorPrescriptionsView";
 import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/DoctorTeleconsultationsView";
 import DoctorLayout from "@/components/layout/DoctorLayout";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
-import { useRecoilValue } from "recoil";
-import { authState } from "@/store/auth/atoms";
-import { RoleDebugger } from "@/components/user-menu/RoleDebugger";
 
 interface DoctorDashboardProps {
   initialParams?: URLSearchParams;
 }
 
-const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
-  const [searchParamsFromUrl] = useSearchParams();
+const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
-  const auth = useRecoilValue(authState);
-  const [showContent, setShowContent] = useState(false);
+  const { isAuthenticated, userRole, isLoading, profile } = useAuth();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  // Use initialParams if provided, otherwise use URL params
-  const searchParams = initialParams || searchParamsFromUrl;
+  // Get parameters from URL or use initialParams if provided
+  const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
+  const section = searchParams.get("section") || initialParams?.get("section") || "dashboard";
+  const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
   
-  // Tracking refs to prevent duplicate actions
-  const redirectAttempted = useRef(false);
-  const contentShown = useRef(false);
+  // Set URL params on initial load if initialParams was provided
+  useEffect(() => {
+    if (initialParams && isInitialLoad && !isLoading) {
+      console.log("Setting initial params from props:", Object.fromEntries(initialParams.entries()));
+      setSearchParams(initialParams);
+    }
+  }, [initialParams, isInitialLoad, isLoading, setSearchParams]);
   
-  // Get parameters from URL
-  const section = searchParams.get("section") || "dashboard";
-  const profileTab = searchParams.get("profileTab") || "personal";
+  // Console logging for debugging
+  useEffect(() => {
+    console.log("DoctorDashboard render:", { 
+      userRole, 
+      currentView, 
+      section,
+      profileTab,
+      searchParams: Object.fromEntries(searchParams.entries()),
+      location: location.pathname + location.search,
+      hasInitialParams: !!initialParams
+    });
+  }, [userRole, currentView, section, profileTab, searchParams, location, initialParams]);
   
-  // Enhanced logging for debugging purposes
-  console.log('DoctorDashboard render:', {
-    isAuthenticated,
-    isLoading,
-    profileRole: auth.profile?.role,
-    isDoctor: auth.profile?.role === 'doctor',
-    showContent,
-    contentShownRef: contentShown.current,
-    redirectRef: redirectAttempted.current
-  });
+  // Make sure we have a default section for doctors
+  useEffect(() => {
+    if (userRole === "doctor" && !isInitialLoad && isAuthenticated) {
+      console.log("Checking doctor params:", { currentView, section });
+      
+      if (currentView !== 'doctor' || !section) {
+        console.log("Setting default doctor params");
+        setSearchParams({ view: 'doctor', section: 'dashboard' }, { replace: true });
+      }
+    }
+  }, [userRole, setSearchParams, currentView, section, isInitialLoad, isAuthenticated]);
   
-  // Define getContent function
+  // Track initial load to avoid flashing loading state during navigation
+  useEffect(() => {
+    if (!isLoading) {
+      setIsInitialLoad(false);
+    }
+  }, [isLoading]);
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    // Only redirect if we're sure the user is not authenticated (after initial load)
+    if (!isInitialLoad && !isAuthenticated) {
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "Please login to access the dashboard.",
+      });
+      navigate("/login");
+    }
+  }, [isAuthenticated, isInitialLoad, navigate]);
+  
+  // Redirect to regular dashboard if not a doctor
+  useEffect(() => {
+    if (!isInitialLoad && isAuthenticated && userRole !== "doctor") {
+      toast({
+        title: "Access restricted",
+        description: "Only doctors can access this dashboard.",
+      });
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, isInitialLoad, navigate, userRole]);
+  
   const getContent = () => {
     // For the doctor dashboard, show content based on the section
     switch (section) {
       case "profile":
-        return <ProfileView activeTab={profileTab} userRole="doctor" />;
+        return <ProfileView activeTab={profileTab} userRole={userRole} />;
       case "settings":
-        return <SettingsView userRole="doctor" />;
+        return <SettingsView userRole={userRole} />;
       case "prescriptions":
         return <DoctorPrescriptionsView />;
       case "patients":
@@ -65,69 +110,37 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps) => {
         return <DoctorTeleconsultationsView />;
       case "dashboard":
       default:
-        return <HomeView userRole="doctor" />;
+        return <HomeView userRole={userRole} />;
     }
   };
   
-  // Handle showing content or redirect based on auth state
-  useEffect(() => {
-    // Only take action when auth is ready (not loading)
-    if (!isLoading) {
-      // Handle not authenticated case
-      if (!isAuthenticated && !redirectAttempted.current) {
-        console.log('Not authenticated, redirecting to login');
-        redirectAttempted.current = true;
-        toast({
-          variant: "destructive",
-          title: "Authentication required",
-          description: "Please login to access the doctor dashboard.",
-        });
-        navigate("/login");
-        return;
-      }
-      
-      // Handle wrong role case
-      if (isAuthenticated && auth.profile && auth.profile.role !== 'doctor' && !redirectAttempted.current) {
-        console.log('Not a doctor, redirecting to dashboard');
-        redirectAttempted.current = true;
-        toast({
-          title: "Access restricted",
-          description: "Only doctors can access this dashboard.",
-        });
-        navigate("/dashboard");
-        return;
-      }
-      
-      // Show content if authenticated with doctor role
-      if (isAuthenticated && auth.profile?.role === 'doctor' && !contentShown.current) {
-        console.log('Showing doctor content - user is a doctor');
-        contentShown.current = true;
-        setShowContent(true);
-      }
-    }
-  }, [isAuthenticated, isLoading, auth.profile, navigate]);
-  
-  // If content should be visible, show the dashboard
-  if (showContent) {
+  // Show loading skeleton only on initial load, not during navigation
+  if (isInitialLoad && isLoading) {
     return (
       <DoctorLayout>
-        <RoleDebugger />
         <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-          {getContent()}
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-64 w-full" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          </div>
         </div>
       </DoctorLayout>
     );
   }
   
-  // Show standardized loading state
   return (
-    <div className="flex h-screen items-center justify-center">
-      <RoleDebugger />
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <p className="text-muted-foreground">Loading dashboard...</p>
+    <DoctorLayout>
+      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+        <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+          {getContent()}
+        </ScrollArea>
       </div>
-    </div>
+    </DoctorLayout>
   );
 };
 

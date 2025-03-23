@@ -1,5 +1,7 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
 import DoctorSidebar from "@/components/sidebar/DoctorSidebar";
 import EnhancedUserMenu from "@/components/user-menu/EnhancedUserMenu";
 import NotificationBell from "@/components/NotificationBell";
@@ -7,16 +9,44 @@ import { Button } from "@/components/ui/button";
 import { Search, Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DoctorLayoutProps {
   children: React.ReactNode;
 }
 
 const DoctorLayout = ({ children }: DoctorLayoutProps) => {
+  const { isAuthenticated, isLoading, profile } = useAuth();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const redirectAttempted = useRef(false);
 
   useEffect(() => {
+    // Only perform the check when loading is complete
+    if (!isLoading) {
+      console.log("DoctorLayout: Auth check - isAuthenticated:", isAuthenticated, "profile:", profile);
+      
+      // Check if user is authenticated
+      if (!isAuthenticated) {
+        if (!redirectAttempted.current) {
+          console.log("DoctorLayout: User not authenticated, redirecting to login");
+          redirectAttempted.current = true;
+          navigate("/login", { replace: true });
+        }
+        return;
+      }
+
+      // Check if user has the doctor role, but only if profile exists
+      if (isAuthenticated && profile && profile.role !== "doctor") {
+        if (!redirectAttempted.current) {
+          console.log("DoctorLayout: User is not a doctor, redirecting to dashboard");
+          redirectAttempted.current = true;
+          navigate("/dashboard", { replace: true });
+        }
+      }
+    }
+
     // Handle window resize for mobile detection
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -24,7 +54,25 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [isAuthenticated, isLoading, navigate, profile]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // If not authenticated or not a doctor, don't render anything until redirect happens
+  if (!isAuthenticated || (profile && profile.role !== "doctor")) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Checking permissions...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -67,8 +115,10 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1">
-          {children}
+        <main className="flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll">
+          <ScrollArea className="h-full w-full">
+            {children}
+          </ScrollArea>
         </main>
       </div>
     </div>
