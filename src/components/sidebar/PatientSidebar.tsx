@@ -40,13 +40,14 @@ const PatientSidebar = () => {
     view === "profile" || false
   );
   
-  // Direct navigation with searchParams
-  const navigateToPatientView = (section: string, tab?: string, tabParam?: string) => {
-    console.log(`Navigating to patient view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
+  // Direct navigation with correct parameters for patient views
+  const navigateToPatientView = (viewName: string, tab?: string, tabParam?: string) => {
+    console.log(`Navigating to patient view: ${viewName}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
+    
     if (tab && tabParam) {
-      navigate(`/dashboard?view=${section}&${tabParam}=${tab}`);
+      navigate(`/dashboard?view=${viewName}&${tabParam}=${tab}`);
     } else {
-      navigate(`/dashboard?view=${section}`);
+      navigate(`/dashboard?view=${viewName}`);
     }
   };
 
@@ -60,7 +61,7 @@ const PatientSidebar = () => {
             icon={<Home className="w-5 h-5 mr-3" />}
             label="Dashboard"
             isActive={view === "home" || !view}
-            onClick={() => navigate("/dashboard?view=home")}
+            onClick={() => navigateToPatientView("home")}
           />
           
           <SidebarCollapsibleItem 

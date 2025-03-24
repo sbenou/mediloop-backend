@@ -35,9 +35,10 @@ const PharmacistSidebar = () => {
     handleFileChange
   } = useSidebarUserProfile(profile);
 
-  // Navigate specifically for pharmacy views with improved logging
+  // Navigate specifically for pharmacy views with improved URL parameters
   const navigateToPharmacyView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
+    
     if (tab && tabParam) {
       navigate(`/dashboard?view=pharmacy&section=${section}&${tabParam}=${tab}`);
     } else {

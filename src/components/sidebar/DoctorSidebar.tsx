@@ -35,9 +35,10 @@ const DoctorSidebar = () => {
     handleFileChange
   } = useSidebarUserProfile(profile);
 
-  // Navigate specifically for doctor views with improved logging
+  // Navigate specifically for doctor views with fixed URL parameters
   const navigateToDoctorView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to doctor view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
+    
     if (tab && tabParam) {
       navigate(`/dashboard?view=doctor&section=${section}&${tabParam}=${tab}`);
     } else {
@@ -45,7 +46,7 @@ const DoctorSidebar = () => {
     }
   };
 
-  // Navigate to doctor profile
+  // Navigate to doctor profile page
   const navigateToDoctorProfile = () => {
     console.log('Navigating to doctor profile from DoctorSidebar');
     navigate('/doctor/profile');

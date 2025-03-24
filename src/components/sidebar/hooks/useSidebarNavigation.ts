@@ -75,7 +75,7 @@ export const useSidebarNavigation = (userRole: string) => {
     return location.pathname === path;
   };
 
-  // Navigate to a link with special handling for pharmacist role
+  // Navigate to a link with special handling for different roles
   const navigateToLink = (path: string) => {
     console.log(`navigateToLink called with path: ${path}, userRole: ${userRole}`);
     
@@ -113,6 +113,18 @@ export const useSidebarNavigation = (userRole: string) => {
       } else if (path.includes('view=patients') || path === '/dashboard?view=patients') {
         console.log('Navigating to pharmacy patients');
         navigate('/dashboard?view=pharmacy&section=patients');
+        return;
+      }
+    } else if (userRole === 'doctor') {
+      // Transform regular paths to doctor view structure for doctors
+      if (path === '/dashboard') {
+        console.log('Navigating to doctor dashboard');
+        navigate('/dashboard?view=doctor&section=dashboard');
+        return;
+      } else if (path.includes('view=profile')) {
+        console.log('Navigating to doctor profile');
+        const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
+        navigate(`/dashboard?view=doctor&section=profile&profileTab=${profileTab}`);
         return;
       }
     }
