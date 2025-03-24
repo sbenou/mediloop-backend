@@ -8,3 +8,10 @@ export interface RoleWithPermissions extends Omit<SupabaseRole, 'created_at' | '
 }
 
 export type Role = SupabaseRole;
+
+export enum UserRole {
+  Patient = "patient",
+  Doctor = "doctor",
+  Pharmacist = "pharmacist",
+  Superadmin = "superadmin",
+}

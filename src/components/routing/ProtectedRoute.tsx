@@ -4,13 +4,19 @@ import { Navigate } from "react-router-dom";
 import { ReactNode } from "react";
 import { Loader } from "lucide-react";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import UnauthorizedPage from "@/pages/UnauthorizedPage";
 
 interface ProtectedRouteProps {
   allowedRoles: string[]; // e.g. ["doctor", "pharmacist"]
   children: ReactNode;
+  showUnauthorizedPage?: boolean;
 }
 
-const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ 
+  allowedRoles, 
+  children, 
+  showUnauthorizedPage = false 
+}: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, profile } = useAuth();
 
   // Show loading state while we're determining authentication
@@ -30,11 +36,16 @@ const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Redirect to appropriate dashboard if not authorized for this route
+  // Check if user is authorized for this route
   if (!profile || !allowedRoles.includes(profile.role)) {
-    const fallback = getDashboardRouteByRole(profile?.role);
-    console.log(`User with role ${profile?.role} not authorized. Redirecting to ${fallback}`);
-    return <Navigate to={fallback} replace />;
+    // Either show unauthorized page or redirect to appropriate dashboard
+    if (showUnauthorizedPage) {
+      return <UnauthorizedPage />;
+    } else {
+      const fallback = getDashboardRouteByRole(profile?.role);
+      console.log(`User with role ${profile?.role} not authorized. Redirecting to ${fallback}`);
+      return <Navigate to={fallback} replace />;
+    }
   }
 
   // User is authenticated and authorized

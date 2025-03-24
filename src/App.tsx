@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -20,6 +21,8 @@ import Teleconsultations from './pages/Teleconsultations';
 import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
 import Products from './pages/Products';
+import UnauthorizedPage from './pages/UnauthorizedPage';
+import { UserRole } from './types/role';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -75,6 +78,7 @@ function App() {
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
                   <Route path="/products" element={<Products />} />
+                  <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
                   {/* Dashboard router - handles redirects to appropriate dashboard */}
                   <Route path="/dashboard" element={<Dashboard />} />
@@ -83,7 +87,7 @@ function App() {
                   <Route
                     path="/doctor/*"
                     element={
-                      <ProtectedRoute allowedRoles={["doctor"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Doctor]}>
                         <DoctorDashboard />
                       </ProtectedRoute>
                     }
@@ -92,7 +96,7 @@ function App() {
                   <Route
                     path="/doctor/profile"
                     element={
-                      <ProtectedRoute allowedRoles={["doctor"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Doctor]}>
                         <DoctorProfilePage />
                       </ProtectedRoute>
                     }
@@ -101,7 +105,7 @@ function App() {
                   <Route
                     path="/pharmacy/*"
                     element={
-                      <ProtectedRoute allowedRoles={["pharmacist"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
                         <PlaceholderPage title="Pharmacy Dashboard" />
                       </ProtectedRoute>
                     }
@@ -110,7 +114,7 @@ function App() {
                   <Route
                     path="/pharmacy/profile"
                     element={
-                      <ProtectedRoute allowedRoles={["pharmacist"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
                         <PharmacyProfile />
                       </ProtectedRoute>
                     }
@@ -119,7 +123,7 @@ function App() {
                   <Route
                     path="/superadmin/*"
                     element={
-                      <ProtectedRoute allowedRoles={["superadmin"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Superadmin]}>
                         <SuperAdminDashboard />
                       </ProtectedRoute>
                     }
@@ -128,7 +132,7 @@ function App() {
                   <Route
                     path="/patient-dashboard"
                     element={
-                      <ProtectedRoute allowedRoles={["patient"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Patient]}>
                         <PatientDashboard />
                       </ProtectedRoute>
                     }
@@ -138,7 +142,7 @@ function App() {
                   <Route
                     path="/admin-settings"
                     element={
-                      <ProtectedRoute allowedRoles={["superadmin", "admin"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Superadmin, "admin"]}>
                         <AdminSettings />
                       </ProtectedRoute>
                     }
@@ -147,7 +151,7 @@ function App() {
                   <Route
                     path="/create-prescription"
                     element={
-                      <ProtectedRoute allowedRoles={["doctor", "pharmacist"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Doctor, UserRole.Pharmacist]}>
                         <CreatePrescription />
                       </ProtectedRoute>
                     }
@@ -156,7 +160,7 @@ function App() {
                   <Route
                     path="/my-prescriptions"
                     element={
-                      <ProtectedRoute allowedRoles={["patient", "doctor", "pharmacist"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Patient, UserRole.Doctor, UserRole.Pharmacist]}>
                         <MyPrescriptions />
                       </ProtectedRoute>
                     }
@@ -165,7 +169,7 @@ function App() {
                   <Route
                     path="/teleconsultations"
                     element={
-                      <ProtectedRoute allowedRoles={["patient", "doctor"]}>
+                      <ProtectedRoute allowedRoles={[UserRole.Patient, UserRole.Doctor]}>
                         <Teleconsultations />
                       </ProtectedRoute>
                     }
