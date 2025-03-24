@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -7,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { AuthProvider } from '@/providers/AuthProvider';
+import ProtectedRoute from './components/routing/ProtectedRoute';
 import Index from './pages/Index';
 import Home from './pages/Home';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
@@ -44,6 +44,7 @@ const EditPrescription = () => <PlaceholderPage title="Edit Prescription" />;
 const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
 const PharmacyProfile = () => <PlaceholderPage title="Pharmacy Profile" />;
+const PatientDashboard = () => <PlaceholderPage title="Patient Dashboard" />;
 
 // Custom DoctorProfile component that renders DoctorDashboard with profile params
 const DoctorProfile = () => {
@@ -67,29 +68,119 @@ function App() {
             <CartProvider>
               <Router>
                 <Routes>
+                  {/* Public routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/home" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/superadmin/*" element={<SuperAdminDashboard />} />
-                  <Route path="/search-pharmacy" element={<SearchPharmacy />} />
-                  <Route path="/prescription" element={<Prescription />} />
-                  <Route path="/create-prescription" element={<CreatePrescription />} />
-                  <Route path="/edit-prescription/:id" element={<EditPrescription />} />
-                  <Route path="/prescriptions/:id" element={<Prescription />} />
-                  <Route path="/my-prescriptions" element={<MyPrescriptions />} />
-                  <Route path="/my-prescriptions/:id" element={<Prescription />} />
-                  <Route path="/teleconsultations" element={<Teleconsultations />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/admin-settings" element={<AdminSettings />} />
-                  <Route path="/pharmacy/profile" element={<PharmacyProfile />} />
-                  <Route path="/doctor/profile" element={<DoctorProfilePage />} />
-                  <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
                   <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
                   <Route path="/products" element={<Products />} />
+
+                  {/* Dashboard router - handles redirects to appropriate dashboard */}
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  
+                  {/* Role-specific protected routes */}
+                  <Route
+                    path="/doctor/*"
+                    element={
+                      <ProtectedRoute allowedRoles={["doctor"]}>
+                        <DoctorDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  <Route
+                    path="/doctor/profile"
+                    element={
+                      <ProtectedRoute allowedRoles={["doctor"]}>
+                        <DoctorProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  <Route
+                    path="/pharmacy/*"
+                    element={
+                      <ProtectedRoute allowedRoles={["pharmacist"]}>
+                        <PlaceholderPage title="Pharmacy Dashboard" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  <Route
+                    path="/pharmacy/profile"
+                    element={
+                      <ProtectedRoute allowedRoles={["pharmacist"]}>
+                        <PharmacyProfile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  <Route
+                    path="/superadmin/*"
+                    element={
+                      <ProtectedRoute allowedRoles={["superadmin"]}>
+                        <SuperAdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  <Route
+                    path="/patient-dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={["patient"]}>
+                        <PatientDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Protected routes available to specific roles */}
+                  <Route
+                    path="/admin-settings"
+                    element={
+                      <ProtectedRoute allowedRoles={["superadmin", "admin"]}>
+                        <AdminSettings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  <Route
+                    path="/create-prescription"
+                    element={
+                      <ProtectedRoute allowedRoles={["doctor", "pharmacist"]}>
+                        <CreatePrescription />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  <Route
+                    path="/my-prescriptions"
+                    element={
+                      <ProtectedRoute allowedRoles={["patient", "doctor", "pharmacist"]}>
+                        <MyPrescriptions />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  <Route
+                    path="/teleconsultations"
+                    element={
+                      <ProtectedRoute allowedRoles={["patient", "doctor"]}>
+                        <Teleconsultations />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  {/* Other routes that should maintain their existing logic */}
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/search-pharmacy" element={<SearchPharmacy />} />
+                  <Route path="/prescription" element={<Prescription />} />
+                  <Route path="/edit-prescription/:id" element={<EditPrescription />} />
+                  <Route path="/prescriptions/:id" element={<Prescription />} />
+                  <Route path="/my-prescriptions/:id" element={<Prescription />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
                 </Routes>
                 <Toaster />
               </Router>

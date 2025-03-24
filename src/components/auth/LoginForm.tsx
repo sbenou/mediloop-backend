@@ -9,6 +9,7 @@ import { PasswordFields } from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -64,13 +65,10 @@ export const LoginForm = () => {
           return;
         }
         
-        if (profile?.role === 'superadmin') {
-          navigate('/superadmin/dashboard', { replace: true });
-        } else if (profile?.role === 'pharmacist') {
-          navigate('/pharmacy/dashboard', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
+        // Use the new utility to get the appropriate dashboard route
+        const route = getDashboardRouteByRole(profile?.role);
+        console.log(`Redirecting user with role ${profile?.role} to ${route}`);
+        navigate(route, { replace: true });
       } catch (err) {
         console.error('Error during role check:', err);
         navigate('/dashboard'); // Fallback redirect

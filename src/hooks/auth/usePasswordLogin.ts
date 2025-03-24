@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, clearAllAuthStorage } from "@/lib/supabase";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { useNavigate } from 'react-router-dom';
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 interface UsePasswordLoginProps {
   email: string;
@@ -131,6 +133,10 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
                 permissions: [],
                 isLoading: false,
               });
+              
+              // Get the correct route based on the profile role
+              const route = getDashboardRouteByRole(newProfile.role);
+              navigate(route, { replace: true });
             } catch (createError) {
               console.error('Error in profile creation flow:', createError);
               throw new Error('Failed to create user profile');
@@ -147,6 +153,11 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
             isLoading: false,
           });
           console.log('Successfully updated auth state with existing profile');
+          
+          // Get the correct route based on the profile role
+          const route = getDashboardRouteByRole(profile.role);
+          console.log(`Redirecting to ${route} based on role ${profile.role}`);
+          navigate(route, { replace: true });
         }
       } catch (profileError) {
         console.error('Profile handling error:', profileError);
@@ -162,9 +173,6 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
       // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
-      } else {
-        // Otherwise, directly redirect to dashboard
-        navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
       console.error('Login failed:', error);
