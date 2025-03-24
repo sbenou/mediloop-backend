@@ -45,9 +45,6 @@ const SidebarUserMenu = ({
   navigateToDoctorProfile,
   handleFileChange
 }: SidebarUserMenuProps) => {
-  // State to track if the pharmacy link has been rendered
-  const [hasRenderedPharmacyLink, setHasRenderedPharmacyLink] = useState(false);
-  
   // Get relevant image URLs from Recoil state
   const userAvatar = useRecoilValue(userAvatarState);
   const doctorStampUrl = useRecoilValue(doctorStampUrlState);
@@ -79,30 +76,7 @@ const SidebarUserMenu = ({
     console.log("SidebarUserMenu: userRole =", userRole, "navigateToPharmacyProfile =", !!navigateToPharmacyProfile);
     console.log("SidebarUserMenu: Is pharmacist check =", userRole === 'pharmacist');
     console.log("SidebarUserMenu: Navigation function type =", typeof navigateToPharmacyProfile);
-
-    const shouldShowPharmacyLink = userRole === 'pharmacist' && typeof navigateToPharmacyProfile === 'function';
-    
-    console.log("SidebarUserMenu mounted with:", {
-      userRole,
-      hasPharmacyProfileFn: !!navigateToPharmacyProfile,
-      shouldShowPharmacyLink
-    });
-
-    // Force create and click the pharmacy link if it's not showing up
-    if (userRole === 'pharmacist' && !!navigateToPharmacyProfile && !hasRenderedPharmacyLink) {
-      setTimeout(() => {
-        const pharmacyLinks = document.querySelectorAll('.pharmacy-profile-link');
-        console.log("Pharmacy profile links found in DOM:", pharmacyLinks.length);
-        setHasRenderedPharmacyLink(pharmacyLinks.length > 0);
-        
-        // If no link found, try to force render it
-        if (pharmacyLinks.length === 0 && typeof navigateToPharmacyProfile === 'function') {
-          console.log("Forcing pharmacy link visibility");
-          // We'll rely on the conditional rendering in the JSX instead
-        }
-      }, 1000);
-    }
-  }, [userRole, navigateToPharmacyProfile, hasRenderedPharmacyLink]);
+  }, [userRole, navigateToPharmacyProfile]);
 
   return (
     <div className="border-t p-4">

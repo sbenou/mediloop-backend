@@ -53,14 +53,8 @@ const PharmacistSidebar = () => {
   // Enhanced navigateToPharmacyProfile function with explicit navigation
   const navigateToPharmacyProfile = () => {
     console.log('Navigating to pharmacy profile from PharmacistSidebar');
-    console.log('navigateToPharmacyProfile function is being called');
-    // Use direct navigation to make sure it works
-    window.location.href = '/pharmacy/profile';
+    navigate('/pharmacy/profile');
   };
-
-  // Add debugging to verify the function exists
-  console.log('PharmacistSidebar: navigateToPharmacyProfile is defined =', typeof navigateToPharmacyProfile === 'function');
-  console.log('PharmacistSidebar: Function reference:', navigateToPharmacyProfile);
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">

@@ -91,6 +91,8 @@ export const UserMenuItems = () => {
       return '/superadmin';
     } else if (userRole === 'pharmacist') {
       return '/pharmacy';
+    } else if (userRole === 'doctor') {
+      return '/doctor';
     }
     return '';
   };
@@ -132,6 +134,17 @@ export const UserMenuItems = () => {
             }} className="pharmacy-profile-link">
               <Store className="mr-2 h-4 w-4" />
               <span>Pharmacy Profile</span>
+            </DropdownMenuItem>
+          )}
+          
+          {/* Doctor Profile link */}
+          {userRole === 'doctor' && (
+            <DropdownMenuItem onClick={() => {
+              console.log('Navigating to doctor profile from UserMenuItems');
+              navigate('/doctor/profile');
+            }} className="doctor-profile-link">
+              <User className="mr-2 h-4 w-4" />
+              <span>Doctor Profile</span>
             </DropdownMenuItem>
           )}
         </DropdownMenuGroup>

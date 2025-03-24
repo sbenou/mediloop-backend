@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -20,6 +21,7 @@ import Teleconsultations from './pages/Teleconsultations';
 import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
 import PharmacyDashboardOld from './pages/pharmacy/PharmacyDashboardOld';
+import PharmacyProfile from './pages/pharmacy/PharmacyProfile';
 import Products from './pages/Products';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import { UserRole } from './types/role';
@@ -46,7 +48,6 @@ const Prescription = () => <PlaceholderPage title="Prescription" />;
 const EditPrescription = () => <PlaceholderPage title="Edit Prescription" />;
 const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
-const PharmacyProfile = () => <PlaceholderPage title="Pharmacy Profile" />;
 const PatientDashboard = () => <PlaceholderPage title="Patient Dashboard" />;
 
 // Custom DoctorProfile component that renders DoctorDashboard with profile params

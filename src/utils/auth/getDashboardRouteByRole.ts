@@ -10,5 +10,8 @@ export const roleRouteMap = {
 
 export const getDashboardRouteByRole = (role?: string): string => {
   if (!role) return "/dashboard";
-  return roleRouteMap[role as keyof typeof roleRouteMap]?.route || "/dashboard";
+  console.log(`Getting dashboard route for role: ${role}`);
+  const route = roleRouteMap[role as keyof typeof roleRouteMap]?.route || "/dashboard";
+  console.log(`Determined route: ${route}`);
+  return route;
 };
