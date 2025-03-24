@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
-import { useLoginManager } from "@/hooks/auth/useLoginManager";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import DashboardRouter from "@/components/dashboard/DashboardRouter";
@@ -11,7 +10,6 @@ import DashboardRouter from "@/components/dashboard/DashboardRouter";
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole } = useAuth();
   const navigate = useNavigate();
-  const { redirected } = useLoginManager();
   const [searchParams] = useSearchParams();
 
   // Redirect to login if not authenticated
@@ -36,6 +34,8 @@ const Dashboard = () => {
 
   // If authenticated, show the appropriate dashboard based on user role
   if (isAuthenticated && userRole) {
+    console.log("Dashboard rendering with params:", Object.fromEntries(searchParams.entries()));
+    
     return (
       <UnifiedLayoutTemplate>
         <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">

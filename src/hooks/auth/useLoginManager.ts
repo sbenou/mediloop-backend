@@ -13,6 +13,12 @@ export const useLoginManager = () => {
   useEffect(() => {
     // Only proceed if we're authenticated, have a profile, and haven't redirected yet
     if (isLoading || !isAuthenticated || !profile || redirected.current) return;
+    
+    // If we're already on the dashboard page, don't redirect again
+    if (window.location.pathname === '/dashboard') {
+      redirected.current = true;
+      return;
+    }
 
     const role = profile.role;
     const route = getDashboardRouteByRole(role);

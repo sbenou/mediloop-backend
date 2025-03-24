@@ -35,83 +35,83 @@ export const useSidebarNavigation = (userRole: string) => {
     if (userRole === 'pharmacist') {
       if (path.includes('?view=pharmacy&section=')) {
         // Already properly formatted pharmacy path
-        navigate(basePath + path.substring(path.indexOf('?')), { replace: true });
+        navigate(basePath + path.substring(path.indexOf('?')), { replace: false });
         return;
       }
       
       // Transform regular paths to pharmacy view structure for pharmacists
       if (path.includes('/dashboard')) {
-        navigate(`${basePath}?view=pharmacy&section=dashboard`, { replace: true });
+        navigate(`${basePath}?view=pharmacy&section=dashboard`, { replace: false });
         return;
       } else if (path.includes('/settings')) {
-        navigate(`${basePath}?view=pharmacy&section=settings`, { replace: true });
+        navigate(`${basePath}?view=pharmacy&section=settings`, { replace: false });
         return;
       } else if (path.includes('profile')) {
         const profileTab = path.includes('profileTab=') 
           ? new URLSearchParams(path.substring(path.indexOf('?'))).get('profileTab') || 'personal'
           : 'personal';
-        navigate(`${basePath}?view=pharmacy&section=profile&profileTab=${profileTab}`, { replace: true });
+        navigate(`${basePath}?view=pharmacy&section=profile&profileTab=${profileTab}`, { replace: false });
         return;
       } else if (path.includes('orders')) {
         const ordersTab = path.includes('ordersTab=') 
           ? new URLSearchParams(path.substring(path.indexOf('?'))).get('ordersTab') || 'orders' 
           : 'orders';
-        navigate(`${basePath}?view=pharmacy&section=orders&ordersTab=${ordersTab}`, { replace: true });
+        navigate(`${basePath}?view=pharmacy&section=orders&ordersTab=${ordersTab}`, { replace: false });
         return;
       } else if (path.includes('prescriptions')) {
-        navigate(`${basePath}?view=pharmacy&section=prescriptions`, { replace: true });
+        navigate(`${basePath}?view=pharmacy&section=prescriptions`, { replace: false });
         return;
       } else if (path.includes('patients')) {
-        navigate(`${basePath}?view=pharmacy&section=patients`, { replace: true });
+        navigate(`${basePath}?view=pharmacy&section=patients`, { replace: false });
         return;
       }
     } else if (userRole === 'doctor') {
       if (path.includes('?view=doctor&section=')) {
         // Already properly formatted doctor path
-        navigate(basePath + path.substring(path.indexOf('?')), { replace: true });
+        navigate(basePath + path.substring(path.indexOf('?')), { replace: false });
         return;
       }
       
       // Transform regular paths to doctor view structure for doctors
       if (path.includes('/dashboard')) {
-        navigate(`${basePath}?view=doctor&section=dashboard`, { replace: true });
+        navigate(`${basePath}?view=doctor&section=dashboard`, { replace: false });
         return;
       } else if (path.includes('/settings')) {
-        navigate(`${basePath}?view=doctor&section=settings`, { replace: true });
+        navigate(`${basePath}?view=doctor&section=settings`, { replace: false });
         return;
       } else if (path.includes('profile')) {
         const profileTab = path.includes('profileTab=') 
           ? new URLSearchParams(path.substring(path.indexOf('?'))).get('profileTab') || 'personal'
           : 'personal';
-        navigate(`${basePath}?view=doctor&section=profile&profileTab=${profileTab}`, { replace: true });
+        navigate(`${basePath}?view=doctor&section=profile&profileTab=${profileTab}`, { replace: false });
         return;
       } else if (path.includes('patients')) {
-        navigate(`${basePath}?view=doctor&section=patients`, { replace: true });
+        navigate(`${basePath}?view=doctor&section=patients`, { replace: false });
         return;
       } else if (path.includes('prescriptions')) {
-        navigate(`${basePath}?view=doctor&section=prescriptions`, { replace: true });
+        navigate(`${basePath}?view=doctor&section=prescriptions`, { replace: false });
         return;
       } else if (path.includes('teleconsultations')) {
-        navigate(`${basePath}?view=doctor&section=teleconsultations`, { replace: true });
+        navigate(`${basePath}?view=doctor&section=teleconsultations`, { replace: false });
         return;
       }
     } else if (userRole === 'patient') {
       // For patient, just update the view parameter
       if (path === '/dashboard') {
-        navigate(`${basePath}?view=home`, { replace: true });
+        navigate(`${basePath}?view=home`, { replace: false });
         return;
       } else if (path.includes('?view=')) {
-        navigate(basePath + path.substring(path.indexOf('?')), { replace: true });
+        navigate(basePath + path.substring(path.indexOf('?')), { replace: false });
         return;
       }
     }
     
     // Default: if path contains query params, preserve them
     if (path.includes('?')) {
-      navigate(basePath + path.substring(path.indexOf('?')), { replace: true });
+      navigate(basePath + path.substring(path.indexOf('?')), { replace: false });
     } else {
       // If it's a full path to a different page (not in-app navigation), use standard navigation
-      navigate(path, { replace: path.startsWith('/dashboard') });
+      navigate(path, { replace: false });
     }
   };
 
