@@ -1,4 +1,5 @@
 
+import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -12,7 +13,6 @@ import SidebarItem from "./SidebarItem";
 import SidebarCollapsibleItem from "./SidebarCollapsibleItem";
 import SidebarSubItem from "./SidebarSubItem";
 import SidebarUserMenu from "./SidebarUserMenu";
-import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 
@@ -23,15 +23,8 @@ const PharmacistSidebar = () => {
   const searchParams = new URLSearchParams(location.search);
   const section = searchParams.get("section") || "dashboard";
   
-  const {
-    isOrdersOpen,
-    setIsOrdersOpen,
-    isProfileOpen,
-    setIsProfileOpen,
-    isPharmacistSectionActive,
-    isPharmacistTabActive,
-    navigateToLink
-  } = useSidebarNavigation('pharmacist');
+  const [isOrdersOpen, setIsOrdersOpen] = React.useState(section === "orders");
+  const [isProfileOpen, setIsProfileOpen] = React.useState(section === "profile");
   
   const { handleLogout } = useSidebarLogout();
   
@@ -45,9 +38,11 @@ const PharmacistSidebar = () => {
   // Navigate specifically for pharmacy views with improved logging
   const navigateToPharmacyView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
-    const path = `/dashboard?view=pharmacy&section=${section}${tab && tabParam ? `&${tabParam}=${tab}` : ''}`;
-    console.log('PharmacistSidebar navigating to path:', path);
-    navigate(path);
+    if (tab && tabParam) {
+      navigate(`/dashboard?view=pharmacy&section=${section}&${tabParam}=${tab}`);
+    } else {
+      navigate(`/dashboard?view=pharmacy&section=${section}`);
+    }
   };
 
   // Enhanced navigateToPharmacyProfile function with explicit navigation
@@ -65,14 +60,14 @@ const PharmacistSidebar = () => {
           <SidebarItem
             icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
             label="Dashboard"
-            isActive={isPharmacistSectionActive('dashboard')}
+            isActive={section === "dashboard"}
             onClick={() => navigateToPharmacyView('dashboard')}
           />
           
           <SidebarItem
             icon={<Users className="w-5 h-5 mr-3" />}
             label="Patients"
-            isActive={isPharmacistSectionActive('patients')}
+            isActive={section === "patients"}
             onClick={() => navigateToPharmacyView('patients')}
           />
           
@@ -80,19 +75,19 @@ const PharmacistSidebar = () => {
             icon={<ShoppingBag className="w-5 h-5 mr-3" />}
             label="Orders"
             isOpen={isOrdersOpen}
-            isActive={isPharmacistSectionActive('orders')}
+            isActive={section === "orders"}
             onOpenChange={(isOpen) => setIsOrdersOpen(isOpen)}
           >
             <SidebarSubItem
               icon={<ShoppingBag className="w-4 h-4 mr-3" />}
               label="All Orders"
-              isActive={isPharmacistTabActive('orders', 'ordersTab', 'orders')}
+              isActive={section === "orders" && (!searchParams.get("ordersTab") || searchParams.get("ordersTab") === "orders")}
               onClick={() => navigateToPharmacyView('orders', 'orders', 'ordersTab')}
             />
             <SidebarSubItem
               icon={<ShoppingBag className="w-4 h-4 mr-3" />}
               label="Pending"
-              isActive={isPharmacistTabActive('orders', 'ordersTab', 'pending')}
+              isActive={section === "orders" && searchParams.get("ordersTab") === "pending"}
               onClick={() => navigateToPharmacyView('orders', 'pending', 'ordersTab')}
             />
           </SidebarCollapsibleItem>
@@ -100,7 +95,7 @@ const PharmacistSidebar = () => {
           <SidebarItem
             icon={<FileText className="w-5 h-5 mr-3" />}
             label="Prescriptions"
-            isActive={isPharmacistSectionActive('prescriptions')}
+            isActive={section === "prescriptions"}
             onClick={() => navigateToPharmacyView('prescriptions')}
           />
           
@@ -108,25 +103,25 @@ const PharmacistSidebar = () => {
             icon={<UserCircle className="w-5 h-5 mr-3" />}
             label="Profile"
             isOpen={isProfileOpen}
-            isActive={isPharmacistSectionActive('profile')}
+            isActive={section === "profile"}
             onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
           >
             <SidebarSubItem
               icon={<UserCircle className="w-4 h-4 mr-3" />}
               label="Personal Info"
-              isActive={isPharmacistTabActive('profile', 'profileTab', 'personal')}
+              isActive={section === "profile" && (!searchParams.get("profileTab") || searchParams.get("profileTab") === "personal")}
               onClick={() => navigateToPharmacyView('profile', 'personal', 'profileTab')}
             />
             <SidebarSubItem
               icon={<MapPin className="w-4 h-4 mr-3" />}
               label="Addresses"
-              isActive={isPharmacistTabActive('profile', 'profileTab', 'addresses')}
+              isActive={section === "profile" && searchParams.get("profileTab") === "addresses"}
               onClick={() => navigateToPharmacyView('profile', 'addresses', 'profileTab')}
             />
             <SidebarSubItem
               icon={<Users className="w-4 h-4 mr-3" />}
               label="Next of Kin"
-              isActive={isPharmacistTabActive('profile', 'profileTab', 'nextofkin')}
+              isActive={section === "profile" && searchParams.get("profileTab") === "nextofkin"}
               onClick={() => navigateToPharmacyView('profile', 'nextofkin', 'profileTab')}
             />
           </SidebarCollapsibleItem>
@@ -134,7 +129,7 @@ const PharmacistSidebar = () => {
           <SidebarItem
             icon={<Settings className="w-5 h-5 mr-3" />}
             label="Settings"
-            isActive={isPharmacistSectionActive('settings')}
+            isActive={section === "settings"}
             onClick={() => navigateToPharmacyView('settings')}
           />
         </SidebarSection>

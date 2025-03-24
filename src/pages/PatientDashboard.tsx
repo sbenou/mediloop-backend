@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -14,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PasswordChange from "@/components/settings/PasswordChange";
 import AccountDeletion from "@/components/settings/AccountDeletion";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import UnifiedLayout from "@/components/layout/UnifiedLayout";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
 import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
@@ -23,6 +23,7 @@ import { usePatientDashboardStats } from "@/hooks/patient/usePatientDashboardSta
 import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorSearch from "@/components/DoctorSearch";
 import DoctorManagement from "@/components/settings/DoctorManagement";
+import PatientLayout from "@/components/layout/PatientLayout";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
@@ -41,17 +42,8 @@ const PatientDashboard = () => {
   useEffect(() => {
     console.log("PatientDashboard page loaded with view:", view, "and ordersTab:", ordersTab);
     
-    const mainContent = document.getElementById('main-content');
-    if (mainContent) {
-      if (isOpen) {
-        mainContent.classList.add('mr-[300px]');
-      } else {
-        mainContent.classList.remove('mr-[300px]');
-      }
-    }
-    
     window.dispatchEvent(new Event('resize'));
-  }, [isOpen, view, ordersTab]);
+  }, [view, ordersTab]);
 
   const handleMarkRead = (id: string) => {
     setActivities(prevActivities => 
@@ -93,7 +85,7 @@ const PatientDashboard = () => {
 
   if (view === "profile") {
     return (
-      <UnifiedLayout>
+      <PatientLayout>
         <div>
           <h1 className="text-3xl font-bold mb-6">My Profile</h1>
           
@@ -161,13 +153,13 @@ const PatientDashboard = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </UnifiedLayout>
+      </PatientLayout>
     );
   }
 
   if (view === "settings") {
     return (
-      <UnifiedLayout>
+      <PatientLayout>
         <div>
           <h1 className="text-3xl font-bold mb-8 text-left">Account Settings</h1>
           
@@ -191,13 +183,13 @@ const PatientDashboard = () => {
             </Card>
           </div>
         </div>
-      </UnifiedLayout>
+      </PatientLayout>
     );
   }
 
   if (view === "orders") {
     return (
-      <UnifiedLayout>
+      <PatientLayout>
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">My Orders</h1>
@@ -257,13 +249,13 @@ const PatientDashboard = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </UnifiedLayout>
+      </PatientLayout>
     );
   }
 
   if (view === "prescriptions") {
     return (
-      <UnifiedLayout>
+      <PatientLayout>
         <div>
           <h1 className="text-3xl font-bold mb-6">My Prescriptions</h1>
           <p className="text-muted-foreground mb-8">View and manage your prescriptions</p>
@@ -275,13 +267,13 @@ const PatientDashboard = () => {
             </p>
           </div>
         </div>
-      </UnifiedLayout>
+      </PatientLayout>
     );
   }
 
   if (view === "teleconsultations") {
     return (
-      <UnifiedLayout>
+      <PatientLayout>
         <div>
           <h1 className="text-3xl font-bold mb-6">Teleconsultations</h1>
           <p className="text-muted-foreground mb-8">Schedule and manage your video consultations with doctors</p>
@@ -293,83 +285,37 @@ const PatientDashboard = () => {
             </p>
           </div>
         </div>
-      </UnifiedLayout>
+      </PatientLayout>
     );
   }
 
   return (
-    <UnifiedLayout>
-      <div className="flex h-full relative font-sans">
-        <div 
-          id="main-content" 
-          className={`flex-1 space-y-8 px-1 mx-0 transition-all duration-300 ${isOpen ? 'mr-[300px]' : 'mr-0'}`}
-        >
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">Welcome, {profile?.full_name || 'Patient'}</h1>
-              <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
-            </div>
-          </div>
-          
-          {/* Dashboard Stats with sparklines - now using patient-specific stats */}
-          <DashboardStats 
-            stats={{
-              total_prescriptions: statsData?.total_prescriptions || 0,
-              pending_orders: statsData?.pending_orders || 0,
-              total_patients: statsData?.active_teleconsultations || 0, // Reuse this field for teleconsultations
-              monthly_revenue: statsData?.completed_payments || 0 // Reuse this field for payments
-            }}
-            isLoading={isStatsLoading}
-            onNavigate={handleViewChange}
-          />
-          
-          <HealthStateIndicator userRole="patient" />
-          
-          <WearableDataDisplay userRole="patient" />
-          
-          <StatisticsCharts />
+    <PatientLayout>
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold">Welcome, {profile?.full_name || 'Patient'}</h1>
+          <p className="text-muted-foreground">Here's an overview of your healthcare information</p>
         </div>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className="fixed right-0 top-20 z-50"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
-        </Button>
-
-        <div 
-          className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
-        >
-          <div className="p-4 h-full overflow-y-auto">
-            <Tabs 
-              defaultValue="home" 
-              className="w-full" 
-              value={activeDrawerTab}
-              onValueChange={setActiveDrawerTab}
-            >
-              <TabsList className="grid grid-cols-2 mb-4">
-                <TabsTrigger value="home">Home</TabsTrigger>
-                <TabsTrigger value="activity">Activity</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="home" className="mt-0">
-                <Advertisements />
-              </TabsContent>
-              
-              <TabsContent value="activity" className="mt-0">
-                <ActivityFeed 
-                  activities={activities}
-                  onMarkRead={handleMarkRead}
-                  onMarkAllRead={handleMarkAllRead}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
+        
+        {/* Dashboard Stats with sparklines - now using patient-specific stats */}
+        <DashboardStats 
+          stats={{
+            total_prescriptions: statsData?.total_prescriptions || 0,
+            pending_orders: statsData?.pending_orders || 0,
+            total_patients: statsData?.active_teleconsultations || 0, // Reuse this field for teleconsultations
+            monthly_revenue: statsData?.completed_payments || 0 // Reuse this field for payments
+          }}
+          isLoading={isStatsLoading}
+          onNavigate={handleViewChange}
+        />
+        
+        <HealthStateIndicator userRole="patient" />
+        
+        <WearableDataDisplay userRole="patient" />
+        
+        <StatisticsCharts />
       </div>
-    </UnifiedLayout>
+    </PatientLayout>
   );
 };
 

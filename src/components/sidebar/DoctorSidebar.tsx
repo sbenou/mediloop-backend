@@ -1,4 +1,5 @@
 
+import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -12,7 +13,6 @@ import SidebarItem from "./SidebarItem";
 import SidebarCollapsibleItem from "./SidebarCollapsibleItem";
 import SidebarSubItem from "./SidebarSubItem";
 import SidebarUserMenu from "./SidebarUserMenu";
-import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 
@@ -23,15 +23,8 @@ const DoctorSidebar = () => {
   const searchParams = new URLSearchParams(location.search);
   const section = searchParams.get("section") || "dashboard";
   
-  const {
-    isOrdersOpen,
-    setIsOrdersOpen,
-    isProfileOpen,
-    setIsProfileOpen,
-    isPharmacistSectionActive,
-    isPharmacistTabActive,
-    navigateToLink
-  } = useSidebarNavigation('doctor');
+  const [isOrdersOpen, setIsOrdersOpen] = React.useState(section === "orders");
+  const [isProfileOpen, setIsProfileOpen] = React.useState(section === "profile");
   
   const { handleLogout } = useSidebarLogout();
   
@@ -45,9 +38,11 @@ const DoctorSidebar = () => {
   // Navigate specifically for doctor views with improved logging
   const navigateToDoctorView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to doctor view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
-    const path = `/dashboard?view=doctor&section=${section}${tab && tabParam ? `&${tabParam}=${tab}` : ''}`;
-    console.log('DoctorSidebar navigating to path:', path);
-    navigate(path);
+    if (tab && tabParam) {
+      navigate(`/dashboard?view=doctor&section=${section}&${tabParam}=${tab}`);
+    } else {
+      navigate(`/dashboard?view=doctor&section=${section}`);
+    }
   };
 
   // Navigate to doctor profile
@@ -65,28 +60,28 @@ const DoctorSidebar = () => {
           <SidebarItem
             icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
             label="Dashboard"
-            isActive={isPharmacistSectionActive('dashboard')}
+            isActive={section === "dashboard"}
             onClick={() => navigateToDoctorView('dashboard')}
           />
           
           <SidebarItem
             icon={<Users className="w-5 h-5 mr-3" />}
             label="Patients"
-            isActive={isPharmacistSectionActive('patients')}
+            isActive={section === "patients"}
             onClick={() => navigateToDoctorView('patients')}
           />
           
           <SidebarItem
             icon={<FileText className="w-5 h-5 mr-3" />}
             label="Prescriptions"
-            isActive={isPharmacistSectionActive('prescriptions')}
+            isActive={section === "prescriptions"}
             onClick={() => navigateToDoctorView('prescriptions')}
           />
           
           <SidebarItem
             icon={<Video className="w-5 h-5 mr-3" />}
             label="Teleconsultations"
-            isActive={isPharmacistSectionActive('teleconsultations')}
+            isActive={section === "teleconsultations"}
             onClick={() => navigateToDoctorView('teleconsultations')}
           />
           
@@ -94,31 +89,31 @@ const DoctorSidebar = () => {
             icon={<UserCircle className="w-5 h-5 mr-3" />}
             label="Profile"
             isOpen={isProfileOpen}
-            isActive={isPharmacistSectionActive('profile')}
+            isActive={section === "profile"}
             onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
           >
             <SidebarSubItem
               icon={<UserCircle className="w-4 h-4 mr-3" />}
               label="Personal Info"
-              isActive={isPharmacistTabActive('profile', 'profileTab', 'personal')}
+              isActive={section === "profile" && searchParams.get("profileTab") === "personal"}
               onClick={() => navigateToDoctorView('profile', 'personal', 'profileTab')}
             />
             <SidebarSubItem
               icon={<MapPin className="w-4 h-4 mr-3" />}
               label="Addresses"
-              isActive={isPharmacistTabActive('profile', 'profileTab', 'addresses')}
+              isActive={section === "profile" && searchParams.get("profileTab") === "addresses"}
               onClick={() => navigateToDoctorView('profile', 'addresses', 'profileTab')}
             />
             <SidebarSubItem
               icon={<Users className="w-4 h-4 mr-3" />}
               label="Next of Kin"
-              isActive={isPharmacistTabActive('profile', 'profileTab', 'nextofkin')}
+              isActive={section === "profile" && searchParams.get("profileTab") === "nextofkin"}
               onClick={() => navigateToDoctorView('profile', 'nextofkin', 'profileTab')}
             />
             <SidebarSubItem
               icon={<Stethoscope className="w-4 h-4 mr-3" />}
               label="Stamp & Signature"
-              isActive={isPharmacistTabActive('profile', 'profileTab', 'stamp')}
+              isActive={section === "profile" && searchParams.get("profileTab") === "stamp"}
               onClick={() => navigateToDoctorView('profile', 'stamp', 'profileTab')}
             />
           </SidebarCollapsibleItem>
@@ -126,7 +121,7 @@ const DoctorSidebar = () => {
           <SidebarItem
             icon={<Settings className="w-5 h-5 mr-3" />}
             label="Settings"
-            isActive={isPharmacistSectionActive('settings')}
+            isActive={section === "settings"}
             onClick={() => navigateToDoctorView('settings')}
           />
         </SidebarSection>

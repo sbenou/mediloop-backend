@@ -1,9 +1,18 @@
 
 import { ReactNode, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PatientSidebar from "../sidebar/PatientSidebar";
 import EnhancedUserMenu from "../user-menu/EnhancedUserMenu";
 import NotificationBell from "../NotificationBell";
 import CartButton from "./navigation/CartButton";
+import { Button } from "@/components/ui/button";
+import { SidebarClose, SidebarOpen } from "lucide-react";
+import { ActivityFeed } from "@/components/activity/ActivityFeed";
+import { Advertisements } from "@/components/activity/Advertisements";
+import { mockActivities } from "@/components/activity/mockActivities";
+import { Activity } from "@/components/activity/ActivityItem";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
 
 interface PatientLayoutProps {
   children: ReactNode;
@@ -11,6 +20,32 @@ interface PatientLayoutProps {
 
 const PatientLayout = ({ children }: PatientLayoutProps) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
+  const navigate = useNavigate();
+  
+  const handleMarkRead = (id: string) => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => 
+        activity.id === id ? { ...activity, read: true } : activity
+      )
+    );
+    toast({
+      title: "Activity marked as read",
+      duration: 2000,
+    });
+  };
+
+  const handleMarkAllRead = () => {
+    setActivities(prevActivities => 
+      prevActivities.map(activity => ({ ...activity, read: true }))
+    );
+    toast({
+      title: "All activities marked as read",
+      duration: 2000,
+    });
+  };
   
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -32,16 +67,52 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
         </header>
         
         {/* Main content wrapper */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden relative">
           {/* Main content area */}
-          <main className="flex-1 p-6 overflow-auto">
+          <main className={`flex-1 p-6 h-full overflow-auto transition-all duration-300 ${isDrawerOpen ? 'mr-[300px]' : 'mr-0'}`}>
             {children}
           </main>
           
-          {/* Right panel */}
-          <aside className="w-64 shrink-0 border-l h-full bg-background">
-            {/* Panel content will go here */}
-          </aside>
+          {/* Drawer toggle button */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="fixed right-0 top-20 z-50"
+            onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+          >
+            {isDrawerOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
+          </Button>
+          
+          {/* Right drawer */}
+          <div 
+            className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          >
+            <div className="p-4 h-full overflow-y-auto">
+              <Tabs 
+                defaultValue="home" 
+                className="w-full" 
+                value={activeDrawerTab}
+                onValueChange={setActiveDrawerTab}
+              >
+                <TabsList className="grid grid-cols-2 mb-4">
+                  <TabsTrigger value="home">Home</TabsTrigger>
+                  <TabsTrigger value="activity">Activity</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="home" className="mt-0">
+                  <Advertisements />
+                </TabsContent>
+                
+                <TabsContent value="activity" className="mt-0">
+                  <ActivityFeed 
+                    activities={activities}
+                    onMarkRead={handleMarkRead}
+                    onMarkAllRead={handleMarkAllRead}
+                  />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
         </div>
       </div>
     </div>
