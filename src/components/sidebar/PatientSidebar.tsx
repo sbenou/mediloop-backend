@@ -44,11 +44,18 @@ const PatientSidebar = () => {
   const navigateToPatientView = (viewName: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to patient view: ${viewName}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
+    // Get current path - if we're not on /dashboard, navigate to it
+    const currentPath = location.pathname;
+    const basePath = "/dashboard";
+    
     if (tab && tabParam) {
-      // Use replace to update URL without navigation to a new page
-      navigate(`/dashboard?view=${viewName}&${tabParam}=${tab}`, { replace: true });
+      const url = `${basePath}?view=${viewName}&${tabParam}=${tab}`;
+      console.log("Navigating to: ", url);
+      navigate(url, { replace: true });
     } else {
-      navigate(`/dashboard?view=${viewName}`, { replace: true });
+      const url = `${basePath}?view=${viewName}`;
+      console.log("Navigating to: ", url);
+      navigate(url, { replace: true });
     }
   };
 

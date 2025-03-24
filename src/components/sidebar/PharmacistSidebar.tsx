@@ -39,11 +39,18 @@ const PharmacistSidebar = () => {
   const navigateToPharmacyView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
+    // Get current path - ensure we're using /dashboard
+    const basePath = "/dashboard";
+    
     if (tab && tabParam) {
       // Use replace to update URL without full page navigation
-      navigate(`/dashboard?view=pharmacy&section=${section}&${tabParam}=${tab}`, { replace: true });
+      const url = `${basePath}?view=pharmacy&section=${section}&${tabParam}=${tab}`;
+      console.log("Navigating to: ", url);
+      navigate(url, { replace: true });
     } else {
-      navigate(`/dashboard?view=pharmacy&section=${section}`, { replace: true });
+      const url = `${basePath}?view=pharmacy&section=${section}`;
+      console.log("Navigating to: ", url);
+      navigate(url, { replace: true });
     }
   };
 
