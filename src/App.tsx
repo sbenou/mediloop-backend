@@ -20,6 +20,7 @@ import MyPrescriptions from './pages/MyPrescriptions';
 import Teleconsultations from './pages/Teleconsultations';
 import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
+import PharmacyDashboardOld from './pages/pharmacy/PharmacyDashboardOld';
 import Products from './pages/Products';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import { UserRole } from './types/role';
@@ -106,7 +107,7 @@ function App() {
                     path="/pharmacy/*"
                     element={
                       <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
-                        <PlaceholderPage title="Pharmacy Dashboard" />
+                        <PharmacyDashboardOld />
                       </ProtectedRoute>
                     }
                   />
