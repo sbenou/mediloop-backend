@@ -13,7 +13,6 @@ import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/Doc
 import DoctorLayout from "@/components/layout/DoctorLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/use-toast";
 
 interface DoctorDashboardProps {
   initialParams?: URLSearchParams;
@@ -22,8 +21,7 @@ interface DoctorDashboardProps {
 const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { isAuthenticated, userRole, isLoading, profile } = useAuth();
+  const { isLoading } = useAuth();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Get parameters from URL or use initialParams if provided
@@ -42,7 +40,6 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   // Console logging for debugging
   useEffect(() => {
     console.log("DoctorDashboard render:", { 
-      userRole, 
       currentView, 
       section,
       profileTab,
@@ -50,11 +47,11 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       location: location.pathname + location.search,
       hasInitialParams: !!initialParams
     });
-  }, [userRole, currentView, section, profileTab, searchParams, location, initialParams]);
+  }, [currentView, section, profileTab, searchParams, location, initialParams]);
   
   // Make sure we have a default section for doctors
   useEffect(() => {
-    if (userRole === "doctor" && !isInitialLoad && isAuthenticated) {
+    if (!isInitialLoad) {
       console.log("Checking doctor params:", { currentView, section });
       
       if (currentView !== 'doctor' || !section) {
@@ -62,7 +59,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         setSearchParams({ view: 'doctor', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, setSearchParams, currentView, section, isInitialLoad, isAuthenticated]);
+  }, [setSearchParams, currentView, section, isInitialLoad]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
@@ -71,37 +68,13 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     }
   }, [isLoading]);
   
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    // Only redirect if we're sure the user is not authenticated (after initial load)
-    if (!isInitialLoad && !isAuthenticated) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please login to access the dashboard.",
-      });
-      navigate("/login");
-    }
-  }, [isAuthenticated, isInitialLoad, navigate]);
-  
-  // Redirect to regular dashboard if not a doctor
-  useEffect(() => {
-    if (!isInitialLoad && isAuthenticated && userRole !== "doctor") {
-      toast({
-        title: "Access restricted",
-        description: "Only doctors can access this dashboard.",
-      });
-      navigate("/dashboard");
-    }
-  }, [isAuthenticated, isInitialLoad, navigate, userRole]);
-  
   const getContent = () => {
     // For the doctor dashboard, show content based on the section
     switch (section) {
       case "profile":
-        return <ProfileView activeTab={profileTab} userRole={userRole} />;
+        return <ProfileView activeTab={profileTab} userRole="doctor" />;
       case "settings":
-        return <SettingsView userRole={userRole} />;
+        return <SettingsView userRole="doctor" />;
       case "prescriptions":
         return <DoctorPrescriptionsView />;
       case "patients":
@@ -110,7 +83,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         return <DoctorTeleconsultationsView />;
       case "dashboard":
       default:
-        return <HomeView userRole={userRole} />;
+        return <HomeView userRole="doctor" />;
     }
   };
   

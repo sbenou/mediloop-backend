@@ -1,7 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/auth/useAuth";
+import { useState, useEffect } from "react";
 import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
 import UserMenu from "@/components/UserMenu";
 import NotificationBell from "@/components/NotificationBell";
@@ -18,13 +16,32 @@ interface PharmacistLayoutProps {
 }
 
 const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
-  const { isAuthenticated, isLoading, profile, userRole } = useAuth();
-  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
-  const redirectAttempted = useRef(false);
-  const sessionCheckAttempted = useRef(false);
+
+  useEffect(() => {
+    // Verify session directly with Supabase to ensure we have a valid session
+    const verifySession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error || !data.session) {
+          console.error("PharmacistLayout: Session verification failed:", error);
+          setSessionCheckFailed(true);
+          return;
+        }
+        
+        console.log("PharmacistLayout: Session verification successful");
+        setSessionCheckFailed(false);
+      } catch (error) {
+        console.error("PharmacistLayout: Session check error:", error);
+        setSessionCheckFailed(true);
+      }
+    };
+    
+    verifySession();
+  }, []);
 
   useEffect(() => {
     // Handle window resize for mobile detection
@@ -35,80 +52,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    // Verify session directly with Supabase to ensure we have a valid session
-    const verifySession = async () => {
-      if (sessionCheckAttempted.current) return;
-      sessionCheckAttempted.current = true;
-      
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error || !data.session) {
-          console.error("PharmacistLayout: Session verification failed:", error);
-          setSessionCheckFailed(true);
-          return;
-        }
-        
-        // Verify user role directly from the database
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.session.user.id)
-          .single();
-          
-        if (profileError || !profileData) {
-          console.error("PharmacistLayout: Failed to verify user role:", profileError);
-          setSessionCheckFailed(true);
-          return;
-        }
-        
-        if (profileData.role !== 'pharmacist') {
-          console.log("PharmacistLayout: User is not a pharmacist, confirmed from database");
-          navigate("/dashboard", { replace: true });
-          redirectAttempted.current = true;
-          return;
-        }
-        
-        console.log("PharmacistLayout: Session and role verification successful");
-        setSessionCheckFailed(false);
-      } catch (error) {
-        console.error("PharmacistLayout: Session check error:", error);
-        setSessionCheckFailed(true);
-      }
-    };
-    
-    if (!isLoading && isAuthenticated) {
-      verifySession();
-    }
-  }, [isAuthenticated, isLoading, navigate]);
-  
-  useEffect(() => {
-    // Only perform the check when loading is complete and not during initial load
-    if (!isLoading) {
-      console.log("PharmacistLayout: Auth check - isAuthenticated:", isAuthenticated, "profile:", profile, "userRole:", userRole);
-      
-      // Check if user is authenticated
-      if (!isAuthenticated) {
-        if (!redirectAttempted.current) {
-          console.log("PharmacistLayout: User not authenticated, redirecting to login");
-          redirectAttempted.current = true;
-          navigate("/login", { replace: true });
-        }
-        return;
-      }
-
-      // Check if user has the pharmacist role, but only if profile exists
-      if (isAuthenticated && profile && profile.role !== "pharmacist") {
-        if (!redirectAttempted.current) {
-          console.log("PharmacistLayout: User is not a pharmacist, redirecting to dashboard");
-          redirectAttempted.current = true;
-          navigate("/dashboard", { replace: true });
-        }
-      }
-    }
-  }, [isAuthenticated, isLoading, navigate, profile, userRole]);
 
   // Handle session recovery
   const handleRetrySession = async () => {
@@ -122,7 +65,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
       await supabase.auth.signOut({ scope: 'local' });
       
       // Redirect to login
-      navigate("/login", { replace: true });
+      window.location.href = "/login";
     } catch (error) {
       console.error("Error during session recovery:", error);
       toast({
@@ -132,18 +75,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
       });
     }
   };
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary border-b-2"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   // If session check failed, show recovery option
   if (sessionCheckFailed) {
@@ -158,17 +89,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
           <Button onClick={handleRetrySession}>
             Reconnect Session
           </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // If not authenticated or not a pharmacist, show minimal loading until redirect happens
-  if (!isAuthenticated || (profile && profile.role !== "pharmacist")) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <p>Checking permissions...</p>
         </div>
       </div>
     );

@@ -2,29 +2,21 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 import { Loader } from "lucide-react";
+import { useLoginManager } from "@/hooks/auth/useLoginManager";
 
 const Dashboard = () => {
-  const { isAuthenticated, isLoading, profile } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const { redirected } = useLoginManager(); // Use the login manager to handle redirects
 
-  // Redirect to appropriate dashboard based on role
+  // Redirect to login if not authenticated
   useEffect(() => {
-    if (isLoading) return;
-    
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       console.log("User not authenticated, redirecting to login");
       navigate("/login", { replace: true });
-      return;
     }
-    
-    if (profile) {
-      const route = getDashboardRouteByRole(profile.role);
-      console.log(`Redirecting ${profile.role} to ${route}`);
-      navigate(route, { replace: true });
-    }
-  }, [isAuthenticated, profile, navigate, isLoading]);
+  }, [isAuthenticated, navigate, isLoading]);
 
   // Show loading state
   return (

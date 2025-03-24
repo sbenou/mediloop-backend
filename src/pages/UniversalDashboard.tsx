@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   ProfileView, 
@@ -14,13 +14,11 @@ import TeleconsultationsView from "@/components/dashboard/views/Teleconsultation
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/use-toast";
 
 const UniversalDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { isAuthenticated, userRole, isLoading, profile, isPharmacist } = useAuth();
+  const { userRole, isLoading, isPharmacist } = useAuth();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const currentView = searchParams.get("view") || "home";
@@ -42,7 +40,7 @@ const UniversalDashboard = () => {
   
   // Make sure we have a default section for pharmacists
   useEffect(() => {
-    if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad && isAuthenticated) {
+    if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad) {
       console.log("Checking pharmacist params:", { currentView, pharmacySection, isPharmacist });
       
       if (currentView !== 'pharmacy' || !pharmacySection) {
@@ -50,7 +48,7 @@ const UniversalDashboard = () => {
         setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isAuthenticated, isPharmacist]);
+  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isPharmacist]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
@@ -58,19 +56,6 @@ const UniversalDashboard = () => {
       setIsInitialLoad(false);
     }
   }, [isLoading]);
-  
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    // Only redirect if we're sure the user is not authenticated (after initial load)
-    if (!isInitialLoad && !isAuthenticated) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please login to access the dashboard.",
-      });
-      navigate("/login");
-    }
-  }, [isAuthenticated, isInitialLoad, navigate]);
   
   const getContent = () => {
     // For pharmacists, always show the pharmacy view regardless of the URL parameter
