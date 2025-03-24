@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -85,26 +86,53 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
         
         if (error) throw error;
         
+        // Always include the current user/pharmacist if they aren't in the results
+        const formattedStaff: StaffMember[] = [];
+        
+        // Add fetched team members
         if (data) {
-          const formattedStaff: StaffMember[] = data.map((item: any) => ({
-            id: item.id,
-            full_name: item.profiles?.full_name || 'Unknown',
-            email: item.profiles?.email || '',
-            role: item.profiles?.role || 'staff',
-            status: 'active',
-            avatar_url: item.profiles?.avatar_url
-          }));
-          
-          setStaff(formattedStaff);
+          data.forEach((item: any) => {
+            if (item.profiles) {
+              formattedStaff.push({
+                id: item.id,
+                full_name: item.profiles.full_name || 'Unknown',
+                email: item.profiles.email || '',
+                role: item.profiles.role || 'staff',
+                status: 'active',
+                avatar_url: item.profiles.avatar_url
+              });
+            }
+          });
         }
+        
+        // Add the current user if they're not already in the list
+        if (profile && !formattedStaff.some(member => member.email === profile.email)) {
+          formattedStaff.unshift({
+            id: profile.id || 'current-user',
+            full_name: profile.full_name || 'Current User',
+            email: profile.email || '',
+            role: profile.role || 'pharmacist',
+            status: 'active',
+            avatar_url: profile.avatar_url
+          });
+        }
+        
+        setStaff(formattedStaff);
       }
     } catch (error) {
       console.error('Error fetching staff:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load staff members.",
-      });
+      
+      // Always include the current user in case of an error
+      if (profile) {
+        setStaff([{
+          id: profile.id || 'current-user',
+          full_name: profile.full_name || 'Current User',
+          email: profile.email || '',
+          role: profile.role || (entityType === 'doctor' ? 'doctor' : 'pharmacist'),
+          status: 'active',
+          avatar_url: profile.avatar_url
+        }]);
+      }
     } finally {
       setLoading(false);
     }
@@ -220,6 +248,9 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
                           </Avatar>
                           <div className="flex flex-col">
                             <span className="font-medium">{member.full_name}</span>
+                            {profile?.id === member.id && (
+                              <span className="text-xs text-muted-foreground">(You)</span>
+                            )}
                           </div>
                         </div>
                       </TableCell>
