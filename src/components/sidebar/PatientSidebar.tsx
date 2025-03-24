@@ -40,14 +40,15 @@ const PatientSidebar = () => {
     view === "profile" || false
   );
   
-  // Direct navigation with correct parameters for patient views
+  // Stay on dashboard page but update view parameters for patient views
   const navigateToPatientView = (viewName: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to patient view: ${viewName}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
     if (tab && tabParam) {
-      navigate(`/dashboard?view=${viewName}&${tabParam}=${tab}`);
+      // Use replace to update URL without navigation to a new page
+      navigate(`/dashboard?view=${viewName}&${tabParam}=${tab}`, { replace: true });
     } else {
-      navigate(`/dashboard?view=${viewName}`);
+      navigate(`/dashboard?view=${viewName}`, { replace: true });
     }
   };
 

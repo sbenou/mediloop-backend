@@ -35,18 +35,19 @@ const PharmacistSidebar = () => {
     handleFileChange
   } = useSidebarUserProfile(profile);
 
-  // Navigate specifically for pharmacy views with improved URL parameters
+  // Update pharmacy view within the dashboard without page navigation
   const navigateToPharmacyView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
     if (tab && tabParam) {
-      navigate(`/dashboard?view=pharmacy&section=${section}&${tabParam}=${tab}`);
+      // Use replace to update URL without full page navigation
+      navigate(`/dashboard?view=pharmacy&section=${section}&${tabParam}=${tab}`, { replace: true });
     } else {
-      navigate(`/dashboard?view=pharmacy&section=${section}`);
+      navigate(`/dashboard?view=pharmacy&section=${section}`, { replace: true });
     }
   };
 
-  // Enhanced navigateToPharmacyProfile function with explicit navigation
+  // Navigate to pharmacy profile page (separate page navigation)
   const navigateToPharmacyProfile = () => {
     console.log('Navigating to pharmacy profile from PharmacistSidebar');
     navigate('/pharmacy/profile');

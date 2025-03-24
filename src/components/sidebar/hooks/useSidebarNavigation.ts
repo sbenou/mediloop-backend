@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -79,57 +78,82 @@ export const useSidebarNavigation = (userRole: string) => {
   const navigateToLink = (path: string) => {
     console.log(`navigateToLink called with path: ${path}, userRole: ${userRole}`);
     
+    // Make sure we stay on the dashboard page for all in-app navigation
+    // This ensures views are loaded in the middle section, not as separate pages
     if (userRole === 'pharmacist') {
       // If the path is already properly formatted for pharmacy view, use it directly
       if (path.includes('/dashboard?view=pharmacy&section=')) {
         console.log('Using properly formatted pharmacy path:', path);
-        navigate(path);
+        navigate(path, { replace: true });
         return;
       }
       
       // Transform regular paths to pharmacy view structure for pharmacists
       if (path === '/dashboard') {
         console.log('Navigating to pharmacy dashboard');
-        navigate('/dashboard?view=pharmacy&section=dashboard');
+        navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
         return;
       } else if (path === '/settings') {
         console.log('Navigating to pharmacy settings');
-        navigate('/dashboard?view=pharmacy&section=settings');
+        navigate('/dashboard?view=pharmacy&section=settings', { replace: true });
         return;
       } else if (path.includes('view=profile')) {
         console.log('Navigating to pharmacy profile');
         const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
-        navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${profileTab}`);
+        navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${profileTab}`, { replace: true });
         return;
       } else if (path.includes('view=orders')) {
         console.log('Navigating to pharmacy orders');
         const ordersTab = new URLSearchParams(path.split('?')[1]).get('ordersTab') || 'orders';
-        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${ordersTab}`);
+        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${ordersTab}`, { replace: true });
         return;
       } else if (path.includes('view=prescriptions') || path === '/dashboard?view=prescriptions') {
         console.log('Navigating to pharmacy prescriptions');
-        navigate('/dashboard?view=pharmacy&section=prescriptions');
+        navigate('/dashboard?view=pharmacy&section=prescriptions', { replace: true });
         return;
       } else if (path.includes('view=patients') || path === '/dashboard?view=patients') {
         console.log('Navigating to pharmacy patients');
-        navigate('/dashboard?view=pharmacy&section=patients');
+        navigate('/dashboard?view=pharmacy&section=patients', { replace: true });
         return;
       }
     } else if (userRole === 'doctor') {
       // Transform regular paths to doctor view structure for doctors
       if (path === '/dashboard') {
         console.log('Navigating to doctor dashboard');
-        navigate('/dashboard?view=doctor&section=dashboard');
+        navigate('/dashboard?view=doctor&section=dashboard', { replace: true });
         return;
       } else if (path.includes('view=profile')) {
         console.log('Navigating to doctor profile');
         const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
-        navigate(`/dashboard?view=doctor&section=profile&profileTab=${profileTab}`);
+        navigate(`/dashboard?view=doctor&section=profile&profileTab=${profileTab}`, { replace: true });
+        return;
+      } else if (path.includes('view=patients')) {
+        console.log('Navigating to doctor patients');
+        navigate('/dashboard?view=doctor&section=patients', { replace: true });
+        return;
+      } else if (path.includes('view=prescriptions')) {
+        console.log('Navigating to doctor prescriptions');
+        navigate('/dashboard?view=doctor&section=prescriptions', { replace: true });
+        return;
+      } else if (path.includes('view=teleconsultations')) {
+        console.log('Navigating to doctor teleconsultations');
+        navigate('/dashboard?view=doctor&section=teleconsultations', { replace: true });
+        return;
+      } else if (path.includes('view=settings')) {
+        console.log('Navigating to doctor settings');
+        navigate('/dashboard?view=doctor&section=settings', { replace: true });
+        return;
+      }
+    } else {
+      // For patient role, keep them on dashboard but change the view
+      if (path.startsWith('/dashboard?view=')) {
+        console.log(`Standard navigation with replace: ${path}`);
+        navigate(path, { replace: true });
         return;
       }
     }
     
-    // Default navigation for other roles
+    // Default navigation for other paths
     console.log(`Standard navigation to: ${path}`);
     navigate(path);
   };

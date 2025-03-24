@@ -35,18 +35,19 @@ const DoctorSidebar = () => {
     handleFileChange
   } = useSidebarUserProfile(profile);
 
-  // Navigate specifically for doctor views with fixed URL parameters
+  // Update doctor view within the dashboard without page navigation
   const navigateToDoctorView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to doctor view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
     if (tab && tabParam) {
-      navigate(`/dashboard?view=doctor&section=${section}&${tabParam}=${tab}`);
+      // Use replace to update URL without full page navigation
+      navigate(`/dashboard?view=doctor&section=${section}&${tabParam}=${tab}`, { replace: true });
     } else {
-      navigate(`/dashboard?view=doctor&section=${section}`);
+      navigate(`/dashboard?view=doctor&section=${section}`, { replace: true });
     }
   };
 
-  // Navigate to doctor profile page
+  // Navigate to doctor profile page (separate page navigation)
   const navigateToDoctorProfile = () => {
     console.log('Navigating to doctor profile from DoctorSidebar');
     navigate('/doctor/profile');
