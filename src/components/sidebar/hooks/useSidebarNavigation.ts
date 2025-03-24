@@ -134,6 +134,28 @@ export const useSidebarNavigation = (userRole: string) => {
     return tab === tabValue || (!tab && tabValue === 'default');
   };
 
+  // Function to check if a specific path is active
+  const isLinkActive = (path: string) => {
+    if (path === '/dashboard') {
+      return location.pathname === '/dashboard' && !location.search;
+    }
+    return location.pathname.includes(path);
+  };
+
+  // Functions specifically for the pharmacist view
+  const isPharmacistSectionActive = (section: string) => {
+    return userRole === 'pharmacist' && 
+           searchParams.get('view') === 'pharmacy' && 
+           searchParams.get('section') === section;
+  };
+
+  const isPharmacistTabActive = (section: string, tabParam: string, tabValue: string) => {
+    if (!isPharmacistSectionActive(section)) return false;
+    
+    const tab = searchParams.get(tabParam);
+    return tab === tabValue || (!tab && tabValue === 'default');
+  };
+
   return {
     isOrdersOpen,
     setIsOrdersOpen,
@@ -141,6 +163,9 @@ export const useSidebarNavigation = (userRole: string) => {
     setIsProfileOpen,
     navigateToLink,
     isSectionActive,
-    isTabActive
+    isTabActive,
+    isLinkActive,
+    isPharmacistSectionActive,
+    isPharmacistTabActive
   };
 };
