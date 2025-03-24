@@ -32,11 +32,11 @@ const PatientSidebar = () => {
   
   const { handleLogout } = useSidebarLogout();
   
-  const [isOrdersOpen, setIsOrdersOpen] = React.useState(
+  const [isOrdersOpen, setIsOrdersOpen] = useState(
     view === "orders" || false
   );
   
-  const [isProfileOpen, setIsProfileOpen] = React.useState(
+  const [isProfileOpen, setIsProfileOpen] = useState(
     view === "profile" || false
   );
   
@@ -60,7 +60,7 @@ const PatientSidebar = () => {
             icon={<Home className="w-5 h-5 mr-3" />}
             label="Dashboard"
             isActive={view === "home" || !view}
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/dashboard?view=home")}
           />
           
           <SidebarCollapsibleItem 
@@ -163,4 +163,3 @@ const PatientSidebar = () => {
 };
 
 export default PatientSidebar;
-

@@ -95,7 +95,7 @@ const DoctorSidebar = () => {
             <SidebarSubItem
               icon={<UserCircle className="w-4 h-4 mr-3" />}
               label="Personal Info"
-              isActive={section === "profile" && searchParams.get("profileTab") === "personal"}
+              isActive={section === "profile" && (!searchParams.get("profileTab") || searchParams.get("profileTab") === "personal")}
               onClick={() => navigateToDoctorView('profile', 'personal', 'profileTab')}
             />
             <SidebarSubItem
