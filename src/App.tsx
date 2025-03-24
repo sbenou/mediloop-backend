@@ -7,23 +7,21 @@ import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { AuthProvider } from '@/providers/AuthProvider';
 import ProtectedRoute from './components/routing/ProtectedRoute';
+import RequireRoleGuard from './components/auth/RequireRoleGuard';
 import Index from './pages/Index';
 import Home from './pages/Home';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import UnauthorizedPage from './pages/UnauthorizedPage';
 import EmailConfirmationHandler from './components/auth/EmailConfirmationHandler';
 import CreatePrescription from './pages/CreatePrescription';
 import MyPrescriptions from './pages/MyPrescriptions';
 import Teleconsultations from './pages/Teleconsultations';
-import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
-import PharmacyDashboardOld from './pages/pharmacy/PharmacyDashboardOld';
 import PharmacyProfile from './pages/pharmacy/PharmacyProfile';
 import Products from './pages/Products';
-import UnauthorizedPage from './pages/UnauthorizedPage';
-import PatientDashboard from './pages/PatientDashboard';
 import { UserRole } from './types/role';
 
 // Create a client for React Query
@@ -49,19 +47,6 @@ const EditPrescription = () => <PlaceholderPage title="Edit Prescription" />;
 const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
 
-// Custom DoctorProfile component that renders DoctorDashboard with profile params
-const DoctorProfile = () => {
-  // Set URL search params for profile view
-  const searchParams = new URLSearchParams();
-  searchParams.set('view', 'doctor');
-  searchParams.set('section', 'profile');
-  searchParams.set('profileTab', 'personal');
-  
-  // Pass these params to the DoctorDashboard component
-  // The component will handle routing internally based on these params
-  return <DoctorDashboard initialParams={searchParams} />;
-};
-
 function App() {
   return (
     <RecoilRoot>
@@ -80,33 +65,15 @@ function App() {
                   <Route path="/products" element={<Products />} />
                   <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-                  {/* Dashboard router - handles redirects to appropriate dashboard */}
+                  {/* Unified Dashboard route - handles redirects to appropriate dashboard */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   
                   {/* Role-specific protected routes */}
-                  <Route
-                    path="/doctor/*"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Doctor]}>
-                        <DoctorDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  
                   <Route
                     path="/doctor/profile"
                     element={
                       <ProtectedRoute allowedRoles={[UserRole.Doctor]}>
                         <DoctorProfilePage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  
-                  <Route
-                    path="/pharmacy/*"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
-                        <PharmacyDashboardOld />
                       </ProtectedRoute>
                     }
                   />
@@ -125,15 +92,6 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={[UserRole.Superadmin]}>
                         <SuperAdminDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  
-                  <Route
-                    path="/patient-dashboard"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Patient]}>
-                        <PatientDashboard />
                       </ProtectedRoute>
                     }
                   />

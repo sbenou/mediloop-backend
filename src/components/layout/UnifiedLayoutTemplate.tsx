@@ -1,6 +1,6 @@
 
-import { ReactNode, useState } from "react";
-import UnifiedSidebar from "../sidebar/UnifiedSidebar";
+import { ReactNode } from "react";
+import Sidebar from "../sidebar/Sidebar";
 import NotificationBell from "../NotificationBell";
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { MainNavigation } from "./navigation/MainNavigation";
@@ -12,6 +12,7 @@ import { Advertisements } from "@/components/activity/Advertisements";
 import { mockActivities } from "@/components/activity/mockActivities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -47,8 +48,8 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
   
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      {/* Sidebar - Always show for unified layout */}
-      <UnifiedSidebar />
+      {/* Dynamic Sidebar based on user role */}
+      <Sidebar />
       
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">

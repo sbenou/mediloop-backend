@@ -1,7 +1,7 @@
 
 import React from "react";
-import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
+import useDashboardParams from "@/hooks/dashboard/useDashboardParams";
 import { 
   ProfileView, 
   SettingsView, 
@@ -20,14 +20,9 @@ interface DashboardRouterProps {
 }
 
 const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
-  const [searchParams] = useSearchParams();
   const { isPharmacist } = useAuth();
-
-  // Get all possible URL parameters
-  const view = searchParams.get("view") || "home";
-  const section = searchParams.get("section") || "dashboard";
-  const profileTab = searchParams.get("profileTab") || "personal";
-  const ordersTab = searchParams.get("ordersTab") || "orders";
+  const { params } = useDashboardParams();
+  const { view, section, profileTab, ordersTab } = params;
   
   console.log("DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
   
