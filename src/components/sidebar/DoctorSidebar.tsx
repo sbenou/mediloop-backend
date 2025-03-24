@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
@@ -15,16 +15,13 @@ import SidebarSubItem from "./SidebarSubItem";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
+import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 
 const DoctorSidebar = () => {
   const { profile } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const section = searchParams.get("section") || "dashboard";
-  
-  const [isOrdersOpen, setIsOrdersOpen] = React.useState(section === "orders");
-  const [isProfileOpen, setIsProfileOpen] = React.useState(section === "profile");
   
   const { handleLogout } = useSidebarLogout();
   
@@ -35,29 +32,29 @@ const DoctorSidebar = () => {
     handleFileChange
   } = useSidebarUserProfile(profile);
 
+  const {
+    isProfileOpen,
+    setIsProfileOpen,
+    navigateToLink
+  } = useSidebarNavigation("doctor");
+
   // Update doctor view within the dashboard without page navigation
   const navigateToDoctorView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to doctor view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
-    // Get current path - ensure we're using /dashboard
-    const basePath = "/dashboard";
-    
     if (tab && tabParam) {
-      // Use replace to update URL without full page navigation
-      const url = `${basePath}?view=doctor&section=${section}&${tabParam}=${tab}`;
-      console.log("Navigating to: ", url);
-      navigate(url, { replace: true });
+      const path = `/dashboard?view=doctor&section=${section}&${tabParam}=${tab}`;
+      navigateToLink(path);
     } else {
-      const url = `${basePath}?view=doctor&section=${section}`;
-      console.log("Navigating to: ", url);
-      navigate(url, { replace: true });
+      const path = `/dashboard?view=doctor&section=${section}`;
+      navigateToLink(path);
     }
   };
 
   // Navigate to doctor profile page (separate page navigation)
   const navigateToDoctorProfile = () => {
     console.log('Navigating to doctor profile from DoctorSidebar');
-    navigate('/doctor/profile');
+    navigateToLink('/doctor/profile');
   };
 
   return (
@@ -145,7 +142,7 @@ const DoctorSidebar = () => {
         handleLogout={handleLogout}
         navigateToProfile={() => navigateToDoctorView('profile', 'personal', 'profileTab')}
         navigateToBilling={() => navigateToDoctorView('orders', 'payments', 'ordersTab')}
-        navigateToUpgrade={() => navigate('/upgrade')}
+        navigateToUpgrade={() => navigateToLink('/upgrade')}
         navigateToDoctorProfile={navigateToDoctorProfile}
         handleFileChange={handleFileChange}
       />

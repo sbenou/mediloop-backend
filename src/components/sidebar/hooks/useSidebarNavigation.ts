@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -23,57 +24,6 @@ export const useSidebarNavigation = (userRole: string) => {
     }
   }, [location]);
 
-  // Function to check if a pharmacy section is active
-  const isPharmacistSectionActive = (sectionName: string) => {
-    if (userRole !== 'pharmacist') return false;
-    
-    // For pharmacist views, check the section parameter
-    const section = searchParams.get('section');
-    const isPharmacyView = location.search.includes('view=pharmacy');
-    
-    return isPharmacyView && section === sectionName;
-  };
-
-  // Function to check if a pharmacy tab is active
-  const isPharmacistTabActive = (sectionName: string, tabParam: string, tabValue: string) => {
-    if (userRole !== 'pharmacist') return false;
-    
-    // For pharmacist views, check both section and tab parameters
-    const section = searchParams.get('section');
-    const tab = searchParams.get(tabParam);
-    const isPharmacyView = location.search.includes('view=pharmacy');
-    
-    return isPharmacyView && section === sectionName && tab === tabValue;
-  };
-
-  // Check if a specific link is active
-  const isLinkActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  // Check if a path with query parameters is active
-  const isSubPathActive = (path: string) => {
-    if (path.includes('?')) {
-      const [basePath, queryString] = path.split('?');
-      const isBasePathMatch = location.pathname === basePath;
-      
-      if (!isBasePathMatch) return false;
-      
-      const pathSearchParams = new URLSearchParams(queryString);
-      const currentSearchParams = new URLSearchParams(location.search);
-      
-      for (const [key, value] of pathSearchParams.entries()) {
-        if (currentSearchParams.get(key) !== value) {
-          return false;
-        }
-      }
-      
-      return true;
-    }
-    
-    return location.pathname === path;
-  };
-
   // Navigate to a link with special handling for different roles
   const navigateToLink = (path: string) => {
     console.log(`navigateToLink called with path: ${path}, userRole: ${userRole}`);
@@ -82,93 +32,106 @@ export const useSidebarNavigation = (userRole: string) => {
     const basePath = "/dashboard";
     
     // Make sure we stay on the dashboard page for all in-app navigation
-    // This ensures views are loaded in the middle section, not as separate pages
     if (userRole === 'pharmacist') {
-      // If the path is already properly formatted for pharmacy view, use it directly
-      if (path.includes('/dashboard?view=pharmacy&section=')) {
-        console.log('Using properly formatted pharmacy path:', path);
-        navigate(path, { replace: true });
+      if (path.includes('?view=pharmacy&section=')) {
+        // Already properly formatted pharmacy path
+        navigate(basePath + path.substring(path.indexOf('?')), { replace: true });
         return;
       }
       
       // Transform regular paths to pharmacy view structure for pharmacists
-      if (path === '/dashboard') {
-        console.log('Navigating to pharmacy dashboard');
+      if (path.includes('/dashboard')) {
         navigate(`${basePath}?view=pharmacy&section=dashboard`, { replace: true });
         return;
-      } else if (path === '/settings') {
-        console.log('Navigating to pharmacy settings');
+      } else if (path.includes('/settings')) {
         navigate(`${basePath}?view=pharmacy&section=settings`, { replace: true });
         return;
-      } else if (path.includes('view=profile')) {
-        console.log('Navigating to pharmacy profile');
-        const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
+      } else if (path.includes('profile')) {
+        const profileTab = path.includes('profileTab=') 
+          ? new URLSearchParams(path.substring(path.indexOf('?'))).get('profileTab') || 'personal'
+          : 'personal';
         navigate(`${basePath}?view=pharmacy&section=profile&profileTab=${profileTab}`, { replace: true });
         return;
-      } else if (path.includes('view=orders')) {
-        console.log('Navigating to pharmacy orders');
-        const ordersTab = new URLSearchParams(path.split('?')[1]).get('ordersTab') || 'orders';
+      } else if (path.includes('orders')) {
+        const ordersTab = path.includes('ordersTab=') 
+          ? new URLSearchParams(path.substring(path.indexOf('?'))).get('ordersTab') || 'orders' 
+          : 'orders';
         navigate(`${basePath}?view=pharmacy&section=orders&ordersTab=${ordersTab}`, { replace: true });
         return;
-      } else if (path.includes('view=prescriptions') || path === '/dashboard?view=prescriptions') {
-        console.log('Navigating to pharmacy prescriptions');
+      } else if (path.includes('prescriptions')) {
         navigate(`${basePath}?view=pharmacy&section=prescriptions`, { replace: true });
         return;
-      } else if (path.includes('view=patients') || path === '/dashboard?view=patients') {
-        console.log('Navigating to pharmacy patients');
+      } else if (path.includes('patients')) {
         navigate(`${basePath}?view=pharmacy&section=patients`, { replace: true });
         return;
       }
     } else if (userRole === 'doctor') {
+      if (path.includes('?view=doctor&section=')) {
+        // Already properly formatted doctor path
+        navigate(basePath + path.substring(path.indexOf('?')), { replace: true });
+        return;
+      }
+      
       // Transform regular paths to doctor view structure for doctors
-      if (path === '/dashboard') {
-        console.log('Navigating to doctor dashboard');
+      if (path.includes('/dashboard')) {
         navigate(`${basePath}?view=doctor&section=dashboard`, { replace: true });
         return;
-      } else if (path.includes('view=profile')) {
-        console.log('Navigating to doctor profile');
-        const profileTab = new URLSearchParams(path.split('?')[1]).get('profileTab') || 'personal';
+      } else if (path.includes('/settings')) {
+        navigate(`${basePath}?view=doctor&section=settings`, { replace: true });
+        return;
+      } else if (path.includes('profile')) {
+        const profileTab = path.includes('profileTab=') 
+          ? new URLSearchParams(path.substring(path.indexOf('?'))).get('profileTab') || 'personal'
+          : 'personal';
         navigate(`${basePath}?view=doctor&section=profile&profileTab=${profileTab}`, { replace: true });
         return;
-      } else if (path.includes('view=patients')) {
-        console.log('Navigating to doctor patients');
+      } else if (path.includes('patients')) {
         navigate(`${basePath}?view=doctor&section=patients`, { replace: true });
         return;
-      } else if (path.includes('view=prescriptions')) {
-        console.log('Navigating to doctor prescriptions');
+      } else if (path.includes('prescriptions')) {
         navigate(`${basePath}?view=doctor&section=prescriptions`, { replace: true });
         return;
-      } else if (path.includes('view=teleconsultations')) {
-        console.log('Navigating to doctor teleconsultations');
+      } else if (path.includes('teleconsultations')) {
         navigate(`${basePath}?view=doctor&section=teleconsultations`, { replace: true });
-        return;
-      } else if (path.includes('view=settings')) {
-        console.log('Navigating to doctor settings');
-        navigate(`${basePath}?view=doctor&section=settings`, { replace: true });
         return;
       }
     } else if (userRole === 'patient') {
-      // For patient role, keep them on dashboard but change the view
-      if (path.startsWith('/dashboard?view=')) {
-        console.log(`Standard navigation with replace: ${path}`);
-        navigate(`${basePath}${path.substring(path.indexOf('?'))}`, { replace: true });
-        return;
-      } else if (path === '/dashboard') {
-        console.log('Navigating to patient dashboard home');
+      // For patient, just update the view parameter
+      if (path === '/dashboard') {
         navigate(`${basePath}?view=home`, { replace: true });
+        return;
+      } else if (path.includes('?view=')) {
+        navigate(basePath + path.substring(path.indexOf('?')), { replace: true });
         return;
       }
     }
     
-    // If path doesn't match any special cases, use standard navigation
-    // But ensure we're still using the dashboard base path for in-app navigation
+    // Default: if path contains query params, preserve them
     if (path.includes('?')) {
-      console.log(`Standard navigation with query params: ${basePath}${path.substring(path.indexOf('?'))}`);
-      navigate(`${basePath}${path.substring(path.indexOf('?'))}`, { replace: true });
+      navigate(basePath + path.substring(path.indexOf('?')), { replace: true });
     } else {
-      console.log(`Standard navigation to: ${path}`);
-      navigate(path, { replace: true });
+      // If it's a full path to a different page (not in-app navigation), use standard navigation
+      navigate(path, { replace: path.startsWith('/dashboard') });
     }
+  };
+
+  // Function to check if a specific section is active
+  const isSectionActive = (sectionName: string, userRole: string) => {
+    if (userRole === 'pharmacist' || userRole === 'doctor') {
+      const section = searchParams.get('section');
+      return section === sectionName;
+    } else {
+      const view = searchParams.get('view');
+      return view === sectionName;
+    }
+  };
+
+  // Function to check if a tab is active
+  const isTabActive = (sectionName: string, tabParam: string, tabValue: string, userRole: string) => {
+    if (!isSectionActive(sectionName, userRole)) return false;
+    
+    const tab = searchParams.get(tabParam);
+    return tab === tabValue || (!tab && tabValue === 'default');
   };
 
   return {
@@ -176,10 +139,8 @@ export const useSidebarNavigation = (userRole: string) => {
     setIsOrdersOpen,
     isProfileOpen,
     setIsProfileOpen,
-    isPharmacistSectionActive,
-    isPharmacistTabActive,
-    isLinkActive,
-    isSubPathActive,
-    navigateToLink
+    navigateToLink,
+    isSectionActive,
+    isTabActive
   };
 };

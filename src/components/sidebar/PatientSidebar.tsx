@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { 
   Home, ShoppingBag, Settings, 
   FileText, UserCircle, MapPin, 
@@ -15,10 +15,10 @@ import SidebarSubItem from "./SidebarSubItem";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
+import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 
 const PatientSidebar = () => {
   const { profile } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const view = searchParams.get("view") || "home";
@@ -32,30 +32,24 @@ const PatientSidebar = () => {
   
   const { handleLogout } = useSidebarLogout();
   
-  const [isOrdersOpen, setIsOrdersOpen] = useState(
-    view === "orders" || false
-  );
-  
-  const [isProfileOpen, setIsProfileOpen] = useState(
-    view === "profile" || false
-  );
+  const {
+    isOrdersOpen,
+    setIsOrdersOpen,
+    isProfileOpen,
+    setIsProfileOpen,
+    navigateToLink
+  } = useSidebarNavigation("patient");
   
   // Stay on dashboard page but update view parameters for patient views
   const navigateToPatientView = (viewName: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to patient view: ${viewName}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
-    // Get current path - if we're not on /dashboard, navigate to it
-    const currentPath = location.pathname;
-    const basePath = "/dashboard";
-    
     if (tab && tabParam) {
-      const url = `${basePath}?view=${viewName}&${tabParam}=${tab}`;
-      console.log("Navigating to: ", url);
-      navigate(url, { replace: true });
+      const path = `/dashboard?view=${viewName}&${tabParam}=${tab}`;
+      navigateToLink(path);
     } else {
-      const url = `${basePath}?view=${viewName}`;
-      console.log("Navigating to: ", url);
-      navigate(url, { replace: true });
+      const path = `/dashboard?view=${viewName}`;
+      navigateToLink(path);
     }
   };
 
@@ -164,7 +158,7 @@ const PatientSidebar = () => {
         handleLogout={handleLogout}
         navigateToProfile={() => navigateToPatientView("profile", "personal", "profileTab")}
         navigateToBilling={() => navigateToPatientView("orders", "payments", "ordersTab")}
-        navigateToUpgrade={() => navigate("/upgrade")}
+        navigateToUpgrade={() => navigateToLink("/upgrade")}
         handleFileChange={handleFileChange}
       />
     </aside>
