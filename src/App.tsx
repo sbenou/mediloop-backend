@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -24,6 +23,7 @@ import PharmacyDashboardOld from './pages/pharmacy/PharmacyDashboardOld';
 import PharmacyProfile from './pages/pharmacy/PharmacyProfile';
 import Products from './pages/Products';
 import UnauthorizedPage from './pages/UnauthorizedPage';
+import PatientDashboard from './pages/PatientDashboard';
 import { UserRole } from './types/role';
 
 // Create a client for React Query
@@ -48,7 +48,6 @@ const Prescription = () => <PlaceholderPage title="Prescription" />;
 const EditPrescription = () => <PlaceholderPage title="Edit Prescription" />;
 const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
-const PatientDashboard = () => <PlaceholderPage title="Patient Dashboard" />;
 
 // Custom DoctorProfile component that renders DoctorDashboard with profile params
 const DoctorProfile = () => {
