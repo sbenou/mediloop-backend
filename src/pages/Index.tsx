@@ -11,16 +11,21 @@ import Footer from "@/components/layout/Footer";
 import CountrySelector from "@/components/CountrySelector";
 
 export default function Index() {
-  // Reset the country selection to force the dialog to appear
+  // Add logging to help debug
   useEffect(() => {
+    console.log("Index page mounted");
+    
     try {
       // Force clearing the country selection on initial Index page mount
       localStorage.removeItem('selectedCountry');
-      console.log("Index: Forced clearing of selectedCountry");
+      console.log("Index: Successfully cleared selectedCountry from localStorage");
     } catch (e) {
       console.error("Error clearing localStorage:", e);
     }
   }, []);
+
+  // Log when components are about to render
+  console.log("Index page rendering components");
 
   return (
     <>

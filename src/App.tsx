@@ -15,6 +15,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import UnauthorizedPage from './pages/UnauthorizedPage';
+import NotFound from './pages/NotFound';
 import EmailConfirmationHandler from './components/auth/EmailConfirmationHandler';
 import CreatePrescription from './pages/CreatePrescription';
 import MyPrescriptions from './pages/MyPrescriptions';
@@ -25,7 +26,14 @@ import Products from './pages/Products';
 import { UserRole } from './types/role';
 
 // Create a client for React Query
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Placeholder components for routes that don't have components yet
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -48,6 +56,8 @@ const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
 
 function App() {
+  console.log("App component rendering");
+  
   return (
     <RecoilRoot>
       <QueryClientProvider client={queryClient}>
@@ -58,6 +68,7 @@ function App() {
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
+                  <Route path="/index" element={<Index />} />
                   <Route path="/home" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
@@ -143,6 +154,9 @@ function App() {
                   <Route path="/my-prescriptions/:id" element={<Prescription />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
+                  
+                  {/* Catch-all route for 404 errors */}
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
                 <Toaster />
               </Router>
