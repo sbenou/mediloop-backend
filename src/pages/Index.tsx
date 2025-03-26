@@ -11,9 +11,10 @@ import Footer from "@/components/layout/Footer";
 import CountrySelector from "@/components/CountrySelector";
 
 export default function Index() {
-  // Add logging to help debug
+  // Add detailed logging to help debug
   useEffect(() => {
     console.log("Index page mounted");
+    console.log("Current URL:", window.location.href);
     
     try {
       // Force clearing the country selection on initial Index page mount

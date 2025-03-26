@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { RecoilRoot } from 'recoil';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -55,9 +55,108 @@ const EditPrescription = () => <PlaceholderPage title="Edit Prescription" />;
 const Settings = () => <PlaceholderPage title="Settings" />;
 const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
 
-function App() {
-  console.log("App component rendering");
+function AppRoutes() {
+  const location = useLocation();
+  console.log('[App] Current route:', location.pathname);
   
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Index />} />
+      <Route path="/index" element={<Index />} />
+      <Route path="/home" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
+      <Route path="/products" element={<Products />} />
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+      {/* Unified Dashboard route - handles redirects to appropriate dashboard */}
+      <Route path="/dashboard" element={<Dashboard />} />
+      
+      {/* Role-specific protected routes */}
+      <Route
+        path="/doctor/profile"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Doctor]}>
+            <DoctorProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/pharmacy/profile"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
+            <PharmacyProfile />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/superadmin/*"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Superadmin]}>
+            <SuperAdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected routes available to specific roles */}
+      <Route
+        path="/admin-settings"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Superadmin, "admin"]}>
+            <AdminSettings />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/create-prescription"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Doctor, UserRole.Pharmacist]}>
+            <CreatePrescription />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/my-prescriptions"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Patient, UserRole.Doctor, UserRole.Pharmacist]}>
+            <MyPrescriptions />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/teleconsultations"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Patient, UserRole.Doctor]}>
+            <Teleconsultations />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Other routes that should maintain their existing logic */}
+      <Route path="/register" element={<Register />} />
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/search-pharmacy" element={<SearchPharmacy />} />
+      <Route path="/prescription" element={<Prescription />} />
+      <Route path="/edit-prescription/:id" element={<EditPrescription />} />
+      <Route path="/prescriptions/:id" element={<Prescription />} />
+      <Route path="/my-prescriptions/:id" element={<Prescription />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
+      
+      {/* Catch-all route for 404 errors */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+function App() {
   return (
     <RecoilRoot>
       <QueryClientProvider client={queryClient}>
@@ -65,99 +164,7 @@ function App() {
           <CurrencyProvider>
             <CartProvider>
               <Router>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/index" element={<Index />} />
-                  <Route path="/home" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/unauthorized" element={<UnauthorizedPage />} />
-
-                  {/* Unified Dashboard route - handles redirects to appropriate dashboard */}
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  
-                  {/* Role-specific protected routes */}
-                  <Route
-                    path="/doctor/profile"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Doctor]}>
-                        <DoctorProfilePage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  
-                  <Route
-                    path="/pharmacy/profile"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
-                        <PharmacyProfile />
-                      </ProtectedRoute>
-                    }
-                  />
-                  
-                  <Route
-                    path="/superadmin/*"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Superadmin]}>
-                        <SuperAdminDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* Protected routes available to specific roles */}
-                  <Route
-                    path="/admin-settings"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Superadmin, "admin"]}>
-                        <AdminSettings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  
-                  <Route
-                    path="/create-prescription"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Doctor, UserRole.Pharmacist]}>
-                        <CreatePrescription />
-                      </ProtectedRoute>
-                    }
-                  />
-                  
-                  <Route
-                    path="/my-prescriptions"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Patient, UserRole.Doctor, UserRole.Pharmacist]}>
-                        <MyPrescriptions />
-                      </ProtectedRoute>
-                    }
-                  />
-                  
-                  <Route
-                    path="/teleconsultations"
-                    element={
-                      <ProtectedRoute allowedRoles={[UserRole.Patient, UserRole.Doctor]}>
-                        <Teleconsultations />
-                      </ProtectedRoute>
-                    }
-                  />
-                  
-                  {/* Other routes that should maintain their existing logic */}
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/search-pharmacy" element={<SearchPharmacy />} />
-                  <Route path="/prescription" element={<Prescription />} />
-                  <Route path="/edit-prescription/:id" element={<EditPrescription />} />
-                  <Route path="/prescriptions/:id" element={<Prescription />} />
-                  <Route path="/my-prescriptions/:id" element={<Prescription />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/search-pharmacy-test" element={<SearchPharmacyTest />} />
-                  
-                  {/* Catch-all route for 404 errors */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <AppRoutes />
                 <Toaster />
               </Router>
             </CartProvider>

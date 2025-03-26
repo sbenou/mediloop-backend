@@ -1,11 +1,17 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 const NotFound = () => {
+  // Add more detailed logging to help debug
+  useEffect(() => {
+    console.log("NotFound page mounted and rendered");
+    console.log("Current URL:", window.location.href);
+  }, []);
+  
   console.log("NotFound page rendering");
   
   return (

@@ -10,9 +10,10 @@ import { FeaturesGrid } from '@/components/home/FeaturesGrid';
 const Home = () => {
   const navigate = useNavigate();
   
-  // Add logging to help debug
+  // Add detailed logging to help debug
   useEffect(() => {
     console.log("Home page mounted");
+    console.log("Current URL:", window.location.href);
   }, []);
 
   // Log when components are about to render
