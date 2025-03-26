@@ -13,6 +13,7 @@ import { mockActivities } from "@/components/activity/mockActivities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -23,6 +24,7 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [activities, setActivities] = useState(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
+  const { userRole } = useAuth();
   
   const handleMarkRead = (id: string) => {
     setActivities(prevActivities => 
@@ -46,6 +48,8 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
     });
   };
   
+  console.log("UnifiedLayoutTemplate rendering for role:", userRole);
+  
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Dynamic Sidebar based on user role */}
@@ -64,6 +68,9 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <div className="text-xs text-muted-foreground">
+              <span>Role: {userRole || "Not logged in"}</span>
+            </div>
             <NotificationBell />
             <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
             <div className="flex items-center space-x-2">
@@ -80,7 +87,11 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
           <main 
             className={`flex-1 p-6 h-full transition-all duration-300 ${isDrawerOpen ? 'mr-[300px]' : 'mr-0'}`}
           >
-            {children}
+            {children || (
+              <div className="p-4 border border-red-300 rounded bg-red-50 text-red-700">
+                ⚠️ No content rendered in main layout. Check dashboard router.
+              </div>
+            )}
           </main>
           
           {/* Drawer toggle button */}
@@ -110,15 +121,27 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
                 </TabsList>
                 
                 <TabsContent value="home" className="mt-0">
-                  <Advertisements />
+                  {typeof Advertisements === 'function' ? (
+                    <Advertisements />
+                  ) : (
+                    <div className="p-4 border rounded text-amber-700 bg-amber-50">
+                      Advertisements component failed to load
+                    </div>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="activity" className="mt-0">
-                  <ActivityFeed 
-                    activities={activities}
-                    onMarkRead={handleMarkRead}
-                    onMarkAllRead={handleMarkAllRead}
-                  />
+                  {Array.isArray(activities) ? (
+                    <ActivityFeed 
+                      activities={activities}
+                      onMarkRead={handleMarkRead}
+                      onMarkAllRead={handleMarkAllRead}
+                    />
+                  ) : (
+                    <div className="p-4 border rounded text-amber-700 bg-amber-50">
+                      Activities unavailable
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>

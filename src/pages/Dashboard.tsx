@@ -20,7 +20,7 @@ const Dashboard = () => {
       console.warn("🔒 Not authenticated — redirecting to login");
       navigate("/login", { replace: true });
     }
-  }, [isAuthenticated, navigate, isLoading]);
+  }, [isAuthenticated, navigate, isLoading, userRole]);
 
   console.log("Dashboard rendering with params:", Object.fromEntries(searchParams.entries()));
   

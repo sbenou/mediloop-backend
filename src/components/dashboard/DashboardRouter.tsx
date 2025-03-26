@@ -26,6 +26,16 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   
   console.log("🚦 DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
   
+  if (!userRole) {
+    console.warn("[DashboardRouter] Warning: userRole is not defined. Rendering fallback view.");
+    return (
+      <div className="p-6 border border-red-300 rounded bg-red-50">
+        <h2 className="text-xl font-semibold text-red-700 mb-2">Dashboard Error</h2>
+        <p className="text-red-600">User role is undefined. Please try logging in again.</p>
+      </div>
+    );
+  }
+  
   // For pharmacists, always show pharmacy views regardless of URL parameter
   if (userRole === "pharmacist" || isPharmacist) {
     console.log("Rendering PharmacyView for pharmacist with section:", section);
