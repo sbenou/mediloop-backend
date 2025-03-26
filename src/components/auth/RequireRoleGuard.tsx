@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
@@ -12,6 +12,14 @@ interface RequireRoleGuardProps {
 const RequireRoleGuard = ({ allowedRoles, children }: RequireRoleGuardProps) => {
   const { isAuthenticated, isLoading, userRole } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log("🔐 RequireRoleGuard check:", {
+      isAuthenticated,
+      userRole,
+      allowedRoles,
+    });
+  }, [isAuthenticated, userRole, allowedRoles]);
 
   // If still loading authentication state, show a loading spinner
   if (isLoading) {
@@ -27,6 +35,7 @@ const RequireRoleGuard = ({ allowedRoles, children }: RequireRoleGuardProps) => 
 
   // If not authenticated or role not allowed, redirect
   if (!isAuthenticated || !userRole || !allowedRoles.includes(userRole)) {
+    console.warn("🚫 Unauthorized access. Redirecting to /unauthorized");
     navigate("/unauthorized", { replace: true });
     return null;
   }

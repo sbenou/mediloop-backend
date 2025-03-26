@@ -8,7 +8,7 @@ import Footer from '@/components/layout/Footer';
 const NotFound = () => {
   // Add more detailed logging to help debug
   useEffect(() => {
-    console.log("NotFound page mounted and rendered");
+    console.log("🚨 NotFound page mounted and rendered");
     console.log("Current URL:", window.location.href);
   }, []);
   

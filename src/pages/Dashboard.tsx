@@ -13,15 +13,17 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Redirect to login if not authenticated
+  // Add more detailed logging to help debug
   useEffect(() => {
+    console.log("✅ Dashboard mounted", { isAuthenticated, userRole });
     if (!isLoading && !isAuthenticated) {
-      console.log("User not authenticated, redirecting to login");
+      console.warn("🔒 Not authenticated — redirecting to login");
       navigate("/login", { replace: true });
     }
   }, [isAuthenticated, navigate, isLoading]);
 
-  // Show loading state while authentication is being checked
+  console.log("Dashboard rendering with params:", Object.fromEntries(searchParams.entries()));
+  
   if (isLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
@@ -33,9 +35,8 @@ const Dashboard = () => {
     );
   }
 
-  // If authenticated, wrap with role guard and show appropriate dashboard
   if (isAuthenticated && userRole) {
-    console.log("Dashboard rendering with params:", Object.fromEntries(searchParams.entries()));
+    console.log("🔓 Access granted to role:", userRole);
     
     return (
       <RequireRoleGuard allowedRoles={["patient", "doctor", "pharmacist", "superadmin"]}>

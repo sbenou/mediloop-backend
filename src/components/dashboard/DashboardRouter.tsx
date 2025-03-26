@@ -24,7 +24,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   const { params } = useDashboardParams();
   const { view, section, profileTab, ordersTab } = params;
   
-  console.log("DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
+  console.log("🚦 DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
   
   // For pharmacists, always show pharmacy views regardless of URL parameter
   if (userRole === "pharmacist" || isPharmacist) {
