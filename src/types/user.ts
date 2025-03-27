@@ -20,6 +20,8 @@ export interface UserProfile {
   is_blocked: boolean | null;
   doctor_stamp_url: string | null;
   doctor_signature_url: string | null;
+  pharmacist_stamp_url: string | null;  // Added this property
+  pharmacist_signature_url: string | null;  // Added this property
   cns_card_front: string | null;
   cns_card_back: string | null;
   cns_number: string | null;

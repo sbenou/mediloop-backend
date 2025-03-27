@@ -61,6 +61,8 @@ export const useProfileFetch = () => {
             cns_number,
             doctor_stamp_url,
             doctor_signature_url,
+            pharmacist_stamp_url,
+            pharmacist_signature_url,
             deleted_at,
             created_at,
             updated_at

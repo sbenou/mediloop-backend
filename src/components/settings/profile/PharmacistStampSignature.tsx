@@ -26,7 +26,7 @@ const PharmacistStampSignature: React.FC<PharmacistStampSignatureProps> = ({
     if (initialSignatureUrl && !signatureUrl) {
       setSignatureUrl(initialSignatureUrl);
     }
-  }, [initialStampUrl, initialSignatureUrl]);
+  }, [initialStampUrl, initialSignatureUrl, setStampUrl, setSignatureUrl, stampUrl, signatureUrl]);
   
   // Initialize from profile if props don't have the data
   useEffect(() => {
@@ -38,7 +38,7 @@ const PharmacistStampSignature: React.FC<PharmacistStampSignatureProps> = ({
         setSignatureUrl(profile.pharmacist_signature_url);
       }
     }
-  }, [profile]);
+  }, [profile, setStampUrl, setSignatureUrl, stampUrl, signatureUrl]);
 
   return (
     <div className="space-y-8">
