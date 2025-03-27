@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -37,9 +36,10 @@ interface ProfessionalData {
 
 interface UniversalProfessionalProfileProps {
   userRole: 'doctor' | 'pharmacist';
+  renderLayout?: boolean;
 }
 
-const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfileProps) => {
+const UniversalProfessionalProfile = ({ userRole, renderLayout = true }: UniversalProfessionalProfileProps) => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [isUploading, setIsUploading] = useState(false);
@@ -315,152 +315,104 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
     setActiveTab(value);
   };
 
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-            <p className="text-muted-foreground">Loading {entityType} information...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  const Content = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold tracking-tight">{entityType === 'doctor' ? 'Doctor Profile' : 'Pharmacy Profile'}</h1>
+        <p className="text-muted-foreground">
+          Manage your {entityType} information, opening hours, and staff.
+        </p>
+      </div>
 
-  if (error) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center space-y-4 max-w-md text-center px-4">
-            <AlertTriangle className="h-12 w-12 text-amber-500" />
-            <h2 className="text-xl font-semibold">{entityType} Data Unavailable</h2>
-            <p className="text-muted-foreground">{error}</p>
-            <Button onClick={fetchProfessionalData} variant="outline">
-              Retry
-            </Button>
-          </div>
+      {/* Tabs with centered list */}
+      <Tabs defaultValue="profile" value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <div className="flex justify-center mb-4">
+          <TabsList>
+            <TabsTrigger value="profile" className="flex items-center">
+              <User className="mr-2 h-4 w-4" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="team" className="flex items-center">
+              <Users className="mr-2 h-4 w-4" />
+              Team
+            </TabsTrigger>
+            <TabsTrigger value="staff" className="flex items-center">
+              <UserCog className="mr-2 h-4 w-4" />
+              Staff Management
+            </TabsTrigger>
+          </TabsList>
         </div>
-      </Layout>
-    );
-  }
+        
+        {/* Profile Tab Content */}
+        <TabsContent value="profile" className="mt-6">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold">{entityType === 'doctor' ? 'Doctor Details' : 'Pharmacy Details'}</h3>
+            </div>
+            
+            <div 
+              onClick={handleImageClick}
+              className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              {/* Use Recoil state for image URL when available, fall back to local state */}
+              {(userRole === 'doctor' && doctorStampUrl) || 
+               (userRole === 'pharmacist' && pharmacyLogoUrl) || 
+               professionalData?.logo_url ? (
+                <div className="w-full h-full relative">
+                  <img 
+                    src={userRole === 'doctor' ? doctorStampUrl : pharmacyLogoUrl || professionalData?.logo_url} 
+                    alt={professionalData?.name || entityType} 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <Button variant="outline" className="bg-white/80" disabled={isUploading}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isUploading ? 'Uploading...' : 'Change Image'}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <Image className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload {entityType} image</h3>
+                  <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your {entityType}</p>
+                  {isUploading && <p className="mt-2 text-sm text-blue-500">Uploading...</p>}
+                </div>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+            </div>
 
-  if (!professionalData) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center space-y-4 max-w-md text-center px-4">
-            <Store className="h-12 w-12 text-muted-foreground" />
-            <h2 className="text-xl font-semibold">No {entityType} Found</h2>
-            <p className="text-muted-foreground">
-              There is no {entityType} associated with your account. Please contact an administrator.
-            </p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  return (
-    <Layout>
-      <div className="space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">{entityType === 'doctor' ? 'Doctor Profile' : 'Pharmacy Profile'}</h1>
-          <p className="text-muted-foreground">
-            Manage your {entityType} information, opening hours, and staff.
-          </p>
-        </div>
-
-        {/* Tabs with centered list */}
-        <Tabs defaultValue="profile" value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <div className="flex justify-center mb-4">
-            <TabsList>
-              <TabsTrigger value="profile" className="flex items-center">
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </TabsTrigger>
-              <TabsTrigger value="team" className="flex items-center">
-                <Users className="mr-2 h-4 w-4" />
-                Team
-              </TabsTrigger>
-              <TabsTrigger value="staff" className="flex items-center">
-                <UserCog className="mr-2 h-4 w-4" />
-                Staff Management
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          
-          {/* Profile Tab Content */}
-          <TabsContent value="profile" className="mt-6">
-            <div className="container mx-auto px-4">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold">{entityType === 'doctor' ? 'Doctor Details' : 'Pharmacy Details'}</h3>
-              </div>
-              
-              <div 
-                onClick={handleImageClick}
-                className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
-              >
-                {/* Use Recoil state for image URL when available, fall back to local state */}
-                {(userRole === 'doctor' && doctorStampUrl) || 
-                 (userRole === 'pharmacist' && pharmacyLogoUrl) || 
-                 professionalData?.logo_url ? (
-                  <div className="w-full h-full relative">
-                    <img 
-                      src={userRole === 'doctor' ? doctorStampUrl : pharmacyLogoUrl || professionalData?.logo_url} 
-                      alt={professionalData?.name || entityType} 
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <Button variant="outline" className="bg-white/80" disabled={isUploading}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        {isUploading ? 'Uploading...' : 'Change Image'}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+              <Card className="h-full">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center text-lg">
+                      <Users className="mr-2 h-5 w-5" />
+                      {entityType === 'doctor' ? 'Doctor Information' : 'Pharmacy Information'}
+                    </CardTitle>
+                    <CardDescription>
+                      Contact details and address
+                    </CardDescription>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
                       </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Image className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload {entityType} image</h3>
-                    <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your {entityType}</p>
-                    {isUploading && <p className="mt-2 text-sm text-blue-500">Uploading...</p>}
-                  </div>
-                )}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  disabled={isUploading}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                <Card className="h-full">
-                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center text-lg">
-                        <Users className="mr-2 h-5 w-5" />
-                        {entityType === 'doctor' ? 'Doctor Information' : 'Pharmacy Information'}
-                      </CardTitle>
-                      <CardDescription>
-                        Contact details and address
-                      </CardDescription>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setIsEditingInfo(true)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Information
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setIsEditingInfo(true)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Information
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
                   </CardHeader>
                   <CardContent>
                     <PharmacyInfo pharmacy={professionalData} />
@@ -490,7 +442,6 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
                           Edit Hours
                         </DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu>
                   </CardHeader>
                   <CardContent>
                     <PharmacyHours hours={professionalData.hours} pharmacyId={professionalData.id} />
@@ -536,6 +487,18 @@ const UniversalProfessionalProfile = ({ userRole }: UniversalProfessionalProfile
           </TabsContent>
         </Tabs>
       </div>
+    </div>
+  );
+
+  if (!renderLayout) {
+    return <Content />;
+  }
+
+  const Layout = userRole === 'doctor' ? DoctorLayout : PharmacistLayout;
+
+  return (
+    <Layout>
+      <Content />
     </Layout>
   );
 };
