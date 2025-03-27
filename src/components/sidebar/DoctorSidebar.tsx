@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -16,7 +17,17 @@ import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 
-const DoctorSidebar = () => {
+interface DoctorSidebarProps {
+  canPrescribe?: boolean;
+  canManageStaff?: boolean;
+  canViewPrescriptions?: boolean;
+}
+
+const DoctorSidebar = ({
+  canPrescribe = false,
+  canManageStaff = false,
+  canViewPrescriptions = false
+}: DoctorSidebarProps) => {
   const { profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -89,12 +100,14 @@ const DoctorSidebar = () => {
             onClick={() => navigateToDoctorView('patients')}
           />
           
-          <SidebarItem
-            icon={<FileText className="w-5 h-5 mr-3" />}
-            label="Prescriptions"
-            isActive={section === "prescriptions"}
-            onClick={() => navigateToDoctorView('prescriptions')}
-          />
+          {canViewPrescriptions && (
+            <SidebarItem
+              icon={<FileText className="w-5 h-5 mr-3" />}
+              label="Prescriptions"
+              isActive={section === "prescriptions"}
+              onClick={() => navigateToDoctorView('prescriptions')}
+            />
+          )}
           
           <SidebarItem
             icon={<Video className="w-5 h-5 mr-3" />}

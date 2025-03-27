@@ -17,7 +17,21 @@ import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 
-const PharmacistSidebar = () => {
+interface PharmacistSidebarProps {
+  canViewProducts?: boolean;
+  canEditProducts?: boolean;
+  canManageStaff?: boolean;
+  canManagePrescriptions?: boolean;
+  canViewPrescriptions?: boolean;
+}
+
+const PharmacistSidebar = ({
+  canViewProducts = false,
+  canEditProducts = false,
+  canManageStaff = false,
+  canManagePrescriptions = false,
+  canViewPrescriptions = false
+}: PharmacistSidebarProps) => {
   const { profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -114,19 +128,23 @@ const PharmacistSidebar = () => {
             />
           </SidebarCollapsibleItem>
           
-          <SidebarItem
-            icon={<FileText className="w-5 h-5 mr-3" />}
-            label="Prescriptions"
-            isActive={isPharmacistSectionActive("prescriptions")}
-            onClick={() => navigateToPharmacySection('prescriptions')}
-          />
+          {canViewPrescriptions && (
+            <SidebarItem
+              icon={<FileText className="w-5 h-5 mr-3" />}
+              label="Prescriptions"
+              isActive={isPharmacistSectionActive("prescriptions")}
+              onClick={() => navigateToPharmacySection('prescriptions')}
+            />
+          )}
           
-          <SidebarItem
-            icon={<Pill className="w-5 h-5 mr-3" />}
-            label="Products"
-            isActive={location.pathname === '/products'}
-            onClick={navigateToProducts}
-          />
+          {canViewProducts && (
+            <SidebarItem
+              icon={<Pill className="w-5 h-5 mr-3" />}
+              label="Products"
+              isActive={location.pathname === '/products'}
+              onClick={navigateToProducts}
+            />
+          )}
           
           <SidebarItem
             icon={<Users className="w-5 h-5 mr-3" />}
