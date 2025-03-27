@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -136,22 +137,28 @@ const PharmacistSidebar = () => {
             onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
           >
             <SidebarSubItem
-              icon={<Store className="w-4 h-4 mr-3" />}
-              label="Pharmacy Info"
-              isActive={isPharmacistTabActive("profile", "profileTab", "pharmacy")}
-              onClick={() => navigateToPharmacySection('profile', 'pharmacy', 'profileTab')}
+              icon={<UserCircle className="w-4 h-4 mr-3" />}
+              label="Personal Details"
+              isActive={isPharmacistTabActive("profile", "profileTab", "personal")}
+              onClick={() => navigateToPharmacySection('profile', 'personal', 'profileTab')}
             />
             <SidebarSubItem
               icon={<MapPin className="w-4 h-4 mr-3" />}
-              label="Locations"
-              isActive={isPharmacistTabActive("profile", "profileTab", "locations")}
-              onClick={() => navigateToPharmacySection('profile', 'locations', 'profileTab')}
+              label="Addresses"
+              isActive={isPharmacistTabActive("profile", "profileTab", "addresses")}
+              onClick={() => navigateToPharmacySection('profile', 'addresses', 'profileTab')}
             />
             <SidebarSubItem
               icon={<Users className="w-4 h-4 mr-3" />}
-              label="Staff"
-              isActive={isPharmacistTabActive("profile", "profileTab", "staff")}
-              onClick={() => navigateToPharmacySection('profile', 'staff', 'profileTab')}
+              label="Next of Kin"
+              isActive={isPharmacistTabActive("profile", "profileTab", "nextofkin")}
+              onClick={() => navigateToPharmacySection('profile', 'nextofkin', 'profileTab')}
+            />
+            <SidebarSubItem
+              icon={<Store className="w-4 h-4 mr-3" />}
+              label="Stamp & Signature"
+              isActive={isPharmacistTabActive("profile", "profileTab", "stampSignature")}
+              onClick={() => navigateToPharmacySection('profile', 'stampSignature', 'profileTab')}
             />
           </SidebarCollapsibleItem>
           
@@ -171,7 +178,7 @@ const PharmacistSidebar = () => {
         handleAvatarClick={handleAvatarClick}
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
-        navigateToProfile={() => navigateToPharmacySection('profile', 'pharmacy', 'profileTab')}
+        navigateToProfile={() => navigateToPharmacySection('profile', 'personal', 'profileTab')}
         navigateToBilling={() => navigateToPharmacySection('orders', 'payments', 'ordersTab')}
         navigateToUpgrade={() => navigateToLink('/upgrade')}
         navigateToPharmacyProfile={navigateToPharmacyProfile}
