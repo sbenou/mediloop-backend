@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -56,7 +57,6 @@ const UniversalProfessionalProfile = ({ userRole, renderLayout = true }: Univers
   const [pharmacyLogoUrl, setPharmacyLogoUrl] = useRecoilState(pharmacyLogoUrlState);
 
   const entityType = userRole === 'doctor' ? 'doctor' : 'pharmacy';
-  const Layout = userRole === 'doctor' ? DoctorLayout : PharmacistLayout;
 
   useEffect(() => {
     fetchProfessionalData();
@@ -124,77 +124,77 @@ const UniversalProfessionalProfile = ({ userRole, renderLayout = true }: Univers
         setProfessionalData(doctorData);
         setIsLoading(false);
         return;
-        
-      } else {
-        relationQuery = await supabase
-          .from('user_pharmacies')
-          .select('pharmacy_id')
-          .eq('user_id', profile.id)
-          .maybeSingle();
-          
-        if (relationQuery.error) {
-          console.error(`Error fetching pharmacy relation:`, relationQuery.error);
-          setError(`Failed to fetch pharmacy relationship`);
-          setIsLoading(false);
-          return;
-        }
-        
-        if (!relationQuery.data || !relationQuery.data.pharmacy_id) {
-          console.log(`No pharmacy associated with this user:`, profile.id);
-          setError(`No pharmacy associated with your account`);
-          setIsLoading(false);
-          return;
-        }
-        
-        console.log(`Found pharmacy relation:`, relationQuery.data);
-        
-        const pharmacyId = relationQuery.data.pharmacy_id;
-        
-        // Get the pharmacy data
-        const pharmacyQuery = await supabase
-          .from('pharmacies')
-          .select('*')
-          .eq('id', pharmacyId)
-          .maybeSingle();
-        
-        if (pharmacyQuery.error) {
-          console.error(`Error fetching pharmacy:`, pharmacyQuery.error);
-          setError(`Failed to fetch pharmacy details`);
-          setIsLoading(false);
-          return;
-        }
-        
-        if (!pharmacyQuery.data) {
-          console.log(`Pharmacy not found for ID:`, pharmacyId);
-          setError(`Pharmacy not found`);
-          setIsLoading(false);
-          return;
-        }
-        
-        console.log(`Fetched pharmacy data:`, pharmacyQuery.data);
-        
-        // Get pharmacy metadata (like logo)
-        const metadataQuery = await supabase
-          .from('pharmacy_metadata')
-          .select('logo_url')
-          .eq('pharmacy_id', pharmacyId)
-          .maybeSingle();
-          
-        let logoUrl = null;
-        if (!metadataQuery.error && metadataQuery.data) {
-          logoUrl = metadataQuery.data.logo_url;
-        } else {
-          console.error(`Error or no data fetching pharmacy metadata:`, metadataQuery.error);
-        }
-        
-        const pharmacyData = {
-          ...pharmacyQuery.data,
-          logo_url: logoUrl
-        };
-        
-        setProfessionalData(pharmacyData as ProfessionalData);
-        setIsLoading(false);
       }
+      
+      // For pharmacists
+      relationQuery = await supabase
+        .from('user_pharmacies')
+        .select('pharmacy_id')
+        .eq('user_id', profile.id)
+        .maybeSingle();
+        
+      if (relationQuery.error) {
+        console.error(`Error fetching pharmacy relation:`, relationQuery.error);
+        setError(`Failed to fetch pharmacy relationship`);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!relationQuery.data || !relationQuery.data.pharmacy_id) {
+        console.log(`No pharmacy associated with this user:`, profile.id);
+        setError(`No pharmacy associated with your account`);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log(`Found pharmacy relation:`, relationQuery.data);
+      
+      const pharmacyId = relationQuery.data.pharmacy_id;
+      
+      // Get the pharmacy data
+      const pharmacyQuery = await supabase
+        .from('pharmacies')
+        .select('*')
+        .eq('id', pharmacyId)
+        .maybeSingle();
+      
+      if (pharmacyQuery.error) {
+        console.error(`Error fetching pharmacy:`, pharmacyQuery.error);
+        setError(`Failed to fetch pharmacy details`);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!pharmacyQuery.data) {
+        console.log(`Pharmacy not found for ID:`, pharmacyId);
+        setError(`Pharmacy not found`);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log(`Fetched pharmacy data:`, pharmacyQuery.data);
+      
+      // Get pharmacy metadata (like logo)
+      const metadataQuery = await supabase
+        .from('pharmacy_metadata')
+        .select('logo_url')
+        .eq('pharmacy_id', pharmacyId)
+        .maybeSingle();
+        
+      let logoUrl = null;
+      if (!metadataQuery.error && metadataQuery.data) {
+        logoUrl = metadataQuery.data.logo_url;
+      } else {
+        console.error(`Error or no data fetching pharmacy metadata:`, metadataQuery.error);
+      }
+      
+      const pharmacyData = {
+        ...pharmacyQuery.data,
+        logo_url: logoUrl
+      };
+      
+      setProfessionalData(pharmacyData as ProfessionalData);
+      setIsLoading(false);
     } catch (error) {
       console.error(`Error fetching ${entityType} data:`, error);
       setError("An unexpected error occurred");
@@ -315,185 +315,220 @@ const UniversalProfessionalProfile = ({ userRole, renderLayout = true }: Univers
     setActiveTab(value);
   };
 
-  const Content = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight">{entityType === 'doctor' ? 'Doctor Profile' : 'Pharmacy Profile'}</h1>
-        <p className="text-muted-foreground">
-          Manage your {entityType} information, opening hours, and staff.
-        </p>
-      </div>
-
-      {/* Tabs with centered list */}
-      <Tabs defaultValue="profile" value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <div className="flex justify-center mb-4">
-          <TabsList>
-            <TabsTrigger value="profile" className="flex items-center">
-              <User className="mr-2 h-4 w-4" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center">
-              <Users className="mr-2 h-4 w-4" />
-              Team
-            </TabsTrigger>
-            <TabsTrigger value="staff" className="flex items-center">
-              <UserCog className="mr-2 h-4 w-4" />
-              Staff Management
-            </TabsTrigger>
-          </TabsList>
+  const Content = () => {
+    // Early return for loading state
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <p>Loading {entityType} information...</p>
         </div>
-        
-        {/* Profile Tab Content */}
-        <TabsContent value="profile" className="mt-6">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">{entityType === 'doctor' ? 'Doctor Details' : 'Pharmacy Details'}</h3>
-            </div>
-            
-            <div 
-              onClick={handleImageClick}
-              className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
-            >
-              {/* Use Recoil state for image URL when available, fall back to local state */}
-              {(userRole === 'doctor' && doctorStampUrl) || 
-                (userRole === 'pharmacist' && pharmacyLogoUrl) || 
-                professionalData?.logo_url ? (
-                <div className="w-full h-full relative">
-                  <img 
-                    src={userRole === 'doctor' ? doctorStampUrl : pharmacyLogoUrl || professionalData?.logo_url} 
-                    alt={professionalData?.name || entityType} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <Button variant="outline" className="bg-white/80" disabled={isUploading}>
-                      <Upload className="mr-2 h-4 w-4" />
-                      {isUploading ? 'Uploading...' : 'Change Image'}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <Image className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload {entityType} image</h3>
-                  <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your {entityType}</p>
-                  {isUploading && <p className="mt-2 text-sm text-blue-500">Uploading...</p>}
-                </div>
-              )}
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileChange}
-                disabled={isUploading}
-              />
-            </div>
+      );
+    }
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-              <Card className="h-full">
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center text-lg">
-                      <Users className="mr-2 h-5 w-5" />
-                      {entityType === 'doctor' ? 'Doctor Information' : 'Pharmacy Information'}
-                    </CardTitle>
-                    <CardDescription>
-                      Contact details and address
-                    </CardDescription>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setIsEditingInfo(true)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Information
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardHeader>
-                <CardContent>
-                  <PharmacyInfo pharmacy={professionalData} />
-                </CardContent>
-              </Card>
+    // Show error state if needed
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+          <h3 className="text-xl font-semibold mb-2">Unable to load profile</h3>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      );
+    }
 
-              <Card className="h-full">
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center text-lg">
-                      <Clock className="mr-2 h-5 w-5" />
-                      Opening Hours
-                    </CardTitle>
-                    <CardDescription>
-                      When your {entityType} is open
-                    </CardDescription>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setIsEditingHours(true)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Hours
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardHeader>
-                <CardContent>
-                  <PharmacyHours hours={professionalData?.hours} pharmacyId={professionalData?.id} />
-                </CardContent>
-              </Card>
+    // Safety check for null data
+    if (!professionalData) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+          <h3 className="text-xl font-semibold mb-2">No profile data available</h3>
+          <p className="text-muted-foreground">Please try again later</p>
+        </div>
+      );
+    }
 
-              <Card className="h-full">
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center text-lg">
-                      <MapPin className="mr-2 h-5 w-5" />
-                      Location
-                    </CardTitle>
-                    <CardDescription>
-                      {entityType} location and distance
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <PharmacyMap pharmacy={professionalData} />
-                </CardContent>
-              </Card>
-            </div>
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold tracking-tight">{entityType === 'doctor' ? 'Doctor Profile' : 'Pharmacy Profile'}</h1>
+          <p className="text-muted-foreground">
+            Manage your {entityType} information, opening hours, and staff.
+          </p>
+        </div>
+
+        {/* Tabs with centered list */}
+        <Tabs defaultValue="profile" value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <div className="flex justify-center mb-4">
+            <TabsList>
+              <TabsTrigger value="profile" className="flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </TabsTrigger>
+              <TabsTrigger value="team" className="flex items-center">
+                <Users className="mr-2 h-4 w-4" />
+                Team
+              </TabsTrigger>
+              <TabsTrigger value="staff" className="flex items-center">
+                <UserCog className="mr-2 h-4 w-4" />
+                Staff Management
+              </TabsTrigger>
+            </TabsList>
           </div>
-        </TabsContent>
-        
-        {/* Team Tab Content */}
-        <TabsContent value="team" className="mt-6">
-          <PharmacyTeam 
-            pharmacyId={professionalData?.id}
-            entityType={entityType}
-          />
-        </TabsContent>
-        
-        {/* Staff Management Tab Content */}
-        <TabsContent value="staff" className="mt-6">
-          <div className="container mx-auto px-4">
-            <PharmacyStaff 
+          
+          {/* Profile Tab Content */}
+          <TabsContent value="profile" className="mt-6">
+            <div className="container mx-auto px-4">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold">{entityType === 'doctor' ? 'Doctor Details' : 'Pharmacy Details'}</h3>
+              </div>
+              
+              <div 
+                onClick={handleImageClick}
+                className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden border border-dashed border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                {/* Use Recoil state for image URL when available, fall back to local state */}
+                {(userRole === 'doctor' && doctorStampUrl) || 
+                 (userRole === 'pharmacist' && pharmacyLogoUrl) || 
+                 professionalData?.logo_url ? (
+                  <div className="w-full h-full relative">
+                    <img 
+                      src={userRole === 'doctor' ? doctorStampUrl : pharmacyLogoUrl || professionalData?.logo_url} 
+                      alt={professionalData?.name || entityType} 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <Button variant="outline" className="bg-white/80" disabled={isUploading}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        {isUploading ? 'Uploading...' : 'Change Image'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <Image className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-semibold text-gray-900">Upload {entityType} image</h3>
+                    <p className="mt-1 text-sm text-gray-500">Click to upload a logo or image for your {entityType}</p>
+                    {isUploading && <p className="mt-2 text-sm text-blue-500">Uploading...</p>}
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <Card className="h-full">
+                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center text-lg">
+                        <Users className="mr-2 h-5 w-5" />
+                        {entityType === 'doctor' ? 'Doctor Information' : 'Pharmacy Information'}
+                      </CardTitle>
+                      <CardDescription>
+                        Contact details and address
+                      </CardDescription>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setIsEditingInfo(true)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Information
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardHeader>
+                  <CardContent>
+                    <PharmacyInfo pharmacy={professionalData} />
+                  </CardContent>
+                </Card>
+
+                <Card className="h-full">
+                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center text-lg">
+                        <Clock className="mr-2 h-5 w-5" />
+                        Opening Hours
+                      </CardTitle>
+                      <CardDescription>
+                        When your {entityType} is open
+                      </CardDescription>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setIsEditingHours(true)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Hours
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardHeader>
+                  <CardContent>
+                    <PharmacyHours hours={professionalData?.hours} pharmacyId={professionalData?.id} />
+                  </CardContent>
+                </Card>
+
+                <Card className="h-full">
+                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center text-lg">
+                        <MapPin className="mr-2 h-5 w-5" />
+                        Location
+                      </CardTitle>
+                      <CardDescription>
+                        {entityType} location and distance
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <PharmacyMap pharmacy={professionalData} />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+          
+          {/* Team Tab Content */}
+          <TabsContent value="team" className="mt-6">
+            <PharmacyTeam 
               pharmacyId={professionalData?.id}
               entityType={entityType}
             />
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+          </TabsContent>
+          
+          {/* Staff Management Tab Content */}
+          <TabsContent value="staff" className="mt-6">
+            <div className="container mx-auto px-4">
+              <PharmacyStaff 
+                pharmacyId={professionalData?.id}
+                entityType={entityType}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  };
 
   if (!renderLayout) {
     return <Content />;
   }
+
+  const Layout = userRole === 'doctor' ? DoctorLayout : PharmacistLayout;
 
   return (
     <Layout>
