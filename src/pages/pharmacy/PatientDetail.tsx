@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
@@ -32,8 +31,8 @@ const PatientDetail = () => {
         // Ensure the profile data has all required properties
         const completePatient = {
           ...patientData as any,
-          pharmacist_stamp_url: null,
-          pharmacist_signature_url: null
+          pharmacist_stamp_url: patientData.pharmacist_stamp_url || null,
+          pharmacist_signature_url: patientData.pharmacist_signature_url || null
         };
         
         setPatient(completePatient);

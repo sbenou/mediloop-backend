@@ -68,8 +68,8 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           profile: {
             ...profile as any,
             // Explicitly add the pharmacist fields with fallbacks
-            pharmacist_stamp_url: null,
-            pharmacist_signature_url: null
+            pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+            pharmacist_signature_url: profile.pharmacist_signature_url || null
           },
           isLoading: false,
           permissions: [],

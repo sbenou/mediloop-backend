@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, safeQueryResult } from '@/types/user';
@@ -157,8 +156,8 @@ export const useProfileFetch = () => {
         const completeProfile: UserProfile = {
           ...profile as any,
           // Make sure pharmacist fields are set, even if they're not in the database
-          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile.pharmacist_signature_url || null
+          pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
+          pharmacist_signature_url: profile?.pharmacist_signature_url || null
         };
 
         const safeProfile = safeQueryResult<UserProfile>(completeProfile);

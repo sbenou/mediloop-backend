@@ -553,6 +553,8 @@ export type Database = {
           id: string
           is_blocked: boolean | null
           license_number: string | null
+          pharmacist_signature_url: string | null
+          pharmacist_stamp_url: string | null
           pharmacy_logo_url: string | null
           pharmacy_name: string | null
           role: string
@@ -576,6 +578,8 @@ export type Database = {
           id: string
           is_blocked?: boolean | null
           license_number?: string | null
+          pharmacist_signature_url?: string | null
+          pharmacist_stamp_url?: string | null
           pharmacy_logo_url?: string | null
           pharmacy_name?: string | null
           role: string
@@ -599,6 +603,8 @@ export type Database = {
           id?: string
           is_blocked?: boolean | null
           license_number?: string | null
+          pharmacist_signature_url?: string | null
+          pharmacist_stamp_url?: string | null
           pharmacy_logo_url?: string | null
           pharmacy_name?: string | null
           role?: string
