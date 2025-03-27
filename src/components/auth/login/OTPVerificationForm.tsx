@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
+import { UserProfile } from "@/types/user";
 
 interface OTPVerificationFormProps {
   email: string;
@@ -61,16 +62,19 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
 
         // Ensure we have profile data with proper fallbacks
         const profile = profileData || {};
+        
+        // Create a complete profile with all required properties
+        const completeProfile: UserProfile = {
+          ...(profile as any),
+          // Explicitly add the pharmacist fields with fallbacks
+          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+          pharmacist_signature_url: profile.pharmacist_signature_url || null
+        };
           
         // Add the profile with all required properties to state
         setAuth({
           user: data.user,
-          profile: {
-            ...profile as any,
-            // Explicitly add the pharmacist fields with fallbacks
-            pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-            pharmacist_signature_url: profile.pharmacist_signature_url || null
-          },
+          profile: completeProfile,
           isLoading: false,
           permissions: [],
         });

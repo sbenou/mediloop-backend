@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
@@ -29,8 +30,8 @@ const PatientDetail = () => {
         if (patientError) throw patientError;
         
         // Ensure the profile data has all required properties
-        const completePatient = {
-          ...patientData as any,
+        const completePatient: UserProfile = {
+          ...(patientData as any),
           pharmacist_stamp_url: patientData.pharmacist_stamp_url || null,
           pharmacist_signature_url: patientData.pharmacist_signature_url || null
         };
@@ -83,7 +84,7 @@ const PatientDetail = () => {
     <PharmacistLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{patient.full_name}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{patient?.full_name}</h1>
           <p className="text-muted-foreground">
             Patient profile information
           </p>

@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { PasswordInput } from "./PasswordInput";
 import { usePasswordLogin } from "@/hooks/auth/usePasswordLogin";
 import { RememberMeOption } from "./RememberMeOption";
@@ -21,7 +19,10 @@ export const PasswordFields = ({
 }: PasswordFieldsProps) => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true); // Default to true for better UX
-  const { handleLogin, isLoading } = usePasswordLogin({ email, onSuccess });
+  const { handleLogin, isLoading } = usePasswordLogin({ 
+    email, 
+    onSuccess 
+  });
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();

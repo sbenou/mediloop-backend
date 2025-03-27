@@ -13,7 +13,106 @@ interface LoginResult {
   login: (password: string) => Promise<void>;
 }
 
-export const usePasswordLogin = (email: string): LoginResult => {
+// Update this interface to match what PasswordFields expects
+interface UsePasswordLoginResult {
+  isLoading: boolean;
+  error: AuthError | null;
+  handleLogin: (password: string, rememberMe: boolean) => Promise<void>;
+}
+
+interface UsePasswordLoginProps {
+  email: string;
+  onSuccess?: () => void;
+}
+
+export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): UsePasswordLoginResult => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<AuthError | null>(null);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const setAuth = useSetRecoilState(authState);
+
+  const handleLogin = useCallback(async (password: string, rememberMe: boolean = true) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (authError) {
+        setError(authError);
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: authError.message,
+        });
+        return;
+      }
+
+      if (data?.session) {
+        // Store the session immediately after login
+        storeSession(data.session);
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user?.id)
+          .single();
+
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          toast({
+            variant: "destructive",
+            title: "Login failed",
+            description: "Failed to fetch user profile.",
+          });
+          return;
+        }
+
+        const completeProfile = {
+          ...profile as any,
+          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+          pharmacist_signature_url: profile.pharmacist_signature_url || null
+        };
+
+        setAuth({
+          user: data.user,
+          profile: completeProfile,
+          permissions: [],
+          isLoading: false,
+        });
+
+        toast({
+          title: "Login successful",
+          description: "You have successfully logged in.",
+        });
+
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate('/', { replace: true });
+        }
+      }
+    } catch (err: any) {
+      setError(err);
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: err.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, navigate, setAuth, toast, onSuccess]);
+
+  return { isLoading, error, handleLogin };
+};
+
+// Keep the old export for backward compatibility
+export const usePasswordLoginLegacy = (email: string): LoginResult => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
   const { toast } = useToast();
