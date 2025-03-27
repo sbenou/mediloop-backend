@@ -1,115 +1,134 @@
 
 import { useState } from 'react';
-import { Canvas as FabricCanvas } from 'fabric';
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { useSetRecoilState } from "recoil";
-import { doctorStampUrlState, doctorSignatureUrlState } from "@/store/images/atoms";
+import { Canvas } from 'fabric';
+import { useToast } from '@/components/ui/use-toast';
+import { useRecoilState } from 'recoil';
+import { 
+  doctorStampUrlState,
+  doctorSignatureUrlState,
+  pharmacistStampUrlState,
+  pharmacistSignatureUrlState
+} from '@/store/images/atoms';
+import { supabase } from '@/lib/supabase';
 
 export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   
-  // Add Recoil state setters
-  const setDoctorStampUrl = useSetRecoilState(doctorStampUrlState);
-  const setDoctorSignatureUrl = useSetRecoilState(doctorSignatureUrlState);
+  // Get appropriate Recoil state based on type
+  const [doctorStampUrl, setDoctorStampUrl] = useRecoilState(doctorStampUrlState);
+  const [doctorSignatureUrl, setDoctorSignatureUrl] = useRecoilState(doctorSignatureUrlState);
+  const [pharmacistStampUrl, setPharmacistStampUrl] = useRecoilState(pharmacistStampUrlState);
+  const [pharmacistSignatureUrl, setPharmacistSignatureUrl] = useRecoilState(pharmacistSignatureUrlState);
 
-  const saveCanvas = async (canvas: FabricCanvas | null) => {
-    if (!canvas || !userId) return;
-    
+  const getUrlAtom = (type: 'stamp' | 'signature', role: 'doctor' | 'pharmacist') => {
+    if (role === 'doctor' && type === 'stamp') return [doctorStampUrl, setDoctorStampUrl] as const;
+    if (role === 'doctor' && type === 'signature') return [doctorSignatureUrl, setDoctorSignatureUrl] as const;
+    if (role === 'pharmacist' && type === 'stamp') return [pharmacistStampUrl, setPharmacistStampUrl] as const;
+    return [pharmacistSignatureUrl, setPharmacistSignatureUrl] as const;
+  };
+
+  const saveCanvas = async (canvas: Canvas) => {
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "User ID is missing. Cannot save the canvas.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
+
     try {
-      console.log(`Starting ${type} save process...`);
+      console.log(`Saving ${type} for user ${userId}`);
       
-      // Convert canvas to data URL with the required multiplier option
+      // First determine if this is for a doctor or pharmacist by checking the user's profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError || !profileData) {
+        throw new Error(`Could not determine user role: ${profileError?.message || 'Unknown error'}`);
+      }
+      
+      const userRole = profileData.role === 'doctor' ? 'doctor' : 'pharmacist';
+      console.log(`User role determined: ${userRole}`);
+      
+      // Get canvas as dataURL (PNG)
       const dataUrl = canvas.toDataURL({
         format: 'png',
-        quality: 1,
-        multiplier: 1
+        quality: 0.8,
+        multiplier: 2 // Better resolution
       });
       
-      console.log(`${type} canvas converted to data URL`);
+      // Create a blob from the dataURL
+      const blobData = await fetch(dataUrl).then(res => res.blob());
       
-      // Convert data URL to blob
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
+      // Generate a unique filename
+      const filename = `${userRole}_${type}_${userId}_${Date.now()}.png`;
+      const filePath = `${userRole}/${userId}/${filename}`;
       
-      console.log(`${type} blob created: ${blob.size} bytes, type: ${blob.type}`);
-      
-      // Upload to Supabase storage
-      const filePath = `${type === 'stamp' ? 'stamps' : 'signatures'}/${userId}/${Date.now()}.png`;
-      console.log(`Preparing to upload ${type} to: ${filePath}`);
-      
-      // Upload the file to the doctor-images bucket
-      const { error: uploadError } = await supabase.storage
-        .from('doctor-images')
-        .upload(filePath, blob, {
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase
+        .storage
+        .from('images')
+        .upload(filePath, blobData, {
           contentType: 'image/png',
           upsert: true
         });
-      
+        
       if (uploadError) {
-        console.error(`Error uploading ${type}:`, uploadError);
-        throw uploadError;
+        throw new Error(`Error uploading image: ${uploadError.message}`);
       }
-      
-      console.log(`${type} uploaded successfully, getting public URL`);
       
       // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from('doctor-images')
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('images')
         .getPublicUrl(filePath);
+        
+      const publicUrl = publicUrlData.publicUrl;
+      console.log(`File uploaded successfully, public URL: ${publicUrl}`);
       
-      console.log(`Public URL obtained: ${urlData.publicUrl}`);
-      
-      // Add cache-busting query parameter to force reload
-      const cachebustedUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-      
-      // Update profile
-      const fieldName = type === 'stamp' ? 'doctor_stamp_url' : 'doctor_signature_url';
+      // Update the profile in the database
+      const updateField = userRole === 'doctor' 
+        ? (type === 'stamp' ? 'doctor_stamp_url' : 'doctor_signature_url')
+        : (type === 'stamp' ? 'pharmacist_stamp_url' : 'pharmacist_signature_url');
+        
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ [fieldName]: cachebustedUrl })
+        .update({ [updateField]: publicUrl })
         .eq('id', userId);
-      
+        
       if (updateError) {
-        console.error(`Error updating profile with ${type} URL:`, updateError);
-        throw updateError;
+        throw new Error(`Error updating profile: ${updateError.message}`);
       }
       
-      console.log(`Profile updated with new ${type} URL`);
-      
-      // Update Recoil state
-      if (type === 'stamp') {
-        setDoctorStampUrl(cachebustedUrl);
-      } else {
-        setDoctorSignatureUrl(cachebustedUrl);
-      }
-      
-      // Invalidate query cache for both profile and specific user-related queries
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile', userId] });
+      // Update the Recoil state
+      const [_, setUrlState] = getUrlAtom(type, userRole as 'doctor' | 'pharmacist');
+      setUrlState(publicUrl);
       
       toast({
         title: "Success",
-        description: `Doctor ${type} uploaded successfully`
+        description: `Your ${type} has been saved successfully.`
       });
-    } catch (error: any) {
-      console.error(`Error saving ${type}:`, error);
+      
+      console.log(`${userRole} ${type} saved successfully`);
+      return publicUrl;
+    } catch (error) {
+      console.error('Error saving canvas:', error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: error.message || `Failed to upload ${type}`
+        description: `Failed to save your ${type}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    saveCanvas,
-    isLoading
-  };
+  return { saveCanvas, isLoading };
 };

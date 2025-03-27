@@ -1,93 +1,136 @@
 
-import { useState, useEffect, useRef } from 'react';
-import { Canvas as FabricCanvas } from 'fabric';
-import { initializeCanvas, cleanupCanvasListeners } from '../utils/canvasInitialization';
+import { useRef, useState, useEffect } from 'react';
+import { Canvas as FabricCanvas, Image } from 'fabric';
 
 interface UseCanvasInitializationProps {
   imageUrl: string | null;
 }
 
 export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationProps) => {
-  const [canvas, setCanvas] = useState<FabricCanvas | null>(null);
-  const [canvasWidth, setCanvasWidth] = useState(200);
-  const [canvasHeight, setCanvasHeight] = useState(200);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false);
-
-  // Initialize canvas when container is ready
+  const [canvas, setCanvas] = useState<FabricCanvas | null>(null);
+  const [canvasWidth, setCanvasWidth] = useState(400);
+  const [canvasHeight, setCanvasHeight] = useState(200);
+  const canvasCreated = useRef(false);
+  
+  // Initialize canvas
   useEffect(() => {
-    if (!canvasContainerRef.current || initialized.current) return;
+    // Don't re-initialize if canvas already exists
+    if (canvasCreated.current || !canvasContainerRef.current) {
+      return;
+    }
     
     try {
-      // Initialize canvas with the container and image URL
-      const fabricCanvas = initializeCanvas(canvasContainerRef.current, imageUrl);
-      setCanvas(fabricCanvas);
+      console.log("Creating new fabric canvas instance");
+      const canvasInstance = new FabricCanvas('canvas', {
+        backgroundColor: '#ffffff',
+        width: canvasWidth,
+        height: canvasHeight,
+        selection: true,
+        preserveObjectStacking: true,
+        isDrawingMode: false,
+        renderOnAddRemove: true
+      });
       
-      // Update dimensions state
-      setCanvasWidth(fabricCanvas.getWidth());
-      setCanvasHeight(fabricCanvas.getHeight());
+      // Set the canvas instance to state
+      setCanvas(canvasInstance);
+      canvasCreated.current = true;
       
-      initialized.current = true;
+      // Create canvas element if it doesn't exist
+      if (!document.getElementById('canvas')) {
+        const newCanvas = document.createElement('canvas');
+        newCanvas.id = 'canvas';
+        canvasContainerRef.current.appendChild(newCanvas);
+      }
       
-      // Cleanup function
+      // Set white background
+      canvasInstance.backgroundColor = '#ffffff';
+      canvasInstance.renderAll();
+      
+      console.log("Canvas initialized successfully");
+      
+      // Clean up when component unmounts
       return () => {
-        try {
-          // Safely remove all event listeners and dispose canvas
-          if (fabricCanvas) {
-            // Remove known event listeners first
-            fabricCanvas.off('mouse:over');
-            fabricCanvas.off('object:added');
-            
-            // Then use cleanup utility
-            cleanupCanvasListeners(fabricCanvas);
-          }
-        } catch (error) {
-          console.error('Error in canvas cleanup:', error);
-        } finally {
-          // Always set canvas to null to prevent further access attempts
-          setCanvas(null);
-        }
+        console.log("Disposing canvas");
+        canvasInstance.dispose();
+        canvasCreated.current = false;
       };
     } catch (error) {
-      console.error('Error initializing canvas:', error);
+      console.error("Error initializing canvas:", error);
     }
-  }, [imageUrl]);
-
-  // Handle window resize
+  }, [canvasWidth, canvasHeight, canvasContainerRef]);
+  
+  // Handle loading image from URL if provided
+  useEffect(() => {
+    if (!canvas || !imageUrl) return;
+    
+    console.log("Loading image from URL:", imageUrl);
+    
+    // Clear existing canvas content first
+    try {
+      canvas.clear();
+      canvas.backgroundColor = '#ffffff';
+      
+      // Load and center the image
+      fabric.Image.fromURL(imageUrl, (img) => {
+        console.log("Image loaded from URL:", img);
+        
+        // Resize image to fit within canvas while maintaining aspect ratio
+        const canvasAspect = canvas.width! / canvas.height!;
+        const imgAspect = img.width! / img.height!;
+        
+        let scaleFactor;
+        if (imgAspect > canvasAspect) {
+          // Image is wider than canvas
+          scaleFactor = (canvas.width! * 0.9) / img.width!;
+        } else {
+          // Image is taller than canvas
+          scaleFactor = (canvas.height! * 0.9) / img.height!;
+        }
+        
+        img.scale(scaleFactor);
+        
+        // Center the image on the canvas
+        img.set({
+          left: canvas.width! / 2,
+          top: canvas.height! / 2,
+          originX: 'center',
+          originY: 'center'
+        });
+        
+        canvas.add(img);
+        canvas.renderAll();
+        
+        console.log("Image added to canvas");
+      }, { crossOrigin: 'anonymous' });
+    } catch (error) {
+      console.error("Error loading image to canvas:", error);
+    }
+  }, [canvas, imageUrl]);
+  
+  // Watch for container size changes and resize canvas
   useEffect(() => {
     if (!canvas || !canvasContainerRef.current) return;
 
-    const handleResize = () => {
-      try {
-        if (!canvasContainerRef.current || !canvas) return;
-        
-        const { clientWidth, clientHeight } = canvasContainerRef.current;
-        
-        // Only resize if container dimensions have changed
-        if (clientWidth !== canvas.getWidth() || clientHeight !== canvas.getHeight()) {
-          canvas.setDimensions({
-            width: clientWidth,
-            height: clientHeight
-          });
-          
-          // Update dimensions state
-          setCanvasWidth(clientWidth);
-          setCanvasHeight(clientHeight);
-          
-          // Force a render
-          canvas.renderAll();
-        }
-      } catch (error) {
-        console.error('Error handling canvas resize:', error);
+    const resizeObserver = new ResizeObserver((entries) => {
+      const newWidth = entries[0].contentRect.width;
+      // Don't change height based on container width for now
+      // const newHeight = entries[0].contentRect.height;
+      
+      // Only resize if the change is substantial (> 5px)
+      if (Math.abs(newWidth - canvasWidth) > 5) {
+        setCanvasWidth(newWidth);
+        canvas.setWidth(newWidth);
+        canvas.renderAll();
       }
-    };
-
-    window.addEventListener('resize', handleResize);
+    });
+    
+    resizeObserver.observe(canvasContainerRef.current);
     
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
     };
-  }, [canvas]);
+  }, [canvas, canvasWidth, canvasHeight, canvasContainerRef]);
 
   return {
     canvasContainerRef,
