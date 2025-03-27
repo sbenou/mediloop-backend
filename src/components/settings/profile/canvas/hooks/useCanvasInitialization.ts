@@ -1,6 +1,6 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { Canvas as FabricCanvas, Image } from 'fabric';
+import { Canvas as FabricCanvas, Image as FabricImage } from 'fabric';
 
 interface UseCanvasInitializationProps {
   imageUrl: string | null;
@@ -71,8 +71,8 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       canvas.clear();
       canvas.backgroundColor = '#ffffff';
       
-      // Load and center the image
-      fabric.Image.fromURL(imageUrl, (img) => {
+      // Load and center the image - fixed to use FabricImage instead of fabric.Image
+      FabricImage.fromURL(imageUrl, (img) => {
         console.log("Image loaded from URL:", img);
         
         // Resize image to fit within canvas while maintaining aspect ratio
