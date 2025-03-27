@@ -35,10 +35,23 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   // Handle tab change
   const handleTabChange = (value: string) => {
     console.log("OrdersView: Tab changed to:", value);
-    if (location.pathname === '/my-orders') {
+    
+    // For pharmacist view, we need to preserve the current subsection (all or payments)
+    if (userRole === 'pharmacist' && location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
+      const currentSubsection = searchParams.get('ordersTab') || 'all';
+      
+      // Only these are valid status tabs for pharmacist
+      const isStatusTab = ['pending', 'processing', 'completed', 'cancelled'].includes(value);
+      
+      if (isStatusTab) {
+        // If it's a status tab, we maintain the current subsection (all/payments) and add a status parameter
+        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${currentSubsection}&status=${value}`);
+      } else {
+        // If switching between 'all' and 'payments', reset the status
+        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${value}`);
+      }
+    } else if (location.pathname === '/my-orders') {
       navigate(`/my-orders?view=${value}`);
-    } else if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
-      navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${value}`);
     } else {
       navigate(`/dashboard?view=orders&ordersTab=${value}`);
     }
@@ -64,15 +77,26 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
           { id: 'orders', label: 'Orders' },
           { id: 'payments', label: 'Payments' }
         ];
-      case 'pharmacist':
+      case 'pharmacist': {
+        // For pharmacist, the main tabs are determined by the current subsection
+        const currentSubsection = searchParams.get('ordersTab') || 'all';
+        
+        // If we're in the main orders or payments view, show status tabs
+        if (currentSubsection === 'all' || currentSubsection === 'payments') {
+          return [
+            { id: 'pending', label: 'Pending' },
+            { id: 'processing', label: 'Processing' },
+            { id: 'completed', label: 'Completed' },
+            { id: 'cancelled', label: 'Cancelled' }
+          ];
+        }
+        
+        // Default tabs if not in a specific subsection (this should rarely be used)
         return [
           { id: 'all', label: 'Orders' },
-          { id: 'payments', label: 'Payments' },
-          { id: 'pending', label: 'Pending' },
-          { id: 'processing', label: 'Processing' },
-          { id: 'completed', label: 'Completed' },
-          { id: 'cancelled', label: 'Cancelled' }
+          { id: 'payments', label: 'Payments' }
         ];
+      }
       case 'superadmin':
         return [
           { id: 'all', label: 'All Orders' },
@@ -88,7 +112,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   const tabs = getTabs();
   
-  // Determine which tab should be active or use the first tab as default
+  // Determine which tab should be active
   const getActiveTab = () => {
     if (location.pathname === '/my-orders') {
       return searchParams.get('view') || 'orders';
@@ -96,12 +120,13 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
     // For pharmacy section in dashboard
     if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
+      // For pharmacist, check if we're in a status view
+      if (userRole === 'pharmacist') {
+        // Get status from URL if present
+        return searchParams.get('status') || 'pending';
+      }
+      
       return searchParams.get('ordersTab') || 'all';
-    }
-    
-    // If pharmacist role, use the activeTab prop or default to first tab (all)
-    if (userRole === 'pharmacist') {
-      return activeTab || 'all';
     }
     
     return activeTab || tabs[0].id;
@@ -109,16 +134,17 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   // Render empty table state based on role and tab
   const renderEmptyState = (tabId: string) => {
+    const currentSubsection = searchParams.get('ordersTab') || 'all';
     let message = "No orders found.";
     
-    if (tabId === 'payments') {
-      message = "No payment records found.";
-    } else if (userRole === 'pharmacist') {
-      if (tabId === 'all') {
-        message = "No orders found.";
-      } else if (tabId !== 'payments') {
+    if (userRole === 'pharmacist') {
+      if (currentSubsection === 'payments') {
+        message = `No ${tabId} payments found.`;
+      } else {
         message = `No ${tabId} orders found.`;
       }
+    } else if (tabId === 'payments') {
+      message = "No payment records found.";
     }
     
     return (
@@ -132,7 +158,9 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   // Get table headers based on role and tab
   const getTableHeaders = (tabId: string) => {
-    if (tabId === 'payments') {
+    const currentSubsection = searchParams.get('ordersTab') || 'all';
+    
+    if (currentSubsection === 'payments' || tabId === 'payments') {
       return [
         "Payment ID",
         "Order ID",
@@ -152,11 +180,12 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   // Render the component with the correct active tab
   const currentActiveTab = getActiveTab();
-  console.log("OrdersView: Current active tab:", currentActiveTab);
+  const currentSubsection = searchParams.get('ordersTab') || 'all';
+  console.log("OrdersView: Current active tab:", currentActiveTab, "Current subsection:", currentSubsection);
 
   // Get view-specific header text
   const getHeaderText = () => {
-    if (currentActiveTab === 'payments') {
+    if (currentSubsection === 'payments') {
       return "Payment Records";
     }
     return "Orders Management";
@@ -164,7 +193,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   // Get view-specific description text
   const getDescriptionText = () => {
-    if (currentActiveTab === 'payments') {
+    if (currentSubsection === 'payments') {
       return userRole === 'patient' 
         ? "View your payment history and transaction details." 
         : "Manage payment records and transaction history for your patients.";
@@ -172,6 +201,26 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     return userRole === 'patient' 
       ? "View and track your orders and delivery status." 
       : "Manage customer orders and process them efficiently.";
+  };
+
+  // Get tab content title based on current tab and subsection
+  const getTabContentTitle = (tabId: string) => {
+    if (userRole === 'pharmacist') {
+      if (currentSubsection === 'payments') {
+        return `${tabId.charAt(0).toUpperCase() + tabId.slice(1)} Payments`;
+      } else {
+        return `${tabId.charAt(0).toUpperCase() + tabId.slice(1)} Orders`;
+      }
+    }
+    
+    return tabId === 'payments' ? 'Payment Records' : 
+           tabId === 'pending' ? 'Pending Orders' :
+           tabId === 'processing' ? 'Processing Orders' :
+           tabId === 'completed' ? 'Completed Orders' :
+           tabId === 'cancelled' ? 'Cancelled Orders' :
+           tabId === 'all' ? 'Orders' :
+           tabId === 'issues' ? 'Orders with Issues' :
+           tabId === 'analytics' ? 'Order Analytics' : 'Orders';
   };
 
   // Should headers be displayed based on role and view
@@ -202,14 +251,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
           <TabsContent key={tab.id} value={tab.id} className="mt-4">
             <div className="bg-white shadow rounded-lg">
               <h2 className="text-xl font-semibold p-4 border-b">
-                {tab.id === 'payments' ? 'Payment Records' : 
-                 tab.id === 'pending' ? 'Pending Orders' :
-                 tab.id === 'processing' ? 'Processing Orders' :
-                 tab.id === 'completed' ? 'Completed Orders' :
-                 tab.id === 'cancelled' ? 'Cancelled Orders' :
-                 tab.id === 'all' ? 'Orders' :
-                 tab.id === 'issues' ? 'Orders with Issues' :
-                 tab.id === 'analytics' ? 'Order Analytics' : 'Orders'}
+                {getTabContentTitle(tab.id)}
               </h2>
               <Table>
                 <TableHeader>
