@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
-  MapPin, Store
+  MapPin, Store, Pill, BellRing 
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -20,6 +20,7 @@ import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 const PharmacistSidebar = () => {
   const { profile } = useAuth();
   const location = useLocation();
+  const isProfilePage = location.pathname.includes('/pharmacy/profile');
   const searchParams = new URLSearchParams(location.search);
   const section = searchParams.get("section") || "dashboard";
   
@@ -37,23 +38,28 @@ const PharmacistSidebar = () => {
     setIsOrdersOpen,
     isProfileOpen,
     setIsProfileOpen,
-    navigateToLink
+    navigateToLink,
+    isPharmacistSectionActive,
+    isPharmacistTabActive
   } = useSidebarNavigation("pharmacist");
 
-  // Update pharmacy view within the dashboard without page navigation
-  const navigateToPharmacyView = (section: string, tab?: string, tabParam?: string) => {
-    console.log(`Navigating to pharmacy view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
+  // Navigate to pharmacy section within the dashboard route
+  const navigateToPharmacySection = (section: string, tab?: string, tabParam?: string) => {
+    console.log(`Navigating to pharmacy section: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
+    
+    // Always navigate to the dashboard route when in profile page
+    const baseRoute = isProfilePage ? '/dashboard' : '';
     
     if (tab && tabParam) {
-      const path = `/dashboard?view=pharmacy&section=${section}&${tabParam}=${tab}`;
+      const path = `${baseRoute}?view=pharmacy&section=${section}&${tabParam}=${tab}`;
       navigateToLink(path);
     } else {
-      const path = `/dashboard?view=pharmacy&section=${section}`;
+      const path = `${baseRoute}?view=pharmacy&section=${section}`;
       navigateToLink(path);
     }
   };
 
-  // Navigate to pharmacy profile page (separate page navigation)
+  // Navigate to pharmacy profile page (separate page)
   const navigateToPharmacyProfile = () => {
     console.log('Navigating to pharmacy profile from PharmacistSidebar');
     navigateToLink('/pharmacy/profile');
@@ -68,77 +74,84 @@ const PharmacistSidebar = () => {
           <SidebarItem
             icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
             label="Dashboard"
-            isActive={section === "dashboard"}
-            onClick={() => navigateToPharmacyView('dashboard')}
-          />
-          
-          <SidebarItem
-            icon={<Users className="w-5 h-5 mr-3" />}
-            label="Patients"
-            isActive={section === "patients"}
-            onClick={() => navigateToPharmacyView('patients')}
+            isActive={isPharmacistSectionActive("dashboard")}
+            onClick={() => navigateToPharmacySection('dashboard')}
           />
           
           <SidebarCollapsibleItem 
             icon={<ShoppingBag className="w-5 h-5 mr-3" />}
             label="Orders"
             isOpen={isOrdersOpen}
-            isActive={section === "orders"}
+            isActive={isPharmacistSectionActive("orders")}
             onOpenChange={(isOpen) => setIsOrdersOpen(isOpen)}
           >
             <SidebarSubItem
               icon={<ShoppingBag className="w-4 h-4 mr-3" />}
               label="All Orders"
-              isActive={section === "orders" && (!searchParams.get("ordersTab") || searchParams.get("ordersTab") === "orders")}
-              onClick={() => navigateToPharmacyView('orders', 'orders', 'ordersTab')}
+              isActive={isPharmacistTabActive("orders", "ordersTab", "all")}
+              onClick={() => navigateToPharmacySection('orders', 'all', 'ordersTab')}
             />
             <SidebarSubItem
-              icon={<ShoppingBag className="w-4 h-4 mr-3" />}
-              label="Pending"
-              isActive={section === "orders" && searchParams.get("ordersTab") === "pending"}
-              onClick={() => navigateToPharmacyView('orders', 'pending', 'ordersTab')}
+              icon={<BellRing className="w-4 h-4 mr-3" />}
+              label="New Orders"
+              isActive={isPharmacistTabActive("orders", "ordersTab", "new")}
+              onClick={() => navigateToPharmacySection('orders', 'new', 'ordersTab')}
             />
           </SidebarCollapsibleItem>
           
           <SidebarItem
             icon={<FileText className="w-5 h-5 mr-3" />}
             label="Prescriptions"
-            isActive={section === "prescriptions"}
-            onClick={() => navigateToPharmacyView('prescriptions')}
+            isActive={isPharmacistSectionActive("prescriptions")}
+            onClick={() => navigateToPharmacySection('prescriptions')}
+          />
+          
+          <SidebarItem
+            icon={<Pill className="w-5 h-5 mr-3" />}
+            label="Products"
+            isActive={isPharmacistSectionActive("products")}
+            onClick={() => navigateToPharmacySection('products')}
+          />
+          
+          <SidebarItem
+            icon={<Users className="w-5 h-5 mr-3" />}
+            label="Patients"
+            isActive={isPharmacistSectionActive("patients")}
+            onClick={() => navigateToPharmacySection('patients')}
           />
           
           <SidebarCollapsibleItem 
             icon={<UserCircle className="w-5 h-5 mr-3" />}
             label="Profile"
             isOpen={isProfileOpen}
-            isActive={section === "profile"}
+            isActive={isPharmacistSectionActive("profile")}
             onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
           >
             <SidebarSubItem
-              icon={<UserCircle className="w-4 h-4 mr-3" />}
-              label="Personal Info"
-              isActive={section === "profile" && (!searchParams.get("profileTab") || searchParams.get("profileTab") === "personal")}
-              onClick={() => navigateToPharmacyView('profile', 'personal', 'profileTab')}
+              icon={<Store className="w-4 h-4 mr-3" />}
+              label="Pharmacy Info"
+              isActive={isPharmacistTabActive("profile", "profileTab", "pharmacy")}
+              onClick={() => navigateToPharmacySection('profile', 'pharmacy', 'profileTab')}
             />
             <SidebarSubItem
               icon={<MapPin className="w-4 h-4 mr-3" />}
-              label="Addresses"
-              isActive={section === "profile" && searchParams.get("profileTab") === "addresses"}
-              onClick={() => navigateToPharmacyView('profile', 'addresses', 'profileTab')}
+              label="Locations"
+              isActive={isPharmacistTabActive("profile", "profileTab", "locations")}
+              onClick={() => navigateToPharmacySection('profile', 'locations', 'profileTab')}
             />
             <SidebarSubItem
               icon={<Users className="w-4 h-4 mr-3" />}
-              label="Next of Kin"
-              isActive={section === "profile" && searchParams.get("profileTab") === "nextofkin"}
-              onClick={() => navigateToPharmacyView('profile', 'nextofkin', 'profileTab')}
+              label="Staff"
+              isActive={isPharmacistTabActive("profile", "profileTab", "staff")}
+              onClick={() => navigateToPharmacySection('profile', 'staff', 'profileTab')}
             />
           </SidebarCollapsibleItem>
           
           <SidebarItem
             icon={<Settings className="w-5 h-5 mr-3" />}
             label="Settings"
-            isActive={section === "settings"}
-            onClick={() => navigateToPharmacyView('settings')}
+            isActive={isPharmacistSectionActive("settings")}
+            onClick={() => navigateToPharmacySection('settings')}
           />
         </SidebarSection>
       </div>
@@ -150,8 +163,8 @@ const PharmacistSidebar = () => {
         handleAvatarClick={handleAvatarClick}
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
-        navigateToProfile={() => navigateToPharmacyView('profile', 'personal', 'profileTab')}
-        navigateToBilling={() => navigateToPharmacyView('orders', 'payments', 'ordersTab')}
+        navigateToProfile={() => navigateToPharmacySection('profile', 'pharmacy', 'profileTab')}
+        navigateToBilling={() => navigateToPharmacySection('orders', 'payments', 'ordersTab')}
         navigateToUpgrade={() => navigateToLink('/upgrade')}
         navigateToPharmacyProfile={navigateToPharmacyProfile}
         handleFileChange={handleFileChange}

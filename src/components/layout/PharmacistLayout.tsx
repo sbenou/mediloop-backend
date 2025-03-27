@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import UserMenu from "@/components/UserMenu";
+import Header from "@/components/layout/Header";
 
 interface PharmacistLayoutProps {
   children: React.ReactNode;
@@ -96,6 +97,9 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Header */}
+      <Header showBackLink={false} />
+      
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">

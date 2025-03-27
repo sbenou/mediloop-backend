@@ -20,6 +20,7 @@ import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 const DoctorSidebar = () => {
   const { profile } = useAuth();
   const location = useLocation();
+  const isProfilePage = location.pathname.includes('/doctor/profile');
   const searchParams = new URLSearchParams(location.search);
   const section = searchParams.get("section") || "dashboard";
   
@@ -42,11 +43,14 @@ const DoctorSidebar = () => {
   const navigateToDoctorView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to doctor view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
+    // Always navigate to the dashboard route when in profile page
+    const baseRoute = isProfilePage ? '/dashboard' : '';
+    
     if (tab && tabParam) {
-      const path = `/dashboard?view=doctor&section=${section}&${tabParam}=${tab}`;
+      const path = `${baseRoute}?view=doctor&section=${section}&${tabParam}=${tab}`;
       navigateToLink(path);
     } else {
-      const path = `/dashboard?view=doctor&section=${section}`;
+      const path = `${baseRoute}?view=doctor&section=${section}`;
       navigateToLink(path);
     }
   };
