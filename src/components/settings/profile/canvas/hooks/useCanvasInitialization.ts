@@ -71,38 +71,44 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       canvas.clear();
       canvas.backgroundColor = '#ffffff';
       
-      // Load and center the image - fixed to use FabricImage instead of fabric.Image
-      FabricImage.fromURL(imageUrl, (img) => {
-        console.log("Image loaded from URL:", img);
-        
-        // Resize image to fit within canvas while maintaining aspect ratio
-        const canvasAspect = canvas.width! / canvas.height!;
-        const imgAspect = img.width! / img.height!;
-        
-        let scaleFactor;
-        if (imgAspect > canvasAspect) {
-          // Image is wider than canvas
-          scaleFactor = (canvas.width! * 0.9) / img.width!;
-        } else {
-          // Image is taller than canvas
-          scaleFactor = (canvas.height! * 0.9) / img.height!;
+      // Load and center the image using the updated Fabric.js v6 API
+      FabricImage.fromURL(imageUrl, {
+        crossOrigin: 'anonymous',
+        // Use the onComplete callback to handle the loaded image
+        onComplete: (img) => {
+          console.log("Image loaded from URL:", img);
+          
+          // Resize image to fit within canvas while maintaining aspect ratio
+          const canvasAspect = canvas.width! / canvas.height!;
+          const imgAspect = img.width! / img.height!;
+          
+          let scaleFactor;
+          if (imgAspect > canvasAspect) {
+            // Image is wider than canvas
+            scaleFactor = (canvas.width! * 0.9) / img.width!;
+          } else {
+            // Image is taller than canvas
+            scaleFactor = (canvas.height! * 0.9) / img.height!;
+          }
+          
+          img.scale(scaleFactor);
+          
+          // Center the image on the canvas
+          img.set({
+            left: canvas.width! / 2,
+            top: canvas.height! / 2,
+            originX: 'center',
+            originY: 'center'
+          });
+          
+          canvas.add(img);
+          canvas.renderAll();
+          
+          console.log("Image added to canvas");
         }
-        
-        img.scale(scaleFactor);
-        
-        // Center the image on the canvas
-        img.set({
-          left: canvas.width! / 2,
-          top: canvas.height! / 2,
-          originX: 'center',
-          originY: 'center'
-        });
-        
-        canvas.add(img);
-        canvas.renderAll();
-        
-        console.log("Image added to canvas");
-      }, { crossOrigin: 'anonymous' });
+      }).catch(error => {
+        console.error("Error loading image:", error);
+      });
     } catch (error) {
       console.error("Error loading image to canvas:", error);
     }
