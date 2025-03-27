@@ -10,7 +10,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import UserMenu from "@/components/UserMenu";
-import Header from "@/components/layout/Header";
 
 interface PharmacistLayoutProps {
   children: React.ReactNode;
@@ -18,7 +17,7 @@ interface PharmacistLayoutProps {
 
 const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(false);
   const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
 
   useEffect(() => {
@@ -45,7 +44,9 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   }, []);
 
   useEffect(() => {
-    // Handle window resize for mobile detection
+    // Initialize mobile state and handle window resize
+    setIsMobile(window.innerWidth < 768);
+    
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -97,9 +98,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header showBackLink={false} />
-      
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">

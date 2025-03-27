@@ -1,7 +1,6 @@
-
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
@@ -20,6 +19,7 @@ import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 const PharmacistSidebar = () => {
   const { profile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const isProfilePage = location.pathname.includes('/pharmacy/profile');
   const searchParams = new URLSearchParams(location.search);
   const section = searchParams.get("section") || "dashboard";
@@ -47,14 +47,22 @@ const PharmacistSidebar = () => {
   const navigateToPharmacySection = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy section: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
-    // Always navigate to the dashboard route when in profile page
-    const baseRoute = isProfilePage ? '/dashboard' : '';
+    // When on profile page, always navigate to dashboard with appropriate params
+    if (isProfilePage) {
+      if (tab && tabParam) {
+        navigate(`/dashboard?view=pharmacy&section=${section}&${tabParam}=${tab}`);
+      } else {
+        navigate(`/dashboard?view=pharmacy&section=${section}`);
+      }
+      return;
+    }
     
+    // Default behavior for regular dashboard view
     if (tab && tabParam) {
-      const path = `${baseRoute}?view=pharmacy&section=${section}&${tabParam}=${tab}`;
+      const path = `?view=pharmacy&section=${section}&${tabParam}=${tab}`;
       navigateToLink(path);
     } else {
-      const path = `${baseRoute}?view=pharmacy&section=${section}`;
+      const path = `?view=pharmacy&section=${section}`;
       navigateToLink(path);
     }
   };
@@ -62,7 +70,7 @@ const PharmacistSidebar = () => {
   // Navigate to pharmacy profile page (separate page)
   const navigateToPharmacyProfile = () => {
     console.log('Navigating to pharmacy profile from PharmacistSidebar');
-    navigateToLink('/pharmacy/profile');
+    navigate('/pharmacy/profile');
   };
 
   return (
