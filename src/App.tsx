@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -24,6 +25,7 @@ import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
 import PharmacyProfile from './pages/pharmacy/PharmacyProfile';
 import Products from './pages/Products';
 import { UserRole } from './types/role';
+import DoctorDashboard from './pages/DoctorDashboard';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -74,7 +76,16 @@ function AppRoutes() {
       {/* Unified Dashboard route - handles redirects to appropriate dashboard */}
       <Route path="/dashboard" element={<Dashboard />} />
       
-      {/* Role-specific protected routes */}
+      {/* Doctor routes */}
+      <Route 
+        path="/doctor" 
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Doctor]}>
+            <DoctorDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      
       <Route
         path="/doctor/profile"
         element={
