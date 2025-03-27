@@ -1,7 +1,6 @@
-
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
@@ -20,6 +19,7 @@ import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 const DoctorSidebar = () => {
   const { profile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const isProfilePage = location.pathname.includes('/doctor/profile');
   const searchParams = new URLSearchParams(location.search);
   const section = searchParams.get("section") || "dashboard";
@@ -39,18 +39,26 @@ const DoctorSidebar = () => {
     navigateToLink
   } = useSidebarNavigation("doctor");
 
-  // Update doctor view within the dashboard without page navigation
+  // Handle navigation when on the doctor/profile page
   const navigateToDoctorView = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to doctor view: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
-    // Always navigate to the dashboard route when in profile page
-    const baseRoute = isProfilePage ? '/dashboard' : '';
+    // When on profile page, always navigate to dashboard with appropriate params
+    if (isProfilePage) {
+      if (tab && tabParam) {
+        navigate(`/dashboard?view=doctor&section=${section}&${tabParam}=${tab}`);
+      } else {
+        navigate(`/dashboard?view=doctor&section=${section}`);
+      }
+      return;
+    }
     
+    // Default behavior for regular dashboard view
     if (tab && tabParam) {
-      const path = `${baseRoute}?view=doctor&section=${section}&${tabParam}=${tab}`;
+      const path = `?view=doctor&section=${section}&${tabParam}=${tab}`;
       navigateToLink(path);
     } else {
-      const path = `${baseRoute}?view=doctor&section=${section}`;
+      const path = `?view=doctor&section=${section}`;
       navigateToLink(path);
     }
   };
@@ -58,7 +66,7 @@ const DoctorSidebar = () => {
   // Navigate to doctor profile page (separate page navigation)
   const navigateToDoctorProfile = () => {
     console.log('Navigating to doctor profile from DoctorSidebar');
-    navigateToLink('/doctor/profile');
+    navigate('/doctor/profile');
   };
 
   return (
