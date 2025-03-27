@@ -153,9 +153,10 @@ export const useProfileFetch = () => {
           console.error('Error fetching pharmacy_id:', pharmacyError);
         }
 
-        // Ensure the profile object has all required properties including new pharmacist fields
+        // Ensure the profile object has all required properties
         const completeProfile: UserProfile = {
           ...profile as any,
+          // Make sure pharmacist fields are set, even if they're not in the database
           pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
           pharmacist_signature_url: profile.pharmacist_signature_url || null
         };

@@ -150,16 +150,14 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
           }
         } else if (profile) {
           // Update global auth state with existing profile
-          // Ensure profile has all required properties including new pharmacist fields
-          const completeProfile = {
-            ...profile as any,
-            pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-            pharmacist_signature_url: profile.pharmacist_signature_url || null
-          };
-
+          // Explicitly cast profile to any to avoid type errors
           setAuth({
             user: session.user,
-            profile: completeProfile,
+            profile: {
+              ...profile as any,
+              pharmacist_stamp_url: null,
+              pharmacist_signature_url: null
+            },
             permissions: [],
             isLoading: false,
           });

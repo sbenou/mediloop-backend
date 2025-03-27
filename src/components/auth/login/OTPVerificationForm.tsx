@@ -48,12 +48,18 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
 
       if (data?.user) {
         console.log("OTP verification successful, fetching user profile");
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
           .single();
 
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          throw profileError;
+        }
+
+        // Ensure we have profile data with proper fallbacks
         const profile = profileData || {};
           
         // Add the profile with all required properties to state
@@ -62,8 +68,8 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           profile: {
             ...profile as any,
             // Explicitly add the pharmacist fields with fallbacks
-            pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-            pharmacist_signature_url: profile.pharmacist_signature_url || null
+            pharmacist_stamp_url: null,
+            pharmacist_signature_url: null
           },
           isLoading: false,
           permissions: [],
