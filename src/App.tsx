@@ -6,8 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { AuthProvider } from '@/providers/AuthProvider';
-import ProtectedRoute from './components/routing/ProtectedRoute';
 import RequireRoleGuard from './components/auth/RequireRoleGuard';
+import RequirePermissionGuard from './components/auth/RequirePermissionGuard';
 import Index from './pages/Index';
 import Home from './pages/Home';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
@@ -26,6 +26,8 @@ import Products from './pages/Products';
 import { UserRole } from './types/role';
 import DoctorDashboard from './pages/DoctorDashboard';
 import UniversalDashboard from './pages/UniversalDashboard';
+import AdminSettings from './pages/AdminSettings';
+import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -50,12 +52,10 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 // Placeholder components for routes
 const Register = () => <PlaceholderPage title="Register" />;
 const AdminDashboard = () => <PlaceholderPage title="Admin Dashboard" />;
-const SuperAdminDashboard = () => <PlaceholderPage title="Super Admin Dashboard" />;
 const SearchPharmacy = () => <PlaceholderPage title="Search Pharmacy" />;
 const Prescription = () => <PlaceholderPage title="Prescription" />;
 const EditPrescription = () => <PlaceholderPage title="Edit Prescription" />;
 const Settings = () => <PlaceholderPage title="Settings" />;
-const AdminSettings = () => <PlaceholderPage title="Admin Settings" />;
 
 function AppRoutes() {
   const location = useLocation();
@@ -80,18 +80,18 @@ function AppRoutes() {
       <Route 
         path="/doctor" 
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Doctor]}>
+          <RequireRoleGuard allowedRoles={[UserRole.Doctor]}>
             <DoctorDashboard />
-          </ProtectedRoute>
+          </RequireRoleGuard>
         } 
       />
       
       <Route
         path="/doctor/profile"
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Doctor]}>
+          <RequireRoleGuard allowedRoles={[UserRole.Doctor]}>
             <DoctorProfilePage />
-          </ProtectedRoute>
+          </RequireRoleGuard>
         }
       />
       
@@ -99,18 +99,18 @@ function AppRoutes() {
       <Route
         path="/pharmacy"
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
+          <RequireRoleGuard allowedRoles={[UserRole.Pharmacist]}>
             <UniversalDashboard />
-          </ProtectedRoute>
+          </RequireRoleGuard>
         }
       />
       
       <Route
         path="/pharmacy/profile"
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
+          <RequireRoleGuard allowedRoles={[UserRole.Pharmacist]}>
             <PharmacyProfile />
-          </ProtectedRoute>
+          </RequireRoleGuard>
         }
       />
       
@@ -118,18 +118,18 @@ function AppRoutes() {
       <Route
         path="/patient"
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Patient]}>
+          <RequireRoleGuard allowedRoles={[UserRole.Patient]}>
             <UniversalDashboard />
-          </ProtectedRoute>
+          </RequireRoleGuard>
         }
       />
       
       <Route
         path="/superadmin/*"
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Superadmin]}>
+          <RequirePermissionGuard requiredPermissions={["view_admin"]}>
             <SuperAdminDashboard />
-          </ProtectedRoute>
+          </RequirePermissionGuard>
         }
       />
 
@@ -137,36 +137,36 @@ function AppRoutes() {
       <Route
         path="/admin-settings"
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Superadmin, "admin"]}>
+          <RequirePermissionGuard requiredPermissions={["manage_roles", "manage_users"]}>
             <AdminSettings />
-          </ProtectedRoute>
+          </RequirePermissionGuard>
         }
       />
       
       <Route
         path="/create-prescription"
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Doctor, UserRole.Pharmacist]}>
+          <RequireRoleGuard allowedRoles={[UserRole.Doctor, UserRole.Pharmacist]}>
             <CreatePrescription />
-          </ProtectedRoute>
+          </RequireRoleGuard>
         }
       />
       
       <Route
         path="/my-prescriptions"
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Patient, UserRole.Doctor, UserRole.Pharmacist]}>
+          <RequireRoleGuard allowedRoles={[UserRole.Patient, UserRole.Doctor, UserRole.Pharmacist]}>
             <MyPrescriptions />
-          </ProtectedRoute>
+          </RequireRoleGuard>
         }
       />
       
       <Route
         path="/teleconsultations"
         element={
-          <ProtectedRoute allowedRoles={[UserRole.Patient, UserRole.Doctor]}>
+          <RequireRoleGuard allowedRoles={[UserRole.Patient, UserRole.Doctor]}>
             <Teleconsultations />
-          </ProtectedRoute>
+          </RequireRoleGuard>
         }
       />
       
