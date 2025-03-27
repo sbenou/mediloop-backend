@@ -4,7 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useRecoilValue } from "recoil";
-import { doctorStampUrlState, doctorSignatureUrlState } from "@/store/images/atoms";
+import { 
+  doctorStampUrlState, 
+  doctorSignatureUrlState,
+  pharmacistStampUrlState,
+  pharmacistSignatureUrlState
+} from "@/store/images/atoms";
 
 // Import the components for each section
 import PersonalDetails from "@/components/settings/PersonalDetails";
@@ -12,8 +17,8 @@ import AddressManagement from "@/components/settings/AddressManagement";
 import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
-// Fix the import to use the default export
 import DoctorStampSignature from "@/components/settings/profile/DoctorStampSignature";
+import PharmacistStampSignature from "@/components/settings/profile/PharmacistStampSignature";
 
 interface ProfileViewProps {
   activeTab: string;
@@ -26,9 +31,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
   const { profile } = useAuth();
   const [searchParams] = useSearchParams();
   
-  // Use Recoil state for doctor images
+  // Use Recoil state for images
   const doctorStampUrl = useRecoilValue(doctorStampUrlState);
   const doctorSignatureUrl = useRecoilValue(doctorSignatureUrlState);
+  const pharmacistStampUrl = useRecoilValue(pharmacistStampUrlState);
+  const pharmacistSignatureUrl = useRecoilValue(pharmacistSignatureUrlState);
 
   // Handle tab change
   const handleTabChange = (value: string) => {
@@ -72,7 +79,10 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
           { id: 'clinic', label: 'Clinic Details' }
         ];
       case 'pharmacist':
-        return commonTabs;
+        return [
+          ...commonTabs,
+          { id: 'stampSignature', label: 'Stamp & Signature' }
+        ];
       case 'superadmin':
         return [
           ...commonTabs,
@@ -151,17 +161,30 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
         </TabsContent>
         
         {/* Stamp & Signature Tab - Only for doctors */}
-      {userRole === 'doctor' && (
-        <TabsContent value="stamp" className="mt-4">
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
-            <DoctorStampSignature 
-              stampUrl={doctorStampUrl || profile?.doctor_stamp_url || null} 
-              signatureUrl={doctorSignatureUrl || profile?.doctor_signature_url || null} 
-            />
-          </div>
-        </TabsContent>
-      )}
+        {userRole === 'doctor' && (
+          <TabsContent value="stamp" className="mt-4">
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
+              <DoctorStampSignature 
+                stampUrl={doctorStampUrl || profile?.doctor_stamp_url || null} 
+                signatureUrl={doctorSignatureUrl || profile?.doctor_signature_url || null} 
+              />
+            </div>
+          </TabsContent>
+        )}
+        
+        {/* Stamp & Signature Tab - Only for pharmacists */}
+        {userRole === 'pharmacist' && (
+          <TabsContent value="stampSignature" className="mt-4">
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
+              <PharmacistStampSignature 
+                stampUrl={pharmacistStampUrl || profile?.pharmacist_stamp_url || null} 
+                signatureUrl={pharmacistSignatureUrl || profile?.pharmacist_signature_url || null} 
+              />
+            </div>
+          </TabsContent>
+        )}
         
         {/* Additional role-specific tabs */}
         {userRole === 'doctor' && (
