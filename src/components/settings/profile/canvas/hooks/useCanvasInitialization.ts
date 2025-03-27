@@ -71,11 +71,10 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       canvas.clear();
       canvas.backgroundColor = '#ffffff';
       
-      // Load and center the image using the updated Fabric.js v6 API
-      FabricImage.fromURL(imageUrl, {
-        crossOrigin: 'anonymous',
-        // Use the onComplete callback to handle the loaded image
-        onComplete: (img) => {
+      // In Fabric.js v6, we need to use the FabricImage.fromURL method with the correct syntax
+      // According to the error, 'onComplete' isn't a valid option, so we'll use the proper callback approach
+      FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' })
+        .then((img) => {
           console.log("Image loaded from URL:", img);
           
           // Resize image to fit within canvas while maintaining aspect ratio
@@ -105,10 +104,10 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
           canvas.renderAll();
           
           console.log("Image added to canvas");
-        }
-      }).catch(error => {
-        console.error("Error loading image:", error);
-      });
+        })
+        .catch(error => {
+          console.error("Error loading image:", error);
+        });
     } catch (error) {
       console.error("Error loading image to canvas:", error);
     }
