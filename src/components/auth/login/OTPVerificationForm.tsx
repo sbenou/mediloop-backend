@@ -60,15 +60,33 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           throw profileError;
         }
 
-        // Ensure we have profile data with proper fallbacks
-        const profile = profileData || {};
+        // Ensure we have profile data with proper type handling
+        const profileWithDefaults = profileData || {};
         
-        // Create a complete profile with all required properties
+        // Create a complete profile with all required properties explicitly typed
         const completeProfile: UserProfile = {
-          ...(profile as any),
-          // Explicitly add the pharmacist fields with fallbacks
-          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile.pharmacist_signature_url || null
+          id: profileWithDefaults.id || data.user.id,
+          role: profileWithDefaults.role || 'patient',
+          role_id: profileWithDefaults.role_id || null,
+          full_name: profileWithDefaults.full_name || null,
+          email: profileWithDefaults.email || data.user.email || null,
+          avatar_url: profileWithDefaults.avatar_url || null,
+          date_of_birth: profileWithDefaults.date_of_birth || null,
+          city: profileWithDefaults.city || null,
+          auth_method: profileWithDefaults.auth_method || null,
+          is_blocked: profileWithDefaults.is_blocked || false,
+          doctor_stamp_url: profileWithDefaults.doctor_stamp_url || null,
+          doctor_signature_url: profileWithDefaults.doctor_signature_url || null,
+          pharmacist_stamp_url: profileWithDefaults.pharmacist_stamp_url || null,
+          pharmacist_signature_url: profileWithDefaults.pharmacist_signature_url || null,
+          cns_card_front: profileWithDefaults.cns_card_front || null,
+          cns_card_back: profileWithDefaults.cns_card_back || null,
+          cns_number: profileWithDefaults.cns_number || null,
+          deleted_at: profileWithDefaults.deleted_at || null,
+          created_at: profileWithDefaults.created_at || null,
+          updated_at: profileWithDefaults.updated_at || null,
+          license_number: profileWithDefaults.license_number || null,
+          pharmacy_id: profileWithDefaults.pharmacy_id || null
         };
           
         // Add the profile with all required properties to state
