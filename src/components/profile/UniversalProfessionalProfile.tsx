@@ -356,8 +356,8 @@ const UniversalProfessionalProfile = ({ userRole, renderLayout = true }: Univers
             >
               {/* Use Recoil state for image URL when available, fall back to local state */}
               {(userRole === 'doctor' && doctorStampUrl) || 
-               (userRole === 'pharmacist' && pharmacyLogoUrl) || 
-               professionalData?.logo_url ? (
+                (userRole === 'pharmacist' && pharmacyLogoUrl) || 
+                professionalData?.logo_url ? (
                 <div className="w-full h-full relative">
                   <img 
                     src={userRole === 'doctor' ? doctorStampUrl : pharmacyLogoUrl || professionalData?.logo_url} 
@@ -413,88 +413,87 @@ const UniversalProfessionalProfile = ({ userRole, renderLayout = true }: Univers
                         Edit Information
                       </DropdownMenuItem>
                     </DropdownMenuContent>
-                  </CardHeader>
-                  <CardContent>
-                    <PharmacyInfo pharmacy={professionalData} />
-                  </CardContent>
-                </Card>
+                  </DropdownMenu>
+                </CardHeader>
+                <CardContent>
+                  <PharmacyInfo pharmacy={professionalData} />
+                </CardContent>
+              </Card>
 
-                <Card className="h-full">
-                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center text-lg">
-                        <Clock className="mr-2 h-5 w-5" />
-                        Opening Hours
-                      </CardTitle>
-                      <CardDescription>
-                        When your {entityType} is open
-                      </CardDescription>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setIsEditingHours(true)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Hours
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                  </CardHeader>
-                  <CardContent>
-                    <PharmacyHours hours={professionalData.hours} pharmacyId={professionalData.id} />
-                  </CardContent>
-                </Card>
+              <Card className="h-full">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center text-lg">
+                      <Clock className="mr-2 h-5 w-5" />
+                      Opening Hours
+                    </CardTitle>
+                    <CardDescription>
+                      When your {entityType} is open
+                    </CardDescription>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setIsEditingHours(true)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Hours
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
+                <CardContent>
+                  <PharmacyHours hours={professionalData?.hours} pharmacyId={professionalData?.id} />
+                </CardContent>
+              </Card>
 
-                <Card className="h-full">
-                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center text-lg">
-                        <MapPin className="mr-2 h-5 w-5" />
-                        Location
-                      </CardTitle>
-                      <CardDescription>
-                        {entityType} location and distance
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <PharmacyMap pharmacy={professionalData} />
-                  </CardContent>
-                </Card>
-              </div>
+              <Card className="h-full">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center text-lg">
+                      <MapPin className="mr-2 h-5 w-5" />
+                      Location
+                    </CardTitle>
+                    <CardDescription>
+                      {entityType} location and distance
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <PharmacyMap pharmacy={professionalData} />
+                </CardContent>
+              </Card>
             </div>
-          </TabsContent>
-          
-          {/* Team Tab Content */}
-          <TabsContent value="team" className="mt-6">
-            <PharmacyTeam 
-              pharmacyId={professionalData.id}
+          </div>
+        </TabsContent>
+        
+        {/* Team Tab Content */}
+        <TabsContent value="team" className="mt-6">
+          <PharmacyTeam 
+            pharmacyId={professionalData?.id}
+            entityType={entityType}
+          />
+        </TabsContent>
+        
+        {/* Staff Management Tab Content */}
+        <TabsContent value="staff" className="mt-6">
+          <div className="container mx-auto px-4">
+            <PharmacyStaff 
+              pharmacyId={professionalData?.id}
               entityType={entityType}
             />
-          </TabsContent>
-          
-          {/* Staff Management Tab Content */}
-          <TabsContent value="staff" className="mt-6">
-            <div className="container mx-auto px-4">
-              <PharmacyStaff 
-                pharmacyId={professionalData.id}
-                entityType={entityType}
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 
   if (!renderLayout) {
     return <Content />;
   }
-
-  const Layout = userRole === 'doctor' ? DoctorLayout : PharmacistLayout;
 
   return (
     <Layout>
