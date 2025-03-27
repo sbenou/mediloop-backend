@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -26,6 +25,7 @@ import PharmacyProfile from './pages/pharmacy/PharmacyProfile';
 import Products from './pages/Products';
 import { UserRole } from './types/role';
 import DoctorDashboard from './pages/DoctorDashboard';
+import UniversalDashboard from './pages/UniversalDashboard';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -95,11 +95,31 @@ function AppRoutes() {
         }
       />
       
+      {/* Pharmacy routes */}
+      <Route
+        path="/pharmacy"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
+            <UniversalDashboard />
+          </ProtectedRoute>
+        }
+      />
+      
       <Route
         path="/pharmacy/profile"
         element={
           <ProtectedRoute allowedRoles={[UserRole.Pharmacist]}>
             <PharmacyProfile />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Patient route */}
+      <Route
+        path="/patient"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.Patient]}>
+            <UniversalDashboard />
           </ProtectedRoute>
         }
       />
