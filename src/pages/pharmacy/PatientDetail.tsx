@@ -31,7 +31,7 @@ const PatientDetail = () => {
         
         // Ensure the profile data has all required properties
         const completePatient = {
-          ...patientData,
+          ...patientData as any,
           pharmacist_stamp_url: patientData.pharmacist_stamp_url || null,
           pharmacist_signature_url: patientData.pharmacist_signature_url || null
         };

@@ -48,20 +48,22 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
 
       if (data?.user) {
         console.log("OTP verification successful, fetching user profile");
-        const { data: profile } = await supabase
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
           .single();
 
+        const profile = profileData || {};
+          
         // Add the profile with all required properties to state
         setAuth({
           user: data.user,
           profile: {
-            ...profile,
-            // Check if the properties exist before accessing them
-            pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
-            pharmacist_signature_url: profile?.pharmacist_signature_url || null
+            ...profile as any,
+            // Explicitly add the pharmacist fields with fallbacks
+            pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+            pharmacist_signature_url: profile.pharmacist_signature_url || null
           },
           isLoading: false,
           permissions: [],

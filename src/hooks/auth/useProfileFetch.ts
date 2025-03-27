@@ -120,9 +120,9 @@ export const useProfileFetch = () => {
             
             console.log('Profile created and fetched successfully');
             
-            // Ensure the newProfile has all required properties
-            const completeNewProfile = {
-              ...newProfile,
+            // Create a complete profile object with default values for all fields
+            const completeNewProfile: UserProfile = {
+              ...newProfile as any,
               pharmacist_stamp_url: null,
               pharmacist_signature_url: null
             };
@@ -153,9 +153,9 @@ export const useProfileFetch = () => {
           console.error('Error fetching pharmacy_id:', pharmacyError);
         }
 
-        // Ensure the profile has all required properties
-        const completeProfile = {
-          ...profile,
+        // Ensure the profile object has all required properties including new pharmacist fields
+        const completeProfile: UserProfile = {
+          ...profile as any,
           pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
           pharmacist_signature_url: profile.pharmacist_signature_url || null
         };
