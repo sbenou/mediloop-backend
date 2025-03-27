@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
-import UserMenu from "@/components/UserMenu";
+import EnhancedUserMenu from "@/components/user-menu/EnhancedUserMenu";
 import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Search, Menu, X, AlertTriangle } from "lucide-react";
@@ -135,7 +135,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
                 />
               </div>
               <NotificationBell />
-              <UserMenu />
+              <EnhancedUserMenu />
             </div>
           </header>
 
