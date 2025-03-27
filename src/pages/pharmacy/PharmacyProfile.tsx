@@ -6,7 +6,9 @@ import PharmacistLayout from "@/components/layout/PharmacistLayout";
 const PharmacyProfile = () => {
   return (
     <PharmacistLayout>
-      <UniversalProfessionalProfile userRole="pharmacist" />
+      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl">
+        <UniversalProfessionalProfile userRole="pharmacist" />
+      </div>
     </PharmacistLayout>
   );
 };

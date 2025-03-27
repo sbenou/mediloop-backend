@@ -16,7 +16,7 @@ import { useRecoilState } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
 
 const UserMenu = memo(() => {
-  const { isAuthenticated, isLoading, profile, user, userRole, isPharmacist } = useAuth();
+  const { isAuthenticated, isLoading, profile, userRole, isPharmacist } = useAuth();
   const [localLoading, setLocalLoading] = useState(true);
   const [hasVisibleSession, setHasVisibleSession] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -110,15 +110,6 @@ const UserMenu = memo(() => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [hasVisibleSession]);
-
-  useEffect(() => {
-    if (profile) {
-      console.log("UserMenu: Current user role:", userRole);
-      console.log("UserMenu: Is pharmacist:", isPharmacist);
-      console.log("UserMenu: Profile data:", profile);
-      console.log("UserMenu: Direct role check:", profile.role === 'pharmacist');
-    }
-  }, [profile, userRole, isPharmacist]);
 
   const handleNavigateToLogin = useCallback(() => {
     navigate('/login', { replace: true });
@@ -235,13 +226,6 @@ const UserMenu = memo(() => {
     );
   }
 
-  console.log("UserMenu rendering with:", {
-    isAuthenticated,
-    userRole,
-    isPharmacist,
-    profileRole: profile?.role
-  });
-
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <div className="flex items-center space-x-2">
@@ -267,7 +251,6 @@ const UserMenu = memo(() => {
             aria-label="User menu"
           >
             <span className="font-medium">{profile?.full_name || 'User'}</span>
-            <span className="text-xs text-gray-500">({profile?.role || 'unknown role'})</span>
           </button>
         </DropdownMenuTrigger>
       </div>
