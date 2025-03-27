@@ -59,6 +59,7 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           user: data.user,
           profile: {
             ...profile,
+            // Check if the properties exist before accessing them
             pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
             pharmacist_signature_url: profile?.pharmacist_signature_url || null
           },

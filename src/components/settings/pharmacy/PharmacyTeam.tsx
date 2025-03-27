@@ -381,7 +381,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
   };
 
   const UserAvatar = ({ userProfile }) => (
-    // Existing component implementation
     null
   );
 
@@ -753,8 +752,8 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId }) => {
                         is_blocked: !member.is_active,
                         doctor_stamp_url: null,
                         doctor_signature_url: null,
-                        pharmacist_stamp_url: null,  // Add this property
-                        pharmacist_signature_url: null,  // Add this property
+                        pharmacist_stamp_url: null,
+                        pharmacist_signature_url: null,
                         cns_card_front: null,
                         cns_card_back: null,
                         cns_number: null,
