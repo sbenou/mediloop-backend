@@ -13,6 +13,7 @@ import { mockActivities } from "@/components/activity/mockActivities";
 import { Activity } from "@/components/activity/ActivityItem";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
+import UserMenu from "@/components/UserMenu";
 
 interface PatientLayoutProps {
   children: ReactNode;
@@ -63,7 +64,7 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
             isOpen={isCartOpen} 
             onOpenChange={setIsCartOpen} 
           />
-          <EnhancedUserMenu />
+          <UserMenu />
         </header>
         
         {/* Main content wrapper */}

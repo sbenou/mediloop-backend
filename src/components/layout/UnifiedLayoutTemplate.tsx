@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
+import UserMenu from "@/components/UserMenu";
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -73,11 +74,7 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
             </div>
             <NotificationBell />
             <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
-            <div className="flex items-center space-x-2">
-              <button className="text-primary hover:text-primary/80 transition-colors">
-                Connection
-              </button>
-            </div>
+            <UserMenu />
           </div>
         </header>
         

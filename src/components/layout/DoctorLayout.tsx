@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Header from "@/components/layout/Header";
+import UserMenu from "@/components/UserMenu";
 
 interface DoctorLayoutProps {
   children: React.ReactNode;
@@ -68,7 +69,7 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
                 />
               </div>
               <NotificationBell />
-              <EnhancedUserMenu />
+              <UserMenu />
             </div>
           </header>
 

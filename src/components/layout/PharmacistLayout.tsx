@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import Header from "@/components/layout/Header";
+import UserMenu from "@/components/UserMenu";
 
 interface PharmacistLayoutProps {
   children: React.ReactNode;
@@ -135,7 +136,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
                 />
               </div>
               <NotificationBell />
-              <EnhancedUserMenu />
+              <UserMenu />
             </div>
           </header>
 
