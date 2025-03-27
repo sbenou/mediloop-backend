@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -73,6 +74,12 @@ const PharmacistSidebar = () => {
     navigate('/pharmacy/profile');
   };
 
+  // Navigate to products page
+  const navigateToProducts = () => {
+    console.log('Navigating to products page from PharmacistSidebar');
+    navigate('/products');
+  };
+
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <SidebarBrand />
@@ -117,8 +124,8 @@ const PharmacistSidebar = () => {
           <SidebarItem
             icon={<Pill className="w-5 h-5 mr-3" />}
             label="Products"
-            isActive={isPharmacistSectionActive("products")}
-            onClick={() => navigateToPharmacySection('products')}
+            isActive={location.pathname === '/products'}
+            onClick={navigateToProducts}
           />
           
           <SidebarItem
