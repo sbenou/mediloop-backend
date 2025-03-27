@@ -8,6 +8,7 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { AuthProvider } from '@/providers/AuthProvider';
 import RequireRoleGuard from './components/auth/RequireRoleGuard';
 import RequirePermissionGuard from './components/auth/RequirePermissionGuard';
+import RequireAccessGuard from './components/auth/RequireAccessGuard';
 import Index from './pages/Index';
 import Home from './pages/Home';
 import SearchPharmacyTest from './pages/SearchPharmacyTest';
@@ -28,6 +29,7 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import UniversalDashboard from './pages/UniversalDashboard';
 import AdminSettings from './pages/AdminSettings';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
+import { PERMISSIONS } from './config/permissions';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -127,7 +129,7 @@ function AppRoutes() {
       <Route
         path="/superadmin/*"
         element={
-          <RequirePermissionGuard requiredPermissions={["view_admin"]}>
+          <RequirePermissionGuard requiredPermissions={[PERMISSIONS.ADMIN.VIEW]}>
             <SuperAdminDashboard />
           </RequirePermissionGuard>
         }
@@ -137,18 +139,28 @@ function AppRoutes() {
       <Route
         path="/admin-settings"
         element={
-          <RequirePermissionGuard requiredPermissions={["manage_roles", "manage_users"]}>
+          <RequirePermissionGuard requiredPermissions={[PERMISSIONS.ADMIN.MANAGE_ROLES, PERMISSIONS.ADMIN.MANAGE_USERS]}>
             <AdminSettings />
           </RequirePermissionGuard>
         }
       />
       
+      {/* Example of using RequireAccessGuard for fine-grained control */}
       <Route
         path="/create-prescription"
         element={
-          <RequireRoleGuard allowedRoles={[UserRole.Doctor, UserRole.Pharmacist]}>
+          <RequireAccessGuard 
+            requiredRole={UserRole.Doctor} 
+            requiredPermission={PERMISSIONS.PRESCRIPTIONS.MANAGE}
+            fallback={
+              <div className="p-8 text-center">
+                <h2 className="text-xl font-semibold mb-4">Permission Required</h2>
+                <p>You need additional permissions to create prescriptions.</p>
+              </div>
+            }
+          >
             <CreatePrescription />
-          </RequireRoleGuard>
+          </RequireAccessGuard>
         }
       />
       
