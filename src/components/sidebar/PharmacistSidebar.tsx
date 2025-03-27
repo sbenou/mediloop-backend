@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
-  MapPin, Store, Pill, BellRing 
+  MapPin, Store, Pill, BellRing, CreditCard 
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -96,15 +96,15 @@ const PharmacistSidebar = () => {
           >
             <SidebarSubItem
               icon={<ShoppingBag className="w-4 h-4 mr-3" />}
-              label="All Orders"
+              label="Orders"
               isActive={isPharmacistTabActive("orders", "ordersTab", "all")}
               onClick={() => navigateToPharmacySection('orders', 'all', 'ordersTab')}
             />
             <SidebarSubItem
-              icon={<BellRing className="w-4 h-4 mr-3" />}
-              label="New Orders"
-              isActive={isPharmacistTabActive("orders", "ordersTab", "new")}
-              onClick={() => navigateToPharmacySection('orders', 'new', 'ordersTab')}
+              icon={<CreditCard className="w-4 h-4 mr-3" />}
+              label="Payments"
+              isActive={isPharmacistTabActive("orders", "ordersTab", "payments")}
+              onClick={() => navigateToPharmacySection('orders', 'payments', 'ordersTab')}
             />
           </SidebarCollapsibleItem>
           

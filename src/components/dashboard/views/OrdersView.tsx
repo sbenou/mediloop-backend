@@ -25,7 +25,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   // Get default tab based on user role
   const getDefaultTab = () => {
     if (userRole === 'pharmacist') {
-      return 'pending';
+      return 'all';
     }
     return 'orders';
   };
@@ -66,6 +66,8 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
         ];
       case 'pharmacist':
         return [
+          { id: 'all', label: 'Orders' },
+          { id: 'payments', label: 'Payments' },
           { id: 'pending', label: 'Pending' },
           { id: 'processing', label: 'Processing' },
           { id: 'completed', label: 'Completed' },
@@ -94,12 +96,12 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
     // For pharmacy section in dashboard
     if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
-      return searchParams.get('ordersTab') || 'pending';
+      return searchParams.get('ordersTab') || 'all';
     }
     
-    // If pharmacist role, use the activeTab prop or default to first tab (pending)
+    // If pharmacist role, use the activeTab prop or default to first tab (all)
     if (userRole === 'pharmacist') {
-      return activeTab || 'pending';
+      return activeTab || 'all';
     }
     
     return activeTab || tabs[0].id;
@@ -109,10 +111,14 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   const renderEmptyState = (tabId: string) => {
     let message = "No orders found.";
     
-    if (userRole === 'patient' && tabId === 'payments') {
+    if (tabId === 'payments') {
       message = "No payment records found.";
     } else if (userRole === 'pharmacist') {
-      message = `No ${tabId} orders found.`;
+      if (tabId === 'all') {
+        message = "No orders found.";
+      } else if (tabId !== 'payments') {
+        message = `No ${tabId} orders found.`;
+      }
     }
     
     return (
@@ -126,7 +132,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   // Get table headers based on role and tab
   const getTableHeaders = (tabId: string) => {
-    if (tabId === 'payments' || (userRole === 'patient' && tabId === 'payments')) {
+    if (tabId === 'payments') {
       return [
         "Payment ID",
         "Order ID",
@@ -161,7 +167,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     if (currentActiveTab === 'payments') {
       return userRole === 'patient' 
         ? "View your payment history and transaction details." 
-        : "Manage payment records and transaction history.";
+        : "Manage payment records and transaction history for your patients.";
     }
     return userRole === 'patient' 
       ? "View and track your orders and delivery status." 
@@ -201,7 +207,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
                  tab.id === 'processing' ? 'Processing Orders' :
                  tab.id === 'completed' ? 'Completed Orders' :
                  tab.id === 'cancelled' ? 'Cancelled Orders' :
-                 tab.id === 'all' ? 'All Orders' :
+                 tab.id === 'all' ? 'Orders' :
                  tab.id === 'issues' ? 'Orders with Issues' :
                  tab.id === 'analytics' ? 'Order Analytics' : 'Orders'}
               </h2>
