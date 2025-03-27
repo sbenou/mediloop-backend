@@ -119,7 +119,15 @@ export const useProfileFetch = () => {
             }
             
             console.log('Profile created and fetched successfully');
-            const safeNewProfile = safeQueryResult<UserProfile>(newProfile);
+            
+            // Ensure the newProfile has all required properties
+            const completeNewProfile = {
+              ...newProfile,
+              pharmacist_stamp_url: null,
+              pharmacist_signature_url: null
+            };
+            
+            const safeNewProfile = safeQueryResult<UserProfile>(completeNewProfile);
             return { 
               profile: safeNewProfile, 
               permissions: [] 
@@ -145,7 +153,14 @@ export const useProfileFetch = () => {
           console.error('Error fetching pharmacy_id:', pharmacyError);
         }
 
-        const safeProfile = safeQueryResult<UserProfile>(profile);
+        // Ensure the profile has all required properties
+        const completeProfile = {
+          ...profile,
+          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+          pharmacist_signature_url: profile.pharmacist_signature_url || null
+        };
+
+        const safeProfile = safeQueryResult<UserProfile>(completeProfile);
         if (!safeProfile) {
           console.error('Failed to process profile data for user:', userId);
           return { profile: null, permissions: [] };

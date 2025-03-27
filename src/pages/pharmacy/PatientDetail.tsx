@@ -28,7 +28,15 @@ const PatientDetail = () => {
           .single();
 
         if (patientError) throw patientError;
-        setPatient(patientData);
+        
+        // Ensure the profile data has all required properties
+        const completePatient = {
+          ...patientData,
+          pharmacist_stamp_url: patientData.pharmacist_stamp_url || null,
+          pharmacist_signature_url: patientData.pharmacist_signature_url || null
+        };
+        
+        setPatient(completePatient);
 
         // Fetch patient addresses
         const { data: addressData, error: addressError } = await supabase

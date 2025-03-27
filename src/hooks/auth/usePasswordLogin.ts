@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, clearAllAuthStorage } from "@/lib/supabase";
@@ -146,9 +145,16 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps) =>
           }
         } else if (profile) {
           // Update global auth state with existing profile
+          // Ensure profile has all required properties
+          const completeProfile = {
+            ...profile,
+            pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+            pharmacist_signature_url: profile.pharmacist_signature_url || null
+          };
+
           setAuth({
             user: session.user,
-            profile,
+            profile: completeProfile,
             permissions: [],
             isLoading: false,
           });
