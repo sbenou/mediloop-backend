@@ -22,26 +22,28 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     
     try {
       console.log("Creating new fabric canvas instance");
+      
+      // Create the canvas element if it doesn't exist
+      let canvasElement = document.getElementById('canvas') as HTMLCanvasElement | null;
+      if (!canvasElement) {
+        canvasElement = document.createElement('canvas');
+        canvasElement.id = 'canvas';
+        canvasContainerRef.current.appendChild(canvasElement);
+      }
+      
       const canvasInstance = new FabricCanvas('canvas', {
         backgroundColor: '#ffffff',
         width: canvasWidth,
         height: canvasHeight,
         selection: true,
         preserveObjectStacking: true,
-        isDrawingMode: false,
+        isDrawingMode: true, // ✅ Enable drawing mode by default
         renderOnAddRemove: true
       });
       
       // Set the canvas instance to state
       setCanvas(canvasInstance);
       canvasCreated.current = true;
-      
-      // Create canvas element if it doesn't exist
-      if (!document.getElementById('canvas')) {
-        const newCanvas = document.createElement('canvas');
-        newCanvas.id = 'canvas';
-        canvasContainerRef.current.appendChild(newCanvas);
-      }
       
       // Set white background
       canvasInstance.backgroundColor = '#ffffff';
@@ -72,7 +74,6 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       canvas.backgroundColor = '#ffffff';
       
       // In Fabric.js v6, we need to use the FabricImage.fromURL method with the correct syntax
-      // According to the error, 'onComplete' isn't a valid option, so we'll use the proper callback approach
       FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' })
         .then((img) => {
           console.log("Image loaded from URL:", img);
@@ -97,7 +98,9 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
             left: canvas.width! / 2,
             top: canvas.height! / 2,
             originX: 'center',
-            originY: 'center'
+            originY: 'center',
+            selectable: false, // ✅ Make image non-selectable so it works as background
+            evented: false     // ✅ Don't capture mouse events
           });
           
           canvas.add(img);
