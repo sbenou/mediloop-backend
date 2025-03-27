@@ -1,14 +1,12 @@
 
 import { useState, useEffect } from "react";
 import DoctorSidebar from "@/components/sidebar/DoctorSidebar";
-import EnhancedUserMenu from "@/components/user-menu/EnhancedUserMenu";
 import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Search, Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import Header from "@/components/layout/Header";
 import UserMenu from "@/components/UserMenu";
 
 interface DoctorLayoutProps {
@@ -31,9 +29,6 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header showBackLink={false} />
-      
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">

@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
-import EnhancedUserMenu from "@/components/user-menu/EnhancedUserMenu";
 import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Search, Menu, X, AlertTriangle } from "lucide-react";
@@ -10,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import Header from "@/components/layout/Header";
 import UserMenu from "@/components/UserMenu";
 
 interface PharmacistLayoutProps {
@@ -98,9 +96,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header showBackLink={false} />
-      
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
