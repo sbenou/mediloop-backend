@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Canvas as FabricCanvas, PencilBrush } from 'fabric';
 
@@ -78,6 +77,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         // Set cursor on the canvas object
         canvas.freeDrawingCursor = penCursor;
         canvas.hoverCursor = penCursor;
+        canvas.defaultCursor = penCursor;
         
         // Apply directly to the HTML element to ensure cursor visibility
         try {
@@ -164,6 +164,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         // Set cursor for drawing mode
         canvas.freeDrawingCursor = penCursor;
         canvas.hoverCursor = penCursor;
+        canvas.defaultCursor = penCursor;
         
         // Apply directly to the HTML element for immediate visibility
         try {
@@ -182,24 +183,6 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         }
         
         setSelectedTool('draw');
-        
-        // Force cursor update with a delay
-        setTimeout(() => {
-          try {
-            if (!canvas) return;
-            
-            try {
-              const canvasElement = canvas.getElement();
-              if (canvasElement) {
-                canvasElement.style.cursor = penCursor;
-              }
-            } catch (elemError) {
-              console.error("Error getting canvas element in delayed toggle update:", elemError);
-            }
-          } catch (e) {
-            console.error("Delayed toggle cursor update error:", e);
-          }
-        }, 100);
       } else {
         // Reset to default cursor for selection mode
         canvas.defaultCursor = 'default';
@@ -278,8 +261,40 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     setSelectedTool,
     setSelectedShape,
     toggleDrawMode,
-    handleColorChange,
-    handleBrushSizeChange
+    handleColorChange: (color: string) => {
+      setPenColor(color);
+      if (!canvas) return;
+      
+      try {
+        if (canvas.freeDrawingBrush) {
+          canvas.freeDrawingBrush.color = color;
+          // Force a render after changing brush color
+          canvas.renderAll();
+        }
+        
+        // Ensure background stays white when changing colors
+        if (canvas) {
+          canvas.backgroundColor = '#ffffff';
+          canvas.renderAll();
+        }
+      } catch (error) {
+        console.error("Error changing brush color:", error);
+      }
+    },
+    handleBrushSizeChange: (size: number) => {
+      setBrushSize(size);
+      if (!canvas) return;
+      
+      try {
+        if (canvas.freeDrawingBrush) {
+          changeBrushSizeUtil(canvas, size);
+          // Force a render after changing brush size
+          canvas.renderAll();
+        }
+      } catch (error) {
+        console.error("Error changing brush size:", error);
+      }
+    }
   };
 };
 

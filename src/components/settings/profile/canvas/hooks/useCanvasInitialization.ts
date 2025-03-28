@@ -31,17 +31,18 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       width: width,
       height: height,
       isDrawingMode: true,
-      selection: false,
+      selection: true,
       renderOnAddRemove: true
     });
 
-    // Initialize brush
+    // Initialize brush properly
     canvasInstance.freeDrawingBrush = new PencilBrush(canvasInstance);
-    canvasInstance.freeDrawingBrush.width = 3;
+    canvasInstance.freeDrawingBrush.width = 3; // Fixed from a3 to 3
     canvasInstance.freeDrawingBrush.color = '#000000';
 
     // Explicitly set background color and render
     canvasInstance.backgroundColor = '#ffffff';
+    canvasInstance.defaultCursor = 'crosshair';
     canvasInstance.renderAll();
 
     setCanvas(canvasInstance);
@@ -56,7 +57,14 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
   useEffect(() => {
     if (!canvas || !imageUrl) return;
 
-    canvas.clear();
+    // Only clear background objects if necessary, not all objects
+    const allObjects = canvas.getObjects();
+    allObjects.forEach(obj => {
+      if (!obj.selectable && !obj.evented) {
+        canvas.remove(obj);
+      }
+    });
+    
     // Set background color directly
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
@@ -84,6 +92,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       });
 
       canvas.add(img);
+      canvas.sendToBack(img); // Ensure background image stays behind
       canvas.renderAll();
     }).catch(err => {
       console.error("Error loading image:", err);
