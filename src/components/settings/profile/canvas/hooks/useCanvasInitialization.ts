@@ -23,7 +23,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     try {
       console.log("Creating new fabric canvas instance");
       
-      // Create the canvas element if it doesn't exist
+      // Step 1: create DOM canvas element first if it doesn't exist
       let canvasElement = document.getElementById('canvas') as HTMLCanvasElement | null;
       if (!canvasElement) {
         canvasElement = document.createElement('canvas');
@@ -31,36 +31,53 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         canvasContainerRef.current.appendChild(canvasElement);
       }
       
-      const canvasInstance = new FabricCanvas('canvas', {
-        backgroundColor: '#ffffff',
-        width: canvasWidth,
-        height: canvasHeight,
-        selection: true,
-        preserveObjectStacking: true,
-        isDrawingMode: true, // ✅ Enable drawing mode by default
-        renderOnAddRemove: true
-      });
-      
-      // Set the canvas instance to state
-      setCanvas(canvasInstance);
-      canvasCreated.current = true;
-      
-      // Set white background
-      canvasInstance.backgroundColor = '#ffffff';
-      canvasInstance.renderAll();
-      
-      console.log("Canvas initialized successfully");
+      // Step 2: wait for next tick to ensure it's mounted in the DOM
+      setTimeout(() => {
+        try {
+          // Create the canvas instance with the DOM element
+          const canvasInstance = new FabricCanvas('canvas', {
+            backgroundColor: '#ffffff',
+            width: canvasWidth,
+            height: canvasHeight,
+            selection: true,
+            preserveObjectStacking: true,
+            isDrawingMode: true, // ✅ Enable drawing mode by default
+            renderOnAddRemove: true
+          });
+          
+          // Set the canvas instance to state
+          setCanvas(canvasInstance);
+          canvasCreated.current = true;
+          
+          // Explicitly set white background and render
+          canvasInstance.backgroundColor = '#ffffff';
+          canvasInstance.renderAll();
+          
+          // Add a fallback style to ensure visibility
+          const mountedCanvasElement = document.getElementById('canvas');
+          if (mountedCanvasElement) {
+            mountedCanvasElement.style.backgroundColor = 'white';
+            mountedCanvasElement.style.display = 'block';
+          }
+          
+          console.log("Canvas initialized successfully");
+        } catch (innerError) {
+          console.error("Error in setTimeout during canvas initialization:", innerError);
+        }
+      }, 0);
       
       // Clean up when component unmounts
       return () => {
-        console.log("Disposing canvas");
-        canvasInstance.dispose();
-        canvasCreated.current = false;
+        if (canvas) {
+          console.log("Disposing canvas");
+          canvas.dispose();
+          canvasCreated.current = false;
+        }
       };
     } catch (error) {
       console.error("Error initializing canvas:", error);
     }
-  }, [canvasWidth, canvasHeight, canvasContainerRef]);
+  }, [canvasWidth, canvasHeight, canvasContainerRef, canvas]);
   
   // Handle loading image from URL if provided
   useEffect(() => {
@@ -71,7 +88,9 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     // Clear existing canvas content first
     try {
       canvas.clear();
+      // Explicitly set white background after clearing
       canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
       
       // In Fabric.js v6, we need to use the FabricImage.fromURL method with the correct syntax
       FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' })
@@ -104,15 +123,26 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
           });
           
           canvas.add(img);
+          
+          // Make sure the background is white again after adding the image
+          canvas.backgroundColor = '#ffffff';
           canvas.renderAll();
           
           console.log("Image added to canvas");
         })
         .catch(error => {
           console.error("Error loading image:", error);
+          // Set white background even if image loading fails
+          canvas.backgroundColor = '#ffffff';
+          canvas.renderAll();
         });
     } catch (error) {
       console.error("Error loading image to canvas:", error);
+      // Set white background even if there's an error
+      if (canvas) {
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+      }
     }
   }, [canvas, imageUrl]);
   
@@ -123,12 +153,13 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     const resizeObserver = new ResizeObserver((entries) => {
       const newWidth = entries[0].contentRect.width;
       // Don't change height based on container width for now
-      // const newHeight = entries[0].contentRect.height;
       
       // Only resize if the change is substantial (> 5px)
       if (Math.abs(newWidth - canvasWidth) > 5) {
         setCanvasWidth(newWidth);
         canvas.setWidth(newWidth);
+        // Ensure background stays white after resize
+        canvas.backgroundColor = '#ffffff';
         canvas.renderAll();
       }
     });
