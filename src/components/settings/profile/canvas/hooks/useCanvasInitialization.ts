@@ -61,30 +61,38 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
 
-    FabricImage.fromURL(imageUrl, (img) => {
-      const canvasAspect = canvas.width! / canvas.height!;
-      const imgAspect = img.width! / img.height!;
+    // Update to use the correct API for Fabric.js v6
+    FabricImage.fromURL(
+      imageUrl, 
+      {
+        crossOrigin: 'anonymous',
+        // Apply operations to the image after it loads
+        onLoaded: (img) => {
+          const canvasAspect = canvas.width! / canvas.height!;
+          const imgAspect = img.width! / img.height!;
 
-      let scaleFactor = (canvas.width! * 0.9) / img.width!;
-      if (imgAspect <= canvasAspect) {
-        scaleFactor = (canvas.height! * 0.9) / img.height!;
+          let scaleFactor = (canvas.width! * 0.9) / img.width!;
+          if (imgAspect <= canvasAspect) {
+            scaleFactor = (canvas.height! * 0.9) / img.height!;
+          }
+
+          img.scale(scaleFactor);
+          img.set({
+            left: canvas.width! / 2,
+            top: canvas.height! / 2,
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false
+          });
+
+          canvas.add(img);
+          canvas.renderAll();
+        }
       }
-
-      img.scale(scaleFactor);
-      img.set({
-        left: canvas.width! / 2,
-        top: canvas.height! / 2,
-        originX: 'center',
-        originY: 'center',
-        selectable: false,
-        evented: false
-      });
-
-      // Add the image to canvas - casting to any to bypass the TS error
-      // This is safe because the fabric library is designed to work this way
-      canvas.add(img as any);
-      canvas.renderAll();
-    }, { crossOrigin: 'anonymous' });
+    ).catch(err => {
+      console.error("Error loading image:", err);
+    });
   }, [canvas, imageUrl]);
 
   return {
