@@ -4,7 +4,8 @@ import {
   useCanvasInitialization, 
   useCanvasTools, 
   useImageManagement, 
-  useLayerManagement 
+  useLayerManagement,
+  useCanvasSize
 } from './hooks';
 import { stampTemplates } from './utils';
 
@@ -93,7 +94,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleApplyTemplate,
     canvasWidth,
     canvasHeight,
-    handleResizeCanvas,
+    handleResizeCanvas,  // Now properly included from useCanvasTools
     selectedImage,
     filterOptions,
     handleApplyFilter,

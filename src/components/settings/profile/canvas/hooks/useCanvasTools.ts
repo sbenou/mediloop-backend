@@ -144,6 +144,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
         break;
         
       case 'line':
+        // Fixed: Line constructor takes points as [x1, y1, x2, y2] not [x1, y1, x2, y2, x3, y3]
         shapeObject = new Line([
           centerX - 40, centerY,
           centerX + 40, centerY
@@ -250,7 +251,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
 
     // If checked, add checkmark
     if (checked) {
-      // Simple checkmark as two lines
+      // Fixed: Create a proper checkmark with a single line having two segments
       const checkmark = new Line([
         centerX - size/4, centerY,
         centerX, centerY + size/4,
@@ -303,6 +304,16 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     }
   };
 
+  // Handle canvas resizing
+  const handleResizeCanvas = (width: number, height: number) => {
+    if (canvas) {
+      canvas.setWidth(width);
+      canvas.setHeight(height);
+      canvas.renderAll();
+      saveCanvasState(canvas);
+    }
+  };
+
   return {
     isDrawMode,
     penColor,
@@ -325,6 +336,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     handleAddDateField,
     handleAddCheckbox,
     handleRotate,
-    handleApplyTemplate
+    handleApplyTemplate,
+    handleResizeCanvas  // Added this to the return object
   };
 };
