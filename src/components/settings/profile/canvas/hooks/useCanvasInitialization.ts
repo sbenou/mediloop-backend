@@ -92,7 +92,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       });
 
       canvas.add(img);
-      canvas.sendToBack(img); // Ensure background image stays behind
+      canvas.sendObjectToBack(img); // Ensure background image stays behind
       canvas.renderAll();
     }).catch(err => {
       console.error("Error loading image:", err);
