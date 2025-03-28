@@ -251,9 +251,21 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
 
     // If checked, add checkmark
     if (checked) {
-      // Fixed: Create a proper checkmark with a single line having two segments
-      const checkmark = new Line([
+      // Fix: Create a proper checkmark with two separate lines
+      // First line of the checkmark (top-left to middle)
+      const checkmark1 = new Line([
         centerX - size/4, centerY,
+        centerX, centerY + size/4
+      ], {
+        stroke: penColor,
+        strokeWidth: 2,
+        fill: 'transparent',
+        originX: 'center',
+        originY: 'center'
+      });
+      
+      // Second line of the checkmark (middle to bottom-right)
+      const checkmark2 = new Line([
         centerX, centerY + size/4,
         centerX + size/3, centerY - size/4
       ], {
@@ -265,9 +277,9 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       });
       
       canvas.add(box);
-      canvas.add(checkmark);
+      canvas.add(checkmark1);
+      canvas.add(checkmark2);
       // Group them together for easier selection
-      const checkboxGroup = canvas.getActiveObject();
       canvas.renderAll();
     } else {
       canvas.add(box);
