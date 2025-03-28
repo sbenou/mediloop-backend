@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Canvas as FabricCanvas } from 'fabric';
+import { Canvas as FabricCanvas, PencilBrush } from 'fabric';
 
 export interface UseDrawingToolsProps {
   canvas: FabricCanvas | null;
@@ -27,11 +27,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       // Initialize the freeDrawingBrush if needed
       if (!canvas.freeDrawingBrush) {
         console.log("Creating new free drawing brush");
-        // Use PencilBrush for continuous lines
-        const PencilBrush = canvas.getClass('PencilBrush');
-        if (PencilBrush) {
-          canvas.freeDrawingBrush = new PencilBrush(canvas);
-        }
+        // Use PencilBrush directly
+        canvas.freeDrawingBrush = new PencilBrush(canvas);
       }
       
       if (canvas.freeDrawingBrush) {
