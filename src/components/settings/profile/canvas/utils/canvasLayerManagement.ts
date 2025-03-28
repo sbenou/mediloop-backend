@@ -20,7 +20,7 @@ export const sendObjectBackward = (canvas: FabricCanvas) => {
   const activeObject = canvas.getActiveObject();
   if (!activeObject) return;
   
-  canvas.sendObjectBackward(activeObject);
+  canvas.sendObjectBackwards(activeObject); // Fixed: changed sendObjectBackward to sendObjectBackwards
   canvas.renderAll();
   saveCanvasState(canvas);
 };
