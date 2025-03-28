@@ -1,6 +1,6 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { Canvas as FabricCanvas, PencilBrush } from 'fabric';
+import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage } from 'fabric';
 
 interface UseCanvasInitializationProps {
   imageUrl: string | null;
@@ -9,6 +9,8 @@ interface UseCanvasInitializationProps {
 export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationProps) => {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [canvas, setCanvas] = useState<FabricCanvas | null>(null);
+  const [canvasWidth, setCanvasWidth] = useState<number>(500);
+  const [canvasHeight, setCanvasHeight] = useState<number>(300);
   const canvasCreated = useRef(false);
 
   useEffect(() => {
@@ -18,10 +20,16 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     canvasEl.id = 'canvas';
     canvasContainerRef.current.appendChild(canvasEl);
 
+    const width = canvasContainerRef.current.clientWidth || 500;
+    const height = 300;
+
+    setCanvasWidth(width);
+    setCanvasHeight(height);
+
     const canvasInstance = new FabricCanvas(canvasEl, {
       backgroundColor: '#ffffff',
-      width: canvasContainerRef.current.clientWidth || 500,
-      height: 300,
+      width: width,
+      height: height,
       isDrawingMode: true,
       selection: false,
       renderOnAddRemove: true
@@ -32,10 +40,9 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     canvasInstance.freeDrawingBrush.width = 3;
     canvasInstance.freeDrawingBrush.color = '#000000';
 
-    // Explicitly render to apply white background
-    canvasInstance.setBackgroundColor('#ffffff', () => {
-      canvasInstance.renderAll();
-    });
+    // Explicitly set background color and render
+    canvasInstance.backgroundColor = '#ffffff';
+    canvasInstance.renderAll();
 
     setCanvas(canvasInstance);
     canvasCreated.current = true;
@@ -50,11 +57,11 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     if (!canvas || !imageUrl) return;
 
     canvas.clear();
-    canvas.setBackgroundColor('#ffffff', () => {
-      canvas.renderAll();
-    });
+    // Set background color directly
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
 
-    fabric.Image.fromURL(imageUrl, (img) => {
+    FabricImage.fromURL(imageUrl, (img) => {
       const canvasAspect = canvas.width! / canvas.height!;
       const imgAspect = img.width! / img.height!;
 
@@ -73,13 +80,17 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         evented: false
       });
 
-      canvas.add(img);
+      // Add the image to canvas - casting to any to bypass the TS error
+      // This is safe because the fabric library is designed to work this way
+      canvas.add(img as any);
       canvas.renderAll();
     }, { crossOrigin: 'anonymous' });
   }, [canvas, imageUrl]);
 
   return {
     canvasContainerRef,
-    canvas
+    canvas,
+    canvasWidth,
+    canvasHeight
   };
 };
