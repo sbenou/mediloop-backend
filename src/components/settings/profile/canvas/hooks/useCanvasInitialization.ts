@@ -61,36 +61,31 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
 
-    // Update to use the correct API for Fabric.js v6
-    FabricImage.fromURL(
-      imageUrl, 
-      {
-        crossOrigin: 'anonymous',
-        // Apply operations to the image after it loads
-        onLoaded: (img) => {
-          const canvasAspect = canvas.width! / canvas.height!;
-          const imgAspect = img.width! / img.height!;
+    // Using the correct Fabric.js v6 API
+    FabricImage.fromURL(imageUrl, {
+      crossOrigin: 'anonymous',
+    }).then(img => {
+      const canvasAspect = canvas.width! / canvas.height!;
+      const imgAspect = img.width! / img.height!;
 
-          let scaleFactor = (canvas.width! * 0.9) / img.width!;
-          if (imgAspect <= canvasAspect) {
-            scaleFactor = (canvas.height! * 0.9) / img.height!;
-          }
-
-          img.scale(scaleFactor);
-          img.set({
-            left: canvas.width! / 2,
-            top: canvas.height! / 2,
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            evented: false
-          });
-
-          canvas.add(img);
-          canvas.renderAll();
-        }
+      let scaleFactor = (canvas.width! * 0.9) / img.width!;
+      if (imgAspect <= canvasAspect) {
+        scaleFactor = (canvas.height! * 0.9) / img.height!;
       }
-    ).catch(err => {
+
+      img.scale(scaleFactor);
+      img.set({
+        left: canvas.width! / 2,
+        top: canvas.height! / 2,
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false
+      });
+
+      canvas.add(img);
+      canvas.renderAll();
+    }).catch(err => {
       console.error("Error loading image:", err);
     });
   }, [canvas, imageUrl]);
