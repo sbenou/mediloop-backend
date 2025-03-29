@@ -1,6 +1,12 @@
-
 import { useState, useEffect } from 'react';
-import { Canvas as FabricCanvas, PencilBrush, Circle, Rect, Line, IText } from 'fabric';
+import { 
+  Canvas as FabricCanvas, 
+  PencilBrush, 
+  Circle, 
+  Rect, 
+  Line, 
+  IText 
+} from 'fabric';
 import { StampTemplate } from '../utils';
 import { saveCanvasState } from '../utils/canvasHistory';
 
@@ -140,8 +146,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       opacity: 1,
       left: centerX,
       top: centerY,
-      originX: 'center',
-      originY: 'center',
+      originX: 'center' as const,
+      originY: 'center' as const,
       selectable: true,
       evented: true
     };
@@ -172,8 +178,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
         ], {
           stroke: penColor,
           strokeWidth: 2,
-          originX: 'center',
-          originY: 'center',
+          originX: 'center' as const,
+          originY: 'center' as const,
           selectable: true,
           evented: true
         });
@@ -207,8 +213,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       fill: penColor,
       stroke: penColor,
       strokeWidth: 0.5,
-      originX: 'center',
-      originY: 'center',
+      originX: 'center' as const,
+      originY: 'center' as const,
       editable: true,
       selectable: true,
       evented: true
@@ -241,8 +247,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       fill: penColor,
       stroke: penColor,
       strokeWidth: 0.5,
-      originX: 'center',
-      originY: 'center',
+      originX: 'center' as const,
+      originY: 'center' as const,
       editable: true,
       underline: true,
       selectable: true,
@@ -279,8 +285,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       strokeWidth: 2,
       left: centerX,
       top: centerY,
-      originX: 'center',
-      originY: 'center',
+      originX: 'center' as const,
+      originY: 'center' as const,
       selectable: true,
       evented: true
     });
@@ -296,8 +302,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
         stroke: penColor,
         strokeWidth: 2,
         fill: 'transparent',
-        originX: 'center',
-        originY: 'center',
+        originX: 'center' as const,
+        originY: 'center' as const,
         selectable: true,
         evented: true
       });
@@ -310,8 +316,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
         stroke: penColor,
         strokeWidth: 2,
         fill: 'transparent',
-        originX: 'center',
-        originY: 'center',
+        originX: 'center' as const,
+        originY: 'center' as const,
         selectable: true,
         evented: true
       });
