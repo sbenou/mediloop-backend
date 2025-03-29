@@ -44,7 +44,12 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
   useEffect(() => {
     if (!canvas) return;
     
-    const onPathCreated = () => {
+    const onPathCreated = (e: any) => {
+      // Explicitly ensure the path is added and visible
+      if (e.path) {
+        canvas.add(e.path);
+        canvas.renderAll();
+      }
       saveCanvasState(canvas);
     };
     
@@ -127,34 +132,36 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     setSelectedTool('shape');
     setSelectedShape(shape);
     
+    // Common properties for all shapes
+    const commonProps = {
+      stroke: penColor,
+      strokeWidth: 2,
+      fill: 'transparent',
+      opacity: 1,
+      left: centerX,
+      top: centerY,
+      originX: 'center',
+      originY: 'center',
+      selectable: true,
+      evented: true
+    };
+    
     // Create and add shape based on type
     let shapeObject;
     
     switch (shape) {
       case 'circle':
         shapeObject = new Circle({
-          radius: 30,
-          fill: 'transparent',
-          stroke: penColor,
-          strokeWidth: 2,
-          left: centerX,
-          top: centerY,
-          originX: 'center',
-          originY: 'center'
+          ...commonProps,
+          radius: 30
         });
         break;
         
       case 'rectangle':
         shapeObject = new Rect({
+          ...commonProps,
           width: 60,
-          height: 60,
-          fill: 'transparent',
-          stroke: penColor,
-          strokeWidth: 2,
-          left: centerX,
-          top: centerY,
-          originX: 'center',
-          originY: 'center'
+          height: 60
         });
         break;
         
@@ -166,7 +173,9 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
           stroke: penColor,
           strokeWidth: 2,
           originX: 'center',
-          originY: 'center'
+          originY: 'center',
+          selectable: true,
+          evented: true
         });
         break;
     }
@@ -174,7 +183,6 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     if (shapeObject) {
       canvas.add(shapeObject);
       canvas.setActiveObject(shapeObject);
-      // Instead of using object.bringToFront(), use canvas.bringObjectToFront(object)
       canvas.bringObjectToFront(shapeObject);
       canvas.renderAll();
       saveCanvasState(canvas);
@@ -197,14 +205,17 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       fontFamily: 'Arial',
       fontSize: 20,
       fill: penColor,
+      stroke: penColor,
+      strokeWidth: 0.5,
       originX: 'center',
       originY: 'center',
-      editable: true
+      editable: true,
+      selectable: true,
+      evented: true
     });
 
     canvas.add(text);
     canvas.setActiveObject(text);
-    // Use canvas method instead of object method
     canvas.bringObjectToFront(text);
     text.enterEditing();
     text.selectAll();
@@ -228,15 +239,18 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       fontFamily: 'Arial',
       fontSize: 16,
       fill: penColor,
+      stroke: penColor,
+      strokeWidth: 0.5,
       originX: 'center',
       originY: 'center',
       editable: true,
-      underline: true
+      underline: true,
+      selectable: true,
+      evented: true
     });
 
     canvas.add(dateText);
     canvas.setActiveObject(dateText);
-    // Use canvas method instead of object method
     canvas.bringObjectToFront(dateText);
     canvas.renderAll();
     saveCanvasState(canvas);
@@ -266,12 +280,14 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       left: centerX,
       top: centerY,
       originX: 'center',
-      originY: 'center'
+      originY: 'center',
+      selectable: true,
+      evented: true
     });
 
     // If checked, add checkmark
     if (checked) {
-      // Fix: Create a proper checkmark with two separate lines
+      // Create a proper checkmark with two separate lines
       // First line of the checkmark (top-left to middle)
       const checkmark1 = new Line([
         centerX - size/4, centerY,
@@ -281,7 +297,9 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
         strokeWidth: 2,
         fill: 'transparent',
         originX: 'center',
-        originY: 'center'
+        originY: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Second line of the checkmark (middle to bottom-right)
@@ -293,14 +311,16 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
         strokeWidth: 2,
         fill: 'transparent',
         originX: 'center',
-        originY: 'center'
+        originY: 'center',
+        selectable: true,
+        evented: true
       });
       
       canvas.add(box);
       canvas.add(checkmark1);
       canvas.add(checkmark2);
       
-      // Bring elements to front to ensure visibility, using canvas methods
+      // Bring elements to front to ensure visibility
       canvas.bringObjectToFront(box);
       canvas.bringObjectToFront(checkmark1);
       canvas.bringObjectToFront(checkmark2);
@@ -308,7 +328,6 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       canvas.renderAll();
     } else {
       canvas.add(box);
-      // Use canvas method instead of object method
       canvas.bringObjectToFront(box);
       canvas.setActiveObject(box);
       canvas.renderAll();
@@ -338,10 +357,19 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     const template = templates.find(t => t.id === templateId);
     if (template && template.renderTemplate) {
       setIsDrawMode(false);
+      // Clear canvas before applying template
+      canvas.getObjects().forEach(obj => canvas.remove(obj));
+      
+      // Apply the template
       template.renderTemplate(canvas, doctorName);
       
-      // Ensure all template objects are visible, using canvas methods
+      // Ensure all objects are visible and at the front
       canvas.getObjects().forEach(obj => {
+        obj.set({
+          selectable: true,
+          evented: true,
+          opacity: 1
+        });
         canvas.bringObjectToFront(obj);
       });
       

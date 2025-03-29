@@ -30,7 +30,9 @@ export const stampTemplates: StampTemplate[] = [
         left: canvas.width! / 2,
         top: canvas.height! / 2,
         originX: 'center',
-        originY: 'center'
+        originY: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Create inner circle
@@ -42,7 +44,9 @@ export const stampTemplates: StampTemplate[] = [
         left: canvas.width! / 2,
         top: canvas.height! / 2,
         originX: 'center',
-        originY: 'center'
+        originY: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add text for name at the top
@@ -50,33 +54,48 @@ export const stampTemplates: StampTemplate[] = [
         fontFamily: 'Arial',
         fontSize: 18,
         fontWeight: 'bold',
+        fill: '#000',
+        stroke: '#000',
+        strokeWidth: 0.2,
         left: canvas.width! / 2,
         top: canvas.height! / 2 - 40,
         originX: 'center',
         originY: 'center',
-        textAlign: 'center'
+        textAlign: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add Doctor text at the bottom
       const doctorText = new IText('Medical Doctor', {
         fontFamily: 'Arial',
         fontSize: 14,
+        fill: '#000',
+        stroke: '#000',
+        strokeWidth: 0.2,
         left: canvas.width! / 2,
         top: canvas.height! / 2 + 40,
         originX: 'center',
         originY: 'center',
-        textAlign: 'center'
+        textAlign: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add license number
       const licenseText = new IText('License #12345', {
         fontFamily: 'Arial',
         fontSize: 12,
+        fill: '#000',
+        stroke: '#000',
+        strokeWidth: 0.2,
         left: canvas.width! / 2,
         top: canvas.height! / 2 + 10,
         originX: 'center',
         originY: 'center',
-        textAlign: 'center'
+        textAlign: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add them to canvas
@@ -85,6 +104,11 @@ export const stampTemplates: StampTemplate[] = [
       canvas.add(nameText);
       canvas.add(doctorText);
       canvas.add(licenseText);
+      
+      // Make sure all objects are visible
+      [outerCircle, innerCircle, nameText, doctorText, licenseText].forEach(obj => {
+        canvas.bringObjectToFront(obj);
+      });
       
       // Render
       canvas.renderAll();
@@ -109,7 +133,9 @@ export const stampTemplates: StampTemplate[] = [
         left: canvas.width! / 2,
         top: canvas.height! / 2,
         originX: 'center',
-        originY: 'center'
+        originY: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Create inner square
@@ -122,7 +148,9 @@ export const stampTemplates: StampTemplate[] = [
         left: canvas.width! / 2,
         top: canvas.height! / 2,
         originX: 'center',
-        originY: 'center'
+        originY: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add text for name at the top
@@ -130,33 +158,48 @@ export const stampTemplates: StampTemplate[] = [
         fontFamily: 'Arial',
         fontSize: 18,
         fontWeight: 'bold',
+        fill: '#000',
+        stroke: '#000',
+        strokeWidth: 0.2,
         left: canvas.width! / 2,
         top: canvas.height! / 2 - 40,
         originX: 'center',
         originY: 'center',
-        textAlign: 'center'
+        textAlign: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add Doctor text at the bottom
       const doctorText = new IText('Pharmacist', {
         fontFamily: 'Arial',
         fontSize: 14,
+        fill: '#000',
+        stroke: '#000',
+        strokeWidth: 0.2,
         left: canvas.width! / 2,
         top: canvas.height! / 2 + 40,
         originX: 'center',
         originY: 'center',
-        textAlign: 'center'
+        textAlign: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add license number
       const licenseText = new IText('License #12345', {
         fontFamily: 'Arial',
         fontSize: 12,
+        fill: '#000',
+        stroke: '#000',
+        strokeWidth: 0.2,
         left: canvas.width! / 2,
         top: canvas.height! / 2 + 10,
         originX: 'center',
         originY: 'center',
-        textAlign: 'center'
+        textAlign: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add them to canvas
@@ -165,6 +208,11 @@ export const stampTemplates: StampTemplate[] = [
       canvas.add(nameText);
       canvas.add(doctorText);
       canvas.add(licenseText);
+      
+      // Make sure all objects are visible
+      [outerSquare, innerSquare, nameText, doctorText, licenseText].forEach(obj => {
+        canvas.bringObjectToFront(obj);
+      });
       
       // Render
       canvas.renderAll();
@@ -184,11 +232,16 @@ export const stampTemplates: StampTemplate[] = [
         fontFamily: 'Brush Script MT',
         fontSize: 36,
         fontStyle: 'italic',
+        fill: '#000',
+        stroke: '#000',
+        strokeWidth: 0.2,
         left: canvas.width! / 2,
         top: canvas.height! / 2,
         originX: 'center',
         originY: 'center',
-        textAlign: 'center'
+        textAlign: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add a line underneath
@@ -199,12 +252,18 @@ export const stampTemplates: StampTemplate[] = [
         left: canvas.width! / 2,
         top: canvas.height! / 2 + 25,
         originX: 'center',
-        originY: 'center'
+        originY: 'center',
+        selectable: true,
+        evented: true
       });
       
       // Add them to canvas
       canvas.add(signatureText);
       canvas.add(underline);
+      
+      // Make sure objects are visible
+      canvas.bringObjectToFront(signatureText);
+      canvas.bringObjectToFront(underline);
       
       // Render
       canvas.renderAll();

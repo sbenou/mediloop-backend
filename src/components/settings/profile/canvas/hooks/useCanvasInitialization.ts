@@ -80,7 +80,6 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       });
 
       // FIX: Correctly add the image at the bottom layer
-      // Instead of using insertAt with a FabricImage as the index param
       canvas.add(img);
       canvas.sendObjectToBack(img);
       canvas.renderAll();
