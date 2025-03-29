@@ -46,7 +46,11 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleAddCheckbox,
     handleRotate,
     handleApplyTemplate,
-    handleResizeCanvas
+    handleResizeCanvas,
+    // Get state setters
+    setSelectedTool,
+    setSelectedShape,
+    setIsDrawMode
   } = useCanvasTools({ 
     canvas, 
     templates: stampTemplates 
@@ -94,7 +98,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleApplyTemplate,
     canvasWidth,
     canvasHeight,
-    handleResizeCanvas,  // Now properly included from useCanvasTools
+    handleResizeCanvas,
     selectedImage,
     filterOptions,
     handleApplyFilter,
@@ -104,6 +108,10 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleSendToBack,
     handleExport,
     handleAddDateField,
-    handleAddCheckbox
+    handleAddCheckbox,
+    // State setters for UI
+    setSelectedTool,
+    setSelectedShape,
+    setIsDrawMode
   };
 };

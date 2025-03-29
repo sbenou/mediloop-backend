@@ -24,6 +24,9 @@ export interface QuickToolbarProps {
   triggerUpload: () => void;
   saveCanvas: () => void;
   isLoading: boolean;
+  // Tool selection states
+  selectedTool: string;
+  selectedShape: 'circle' | 'rectangle' | 'line' | null;
   // Template props
   type?: 'stamp' | 'signature';
   availableTemplates?: StampTemplate[];
@@ -70,7 +73,24 @@ const QuickToolbar: React.FC<QuickToolbarProps> = (props) => {
         </TabsList>
         
         <TabsContent value="tools">
-          <ToolsTab {...props} />
+          <ToolsTab 
+            isDrawMode={props.isDrawMode}
+            toggleDrawMode={props.toggleDrawMode}
+            clearCanvas={props.clearCanvas}
+            handleUndo={props.handleUndo}
+            handleRedo={props.handleRedo}
+            canUndo={props.canUndo}
+            canRedo={props.canRedo}
+            handleAddShape={props.handleAddShape}
+            handleAddText={props.handleAddText}
+            triggerUpload={props.triggerUpload}
+            saveCanvas={props.saveCanvas}
+            isLoading={props.isLoading}
+            handleAddDateField={props.handleAddDateField}
+            handleAddCheckbox={props.handleAddCheckbox}
+            selectedTool={props.selectedTool}
+            selectedShape={props.selectedShape}
+          />
         </TabsContent>
         
         <TabsContent value="draw">

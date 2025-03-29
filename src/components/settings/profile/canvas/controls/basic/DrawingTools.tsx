@@ -33,7 +33,7 @@ const DrawingTools: React.FC<DrawingToolsProps> = ({
             <ToggleGroupItem 
               value="draw" 
               aria-label="Toggle drawing mode"
-              data-state={isDrawMode ? "on" : "off"}
+              data-state={selectedTool === 'draw' ? "on" : "off"}
               onClick={toggleDrawMode}
             >
               <Pencil className="h-4 w-4" />

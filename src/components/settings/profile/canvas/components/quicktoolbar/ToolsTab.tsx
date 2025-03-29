@@ -23,7 +23,7 @@ type ToolsTabProps = Pick<
   QuickToolbarProps, 
   'isDrawMode' | 'toggleDrawMode' | 'clearCanvas' | 'handleUndo' | 'handleRedo' | 
   'canUndo' | 'canRedo' | 'handleAddShape' | 'handleAddText' | 'triggerUpload' | 
-  'saveCanvas' | 'isLoading' | 'handleAddDateField' | 'handleAddCheckbox'
+  'saveCanvas' | 'isLoading' | 'handleAddDateField' | 'handleAddCheckbox' | 'selectedTool' | 'selectedShape'
 >;
 
 const ToolsTab: React.FC<ToolsTabProps> = ({
@@ -40,13 +40,15 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
   saveCanvas,
   isLoading,
   handleAddDateField,
-  handleAddCheckbox
+  handleAddCheckbox,
+  selectedTool,
+  selectedShape
 }) => {
   return (
     <div className="p-3">
       <div className="flex flex-wrap gap-2">
         <Button
-          variant={isDrawMode ? "default" : "outline"}
+          variant={selectedTool === 'draw' ? "default" : "outline"}
           size="icon"
           onClick={toggleDrawMode}
           title={isDrawMode ? "Finish Drawing" : "Draw"}
@@ -55,7 +57,7 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
         </Button>
         
         <Button
-          variant="outline"
+          variant={selectedTool === 'shape' && selectedShape === 'circle' ? "default" : "outline"}
           size="icon"
           onClick={() => handleAddShape('circle')}
           title="Add Circle"
@@ -64,7 +66,7 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
         </Button>
         
         <Button
-          variant="outline"
+          variant={selectedTool === 'shape' && selectedShape === 'rectangle' ? "default" : "outline"}
           size="icon"
           onClick={() => handleAddShape('rectangle')}
           title="Add Rectangle"
@@ -73,7 +75,7 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
         </Button>
         
         <Button
-          variant="outline"
+          variant={selectedTool === 'shape' && selectedShape === 'line' ? "default" : "outline"}
           size="icon"
           onClick={() => handleAddShape('line')}
           title="Add Line"
@@ -82,7 +84,7 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
         </Button>
         
         <Button
-          variant="outline"
+          variant={selectedTool === 'text' ? "default" : "outline"}
           size="icon"
           onClick={handleAddText}
           title="Add Text"
@@ -92,7 +94,7 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
         
         {handleAddDateField && (
           <Button
-            variant="outline"
+            variant={selectedTool === 'date' ? "default" : "outline"}
             size="icon"
             onClick={handleAddDateField}
             title="Add Date Field"
@@ -103,7 +105,7 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
         
         {handleAddCheckbox && (
           <Button
-            variant="outline"
+            variant={selectedTool === 'checkbox' ? "default" : "outline"}
             size="icon"
             onClick={() => handleAddCheckbox(false)}
             title="Add Checkbox"

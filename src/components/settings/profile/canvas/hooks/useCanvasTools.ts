@@ -40,6 +40,21 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     canvas.renderAll();
   }, [canvas, isDrawMode, penColor, brushSize]);
 
+  // Add an effect to ensure drawings persist after mouse release
+  useEffect(() => {
+    if (!canvas) return;
+    
+    const onPathCreated = () => {
+      saveCanvasState(canvas);
+    };
+    
+    canvas.on('path:created', onPathCreated);
+    
+    return () => {
+      canvas.off('path:created', onPathCreated);
+    };
+  }, [canvas]);
+
   // Toggle between draw and select mode
   const toggleDrawMode = () => {
     setIsDrawMode(prev => !prev);
@@ -159,7 +174,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     if (shapeObject) {
       canvas.add(shapeObject);
       canvas.setActiveObject(shapeObject);
-      // Instead of using object.bringToFront(), use canvas.bringToFront(object)
+      // Instead of using object.bringToFront(), use canvas.bringObjectToFront(object)
       canvas.bringObjectToFront(shapeObject);
       canvas.renderAll();
       saveCanvasState(canvas);
@@ -368,6 +383,10 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     handleAddCheckbox,
     handleRotate,
     handleApplyTemplate,
-    handleResizeCanvas
+    handleResizeCanvas,
+    // Expose state setters for UI components
+    setSelectedTool,
+    setSelectedShape,
+    setIsDrawMode
   };
 };

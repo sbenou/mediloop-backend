@@ -37,7 +37,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
 
     // Initialize brush properly
     canvasInstance.freeDrawingBrush = new PencilBrush(canvasInstance);
-    canvasInstance.freeDrawingBrush.width = 3; // Fixed from a3 to 3
+    canvasInstance.freeDrawingBrush.width = 3; 
     canvasInstance.freeDrawingBrush.color = '#000000';
 
     // Explicitly set background color and render
@@ -56,18 +56,6 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
 
   useEffect(() => {
     if (!canvas || !imageUrl) return;
-
-    // Only clear background objects if necessary, not all objects
-    const allObjects = canvas.getObjects();
-    allObjects.forEach(obj => {
-      if (!obj.selectable && !obj.evented) {
-        canvas.remove(obj);
-      }
-    });
-    
-    // Set background color directly
-    canvas.backgroundColor = '#ffffff';
-    canvas.renderAll();
 
     // Using the correct Fabric.js v6 API
     FabricImage.fromURL(imageUrl, {
@@ -91,8 +79,9 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         evented: false
       });
 
-      canvas.add(img);
-      canvas.sendObjectToBack(img); // Ensure background image stays behind
+      // Insert at position 0 instead of adding (which adds at the top)
+      // This ensures the image is at the bottom layer
+      canvas.insertAt(img, 0);
       canvas.renderAll();
     }).catch(err => {
       console.error("Error loading image:", err);
