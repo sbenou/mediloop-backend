@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { 
   Canvas as FabricCanvas, 
@@ -200,7 +201,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       console.log('Shape object created:', shapeObject);
       canvas.add(shapeObject);
       canvas.setActiveObject(shapeObject);
-      canvas.bringToFront(shapeObject);
+      canvas.bringObjectToFront(shapeObject);
       console.log('Canvas objects after shape added:', canvas.getObjects());
       canvas.renderAll();
       saveCanvasState(canvas);
@@ -390,7 +391,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
           evented: true,
           opacity: 1
         });
-        canvas.bringToFront(obj);
+        canvas.bringObjectToFront(obj);
       });
       
       canvas.renderAll();

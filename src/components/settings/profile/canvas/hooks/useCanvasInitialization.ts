@@ -84,20 +84,17 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         evented: false
       });
 
-      // Clear any existing objects on canvas (optional)
-      // canvas.clear();
-      
       // Re-establish white background
       canvas.backgroundColor = '#ffffff';
       
       // FIX: Correctly add the image at the bottom layer
       console.log('Adding image to canvas');
       canvas.add(img);
-      canvas.sendToBack(img); // Use sendToBack instead of sendObjectToBack
+      canvas.sendObjectToBack(img); // Use correct method for Fabric.js v6
       
       // Additional verification to make sure image stays at back
       setTimeout(() => {
-        canvas.sendToBack(img);
+        canvas.sendObjectToBack(img);
         console.log('Canvas objects after image added:', canvas.getObjects().length);
         canvas.renderAll();
       }, 100);
