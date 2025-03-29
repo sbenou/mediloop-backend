@@ -144,7 +144,6 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
         break;
         
       case 'line':
-        // Fixed: Line constructor takes points as [x1, y1, x2, y2] not [x1, y1, x2, y2, x3, y3]
         shapeObject = new Line([
           centerX - 40, centerY,
           centerX + 40, centerY
@@ -160,6 +159,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     if (shapeObject) {
       canvas.add(shapeObject);
       canvas.setActiveObject(shapeObject);
+      shapeObject.bringToFront?.(); // Ensure shape is visible on top
       canvas.renderAll();
       saveCanvasState(canvas);
     }
@@ -188,6 +188,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
 
     canvas.add(text);
     canvas.setActiveObject(text);
+    text.bringToFront?.(); // Ensure text is visible on top
     text.enterEditing();
     text.selectAll();
     canvas.renderAll();
@@ -218,6 +219,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
 
     canvas.add(dateText);
     canvas.setActiveObject(dateText);
+    dateText.bringToFront?.(); // Ensure date field is visible on top
     canvas.renderAll();
     saveCanvasState(canvas);
   };
@@ -279,10 +281,16 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       canvas.add(box);
       canvas.add(checkmark1);
       canvas.add(checkmark2);
-      // Group them together for easier selection
+      
+      // Bring elements to front to ensure visibility
+      box.bringToFront?.();
+      checkmark1.bringToFront?.();
+      checkmark2.bringToFront?.();
+      
       canvas.renderAll();
     } else {
       canvas.add(box);
+      box.bringToFront?.(); // Ensure checkbox is visible on top
       canvas.setActiveObject(box);
       canvas.renderAll();
     }
@@ -312,6 +320,13 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     if (template && template.renderTemplate) {
       setIsDrawMode(false);
       template.renderTemplate(canvas, doctorName);
+      
+      // Ensure all template objects are visible
+      canvas.getObjects().forEach(obj => {
+        obj.bringToFront?.();
+      });
+      
+      canvas.renderAll();
       saveCanvasState(canvas);
     }
   };
@@ -349,6 +364,6 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     handleAddCheckbox,
     handleRotate,
     handleApplyTemplate,
-    handleResizeCanvas  // Added this to the return object
+    handleResizeCanvas
   };
 };
