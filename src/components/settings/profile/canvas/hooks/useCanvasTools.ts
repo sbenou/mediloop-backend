@@ -159,7 +159,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     if (shapeObject) {
       canvas.add(shapeObject);
       canvas.setActiveObject(shapeObject);
-      shapeObject.bringToFront?.(); // Ensure shape is visible on top
+      // Instead of using object.bringToFront(), use canvas.bringToFront(object)
+      canvas.bringObjectToFront(shapeObject);
       canvas.renderAll();
       saveCanvasState(canvas);
     }
@@ -188,7 +189,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
 
     canvas.add(text);
     canvas.setActiveObject(text);
-    text.bringToFront?.(); // Ensure text is visible on top
+    // Use canvas method instead of object method
+    canvas.bringObjectToFront(text);
     text.enterEditing();
     text.selectAll();
     canvas.renderAll();
@@ -219,7 +221,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
 
     canvas.add(dateText);
     canvas.setActiveObject(dateText);
-    dateText.bringToFront?.(); // Ensure date field is visible on top
+    // Use canvas method instead of object method
+    canvas.bringObjectToFront(dateText);
     canvas.renderAll();
     saveCanvasState(canvas);
   };
@@ -282,15 +285,16 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       canvas.add(checkmark1);
       canvas.add(checkmark2);
       
-      // Bring elements to front to ensure visibility
-      box.bringToFront?.();
-      checkmark1.bringToFront?.();
-      checkmark2.bringToFront?.();
+      // Bring elements to front to ensure visibility, using canvas methods
+      canvas.bringObjectToFront(box);
+      canvas.bringObjectToFront(checkmark1);
+      canvas.bringObjectToFront(checkmark2);
       
       canvas.renderAll();
     } else {
       canvas.add(box);
-      box.bringToFront?.(); // Ensure checkbox is visible on top
+      // Use canvas method instead of object method
+      canvas.bringObjectToFront(box);
       canvas.setActiveObject(box);
       canvas.renderAll();
     }
@@ -321,9 +325,9 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       setIsDrawMode(false);
       template.renderTemplate(canvas, doctorName);
       
-      // Ensure all template objects are visible
+      // Ensure all template objects are visible, using canvas methods
       canvas.getObjects().forEach(obj => {
-        obj.bringToFront?.();
+        canvas.bringObjectToFront(obj);
       });
       
       canvas.renderAll();
