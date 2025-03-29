@@ -45,6 +45,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     canvasInstance.defaultCursor = 'crosshair';
     canvasInstance.renderAll();
 
+    console.log('Canvas initialized with dimensions:', width, 'x', height);
     setCanvas(canvasInstance);
     canvasCreated.current = true;
 
@@ -57,10 +58,14 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
   useEffect(() => {
     if (!canvas || !imageUrl) return;
 
+    console.log('Loading image URL to canvas:', imageUrl);
+    
     // Using the correct Fabric.js v6 API
     FabricImage.fromURL(imageUrl, {
       crossOrigin: 'anonymous',
     }).then(img => {
+      console.log('Image loaded successfully:', img.width, 'x', img.height);
+      
       const canvasAspect = canvas.width! / canvas.height!;
       const imgAspect = img.width! / img.height!;
 
@@ -79,9 +84,24 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         evented: false
       });
 
+      // Clear any existing objects on canvas (optional)
+      // canvas.clear();
+      
+      // Re-establish white background
+      canvas.backgroundColor = '#ffffff';
+      
       // FIX: Correctly add the image at the bottom layer
+      console.log('Adding image to canvas');
       canvas.add(img);
-      canvas.sendObjectToBack(img);
+      canvas.sendToBack(img); // Use sendToBack instead of sendObjectToBack
+      
+      // Additional verification to make sure image stays at back
+      setTimeout(() => {
+        canvas.sendToBack(img);
+        console.log('Canvas objects after image added:', canvas.getObjects().length);
+        canvas.renderAll();
+      }, 100);
+      
       canvas.renderAll();
     }).catch(err => {
       console.error("Error loading image:", err);

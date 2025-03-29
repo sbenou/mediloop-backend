@@ -41,6 +41,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       
       brush.color = penColor;
       brush.width = brushSize;
+      console.log('Drawing mode enabled with color:', penColor, 'and size:', brushSize);
     }
 
     canvas.renderAll();
@@ -51,17 +52,24 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     if (!canvas) return;
     
     const onPathCreated = (e: any) => {
+      console.log('Path created event:', e);
       // Explicitly ensure the path is added and visible
       if (e.path) {
+        console.log('Adding path to canvas:', e.path);
         canvas.add(e.path);
         canvas.renderAll();
+        console.log('Canvas objects after path added:', canvas.getObjects().length);
+      } else {
+        console.log('No path found in event');
       }
       saveCanvasState(canvas);
     };
     
+    console.log('Setting up path:created listener');
     canvas.on('path:created', onPathCreated);
     
     return () => {
+      console.log('Removing path:created listener');
       canvas.off('path:created', onPathCreated);
     };
   }, [canvas]);
@@ -129,6 +137,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
   const handleAddShape = (shape: 'circle' | 'rectangle' | 'line') => {
     if (!canvas) return;
     
+    console.log('Adding shape:', shape);
+    
     // Center of canvas
     const centerX = canvas.width! / 2;
     const centerY = canvas.height! / 2;
@@ -187,9 +197,11 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     }
     
     if (shapeObject) {
+      console.log('Shape object created:', shapeObject);
       canvas.add(shapeObject);
       canvas.setActiveObject(shapeObject);
-      canvas.bringObjectToFront(shapeObject);
+      canvas.bringToFront(shapeObject);
+      console.log('Canvas objects after shape added:', canvas.getObjects());
       canvas.renderAll();
       saveCanvasState(canvas);
     }
@@ -360,6 +372,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
   const handleApplyTemplate = (templateId: string, doctorName?: string) => {
     if (!canvas) return;
     
+    console.log('Applying template:', templateId);
     const template = templates.find(t => t.id === templateId);
     if (template && template.renderTemplate) {
       setIsDrawMode(false);
@@ -370,13 +383,14 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       template.renderTemplate(canvas, doctorName);
       
       // Ensure all objects are visible and at the front
+      console.log('Template objects created:', canvas.getObjects().length);
       canvas.getObjects().forEach(obj => {
         obj.set({
           selectable: true,
           evented: true,
           opacity: 1
         });
-        canvas.bringObjectToFront(obj);
+        canvas.bringToFront(obj);
       });
       
       canvas.renderAll();
