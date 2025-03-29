@@ -17,9 +17,10 @@ const CanvasContainer = forwardRef<HTMLDivElement, CanvasContainerProps>(
           height: '300px',
           backgroundColor: '#ffffff',
           position: 'relative',
-          border: '1px solid #e2e8f0',
+          border: '2px dashed red', // Temporary debug border
           borderRadius: '0.375rem',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          zIndex: 1
         }}
       />
     );
