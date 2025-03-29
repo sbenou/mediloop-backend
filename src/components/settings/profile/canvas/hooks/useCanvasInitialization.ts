@@ -79,9 +79,10 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         evented: false
       });
 
-      // Insert at position 0 instead of adding (which adds at the top)
-      // This ensures the image is at the bottom layer
-      canvas.insertAt(img, 0);
+      // FIX: Correctly add the image at the bottom layer
+      // Instead of using insertAt with a FabricImage as the index param
+      canvas.add(img);
+      canvas.sendObjectToBack(img);
       canvas.renderAll();
     }).catch(err => {
       console.error("Error loading image:", err);

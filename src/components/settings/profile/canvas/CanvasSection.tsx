@@ -62,7 +62,11 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     handleSendToBack,
     handleExport,
     handleAddDateField,
-    handleAddCheckbox
+    handleAddCheckbox,
+    // State setters
+    setSelectedTool,
+    setSelectedShape,
+    setIsDrawMode
   } = useCanvasManager({ imageUrl });
 
   // File upload functionality
@@ -230,6 +234,9 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             handleAddDateField={handleAddDateField}
             handleAddCheckbox={handleAddCheckbox}
             handleExport={handleExport}
+            // Fix: Add missing props for selectedTool and selectedShape
+            selectedTool={selectedTool}
+            selectedShape={selectedShape}
           />
         </div>
       </CardContent>
