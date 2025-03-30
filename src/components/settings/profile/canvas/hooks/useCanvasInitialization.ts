@@ -1,6 +1,6 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle } from 'fabric';
+import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle, Rect } from 'fabric';
 
 interface UseCanvasInitializationProps {
   imageUrl: string | null;
@@ -53,7 +53,8 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     
     // Add a testing shape to verify canvas is working
     try {
-      const testRect = new FabricCanvas.Rect({
+      // Use imported Rect instead of Canvas.Rect
+      const testRect = new Rect({
         left: width / 2,
         top: height / 2,
         fill: 'red',
@@ -84,8 +85,9 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
 
     console.log('Loading image URL to canvas:', imageUrl);
     
-    // Temporarily use a direct white background instead of loading the image
-    canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas));
+    // Use backgroundColor property directly instead of setBackgroundColor method
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
     
     // Commenting out image loading for debugging purposes
     /*
