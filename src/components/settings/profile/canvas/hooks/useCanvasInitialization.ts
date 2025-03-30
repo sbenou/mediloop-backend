@@ -1,6 +1,6 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage } from 'fabric';
+import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Circle } from 'fabric';
 
 interface UseCanvasInitializationProps {
   imageUrl: string | null;
@@ -43,9 +43,33 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     // Explicitly set background color and render
     canvasInstance.backgroundColor = '#ffffff';
     canvasInstance.defaultCursor = 'crosshair';
+    
+    // Force hard render
     canvasInstance.renderAll();
+    canvasInstance.requestRenderAll();
+    canvasInstance.calcOffset();
 
     console.log('Canvas initialized with dimensions:', width, 'x', height);
+    
+    // Add a testing shape to verify canvas is working
+    try {
+      const testRect = new FabricCanvas.Rect({
+        left: width / 2,
+        top: height / 2,
+        fill: 'red',
+        width: 50,
+        height: 50,
+        opacity: 1,
+        originX: 'center',
+        originY: 'center'
+      });
+      canvasInstance.add(testRect);
+      console.log('Test rectangle added, canvas objects:', canvasInstance.getObjects().length);
+      canvasInstance.renderAll();
+    } catch (err) {
+      console.error('Failed to add test rectangle:', err);
+    }
+    
     setCanvas(canvasInstance);
     canvasCreated.current = true;
 
@@ -60,6 +84,11 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
 
     console.log('Loading image URL to canvas:', imageUrl);
     
+    // Temporarily use a direct white background instead of loading the image
+    canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas));
+    
+    // Commenting out image loading for debugging purposes
+    /*
     // Using the correct Fabric.js v6 API
     FabricImage.fromURL(imageUrl, {
       crossOrigin: 'anonymous',
@@ -103,6 +132,27 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     }).catch(err => {
       console.error("Error loading image:", err);
     });
+    */
+    
+    // For debugging: add a visible test object after a slight delay
+    setTimeout(() => {
+      try {
+        const testCircle = new Circle({
+          radius: 30,
+          fill: '#FF5733',
+          left: 100,
+          top: 100,
+          opacity: 1
+        });
+        canvas.add(testCircle);
+        canvas.renderAll();
+        canvas.requestRenderAll();
+        console.log('Debug circle added. Total objects:', canvas.getObjects().length);
+      } catch (err) {
+        console.error('Failed to add debug circle:', err);
+      }
+    }, 1000);
+    
   }, [canvas, imageUrl]);
 
   return {

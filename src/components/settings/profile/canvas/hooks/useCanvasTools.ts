@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   Canvas as FabricCanvas, 
@@ -53,16 +52,39 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     if (!canvas) return;
     
     const onPathCreated = (e: any) => {
-      console.log('Path created event:', e);
-      // Explicitly ensure the path is added and visible
+      console.log('🔥 Path created event:', e);
+      
       if (e.path) {
-        console.log('Adding path to canvas:', e.path);
-        canvas.add(e.path);
+        console.log('🧠 Adding path to canvas:', e.path);
+        
+        const path = e.path;
+        path.set({
+          opacity: 1,
+          stroke: penColor,
+          fill: 'transparent',
+          strokeWidth: brushSize,
+          selectable: true,
+          evented: true
+        });
+        
+        canvas.add(path);
+        canvas.setActiveObject(path);
         canvas.renderAll();
-        console.log('Canvas objects after path added:', canvas.getObjects().length);
+        
+        console.log('🖼 Canvas objects after path added:', canvas.getObjects().length);
+        console.log('Objects visible?', canvas.getObjects().map(obj => ({
+          type: obj.type,
+          opacity: obj.opacity,
+          visible: obj.visible
+        })));
       } else {
-        console.log('No path found in event');
+        console.warn('⚠️ No path found in path:created event');
       }
+      
+      // Hard render flush
+      canvas.requestRenderAll();
+      canvas.calcOffset(); // Force re-evaluate object positions
+      
       saveCanvasState(canvas);
     };
     
@@ -73,7 +95,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       console.log('Removing path:created listener');
       canvas.off('path:created', onPathCreated);
     };
-  }, [canvas]);
+  }, [canvas, penColor, brushSize]);
 
   // Toggle between draw and select mode
   const toggleDrawMode = () => {
@@ -90,6 +112,11 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     canvas.getObjects().forEach(obj => canvas.remove(obj));
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
+    
+    // Hard render flush
+    canvas.requestRenderAll();
+    canvas.calcOffset();
+    
     saveCanvasState(canvas);
   };
 
@@ -119,6 +146,11 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       const lastObject = objects[objects.length - 1];
       canvas.remove(lastObject);
       canvas.renderAll();
+      
+      // Hard render flush
+      canvas.requestRenderAll();
+      canvas.calcOffset();
+      
       saveCanvasState(canvas);
     }
   };
@@ -151,9 +183,9 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     
     // Common properties for all shapes
     const commonProps = {
-      stroke: penColor,
+      stroke: '#ff0000', // 🔴 Red stroke to make visible
       strokeWidth: 2,
-      fill: 'transparent',
+      fill: 'rgba(255,0,0,0.2)', // Slightly transparent red fill
       opacity: 1,
       left: centerX,
       top: centerY,
@@ -187,8 +219,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
           centerX - 40, centerY,
           centerX + 40, centerY
         ], {
-          stroke: penColor,
-          strokeWidth: 2,
+          stroke: '#ff0000', // Red for visibility
+          strokeWidth: 4, // Thicker for visibility
           originX: 'center' as const,
           originY: 'center' as const,
           selectable: true,
@@ -202,8 +234,18 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       canvas.add(shapeObject);
       canvas.setActiveObject(shapeObject);
       canvas.bringObjectToFront(shapeObject);
-      console.log('Canvas objects after shape added:', canvas.getObjects());
-      canvas.renderAll();
+      
+      // Hard render flush
+      canvas.requestRenderAll();
+      canvas.calcOffset();
+      
+      console.log('Canvas objects after shape added:', canvas.getObjects().length);
+      console.log('Objects visible?', canvas.getObjects().map(obj => ({
+        type: obj.type,
+        opacity: obj.opacity,
+        visible: obj.visible
+      })));
+      
       saveCanvasState(canvas);
     }
   };
