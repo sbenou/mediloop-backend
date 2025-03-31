@@ -16,8 +16,8 @@ import AddressManagement from "@/components/settings/AddressManagement";
 import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
-import DoctorStampSignature from "@/components/settings/profile/DoctorStampSignature";
-import PharmacistStampSignature from "@/components/settings/profile/PharmacistStampSignature";
+import ProfessionalStampSignature from "@/components/settings/profile/ProfessionalStampSignature";
+import { UserRole } from "@/types/role";
 
 interface ProfileViewProps {
   activeTab: string;
@@ -164,7 +164,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
           <TabsContent value="stamp" className="mt-4">
             <div className="bg-white shadow rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
-              <DoctorStampSignature 
+              <ProfessionalStampSignature 
+                userRole={UserRole.Doctor}
                 stampUrl={doctorStampUrl || profile?.doctor_stamp_url || null} 
                 signatureUrl={doctorSignatureUrl || profile?.doctor_signature_url || null} 
               />
@@ -177,7 +178,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
           <TabsContent value="stampSignature" className="mt-4">
             <div className="bg-white shadow rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4">Stamp & Signature</h2>
-              <PharmacistStampSignature 
+              <ProfessionalStampSignature 
+                userRole={UserRole.Pharmacist}
                 stampUrl={pharmacistStampUrl || profile?.pharmacist_stamp_url || null} 
                 signatureUrl={pharmacistSignatureUrl || profile?.pharmacist_signature_url || null} 
               />
