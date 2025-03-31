@@ -70,7 +70,6 @@ export const saveCanvasState = (canvas: FabricCanvas) => {
 
 // Undo the last action
 export const undoCanvas = (canvas: FabricCanvas): boolean => {
-  // Fix: Call canUndo() without any argument
   if (!canUndo()) return false;
   
   console.log(`Undoing to state: ${currentStateIndex - 1}`);
@@ -87,7 +86,6 @@ export const undoCanvas = (canvas: FabricCanvas): boolean => {
 
 // Redo the last undone action
 export const redoCanvas = (canvas: FabricCanvas): boolean => {
-  // Fix: Call canRedo() without any argument
   if (!canRedo()) return false;
   
   console.log(`Redoing to state: ${currentStateIndex + 1}`);
