@@ -243,9 +243,12 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             handleAddDateField={handleAddDateField}
             handleAddCheckbox={handleAddCheckbox}
             handleExport={handleExport}
-            // Fix: Add missing props for selectedTool and selectedShape
+            // Add missing required props
             selectedTool={selectedTool}
             selectedShape={selectedShape}
+            setSelectedTool={setSelectedTool}
+            setSelectedShape={setSelectedShape}
+            setIsDrawMode={setIsDrawMode}
           />
         </div>
       </CardContent>
