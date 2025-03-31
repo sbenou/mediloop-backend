@@ -1,4 +1,5 @@
 
+
 import { Canvas as FabricCanvas } from 'fabric';
 
 // History system state
@@ -133,3 +134,4 @@ function throttle(fn: Function, wait: number) {
     }
   };
 }
+
