@@ -20,7 +20,10 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
 
   // Initialize canvas and handle container resize
   useEffect(() => {
+    // Only initialize if we have a container and no canvas yet
     if (!canvasContainerRef.current || canvas !== null) return;
+    
+    console.log('Initializing canvas with container');
     
     const containerWidth = canvasContainerRef.current.clientWidth;
     const newWidth = Math.min(600, containerWidth);
@@ -37,7 +40,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     setCanvas(newCanvas);
     setIsCanvasInitialized(true);
     
-    // Cleanup function for when component unmounts or when effect reruns
+    // Cleanup function for when component unmounts
     return () => {
       if (newCanvas) {
         try {
@@ -53,13 +56,13 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
           
           // Set canvas to null to avoid any future references
           setCanvas(null);
+          setIsCanvasInitialized(false);
         } catch (error) {
           console.error('Error during canvas cleanup:', error);
         }
       }
     };
-  // Only depend on container ref - not any props or state that might change frequently
-  }, [canvasContainerRef.current]);
+  }, [canvasContainerRef]); // Only depend on container ref - removing canvas from deps to avoid recreation loops
 
   // Handle loading images when URL changes - separate from canvas initialization
   useEffect(() => {
