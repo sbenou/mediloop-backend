@@ -35,6 +35,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     showGrid,
     canUndo,
     canRedo,
+    isDirty,
     selectedTool,
     selectedShape,
     toggleDrawMode,
@@ -43,6 +44,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     handleBrushSizeChange,
     handleUndo,
     handleRedo,
+    resetHistory,
     handleToggleGrid,
     handleAddShape,
     handleAddText,
@@ -82,8 +84,21 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
       canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
       saveCanvasToServer(canvas);
+      
+      // Reset history and dirty state after saving
+      resetHistory();
     }
   };
+
+  // Effect for cleanup on unmount - show warning if unsaved changes
+  useEffect(() => {
+    return () => {
+      if (isDirty && canvas) {
+        // The actual warning is handled in useCanvasManager
+        console.log('Component unmounting with unsaved changes');
+      }
+    };
+  }, [isDirty, canvas]);
 
   // Force white background whenever canvas changes and ensure proper drawing setup
   useEffect(() => {

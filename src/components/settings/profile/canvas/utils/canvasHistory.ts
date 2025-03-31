@@ -5,7 +5,7 @@ import { Canvas as FabricCanvas } from 'fabric';
 let canvasHistory: string[] = [];
 let currentStateIndex = -1;
 let isRedoing = false;
-const maxHistoryStates = 50; // Limit history to prevent memory issues
+const maxHistoryStates = 20; // Limit history to prevent memory issues
 
 // Initialize the history system
 export const setupUndoRedoHistory = (canvas: FabricCanvas) => {

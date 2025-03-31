@@ -6,7 +6,8 @@ import {
   canRedo as canRedoUtil,
   undoCanvas as undoCanvasUtil,
   redoCanvas as redoCanvasUtil,
-  setupUndoRedoHistory
+  setupUndoRedoHistory,
+  clearHistory
 } from '../utils/canvasHistory';
 
 export interface UseCanvasHistoryProps {
@@ -16,6 +17,7 @@ export interface UseCanvasHistoryProps {
 export const useCanvasHistory = ({ canvas }: UseCanvasHistoryProps) => {
   const [canUndoState, setCanUndoState] = useState(false);
   const [canRedoState, setCanRedoState] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Initialize history system
   useEffect(() => {
@@ -30,6 +32,7 @@ export const useCanvasHistory = ({ canvas }: UseCanvasHistoryProps) => {
     // Setup listeners for all canvas changes that should update history state
     const updateHistory = () => {
       updateUndoRedoState();
+      setIsDirty(true);
     };
     
     canvas.on('object:added', updateHistory);
@@ -71,10 +74,19 @@ export const useCanvasHistory = ({ canvas }: UseCanvasHistoryProps) => {
     }
   };
 
+  // Clear history and mark as not dirty
+  const resetHistory = () => {
+    clearHistory();
+    setIsDirty(false);
+    updateUndoRedoState();
+  };
+
   return {
     canUndo: canUndoState,
     canRedo: canRedoState,
+    isDirty,
     handleUndo,
-    handleRedo
+    handleRedo,
+    resetHistory
   };
 };

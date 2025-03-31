@@ -49,9 +49,8 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     canvasInstance.hoverCursor = penCursor;
     
     // Also apply cursor directly to DOM element
-    const canvasElDom = canvasInstance.getElement();
-    if (canvasElDom) {
-      canvasElDom.style.cursor = penCursor;
+    if (canvasEl) {
+      canvasEl.style.cursor = penCursor;
     }
     
     // Force hard render
@@ -61,6 +60,19 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
 
     console.log('Canvas initialized with dimensions:', width, 'x', height);
     
+    // Setup path:created to prevent auto-selection
+    canvasInstance.on('path:created', (e) => {
+      // Set the path to be selectable but don't auto-select it
+      if (e.path) {
+        e.path.set({
+          selectable: true,
+          evented: true
+        });
+        canvasInstance.discardActiveObject();
+        canvasInstance.renderAll();
+      }
+    });
+
     setCanvas(canvasInstance);
     canvasCreated.current = true;
 

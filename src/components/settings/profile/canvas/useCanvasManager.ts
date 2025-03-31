@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { 
   useCanvasInitialization, 
   useCanvasTools, 
@@ -7,6 +8,7 @@ import {
   useLayerManagement,
   useCanvasSize
 } from './hooks';
+import { useUnsavedChangesWarning } from './hooks/useUnsavedChangesWarning';
 import { stampTemplates } from './utils';
 
 interface UseCanvasManagerProps {
@@ -14,6 +16,9 @@ interface UseCanvasManagerProps {
 }
 
 export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
+  // Track if we have warned the user about unsaved changes
+  const [hasShownWarning, setHasShownWarning] = useState(false);
+
   // Canvas initialization
   const {
     canvasContainerRef,
@@ -22,7 +27,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     canvasHeight
   } = useCanvasInitialization({ imageUrl });
 
-  // Canvas tools
+  // Canvas tools with drawing, shapes, and text functionality
   const {
     isDrawMode,
     penColor,
@@ -30,6 +35,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     showGrid,
     canUndo,
     canRedo,
+    isDirty,
     selectedTool,
     selectedShape,
     availableTemplates,
@@ -39,6 +45,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleBrushSizeChange,
     handleUndo,
     handleRedo,
+    resetHistory,
     handleToggleGrid,
     handleAddShape,
     handleAddText,
@@ -47,7 +54,6 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleRotate,
     handleApplyTemplate,
     handleResizeCanvas,
-    // Get state setters
     setSelectedTool,
     setSelectedShape,
     setIsDrawMode
@@ -56,7 +62,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     templates: stampTemplates 
   });
 
-  // Image management
+  // Image management for filters and export
   const {
     selectedImage,
     filterOptions,
@@ -64,13 +70,50 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleExport
   } = useImageManagement({ canvas });
 
-  // Layer management
+  // Layer management for object ordering
   const {
     handleBringForward,
     handleSendBackward,
     handleBringToFront,
     handleSendToBack
   } = useLayerManagement({ canvas });
+
+  // Handle save action that will be passed to the unsaved changes warning
+  const handleSave = async () => {
+    console.log('Saving canvas...');
+    // This will be implemented by the component that uses this hook
+    // But we mark the canvas as clean
+    resetHistory();
+    setHasShownWarning(false);
+    return Promise.resolve();
+  };
+
+  // Handle discard action
+  const handleDiscard = () => {
+    console.log('Discarding changes...');
+    resetHistory();
+    setHasShownWarning(false);
+  };
+
+  // Setup unsaved changes warning
+  const { showWarningToast } = useUnsavedChangesWarning({
+    isDirty,
+    onSave: handleSave,
+    onDiscard: handleDiscard
+  });
+
+  // Show warning when navigating away with unsaved changes
+  useEffect(() => {
+    if (isDirty && !hasShownWarning) {
+      // We'll trigger this when component is about to unmount
+      return () => {
+        if (isDirty && !hasShownWarning) {
+          showWarningToast();
+          setHasShownWarning(true);
+        }
+      };
+    }
+  }, [isDirty, hasShownWarning, showWarningToast]);
 
   return {
     canvasContainerRef,
@@ -81,6 +124,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     showGrid,
     canUndo,
     canRedo,
+    isDirty,
     selectedTool,
     selectedShape,
     toggleDrawMode,
@@ -89,6 +133,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleBrushSizeChange,
     handleUndo,
     handleRedo,
+    resetHistory,
     handleToggleGrid,
     handleAddShape,
     handleAddText,
@@ -109,6 +154,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleExport,
     handleAddDateField,
     handleAddCheckbox,
+    showWarningToast,
     // State setters for UI
     setSelectedTool,
     setSelectedShape,
