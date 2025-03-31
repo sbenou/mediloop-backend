@@ -1,6 +1,7 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { initializeCanvas, loadImageToCanvas } from '../utils';
+import { initializeCanvas } from '../utils';
+import { loadImageToCanvas } from '../utils/canvasImageHandling';
 import { Canvas as FabricCanvas } from 'fabric';
 
 interface UseCanvasInitializationProps {

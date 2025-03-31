@@ -70,40 +70,6 @@ export const initializeCanvas = (
   return canvas;
 };
 
-export const loadImageToCanvas = (canvas: Canvas, imageUrl: string): void => {
-  try {
-    // Use FabricImage instead of fabric.Image
-    FabricImage.fromURL(imageUrl, {
-      crossOrigin: 'anonymous',
-    }).then((img) => {
-      // Clear any existing content first
-      canvas.clear();
-      canvas.backgroundColor = '#ffffff';
-      
-      img.set({
-        left: 0,
-        top: 0,
-        selectable: true
-      });
-      canvas.add(img);
-      canvas.renderAll();
-      console.log('Image loaded successfully:', img.width, 'x', img.height);
-    }).catch(error => {
-      console.error('Error loading image:', error);
-      // Reset to a clean state if image loading fails
-      canvas.clear();
-      canvas.backgroundColor = '#ffffff';
-      canvas.renderAll();
-    });
-  } catch (error) {
-    console.error('Error in loadImageToCanvas:', error);
-    // Reset to a clean state if anything goes wrong
-    canvas.clear();
-    canvas.backgroundColor = '#ffffff';
-    canvas.renderAll();
-  }
-};
-
 export const cleanupCanvasListeners = (canvas: Canvas | null): void => {
   if (!canvas) return;
   
