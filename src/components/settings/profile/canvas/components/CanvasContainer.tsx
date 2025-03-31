@@ -17,7 +17,7 @@ const CanvasContainer = forwardRef<HTMLDivElement, CanvasContainerProps>(
           height: '300px',
           backgroundColor: '#ffffff',
           position: 'relative',
-          border: '2px dashed red', // Temporary debug border
+          border: '1px solid #e2e8f0', // Changed from debug border to regular border
           borderRadius: '0.375rem',
           overflow: 'hidden',
           zIndex: 1

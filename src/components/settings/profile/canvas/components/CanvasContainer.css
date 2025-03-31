@@ -16,19 +16,21 @@
   position: absolute !important;
   top: 0;
   left: 0;
-  z-index: 1 !important;
+  z-index: 10 !important;
   background-color: transparent !important;
   width: 100% !important;
   height: 100% !important;
+  cursor: crosshair !important; /* Force visible cursor */
 }
 
 /* Ensure no layer is covering your main canvas */
 canvas.upper-canvas, 
 canvas.lower-canvas, 
 canvas.static-canvas {
-  z-index: 1 !important;
+  z-index: 10 !important;
   pointer-events: auto !important;
   opacity: 1 !important;
+  cursor: crosshair !important;
 }
 
 /* TEMP: Force visibility */
