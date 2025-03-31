@@ -7,7 +7,8 @@ import {
   undoCanvas as undoCanvasUtil,
   redoCanvas as redoCanvasUtil,
   setupUndoRedoHistory,
-  clearHistory
+  clearHistory,
+  saveCanvasState
 } from '../utils/canvasHistory';
 
 export interface UseCanvasHistoryProps {
@@ -60,6 +61,7 @@ export const useCanvasHistory = ({ canvas }: UseCanvasHistoryProps) => {
       const success = undoCanvasUtil(canvas);
       if (success) {
         updateUndoRedoState();
+        setIsDirty(true); // Still consider dirty after undo
       }
     }
   };
@@ -70,7 +72,17 @@ export const useCanvasHistory = ({ canvas }: UseCanvasHistoryProps) => {
       const success = redoCanvasUtil(canvas);
       if (success) {
         updateUndoRedoState();
+        setIsDirty(true); // Still consider dirty after redo
       }
+    }
+  };
+
+  // Save current state
+  const handleSave = () => {
+    if (canvas) {
+      saveCanvasState(canvas);
+      setIsDirty(false); // Reset dirty state after saving
+      updateUndoRedoState();
     }
   };
 
@@ -85,8 +97,10 @@ export const useCanvasHistory = ({ canvas }: UseCanvasHistoryProps) => {
     canUndo: canUndoState,
     canRedo: canRedoState,
     isDirty,
+    setIsDirty,
     handleUndo,
     handleRedo,
+    handleSave,
     resetHistory
   };
 };

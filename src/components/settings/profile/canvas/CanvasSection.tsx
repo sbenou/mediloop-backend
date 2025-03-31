@@ -7,6 +7,7 @@ import CanvasContainer from './components/CanvasContainer';
 import { useFileUpload } from './hooks/useFileUpload';
 import { useSaveCanvas } from './hooks/useSaveCanvas';
 import QuickToolbar from './components/quicktoolbar';
+import UnsavedChangesModal from './components/UnsavedChangesModal';
 
 interface CanvasSectionProps {
   title: string;
@@ -24,6 +25,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   userId
 }) => {
   const [doctorName, setDoctorName] = useState("");
+  const [nextRoute, setNextRoute] = useState<string | null>(null);
   
   // Initialize canvas and get canvas functionality
   const {
@@ -65,7 +67,12 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     handleExport,
     handleAddDateField,
     handleAddCheckbox,
-    showWarningToast, // Access the toast function from useCanvasManager
+    showWarningToast,
+    showWarningModal,
+    showModal,
+    handleSaveAndLeave,
+    handleDiscardAndLeave,
+    handleCancelNavigation,
     // State setters
     setSelectedTool,
     setSelectedShape,
@@ -91,16 +98,62 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     }
   };
 
-  // Effect for cleanup on unmount - show warning if unsaved changes
+  // Handle saving and leaving
+  const handleSaveAndContinue = async () => {
+    await saveCanvas();
+    if (nextRoute) {
+      window.location.href = nextRoute;
+    }
+  };
+  
+  // Handle discarding and leaving
+  const handleDiscardAndContinue = () => {
+    resetHistory();
+    if (nextRoute) {
+      window.location.href = nextRoute;
+    }
+  };
+
+  // Effect for intercepting navigation
   useEffect(() => {
-    return () => {
-      if (isDirty && canvas) {
-        // Show the unsaved changes warning toast when unmounting with unsaved changes
-        showWarningToast();
-        console.log('Component unmounting with unsaved changes');
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isDirty) {
+        event.preventDefault();
+        event.returnValue = '';
+        return '';
       }
     };
-  }, [isDirty, canvas, showWarningToast]);
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // For in-app navigation, you would hook into your router here
+    // This is a simplified example:
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const closestAnchor = target.closest('a');
+      
+      if (closestAnchor && isDirty) {
+        const href = closestAnchor.getAttribute('href');
+        if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+          e.preventDefault();
+          setNextRoute(href);
+          showWarningModal();
+        }
+      }
+    };
+    
+    document.addEventListener('click', handleClick);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleClick);
+      
+      // Show warning before unmount if needed
+      if (isDirty) {
+        showWarningToast();
+      }
+    };
+  }, [isDirty, showWarningToast, showWarningModal]);
 
   // Force white background whenever canvas changes and ensure proper drawing setup
   useEffect(() => {
@@ -269,6 +322,14 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
           />
         </div>
       </CardContent>
+      
+      {/* Unsaved Changes Modal */}
+      <UnsavedChangesModal
+        open={showModal}
+        onSaveAndLeave={handleSaveAndContinue}
+        onDiscardAndLeave={handleDiscardAndContinue}
+        onCancel={handleCancelNavigation}
+      />
     </Card>
   );
 };

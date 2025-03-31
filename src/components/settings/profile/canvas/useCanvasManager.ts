@@ -96,7 +96,14 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
   };
 
   // Setup unsaved changes warning
-  const { showWarningToast } = useUnsavedChangesWarning({
+  const { 
+    showWarningToast, 
+    showWarningModal, 
+    showModal, 
+    handleSaveAndLeave, 
+    handleDiscardAndLeave, 
+    handleCancelNavigation 
+  } = useUnsavedChangesWarning({
     isDirty,
     onSave: handleSave,
     onDiscard: handleDiscard
@@ -155,6 +162,11 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleAddDateField,
     handleAddCheckbox,
     showWarningToast, // Expose the toast function
+    showWarningModal, // Expose the modal function
+    showModal, // Expose the modal state
+    handleSaveAndLeave, // Expose the save and leave function
+    handleDiscardAndLeave, // Expose the discard and leave function
+    handleCancelNavigation, // Expose the cancel navigation function
     // State setters for UI
     setSelectedTool,
     setSelectedShape,
