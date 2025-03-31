@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCanvasManager } from './useCanvasManager';
@@ -87,7 +86,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   const { fileInputRef, triggerUpload, handleFileChange } = useFileUpload(canvas);
 
   // Save canvas functionality
-  const { saveCanvas: saveCanvasToServer, isLoading, deleteCanvasImage } = useSaveCanvas(type, userId);
+  const { saveCanvas: saveCanvasToServer, isLoading, deleteCanvasImage, isDeleting } = useSaveCanvas(type, userId);
 
   // Save canvas wrapper function
   const saveCanvas = () => {
@@ -203,25 +202,23 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col space-y-2">
-          <div>
+        <div className="flex flex-col space-y-4">
+          <div className="space-y-1.5">
             <CardTitle>{title}</CardTitle>
             <CardDescription>
               {description}
             </CardDescription>
           </div>
           <div className="flex justify-end">
-            {imageUrl && (
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                onClick={handleDeleteCanvasImage}
-                disabled={isLoading}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete {type === 'stamp' ? 'Stamp' : 'Signature'}
-              </Button>
-            )}
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleDeleteCanvasImage}
+              disabled={isDeleting || !imageUrl}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete {type === 'stamp' ? 'Stamp' : 'Signature'}
+            </Button>
           </div>
         </div>
       </CardHeader>
