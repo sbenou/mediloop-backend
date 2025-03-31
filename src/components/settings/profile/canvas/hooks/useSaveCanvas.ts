@@ -185,7 +185,7 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
         throw new Error(`Error updating profile: ${updateError.message}`);
       }
       
-      // Update the Recoil state
+      // Update the Recoil state to null immediately
       const [_, setUrlState] = getUrlAtom(type, userRole as 'doctor' | 'pharmacist');
       setUrlState(null);
       
