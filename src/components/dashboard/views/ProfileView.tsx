@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
@@ -7,7 +8,7 @@ import {
   doctorStampUrlState, 
   doctorSignatureUrlState,
   pharmacistStampUrlState,
-  pharmacistSignatureUrlState
+  pharmacistSignatureUrlState 
 } from "@/store/images/atoms";
 
 // Import the components for each section

@@ -89,10 +89,15 @@ export const cleanupCanvasListeners = (canvas: Canvas | null): void => {
     // Clear canvas
     canvas.clear();
     
-    // Remove canvas from DOM
+    // Safety check: Only remove from DOM if it's still attached to a parent
     const canvasEl = canvas.getElement();
-    if (canvasEl && canvasEl.parentNode) {
-      canvasEl.parentNode.removeChild(canvasEl);
+    if (canvasEl) {
+      // Check if the element has a parent before attempting to remove it
+      if (canvasEl.parentNode) {
+        canvasEl.parentNode.removeChild(canvasEl);
+      } else {
+        console.log('Canvas element has no parent, skipping DOM removal');
+      }
     }
   } catch (error) {
     console.error('Error in canvas cleanup:', error);

@@ -1,6 +1,6 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { initializeCanvas } from '../utils';
+import { initializeCanvas, cleanupCanvasListeners } from '../utils';
 import { loadImageToCanvas } from '../utils/canvasImageHandling';
 import { Canvas as FabricCanvas } from 'fabric';
 
@@ -40,7 +40,15 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     // Cleanup on unmount
     return () => {
       if (newCanvas) {
-        newCanvas.dispose();
+        try {
+          console.log('Cleaning up canvas on unmount');
+          // Make sure we clean up properly
+          newCanvas.off(); // Remove all event listeners
+          newCanvas.clear(); // Remove all objects
+          cleanupCanvasListeners(newCanvas);
+        } catch (error) {
+          console.error('Error during canvas cleanup:', error);
+        }
       }
     };
   }, [canvasContainerRef, canvas]);
