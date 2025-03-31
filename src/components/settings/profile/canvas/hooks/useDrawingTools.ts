@@ -203,7 +203,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     setSelectedShape,
     toggleDrawMode,
     handleColorChange,
-    handleBrushSizeChange
+    handleBrushSizeChange,
+    setIsDrawMode
   };
 };
 
