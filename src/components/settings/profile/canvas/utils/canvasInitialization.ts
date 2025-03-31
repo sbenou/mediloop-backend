@@ -1,9 +1,14 @@
 
 import { Canvas, Image as FabricImage, Object as FabricObject } from 'fabric';
 
+interface CanvasOptions {
+  width: number;
+  height: number;
+}
+
 export const initializeCanvas = (
   container: HTMLDivElement,
-  initialImageUrl: string | null
+  options: CanvasOptions
 ): Canvas => {
   // Remove any existing canvas elements first
   const existingCanvas = container.querySelector('canvas');
@@ -18,8 +23,8 @@ export const initializeCanvas = (
   container.appendChild(canvas.getElement());
   
   // Configure canvas
-  const width = container.clientWidth;
-  const height = container.clientHeight;
+  const width = options.width || container.clientWidth;
+  const height = options.height || container.clientHeight;
   
   canvas.setWidth(width);
   canvas.setHeight(height);
@@ -62,30 +67,41 @@ export const initializeCanvas = (
     }
   });
   
-  // Load initial image if provided
-  if (initialImageUrl) {
-    try {
-      // Use FabricImage instead of fabric.Image
-      FabricImage.fromURL(initialImageUrl, {
-        crossOrigin: 'anonymous',
-      }).then((img) => {
-        img.set({
-          left: 0,
-          top: 0,
-          selectable: true
-        });
-        canvas.add(img);
-        canvas.renderAll();
-      }).catch(error => {
-        console.error('Error loading initial image:', error);
-      });
-    } catch (error) {
-      console.error('Error loading initial image:', error);
-    }
-  }
-  
-  // Return the configured canvas
   return canvas;
+};
+
+export const loadImageToCanvas = (canvas: Canvas, imageUrl: string): void => {
+  try {
+    // Use FabricImage instead of fabric.Image
+    FabricImage.fromURL(imageUrl, {
+      crossOrigin: 'anonymous',
+    }).then((img) => {
+      // Clear any existing content first
+      canvas.clear();
+      canvas.backgroundColor = '#ffffff';
+      
+      img.set({
+        left: 0,
+        top: 0,
+        selectable: true
+      });
+      canvas.add(img);
+      canvas.renderAll();
+      console.log('Image loaded successfully:', img.width, 'x', img.height);
+    }).catch(error => {
+      console.error('Error loading image:', error);
+      // Reset to a clean state if image loading fails
+      canvas.clear();
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
+    });
+  } catch (error) {
+    console.error('Error in loadImageToCanvas:', error);
+    // Reset to a clean state if anything goes wrong
+    canvas.clear();
+    canvas.backgroundColor = '#ffffff';
+    canvas.renderAll();
+  }
 };
 
 export const cleanupCanvasListeners = (canvas: Canvas | null): void => {
