@@ -70,12 +70,15 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       
       // Generate a unique filename
       const filename = `${userRole}_${type}_${userId}_${Date.now()}.png`;
-      const filePath = `${userRole}/${userId}/${filename}`;
+      
+      // Determine the bucket and file path based on role
+      const bucketName = 'images';
+      const filePath = `${userRole}s/${userId}/${filename}`;
       
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase
         .storage
-        .from('images')
+        .from(bucketName)
         .upload(filePath, blobData, {
           contentType: 'image/png',
           upsert: true
@@ -88,7 +91,7 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       // Get the public URL
       const { data: publicUrlData } = supabase
         .storage
-        .from('images')
+        .from(bucketName)
         .getPublicUrl(filePath);
         
       const publicUrl = publicUrlData.publicUrl;
