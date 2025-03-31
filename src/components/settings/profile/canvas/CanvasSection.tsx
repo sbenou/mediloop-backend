@@ -203,24 +203,26 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-2">
           <div>
             <CardTitle>{title}</CardTitle>
             <CardDescription>
               {description}
             </CardDescription>
           </div>
-          {imageUrl && (
-            <Button 
-              variant="destructive" 
-              size="sm" 
-              onClick={handleDeleteCanvasImage}
-              disabled={isLoading}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete {type === 'stamp' ? 'Stamp' : 'Signature'}
-            </Button>
-          )}
+          <div className="flex justify-end">
+            {imageUrl && (
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={handleDeleteCanvasImage}
+                disabled={isLoading}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete {type === 'stamp' ? 'Stamp' : 'Signature'}
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="bg-white">
@@ -301,11 +303,9 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
             handleApplyTemplate={handleApplyTemplate}
             doctorName={doctorName}
             setDoctorName={setDoctorName}
-            // Add new functionality
             handleAddDateField={handleAddDateField}
             handleAddCheckbox={handleAddCheckbox}
             handleExport={handleExport}
-            // Add missing required props
             selectedTool={selectedTool}
             selectedShape={selectedShape}
             setSelectedTool={setSelectedTool}

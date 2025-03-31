@@ -74,11 +74,7 @@ const CanvasControls: React.FC<CanvasControlsProps> = (props) => {
   // Pass all menubar-related props to the MenuBar component
   // Use the ControlsContainer to wrap everything
   return (
-    <ControlsContainer 
-      saveCanvas={props.saveCanvas}
-      isLoading={props.isLoading}
-      type={props.type}
-    >
+    <ControlsContainer>
       <MenuBar
         isDrawMode={props.isDrawMode}
         toggleDrawMode={props.toggleDrawMode}

@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 
 export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   
   // Get appropriate Recoil state based on type
@@ -141,7 +142,8 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       return;
     }
 
-    setIsLoading(true);
+    // Use separate loading state for delete operation
+    setIsDeleting(true);
 
     try {
       console.log(`Deleting ${type} for user ${userId}`);
@@ -184,9 +186,9 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       console.error('Error deleting canvas image:', error);
       throw error;
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
     }
   };
 
-  return { saveCanvas, deleteCanvasImage, isLoading };
+  return { saveCanvas, deleteCanvasImage, isLoading, isDeleting };
 };
