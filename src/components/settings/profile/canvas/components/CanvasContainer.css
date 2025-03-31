@@ -12,12 +12,27 @@
 
 /* Canvas element styles */
 .canvas-container canvas {
-  display: block;
-  background-color: #ffffff;
-  position: relative;
-  z-index: 1;
+  display: block !important;
+  position: absolute !important;
   top: 0;
   left: 0;
+  z-index: 1 !important;
+  background-color: transparent !important;
   width: 100% !important;
   height: 100% !important;
+}
+
+/* Ensure no layer is covering your main canvas */
+canvas.upper-canvas, 
+canvas.lower-canvas, 
+canvas.static-canvas {
+  z-index: 1 !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+/* TEMP: Force visibility */
+.canvas-container * {
+  opacity: 1 !important;
+  visibility: visible !important;
 }

@@ -112,7 +112,8 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         originX: 'center',
         originY: 'center',
         selectable: false,
-        evented: false
+        evented: false,
+        opacity: 1
       });
 
       // Re-establish white background
@@ -121,7 +122,15 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       // FIX: Correctly add the image at the bottom layer
       console.log('Adding image to canvas');
       canvas.add(img);
-      canvas.sendObjectToBack(img); // Use correct method for Fabric.js v6
+      canvas.sendObjectToBack(img);
+      
+      // 🛑 Make absolutely sure the image is behind everything
+      img.set({ opacity: 1 });
+      canvas.getObjects().forEach(obj => {
+        if (obj !== img) {
+          canvas.bringToFront(obj);
+        }
+      });
       
       // Additional verification to make sure image stays at back
       setTimeout(() => {
