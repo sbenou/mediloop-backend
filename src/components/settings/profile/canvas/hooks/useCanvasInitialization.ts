@@ -1,6 +1,6 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage } from 'fabric';
+import { Canvas as FabricCanvas, PencilBrush } from 'fabric';
 
 interface UseCanvasInitializationProps {
   imageUrl: string | null;
@@ -70,74 +70,60 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     };
   }, []);
 
-  // Fix: Only load image if URL is explicitly provided and valid
+  // Only load image if URL is explicitly provided and valid - remove test image
   useEffect(() => {
     if (!canvas) return;
+    
+    // If no image URL is provided, ensure the canvas is properly cleared with white background
     if (!imageUrl || !imageUrl.trim()) {
-      // If no image URL is provided, ensure the canvas is properly cleared
+      canvas.clear();
       canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
       return;
     }
 
+    // Only load external images if a valid URL is provided
     console.log('Loading image URL to canvas:', imageUrl);
     
-    // Use backgroundColor property directly instead of setBackgroundColor method
+    // Clear the canvas and set white background first
+    canvas.clear();
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
     
-    // Only load the image if a valid URL is provided
-    FabricImage.fromURL(imageUrl, {
-      crossOrigin: 'anonymous',
-    }).then(img => {
-      console.log('Image loaded successfully:', img.width, 'x', img.height);
-      
-      const canvasAspect = canvas.width! / canvas.height!;
-      const imgAspect = img.width! / img.height!;
+    // Then load the external image if a valid URL is provided
+    if (imageUrl && imageUrl.trim()) {
+      import('fabric').then(({ Image: FabricImage }) => {
+        FabricImage.fromURL(imageUrl, {
+          crossOrigin: 'anonymous',
+        }).then(img => {
+          console.log('Image loaded successfully:', img.width, 'x', img.height);
+          
+          const canvasAspect = canvas.width! / canvas.height!;
+          const imgAspect = img.width! / img.height!;
 
-      let scaleFactor = (canvas.width! * 0.9) / img.width!;
-      if (imgAspect <= canvasAspect) {
-        scaleFactor = (canvas.height! * 0.9) / img.height!;
-      }
+          let scaleFactor = (canvas.width! * 0.9) / img.width!;
+          if (imgAspect <= canvasAspect) {
+            scaleFactor = (canvas.height! * 0.9) / img.height!;
+          }
 
-      img.scale(scaleFactor);
-      img.set({
-        left: canvas.width! / 2,
-        top: canvas.height! / 2,
-        originX: 'center',
-        originY: 'center',
-        selectable: false,
-        evented: false,
-        opacity: 1
+          img.scale(scaleFactor);
+          img.set({
+            left: canvas.width! / 2,
+            top: canvas.height! / 2,
+            originX: 'center',
+            originY: 'center',
+            selectable: true,
+            evented: true
+          });
+
+          // Add the image to the canvas
+          canvas.add(img);
+          canvas.renderAll();
+        }).catch(err => {
+          console.error("Error loading image:", err);
+        });
       });
-
-      // Re-establish white background
-      canvas.backgroundColor = '#ffffff';
-      
-      // FIX: Correctly add the image at the bottom layer
-      console.log('Adding image to canvas');
-      canvas.add(img);
-      canvas.sendObjectToBack(img);
-      
-      // 🛑 Make absolutely sure the image is behind everything
-      img.set({ opacity: 1 });
-      canvas.getObjects().forEach(obj => {
-        if (obj !== img) {
-          canvas.bringObjectToFront(obj);
-        }
-      });
-      
-      // Additional verification to make sure image stays at back
-      setTimeout(() => {
-        canvas.sendObjectToBack(img);
-        console.log('Canvas objects after image added:', canvas.getObjects().length);
-        canvas.renderAll();
-      }, 100);
-      
-      canvas.renderAll();
-    }).catch(err => {
-      console.error("Error loading image:", err);
-    });
+    }
   }, [canvas, imageUrl]);
 
   return {
