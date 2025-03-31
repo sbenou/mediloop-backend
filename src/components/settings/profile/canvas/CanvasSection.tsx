@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCanvasManager } from './useCanvasManager';
@@ -8,6 +9,9 @@ import { useSaveCanvas } from './hooks/useSaveCanvas';
 import QuickToolbar from './components/quicktoolbar';
 import UnsavedChangesModal from './components/UnsavedChangesModal';
 import useUnsavedNavigationWarning from './hooks/useUnsavedNavigationWarning';
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface CanvasSectionProps {
   title: string;
@@ -83,7 +87,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   const { fileInputRef, triggerUpload, handleFileChange } = useFileUpload(canvas);
 
   // Save canvas functionality
-  const { saveCanvas: saveCanvasToServer, isLoading } = useSaveCanvas(type, userId);
+  const { saveCanvas: saveCanvasToServer, isLoading, deleteCanvasImage } = useSaveCanvas(type, userId);
 
   // Save canvas wrapper function
   const saveCanvas = () => {
@@ -95,6 +99,24 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
       
       // Reset history and dirty state after saving
       resetHistory();
+    }
+  };
+
+  // Handle delete canvas image
+  const handleDeleteCanvasImage = async () => {
+    try {
+      await deleteCanvasImage();
+      
+      // Clear the canvas after deleting the image
+      if (canvas) {
+        clearCanvas();
+        resetHistory();
+      }
+      
+      toast.success(`Your ${type} has been deleted successfully.`);
+    } catch (error) {
+      console.error('Error deleting canvas image:', error);
+      toast.error(`Failed to delete your ${type}. Please try again.`);
     }
   };
 
@@ -181,10 +203,25 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>
-          {description}
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>
+              {description}
+            </CardDescription>
+          </div>
+          {imageUrl && (
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleDeleteCanvasImage}
+              disabled={isLoading}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete {type === 'stamp' ? 'Stamp' : 'Signature'}
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="bg-white">
         <div className="space-y-4">

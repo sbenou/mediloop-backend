@@ -130,5 +130,63 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
     }
   };
 
-  return { saveCanvas, isLoading };
+  // New functionality to delete a canvas image
+  const deleteCanvasImage = async () => {
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "User ID is missing. Cannot delete the canvas image.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log(`Deleting ${type} for user ${userId}`);
+      
+      // Determine if this is for a doctor or pharmacist by checking the user's profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError || !profileData) {
+        throw new Error(`Could not determine user role: ${profileError?.message || 'Unknown error'}`);
+      }
+      
+      const userRole = profileData.role === 'doctor' ? 'doctor' : 'pharmacist';
+      console.log(`User role determined: ${userRole}`);
+      
+      // Determine which field to update based on type and role
+      const updateField = userRole === 'doctor' 
+        ? (type === 'stamp' ? 'doctor_stamp_url' : 'doctor_signature_url')
+        : (type === 'stamp' ? 'pharmacist_stamp_url' : 'pharmacist_signature_url');
+      
+      // Update the profile in the database to set the URL to null
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ [updateField]: null })
+        .eq('id', userId);
+        
+      if (updateError) {
+        throw new Error(`Error updating profile: ${updateError.message}`);
+      }
+      
+      // Update the Recoil state
+      const [_, setUrlState] = getUrlAtom(type, userRole as 'doctor' | 'pharmacist');
+      setUrlState(null);
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting canvas image:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { saveCanvas, deleteCanvasImage, isLoading };
 };
