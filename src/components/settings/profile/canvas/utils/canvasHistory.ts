@@ -65,7 +65,7 @@ export const saveCanvasState = (canvas: FabricCanvas) => {
     currentStateIndex--;
   }
   
-  console.log(`Canvas state saved. History: ${currentStateIndex + 1}/${canvasHistory.length}`);
+  console.log(`📌 Canvas state saved. History length: ${canvasHistory.length}, current index: ${currentStateIndex}`);
   return true;
 };
 
