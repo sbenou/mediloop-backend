@@ -61,9 +61,6 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
 
     console.log('Canvas initialized with dimensions:', width, 'x', height);
     
-    // Remove test shapes - we don't need them anymore since canvas is working
-    // The test rectangle was only for debugging and is no longer needed
-    
     setCanvas(canvasInstance);
     canvasCreated.current = true;
 
@@ -73,8 +70,15 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     };
   }, []);
 
+  // Fix: Only load image if URL is explicitly provided and valid
   useEffect(() => {
-    if (!canvas || !imageUrl) return;
+    if (!canvas) return;
+    if (!imageUrl || !imageUrl.trim()) {
+      // If no image URL is provided, ensure the canvas is properly cleared
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
+      return;
+    }
 
     console.log('Loading image URL to canvas:', imageUrl);
     
@@ -82,7 +86,7 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
     
-    // Uncomment image loading code now that canvas visibility is fixed
+    // Only load the image if a valid URL is provided
     FabricImage.fromURL(imageUrl, {
       crossOrigin: 'anonymous',
     }).then(img => {
@@ -119,7 +123,6 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       img.set({ opacity: 1 });
       canvas.getObjects().forEach(obj => {
         if (obj !== img) {
-          // Fix: Using the correct method name for Fabric.js v6
           canvas.bringObjectToFront(obj);
         }
       });
@@ -135,9 +138,6 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     }).catch(err => {
       console.error("Error loading image:", err);
     });
-    
-    // Remove the debug circle - no longer needed for testing
-    
   }, [canvas, imageUrl]);
 
   return {

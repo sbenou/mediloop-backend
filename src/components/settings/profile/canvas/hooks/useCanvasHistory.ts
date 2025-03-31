@@ -20,31 +20,43 @@ export const useCanvasHistory = ({ canvas }: UseCanvasHistoryProps) => {
   // Initialize history system
   useEffect(() => {
     if (!canvas) return;
+    
+    // Set up history tracking
     setupUndoRedoHistory(canvas);
+    
+    // Update state initially
+    updateUndoRedoState();
+    
+    // Setup listeners for all canvas changes that should update history state
+    const updateHistory = () => {
+      updateUndoRedoState();
+    };
+    
+    canvas.on('object:added', updateHistory);
+    canvas.on('object:modified', updateHistory);
+    canvas.on('object:removed', updateHistory);
+    canvas.on('path:created', updateHistory);
+    
+    return () => {
+      canvas.off('object:added', updateHistory);
+      canvas.off('object:modified', updateHistory);
+      canvas.off('object:removed', updateHistory);
+      canvas.off('path:created', updateHistory);
+    };
   }, [canvas]);
 
   // Update undo/redo state
-  useEffect(() => {
-    const updateUndoRedoState = () => {
-      setCanUndoState(canUndoUtil());
-      setCanRedoState(canRedoUtil());
-    };
-    
-    // Check initially and whenever the canvas changes
-    updateUndoRedoState();
-    
-    // Poll for changes every 500ms as a fallback
-    const interval = setInterval(updateUndoRedoState, 500);
-    return () => clearInterval(interval);
-  }, [canvas]);
+  const updateUndoRedoState = () => {
+    setCanUndoState(canUndoUtil());
+    setCanRedoState(canRedoUtil());
+  };
 
   // Undo last action
   const handleUndo = () => {
     if (canvas) {
       const success = undoCanvasUtil(canvas);
       if (success) {
-        setCanUndoState(canUndoUtil());
-        setCanRedoState(canRedoUtil());
+        updateUndoRedoState();
       }
     }
   };
@@ -54,8 +66,7 @@ export const useCanvasHistory = ({ canvas }: UseCanvasHistoryProps) => {
     if (canvas) {
       const success = redoCanvasUtil(canvas);
       if (success) {
-        setCanUndoState(canUndoUtil());
-        setCanRedoState(canRedoUtil());
+        updateUndoRedoState();
       }
     }
   };

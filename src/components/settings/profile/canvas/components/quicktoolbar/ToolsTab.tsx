@@ -2,7 +2,7 @@
 import React from 'react';
 import { 
   Pencil, 
-  Eraser, 
+  MousePointer,
   Circle, 
   Square, 
   Type, 
@@ -23,7 +23,7 @@ type ToolsTabProps = Pick<
   QuickToolbarProps, 
   'isDrawMode' | 'toggleDrawMode' | 'clearCanvas' | 'handleUndo' | 'handleRedo' | 
   'canUndo' | 'canRedo' | 'handleAddShape' | 'handleAddText' | 'triggerUpload' | 
-  'saveCanvas' | 'isLoading' | 'handleAddDateField' | 'handleAddCheckbox' | 'selectedTool' | 'selectedShape'
+  'saveCanvas' | 'isLoading' | 'handleAddDateField' | 'handleAddCheckbox' | 'selectedTool' | 'selectedShape' | 'setSelectedTool' | 'setIsDrawMode'
 >;
 
 const ToolsTab: React.FC<ToolsTabProps> = ({
@@ -42,8 +42,16 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
   handleAddDateField,
   handleAddCheckbox,
   selectedTool,
-  selectedShape
+  selectedShape,
+  setSelectedTool,
+  setIsDrawMode
 }) => {
+  // New function to handle selection tool
+  const handleSelectTool = () => {
+    setSelectedTool('select');
+    setIsDrawMode(false);
+  };
+
   return (
     <div className="p-3">
       <div className="flex flex-wrap gap-2">
@@ -54,6 +62,15 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
           title={isDrawMode ? "Finish Drawing" : "Draw"}
         >
           <Pencil className="h-4 w-4" />
+        </Button>
+
+        <Button
+          variant={selectedTool === 'select' ? "default" : "outline"}
+          size="icon"
+          onClick={handleSelectTool}
+          title="Select Tool"
+        >
+          <MousePointer className="h-4 w-4" />
         </Button>
         
         <Button

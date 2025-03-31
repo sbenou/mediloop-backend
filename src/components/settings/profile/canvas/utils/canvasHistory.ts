@@ -1,86 +1,120 @@
 
-import { Canvas as FabricCanvas } from "fabric";
+import { Canvas as FabricCanvas } from 'fabric';
 
-// Setup undo/redo functionality
-export interface CanvasHistoryState {
-  objects: string; // JSON string of canvas objects
-  background: string; // Background color
-}
+// History system state
+let canvasHistory: string[] = [];
+let currentStateIndex = -1;
+let isRedoing = false;
+const maxHistoryStates = 50; // Limit history to prevent memory issues
 
-// Add history functionality to the canvas
-let canvasHistory: CanvasHistoryState[] = [];
-let canvasHistoryIndex = -1;
-const maxHistorySteps = 30; // Limit history to prevent memory issues
-
+// Initialize the history system
 export const setupUndoRedoHistory = (canvas: FabricCanvas) => {
-  // Clear history when setting up a new canvas
+  // Clear existing history
   canvasHistory = [];
-  canvasHistoryIndex = -1;
+  currentStateIndex = -1;
+  isRedoing = false;
   
-  // Save initial state (empty canvas)
+  // Save initial state
   saveCanvasState(canvas);
   
-  // Set up event listeners for history
-  canvas.on('object:added', () => saveCanvasState(canvas));
-  canvas.on('object:modified', () => saveCanvasState(canvas));
-  canvas.on('object:removed', () => saveCanvasState(canvas));
-  canvas.on('path:created', () => saveCanvasState(canvas));
+  // Setup event listeners for auto-saving state
+  setupHistoryEventListeners(canvas);
 };
 
-export const saveCanvasState = (canvas: FabricCanvas) => {
-  // Limit history size by removing oldest entries if needed
-  if (canvasHistoryIndex >= maxHistorySteps) {
-    canvasHistory.shift(); // Remove oldest state
-    canvasHistoryIndex--;
-  }
+// Setup canvas event listeners to track history
+const setupHistoryEventListeners = (canvas: FabricCanvas) => {
+  // Remove any existing listeners to prevent duplicates
+  canvas.off('object:added');
+  canvas.off('object:modified');
+  canvas.off('object:removed');
+  canvas.off('path:created');
   
-  // If we're not at the end of the history (i.e., user has performed undo),
-  // remove all future states as they are now invalid
-  if (canvasHistoryIndex < canvasHistory.length - 1) {
-    canvasHistory = canvasHistory.slice(0, canvasHistoryIndex + 1);
-  }
-  
-  const newState: CanvasHistoryState = {
-    objects: JSON.stringify(canvas.toJSON()),
-    background: canvas.backgroundColor?.toString() || '#ffffff'
+  // Add new listeners
+  const saveHistory = () => {
+    if (!isRedoing) {
+      saveCanvasState(canvas);
+    }
   };
   
-  canvasHistory.push(newState);
-  canvasHistoryIndex = canvasHistory.length - 1;
+  // Listen for canvas changes to save history
+  canvas.on('object:added', saveHistory);
+  canvas.on('object:modified', saveHistory);
+  canvas.on('object:removed', saveHistory);
+  canvas.on('path:created', saveHistory);
 };
 
-export const canUndo = (): boolean => {
-  return canvasHistoryIndex > 0;
+// Save the current canvas state to history
+export const saveCanvasState = (canvas: FabricCanvas) => {
+  // If we're in the middle of the history stack, truncate future states
+  if (currentStateIndex < canvasHistory.length - 1 && !isRedoing) {
+    canvasHistory = canvasHistory.slice(0, currentStateIndex + 1);
+  }
+  
+  // Save current state as JSON
+  const json = canvas.toJSON(['selectable', 'evented']);
+  const jsonString = JSON.stringify(json);
+  
+  // Add state to history
+  canvasHistory.push(jsonString);
+  currentStateIndex = canvasHistory.length - 1;
+  
+  // Limit history size
+  if (canvasHistory.length > maxHistoryStates) {
+    canvasHistory.shift();
+    currentStateIndex--;
+  }
+  
+  console.log(`Canvas state saved. History: ${currentStateIndex + 1}/${canvasHistory.length}`);
+  return true;
 };
 
-export const canRedo = (): boolean => {
-  return canvasHistoryIndex < canvasHistory.length - 1;
-};
-
+// Undo the last action
 export const undoCanvas = (canvas: FabricCanvas): boolean => {
   if (!canUndo()) return false;
   
-  canvasHistoryIndex--;
-  loadCanvasState(canvas, canvasHistoryIndex);
+  console.log(`Undoing to state: ${currentStateIndex - 1}`);
+  currentStateIndex--;
+  
+  // Load previous state
+  const previousState = canvasHistory[currentStateIndex];
+  canvas.loadFromJSON(previousState, () => {
+    canvas.renderAll();
+  });
+  
   return true;
 };
 
+// Redo the last undone action
 export const redoCanvas = (canvas: FabricCanvas): boolean => {
   if (!canRedo()) return false;
   
-  canvasHistoryIndex++;
-  loadCanvasState(canvas, canvasHistoryIndex);
+  console.log(`Redoing to state: ${currentStateIndex + 1}`);
+  currentStateIndex++;
+  
+  isRedoing = true;
+  
+  // Load next state
+  const nextState = canvasHistory[currentStateIndex];
+  canvas.loadFromJSON(nextState, () => {
+    canvas.renderAll();
+    isRedoing = false;
+  });
+  
   return true;
 };
 
-const loadCanvasState = (canvas: FabricCanvas, index: number) => {
-  if (index < 0 || index >= canvasHistory.length) return;
-  
-  const state = canvasHistory[index];
-  
-  canvas.clear();
-  canvas.loadFromJSON(state.objects, () => {
-    canvas.backgroundColor = state.background;
-    canvas.renderAll();
-  });
+// Clear history
+export const clearHistory = () => {
+  canvasHistory = [];
+  currentStateIndex = -1;
+};
+
+// Check if undo is available
+export const canUndo = (): boolean => {
+  return currentStateIndex > 0;
+};
+
+// Check if redo is available
+export const canRedo = (): boolean => {
+  return currentStateIndex < canvasHistory.length - 1;
 };

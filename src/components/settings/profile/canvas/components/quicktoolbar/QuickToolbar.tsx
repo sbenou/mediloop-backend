@@ -27,6 +27,10 @@ export interface QuickToolbarProps {
   // Tool selection states
   selectedTool: string;
   selectedShape: 'circle' | 'rectangle' | 'line' | null;
+  // Tool state setters
+  setSelectedTool: (tool: 'draw' | 'select' | 'shape' | 'text' | 'date' | 'checkbox') => void;
+  setSelectedShape: (shape: 'circle' | 'rectangle' | 'line' | null) => void;
+  setIsDrawMode: (isDrawMode: boolean) => void;
   // Template props
   type?: 'stamp' | 'signature';
   availableTemplates?: StampTemplate[];
@@ -90,6 +94,8 @@ const QuickToolbar: React.FC<QuickToolbarProps> = (props) => {
             handleAddCheckbox={props.handleAddCheckbox}
             selectedTool={props.selectedTool}
             selectedShape={props.selectedShape}
+            setSelectedTool={props.setSelectedTool}
+            setIsDrawMode={props.setIsDrawMode}
           />
         </TabsContent>
         
