@@ -119,7 +119,8 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
       img.set({ opacity: 1 });
       canvas.getObjects().forEach(obj => {
         if (obj !== img) {
-          canvas.bringToFront(obj);
+          // Fix: Using the correct method name for Fabric.js v6
+          canvas.bringObjectToFront(obj);
         }
       });
       
