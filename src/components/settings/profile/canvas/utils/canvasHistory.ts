@@ -36,11 +36,14 @@ const setupHistoryEventListeners = (canvas: FabricCanvas) => {
     }
   };
   
+  // Throttle the save function to prevent too many history states
+  const throttledSave = throttle(saveHistory, 250);
+  
   // Listen for canvas changes to save history
-  canvas.on('object:added', saveHistory);
-  canvas.on('object:modified', saveHistory);
-  canvas.on('object:removed', saveHistory);
-  canvas.on('path:created', saveHistory);
+  canvas.on('object:added', throttledSave);
+  canvas.on('object:modified', throttledSave);
+  canvas.on('object:removed', throttledSave);
+  canvas.on('path:created', throttledSave);
 };
 
 // Save the current canvas state to history
@@ -119,3 +122,14 @@ export const canUndo = (): boolean => {
 export const canRedo = (): boolean => {
   return currentStateIndex < canvasHistory.length - 1;
 };
+
+// Throttle function to limit frequency of function calls
+function throttle(fn: Function, wait: number) {
+  let time = Date.now();
+  return function(...args: any[]) {
+    if ((time + wait - Date.now()) < 0) {
+      fn(...args);
+      time = Date.now();
+    }
+  };
+}

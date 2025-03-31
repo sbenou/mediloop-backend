@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
@@ -161,12 +160,12 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleExport,
     handleAddDateField,
     handleAddCheckbox,
-    showWarningToast, // Expose the toast function
-    showWarningModal, // Expose the modal function
-    showModal, // Expose the modal state
-    handleSaveAndLeave, // Expose the save and leave function
-    handleDiscardAndLeave, // Expose the discard and leave function
-    handleCancelNavigation, // Expose the cancel navigation function
+    showWarningToast,
+    showWarningModal,
+    showModal,
+    handleSaveAndLeave,
+    handleDiscardAndLeave,
+    handleCancelNavigation,
     // State setters for UI
     setSelectedTool,
     setSelectedShape,
