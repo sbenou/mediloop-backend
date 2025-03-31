@@ -78,28 +78,44 @@ export const cleanupCanvasListeners = (canvas: Canvas | null): void => {
     canvas.off();
     
     // Dispose objects
-    canvas.getObjects().forEach((obj) => {
-      try {
-        canvas.remove(obj);
-      } catch (e) {
-        console.error('Error removing object during cleanup:', e);
-      }
-    });
+    const objects = canvas.getObjects();
+    if (objects && objects.length > 0) {
+      objects.forEach((obj) => {
+        try {
+          canvas.remove(obj);
+        } catch (e) {
+          console.error('Error removing object during cleanup:', e);
+        }
+      });
+    }
     
     // Clear canvas
     canvas.clear();
     
-    // Safety check: Only remove from DOM if it's still attached to a parent
+    // Safety check: Only try to remove from DOM if it's a valid canvas element with a parent
     const canvasEl = canvas.getElement();
     if (canvasEl) {
-      // Check if the element has a parent before attempting to remove it
-      if (canvasEl.parentNode) {
-        canvasEl.parentNode.removeChild(canvasEl);
-      } else {
-        console.log('Canvas element has no parent, skipping DOM removal');
+      try {
+        // Safest approach is to use the remove() method which doesn't require access to the parent
+        if (canvasEl.parentNode) {
+          // Traditional approach
+          canvasEl.parentNode.removeChild(canvasEl);
+        } else {
+          // Element might have been detached already
+          console.log('Canvas element has no parent, skipping DOM removal');
+        }
+      } catch (error) {
+        console.error('Error removing canvas from DOM:', error);
+        // Try alternative removal if needed
+        try {
+          canvasEl.remove();
+        } catch (e) {
+          console.error('Failed all canvas removal attempts:', e);
+        }
       }
     }
   } catch (error) {
     console.error('Error in canvas cleanup:', error);
   }
 };
+

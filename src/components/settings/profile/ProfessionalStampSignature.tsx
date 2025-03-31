@@ -34,10 +34,10 @@ const ProfessionalStampSignature: React.FC<ProfessionalStampSignatureProps> = ({
   
   // Initialize Recoil state from props on first render
   useEffect(() => {
-    if (initialStampUrl !== null && stampUrl !== initialStampUrl) {
+    if (initialStampUrl && !stampUrl) {
       setStampUrl(initialStampUrl);
     }
-    if (initialSignatureUrl !== null && signatureUrl !== initialSignatureUrl) {
+    if (initialSignatureUrl && !signatureUrl) {
       setSignatureUrl(initialSignatureUrl);
     }
   }, [initialStampUrl, initialSignatureUrl, setStampUrl, setSignatureUrl, stampUrl, signatureUrl]);
@@ -46,17 +46,17 @@ const ProfessionalStampSignature: React.FC<ProfessionalStampSignatureProps> = ({
   useEffect(() => {
     if (profile) {
       if (userRole === UserRole.Doctor) {
-        if (profile.doctor_stamp_url !== undefined && profile.doctor_stamp_url !== stampUrl) {
+        if (profile.doctor_stamp_url && !stampUrl) {
           setStampUrl(profile.doctor_stamp_url);
         }
-        if (profile.doctor_signature_url !== undefined && profile.doctor_signature_url !== signatureUrl) {
+        if (profile.doctor_signature_url && !signatureUrl) {
           setSignatureUrl(profile.doctor_signature_url);
         }
       } else if (userRole === UserRole.Pharmacist) {
-        if (profile.pharmacist_stamp_url !== undefined && profile.pharmacist_stamp_url !== stampUrl) {
+        if (profile.pharmacist_stamp_url && !stampUrl) {
           setStampUrl(profile.pharmacist_stamp_url);
         }
-        if (profile.pharmacist_signature_url !== undefined && profile.pharmacist_signature_url !== signatureUrl) {
+        if (profile.pharmacist_signature_url && !signatureUrl) {
           setSignatureUrl(profile.pharmacist_signature_url);
         }
       }

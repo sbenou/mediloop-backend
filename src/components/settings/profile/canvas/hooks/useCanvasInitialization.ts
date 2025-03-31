@@ -37,15 +37,22 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
     setCanvas(newCanvas);
     setIsCanvasInitialized(true);
     
-    // Cleanup on unmount
+    // Cleanup function for when component unmounts or when effect reruns
     return () => {
       if (newCanvas) {
         try {
           console.log('Cleaning up canvas on unmount');
-          // Make sure we clean up properly
-          newCanvas.off(); // Remove all event listeners
-          newCanvas.clear(); // Remove all objects
+          // First remove all event listeners
+          newCanvas.off();
+          
+          // Clear any objects on the canvas
+          newCanvas.clear();
+          
+          // Call our enhanced cleanup function
           cleanupCanvasListeners(newCanvas);
+          
+          // Set canvas to null to avoid any future references
+          setCanvas(null);
         } catch (error) {
           console.error('Error during canvas cleanup:', error);
         }
