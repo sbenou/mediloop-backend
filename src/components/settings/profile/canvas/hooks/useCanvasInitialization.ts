@@ -58,9 +58,10 @@ export const useCanvasInitialization = ({ imageUrl }: UseCanvasInitializationPro
         }
       }
     };
-  }, [canvasContainerRef, canvas]);
+  // Only depend on container ref - not any props or state that might change frequently
+  }, [canvasContainerRef.current]);
 
-  // Handle loading images when URL changes
+  // Handle loading images when URL changes - separate from canvas initialization
   useEffect(() => {
     if (!canvas || !isCanvasInitialized) return;
     

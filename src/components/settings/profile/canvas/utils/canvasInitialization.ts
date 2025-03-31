@@ -1,4 +1,3 @@
-
 import { Canvas, Image as FabricImage, Object as FabricObject } from 'fabric';
 
 interface CanvasOptions {
@@ -54,6 +53,10 @@ export const initializeCanvas = (
   canvas.defaultCursor = 'crosshair';
   canvas.hoverCursor = 'crosshair';
   
+  // Store a reference to the container element on the canvas instance
+  // @ts-ignore - adding a custom property
+  canvas._canvasContainer = container;
+  
   // Force canvas to recalculate object coordinates on added
   canvas.on('object:added', (e) => {
     try {
@@ -92,30 +95,31 @@ export const cleanupCanvasListeners = (canvas: Canvas | null): void => {
     // Clear canvas
     canvas.clear();
     
-    // Safety check: Only try to remove from DOM if it's a valid canvas element with a parent
+    // Get the container reference we stored earlier
+    // @ts-ignore - accessing custom property
+    const container = canvas._canvasContainer;
+    
+    // Safety check: Only try to remove from DOM if it's a valid canvas element
     const canvasEl = canvas.getElement();
     if (canvasEl) {
       try {
-        // Safest approach is to use the remove() method which doesn't require access to the parent
-        if (canvasEl.parentNode) {
-          // Traditional approach
+        // If we have the container reference, check if the canvas is a child of it
+        if (container && container.contains(canvasEl)) {
+          container.removeChild(canvasEl);
+        } 
+        // Otherwise, try using the parent node if available
+        else if (canvasEl.parentNode) {
           canvasEl.parentNode.removeChild(canvasEl);
-        } else {
-          // Element might have been detached already
-          console.log('Canvas element has no parent, skipping DOM removal');
+        } 
+        // Last resort, use the remove() method
+        else {
+          canvasEl.remove();
         }
       } catch (error) {
         console.error('Error removing canvas from DOM:', error);
-        // Try alternative removal if needed
-        try {
-          canvasEl.remove();
-        } catch (e) {
-          console.error('Failed all canvas removal attempts:', e);
-        }
       }
     }
   } catch (error) {
     console.error('Error in canvas cleanup:', error);
   }
 };
-
