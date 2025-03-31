@@ -65,6 +65,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     handleExport,
     handleAddDateField,
     handleAddCheckbox,
+    showWarningToast, // Access the toast function from useCanvasManager
     // State setters
     setSelectedTool,
     setSelectedShape,
@@ -94,11 +95,12 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
   useEffect(() => {
     return () => {
       if (isDirty && canvas) {
-        // The actual warning is handled in useCanvasManager
+        // Show the unsaved changes warning toast when unmounting with unsaved changes
+        showWarningToast();
         console.log('Component unmounting with unsaved changes');
       }
     };
-  }, [isDirty, canvas]);
+  }, [isDirty, canvas, showWarningToast]);
 
   // Force white background whenever canvas changes and ensure proper drawing setup
   useEffect(() => {

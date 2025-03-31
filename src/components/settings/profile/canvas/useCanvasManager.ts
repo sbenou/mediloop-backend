@@ -154,7 +154,7 @@ export const useCanvasManager = ({ imageUrl }: UseCanvasManagerProps) => {
     handleExport,
     handleAddDateField,
     handleAddCheckbox,
-    showWarningToast,
+    showWarningToast, // Expose the toast function
     // State setters for UI
     setSelectedTool,
     setSelectedShape,
