@@ -5,8 +5,9 @@ import {
   canUndo as canUndoUtil, 
   canRedo as canRedoUtil,
   undoCanvas as undoCanvasUtil,
-  redoCanvas as redoCanvasUtil
-} from '../utils';
+  redoCanvas as redoCanvasUtil,
+  setupUndoRedoHistory
+} from '../utils/canvasHistory';
 
 export interface UseCanvasHistoryProps {
   canvas: FabricCanvas | null;
@@ -15,6 +16,12 @@ export interface UseCanvasHistoryProps {
 export const useCanvasHistory = ({ canvas }: UseCanvasHistoryProps) => {
   const [canUndoState, setCanUndoState] = useState(false);
   const [canRedoState, setCanRedoState] = useState(false);
+
+  // Initialize history system
+  useEffect(() => {
+    if (!canvas) return;
+    setupUndoRedoHistory(canvas);
+  }, [canvas]);
 
   // Update undo/redo state
   useEffect(() => {

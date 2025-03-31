@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { 
   Canvas as FabricCanvas, 
@@ -8,7 +9,7 @@ import {
   IText 
 } from 'fabric';
 import { StampTemplate } from '../utils';
-import { saveCanvasState } from '../utils/canvasHistory';
+import { saveCanvasState, undoCanvas, redoCanvas, canUndo, canRedo, setupUndoRedoHistory } from '../utils/canvasHistory';
 
 export interface UseCanvasToolsProps {
   canvas: FabricCanvas | null;
@@ -23,6 +24,26 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
   const [showGrid, setShowGrid] = useState(false);
   const [selectedTool, setSelectedTool] = useState<'draw' | 'select' | 'shape' | 'text' | 'date' | 'checkbox'>('draw');
   const [selectedShape, setSelectedShape] = useState<'circle' | 'rectangle' | 'line' | null>(null);
+  const [canUndoState, setCanUndoState] = useState(false);
+  const [canRedoState, setCanRedoState] = useState(false);
+
+  // Setup undo/redo history when canvas is initialized
+  useEffect(() => {
+    if (!canvas) return;
+    
+    // Set up history tracking
+    setupUndoRedoHistory(canvas);
+    
+    // Initial state check
+    updateUndoRedoState();
+    
+  }, [canvas]);
+
+  // Update undo/redo state
+  const updateUndoRedoState = () => {
+    setCanUndoState(canUndo());
+    setCanRedoState(canRedo());
+  };
 
   // Update drawing brush when canvas or brush settings change
   useEffect(() => {
@@ -86,14 +107,28 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       canvas.calcOffset(); // Force re-evaluate object positions
       
       saveCanvasState(canvas);
+      updateUndoRedoState();
     };
     
     console.log('Setting up path:created listener');
     canvas.on('path:created', onPathCreated);
     
+    // Setup listeners for object modifications to track history
+    const updateHistory = () => {
+      saveCanvasState(canvas);
+      updateUndoRedoState();
+    };
+    
+    canvas.on('object:added', updateHistory);
+    canvas.on('object:modified', updateHistory);
+    canvas.on('object:removed', updateHistory);
+    
     return () => {
       console.log('Removing path:created listener');
       canvas.off('path:created', onPathCreated);
+      canvas.off('object:added', updateHistory);
+      canvas.off('object:modified', updateHistory);
+      canvas.off('object:removed', updateHistory);
     };
   }, [canvas, penColor, brushSize]);
 
@@ -118,6 +153,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     canvas.calcOffset();
     
     saveCanvasState(canvas);
+    updateUndoRedoState();
   };
 
   // Change pen color
@@ -141,23 +177,19 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
   // Undo last action
   const handleUndo = () => {
     if (!canvas) return;
-    const objects = canvas.getObjects();
-    if (objects.length > 0) {
-      const lastObject = objects[objects.length - 1];
-      canvas.remove(lastObject);
-      canvas.renderAll();
-      
-      // Hard render flush
-      canvas.requestRenderAll();
-      canvas.calcOffset();
-      
-      saveCanvasState(canvas);
+    const success = undoCanvas(canvas);
+    if (success) {
+      updateUndoRedoState();
     }
   };
 
-  // Currently a placeholder as we need to implement a history stack
+  // Redo last undone action
   const handleRedo = () => {
-    // Implementation requires history stack
+    if (!canvas) return;
+    const success = redoCanvas(canvas);
+    if (success) {
+      updateUndoRedoState();
+    }
   };
 
   // Toggle grid visibility
@@ -183,9 +215,9 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     
     // Common properties for all shapes
     const commonProps = {
-      stroke: '#ff0000', // 🔴 Red stroke to make visible
+      stroke: penColor,
       strokeWidth: 2,
-      fill: 'rgba(255,0,0,0.2)', // Slightly transparent red fill
+      fill: 'transparent',
       opacity: 1,
       left: centerX,
       top: centerY,
@@ -219,8 +251,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
           centerX - 40, centerY,
           centerX + 40, centerY
         ], {
-          stroke: '#ff0000', // Red for visibility
-          strokeWidth: 4, // Thicker for visibility
+          stroke: penColor,
+          strokeWidth: 2,
           originX: 'center' as const,
           originY: 'center' as const,
           selectable: true,
@@ -247,6 +279,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       })));
       
       saveCanvasState(canvas);
+      updateUndoRedoState();
     }
   };
 
@@ -282,6 +315,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     text.selectAll();
     canvas.renderAll();
     saveCanvasState(canvas);
+    updateUndoRedoState();
   };
 
   // Add a date field to the canvas
@@ -315,6 +349,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     canvas.bringObjectToFront(dateText);
     canvas.renderAll();
     saveCanvasState(canvas);
+    updateUndoRedoState();
   };
 
   // Add a checkbox to the canvas
@@ -395,6 +430,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     }
     
     saveCanvasState(canvas);
+    updateUndoRedoState();
   };
 
   // Rotate selected object
@@ -408,6 +444,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       activeObject.rotate(currentAngle + angle);
       canvas.renderAll();
       saveCanvasState(canvas);
+      updateUndoRedoState();
     }
   };
 
@@ -438,6 +475,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       
       canvas.renderAll();
       saveCanvasState(canvas);
+      updateUndoRedoState();
     }
   };
 
@@ -448,6 +486,7 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
       canvas.setHeight(height);
       canvas.renderAll();
       saveCanvasState(canvas);
+      updateUndoRedoState();
     }
   };
 
@@ -456,8 +495,8 @@ export const useCanvasTools = ({ canvas, templates = [] }: UseCanvasToolsProps) 
     penColor,
     brushSize,
     showGrid,
-    canUndo: canvas ? canvas.getObjects().length > 0 : false,
-    canRedo: false, // Will be true when redo is implemented
+    canUndo: canUndoState,
+    canRedo: canRedoState,
     selectedTool,
     selectedShape,
     availableTemplates: templates,
