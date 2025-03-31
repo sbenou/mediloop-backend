@@ -1,4 +1,3 @@
-
 import { Canvas, Line, Circle, Rect, IText, Text } from "fabric";
 
 // Re-export all utilities from the utils folder
@@ -99,18 +98,32 @@ export const resizeCanvas = (canvas: Canvas, width: number, height: number) => {
 export const addCircle = (canvas: Canvas, color: string) => {
   if (!canvas) return;
   
+  // Calculate the appropriate size based on canvas dimensions
+  const canvasWidth = canvas.getWidth();
+  const canvasHeight = canvas.getHeight();
+  const size = Math.min(canvasWidth, canvasHeight) * 0.25; // 25% of smallest dimension
+  
   const circle = new Circle({
-    left: 100,
-    top: 100,
-    radius: 50,
+    left: canvasWidth / 2 - size / 2,
+    top: canvasHeight / 2 - size / 2,
+    radius: size / 2,
     fill: 'transparent',
     stroke: color,
     strokeWidth: 2,
     selectable: true,
-    hasControls: true
+    hasControls: true,
+    hasBorders: true,
+    transparentCorners: false,
+    cornerColor: '#0066ff',
+    cornerSize: 10,
+    cornerStyle: 'circle'
   });
   
   canvas.add(circle);
+  
+  // Force drawing mode off to allow selection
+  canvas.isDrawingMode = false;
+  
   // Force the control points to be positioned correctly
   circle.setCoords();
   canvas.setActiveObject(circle);
@@ -120,19 +133,34 @@ export const addCircle = (canvas: Canvas, color: string) => {
 export const addRectangle = (canvas: Canvas, color: string) => {
   if (!canvas) return;
   
+  // Calculate the appropriate size based on canvas dimensions
+  const canvasWidth = canvas.getWidth();
+  const canvasHeight = canvas.getHeight();
+  const width = canvasWidth * 0.3; // 30% of canvas width
+  const height = canvasHeight * 0.3; // 30% of canvas height
+  
   const rect = new Rect({
-    left: 100,
-    top: 100,
-    width: 100,
-    height: 80,
+    left: canvasWidth / 2 - width / 2,
+    top: canvasHeight / 2 - height / 2,
+    width: width,
+    height: height,
     fill: 'transparent',
     stroke: color,
     strokeWidth: 2,
     selectable: true,
-    hasControls: true
+    hasControls: true,
+    hasBorders: true,
+    transparentCorners: false,
+    cornerColor: '#0066ff',
+    cornerSize: 10,
+    cornerStyle: 'circle'
   });
   
   canvas.add(rect);
+  
+  // Force drawing mode off to allow selection
+  canvas.isDrawingMode = false;
+  
   // Force the control points to be positioned correctly
   rect.setCoords();
   canvas.setActiveObject(rect);
@@ -142,14 +170,30 @@ export const addRectangle = (canvas: Canvas, color: string) => {
 export const addLine = (canvas: Canvas, color: string) => {
   if (!canvas) return;
   
-  const line = new Line([50, 50, 200, 50], {
+  // Calculate the appropriate size based on canvas dimensions
+  const canvasWidth = canvas.getWidth();
+  const canvasHeight = canvas.getHeight();
+  const startX = canvasWidth * 0.25; // 25% from left
+  const endX = canvasWidth * 0.75; // 75% from left
+  const y = canvasHeight / 2; // Center vertically
+  
+  const line = new Line([startX, y, endX, y], {
     stroke: color,
     strokeWidth: 2,
     selectable: true,
-    hasControls: true
+    hasControls: true,
+    hasBorders: true,
+    transparentCorners: false,
+    cornerColor: '#0066ff',
+    cornerSize: 10,
+    cornerStyle: 'circle'
   });
   
   canvas.add(line);
+  
+  // Force drawing mode off to allow selection
+  canvas.isDrawingMode = false;
+  
   // Force the control points to be positioned correctly
   line.setCoords();
   canvas.setActiveObject(line);
@@ -170,6 +214,9 @@ export const addText = (canvas: Canvas, text: string, color: string) => {
   });
   
   canvas.add(textObj);
+  // Force drawing mode off to allow selection
+  canvas.isDrawingMode = false;
+  
   // Force the control points to be positioned correctly
   textObj.setCoords();
   canvas.setActiveObject(textObj);
@@ -192,6 +239,9 @@ export const addDateField = (canvas: Canvas, color: string) => {
   });
   
   canvas.add(dateField);
+  // Force drawing mode off to allow selection
+  canvas.isDrawingMode = false;
+  
   // Force the control points to be positioned correctly
   dateField.setCoords();
   canvas.setActiveObject(dateField);
@@ -240,6 +290,9 @@ export const addCheckbox = (canvas: Canvas, color: string, checked: boolean = fa
     // Just add the empty box
     canvas.add(box);
   }
+  
+  // Force drawing mode off to allow selection
+  canvas.isDrawingMode = false;
   
   // Force the control points to be positioned correctly
   box.setCoords();

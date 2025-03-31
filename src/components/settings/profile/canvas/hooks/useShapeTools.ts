@@ -40,8 +40,12 @@ export const useShapeTools = ({
     
     setSelectedShape(shape);
     setSelectedTool('shape');
-    canvas.isDrawingMode = false;
-    setIsDrawMode(false);
+    
+    // Force drawing mode off when adding shapes
+    if (canvas.isDrawingMode) {
+      canvas.isDrawingMode = false;
+      setIsDrawMode(false);
+    }
     
     switch (shape) {
       case 'circle':
@@ -54,6 +58,12 @@ export const useShapeTools = ({
         addLineUtil(canvas, penColor);
         break;
     }
+    
+    // Ensure the canvas has focus for manipulation
+    const canvasEl = canvas.getElement();
+    if (canvasEl) {
+      canvasEl.focus();
+    }
   };
 
   // Add text to the canvas
@@ -61,10 +71,20 @@ export const useShapeTools = ({
     if (!canvas) return;
     
     setSelectedTool('text');
-    canvas.isDrawingMode = false;
-    setIsDrawMode(false);
+    
+    // Force drawing mode off when adding text
+    if (canvas.isDrawingMode) {
+      canvas.isDrawingMode = false;
+      setIsDrawMode(false);
+    }
     
     addTextUtil(canvas, 'Text', penColor);
+    
+    // Ensure the canvas has focus for manipulation
+    const canvasEl = canvas.getElement();
+    if (canvasEl) {
+      canvasEl.focus();
+    }
   };
 
   // Add date field to the canvas
@@ -72,10 +92,20 @@ export const useShapeTools = ({
     if (!canvas) return;
     
     setSelectedTool('date');
-    canvas.isDrawingMode = false;
-    setIsDrawMode(false);
+    
+    // Force drawing mode off when adding date field
+    if (canvas.isDrawingMode) {
+      canvas.isDrawingMode = false;
+      setIsDrawMode(false);
+    }
     
     addDateFieldUtil(canvas, penColor);
+    
+    // Ensure the canvas has focus for manipulation
+    const canvasEl = canvas.getElement();
+    if (canvasEl) {
+      canvasEl.focus();
+    }
   };
 
   // Add checkbox to the canvas
@@ -83,10 +113,20 @@ export const useShapeTools = ({
     if (!canvas) return;
     
     setSelectedTool('checkbox');
-    canvas.isDrawingMode = false;
-    setIsDrawMode(false);
+    
+    // Force drawing mode off when adding checkbox
+    if (canvas.isDrawingMode) {
+      canvas.isDrawingMode = false;
+      setIsDrawMode(false);
+    }
     
     addCheckboxUtil(canvas, penColor, checked);
+    
+    // Ensure the canvas has focus for manipulation
+    const canvasEl = canvas.getElement();
+    if (canvasEl) {
+      canvasEl.focus();
+    }
   };
 
   // Rotate selected object

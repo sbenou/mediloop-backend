@@ -58,6 +58,15 @@ export const initializeCanvas = (
   // Enable drawing mode by default
   canvas.isDrawingMode = true;
   
+  // Setup proper options for the drawing brush
+  if (canvas.freeDrawingBrush) {
+    canvas.freeDrawingBrush.color = '#000000';
+    canvas.freeDrawingBrush.width = 2;
+    canvas.freeDrawingBrush.shadow = null;
+    canvas.freeDrawingBrush.strokeLineCap = 'round';
+    canvas.freeDrawingBrush.strokeLineJoin = 'round';
+  }
+  
   // Store a reference to the container element on the canvas instance
   // @ts-ignore - adding a custom property
   canvas._canvasContainer = container;
