@@ -51,7 +51,8 @@ export const saveCanvasState = (canvas: FabricCanvas) => {
   }
   
   // Save current state as JSON
-  const json = canvas.toJSON(['selectable', 'evented']);
+  // Updated for Fabric.js v6 - no longer passing arguments to toJSON()
+  const json = canvas.toJSON();
   const jsonString = JSON.stringify(json);
   
   // Add state to history
