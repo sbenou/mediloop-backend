@@ -41,9 +41,8 @@ export const useUnsavedChangesWarning = ({
     // This would need to be implemented with your specific router (React Router, Next.js, etc.)
     // The implementation details depend on your specific routing library
     
-    // Example placeholder for React Router or similar:
-    // router.events.on('routeChangeStart', handleRouteChangeStart);
-    // return () => router.events.off('routeChangeStart', handleRouteChangeStart);
+    // For React Router, we'll handle this at component level with click handlers
+    // since we don't have direct access to router events
     
     return () => {
       // If component is unmounting and we have unsaved changes, show warning
@@ -96,8 +95,10 @@ export const useUnsavedChangesWarning = ({
     await onSave();
     setShowModal(false);
     setAttemptedNavigation(true);
-    // If using a router, you would redirect here
-    // router.push(nextUrlRef.current || '/');
+    // If using React Router, we'll handle the actual navigation at the component level
+    if (nextUrlRef.current) {
+      window.location.href = nextUrlRef.current;
+    }
   }, [onSave]);
   
   // Handle discarding and continuing navigation
@@ -105,8 +106,10 @@ export const useUnsavedChangesWarning = ({
     onDiscard();
     setShowModal(false);
     setAttemptedNavigation(true);
-    // If using a router, you would redirect here
-    // router.push(nextUrlRef.current || '/');
+    // If using React Router, we'll handle the actual navigation at the component level
+    if (nextUrlRef.current) {
+      window.location.href = nextUrlRef.current;
+    }
   }, [onDiscard]);
   
   // Cancel navigation attempt
