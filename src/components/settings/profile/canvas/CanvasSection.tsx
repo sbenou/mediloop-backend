@@ -144,6 +144,15 @@ const CanvasSection: React.FC<CanvasSectionProps> = ({
     }
   }, [canvas, isDrawMode]);
 
+  // Add useEffect to expose canvas to window for debugging
+  useEffect(() => {
+    if (canvas) {
+      // 👇 Expose the canvas to the browser console
+      (window as any).fabricCanvas = canvas;
+      console.log("✅ Canvas attached to window as fabricCanvas");
+    }
+  }, [canvas]);
+
   return (
     <Card>
       <CardHeader>
