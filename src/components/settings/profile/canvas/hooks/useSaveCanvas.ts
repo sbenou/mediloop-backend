@@ -71,9 +71,10 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       // Generate a unique filename
       const filename = `${userRole}_${type}_${userId}_${Date.now()}.png`;
       
-      // Determine the bucket and file path based on role
-      const bucketName = 'images';
-      const filePath = `${userRole}s/${userId}/${filename}`;
+      // Use our new private bucket for professional images
+      const bucketName = 'professional-images';
+      // Store in a folder structure that matches the user's ID
+      const filePath = `${userId}/${filename}`;
       
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase
@@ -88,14 +89,18 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
         throw new Error(`Error uploading image: ${uploadError.message}`);
       }
       
-      // Get the public URL
-      const { data: publicUrlData } = supabase
+      // Get the URL (note: since the bucket is private, this will be a signed URL)
+      const { data: urlData } = await supabase
         .storage
         .from(bucketName)
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year expiry
         
-      const publicUrl = publicUrlData.publicUrl;
-      console.log(`File uploaded successfully, public URL: ${publicUrl}`);
+      if (!urlData || !urlData.signedUrl) {
+        throw new Error("Failed to get a signed URL for the image");
+      }
+      
+      const signedUrl = urlData.signedUrl;
+      console.log(`File uploaded successfully, signed URL created`);
       
       // Update the profile in the database
       const updateField = userRole === 'doctor' 
@@ -104,7 +109,7 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
         
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ [updateField]: publicUrl })
+        .update({ [updateField]: signedUrl })
         .eq('id', userId);
         
       if (updateError) {
@@ -113,7 +118,7 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       
       // Update the Recoil state
       const [_, setUrlState] = getUrlAtom(type, userRole as 'doctor' | 'pharmacist');
-      setUrlState(publicUrl);
+      setUrlState(signedUrl);
       
       toast({
         title: "Success",
@@ -121,7 +126,7 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
       });
       
       console.log(`${userRole} ${type} saved successfully`);
-      return publicUrl;
+      return signedUrl;
     } catch (error) {
       console.error('Error saving canvas:', error);
       toast({
@@ -134,7 +139,7 @@ export const useSaveCanvas = (type: 'stamp' | 'signature', userId: string) => {
     }
   };
 
-  // New functionality to delete a canvas image
+  // Function to delete a canvas image
   const deleteCanvasImage = async () => {
     if (!userId) {
       toast({
