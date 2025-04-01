@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas as FabricCanvas, PencilBrush } from 'fabric';
 
 export interface UseDrawingToolsProps {
@@ -21,11 +21,11 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     canvasRef.current = canvas;
   }, [canvas]);
 
-  // Define pen cursor
+  // Define pen cursor as a constant to ensure consistency
   const penCursor = 'crosshair'; // Simplified for browser compatibility
 
   // Helper function to apply cursor based on drawing mode
-  const applyCursor = (canvas: FabricCanvas, isDrawing: boolean) => {
+  const applyCursor = useCallback((canvas: FabricCanvas, isDrawing: boolean) => {
     if (isDrawing) {
       canvas.defaultCursor = penCursor;
       canvas.hoverCursor = penCursor;
@@ -44,7 +44,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         canvas.wrapperEl.style.cursor = 'default';
       }
     }
-  };
+  }, [penCursor]);
 
   // Apply brush settings when canvas is initialized or relevant settings change
   useEffect(() => {
@@ -81,7 +81,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     } catch (error) {
       console.error("Error applying brush settings:", error);
     }
-  }, [canvas, isDrawMode, penColor, brushSize]);
+  }, [canvas, isDrawMode, penColor, brushSize, applyCursor]);
 
   // Cleanup effect
   useEffect(() => {
@@ -157,7 +157,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     
     try {
       if (canvas.freeDrawingBrush) {
-        canvas.freeDrawingBrush.width = size;
+        changeBrushSizeUtil(canvas, size);
         canvas.renderAll();
       }
     } catch (error) {
@@ -178,4 +178,15 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     handleBrushSizeChange,
     setIsDrawMode
   };
+};
+
+// Import this from utils but declare it here to avoid circular dependencies
+const changeBrushSizeUtil = (canvas: FabricCanvas, size: number) => {
+  if (!canvas || !canvas.freeDrawingBrush) return;
+  
+  try {
+    canvas.freeDrawingBrush.width = size;
+  } catch (error) {
+    console.error("Error in changeBrushSizeUtil:", error);
+  }
 };
