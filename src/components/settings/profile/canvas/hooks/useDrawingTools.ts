@@ -24,6 +24,28 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
   // Define pen cursor
   const penCursor = 'crosshair'; // Simplified for browser compatibility
 
+  // Helper function to apply cursor based on drawing mode
+  const applyCursor = (canvas: FabricCanvas, isDrawing: boolean) => {
+    if (isDrawing) {
+      canvas.defaultCursor = penCursor;
+      canvas.hoverCursor = penCursor;
+      canvas.freeDrawingCursor = penCursor;
+      
+      // Apply cursor directly to the wrapper element for immediate visibility
+      if (canvas.wrapperEl) {
+        canvas.wrapperEl.style.cursor = penCursor;
+      }
+    } else {
+      canvas.defaultCursor = 'default';
+      canvas.hoverCursor = 'default';
+      
+      // Apply cursor directly to the wrapper element for immediate visibility
+      if (canvas.wrapperEl) {
+        canvas.wrapperEl.style.cursor = 'default';
+      }
+    }
+  };
+
   // Apply brush settings when canvas is initialized or relevant settings change
   useEffect(() => {
     if (!canvas) return;
@@ -50,27 +72,11 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         canvas.freeDrawingBrush.strokeLineJoin = 'round';
       }
       
-      // Set proper cursor
-      if (isDrawMode) {
-        canvas.defaultCursor = penCursor;
-        canvas.hoverCursor = penCursor;
-        canvas.freeDrawingCursor = penCursor;
-        
-        // Apply cursor properly for Fabric v6
-        if (canvas.wrapperEl) {
-          canvas.wrapperEl.style.cursor = penCursor;
-        }
-      } else {
-        canvas.defaultCursor = 'default';
-        canvas.hoverCursor = 'default';
-        
-        // Apply cursor properly for Fabric v6
-        if (canvas.wrapperEl) {
-          canvas.wrapperEl.style.cursor = 'default';
-        }
-      }
+      // Apply proper cursor based on current drawing mode
+      applyCursor(canvas, isDrawMode);
       
-      // Force a render to ensure settings are applied
+      // Ensure background stays white and render once
+      canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
     } catch (error) {
       console.error("Error applying brush settings:", error);
@@ -103,17 +109,10 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       // Update canvas drawing mode
       canvas.isDrawingMode = newMode;
       
+      // Apply cursor based on new mode
+      applyCursor(canvas, newMode);
+      
       if (newMode) {
-        // Set cursor for drawing mode
-        canvas.defaultCursor = penCursor;
-        canvas.hoverCursor = penCursor;
-        canvas.freeDrawingCursor = penCursor;
-        
-        // Apply directly to the wrapper element for immediate visibility
-        if (canvas.wrapperEl) {
-          canvas.wrapperEl.style.cursor = penCursor;
-        }
-        
         // Ensure brush settings are applied
         if (canvas.freeDrawingBrush) {
           canvas.freeDrawingBrush.color = penColor;
@@ -122,22 +121,10 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         
         setSelectedTool('draw');
       } else {
-        // Reset to default cursor for selection mode
-        canvas.defaultCursor = 'default';
-        canvas.hoverCursor = 'default';
-        
-        // Apply to wrapper element
-        if (canvas.wrapperEl) {
-          canvas.wrapperEl.style.cursor = 'default';
-        }
-        
         setSelectedTool('select');
       }
 
-      // Force a render to ensure cursor and mode changes take effect
-      canvas.renderAll();
-
-      // Always ensure background is white regardless of mode change
+      // Set background color and render once
       canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
     } catch (error) {
@@ -153,11 +140,9 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     try {
       if (canvas.freeDrawingBrush) {
         canvas.freeDrawingBrush.color = color;
-        // Force a render after changing brush color
-        canvas.renderAll();
       }
       
-      // Ensure background stays white when changing colors
+      // Set background and render once
       canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
     } catch (error) {
@@ -173,7 +158,6 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     try {
       if (canvas.freeDrawingBrush) {
         canvas.freeDrawingBrush.width = size;
-        // Force a render after changing brush size
         canvas.renderAll();
       }
     } catch (error) {
