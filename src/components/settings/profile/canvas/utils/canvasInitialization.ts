@@ -69,8 +69,8 @@ export const initializeCanvas = (
     brush.strokeLineJoin = 'round';
     
     // In Fabric.js v6, we need to set the brush properly
-    if (typeof (canvas as any).setBrush === 'function') {
-      (canvas as any).setBrush(brush);
+    if (typeof canvas.setBrush === 'function') {
+      canvas.setBrush(brush);
       console.log("Brush set using canvas.setBrush() during initialization");
     } else {
       // Fallback for backward compatibility
