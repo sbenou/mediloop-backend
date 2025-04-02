@@ -76,8 +76,9 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       brush.strokeLineJoin = 'round';
       
       // In Fabric.js v6, we need to set the brush properly
-      if (typeof canvas.setBrush === 'function') {
-        canvas.setBrush(brush);
+      // Use type assertions to handle the TypeScript errors
+      if (typeof (canvas as any).setBrush === 'function') {
+        (canvas as any).setBrush(brush);
         console.log("Brush set using canvas.setBrush()");
       } else {
         // Fallback for backward compatibility
@@ -140,8 +141,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         brush.strokeLineJoin = 'round';
         
         // In Fabric.js v6, use setBrush method if available
-        if (typeof canvas.setBrush === 'function') {
-          canvas.setBrush(brush);
+        if (typeof (canvas as any).setBrush === 'function') {
+          (canvas as any).setBrush(brush);
           console.log("Brush set using canvas.setBrush() during toggle");
         } else {
           // Fallback for backward compatibility
@@ -173,8 +174,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     try {
       // Get the current brush - use getBrush if available (Fabric v6)
       let brush;
-      if (typeof canvas.getBrush === 'function') {
-        brush = canvas.getBrush();
+      if (typeof (canvas as any).getBrush === 'function') {
+        brush = (canvas as any).getBrush();
         console.log("Got brush using canvas.getBrush()");
       } else {
         // Fallback for backward compatibility
@@ -197,8 +198,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         newBrush.strokeLineJoin = 'round';
         
         // Set the new brush using the appropriate method
-        if (typeof canvas.setBrush === 'function') {
-          canvas.setBrush(newBrush);
+        if (typeof (canvas as any).setBrush === 'function') {
+          (canvas as any).setBrush(newBrush);
           console.log("New brush set using canvas.setBrush()");
         } else {
           // Fallback for backward compatibility
@@ -224,8 +225,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     try {
       // Get the current brush - use getBrush if available (Fabric v6)
       let brush;
-      if (typeof canvas.getBrush === 'function') {
-        brush = canvas.getBrush();
+      if (typeof (canvas as any).getBrush === 'function') {
+        brush = (canvas as any).getBrush();
         console.log("Got brush using canvas.getBrush()");
       } else {
         // Fallback for backward compatibility
@@ -248,8 +249,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         newBrush.strokeLineJoin = 'round';
         
         // Set the new brush using the appropriate method
-        if (typeof canvas.setBrush === 'function') {
-          canvas.setBrush(newBrush);
+        if (typeof (canvas as any).setBrush === 'function') {
+          (canvas as any).setBrush(newBrush);
           console.log("New brush set using canvas.setBrush()");
         } else {
           // Fallback for backward compatibility
