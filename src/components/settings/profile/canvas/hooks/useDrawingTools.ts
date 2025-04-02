@@ -75,9 +75,14 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       brush.strokeLineCap = 'round';
       brush.strokeLineJoin = 'round';
       
-      // Directly assign to freeDrawingBrush
-      // Need to use type assertion for TypeScript compatibility
-      (canvas as any).freeDrawingBrush = brush;
+      // In Fabric.js v6, we need to set the brush using the setBrush method
+      // We're using 'as any' here to bypass the TypeScript errors
+      if (typeof (canvas as any).setBrush === 'function') {
+        (canvas as any).setBrush(brush);
+      } else {
+        // Fallback for backward compatibility
+        (canvas as any).freeDrawingBrush = brush;
+      }
       
       // Apply drawing mode
       canvas.isDrawingMode = isDrawMode;
@@ -129,8 +134,13 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
         brush.strokeLineCap = 'round';
         brush.strokeLineJoin = 'round';
         
-        // Directly assign to freeDrawingBrush
-        (canvas as any).freeDrawingBrush = brush;
+        // In Fabric.js v6, use setBrush method
+        if (typeof (canvas as any).setBrush === 'function') {
+          (canvas as any).setBrush(brush);
+        } else {
+          // Fallback for backward compatibility
+          (canvas as any).freeDrawingBrush = brush;
+        }
         setSelectedTool('draw');
       } else {
         setSelectedTool('select');
@@ -154,22 +164,36 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     if (!canvas) return;
     
     try {
-      // Update the color on the freeDrawingBrush directly
-      if ((canvas as any).freeDrawingBrush) {
-        (canvas as any).freeDrawingBrush.color = color;
-        console.log("Color applied to brush:", (canvas as any).freeDrawingBrush.color);
+      // Get the current brush
+      let brush;
+      if (typeof (canvas as any).getBrush === 'function') {
+        brush = (canvas as any).getBrush();
+      } else {
+        // Fallback for backward compatibility
+        brush = (canvas as any).freeDrawingBrush;
+      }
+      
+      // Update the color on the brush
+      if (brush) {
+        brush.color = color;
+        console.log("Color applied to brush:", brush.color);
       } else {
         console.warn("No brush available to update color");
         // If no brush exists, create one
-        const brush = new PencilBrush(canvas);
-        brush.color = color;
-        brush.width = brushSize;
-        brush.shadow = null;
-        brush.strokeLineCap = 'round';
-        brush.strokeLineJoin = 'round';
+        const newBrush = new PencilBrush(canvas);
+        newBrush.color = color;
+        newBrush.width = brushSize;
+        newBrush.shadow = null;
+        newBrush.strokeLineCap = 'round';
+        newBrush.strokeLineJoin = 'round';
         
-        // Directly assign to freeDrawingBrush
-        (canvas as any).freeDrawingBrush = brush;
+        // Set the new brush
+        if (typeof (canvas as any).setBrush === 'function') {
+          (canvas as any).setBrush(newBrush);
+        } else {
+          // Fallback for backward compatibility
+          (canvas as any).freeDrawingBrush = newBrush;
+        }
       }
       
       // Set background and render once
@@ -187,22 +211,36 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     if (!canvas) return;
     
     try {
-      // Update the width on the freeDrawingBrush directly
-      if ((canvas as any).freeDrawingBrush) {
-        (canvas as any).freeDrawingBrush.width = size;
-        console.log("Size applied to brush:", (canvas as any).freeDrawingBrush.width);
+      // Get the current brush
+      let brush;
+      if (typeof (canvas as any).getBrush === 'function') {
+        brush = (canvas as any).getBrush();
+      } else {
+        // Fallback for backward compatibility
+        brush = (canvas as any).freeDrawingBrush;
+      }
+      
+      // Update the width on the brush
+      if (brush) {
+        brush.width = size;
+        console.log("Size applied to brush:", brush.width);
       } else {
         console.warn("No brush available to update size");
         // If no brush exists, create one
-        const brush = new PencilBrush(canvas);
-        brush.color = penColor;
-        brush.width = size;
-        brush.shadow = null;
-        brush.strokeLineCap = 'round';
-        brush.strokeLineJoin = 'round';
+        const newBrush = new PencilBrush(canvas);
+        newBrush.color = penColor;
+        newBrush.width = size;
+        newBrush.shadow = null;
+        newBrush.strokeLineCap = 'round';
+        newBrush.strokeLineJoin = 'round';
         
-        // Directly assign to freeDrawingBrush
-        (canvas as any).freeDrawingBrush = brush;
+        // Set the new brush
+        if (typeof (canvas as any).setBrush === 'function') {
+          (canvas as any).setBrush(newBrush);
+        } else {
+          // Fallback for backward compatibility
+          (canvas as any).freeDrawingBrush = newBrush;
+        }
       }
       
       canvas.renderAll();
