@@ -1,5 +1,5 @@
 
-import { Canvas, Image as FabricImage, Object as FabricObject } from 'fabric';
+import { Canvas, Image as FabricImage, Object as FabricObject, PencilBrush } from 'fabric';
 
 interface CanvasOptions {
   width: number;
@@ -59,12 +59,26 @@ export const initializeCanvas = (
   canvas.isDrawingMode = true;
   
   // Setup proper options for the drawing brush
-  if (canvas.freeDrawingBrush) {
-    canvas.freeDrawingBrush.color = '#000000';
-    canvas.freeDrawingBrush.width = 2;
-    canvas.freeDrawingBrush.shadow = null;
-    canvas.freeDrawingBrush.strokeLineCap = 'round';
-    canvas.freeDrawingBrush.strokeLineJoin = 'round';
+  try {
+    // Create a new brush instance
+    const brush = new PencilBrush(canvas);
+    brush.color = '#000000';
+    brush.width = 2;
+    brush.shadow = null;
+    brush.strokeLineCap = 'round';
+    brush.strokeLineJoin = 'round';
+    
+    // In Fabric.js v6, we need to set the brush properly
+    if (typeof (canvas as any).setBrush === 'function') {
+      (canvas as any).setBrush(brush);
+      console.log("Brush set using canvas.setBrush() during initialization");
+    } else {
+      // Fallback for backward compatibility
+      (canvas as any).freeDrawingBrush = brush;
+      console.log("Brush set using canvas.freeDrawingBrush fallback during initialization");
+    }
+  } catch (error) {
+    console.error("Error setting up initial brush:", error);
   }
   
   // Store a reference to the container element on the canvas instance
