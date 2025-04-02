@@ -60,10 +60,14 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     }
   }, [penCursor]);
 
-  // Helper to create and configure the brush
-  const createBrush = useCallback((canvas: FabricCanvas) => {
+  // Initialize freeDrawingBrush when canvas changes or when brush settings change
+  useEffect(() => {
+    if (!canvas) return;
+    
     try {
-      console.log("Creating new brush for canvas");
+      console.log("Initializing freeDrawingBrush");
+      
+      // Create a new brush instance
       const brush = new PencilBrush(canvas);
       brush.color = penColor;
       brush.width = brushSize;
@@ -71,46 +75,23 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       brush.strokeLineCap = 'round';
       brush.strokeLineJoin = 'round';
       
-      // Use type assertion to access Fabric v6 method
-      (canvas as any).setBrush(brush);
-      console.log("Brush created and set successfully:", brush);
-      return brush;
-    } catch (error) {
-      console.error("Error creating brush:", error);
-      return null;
-    }
-  }, [penColor, brushSize]);
-
-  // Apply brush settings when canvas is initialized or relevant settings change
-  useEffect(() => {
-    if (!canvas) return;
-    
-    try {
-      console.log("Applying brush settings to canvas");
+      // Directly assign to freeDrawingBrush
+      // Need to use type assertion for TypeScript compatibility
+      (canvas as any).freeDrawingBrush = brush;
       
-      // Make sure the drawing mode is properly set first
+      // Apply drawing mode
       canvas.isDrawingMode = isDrawMode;
-      
-      // Create and apply a new brush using Fabric v6 method
-      createBrush(canvas);
-      
-      // Apply proper cursor based on current drawing mode
       applyCursor(canvas, isDrawMode);
+      
+      console.log("Brush initialized:", brush);
       
       // Ensure background stays white and render once
       canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
-      
-      // Debug: Verify the brush was created
-      setTimeout(() => {
-        const currentBrush = (canvas as any).getBrush?.();
-        console.log("Current brush after setup:", currentBrush);
-        console.log("Drawing mode:", canvas.isDrawingMode);
-      }, 200);
     } catch (error) {
-      console.error("Error applying brush settings:", error);
+      console.error("Error initializing brush:", error);
     }
-  }, [canvas, isDrawMode, createBrush, applyCursor]);
+  }, [canvas, penColor, brushSize, isDrawMode, applyCursor]);
 
   // Cleanup effect
   useEffect(() => {
@@ -139,24 +120,32 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       // Update canvas drawing mode
       canvas.isDrawingMode = newMode;
       
-      // Apply cursor based on new mode
-      applyCursor(canvas, newMode);
-      
+      // Create a new brush if needed when entering drawing mode
       if (newMode) {
-        // Ensure brush is properly created for drawing mode
-        createBrush(canvas);
+        const brush = new PencilBrush(canvas);
+        brush.color = penColor;
+        brush.width = brushSize;
+        brush.shadow = null;
+        brush.strokeLineCap = 'round';
+        brush.strokeLineJoin = 'round';
+        
+        // Directly assign to freeDrawingBrush
+        (canvas as any).freeDrawingBrush = brush;
         setSelectedTool('draw');
       } else {
         setSelectedTool('select');
       }
-
+      
+      // Apply cursor based on new mode
+      applyCursor(canvas, newMode);
+      
       // Set background color and render once
       canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
     } catch (error) {
       console.error("Error toggling draw mode:", error);
     }
-  }, [canvas, isDrawMode, applyCursor, createBrush]);
+  }, [canvas, isDrawMode, penColor, brushSize, applyCursor]);
 
   // Handle color change
   const handleColorChange = useCallback((color: string) => {
@@ -165,15 +154,22 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     if (!canvas) return;
     
     try {
-      // Get the current brush using Fabric v6 method
-      const brush = (canvas as any).getBrush?.();
-      if (brush) {
-        brush.color = color;
-        console.log("Color applied to brush:", brush.color);
+      // Update the color on the freeDrawingBrush directly
+      if ((canvas as any).freeDrawingBrush) {
+        (canvas as any).freeDrawingBrush.color = color;
+        console.log("Color applied to brush:", (canvas as any).freeDrawingBrush.color);
       } else {
         console.warn("No brush available to update color");
         // If no brush exists, create one
-        createBrush(canvas);
+        const brush = new PencilBrush(canvas);
+        brush.color = color;
+        brush.width = brushSize;
+        brush.shadow = null;
+        brush.strokeLineCap = 'round';
+        brush.strokeLineJoin = 'round';
+        
+        // Directly assign to freeDrawingBrush
+        (canvas as any).freeDrawingBrush = brush;
       }
       
       // Set background and render once
@@ -182,7 +178,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     } catch (error) {
       console.error("Error changing brush color:", error);
     }
-  }, [canvas, createBrush]);
+  }, [canvas, brushSize]);
 
   // Handle brush size change
   const handleBrushSizeChange = useCallback((size: number) => {
@@ -191,22 +187,29 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     if (!canvas) return;
     
     try {
-      // Get the current brush using Fabric v6 method
-      const brush = (canvas as any).getBrush?.();
-      if (brush) {
-        brush.width = size;
-        console.log("Size applied to brush:", brush.width);
+      // Update the width on the freeDrawingBrush directly
+      if ((canvas as any).freeDrawingBrush) {
+        (canvas as any).freeDrawingBrush.width = size;
+        console.log("Size applied to brush:", (canvas as any).freeDrawingBrush.width);
       } else {
         console.warn("No brush available to update size");
         // If no brush exists, create one
-        createBrush(canvas);
+        const brush = new PencilBrush(canvas);
+        brush.color = penColor;
+        brush.width = size;
+        brush.shadow = null;
+        brush.strokeLineCap = 'round';
+        brush.strokeLineJoin = 'round';
+        
+        // Directly assign to freeDrawingBrush
+        (canvas as any).freeDrawingBrush = brush;
       }
       
       canvas.renderAll();
     } catch (error) {
       console.error("Error changing brush size:", error);
     }
-  }, [canvas, createBrush]);
+  }, [canvas, penColor]);
 
   return {
     isDrawMode,
