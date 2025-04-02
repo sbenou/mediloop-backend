@@ -7,7 +7,8 @@ import {
   addLine as addLineUtil,
   addDateField as addDateFieldUtil,
   addCheckbox as addCheckboxUtil,
-  rotateObject as rotateObjectUtil
+  rotateObject as rotateObjectUtil,
+  saveCanvasState
 } from '../utils';
 
 export interface UseShapeToolsProps {
@@ -28,9 +29,13 @@ export const useShapeTools = ({
   // Clear the canvas
   const clearCanvas = () => {
     if (canvas) {
+      console.log("Clearing canvas");
       canvas.clear();
       canvas.backgroundColor = '#ffffff';
       canvas.renderAll();
+      
+      // Save the cleared state to history
+      saveCanvasState(canvas);
     }
   };
 
@@ -38,6 +43,7 @@ export const useShapeTools = ({
   const handleAddShape = (shape: 'circle' | 'rectangle' | 'line') => {
     if (!canvas) return;
     
+    console.log(`Adding shape: ${shape} with color: ${penColor}`);
     setSelectedShape(shape);
     setSelectedTool('shape');
     
@@ -59,6 +65,13 @@ export const useShapeTools = ({
         break;
     }
     
+    // Save the canvas state after adding a shape
+    setTimeout(() => {
+      if (canvas) {
+        saveCanvasState(canvas);
+      }
+    }, 50);
+    
     // Ensure the canvas has focus for manipulation
     const canvasEl = canvas.getElement();
     if (canvasEl) {
@@ -70,6 +83,7 @@ export const useShapeTools = ({
   const handleAddText = () => {
     if (!canvas) return;
     
+    console.log("Adding text with color:", penColor);
     setSelectedTool('text');
     
     // Force drawing mode off when adding text
@@ -79,6 +93,13 @@ export const useShapeTools = ({
     }
     
     addTextUtil(canvas, 'Text', penColor);
+    
+    // Save the canvas state after adding text
+    setTimeout(() => {
+      if (canvas) {
+        saveCanvasState(canvas);
+      }
+    }, 50);
     
     // Ensure the canvas has focus for manipulation
     const canvasEl = canvas.getElement();
@@ -91,6 +112,7 @@ export const useShapeTools = ({
   const handleAddDateField = () => {
     if (!canvas) return;
     
+    console.log("Adding date field with color:", penColor);
     setSelectedTool('date');
     
     // Force drawing mode off when adding date field
@@ -100,6 +122,13 @@ export const useShapeTools = ({
     }
     
     addDateFieldUtil(canvas, penColor);
+    
+    // Save the canvas state after adding a date field
+    setTimeout(() => {
+      if (canvas) {
+        saveCanvasState(canvas);
+      }
+    }, 50);
     
     // Ensure the canvas has focus for manipulation
     const canvasEl = canvas.getElement();
@@ -112,6 +141,7 @@ export const useShapeTools = ({
   const handleAddCheckbox = (checked: boolean = false) => {
     if (!canvas) return;
     
+    console.log("Adding checkbox with color:", penColor, "checked:", checked);
     setSelectedTool('checkbox');
     
     // Force drawing mode off when adding checkbox
@@ -121,6 +151,13 @@ export const useShapeTools = ({
     }
     
     addCheckboxUtil(canvas, penColor, checked);
+    
+    // Save the canvas state after adding a checkbox
+    setTimeout(() => {
+      if (canvas) {
+        saveCanvasState(canvas);
+      }
+    }, 50);
     
     // Ensure the canvas has focus for manipulation
     const canvasEl = canvas.getElement();
@@ -132,7 +169,15 @@ export const useShapeTools = ({
   // Rotate selected object
   const handleRotate = (angle: number) => {
     if (canvas) {
+      console.log(`Rotating object by ${angle} degrees`);
       rotateObjectUtil(canvas, angle);
+      
+      // Save the canvas state after rotating
+      setTimeout(() => {
+        if (canvas) {
+          saveCanvasState(canvas);
+        }
+      }, 50);
     }
   };
 

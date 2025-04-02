@@ -98,6 +98,8 @@ export const resizeCanvas = (canvas: Canvas, width: number, height: number) => {
 export const addCircle = (canvas: Canvas, color: string) => {
   if (!canvas) return;
   
+  console.log("Adding circle with color:", color);
+  
   // Calculate the appropriate size based on canvas dimensions
   const canvasWidth = canvas.getWidth();
   const canvasHeight = canvas.getHeight();
@@ -127,11 +129,15 @@ export const addCircle = (canvas: Canvas, color: string) => {
   // Force the control points to be positioned correctly
   circle.setCoords();
   canvas.setActiveObject(circle);
-  canvas.renderAll();
+  canvas.requestRenderAll();
+  
+  console.log("Circle added successfully");
 };
 
 export const addRectangle = (canvas: Canvas, color: string) => {
   if (!canvas) return;
+  
+  console.log("Adding rectangle with color:", color);
   
   // Calculate the appropriate size based on canvas dimensions
   const canvasWidth = canvas.getWidth();
@@ -164,11 +170,15 @@ export const addRectangle = (canvas: Canvas, color: string) => {
   // Force the control points to be positioned correctly
   rect.setCoords();
   canvas.setActiveObject(rect);
-  canvas.renderAll();
+  canvas.requestRenderAll();
+  
+  console.log("Rectangle added successfully");
 };
 
 export const addLine = (canvas: Canvas, color: string) => {
   if (!canvas) return;
+  
+  console.log("Adding line with color:", color);
   
   // Calculate the appropriate size based on canvas dimensions
   const canvasWidth = canvas.getWidth();
@@ -197,11 +207,15 @@ export const addLine = (canvas: Canvas, color: string) => {
   // Force the control points to be positioned correctly
   line.setCoords();
   canvas.setActiveObject(line);
-  canvas.renderAll();
+  canvas.requestRenderAll();
+  
+  console.log("Line added successfully");
 };
 
 export const addText = (canvas: Canvas, text: string, color: string) => {
   if (!canvas) return;
+  
+  console.log("Adding text with color:", color);
   
   const textObj = new Text(text, {
     left: 100,
@@ -214,17 +228,22 @@ export const addText = (canvas: Canvas, text: string, color: string) => {
   });
   
   canvas.add(textObj);
+  
   // Force drawing mode off to allow selection
   canvas.isDrawingMode = false;
   
   // Force the control points to be positioned correctly
   textObj.setCoords();
   canvas.setActiveObject(textObj);
-  canvas.renderAll();
+  canvas.requestRenderAll();
+  
+  console.log("Text added successfully");
 };
 
 export const addDateField = (canvas: Canvas, color: string) => {
   if (!canvas) return;
+  
+  console.log("Adding date field with color:", color);
   
   const currentDate = new Date().toLocaleDateString();
   const dateField = new Text(currentDate, {
@@ -239,17 +258,22 @@ export const addDateField = (canvas: Canvas, color: string) => {
   });
   
   canvas.add(dateField);
+  
   // Force drawing mode off to allow selection
   canvas.isDrawingMode = false;
   
   // Force the control points to be positioned correctly
   dateField.setCoords();
   canvas.setActiveObject(dateField);
-  canvas.renderAll();
+  canvas.requestRenderAll();
+  
+  console.log("Date field added successfully");
 };
 
 export const addCheckbox = (canvas: Canvas, color: string, checked: boolean = false) => {
   if (!canvas) return;
+  
+  console.log("Adding checkbox with color:", color, "checked:", checked);
   
   // Create a group for checkbox consisting of a square and optional checkmark
   const boxSize = 20;
@@ -262,7 +286,9 @@ export const addCheckbox = (canvas: Canvas, color: string, checked: boolean = fa
     stroke: color,
     strokeWidth: 2,
     selectable: true,
-    hasControls: true
+    hasControls: true,
+    left: 100,
+    top: 100
   });
   
   // If checked, add a checkmark
@@ -270,12 +296,16 @@ export const addCheckbox = (canvas: Canvas, color: string, checked: boolean = fa
     // Simple checkmark using a line
     const checkmark1 = new Line([5, 10, 10, 15], {
       stroke: color,
-      strokeWidth: 2
+      strokeWidth: 2,
+      left: 100,
+      top: 100
     });
     
     const checkmark2 = new Line([10, 15, 15, 5], {
       stroke: color,
-      strokeWidth: 2
+      strokeWidth: 2,
+      left: 100,
+      top: 100
     });
     
     // Add both elements to canvas
@@ -297,11 +327,15 @@ export const addCheckbox = (canvas: Canvas, color: string, checked: boolean = fa
   // Force the control points to be positioned correctly
   box.setCoords();
   canvas.setActiveObject(box);
-  canvas.renderAll();
+  canvas.requestRenderAll();
+  
+  console.log("Checkbox added successfully");
 };
 
 export const rotateObject = (canvas: Canvas, angle: number) => {
   if (!canvas) return;
+  
+  console.log(`Rotating object by ${angle} degrees`);
   
   const activeObject = canvas.getActiveObject();
   if (!activeObject) return;
@@ -312,5 +346,7 @@ export const rotateObject = (canvas: Canvas, angle: number) => {
   
   // Force the control points to be positioned correctly
   activeObject.setCoords();
-  canvas.renderAll();
+  canvas.requestRenderAll();
+  
+  console.log("Object rotated successfully");
 };
