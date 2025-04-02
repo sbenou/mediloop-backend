@@ -71,8 +71,8 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       brush.strokeLineCap = 'round';
       brush.strokeLineJoin = 'round';
       
-      // Use the proper Fabric v6 method to set the brush
-      canvas.setBrush(brush);
+      // Use type assertion to access Fabric v6 method
+      (canvas as any).setBrush(brush);
       console.log("Brush created and set successfully:", brush);
       return brush;
     } catch (error) {
@@ -103,7 +103,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
       
       // Debug: Verify the brush was created
       setTimeout(() => {
-        const currentBrush = canvas.getBrush();
+        const currentBrush = (canvas as any).getBrush?.();
         console.log("Current brush after setup:", currentBrush);
         console.log("Drawing mode:", canvas.isDrawingMode);
       }, 200);
@@ -166,7 +166,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     
     try {
       // Get the current brush using Fabric v6 method
-      const brush = canvas.getBrush();
+      const brush = (canvas as any).getBrush?.();
       if (brush) {
         brush.color = color;
         console.log("Color applied to brush:", brush.color);
@@ -192,7 +192,7 @@ export const useDrawingTools = ({ canvas }: UseDrawingToolsProps) => {
     
     try {
       // Get the current brush using Fabric v6 method
-      const brush = canvas.getBrush();
+      const brush = (canvas as any).getBrush?.();
       if (brush) {
         brush.width = size;
         console.log("Size applied to brush:", brush.width);
