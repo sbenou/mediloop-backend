@@ -1,11 +1,10 @@
 
 import { Canvas, Line } from "fabric";
 
-// Import and re-export specific functions to avoid naming conflicts
-export { initializeCanvas, cleanupCanvasListeners } from './canvasInitialization';
+// Re-export all utilities from the utils folder
 export * from './canvasHistory';
-// Export canvasImageHandling functions but not the one that conflicts
-export { applyImageFilter } from './canvasImageHandling';
+export * from './canvasInitialization';
+export * from './canvasImageHandling';
 export * from './canvasShapes';
 export * from './canvasLayerManagement';
 export * from './canvasTemplates';
