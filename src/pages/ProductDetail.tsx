@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -194,7 +195,7 @@ const ProductDetail = () => {
           <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-100 border">
             <img
               src={activeImage || '/placeholder.svg'}
-              alt={product.name}
+              alt={product?.name || 'Product image'}
               className="h-full w-full object-contain"
             />
           </div>
@@ -211,7 +212,7 @@ const ProductDetail = () => {
                   >
                     <img
                       src={image}
-                      alt={`${product.name} view ${index + 1}`}
+                      alt={`${product?.name || 'Product'} view ${index + 1}`}
                       className="h-full w-full object-cover"
                     />
                   </div>
