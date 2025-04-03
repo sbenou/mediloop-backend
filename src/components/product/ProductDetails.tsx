@@ -25,9 +25,9 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
           <span>{product.requires_prescription ? 'Yes' : 'No'}</span>
         </li>
         {product.description && (
-          <li className="flex mt-4">
-            <span className="text-gray-500 w-40">Description:</span>
-            <span className="text-gray-700">{product.description}</span>
+          <li className="flex flex-col mt-4">
+            <span className="text-gray-500 mb-1">Description:</span>
+            <p className="text-gray-700">{product.description}</p>
           </li>
         )}
       </ul>

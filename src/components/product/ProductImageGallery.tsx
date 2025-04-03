@@ -22,7 +22,7 @@ export const ProductImageGallery = ({ mainImage, galleryImages, productName }: P
       </div>
       
       {galleryImages.length > 0 && (
-        <Carousel className="w-full group">
+        <Carousel className="w-full group relative">
           <CarouselContent>
             {galleryImages.map((image, index) => (
               <CarouselItem key={index} className="basis-1/4 sm:basis-1/5">
@@ -40,8 +40,8 @@ export const ProductImageGallery = ({ mainImage, galleryImages, productName }: P
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-0" />
-          <CarouselNext className="right-0" />
+          <CarouselPrevious className="left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <CarouselNext className="right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Carousel>
       )}
     </div>
