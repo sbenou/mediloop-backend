@@ -54,10 +54,10 @@ export function CookieConsent() {
   return (
     <>
       {showBanner && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t shadow-lg md:flex md:items-center md:justify-between">
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-[#7E69AB] border-t shadow-lg md:flex md:items-center md:justify-between text-white">
           <div className="mb-4 md:mb-0 md:mr-4">
             <h3 className="text-lg font-semibold">We use cookies</h3>
-            <p className="max-w-3xl text-sm text-muted-foreground">
+            <p className="max-w-3xl text-sm text-white/80">
               This website uses cookies to enhance your browsing experience. You can choose which cookies you want to accept.
             </p>
           </div>
@@ -69,6 +69,7 @@ export function CookieConsent() {
                 setShowBanner(false);
                 setShowSettings(true);
               }}
+              className="text-white border-white hover:bg-white/10"
             >
               Cookie settings
             </Button>
@@ -76,6 +77,7 @@ export function CookieConsent() {
               variant="outline"
               size="sm"
               onClick={rejectNonEssential}
+              className="text-white border-white hover:bg-white/10"
             >
               Reject non-essential
             </Button>
