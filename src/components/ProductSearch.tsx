@@ -56,7 +56,7 @@ export const ProductSearch = () => {
 
   return (
     <div className="flex gap-6">
-      <div className="w-56 space-y-6">
+      <div className="w-64 space-y-6">
         <ProductFilters 
           userRole={productsData?.userProfile?.role || null}
           onFilterChange={handleFilterChange}

@@ -53,10 +53,10 @@ export const FilterSubcategory = ({
         onClick={handleSubcategoryClick}
         className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-primary py-1 cursor-pointer"
       >
-        <span>{subcategory.name}</span>
+        <span className="truncate mr-2">{subcategory.name}</span>
         <Badge 
           variant="secondary" 
-          className="text-sm text-muted-foreground ml-auto w-7 text-center flex items-center justify-center h-5"
+          className="text-sm text-muted-foreground ml-auto w-7 text-center flex items-center justify-center h-5 flex-shrink-0"
         >
           {totalProducts}
         </Badge>

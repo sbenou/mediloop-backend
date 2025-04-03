@@ -39,10 +39,10 @@ export const FilterCategory = ({
         onClick={handleCategoryClick}
         className="flex items-center justify-between w-full text-sm hover:text-primary cursor-pointer"
       >
-        <span>{name}</span>
+        <span className="truncate mr-2">{name}</span>
         <Badge 
           variant="secondary" 
-          className="text-sm ml-auto w-7 text-center flex items-center justify-center h-5"
+          className="text-sm ml-auto w-7 text-center flex items-center justify-center h-5 flex-shrink-0"
         >
           {totalProducts}
         </Badge>
