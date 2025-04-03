@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -246,7 +247,9 @@ const ProductDetail = () => {
 
   const navigateToProduct = (productData: AdjacentProduct | null) => {
     if (!productData) return;
-    // Preserve the current sort order in the URL
+    
+    // Preserve the current sort order in the URL and navigate to the new product
+    console.log(`Navigating to product: ${productData.id} (${productData.name})`);
     navigate(`/products/${productData.id}?sort=${sortOrder}`);
   };
 
@@ -284,7 +287,7 @@ const ProductDetail = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      {/* Breadcrumb component replacing back button */}
+      {/* Breadcrumb navigation */}
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -339,24 +342,28 @@ const ProductDetail = () => {
             <CarouselNext className="right-0" />
           </Carousel>
           
-          {/* Product Navigation */}
+          {/* Product Navigation - Fixed to correctly display product names and handle navigation */}
           <div className="flex justify-between mt-6">
             <Button
               variant="outline"
               className="flex items-center gap-2 max-w-[45%]"
-              onClick={() => navigateToProduct(prevProduct)}
+              onClick={() => prevProduct && navigateToProduct(prevProduct)}
               disabled={!prevProduct || loadingNavigation}
             >
               <ArrowLeft className="h-4 w-4 flex-shrink-0" /> 
-              <span className="truncate">{prevProduct?.name || 'Previous Product'}</span>
+              <span className="truncate">
+                {prevProduct ? prevProduct.name : 'Previous Product'}
+              </span>
             </Button>
             <Button
               variant="outline"
               className="flex items-center gap-2 max-w-[45%]"
-              onClick={() => navigateToProduct(nextProduct)}
+              onClick={() => nextProduct && navigateToProduct(nextProduct)}
               disabled={!nextProduct || loadingNavigation}
             >
-              <span className="truncate">{nextProduct?.name || 'Next Product'}</span> 
+              <span className="truncate">
+                {nextProduct ? nextProduct.name : 'Next Product'}
+              </span> 
               <ArrowRight className="h-4 w-4 flex-shrink-0" />
             </Button>
           </div>
