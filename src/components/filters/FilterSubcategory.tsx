@@ -38,6 +38,12 @@ export const FilterSubcategory = ({
 
   const totalProducts = subcategory.products?.length || 0;
 
+  // Count products per description
+  const getProductCountByDescription = (description: string) => {
+    if (!subcategory.products) return 0;
+    return subcategory.products.filter(product => product.description === description).length;
+  };
+
   return (
     <div className="space-y-1 pb-2">
       <a
@@ -61,6 +67,7 @@ export const FilterSubcategory = ({
             categoryId={categoryId}
             subcategoryId={subcategory.id}
             type={type}
+            count={getProductCountByDescription(description)}
             onFilterChange={onFilterChange}
           />
         ))}
