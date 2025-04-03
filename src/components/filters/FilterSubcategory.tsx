@@ -56,7 +56,7 @@ export const FilterSubcategory = ({
         <span>{subcategory.name}</span>
         <Badge 
           variant="secondary" 
-          className="text-sm text-muted-foreground ml-auto min-w-[28px] text-right flex items-center justify-center h-5"
+          className="text-sm text-muted-foreground ml-auto w-8 text-center flex items-center justify-center h-5"
         >
           {totalProducts}
         </Badge>
