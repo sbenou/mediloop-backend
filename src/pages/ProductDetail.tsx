@@ -189,6 +189,7 @@ const ProductDetail = () => {
       console.log('Previous product data:', prevData);
       console.log('Next product data:', nextData);
       
+      // Set the previous and next products
       setPrevProduct(prevData && prevData.length > 0 ? prevData[0] : null);
       setNextProduct(nextData && nextData.length > 0 ? nextData[0] : null);
     } catch (err) {
@@ -271,6 +272,9 @@ const ProductDetail = () => {
     );
   }
 
+  // For debugging
+  console.log('Rendering with navigation products:', { prevProduct, nextProduct });
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Button 
@@ -324,7 +328,7 @@ const ProductDetail = () => {
               disabled={!prevProduct || loadingNavigation}
             >
               <ArrowLeft className="h-4 w-4 flex-shrink-0" /> 
-              <span className="truncate">{prevProduct ? prevProduct.name : 'Previous Product'}</span>
+              <span className="truncate">{prevProduct?.name || 'Previous Product'}</span>
             </Button>
             <Button
               variant="outline"
@@ -332,7 +336,7 @@ const ProductDetail = () => {
               onClick={() => navigateToProduct(nextProduct)}
               disabled={!nextProduct || loadingNavigation}
             >
-              <span className="truncate">{nextProduct ? nextProduct.name : 'Next Product'}</span> 
+              <span className="truncate">{nextProduct?.name || 'Next Product'}</span> 
               <ArrowRight className="h-4 w-4 flex-shrink-0" />
             </Button>
           </div>
