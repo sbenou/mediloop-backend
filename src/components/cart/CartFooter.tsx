@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -64,12 +63,12 @@ const CartFooter = () => {
     }
   };
   
-  const handleViewCart = () => {
+  const handleContinueShopping = () => {
     // Close the cart drawer/modal if it exists
     const closeCartEvent = new CustomEvent('closeCart');
     window.dispatchEvent(closeCartEvent);
     
-    // Navigate to the products page - this is typically where users can see their cart
+    // Navigate to the products page
     navigate('/products');
   };
   
@@ -93,9 +92,9 @@ const CartFooter = () => {
           variant="outline" 
           className="w-full" 
           size="lg"
-          onClick={handleViewCart}
+          onClick={handleContinueShopping}
         >
-          View Cart
+          Continue Shopping
         </Button>
       </div>
     </div>
