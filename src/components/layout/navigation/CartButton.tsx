@@ -10,6 +10,7 @@ import {
 import CartPreview from "@/components/CartPreview";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useEffect } from "react";
 
 interface CartButtonProps {
   isOpen: boolean;
@@ -20,6 +21,18 @@ const CartButton = ({ isOpen, onOpenChange }: CartButtonProps) => {
   const { state: cartState } = useCart();
   const { isAuthenticated } = useAuth();
   const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
+
+  // Listen for custom closeCart event
+  useEffect(() => {
+    const handleCloseCart = () => {
+      onOpenChange(false);
+    };
+    
+    window.addEventListener('closeCart', handleCloseCart);
+    return () => {
+      window.removeEventListener('closeCart', handleCloseCart);
+    };
+  }, [onOpenChange]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
