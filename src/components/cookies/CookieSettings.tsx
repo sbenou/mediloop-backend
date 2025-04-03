@@ -37,11 +37,11 @@ export function CookieSettings({ open, onOpenChange }: CookieSettingsProps) {
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh]">
+      <DrawerContent className="max-h-[85vh] bg-[#7E69AB] text-white">
         <div className="mx-auto w-full max-w-md">
           <DrawerHeader>
-            <DrawerTitle className="text-center text-xl">Cookie Settings</DrawerTitle>
-            <p className="text-center text-muted-foreground">
+            <DrawerTitle className="text-center text-xl text-white">Cookie Settings</DrawerTitle>
+            <p className="text-center text-white/80">
               Manage your cookie settings here.
             </p>
           </DrawerHeader>
@@ -49,8 +49,8 @@ export function CookieSettings({ open, onOpenChange }: CookieSettingsProps) {
           <div className="px-4 py-2 space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label htmlFor="necessary-cookies" className="font-medium">Strictly Necessary</Label>
-                <p className="text-sm text-muted-foreground">
+                <Label htmlFor="necessary-cookies" className="font-medium text-white">Strictly Necessary</Label>
+                <p className="text-sm text-white/70">
                   These cookies are essential in order to use the website and use its features.
                 </p>
               </div>
@@ -63,8 +63,8 @@ export function CookieSettings({ open, onOpenChange }: CookieSettingsProps) {
             
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label htmlFor="functional-cookies" className="font-medium">Functional Cookies</Label>
-                <p className="text-sm text-muted-foreground">
+                <Label htmlFor="functional-cookies" className="font-medium text-white">Functional Cookies</Label>
+                <p className="text-sm text-white/70">
                   These cookies allow the website to provide personalized functionality.
                 </p>
               </div>
@@ -79,8 +79,8 @@ export function CookieSettings({ open, onOpenChange }: CookieSettingsProps) {
             
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label htmlFor="performance-cookies" className="font-medium">Performance Cookies</Label>
-                <p className="text-sm text-muted-foreground">
+                <Label htmlFor="performance-cookies" className="font-medium text-white">Performance Cookies</Label>
+                <p className="text-sm text-white/70">
                   These cookies help to improve the performance of the website.
                 </p>
               </div>
@@ -97,7 +97,7 @@ export function CookieSettings({ open, onOpenChange }: CookieSettingsProps) {
           <DrawerFooter>
             <Button 
               onClick={handleSave}
-              className="w-full"
+              className="w-full bg-white text-[#7E69AB] hover:bg-white/90"
             >
               Save preferences
             </Button>
