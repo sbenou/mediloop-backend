@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export interface Product {
@@ -81,8 +82,7 @@ export const fetchAdjacentProducts = async (
   }
   
   try {
-    // This approach gets all products sorted by the selected order field,
-    // finds the current product's position, and returns the adjacent products
+    // Get all products sorted by the selected order field
     const { data: allProducts, error } = await supabase
       .from('products')
       .select('id, name')
