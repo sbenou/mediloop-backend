@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -74,8 +75,7 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
-      <Route path="/products" element={<Products />} />
-      <Route path="/products/:id" element={<ProductDetail />} />
+      <Route path="/products/*" element={<Products />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* Unified Dashboard route - handles redirects to appropriate dashboard */}

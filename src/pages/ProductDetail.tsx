@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Minus, Plus, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
@@ -11,6 +10,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { supabase } from '@/lib/supabase';
 
 interface Product {
   id: string;
@@ -29,7 +29,6 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const supabase = useSupabaseClient();
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { formatCurrency, convertPrice } = useCurrency();
@@ -43,15 +42,21 @@ const ProductDetail = () => {
 
       try {
         setLoading(true);
+        console.log('Fetching product with ID:', id);
+        
         const { data, error } = await supabase
           .from('products')
           .select('*')
           .eq('id', id)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
         
         if (data) {
+          console.log('Product data:', data);
           setProduct(data);
           
           // Set the main product image as the first gallery image
@@ -89,7 +94,7 @@ const ProductDetail = () => {
     };
 
     fetchProduct();
-  }, [id, supabase]);
+  }, [id]);
 
   const handleQuantityChange = (amount: number) => {
     const newQuantity = quantity + amount;
