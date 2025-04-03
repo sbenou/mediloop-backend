@@ -22,27 +22,29 @@ export const ProductImageGallery = ({ mainImage, galleryImages, productName }: P
       </div>
       
       {galleryImages.length > 0 && (
-        <Carousel className="w-full group relative mb-12">
-          <CarouselContent>
-            {galleryImages.map((image, index) => (
-              <CarouselItem key={index} className="basis-1/4 sm:basis-1/5">
-                <div 
-                  className={`h-20 w-full rounded-md overflow-hidden cursor-pointer border-2 
-                    ${activeImage === image ? 'border-primary' : 'border-transparent'}`}
-                  onClick={() => setActiveImage(image)}
-                >
-                  <img
-                    src={image}
-                    alt={`${productName || 'Product'} view ${index + 1}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-0 hidden group-hover:flex transition-all duration-300" />
-          <CarouselNext className="right-0 hidden group-hover:flex transition-all duration-300" />
-        </Carousel>
+        <div className="mb-16"> {/* Increased spacing here between carousel and navigation buttons */}
+          <Carousel className="w-full group relative">
+            <CarouselContent>
+              {galleryImages.map((image, index) => (
+                <CarouselItem key={index} className="basis-1/4 sm:basis-1/5">
+                  <div 
+                    className={`h-20 w-full rounded-md overflow-hidden cursor-pointer border-2 
+                      ${activeImage === image ? 'border-primary' : 'border-transparent'}`}
+                    onClick={() => setActiveImage(image)}
+                  >
+                    <img
+                      src={image}
+                      alt={`${productName || 'Product'} view ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-0 hidden group-hover:flex transition-all duration-300" />
+            <CarouselNext className="right-0 hidden group-hover:flex transition-all duration-300" />
+          </Carousel>
+        </div>
       )}
     </div>
   );
