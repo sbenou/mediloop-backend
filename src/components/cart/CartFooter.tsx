@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { getCartTotal } from '@/utils/cartUtils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { toast } from '@/components/ui/use-toast';
@@ -12,6 +13,7 @@ const CartFooter = () => {
   const { state } = useCart();
   const { formatCurrency } = useCurrency();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
   const supabase = useSupabaseClient();
   
@@ -68,8 +70,11 @@ const CartFooter = () => {
     const closeCartEvent = new CustomEvent('closeCart');
     window.dispatchEvent(closeCartEvent);
     
-    // Navigate to the products page
-    navigate('/products');
+    // Only navigate if the user is not already on the products page
+    const isOnProductsPage = location.pathname.startsWith('/products');
+    if (!isOnProductsPage) {
+      navigate('/products');
+    }
   };
   
   return (
