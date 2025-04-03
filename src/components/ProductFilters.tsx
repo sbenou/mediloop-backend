@@ -116,7 +116,7 @@ export const ProductFilters = ({
   };
 
   return (
-    <div className="w-64 flex-shrink-0 border-r pr-4">
+    <div className="w-full border-r pr-3">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold">Filters</h3>
         {activeFilters && (
