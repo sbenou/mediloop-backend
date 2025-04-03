@@ -42,7 +42,7 @@ export const FilterCategory = ({
         <span>{name}</span>
         <Badge 
           variant="secondary" 
-          className="text-sm ml-auto min-w-[32px] text-right"
+          className="text-sm ml-auto min-w-[32px] text-right flex items-center justify-center h-5"
         >
           {totalProducts}
         </Badge>

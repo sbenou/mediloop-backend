@@ -37,7 +37,7 @@ export const FilterDescription = ({
       <span>{description}</span>
       <Badge 
         variant="secondary" 
-        className="text-xs text-muted-foreground ml-auto px-1.5 py-0 min-w-[24px] text-right"
+        className="text-xs text-muted-foreground ml-auto px-1.5 py-0 min-w-[24px] text-right flex items-center justify-center h-4"
       >
         {count}
       </Badge>
