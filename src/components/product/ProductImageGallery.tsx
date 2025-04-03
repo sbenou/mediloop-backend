@@ -12,7 +12,7 @@ export const ProductImageGallery = ({ mainImage, galleryImages, productName }: P
   const [activeImage, setActiveImage] = useState<string | null>(mainImage || galleryImages[0] || null);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8"> {/* Increased space-y-4 to space-y-8 for more vertical spacing between elements */}
       <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-100 border">
         <img
           src={activeImage || '/placeholder.svg'}
@@ -22,7 +22,7 @@ export const ProductImageGallery = ({ mainImage, galleryImages, productName }: P
       </div>
       
       {galleryImages.length > 0 && (
-        <div className="mb-24"> {/* Increased spacing from mb-16 to mb-24 for more space between carousel and navigation */}
+        <div className="mb-8"> {/* Reduced from mb-24 to mb-8 since we're adding space elsewhere */}
           <Carousel className="w-full group relative">
             <CarouselContent>
               {galleryImages.map((image, index) => (
