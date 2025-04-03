@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { Badge } from "@/components/ui/badge";
 import { FilterSubcategory } from "./FilterSubcategory";
@@ -27,16 +28,20 @@ export const FilterCategory = ({
     navigate('/products');
   };
 
+  // Count total products in all subcategories
+  const totalProducts = subcategories.reduce((total, sub) => 
+    total + (sub.products?.length || 0), 0);
+
   return (
     <div className="py-2">
       <a
         href="#"
         onClick={handleCategoryClick}
-        className="text-sm hover:text-primary w-full text-left block cursor-pointer"
+        className="flex items-center justify-between w-full text-sm hover:text-primary cursor-pointer"
       >
-        {name}
-        <Badge variant="secondary" className="ml-2">
-          {subcategories.length}
+        <span>{name}</span>
+        <Badge variant="secondary" className="text-xs ml-2">
+          {totalProducts}
         </Badge>
       </a>
       <div className="ml-4 space-y-1 mt-1">

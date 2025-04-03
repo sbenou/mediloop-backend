@@ -30,12 +30,13 @@ export const ProductSearch = () => {
   });
 
   useEffect(() => {
-    const handleFilterProducts = (event: CustomEvent<{ type: string; category: string; subcategory: string }>) => {
+    const handleFilterProducts = (event: CustomEvent<{ type: string; category: string; subcategory: string; description: string }>) => {
       console.log('Filter event received:', event.detail);
       setFilters({
         type: event.detail.type,
         category: event.detail.category,
-        subcategory: event.detail.subcategory
+        subcategory: event.detail.subcategory,
+        description: event.detail.description
       });
       setCurrentPage(1); // Reset to first page when filters change
     };

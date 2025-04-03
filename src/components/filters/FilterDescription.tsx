@@ -1,10 +1,13 @@
+
 import { useNavigate } from 'react-router-dom';
+import { Badge } from "@/components/ui/badge";
 
 interface FilterDescriptionProps {
   description: string;
   categoryId: string;
   subcategoryId: string;
   type: 'medication' | 'parapharmacy';
+  count: number;
   onFilterChange: (filters: { type?: string; category?: string; subcategory?: string; description?: string }) => void;
 }
 
@@ -13,6 +16,7 @@ export const FilterDescription = ({
   categoryId,
   subcategoryId,
   type,
+  count,
   onFilterChange
 }: FilterDescriptionProps) => {
   const navigate = useNavigate();
@@ -28,9 +32,12 @@ export const FilterDescription = ({
     <a
       href="#"
       onClick={handleDescriptionClick}
-      className="text-xs text-muted-foreground hover:text-primary block cursor-pointer"
+      className="flex items-center justify-between w-full text-xs text-muted-foreground hover:text-primary cursor-pointer py-1"
     >
-      {description}
+      <span>{description}</span>
+      <Badge variant="secondary" className="text-xs ml-2 px-1.5 py-0">
+        {count}
+      </Badge>
     </a>
   );
 };

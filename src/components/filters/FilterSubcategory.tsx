@@ -1,6 +1,8 @@
+
 import { useNavigate } from 'react-router-dom';
 import { Subcategory } from "@/components/product/types/product";
 import { FilterDescription } from "./FilterDescription";
+import { Badge } from "@/components/ui/badge";
 
 interface FilterSubcategoryProps {
   subcategory: Subcategory;
@@ -34,14 +36,27 @@ export const FilterSubcategory = ({
     return [...new Set(descriptions)];
   };
 
+  const getDescriptionCount = (description: string) => {
+    if (!subcategory.products) return 0;
+    
+    return subcategory.products.filter(
+      product => product && product.description === description
+    ).length;
+  };
+
+  const totalProducts = subcategory.products?.length || 0;
+
   return (
     <div className="space-y-1">
       <a
         href="#"
         onClick={handleSubcategoryClick}
-        className="text-sm text-muted-foreground hover:text-primary block w-full text-left py-1 cursor-pointer"
+        className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-primary py-1 cursor-pointer"
       >
-        {subcategory.name}
+        <span>{subcategory.name}</span>
+        <Badge variant="secondary" className="text-xs ml-2">
+          {totalProducts}
+        </Badge>
       </a>
       <div className="pl-4 space-y-1">
         {getUniqueDescriptions().map((description, index) => (
@@ -51,6 +66,7 @@ export const FilterSubcategory = ({
             categoryId={categoryId}
             subcategoryId={subcategory.id}
             type={type}
+            count={getDescriptionCount(description)}
             onFilterChange={onFilterChange}
           />
         ))}

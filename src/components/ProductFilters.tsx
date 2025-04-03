@@ -21,7 +21,7 @@ export const ProductFilters = ({
   onFilterChange 
 }: { 
   userRole: string | null;
-  onFilterChange: (filters: { type?: string; category?: string; subcategory?: string }) => void;
+  onFilterChange: (filters: { type?: string; category?: string; subcategory?: string; description?: string }) => void;
 }) => {
   console.log('User Role in ProductFilters:', userRole);
   const [activeFilters, setActiveFilters] = useState<boolean>(false);
@@ -62,14 +62,15 @@ export const ProductFilters = ({
   });
 
   useEffect(() => {
-    const handleFilterProducts = (event: CustomEvent<{ type: string; category?: string; subcategory?: string }>) => {
+    const handleFilterProducts = (event: CustomEvent<{ type: string; category?: string; subcategory?: string; description?: string }>) => {
       const filters = {
         type: event.detail.type,
         category: event.detail.category,
-        subcategory: event.detail.subcategory
+        subcategory: event.detail.subcategory,
+        description: event.detail.description
       };
       
-      setActiveFilters(!!filters.type || !!filters.category || !!filters.subcategory);
+      setActiveFilters(!!filters.type || !!filters.category || !!filters.subcategory || !!filters.description);
       onFilterChange(filters);
     };
 
@@ -80,8 +81,8 @@ export const ProductFilters = ({
     };
   }, [onFilterChange]);
 
-  const handleFilterChange = (filters: { type?: string; category?: string; subcategory?: string }) => {
-    setActiveFilters(!!filters.type || !!filters.category || !!filters.subcategory);
+  const handleFilterChange = (filters: { type?: string; category?: string; subcategory?: string; description?: string }) => {
+    setActiveFilters(!!filters.type || !!filters.category || !!filters.subcategory || !!filters.description);
     onFilterChange(filters);
   };
 
