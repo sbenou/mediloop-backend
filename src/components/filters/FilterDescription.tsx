@@ -35,7 +35,10 @@ export const FilterDescription = ({
       className="flex items-center justify-between w-full text-xs text-muted-foreground hover:text-primary cursor-pointer py-1"
     >
       <span>{description}</span>
-      <Badge variant="secondary" className="text-xs ml-auto px-1.5 py-0">
+      <Badge 
+        variant="secondary" 
+        className="text-xs text-muted-foreground ml-auto px-1.5 py-0"
+      >
         {count}
       </Badge>
     </a>
