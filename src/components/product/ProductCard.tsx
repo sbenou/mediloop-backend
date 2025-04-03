@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -20,14 +19,15 @@ interface Product {
 
 interface ProductCardProps {
   product: Product;
+  userRole?: string;
 }
 
-export const ProductCard = ({ product }: ProductCardProps) => {
+export const ProductCard = ({ product, userRole }: ProductCardProps) => {
   const { addToCart } = useCart();
   const { formatCurrency, convertPrice } = useCurrency();
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
-
+  
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation when clicking the button
     
