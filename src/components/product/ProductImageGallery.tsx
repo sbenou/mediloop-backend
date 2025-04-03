@@ -22,7 +22,7 @@ export const ProductImageGallery = ({ mainImage, galleryImages, productName }: P
       </div>
       
       {galleryImages.length > 0 && (
-        <Carousel className="w-full group relative">
+        <Carousel className="w-full group relative mb-12">
           <CarouselContent>
             {galleryImages.map((image, index) => (
               <CarouselItem key={index} className="basis-1/4 sm:basis-1/5">

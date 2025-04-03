@@ -17,11 +17,11 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
       <h2 className="text-lg font-semibold mb-2">Details</h2>
       <ul className="space-y-2">
         <li className="flex">
-          <span className="text-gray-500 w-40">Type:</span>
+          <span className="text-gray-500 w-56">Type:</span>
           <span className="capitalize">{product.type}</span>
         </li>
         <li className="flex">
-          <span className="text-gray-500 w-40">Prescription Required:</span>
+          <span className="text-gray-500 w-56">Prescription Required:</span>
           <span>{product.requires_prescription ? 'Yes' : 'No'}</span>
         </li>
         {product.description && (
