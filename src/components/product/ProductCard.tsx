@@ -58,8 +58,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     setImageError(true);
   };
 
-  const navigateToProductDetail = () => {
-    console.log('Navigating to product detail:', product.id);
+  const handleCardClick = () => {
+    console.log('Card clicked! Navigating to product detail:', product.id);
     navigate(`/products/${product.id}`);
   };
 
@@ -80,9 +80,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Card 
       className="overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow duration-200"
-      onClick={navigateToProductDetail}
+      onClick={handleCardClick}
     >
-      <div className="aspect-square relative overflow-hidden bg-gray-100">
+      <div 
+        className="aspect-square relative overflow-hidden bg-gray-100"
+        onClick={handleCardClick}
+      >
         <img
           src={imageError || !product.image_url ? getPlaceholderImage() : product.image_url}
           alt={product.name}
