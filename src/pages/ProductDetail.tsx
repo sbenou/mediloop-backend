@@ -212,7 +212,7 @@ const ProductDetail = () => {
             </div>
             
             {/* Image Gallery */}
-            <Carousel className="w-full">
+            <Carousel className="w-full group">
               <CarouselContent>
                 {galleryImages.map((image, index) => (
                   <CarouselItem key={index} className="basis-1/4 sm:basis-1/5">
