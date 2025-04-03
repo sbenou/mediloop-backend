@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Minus, Plus, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -28,9 +27,17 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [prevProductId, setPrevProductId] = useState<string | null>(null);
+  const [nextProductId, setNextProductId] = useState<string | null>(null);
+  const [loadingNavigation, setLoadingNavigation] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart } = useCart();
   const { formatCurrency, convertPrice } = useCurrency();
+
+  // Parse sort order from query params
+  const queryParams = new URLSearchParams(location.search);
+  const sortOrder = queryParams.get('sort') || 'newest';
 
   // Sample gallery images (in a real app, these would come from the database)
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
@@ -100,6 +107,9 @@ const ProductDetail = () => {
           }
           
           setGalleryImages(images);
+          
+          // Fetch next and previous products
+          fetchAdjacentProducts(data.id);
         }
       } catch (err) {
         console.error('Error fetching product:', err);
@@ -110,7 +120,61 @@ const ProductDetail = () => {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, sortOrder]);
+
+  const fetchAdjacentProducts = async (currentProductId: string) => {
+    setLoadingNavigation(true);
+    try {
+      let orderField = 'created_at';
+      let ascending = false;
+      
+      // Determine order field and direction based on sort order
+      switch (sortOrder) {
+        case 'name':
+          orderField = 'name';
+          ascending = true;
+          break;
+        case 'price-asc':
+          orderField = 'price';
+          ascending = true;
+          break;
+        case 'price-desc':
+          orderField = 'price';
+          ascending = false;
+          break;
+        case 'popular':
+          orderField = 'popularity';
+          ascending = false;
+          break;
+        default: // newest
+          orderField = 'created_at';
+          ascending = false;
+      }
+      
+      // Fetch previous product
+      const { data: prevData } = await supabase
+        .from('products')
+        .select('id')
+        .filter(orderField, ascending ? 'lt' : 'gt', product?.[orderField as keyof Product])
+        .order(orderField, { ascending: !ascending })
+        .limit(1);
+      
+      // Fetch next product
+      const { data: nextData } = await supabase
+        .from('products')
+        .select('id')
+        .filter(orderField, ascending ? 'gt' : 'lt', product?.[orderField as keyof Product])
+        .order(orderField, { ascending: ascending })
+        .limit(1);
+      
+      setPrevProductId(prevData && prevData.length > 0 ? prevData[0].id : null);
+      setNextProductId(nextData && nextData.length > 0 ? nextData[0].id : null);
+    } catch (err) {
+      console.error('Error fetching adjacent products:', err);
+    } finally {
+      setLoadingNavigation(false);
+    }
+  };
 
   const handleQuantityChange = (amount: number) => {
     const newQuantity = quantity + amount;
@@ -148,6 +212,12 @@ const ProductDetail = () => {
   const handleBuyNow = () => {
     handleAddToCart();
     navigate('/checkout');
+  };
+
+  const navigateToProduct = (productId: string | null) => {
+    if (!productId) return;
+    // Preserve the current sort order in the URL
+    navigate(`/products/${productId}?sort=${sortOrder}`);
   };
 
   if (loading) {
@@ -222,6 +292,26 @@ const ProductDetail = () => {
             <CarouselPrevious className="left-0" />
             <CarouselNext className="right-0" />
           </Carousel>
+          
+          {/* Product Navigation */}
+          <div className="flex justify-between mt-6">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => navigateToProduct(prevProductId)}
+              disabled={!prevProductId || loadingNavigation}
+            >
+              <ArrowLeft className="h-4 w-4" /> Previous Product
+            </Button>
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => navigateToProduct(nextProductId)}
+              disabled={!nextProductId || loadingNavigation}
+            >
+              Next Product <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Product Info */}

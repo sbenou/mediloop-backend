@@ -1,16 +1,8 @@
 
+import { Product } from "./product/types/product";
 import { ProductCard } from "./product/ProductCard";
 import { ProductGridSkeleton } from "./product/ProductGridSkeleton";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  requires_prescription: boolean;
-  type: 'medication' | 'parapharmacy';
-  image_url?: string;
-  description?: string;
-}
+import { Link, useLocation } from "react-router-dom";
 
 interface ProductGridProps {
   products: Product[];
@@ -18,15 +10,34 @@ interface ProductGridProps {
   userRole?: string;
 }
 
-export const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
+export const ProductGrid = ({ products, isLoading, userRole }: ProductGridProps) => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const sortOrder = queryParams.get('sort') || 'newest';
+
   if (isLoading) {
     return <ProductGridSkeleton />;
   }
 
+  if (products.length === 0) {
+    return (
+      <div className="py-12 text-center border rounded-lg">
+        <h2 className="text-xl font-semibold mb-2">No products found</h2>
+        <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <Link 
+          key={product.id} 
+          to={`/products/${product.id}?sort=${sortOrder}`}
+          className="no-underline"
+        >
+          <ProductCard product={product} userRole={userRole} />
+        </Link>
       ))}
     </div>
   );
