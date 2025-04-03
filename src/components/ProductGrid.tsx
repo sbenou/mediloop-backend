@@ -35,6 +35,13 @@ export const ProductGrid = ({ products, isLoading, userRole }: ProductGridProps)
           key={product.id} 
           to={`/products/${product.id}?sort=${sortOrder}`}
           className="no-underline"
+          onClick={(e) => {
+            // If the target is the Add to Cart button or its children,
+            // we'll let the button's handler manage it
+            if ((e.target as HTMLElement).closest('button')) {
+              e.preventDefault();
+            }
+          }}
         >
           <ProductCard product={product} userRole={userRole} />
         </Link>

@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -29,7 +30,8 @@ export const ProductCard = ({ product, userRole }: ProductCardProps) => {
   const navigate = useNavigate();
   
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation when clicking the button
+    e.preventDefault(); // Prevent default link behavior
+    e.stopPropagation(); // Prevent event bubbling to parent card/link
     
     if (product.requires_prescription) {
       toast({
@@ -84,7 +86,6 @@ export const ProductCard = ({ product, userRole }: ProductCardProps) => {
     >
       <div 
         className="aspect-square relative overflow-hidden bg-gray-100"
-        onClick={handleCardClick}
       >
         <img
           src={imageError || !product.image_url ? getPlaceholderImage() : product.image_url}
