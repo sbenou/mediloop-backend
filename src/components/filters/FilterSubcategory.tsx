@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Subcategory } from "@/components/product/types/product";
 import { FilterDescription } from "./FilterDescription";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 
 interface FilterSubcategoryProps {
   subcategory: Subcategory;
@@ -75,9 +74,6 @@ export const FilterSubcategory = ({
           />
         ))}
       </div>
-      {/* Significantly increased spacing before the separator */}
-      <div className="pt-6"></div>
-      <Separator />
     </div>
   );
 };

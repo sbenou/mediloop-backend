@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Badge } from "@/components/ui/badge";
 import { FilterSubcategory } from "./FilterSubcategory";
 import { Subcategory } from "@/components/product/types/product";
+import { Separator } from "@/components/ui/separator";
 
 interface FilterCategoryProps {
   id: string;
@@ -48,14 +49,21 @@ export const FilterCategory = ({
         </Badge>
       </a>
       <div className="ml-4 mt-2 space-y-0">
-        {subcategories.map((sub) => (
-          <FilterSubcategory
-            key={sub.id}
-            subcategory={sub}
-            categoryId={id}
-            type={type}
-            onFilterChange={onFilterChange}
-          />
+        {subcategories.map((sub, index) => (
+          <div key={sub.id}>
+            <FilterSubcategory
+              subcategory={sub}
+              categoryId={id}
+              type={type}
+              onFilterChange={onFilterChange}
+            />
+            {/* Add separator after each subcategory except the last one */}
+            {index < subcategories.length - 1 && (
+              <div className="pt-6 pb-2">
+                <Separator />
+              </div>
+            )}
+          </div>
         ))}
       </div>
     </div>
