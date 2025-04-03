@@ -55,45 +55,47 @@ export const ProductSearch = () => {
   };
 
   return (
-    <div className="flex gap-6">
-      <div className="w-64 space-y-6">
-        <ProductFilters 
-          userRole={productsData?.userProfile?.role || null}
-          onFilterChange={handleFilterChange}
-        />
-        {productsData?.userProfile?.role === 'pharmacist' && (
-          <ProductUploader />
-        )}
-      </div>
-      
-      <div className="flex-1 space-y-6">
-        <div className="flex items-center justify-between">
-          <ProductSearchBar 
-            value={searchTerm}
-            onChange={(value) => {
-              setSearchTerm(value);
-              setCurrentPage(1); // Reset to first page when search changes
-            }}
+    <div className="container mx-auto px-4">
+      <div className="flex gap-6">
+        <div className="w-64 space-y-6">
+          <ProductFilters 
+            userRole={productsData?.userProfile?.role || null}
+            onFilterChange={handleFilterChange}
           />
-          <ProductSort onSortChange={(value) => {
-            setSortBy(value);
-            setCurrentPage(1); // Reset to first page when sort changes
-          }} />
+          {productsData?.userProfile?.role === 'pharmacist' && (
+            <ProductUploader />
+          )}
         </div>
+        
+        <div className="flex-1 space-y-6">
+          <div className="flex items-center justify-between">
+            <ProductSearchBar 
+              value={searchTerm}
+              onChange={(value) => {
+                setSearchTerm(value);
+                setCurrentPage(1); // Reset to first page when search changes
+              }}
+            />
+            <ProductSort onSortChange={(value) => {
+              setSortBy(value);
+              setCurrentPage(1); // Reset to first page when sort changes
+            }} />
+          </div>
 
-        <ProductGrid 
-          products={productsData?.products || []}
-          isLoading={isLoading}
-          userRole={productsData?.userProfile?.role}
-        />
-
-        {productsData && productsData.total > ITEMS_PER_PAGE && (
-          <ProductPagination
-            currentPage={currentPage}
-            totalPages={Math.ceil(productsData.total / ITEMS_PER_PAGE)}
-            onPageChange={setCurrentPage}
+          <ProductGrid 
+            products={productsData?.products || []}
+            isLoading={isLoading}
+            userRole={productsData?.userProfile?.role}
           />
-        )}
+
+          {productsData && productsData.total > ITEMS_PER_PAGE && (
+            <ProductPagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(productsData.total / ITEMS_PER_PAGE)}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
