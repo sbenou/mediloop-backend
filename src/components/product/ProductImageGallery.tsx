@@ -22,7 +22,7 @@ export const ProductImageGallery = ({ mainImage, galleryImages, productName }: P
       </div>
       
       {galleryImages.length > 0 && (
-        <div className="mb-16"> {/* Increased spacing here between carousel and navigation buttons */}
+        <div className="mb-24"> {/* Increased spacing from mb-16 to mb-24 for more space between carousel and navigation */}
           <Carousel className="w-full group relative">
             <CarouselContent>
               {galleryImages.map((image, index) => (
