@@ -10,6 +10,7 @@ import {
 import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatientView";
 import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorPrescriptionsView";
 import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/DoctorTeleconsultationsView";
+import DoctorAppointmentsView from "@/components/dashboard/views/doctor/DoctorAppointmentsView";
 import DoctorLayout from "@/components/layout/DoctorLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,6 +82,8 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         return <DoctorPatientView />;
       case "teleconsultations":
         return <DoctorTeleconsultationsView />;
+      case "appointments":
+        return <DoctorAppointmentsView />;
       case "dashboard":
       default:
         return <HomeView userRole="doctor" />;

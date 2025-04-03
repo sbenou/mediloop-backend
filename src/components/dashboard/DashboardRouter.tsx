@@ -14,6 +14,7 @@ import TeleconsultationsView from "@/components/dashboard/views/Teleconsultation
 import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatientView";
 import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorPrescriptionsView";
 import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/DoctorTeleconsultationsView";
+import DoctorAppointmentsView from "@/components/dashboard/views/doctor/DoctorAppointmentsView";
 
 interface DashboardRouterProps {
   userRole: string;
@@ -56,6 +57,8 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
         return <DoctorPatientView />;
       case "teleconsultations":
         return <DoctorTeleconsultationsView />;
+      case "appointments":
+        return <DoctorAppointmentsView />;
       case "dashboard":
       default:
         return <HomeView userRole="doctor" />;

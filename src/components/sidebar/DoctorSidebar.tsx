@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
-  MapPin, Video, Stethoscope 
+  MapPin, Video, Stethoscope, Calendar 
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -114,6 +114,13 @@ const DoctorSidebar = ({
             label="Teleconsultations"
             isActive={section === "teleconsultations"}
             onClick={() => navigateToDoctorView('teleconsultations')}
+          />
+          
+          <SidebarItem
+            icon={<Calendar className="w-5 h-5 mr-3" />}
+            label="Appointments"
+            isActive={section === "appointments"}
+            onClick={() => navigateToDoctorView('appointments')}
           />
           
           <SidebarCollapsibleItem 
