@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,6 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { supabase } from '@/lib/supabase';
-import { Product as ProductType } from '@/components/product/types/product';
 
 interface Product {
   id: string;
@@ -151,11 +151,25 @@ const ProductDetail = () => {
           ascending = false;
       }
       
+      // Get current product values for comparison
+      const { data: currentProduct } = await supabase
+        .from('products')
+        .select(orderField)
+        .eq('id', currentProductId)
+        .single();
+        
+      if (!currentProduct) {
+        console.error('Could not find current product value for comparison');
+        return;
+      }
+      
+      const compareValue = currentProduct[orderField as keyof typeof currentProduct];
+      
       // Fetch previous product
       const { data: prevData } = await supabase
         .from('products')
         .select('id')
-        .filter(orderField, ascending ? 'lt' : 'gt', product?.[orderField as keyof Product])
+        .filter(orderField, ascending ? 'lt' : 'gt', compareValue)
         .order(orderField, { ascending: !ascending })
         .limit(1);
       
@@ -163,7 +177,7 @@ const ProductDetail = () => {
       const { data: nextData } = await supabase
         .from('products')
         .select('id')
-        .filter(orderField, ascending ? 'gt' : 'lt', product?.[orderField as keyof Product])
+        .filter(orderField, ascending ? 'gt' : 'lt', compareValue)
         .order(orderField, { ascending: ascending })
         .limit(1);
       
