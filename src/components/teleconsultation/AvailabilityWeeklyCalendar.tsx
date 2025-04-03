@@ -123,13 +123,13 @@ const AvailabilityWeeklyCalendar = ({
             )}
           </div>
           
-          {/* Add New Appointment button */}
+          {/* Add New Teleconsultation button */}
           {showBookingControls && (
             <Button 
               onClick={handleNewAppointment} 
               className="flex items-center gap-1"
             >
-              <Plus className="h-4 w-4" /> New Appointment
+              <Plus className="h-4 w-4" /> New Teleconsultation
             </Button>
           )}
         </div>

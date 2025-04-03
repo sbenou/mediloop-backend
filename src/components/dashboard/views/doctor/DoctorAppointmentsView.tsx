@@ -34,9 +34,14 @@ const DoctorAppointmentsView = () => {
     }
   }, [doctorId, currentWeek, refreshTeleconsultations]);
 
+  // Filter to show only in-person appointments
+  const inPersonAppointments = teleconsultations.filter(
+    appointment => appointment.meta?.appointment_type === 'in-person' || !appointment.meta?.is_teleconsultation
+  );
+
   // Helper to check if a day has appointments
   const getDayAppointments = (day: Date) => {
-    return teleconsultations.filter(appointment => 
+    return inPersonAppointments.filter(appointment => 
       isSameDay(new Date(appointment.start_time), day)
     );
   };
@@ -78,7 +83,7 @@ const DoctorAppointmentsView = () => {
         <div className="mt-3 flex space-x-2">
           <Button size="sm" variant="outline">Reschedule</Button>
           {appointment.status === 'confirmed' && (
-            <Button size="sm">Join Call</Button>
+            <Button size="sm">Check In</Button>
           )}
         </div>
       </div>
@@ -89,13 +94,13 @@ const DoctorAppointmentsView = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Appointments</h2>
+          <h2 className="text-3xl font-bold tracking-tight">In-Person Appointments</h2>
           <p className="text-muted-foreground">
-            Manage your upcoming patient appointments and schedule.
+            Manage your upcoming in-clinic patient appointments and schedule.
           </p>
         </div>
         <div className="mt-4 md:mt-0">
-          <Button>+ New Appointment</Button>
+          <Button>+ New In-Person Appointment</Button>
         </div>
       </div>
 
@@ -163,7 +168,7 @@ const DoctorAppointmentsView = () => {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Appointments List</CardTitle>
+                <CardTitle>In-Person Appointments List</CardTitle>
                 <WeekNavigation 
                   currentWeek={currentWeek}
                   onPreviousWeek={previousWeek}
@@ -194,9 +199,9 @@ const DoctorAppointmentsView = () => {
               ) : (
                 <div className="text-center py-12">
                   <Calendar className="w-12 h-12 mx-auto text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No appointments scheduled</h3>
+                  <h3 className="mt-4 text-lg font-medium">No in-person appointments scheduled</h3>
                   <p className="text-muted-foreground mt-2">
-                    You don't have any appointments scheduled for this week.
+                    You don't have any in-person appointments scheduled for this week.
                   </p>
                 </div>
               )}
