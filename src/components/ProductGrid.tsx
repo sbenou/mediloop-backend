@@ -3,6 +3,7 @@ import { Product } from "./product/types/product";
 import { ProductCard } from "./product/ProductCard";
 import { ProductGridSkeleton } from "./product/ProductGridSkeleton";
 import { Link, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 interface ProductGridProps {
   products: Product[];
@@ -14,6 +15,18 @@ export const ProductGrid = ({ products, isLoading, userRole }: ProductGridProps)
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const sortOrder = queryParams.get('sort') || 'newest';
+
+  // Store the ordered product IDs in sessionStorage when products are loaded
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const orderedProductIds = products.map(product => product.id);
+      sessionStorage.setItem('ordered-product-ids', JSON.stringify({
+        ids: orderedProductIds,
+        sort: sortOrder,
+        timestamp: new Date().getTime()
+      }));
+    }
+  }, [products, sortOrder]);
 
   if (isLoading) {
     return <ProductGridSkeleton />;

@@ -22,10 +22,12 @@ export const ProductSort = ({
   // Clear product navigation cache when visiting the products list
   useEffect(() => {
     if (location.pathname === '/products') {
+      // Clear both the adjacent products cache and the ordered product IDs
       const navigationCacheKeys = Object.keys(sessionStorage).filter(key => 
         key.startsWith('adjacent-products-'));
       
       navigationCacheKeys.forEach(key => sessionStorage.removeItem(key));
+      sessionStorage.removeItem('ordered-product-ids');
     }
   }, [location.pathname]);
 
@@ -39,6 +41,9 @@ export const ProductSort = ({
       key.startsWith('adjacent-products-'));
     
     navigationCacheKeys.forEach(key => sessionStorage.removeItem(key));
+    
+    // Also clear the ordered product IDs
+    sessionStorage.removeItem('ordered-product-ids');
     
     // Notify parent component
     onSortChange(value);
