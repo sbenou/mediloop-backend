@@ -59,6 +59,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   const navigateToProductDetail = () => {
+    console.log('Navigating to product detail:', product.id);
     navigate(`/products/${product.id}`);
   };
 
