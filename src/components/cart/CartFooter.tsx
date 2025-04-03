@@ -49,6 +49,7 @@ const CartFooter = () => {
       if (error) throw error;
       
       if (data?.url) {
+        // Redirect to Stripe checkout
         window.location.href = data.url;
       } else {
         throw new Error('No checkout URL returned');
