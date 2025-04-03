@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import Footer from '@/components/layout/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { supabase } from '@/lib/supabase';
+import { Product as ProductType } from '@/components/product/types/product';
 
 interface Product {
   id: string;
@@ -57,7 +57,24 @@ const ProductDetail = () => {
         
         if (data) {
           console.log('Product data:', data);
-          setProduct(data);
+          
+          // Type assertion to ensure the type is either 'medication' or 'parapharmacy'
+          const validType = data.type === 'medication' || data.type === 'parapharmacy' 
+            ? data.type as 'medication' | 'parapharmacy'
+            : 'parapharmacy'; // Default fallback
+          
+          // Create a valid product object with correct typing
+          const productData: Product = {
+            id: data.id,
+            name: data.name,
+            price: data.price,
+            description: data.description || undefined,
+            image_url: data.image_url,
+            requires_prescription: !!data.requires_prescription,
+            type: validType
+          };
+          
+          setProduct(productData);
           
           // Set the main product image as the first gallery image
           const images = [];
