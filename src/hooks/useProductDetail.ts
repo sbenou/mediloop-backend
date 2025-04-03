@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { fetchProduct, fetchAdjacentProducts, Product, AdjacentProduct } from '@/services/product-service';
+import { LocalCache } from '@/lib/cache';
 
 export const useProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -55,8 +56,18 @@ export const useProductDetail = () => {
         
         setGalleryImages(images);
         
+        // Reset pagination info when product changes
+        setPrevProduct(null);
+        setNextProduct(null);
+        
         // Load adjacent products
         try {
+          // Clear product navigation cache when loading a new product with a different sort
+          const navigationCacheKeys = Object.keys(sessionStorage).filter(key => 
+            key.startsWith('adjacent-products-') && !key.includes(sortOrder));
+          
+          navigationCacheKeys.forEach(key => sessionStorage.removeItem(key));
+          
           const { prevProduct, nextProduct } = await fetchAdjacentProducts(id, sortOrder);
           setPrevProduct(prevProduct);
           setNextProduct(nextProduct);

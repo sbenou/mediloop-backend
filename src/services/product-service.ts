@@ -1,5 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
+import { LocalCache } from '@/lib/cache';
 
 export interface Product {
   id: string;
@@ -54,6 +55,15 @@ export const fetchAdjacentProducts = async (
   sortOrder: string
 ): Promise<{ prevProduct: AdjacentProduct | null; nextProduct: AdjacentProduct | null }> => {
   console.log(`Fetching adjacent products for ${currentProductId} with sort order: ${sortOrder}`);
+  
+  // Check cache first
+  const cacheKey = `adjacent-products-${sortOrder}-${currentProductId}`;
+  const cachedResult = LocalCache.get<{ prevProduct: AdjacentProduct | null; nextProduct: AdjacentProduct | null }>(cacheKey);
+  
+  if (cachedResult) {
+    console.log('Returning adjacent products from cache');
+    return cachedResult;
+  }
   
   let orderField = 'created_at';
   let ascending = false;
@@ -116,7 +126,11 @@ export const fetchAdjacentProducts = async (
     console.log('Previous product:', prevProduct);
     console.log('Next product:', nextProduct);
     
-    return { prevProduct, nextProduct };
+    // Cache the result
+    const result = { prevProduct, nextProduct };
+    LocalCache.set(cacheKey, result);
+    
+    return result;
   } catch (err) {
     console.error('Error in fetchAdjacentProducts:', err);
     return { prevProduct: null, nextProduct: null };
