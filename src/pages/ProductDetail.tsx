@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,8 +6,6 @@ import { ArrowLeft, Minus, Plus, ShoppingBag, ShoppingCart } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { supabase } from '@/lib/supabase';
@@ -153,177 +152,165 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <>
-        <Header />
-        <div className="container mx-auto py-8 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Skeleton className="h-[400px] w-full rounded-lg" />
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-2/3" />
-              <Skeleton className="h-6 w-1/3" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
+      <div className="container mx-auto py-8 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Skeleton className="h-[400px] w-full rounded-lg" />
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-2/3" />
+            <Skeleton className="h-6 w-1/3" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
           </div>
         </div>
-        <Footer />
-      </>
+      </div>
     );
   }
 
   if (error || !product) {
     return (
-      <>
-        <Header />
-        <div className="container mx-auto py-8 px-4 text-center">
-          <h1 className="text-2xl font-bold mb-4">Error</h1>
-          <p>{error || 'Product not found'}</p>
-          <Button className="mt-4" onClick={() => navigate('/products')}>
-            Back to Products
-          </Button>
-        </div>
-        <Footer />
-      </>
+      <div className="container mx-auto py-8 px-4 text-center">
+        <h1 className="text-2xl font-bold mb-4">Error</h1>
+        <p>{error || 'Product not found'}</p>
+        <Button className="mt-4" onClick={() => navigate('/products')}>
+          Back to Products
+        </Button>
+      </div>
     );
   }
 
   return (
-    <>
-      <Header />
-      <div className="container mx-auto py-8 px-4">
-        <Button 
-          variant="ghost" 
-          className="mb-6 flex items-center gap-2" 
-          onClick={() => navigate('/products')}
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Products
-        </Button>
+    <div className="container mx-auto py-8 px-4">
+      <Button 
+        variant="ghost" 
+        className="mb-6 flex items-center gap-2" 
+        onClick={() => navigate('/products')}
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to Products
+      </Button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Product Images */}
-          <div className="space-y-4">
-            <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-100 border">
-              <img
-                src={activeImage || '/placeholder.svg'}
-                alt={product.name}
-                className="h-full w-full object-contain"
-              />
-            </div>
-            
-            {/* Image Gallery */}
-            <Carousel className="w-full group">
-              <CarouselContent>
-                {galleryImages.map((image, index) => (
-                  <CarouselItem key={index} className="basis-1/4 sm:basis-1/5">
-                    <div 
-                      className={`h-20 w-full rounded-md overflow-hidden cursor-pointer border-2 
-                        ${activeImage === image ? 'border-primary' : 'border-transparent'}`}
-                      onClick={() => setActiveImage(image)}
-                    >
-                      <img
-                        src={image}
-                        alt={`${product.name} view ${index + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-0" />
-              <CarouselNext className="right-0" />
-            </Carousel>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Product Images */}
+        <div className="space-y-4">
+          <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-100 border">
+            <img
+              src={activeImage || '/placeholder.svg'}
+              alt={product.name}
+              className="h-full w-full object-contain"
+            />
+          </div>
+          
+          {/* Image Gallery */}
+          <Carousel className="w-full group">
+            <CarouselContent>
+              {galleryImages.map((image, index) => (
+                <CarouselItem key={index} className="basis-1/4 sm:basis-1/5">
+                  <div 
+                    className={`h-20 w-full rounded-md overflow-hidden cursor-pointer border-2 
+                      ${activeImage === image ? 'border-primary' : 'border-transparent'}`}
+                    onClick={() => setActiveImage(image)}
+                  >
+                    <img
+                      src={image}
+                      alt={`${product.name} view ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-0" />
+            <CarouselNext className="right-0" />
+          </Carousel>
+        </div>
+
+        {/* Product Info */}
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold">{product.name}</h1>
+            <p className="text-2xl font-semibold mt-2 text-primary">
+              {formatCurrency(convertPrice(product.price))}
+            </p>
           </div>
 
-          {/* Product Info */}
-          <div className="space-y-6">
+          {product.description && (
             <div>
-              <h1 className="text-3xl font-bold">{product.name}</h1>
-              <p className="text-2xl font-semibold mt-2 text-primary">
-                {formatCurrency(convertPrice(product.price))}
+              <h2 className="text-lg font-semibold mb-2">Description</h2>
+              <p className="text-gray-700">{product.description}</p>
+            </div>
+          )}
+
+          <div>
+            <h2 className="text-lg font-semibold mb-3">Quantity</h2>
+            <div className="flex items-center w-32 h-12 border rounded-md">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleQuantityChange(-1)}
+                disabled={quantity <= 1}
+                className="h-full"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <div className="flex-1 text-center font-medium">
+                {quantity}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleQuantityChange(1)}
+                className="h-full"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="pt-4 space-y-3">
+            <Button 
+              className="w-full flex items-center gap-2" 
+              size="lg"
+              onClick={handleAddToCart}
+              disabled={product.requires_prescription}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              Add to Cart
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center gap-2" 
+              size="lg"
+              onClick={handleBuyNow}
+              disabled={product.requires_prescription}
+            >
+              <ShoppingBag className="h-5 w-5" />
+              Buy Now
+            </Button>
+            
+            {product.requires_prescription && (
+              <p className="text-sm text-red-500 mt-2">
+                This product requires a prescription and cannot be purchased directly.
               </p>
-            </div>
-
-            {product.description && (
-              <div>
-                <h2 className="text-lg font-semibold mb-2">Description</h2>
-                <p className="text-gray-700">{product.description}</p>
-              </div>
             )}
+          </div>
 
-            <div>
-              <h2 className="text-lg font-semibold mb-3">Quantity</h2>
-              <div className="flex items-center w-32 h-12 border rounded-md">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleQuantityChange(-1)}
-                  disabled={quantity <= 1}
-                  className="h-full"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <div className="flex-1 text-center font-medium">
-                  {quantity}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleQuantityChange(1)}
-                  className="h-full"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="pt-4 space-y-3">
-              <Button 
-                className="w-full flex items-center gap-2" 
-                size="lg"
-                onClick={handleAddToCart}
-                disabled={product.requires_prescription}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                Add to Cart
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full flex items-center gap-2" 
-                size="lg"
-                onClick={handleBuyNow}
-                disabled={product.requires_prescription}
-              >
-                <ShoppingBag className="h-5 w-5" />
-                Buy Now
-              </Button>
-              
-              {product.requires_prescription && (
-                <p className="text-sm text-red-500 mt-2">
-                  This product requires a prescription and cannot be purchased directly.
-                </p>
-              )}
-            </div>
-
-            <div className="pt-4 border-t">
-              <h2 className="text-lg font-semibold mb-2">Details</h2>
-              <ul className="space-y-2">
-                <li className="flex gap-2">
-                  <span className="text-gray-500 min-w-32">Type:</span>
-                  <span className="capitalize">{product.type}</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-gray-500 min-w-32">Prescription Required:</span>
-                  <span>{product.requires_prescription ? 'Yes' : 'No'}</span>
-                </li>
-              </ul>
-            </div>
+          <div className="pt-4 border-t">
+            <h2 className="text-lg font-semibold mb-2">Details</h2>
+            <ul className="space-y-2">
+              <li className="flex gap-2">
+                <span className="text-gray-500 min-w-32">Type:</span>
+                <span className="capitalize">{product.type}</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-gray-500 min-w-32">Prescription Required:</span>
+                <span>{product.requires_prescription ? 'Yes' : 'No'}</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
-      <Footer />
-    </>
+    </div>
   );
 };
 
