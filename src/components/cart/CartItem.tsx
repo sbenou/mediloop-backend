@@ -15,8 +15,9 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
   
   return (
     <div className="flex gap-3 py-3 border-b last:border-b-0">
-      <div className="w-16 h-16 flex-shrink-0 rounded overflow-hidden">
-        <AspectRatio ratio={1} className="bg-gray-100">
+      {/* Fixed image container with consistent dimensions */}
+      <div className="w-16 h-16 flex-shrink-0 rounded overflow-hidden flex items-center justify-center bg-gray-100">
+        <AspectRatio ratio={1} className="w-full h-full">
           {item.image_url ? (
             <img
               src={item.image_url}
@@ -37,12 +38,13 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
         </AspectRatio>
       </div>
       
-      <div className="flex flex-col justify-between flex-1">
+      <div className="flex flex-col justify-between flex-1 min-w-0">
         <div>
           <h4 className="font-medium text-sm line-clamp-1">{item.name}</h4>
           <p className="text-sm text-muted-foreground">${item.price}</p>
         </div>
         
+        {/* Improved alignment of the controls */}
         <div className="flex items-center justify-between mt-1">
           <div className="flex items-center">
             <Button
@@ -64,14 +66,15 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
             </Button>
           </div>
           
+          {/* Made delete button more visible */}
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 hover:bg-red-50 hover:text-red-500"
+            className="h-7 w-7 hover:bg-red-50 hover:text-red-500 ml-2"
             onClick={() => removeFromCart(item.id)}
             aria-label="Remove item"
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
