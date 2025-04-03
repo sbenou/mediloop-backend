@@ -92,7 +92,39 @@ serve(async (req) => {
         
         console.log(`Pharmacy ${pharmacyId} marked as endorsed successfully`)
       } else {
-        console.warn('No pharmacy ID in session metadata:', session.metadata)
+        // Handle product order completion
+        console.log('Order completed successfully, customer data:', session.customer_details)
+        
+        // Here you could update order status in your database
+        try {
+          const supabaseAdmin = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+            {
+              auth: {
+                autoRefreshToken: false,
+                persistSession: false
+              }
+            }
+          )
+          
+          // Record the completed order in the orders table (if you have one)
+          // This is optional as you may handle this differently
+          if (session.customer_details?.email) {
+            const { data: userData, error: userError } = await supabaseAdmin
+              .from('profiles')
+              .select('id')
+              .eq('email', session.customer_details.email)
+              .single()
+              
+            if (!userError && userData) {
+              console.log('Found user for order:', userData.id)
+              // Add code here to update order status if needed
+            }
+          }
+        } catch (dbError) {
+          console.error('Error recording completed order:', dbError)
+        }
       }
     } else if (event.type === 'customer.subscription.deleted') {
       // Handle subscription cancellation - would need to find the pharmacy based on customer ID

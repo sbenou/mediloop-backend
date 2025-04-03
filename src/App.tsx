@@ -30,6 +30,7 @@ import UniversalDashboard from './pages/UniversalDashboard';
 import AdminSettings from './pages/AdminSettings';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import { PERMISSIONS } from './config/permissions';
+import MyOrders from './pages/MyOrders';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -181,6 +182,9 @@ function AppRoutes() {
           </RequireRoleGuard>
         }
       />
+      
+      {/* Order Management */}
+      <Route path="/my-orders" element={<MyOrders />} />
       
       {/* Other routes that should maintain their existing logic */}
       <Route path="/register" element={<Register />} />
