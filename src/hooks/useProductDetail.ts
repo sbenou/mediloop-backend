@@ -69,6 +69,7 @@ export const useProductDetail = () => {
         setError('Failed to load product details');
       } finally {
         setLoading(false);
+        setLoadingNavigation(false);
       }
     };
 

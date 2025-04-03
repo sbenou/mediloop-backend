@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export interface Product {
@@ -53,6 +52,8 @@ export const fetchAdjacentProducts = async (
   currentProductId: string, 
   sortOrder: string
 ): Promise<{ prevProduct: AdjacentProduct | null; nextProduct: AdjacentProduct | null }> => {
+  console.log(`Fetching adjacent products for ${currentProductId} with sort order: ${sortOrder}`);
+  
   let orderField = 'created_at';
   let ascending = false;
   
@@ -79,64 +80,43 @@ export const fetchAdjacentProducts = async (
       ascending = false;
   }
   
-  // Get current product details for comparison
-  const { data: currentProduct } = await supabase
-    .from('products')
-    .select(`id, name, ${orderField}`)
-    .eq('id', currentProductId)
-    .single();
+  try {
+    // This approach gets all products sorted by the selected order field,
+    // finds the current product's position, and returns the adjacent products
+    const { data: allProducts, error } = await supabase
+      .from('products')
+      .select('id, name')
+      .order(orderField, { ascending: ascending });
+      
+    if (error) {
+      console.error('Error fetching products for navigation:', error);
+      return { prevProduct: null, nextProduct: null };
+    }
     
-  if (!currentProduct) {
-    console.error('Could not find current product for comparison');
+    if (!allProducts || allProducts.length === 0) {
+      console.log('No products found for navigation');
+      return { prevProduct: null, nextProduct: null };
+    }
+    
+    // Find the current product's index in the sorted array
+    const currentIndex = allProducts.findIndex(p => p.id === currentProductId);
+    console.log(`Current product index: ${currentIndex} of ${allProducts.length} total products`);
+    
+    if (currentIndex === -1) {
+      console.error('Current product not found in products list');
+      return { prevProduct: null, nextProduct: null };
+    }
+    
+    // Get previous and next products based on the index
+    const prevProduct = currentIndex > 0 ? allProducts[currentIndex - 1] : null;
+    const nextProduct = currentIndex < allProducts.length - 1 ? allProducts[currentIndex + 1] : null;
+    
+    console.log('Previous product:', prevProduct);
+    console.log('Next product:', nextProduct);
+    
+    return { prevProduct, nextProduct };
+  } catch (err) {
+    console.error('Error in fetchAdjacentProducts:', err);
     return { prevProduct: null, nextProduct: null };
   }
-  
-  // Log for debugging
-  console.log(`Current product: ${currentProduct.id} - ${currentProduct.name}`);
-  console.log(`Using order field: ${orderField}, ascending: ${ascending}`);
-  console.log(`Order value: ${currentProduct[orderField as keyof typeof currentProduct]}`);
-  
-  const compareValue = currentProduct[orderField as keyof typeof currentProduct];
-  
-  // For debugging
-  const logQuery = (direction: string, operator: string) => {
-    console.log(`${direction} query: SELECT id, name FROM products WHERE ${orderField} ${operator} ${compareValue} ORDER BY ${orderField} ${direction === 'prev' ? 'DESC' : 'ASC'} LIMIT 1`);
-  };
-  
-  // Log the queries we're about to run
-  logQuery('prev', ascending ? '<' : '>');
-  logQuery('next', ascending ? '>' : '<');
-  
-  // Fetch previous product with improved query
-  const { data: prevData, error: prevError } = await supabase
-    .from('products')
-    .select('id, name')
-    .filter(orderField, ascending ? 'lt' : 'gt', compareValue)
-    .order(orderField, { ascending: !ascending })
-    .limit(1);
-  
-  if (prevError) {
-    console.error('Error fetching previous product:', prevError);
-  }
-  
-  // Fetch next product with improved query
-  const { data: nextData, error: nextError } = await supabase
-    .from('products')
-    .select('id, name')
-    .filter(orderField, ascending ? 'gt' : 'lt', compareValue)
-    .order(orderField, { ascending: ascending })
-    .limit(1);
-  
-  if (nextError) {
-    console.error('Error fetching next product:', nextError);
-  }
-  
-  console.log('Previous product data:', prevData);
-  console.log('Next product data:', nextData);
-  
-  // Return the adjacent products
-  return {
-    prevProduct: prevData && prevData.length > 0 ? prevData[0] : null,
-    nextProduct: nextData && nextData.length > 0 ? nextData[0] : null
-  };
 };
