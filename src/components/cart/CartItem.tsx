@@ -44,22 +44,25 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
           <p className="text-sm text-muted-foreground">${item.price}</p>
         </div>
         
-        {/* Improved alignment of the controls */}
+        {/* Updated quantity controls to match the product detail page */}
         <div className="flex items-center justify-between mt-1">
-          <div className="flex items-center">
+          <div className="flex items-center h-8 border rounded-md">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-full w-8"
               onClick={() => updateQuantity(item.id, item.quantity - 1)}
+              disabled={item.quantity <= 1}
             >
               <Minus className="h-3 w-3" />
             </Button>
-            <span className="w-8 text-center text-sm">{item.quantity}</span>
+            <div className="w-8 text-center text-sm font-medium">
+              {item.quantity}
+            </div>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-full w-8"
               onClick={() => updateQuantity(item.id, item.quantity + 1)}
             >
               <Plus className="h-3 w-3" />

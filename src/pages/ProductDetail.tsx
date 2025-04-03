@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, ShoppingCart, Home } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -290,10 +289,7 @@ const ProductDetail = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/" className="flex items-center gap-1">
-                <Home className="h-4 w-4" />
-                Home
-              </Link>
+              <Link to="/">Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
