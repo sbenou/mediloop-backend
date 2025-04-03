@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import WeekNavigation from "@/components/teleconsultation/calendar/WeekNavigation";
 import { useAvailabilityCalendar } from "@/components/teleconsultation/hooks/useAvailabilityCalendar";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { Teleconsultation } from "@/types/supabase";
 
 const DoctorAppointmentsView = () => {
   const { profile } = useAuth();
@@ -36,7 +37,7 @@ const DoctorAppointmentsView = () => {
   // Helper to check if a day has appointments
   const getDayAppointments = (day: Date) => {
     return teleconsultations.filter(appointment => 
-      isSameDay(new Date(appointment.scheduled_at), day)
+      isSameDay(new Date(appointment.start_time), day)
     );
   };
 
@@ -50,18 +51,19 @@ const DoctorAppointmentsView = () => {
       };
     }
     return acc;
-  }, {} as Record<string, { date: Date, appointments: any[] }>);
+  }, {} as Record<string, { date: Date, appointments: Teleconsultation[] }>);
 
   // Render appointment item 
-  const renderAppointmentItem = (appointment: any) => {
-    const startTime = new Date(appointment.scheduled_at);
-    const endTime = new Date(new Date(appointment.scheduled_at).getTime() + (appointment.duration_minutes * 60000));
+  const renderAppointmentItem = (appointment: Teleconsultation) => {
+    const startTime = new Date(appointment.start_time);
+    const endTime = new Date(appointment.end_time);
+    const patientName = appointment.patient?.full_name || 'Unknown Patient';
     
     return (
       <div key={appointment.id} className="mb-4 p-4 border rounded-lg bg-white shadow-sm">
         <div className="flex justify-between items-start mb-2">
           <div>
-            <h4 className="font-medium">{appointment.patient_name || 'Patient'}</h4>
+            <h4 className="font-medium">{patientName}</h4>
             <p className="text-sm text-muted-foreground">
               {format(startTime, 'h:mm a')} - {format(endTime, 'h:mm a')}
             </p>
@@ -70,11 +72,8 @@ const DoctorAppointmentsView = () => {
             {appointment.status || 'Scheduled'}
           </Badge>
         </div>
-        {appointment.consultation_type && (
-          <p className="text-sm">Type: {appointment.consultation_type}</p>
-        )}
-        {appointment.notes && (
-          <p className="text-sm mt-2 line-clamp-2">{appointment.notes}</p>
+        {appointment.reason && (
+          <p className="text-sm mt-2 line-clamp-2">{appointment.reason}</p>
         )}
         <div className="mt-3 flex space-x-2">
           <Button size="sm" variant="outline">Reschedule</Button>
@@ -147,8 +146,8 @@ const DoctorAppointmentsView = () => {
                             key={appointment.id}
                             className="bg-primary/10 text-xs p-2 rounded border border-primary/20 mb-1 cursor-pointer hover:bg-primary/20 transition-colors"
                           >
-                            <p className="font-medium truncate">{appointment.patient_name || 'Patient'}</p>
-                            <p>{format(new Date(appointment.scheduled_at), 'h:mm a')}</p>
+                            <p className="font-medium truncate">{appointment.patient?.full_name || 'Unknown Patient'}</p>
+                            <p>{format(new Date(appointment.start_time), 'h:mm a')}</p>
                           </div>
                         ))}
                       </div>
