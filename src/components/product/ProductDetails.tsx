@@ -15,22 +15,22 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   return (
     <div className="pt-4 border-t w-full">
       <h2 className="text-lg font-semibold mb-4">Details</h2>
-      <ul className="space-y-3">
-        <li className="flex">
-          <span className="text-gray-500 w-32 flex-shrink-0">Type:</span>
-          <span className="capitalize">{product.type}</span>
-        </li>
-        <li className="flex">
-          <span className="text-gray-500 w-32 flex-shrink-0">Prescription Required:</span>
-          <span>{product.requires_prescription ? 'Yes' : 'No'}</span>
-        </li>
+      <dl className="space-y-3">
+        <div className="flex">
+          <dt className="text-gray-500 w-40 flex-shrink-0">Type:</dt>
+          <dd className="capitalize">{product.type}</dd>
+        </div>
+        <div className="flex">
+          <dt className="text-gray-500 w-40 flex-shrink-0">Prescription Required:</dt>
+          <dd>{product.requires_prescription ? 'Yes' : 'No'}</dd>
+        </div>
         {product.description && (
-          <li className="mt-6"> {/* Changed from mt-4 to mt-6 for more spacing */}
-            <span className="text-gray-500 block mb-2">Description:</span> {/* Added block and mb-2 */}
-            <p className="text-gray-700">{product.description}</p>
-          </li>
+          <div className="mt-6">
+            <dt className="text-gray-500 mb-2">Description:</dt>
+            <dd className="text-gray-700">{product.description}</dd>
+          </div>
         )}
-      </ul>
+      </dl>
     </div>
   );
 };
