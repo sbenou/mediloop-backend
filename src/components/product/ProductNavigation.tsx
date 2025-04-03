@@ -29,28 +29,33 @@ export const ProductNavigation = ({
 
   return (
     <div className="flex justify-between mt-6">
-      <Button
-        variant="outline"
-        className="flex items-center gap-2 max-w-[45%]"
-        onClick={() => handleNavigation(prevProduct)}
-        disabled={!prevProduct || loading}
-      >
-        <ArrowLeft className="h-4 w-4 flex-shrink-0" /> 
-        <span className="truncate">
-          {prevProduct ? prevProduct.name : 'Previous Product'}
-        </span>
-      </Button>
-      <Button
-        variant="outline"
-        className="flex items-center gap-2 max-w-[45%]"
-        onClick={() => handleNavigation(nextProduct)}
-        disabled={!nextProduct || loading}
-      >
-        <span className="truncate">
-          {nextProduct ? nextProduct.name : 'Next Product'}
-        </span> 
-        <ArrowRight className="h-4 w-4 flex-shrink-0" />
-      </Button>
+      {prevProduct ? (
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 max-w-[45%]"
+          onClick={() => handleNavigation(prevProduct)}
+          disabled={loading}
+        >
+          <ArrowLeft className="h-4 w-4 flex-shrink-0" /> 
+          <span className="truncate">{prevProduct.name}</span>
+        </Button>
+      ) : (
+        <div></div> // Empty div to maintain flex layout when no previous product
+      )}
+      
+      {nextProduct ? (
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 max-w-[45%]"
+          onClick={() => handleNavigation(nextProduct)}
+          disabled={loading}
+        >
+          <span className="truncate">{nextProduct.name}</span> 
+          <ArrowRight className="h-4 w-4 flex-shrink-0" />
+        </Button>
+      ) : (
+        <div></div> // Empty div to maintain flex layout when no next product
+      )}
     </div>
   );
 };

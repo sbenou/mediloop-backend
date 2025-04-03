@@ -40,8 +40,8 @@ export const ProductImageGallery = ({ mainImage, galleryImages, productName }: P
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <CarouselNext className="right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <CarouselPrevious className="left-0 hidden group-hover:flex transition-all duration-300" />
+          <CarouselNext className="right-0 hidden group-hover:flex transition-all duration-300" />
         </Carousel>
       )}
     </div>
