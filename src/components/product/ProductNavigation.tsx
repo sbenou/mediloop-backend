@@ -20,12 +20,19 @@ export const ProductNavigation = ({
   onNavigate, 
   loading 
 }: ProductNavigationProps) => {
+  const handleNavigation = (product: AdjacentProduct | null) => {
+    if (product && !loading) {
+      console.log(`Navigating to: ${product.id} - ${product.name}`);
+      onNavigate(product);
+    }
+  };
+
   return (
     <div className="flex justify-between mt-6">
       <Button
         variant="outline"
         className="flex items-center gap-2 max-w-[45%]"
-        onClick={() => onNavigate(prevProduct)}
+        onClick={() => handleNavigation(prevProduct)}
         disabled={!prevProduct || loading}
       >
         <ArrowLeft className="h-4 w-4 flex-shrink-0" /> 
@@ -36,7 +43,7 @@ export const ProductNavigation = ({
       <Button
         variant="outline"
         className="flex items-center gap-2 max-w-[45%]"
-        onClick={() => onNavigate(nextProduct)}
+        onClick={() => handleNavigation(nextProduct)}
         disabled={!nextProduct || loading}
       >
         <span className="truncate">
