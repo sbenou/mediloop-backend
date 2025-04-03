@@ -35,13 +35,12 @@ export const UserMenuItems = () => {
   const { isPharmacist } = useAuth();
   const userRole = auth.profile?.role || 'user';
   
-  // Ensure to report role status - critical debugging
+  // Debugging logs
   console.log('UserMenuItems rendering with userRole:', userRole);
-  console.log('UserMenuItems userRole === pharmacist check:', userRole === 'pharmacist');
   console.log('UserMenuItems isPharmacist from hook:', isPharmacist);
   console.log('UserMenuItems profile data:', auth.profile);
   
-  // Force check for pharmacist role from multiple sources for debugging
+  // Force check for pharmacist role for debugging
   const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist';
   console.log('UserMenuItems FINAL isUserPharmacist check:', isUserPharmacist);
 
@@ -64,7 +63,7 @@ export const UserMenuItems = () => {
         console.error("Error removing selectedCountry:", e);
       }
       
-      // Force clear all auth storage (localStorage, sessionStorage, and cookies)
+      // Force clear all auth storage
       clearAllAuthStorage();
       
       // Broadcast logout event to other tabs
@@ -75,7 +74,7 @@ export const UserMenuItems = () => {
         console.error('Error broadcasting logout event:', eventError);
       }
       
-      // Sign out from Supabase - this will clear the session on the server
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
@@ -88,7 +87,7 @@ export const UserMenuItems = () => {
         description: "You have been successfully logged out",
       });
       
-      // Force a hard redirect to ensure complete logout and fresh page load
+      // Force a hard redirect to ensure complete logout
       window.location.href = "/login";
     } catch (error) {
       console.error("Logout error:", error);
@@ -100,43 +99,45 @@ export const UserMenuItems = () => {
     }
   };
 
-  // Generate menu items based on user role
+  // Generate menu items based on user role - this now exactly matches the sidebar navigation
   const getMenuItemsByRole = () => {
     // Default items (patient/user role)
     if (userRole === 'user' || userRole === 'patient') {
       return [
-        { icon: Home, label: 'Dashboard', path: '/dashboard?view=home' },
-        { icon: User, label: 'Profile', path: '/dashboard?view=profile' },
-        { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders' },
+        { icon: Home, label: 'Dashboard', path: '/dashboard' },
+        { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
+        { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
+        { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
         { icon: Video, label: 'Teleconsultations', path: '/dashboard?view=teleconsultations' },
-        { icon: Settings, label: 'Settings', path: '/dashboard?view=settings' }
+        { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
     
     // Doctor specific items
     if (userRole === 'doctor') {
       return [
-        { icon: Home, label: 'Dashboard', path: '/doctor?section=dashboard' },
-        { icon: Users, label: 'Patients', path: '/doctor?section=patients' },
-        { icon: FileText, label: 'Prescriptions', path: '/doctor?section=prescriptions' },
-        { icon: Video, label: 'Teleconsultations', path: '/doctor?section=teleconsultations' },
-        { icon: Calendar, label: 'Appointments', path: '/doctor?section=appointments' },
-        { icon: User, label: 'Profile', path: '/doctor?section=profile' },
-        { icon: Settings, label: 'Settings', path: '/doctor?section=settings' }
+        { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
+        { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
+        { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
+        { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
+        { icon: Video, label: 'Teleconsultations', path: '/dashboard?section=teleconsultations' },
+        { icon: Calendar, label: 'Appointments', path: '/dashboard?section=appointments' },
+        { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
     
     // Pharmacist specific items
     if (isUserPharmacist) {
       return [
-        { icon: Home, label: 'Dashboard', path: '/pharmacy?section=dashboard' },
-        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy?section=profile' },
-        { icon: ShoppingBag, label: 'Orders', path: '/pharmacy?section=orders' },
-        { icon: Users, label: 'Customers', path: '/pharmacy?section=customers' },
-        { icon: FileText, label: 'Prescriptions', path: '/pharmacy?section=prescriptions' },
-        { icon: BarChart, label: 'Analytics', path: '/pharmacy?section=analytics' },
-        { icon: Settings, label: 'Settings', path: '/pharmacy?section=settings' }
+        { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
+        { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
+        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
+        { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
+        { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
+        { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
+        { icon: BarChart, label: 'Analytics', path: '/dashboard?view=pharmacy&section=analytics' },
+        { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
     
@@ -166,13 +167,7 @@ export const UserMenuItems = () => {
     
     // Enhanced debugging
     console.log('Current user role in UserMenuItems:', userRole);
-    console.log('Profile data:', auth.profile);
-    console.log('Is pharmacist check (multiple sources):', 
-      userRole === 'pharmacist', 
-      isPharmacist, 
-      auth.profile?.role === 'pharmacist',
-      isUserPharmacist
-    );
+    console.log('Menu items generated for role:', roleSpecificItems);
     
     return (
       <>

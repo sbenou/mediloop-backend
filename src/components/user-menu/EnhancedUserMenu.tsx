@@ -20,9 +20,9 @@ const EnhancedUserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative flex items-center space-x-2">
+        <Button variant="ghost" className="relative flex items-center space-x-2 px-2">
           <UserAvatar userProfile={profile} />
-          <span>{profile.full_name}</span>
+          <span className="hidden md:inline-block">{profile.full_name}</span>
           <ChevronDown className="h-4 w-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
