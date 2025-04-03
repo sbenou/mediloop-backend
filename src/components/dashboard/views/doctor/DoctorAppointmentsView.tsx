@@ -35,9 +35,11 @@ const DoctorAppointmentsView = () => {
   }, [doctorId, currentWeek, refreshTeleconsultations]);
 
   // Filter to show only in-person appointments
-  const inPersonAppointments = teleconsultations.filter(
-    appointment => appointment.meta?.appointment_type === 'in-person' || !appointment.meta?.is_teleconsultation
-  );
+  // We can assume teleconsultations with reason containing "in-person" are in-person appointments
+  const inPersonAppointments = teleconsultations.filter(appointment => {
+    const reason = appointment.reason?.toLowerCase() || '';
+    return reason.includes('in-person') || reason.includes('in person');
+  });
 
   // Helper to check if a day has appointments
   const getDayAppointments = (day: Date) => {

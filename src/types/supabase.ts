@@ -55,6 +55,11 @@ export interface Teleconsultation {
     full_name: string | null;
     email: string | null;
   };
+  meta?: {
+    appointment_type?: string;
+    is_teleconsultation?: boolean;
+    [key: string]: any;
+  };
 }
 
 export interface Notification {
