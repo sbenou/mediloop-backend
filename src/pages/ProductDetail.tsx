@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -245,11 +244,17 @@ const ProductDetail = () => {
     navigate('/checkout');
   };
 
+  // Fix the navigation function to properly handle clicking on adjacent products
   const navigateToProduct = (productData: AdjacentProduct | null) => {
     if (!productData) return;
     
     // Preserve the current sort order in the URL and navigate to the new product
     console.log(`Navigating to product: ${productData.id} (${productData.name})`);
+    
+    // Clear loading state to show loading UI
+    setLoading(true);
+    
+    // Actually navigate to the new product URL
     navigate(`/products/${productData.id}?sort=${sortOrder}`);
   };
 
@@ -342,12 +347,12 @@ const ProductDetail = () => {
             <CarouselNext className="right-0" />
           </Carousel>
           
-          {/* Product Navigation - Fixed to correctly display product names and handle navigation */}
+          {/* Product Navigation - Fix to correctly display product names and handle navigation */}
           <div className="flex justify-between mt-6">
             <Button
               variant="outline"
               className="flex items-center gap-2 max-w-[45%]"
-              onClick={() => prevProduct && navigateToProduct(prevProduct)}
+              onClick={() => navigateToProduct(prevProduct)}
               disabled={!prevProduct || loadingNavigation}
             >
               <ArrowLeft className="h-4 w-4 flex-shrink-0" /> 
@@ -358,7 +363,7 @@ const ProductDetail = () => {
             <Button
               variant="outline"
               className="flex items-center gap-2 max-w-[45%]"
-              onClick={() => nextProduct && navigateToProduct(nextProduct)}
+              onClick={() => navigateToProduct(nextProduct)}
               disabled={!nextProduct || loadingNavigation}
             >
               <span className="truncate">
@@ -377,13 +382,6 @@ const ProductDetail = () => {
               {product && formatCurrency(convertPrice(product.price))}
             </p>
           </div>
-
-          {product.description && (
-            <div>
-              <h2 className="text-lg font-semibold mb-2">Description</h2>
-              <p className="text-gray-700">{product.description}</p>
-            </div>
-          )}
 
           <div>
             <h2 className="text-lg font-semibold mb-3">Quantity</h2>
@@ -451,6 +449,12 @@ const ProductDetail = () => {
                 <span className="text-gray-500 min-w-32">Prescription Required:</span>
                 <span>{product.requires_prescription ? 'Yes' : 'No'}</span>
               </li>
+              {product.description && (
+                <li className="flex gap-2 mt-4">
+                  <span className="text-gray-500 min-w-32">Description:</span>
+                  <span className="text-gray-700">{product.description}</span>
+                </li>
+              )}
             </ul>
           </div>
         </div>
