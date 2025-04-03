@@ -20,6 +20,11 @@ interface Product {
   type: 'medication' | 'parapharmacy';
 }
 
+interface AdjacentProduct {
+  id: string;
+  name: string;
+}
+
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
@@ -27,8 +32,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [prevProductId, setPrevProductId] = useState<string | null>(null);
-  const [nextProductId, setNextProductId] = useState<string | null>(null);
+  const [prevProduct, setPrevProduct] = useState<AdjacentProduct | null>(null);
+  const [nextProduct, setNextProduct] = useState<AdjacentProduct | null>(null);
   const [loadingNavigation, setLoadingNavigation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -165,24 +170,24 @@ const ProductDetail = () => {
       
       const compareValue = currentProduct[orderField as keyof typeof currentProduct];
       
-      // Fetch previous product
+      // Fetch previous product with name
       const { data: prevData } = await supabase
         .from('products')
-        .select('id')
+        .select('id, name')
         .filter(orderField, ascending ? 'lt' : 'gt', compareValue)
         .order(orderField, { ascending: !ascending })
         .limit(1);
       
-      // Fetch next product
+      // Fetch next product with name
       const { data: nextData } = await supabase
         .from('products')
-        .select('id')
+        .select('id, name')
         .filter(orderField, ascending ? 'gt' : 'lt', compareValue)
         .order(orderField, { ascending: ascending })
         .limit(1);
       
-      setPrevProductId(prevData && prevData.length > 0 ? prevData[0].id : null);
-      setNextProductId(nextData && nextData.length > 0 ? nextData[0].id : null);
+      setPrevProduct(prevData && prevData.length > 0 ? prevData[0] : null);
+      setNextProduct(nextData && nextData.length > 0 ? nextData[0] : null);
     } catch (err) {
       console.error('Error fetching adjacent products:', err);
     } finally {
@@ -228,10 +233,10 @@ const ProductDetail = () => {
     navigate('/checkout');
   };
 
-  const navigateToProduct = (productId: string | null) => {
-    if (!productId) return;
+  const navigateToProduct = (productData: AdjacentProduct | null) => {
+    if (!productData) return;
     // Preserve the current sort order in the URL
-    navigate(`/products/${productId}?sort=${sortOrder}`);
+    navigate(`/products/${productData.id}?sort=${sortOrder}`);
   };
 
   if (loading) {
@@ -312,18 +317,18 @@ const ProductDetail = () => {
             <Button
               variant="outline"
               className="flex items-center gap-2"
-              onClick={() => navigateToProduct(prevProductId)}
-              disabled={!prevProductId || loadingNavigation}
+              onClick={() => navigateToProduct(prevProduct)}
+              disabled={!prevProduct || loadingNavigation}
             >
-              <ArrowLeft className="h-4 w-4" /> Previous Product
+              <ArrowLeft className="h-4 w-4" /> {prevProduct ? prevProduct.name : 'Previous Product'}
             </Button>
             <Button
               variant="outline"
               className="flex items-center gap-2"
-              onClick={() => navigateToProduct(nextProductId)}
-              disabled={!nextProductId || loadingNavigation}
+              onClick={() => navigateToProduct(nextProduct)}
+              disabled={!nextProduct || loadingNavigation}
             >
-              Next Product <ArrowRight className="h-4 w-4" />
+              {nextProduct ? nextProduct.name : 'Next Product'} <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
