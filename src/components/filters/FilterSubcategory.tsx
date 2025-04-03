@@ -75,7 +75,8 @@ export const FilterSubcategory = ({
           />
         ))}
       </div>
-      <Separator className="mt-2" />
+      {/* Increased spacing before the separator */}
+      <Separator className="mt-4" />
     </div>
   );
 };
