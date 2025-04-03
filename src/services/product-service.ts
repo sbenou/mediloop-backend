@@ -79,40 +79,62 @@ export const fetchAdjacentProducts = async (
       ascending = false;
   }
   
-  // Get current product values for comparison
+  // Get current product details for comparison
   const { data: currentProduct } = await supabase
     .from('products')
-    .select(orderField)
+    .select(`id, name, ${orderField}`)
     .eq('id', currentProductId)
     .single();
     
   if (!currentProduct) {
-    console.error('Could not find current product value for comparison');
+    console.error('Could not find current product for comparison');
     return { prevProduct: null, nextProduct: null };
   }
   
+  // Log for debugging
+  console.log(`Current product: ${currentProduct.id} - ${currentProduct.name}`);
+  console.log(`Using order field: ${orderField}, ascending: ${ascending}`);
+  console.log(`Order value: ${currentProduct[orderField as keyof typeof currentProduct]}`);
+  
   const compareValue = currentProduct[orderField as keyof typeof currentProduct];
   
-  // Fetch previous product with name
-  const { data: prevData } = await supabase
+  // For debugging
+  const logQuery = (direction: string, operator: string) => {
+    console.log(`${direction} query: SELECT id, name FROM products WHERE ${orderField} ${operator} ${compareValue} ORDER BY ${orderField} ${direction === 'prev' ? 'DESC' : 'ASC'} LIMIT 1`);
+  };
+  
+  // Log the queries we're about to run
+  logQuery('prev', ascending ? '<' : '>');
+  logQuery('next', ascending ? '>' : '<');
+  
+  // Fetch previous product with improved query
+  const { data: prevData, error: prevError } = await supabase
     .from('products')
     .select('id, name')
     .filter(orderField, ascending ? 'lt' : 'gt', compareValue)
     .order(orderField, { ascending: !ascending })
     .limit(1);
   
-  // Fetch next product with name
-  const { data: nextData } = await supabase
+  if (prevError) {
+    console.error('Error fetching previous product:', prevError);
+  }
+  
+  // Fetch next product with improved query
+  const { data: nextData, error: nextError } = await supabase
     .from('products')
     .select('id, name')
     .filter(orderField, ascending ? 'gt' : 'lt', compareValue)
     .order(orderField, { ascending: ascending })
     .limit(1);
   
+  if (nextError) {
+    console.error('Error fetching next product:', nextError);
+  }
+  
   console.log('Previous product data:', prevData);
   console.log('Next product data:', nextData);
   
-  // Return the previous and next products
+  // Return the adjacent products
   return {
     prevProduct: prevData && prevData.length > 0 ? prevData[0] : null,
     nextProduct: nextData && nextData.length > 0 ? nextData[0] : null

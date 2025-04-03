@@ -56,9 +56,14 @@ export const useProductDetail = () => {
         setGalleryImages(images);
         
         // Load adjacent products
-        const { prevProduct, nextProduct } = await fetchAdjacentProducts(id, sortOrder);
-        setPrevProduct(prevProduct);
-        setNextProduct(nextProduct);
+        try {
+          const { prevProduct, nextProduct } = await fetchAdjacentProducts(id, sortOrder);
+          setPrevProduct(prevProduct);
+          setNextProduct(nextProduct);
+          console.log("Adjacent products loaded:", { prevProduct, nextProduct });
+        } catch (adjError) {
+          console.error("Error loading adjacent products:", adjError);
+        }
       } catch (err) {
         console.error('Error fetching product:', err);
         setError('Failed to load product details');
@@ -82,11 +87,12 @@ export const useProductDetail = () => {
     
     console.log(`Navigating to product: ${adjacentProduct.id} (${adjacentProduct.name})`);
     
-    // Set loading state to show loading UI
+    // Set loading states to show loading UI
+    setLoadingNavigation(true);
     setLoading(true);
     
     // Preserve the current sort order in the URL
-    navigate(`/products/${adjacentProduct.id}?sort=${sortOrder}`, { replace: true });
+    navigate(`/products/${adjacentProduct.id}?sort=${sortOrder}`);
   };
 
   return {
