@@ -26,7 +26,7 @@ const AVAILABLE_COUNTRIES: Country[] = [
 ];
 
 export const useCountrySelection = () => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false); // Initialize as closed by default
   const [selectedCountry, setSelectedCountry] = useState<string>("LU");
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
   const { isAuthenticated, user } = useAuth();
@@ -34,70 +34,14 @@ export const useCountrySelection = () => {
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   const [selectionComplete, setSelectionComplete] = useState(false);
 
-  // Initialize the dialog as open and reset any saved country
+  // Handle checking for existing country selection and user address
   useEffect(() => {
-    console.log("CountrySelector: Component mounted, initializing");
-    setOpen(true);
-    
-    // Try to clear any existing selection to force the dialog
-    try {
-      localStorage.removeItem('selectedCountry');
-      console.log("CountrySelector: Cleared selectedCountry on mount");
-    } catch (e) {
-      console.error("Error clearing localStorage:", e);
-    }
-  }, []);
-  
-  // Force dialog to remain open only if no selection has been made
-  useEffect(() => {
-    if (!open && !selectionComplete) {
-      console.log("CountrySelector: Dialog was closed without selection, forcing it open again");
-      setOpen(true);
-    }
-  }, [open, selectionComplete]);
-  
-  useEffect(() => {
-    let shouldShowDialog = true;
+    let shouldShowDialog = false; // Default to not showing dialog
     
     const checkUserAddress = async () => {
       console.log("CountrySelector: Checking user address and country selection");
       
-      // Check if user has a default address
-      if (isAuthenticated && user) {
-        console.log("CountrySelector: User is authenticated, checking for default address");
-        try {
-          const { data, error } = await supabase
-            .from('addresses')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('is_default', true)
-            .single();
-          
-          if (!error && data) {
-            console.log("CountrySelector: Found default address:", data);
-            setMainAddress(data);
-            
-            if (data.country === "Luxembourg" || data.country === "LU") {
-              setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "LU")?.coordinates || userLocation);
-              shouldShowDialog = false;
-              setSelectionComplete(true);
-            } else if (data.country === "France" || data.country === "FR") {
-              setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "FR")?.coordinates || userLocation);
-              shouldShowDialog = false;
-              setSelectionComplete(true);
-            }
-          } else {
-            console.log("CountrySelector: No default address found or error:", error);
-          }
-        } catch (e) {
-          console.error("Error fetching address:", e);
-        }
-      } else {
-        console.log("CountrySelector: User is not authenticated");
-      }
-      
-      // Even if we've already determined not to show the dialog,
-      // still check localStorage to update the selected country
+      // First check localStorage for a saved country selection
       try {
         const savedCountry = localStorage.getItem('selectedCountry');
         if (savedCountry) {
@@ -110,9 +54,50 @@ export const useCountrySelection = () => {
             setSelectionComplete(true);
           }
         } else {
-          console.log("CountrySelector: No saved country found, dialog should appear");
-          shouldShowDialog = true;
-          setSelectionComplete(false);
+          // Only check user address if no country in localStorage
+          if (isAuthenticated && user) {
+            console.log("CountrySelector: User is authenticated, checking for default address");
+            try {
+              const { data, error } = await supabase
+                .from('addresses')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('is_default', true)
+                .single();
+              
+              if (!error && data) {
+                console.log("CountrySelector: Found default address:", data);
+                setMainAddress(data);
+                
+                if (data.country === "Luxembourg" || data.country === "LU") {
+                  setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "LU")?.coordinates || userLocation);
+                  shouldShowDialog = false;
+                  setSelectionComplete(true);
+                } else if (data.country === "France" || data.country === "FR") {
+                  setUserLocation(AVAILABLE_COUNTRIES.find(c => c.code === "FR")?.coordinates || userLocation);
+                  shouldShowDialog = false;
+                  setSelectionComplete(true);
+                } else {
+                  // If country not recognized, we need to show the dialog
+                  shouldShowDialog = true;
+                  setSelectionComplete(false);
+                }
+              } else {
+                console.log("CountrySelector: No default address found or error:", error);
+                shouldShowDialog = true;
+                setSelectionComplete(false);
+              }
+            } catch (e) {
+              console.error("Error fetching address:", e);
+              shouldShowDialog = true;
+              setSelectionComplete(false);
+            }
+          } else {
+            // Not authenticated and no savedCountry
+            console.log("CountrySelector: User is not authenticated and no saved country");
+            shouldShowDialog = true;
+            setSelectionComplete(false);
+          }
         }
       } catch (e) {
         console.error("Error reading from localStorage:", e);
@@ -136,6 +121,7 @@ export const useCountrySelection = () => {
           setSelectionComplete(false);
         } else {
           setSelectionComplete(true);
+          setOpen(false);
         }
       }
     };

@@ -17,13 +17,8 @@ export default function Index() {
     console.log("Index page mounted");
     console.log("Current URL:", window.location.href);
     
-    try {
-      // Force clearing the country selection on initial Index page mount
-      localStorage.removeItem('selectedCountry');
-      console.log("Index: Successfully cleared selectedCountry from localStorage");
-    } catch (e) {
-      console.error("Error clearing localStorage:", e);
-    }
+    // We're removing the forced clearing of country selection
+    // to respect user's previous selection
   }, []);
 
   // Log when components are about to render
