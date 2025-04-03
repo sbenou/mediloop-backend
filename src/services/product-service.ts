@@ -108,7 +108,9 @@ export const fetchAdjacentProducts = async (
     }
     
     // Get previous and next products based on the index
+    // Only set prevProduct if we're not at the first item in the sorted list
     const prevProduct = currentIndex > 0 ? allProducts[currentIndex - 1] : null;
+    // Only set nextProduct if we're not at the last item in the sorted list
     const nextProduct = currentIndex < allProducts.length - 1 ? allProducts[currentIndex + 1] : null;
     
     console.log('Previous product:', prevProduct);
