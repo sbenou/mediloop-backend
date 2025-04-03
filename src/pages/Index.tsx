@@ -9,6 +9,7 @@ import { PartnerSection } from "@/components/home/PartnerSection";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CountrySelector from "@/components/CountrySelector";
+import { CookieConsent } from "@/components/cookies/CookieConsent";
 
 export default function Index() {
   // Add detailed logging to help debug
@@ -43,6 +44,7 @@ export default function Index() {
       </div>
       <PartnerSection />
       <Footer />
+      <CookieConsent />
     </>
   );
 }
