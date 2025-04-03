@@ -28,7 +28,7 @@ export const ProductNavigation = ({
   };
 
   return (
-    <div className="flex justify-between mt-8 pt-6 border-t">  {/* Added pt-6 and border-t for visual separation */}
+    <div className="flex justify-between mt-16 pt-8 border-t border-gray-200">  {/* Increased mt-8 to mt-16 and pt-6 to pt-8 */}
       {prevProduct ? (
         <Button
           variant="outline"

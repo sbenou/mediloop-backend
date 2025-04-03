@@ -114,7 +114,7 @@ const ProductDetail = () => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12"> {/* Increased gap-8 to gap-12 for more spacing between columns */}
         {/* Product Images and Navigation */}
         <div className="space-y-4">
           <ProductImageGallery 
