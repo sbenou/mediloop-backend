@@ -70,9 +70,11 @@ const CartFooter = () => {
     const closeCartEvent = new CustomEvent('closeCart');
     window.dispatchEvent(closeCartEvent);
     
-    // Only navigate if the user is not already on the products page
-    const isOnProductsPage = location.pathname.startsWith('/products');
-    if (!isOnProductsPage) {
+    // Check if we're on a product detail page or not on products page at all
+    const isProductsListPage = location.pathname === '/products' || location.pathname === '/products/';
+    
+    // Only navigate if we're not on the products list page
+    if (!isProductsListPage) {
       navigate('/products');
     }
   };
