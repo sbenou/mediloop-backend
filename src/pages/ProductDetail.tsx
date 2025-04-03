@@ -1,14 +1,22 @@
 
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, ShoppingCart, Home } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { supabase } from '@/lib/supabase';
+import { 
+  Breadcrumb, 
+  BreadcrumbItem, 
+  BreadcrumbLink, 
+  BreadcrumbList, 
+  BreadcrumbPage, 
+  BreadcrumbSeparator 
+} from '@/components/ui/breadcrumb';
 
 interface Product {
   id: string;
@@ -277,13 +285,29 @@ const ProductDetail = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Button 
-        variant="ghost" 
-        className="mb-6 flex items-center gap-2" 
-        onClick={() => navigate('/products')}
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to Products
-      </Button>
+      {/* Breadcrumb component replacing back button */}
+      <Breadcrumb className="mb-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/" className="flex items-center gap-1">
+                <Home className="h-4 w-4" />
+                Home
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/products">Products</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{product.name}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Product Images */}
