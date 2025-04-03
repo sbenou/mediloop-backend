@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -5,6 +6,7 @@ import { toast } from "@/components/ui/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Product {
   id: string;
@@ -24,8 +26,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart } = useCart();
   const { formatCurrency, convertPrice } = useCurrency();
   const [imageError, setImageError] = useState(false);
+  const navigate = useNavigate();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking the button
+    
     if (product.requires_prescription) {
       toast({
         variant: "destructive",
@@ -53,6 +58,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     setImageError(true);
   };
 
+  const navigateToProductDetail = () => {
+    navigate(`/products/${product.id}`);
+  };
+
   const placeholderImages = [
     'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae',
     'https://images.unsplash.com/photo-1587854692152-cbe660dbde88',
@@ -68,7 +77,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const displayPrice = formatCurrency(convertPrice(product.price));
 
   return (
-    <Card className="overflow-hidden flex flex-col">
+    <Card 
+      className="overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow duration-200"
+      onClick={navigateToProductDetail}
+    >
       <div className="aspect-square relative overflow-hidden bg-gray-100">
         <img
           src={imageError || !product.image_url ? getPlaceholderImage() : product.image_url}

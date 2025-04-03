@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -24,6 +25,7 @@ import Teleconsultations from './pages/Teleconsultations';
 import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
 import PharmacyProfile from './pages/pharmacy/PharmacyProfile';
 import Products from './pages/Products';
+import ProductDetail from './pages/ProductDetail';
 import { UserRole } from './types/role';
 import DoctorDashboard from './pages/DoctorDashboard';
 import UniversalDashboard from './pages/UniversalDashboard';
@@ -74,6 +76,7 @@ function AppRoutes() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/auth/confirm" element={<EmailConfirmationHandler />} />
       <Route path="/products" element={<Products />} />
+      <Route path="/products/:id" element={<ProductDetail />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* Unified Dashboard route - handles redirects to appropriate dashboard */}

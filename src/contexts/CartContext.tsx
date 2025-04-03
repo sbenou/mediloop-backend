@@ -27,7 +27,7 @@ const CART_STORAGE_KEY = 'shopping_cart';
 const CartContext = createContext<{
   state: CartState;
   dispatch: React.Dispatch<CartAction>;
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void;
+  addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -67,7 +67,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           ...state,
           items: state.items.map(item =>
             item.id === action.payload.id
-              ? { ...item, quantity: item.quantity + 1 }
+              ? { ...item, quantity: item.quantity + action.payload.quantity }
               : item
           ),
           lastUpdated: Date.now(),
@@ -75,7 +75,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       } else {
         newState = {
           ...state,
-          items: [...state.items, { ...action.payload, quantity: 1 }],
+          items: [...state.items, action.payload],
           lastUpdated: Date.now(),
         };
       }
@@ -146,8 +146,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     return () => clearInterval(interval);
   }, [state.lastUpdated]);
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
-    dispatch({ type: 'ADD_ITEM', payload: { ...item, quantity: 1 } });
+  const addToCart = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+    dispatch({ 
+      type: 'ADD_ITEM', 
+      payload: { ...item, quantity: item.quantity || 1 } 
+    });
   };
 
   const removeFromCart = (id: string) => {
