@@ -186,6 +186,9 @@ const ProductDetail = () => {
         .order(orderField, { ascending: ascending })
         .limit(1);
       
+      console.log('Previous product data:', prevData);
+      console.log('Next product data:', nextData);
+      
       setPrevProduct(prevData && prevData.length > 0 ? prevData[0] : null);
       setNextProduct(nextData && nextData.length > 0 ? nextData[0] : null);
     } catch (err) {
@@ -316,19 +319,21 @@ const ProductDetail = () => {
           <div className="flex justify-between mt-6">
             <Button
               variant="outline"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 max-w-[45%]"
               onClick={() => navigateToProduct(prevProduct)}
               disabled={!prevProduct || loadingNavigation}
             >
-              <ArrowLeft className="h-4 w-4" /> {prevProduct ? prevProduct.name : 'Previous Product'}
+              <ArrowLeft className="h-4 w-4 flex-shrink-0" /> 
+              <span className="truncate">{prevProduct ? prevProduct.name : 'Previous Product'}</span>
             </Button>
             <Button
               variant="outline"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 max-w-[45%]"
               onClick={() => navigateToProduct(nextProduct)}
               disabled={!nextProduct || loadingNavigation}
             >
-              {nextProduct ? nextProduct.name : 'Next Product'} <ArrowRight className="h-4 w-4" />
+              <span className="truncate">{nextProduct ? nextProduct.name : 'Next Product'}</span> 
+              <ArrowRight className="h-4 w-4 flex-shrink-0" />
             </Button>
           </div>
         </div>
@@ -336,9 +341,9 @@ const ProductDetail = () => {
         {/* Product Info */}
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold">{product.name}</h1>
+            <h1 className="text-3xl font-bold">{product?.name}</h1>
             <p className="text-2xl font-semibold mt-2 text-primary">
-              {formatCurrency(convertPrice(product.price))}
+              {product && formatCurrency(convertPrice(product.price))}
             </p>
           </div>
 
