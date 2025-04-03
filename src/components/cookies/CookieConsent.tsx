@@ -69,7 +69,7 @@ export function CookieConsent() {
                 setShowBanner(false);
                 setShowSettings(true);
               }}
-              className="text-white border-white hover:bg-white/10"
+              className="text-black border-white hover:bg-white/10"
             >
               Cookie settings
             </Button>
@@ -77,7 +77,7 @@ export function CookieConsent() {
               variant="outline"
               size="sm"
               onClick={rejectNonEssential}
-              className="text-white border-white hover:bg-white/10"
+              className="text-black border-white hover:bg-white/10"
             >
               Reject non-essential
             </Button>
