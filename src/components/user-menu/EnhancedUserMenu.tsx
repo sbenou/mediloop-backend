@@ -2,14 +2,13 @@
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import UserAvatar from "./UserAvatar";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Button } from "@/components/ui/button";
-import UserMenuItems from "./UserMenuItems";
+import { UserMenuItems } from "./UserMenuItems";
 
 const EnhancedUserMenu = () => {
   const { profile, user } = useAuth();
@@ -28,14 +27,6 @@ const EnhancedUserMenu = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{profile.full_name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {profile.email}
-            </p>
-          </div>
-        </DropdownMenuLabel>
         <UserMenuItems />
       </DropdownMenuContent>
     </DropdownMenu>
