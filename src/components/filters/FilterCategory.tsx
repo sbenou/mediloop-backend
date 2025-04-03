@@ -49,7 +49,7 @@ export const FilterCategory = ({
         </Badge>
       </a>
       <div className="ml-4 mt-2 space-y-0">
-        {subcategories.map((sub, index) => (
+        {subcategories.map((sub) => (
           <div key={sub.id}>
             <FilterSubcategory
               subcategory={sub}
@@ -57,12 +57,6 @@ export const FilterCategory = ({
               type={type}
               onFilterChange={onFilterChange}
             />
-            {/* Add separator after each subcategory except the last one */}
-            {index < subcategories.length - 1 && (
-              <div className="pt-6 pb-2">
-                <Separator />
-              </div>
-            )}
           </div>
         ))}
       </div>

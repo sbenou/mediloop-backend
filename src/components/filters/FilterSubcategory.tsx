@@ -36,14 +36,6 @@ export const FilterSubcategory = ({
     return [...new Set(descriptions)];
   };
 
-  const getDescriptionCount = (description: string) => {
-    if (!subcategory.products) return 0;
-    
-    return subcategory.products.filter(
-      product => product && product.description === description
-    ).length;
-  };
-
   const totalProducts = subcategory.products?.length || 0;
 
   return (
@@ -69,7 +61,6 @@ export const FilterSubcategory = ({
             categoryId={categoryId}
             subcategoryId={subcategory.id}
             type={type}
-            count={getDescriptionCount(description)}
             onFilterChange={onFilterChange}
           />
         ))}

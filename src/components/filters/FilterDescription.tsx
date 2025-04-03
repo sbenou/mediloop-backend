@@ -1,6 +1,5 @@
 
 import { useNavigate } from 'react-router-dom';
-import { Badge } from "@/components/ui/badge";
 
 interface FilterDescriptionProps {
   description: string;
@@ -16,7 +15,6 @@ export const FilterDescription = ({
   categoryId,
   subcategoryId,
   type,
-  count,
   onFilterChange
 }: FilterDescriptionProps) => {
   const navigate = useNavigate();
@@ -35,12 +33,6 @@ export const FilterDescription = ({
       className="flex items-center justify-between w-full text-xs text-muted-foreground hover:text-primary cursor-pointer py-1"
     >
       <span className="truncate mr-2">{description}</span>
-      <Badge 
-        variant="secondary" 
-        className="text-xs text-muted-foreground ml-auto w-7 text-center flex items-center justify-center h-4 flex-shrink-0"
-      >
-        {count}
-      </Badge>
     </a>
   );
 };

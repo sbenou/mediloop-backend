@@ -8,6 +8,7 @@ import { FilterCategory } from "./filters/FilterCategory";
 import { Product, Subcategory } from "./product/types/product";
 import { Button } from "@/components/ui/button";
 import { FilterX } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface Category {
   id: string;
@@ -137,30 +138,44 @@ export const ProductFilters = ({
           <AccordionItem value="pharmacy">
             <AccordionTrigger>Pharmacy</AccordionTrigger>
             <AccordionContent>
-              {getMedicationCategories().map((category) => (
-                <FilterCategory
-                  key={category.id}
-                  id={category.id}
-                  name={category.name}
-                  type="medication"
-                  subcategories={category.subcategories}
-                  onFilterChange={handleFilterChange}
-                />
+              {getMedicationCategories().map((category, index, array) => (
+                <div key={category.id}>
+                  <FilterCategory
+                    id={category.id}
+                    name={category.name}
+                    type="medication"
+                    subcategories={category.subcategories}
+                    onFilterChange={handleFilterChange}
+                  />
+                  {/* Add separator after each category except the last one */}
+                  {index < array.length - 1 && (
+                    <div className="py-2">
+                      <Separator />
+                    </div>
+                  )}
+                </div>
               ))}
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="parapharmacy">
             <AccordionTrigger>Parapharmacy</AccordionTrigger>
             <AccordionContent>
-              {getParapharmacyCategories().map((category) => (
-                <FilterCategory
-                  key={category.id}
-                  id={category.id}
-                  name={category.name}
-                  type="parapharmacy"
-                  subcategories={category.subcategories}
-                  onFilterChange={handleFilterChange}
-                />
+              {getParapharmacyCategories().map((category, index, array) => (
+                <div key={category.id}>
+                  <FilterCategory
+                    id={category.id}
+                    name={category.name}
+                    type="parapharmacy"
+                    subcategories={category.subcategories}
+                    onFilterChange={handleFilterChange}
+                  />
+                  {/* Add separator after each category except the last one */}
+                  {index < array.length - 1 && (
+                    <div className="py-2">
+                      <Separator />
+                    </div>
+                  )}
+                </div>
               ))}
             </AccordionContent>
           </AccordionItem>
