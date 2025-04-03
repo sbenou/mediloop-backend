@@ -54,7 +54,7 @@ export const FilterSubcategory = ({
         className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-primary py-1 cursor-pointer"
       >
         <span>{subcategory.name}</span>
-        <Badge variant="secondary" className="text-xs ml-2">
+        <Badge variant="secondary" className="text-xs ml-auto">
           {totalProducts}
         </Badge>
       </a>

@@ -40,7 +40,7 @@ export const FilterCategory = ({
         className="flex items-center justify-between w-full text-sm hover:text-primary cursor-pointer"
       >
         <span>{name}</span>
-        <Badge variant="secondary" className="text-xs ml-2">
+        <Badge variant="secondary" className="text-xs ml-auto">
           {totalProducts}
         </Badge>
       </a>
