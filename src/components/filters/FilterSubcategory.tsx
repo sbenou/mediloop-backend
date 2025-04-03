@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Subcategory } from "@/components/product/types/product";
 import { FilterDescription } from "./FilterDescription";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 interface FilterSubcategoryProps {
   subcategory: Subcategory;
@@ -47,7 +48,7 @@ export const FilterSubcategory = ({
   const totalProducts = subcategory.products?.length || 0;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 pb-2">
       <a
         href="#"
         onClick={handleSubcategoryClick}
@@ -74,6 +75,7 @@ export const FilterSubcategory = ({
           />
         ))}
       </div>
+      <Separator className="mt-2" />
     </div>
   );
 };

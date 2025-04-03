@@ -47,7 +47,7 @@ export const FilterCategory = ({
           {totalProducts}
         </Badge>
       </a>
-      <div className="ml-4 space-y-1 mt-1">
+      <div className="ml-4 mt-2 space-y-0">
         {subcategories.map((sub) => (
           <FilterSubcategory
             key={sub.id}
