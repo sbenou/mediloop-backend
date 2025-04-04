@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { 
@@ -182,7 +181,7 @@ export const fetchTeleconsultations = async (
       })();
       
       // Ensure the meta field exists, even if it's empty
-      const meta = item.meta || {};
+      const metaData = item.meta || {};
       
       return {
         id: item.id,
@@ -197,7 +196,7 @@ export const fetchTeleconsultations = async (
         updated_at: item.updated_at,
         patient: patientData,
         doctor: doctorData,
-        meta: meta
+        meta: metaData
       } as Teleconsultation;
     });
     
