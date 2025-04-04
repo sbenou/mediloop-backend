@@ -3,9 +3,12 @@ import { supabase } from "@/lib/supabase";
 import { mockActivities } from "@/components/activity/mockActivities";
 import { toast } from "@/components/ui/use-toast";
 
+// Use a proper UUID format for Tim Burton
+const timBurtonId = "00000000-0000-4000-a000-000000000001"; // Fixed UUID for Tim Burton
+
 // Mock doctor data for Tim Burton
 const timBurtonDoctorData = {
-  id: "doctor-tim-burton",
+  id: timBurtonId,
   full_name: "Dr. Tim Burton",
   email: "tim.burton@example.com",
   role: "doctor",
@@ -20,7 +23,7 @@ const timBurtonDoctorData = {
 const timBurtonNotifications = [
   {
     id: "notif-1",
-    user_id: "doctor-tim-burton",
+    user_id: timBurtonId,
     type: "patient_connected",
     title: "New Patient Connection",
     message: "Patient Jack Skellington has connected with you",
@@ -29,7 +32,7 @@ const timBurtonNotifications = [
   },
   {
     id: "notif-2",
-    user_id: "doctor-tim-burton",
+    user_id: timBurtonId,
     type: "prescription_created",
     title: "Prescription Sent",
     message: "Prescription #PR-2023-001 for patient Sally has been sent",
@@ -38,7 +41,7 @@ const timBurtonNotifications = [
   },
   {
     id: "notif-3",
-    user_id: "doctor-tim-burton",
+    user_id: timBurtonId,
     type: "payment_failed",
     title: "Payment Failed",
     message: "Your subscription payment has failed. Please update your payment method.",
@@ -47,7 +50,7 @@ const timBurtonNotifications = [
   },
   {
     id: "notif-4",
-    user_id: "doctor-tim-burton",
+    user_id: timBurtonId,
     type: "new_teleconsultation",
     title: "New Teleconsultation",
     message: "You have a new teleconsultation scheduled with Edward Scissorhands at 3:00 PM tomorrow",
@@ -88,7 +91,7 @@ export const seedTimBurtonData = async () => {
     // 3. Insert mock activities (convert from mockActivities format)
     const activitiesForTimBurton = mockActivities.map(activity => ({
       id: activity.id,
-      user_id: "doctor-tim-burton",
+      user_id: timBurtonId, // Use the fixed UUID format
       type: activity.type,
       title: activity.title,
       description: activity.description,
@@ -104,7 +107,7 @@ export const seedTimBurtonData = async () => {
     const { error: deleteError } = await supabase
       .from('activities')
       .delete()
-      .eq('user_id', 'doctor-tim-burton');
+      .eq('user_id', timBurtonId);
       
     if (deleteError) {
       console.error("Error deleting existing activities:", deleteError);
@@ -126,7 +129,7 @@ export const seedTimBurtonData = async () => {
 
     return {
       success: true,
-      doctorId: "doctor-tim-burton",
+      doctorId: timBurtonId,
       activitiesCount: activitiesForTimBurton.length
     };
   } catch (error) {
