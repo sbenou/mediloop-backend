@@ -1,18 +1,28 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Activity, ActivityItem, ActivityType } from "./ActivityItem";
+import { useActivities } from "@/hooks/useActivities";
 
-interface ActivityFeedProps {
-  activities: Activity[];
-  onMarkRead: (id: string) => void;
-  onMarkAllRead: () => void;
-}
-
-export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: ActivityFeedProps) => {
+export const ActivityFeed = () => {
+  const { 
+    activities, 
+    isLoading, 
+    fetchActivities, 
+    markAsRead, 
+    markAllAsRead,
+    setupRealtimeSubscription 
+  } = useActivities();
+  
   const [activeTab, setActiveTab] = useState<"all" | ActivityType>("all");
+  
+  useEffect(() => {
+    fetchActivities();
+    const cleanup = setupRealtimeSubscription();
+    return cleanup;
+  }, [fetchActivities, setupRealtimeSubscription]);
   
   const filteredActivities = activeTab === "all" 
     ? activities 
@@ -43,6 +53,17 @@ export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: Activity
   
   const hasActivities = filteredActivities.length > 0;
   
+  if (isLoading) {
+    return (
+      <div className="h-full flex flex-col">
+        <h2 className="text-xl font-semibold mb-4">Activity Feed</h2>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-pulse text-muted-foreground">Loading activities...</div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
@@ -51,7 +72,7 @@ export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: Activity
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={onMarkAllRead}
+            onClick={markAllAsRead}
             className="text-xs"
           >
             Mark all read
@@ -82,7 +103,7 @@ export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: Activity
                         <ActivityItem 
                           key={activity.id} 
                           activity={activity} 
-                          onMarkRead={onMarkRead} 
+                          onMarkRead={markAsRead} 
                         />
                       ))}
                     </div>
@@ -97,7 +118,7 @@ export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: Activity
                         <ActivityItem 
                           key={activity.id} 
                           activity={activity} 
-                          onMarkRead={onMarkRead} 
+                          onMarkRead={markAsRead} 
                         />
                       ))}
                     </div>
@@ -112,7 +133,7 @@ export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: Activity
                         <ActivityItem 
                           key={activity.id} 
                           activity={activity} 
-                          onMarkRead={onMarkRead} 
+                          onMarkRead={markAsRead} 
                         />
                       ))}
                     </div>
@@ -127,7 +148,7 @@ export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: Activity
                         <ActivityItem 
                           key={activity.id} 
                           activity={activity} 
-                          onMarkRead={onMarkRead} 
+                          onMarkRead={markAsRead} 
                         />
                       ))}
                     </div>
@@ -150,7 +171,7 @@ export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: Activity
                   <ActivityItem 
                     key={activity.id} 
                     activity={activity} 
-                    onMarkRead={onMarkRead} 
+                    onMarkRead={markAsRead} 
                   />
                 ))}
               </div>
@@ -170,7 +191,7 @@ export const ActivityFeed = ({ activities, onMarkRead, onMarkAllRead }: Activity
                   <ActivityItem 
                     key={activity.id} 
                     activity={activity} 
-                    onMarkRead={onMarkRead} 
+                    onMarkRead={markAsRead} 
                   />
                 ))}
               </div>

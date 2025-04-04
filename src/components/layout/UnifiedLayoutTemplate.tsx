@@ -9,9 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { Advertisements } from "@/components/activity/Advertisements";
-import { mockActivities } from "@/components/activity/mockActivities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UserMenu from "@/components/UserMenu";
@@ -23,31 +21,8 @@ interface UnifiedLayoutProps {
 const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
-  const [activities, setActivities] = useState(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
   const { userRole } = useAuth();
-  
-  const handleMarkRead = (id: string) => {
-    setActivities(prevActivities => 
-      prevActivities.map(activity => 
-        activity.id === id ? { ...activity, read: true } : activity
-      )
-    );
-    toast({
-      title: "Activity marked as read",
-      duration: 2000,
-    });
-  };
-
-  const handleMarkAllRead = () => {
-    setActivities(prevActivities => 
-      prevActivities.map(activity => ({ ...activity, read: true }))
-    );
-    toast({
-      title: "All activities marked as read",
-      duration: 2000,
-    });
-  };
   
   console.log("UnifiedLayoutTemplate rendering for role:", userRole);
   
@@ -128,17 +103,7 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
                 </TabsContent>
                 
                 <TabsContent value="activity" className="mt-0">
-                  {Array.isArray(activities) ? (
-                    <ActivityFeed 
-                      activities={activities}
-                      onMarkRead={handleMarkRead}
-                      onMarkAllRead={handleMarkAllRead}
-                    />
-                  ) : (
-                    <div className="p-4 border rounded text-amber-700 bg-amber-50">
-                      Activities unavailable
-                    </div>
-                  )}
+                  <ActivityFeed />
                 </TabsContent>
               </Tabs>
             </div>

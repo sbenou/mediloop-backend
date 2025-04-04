@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      activities: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          meta: Json | null
+          read: boolean
+          related_id: string | null
+          related_type: string | null
+          team_id: string | null
+          tenant_id: string | null
+          timestamp: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          meta?: Json | null
+          read?: boolean
+          related_id?: string | null
+          related_type?: string | null
+          team_id?: string | null
+          tenant_id?: string | null
+          timestamp?: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          meta?: Json | null
+          read?: boolean
+          related_id?: string | null
+          related_type?: string | null
+          team_id?: string | null
+          tenant_id?: string | null
+          timestamp?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       addresses: {
         Row: {
           city: string
@@ -811,6 +862,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      create_activity: {
+        Args: {
+          p_user_id: string
+          p_type: string
+          p_title: string
+          p_description: string
+          p_related_id?: string
+          p_related_type?: string
+          p_meta?: Json
+          p_tenant_id?: string
+          p_team_id?: string
+        }
+        Returns: string
+      }
       create_profile: {
         Args: {
           user_id: string
@@ -830,6 +895,17 @@ export type Database = {
           user_license_number: string
         }
         Returns: undefined
+      }
+      create_system_activity: {
+        Args: {
+          p_type: string
+          p_title: string
+          p_description: string
+          p_related_id?: string
+          p_related_type?: string
+          p_meta?: Json
+        }
+        Returns: string
       }
       get_admin_dashboard_stats: {
         Args: Record<PropertyKey, never>
@@ -854,6 +930,16 @@ export type Database = {
       is_user_pharmacist: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      mark_activity_read: {
+        Args: {
+          activity_id: string
+        }
+        Returns: undefined
+      }
+      mark_all_activities_read: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       mark_all_notifications_read: {
         Args: Record<PropertyKey, never>
