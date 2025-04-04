@@ -59,19 +59,31 @@ const timBurtonNotifications = [
 // Function to seed Tim Burton's mock data
 export const seedTimBurtonData = async () => {
   try {
+    console.log("Starting to seed Tim Burton data...");
+    
     // 1. Insert or update Tim Burton's profile
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert(timBurtonDoctorData, { onConflict: 'id' });
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error("Error inserting profile:", profileError);
+      throw profileError;
+    }
+
+    console.log("Profile data inserted successfully");
 
     // 2. Insert mock notifications
     const { error: notificationsError } = await supabase
       .from('notifications')
       .upsert(timBurtonNotifications, { onConflict: 'id' });
 
-    if (notificationsError) throw notificationsError;
+    if (notificationsError) {
+      console.error("Error inserting notifications:", notificationsError);
+      throw notificationsError;
+    }
+
+    console.log("Notifications inserted successfully");
 
     // 3. Insert mock activities (convert from mockActivities format)
     const activitiesForTimBurton = mockActivities.map(activity => ({
@@ -86,11 +98,31 @@ export const seedTimBurtonData = async () => {
       updated_at: activity.timestamp.toISOString()
     }));
 
-    const { error: activitiesError } = await supabase
-      .from('activities')
-      .upsert(activitiesForTimBurton, { onConflict: 'id' });
+    console.log("Preparing to insert activities:", activitiesForTimBurton);
 
-    if (activitiesError) throw activitiesError;
+    // Delete existing records first to avoid constraints on the primary key
+    const { error: deleteError } = await supabase
+      .from('activities')
+      .delete()
+      .eq('user_id', 'doctor-tim-burton');
+      
+    if (deleteError) {
+      console.error("Error deleting existing activities:", deleteError);
+      // Continue anyway
+    }
+
+    // Insert new activities
+    const { data: activitiesData, error: activitiesError } = await supabase
+      .from('activities')
+      .insert(activitiesForTimBurton)
+      .select();
+
+    if (activitiesError) {
+      console.error("Error inserting activities:", activitiesError);
+      throw activitiesError;
+    }
+
+    console.log("Activities inserted successfully:", activitiesData);
 
     toast({
       title: "Test data loaded successfully",
@@ -99,7 +131,8 @@ export const seedTimBurtonData = async () => {
 
     return {
       success: true,
-      doctorId: "doctor-tim-burton"
+      doctorId: "doctor-tim-burton",
+      activitiesCount: activitiesForTimBurton.length
     };
   } catch (error) {
     console.error("Error loading test data:", error);

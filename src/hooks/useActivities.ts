@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Activity } from '@/components/activity/ActivityItem';
 import { toast } from '@/components/ui/use-toast';
@@ -27,10 +27,13 @@ export const useActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   const fetchActivities = useCallback(async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching activities...");
+      
       // Use the explicit cast to tell TypeScript we're using the custom activities table
       const { data, error } = await supabase
         .from('activities')
@@ -38,8 +41,11 @@ export const useActivities = () => {
         .order('timestamp', { ascending: false });
 
       if (error) {
+        console.error("Error from Supabase:", error);
         throw error;
       }
+
+      console.log("Raw activities data from Supabase:", data);
 
       if (data) {
         // Transform the data into the Activity format
@@ -52,8 +58,11 @@ export const useActivities = () => {
           read: item.read
         }));
         
+        console.log("Formatted activities:", formattedActivities);
+        
         setActivities(formattedActivities);
         setUnreadCount(formattedActivities.filter(activity => !activity.read).length);
+        setLastFetchTime(Date.now());
       }
     } catch (error) {
       console.error('Error fetching activities:', error);
@@ -66,6 +75,15 @@ export const useActivities = () => {
       setIsLoading(false);
     }
   }, []);
+
+  // Add a refresh function that can be called to force a reload
+  const refreshActivities = useCallback(() => {
+    // Only refresh if it's been more than 2 seconds since the last fetch
+    // to prevent too many refreshes happening at once
+    if (Date.now() - lastFetchTime > 2000) {
+      fetchActivities();
+    }
+  }, [fetchActivities, lastFetchTime]);
 
   const markAsRead = useCallback(async (id: string) => {
     try {
@@ -128,6 +146,8 @@ export const useActivities = () => {
   }, []);
 
   const setupRealtimeSubscription = useCallback(() => {
+    console.log("Setting up realtime subscription for activities...");
+    
     const channel = supabase
       .channel('activities_changes')
       .on('postgres_changes', {
@@ -135,20 +155,23 @@ export const useActivities = () => {
         schema: 'public',
         table: 'activities'
       }, (payload) => {
-        fetchActivities();
+        console.log("Realtime update received:", payload);
+        refreshActivities();
       })
       .subscribe();
 
     return () => {
+      console.log("Cleaning up activities subscription");
       supabase.removeChannel(channel);
     };
-  }, [fetchActivities]);
+  }, [refreshActivities]);
 
   return {
     activities,
     isLoading,
     unreadCount,
     fetchActivities,
+    refreshActivities,
     markAsRead,
     markAllAsRead,
     setupRealtimeSubscription

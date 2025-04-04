@@ -5,19 +5,27 @@ import { seedTimBurtonData } from "@/utils/mockDataSeeder";
 import { seedUserNotifications } from "@/utils/seedNotifications";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { toast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 export const ActivityDataLoader = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingActivities, setIsLoadingActivities] = useState(false);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const { user } = useAuth();
 
   const handleLoadActivitiesData = async () => {
-    setIsLoading(true);
+    setIsLoadingActivities(true);
     try {
-      await seedTimBurtonData();
-      toast({
-        title: "Activities test data loaded",
-        description: "Mock activities have been loaded successfully"
-      });
+      const result = await seedTimBurtonData();
+      console.log("Activities data loading result:", result);
+      
+      if (result?.success) {
+        toast({
+          title: "Activities test data loaded",
+          description: "Mock activities have been loaded successfully"
+        });
+      } else {
+        throw new Error("Failed to load activities data");
+      }
     } catch (error) {
       console.error("Error loading activities data:", error);
       toast({
@@ -26,7 +34,7 @@ export const ActivityDataLoader = () => {
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingActivities(false);
     }
   };
 
@@ -40,9 +48,11 @@ export const ActivityDataLoader = () => {
       return;
     }
     
-    setIsLoading(true);
+    setIsLoadingNotifications(true);
     try {
-      await seedUserNotifications(user.id);
+      const result = await seedUserNotifications(user.id);
+      console.log("Notifications data loading result:", result);
+      
       toast({
         title: "Notifications test data loaded",
         description: "Mock notifications have been loaded successfully"
@@ -55,7 +65,7 @@ export const ActivityDataLoader = () => {
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingNotifications(false);
     }
   };
 
@@ -65,19 +75,33 @@ export const ActivityDataLoader = () => {
         size="sm"
         variant="outline"
         onClick={handleLoadActivitiesData}
-        disabled={isLoading}
-        className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+        disabled={isLoadingActivities || isLoadingNotifications}
+        className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 min-w-[180px] justify-between"
       >
-        {isLoading ? "Loading..." : "Load Activities Data"}
+        {isLoadingActivities ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <span>Loading Activities...</span>
+          </>
+        ) : (
+          <span>Load Activities Data</span>
+        )}
       </Button>
       <Button 
         size="sm"
         variant="outline"
         onClick={handleLoadNotifications}
-        disabled={isLoading}
-        className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+        disabled={isLoadingActivities || isLoadingNotifications || !user}
+        className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 min-w-[180px] justify-between"
       >
-        {isLoading ? "Loading..." : "Load Notifications Data"}
+        {isLoadingNotifications ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <span>Loading Notifications...</span>
+          </>
+        ) : (
+          <span>Load Notifications Data</span>
+        )}
       </Button>
     </div>
   );

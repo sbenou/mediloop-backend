@@ -10,7 +10,11 @@ import {
   RefreshCw, 
   Package, 
   Settings, 
-  CreditCard
+  CreditCard, 
+  FileText,
+  Clock,
+  Award,
+  Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +28,11 @@ export type ActivityType =
   | "doctor_connected" 
   | "profile_updated" 
   | "payment_processed" 
-  | "system_alert";
+  | "system_alert"
+  | "payment_failed"
+  | "profile_updated"
+  | "teleconsultation_scheduled"
+  | "delivery_status_updated";
 
 export interface Activity {
   id: string;
@@ -64,6 +72,7 @@ export const ActivityItem = ({ activity, onMarkRead }: ActivityItemProps) => {
           color: "bg-green-100 text-green-800 border-green-200" 
         };
       case "appointment_scheduled":
+      case "teleconsultation_scheduled":
         return { 
           icon: <Calendar className="h-4 w-4" />, 
           color: "bg-indigo-100 text-indigo-800 border-indigo-200" 
@@ -74,15 +83,29 @@ export const ActivityItem = ({ activity, onMarkRead }: ActivityItemProps) => {
           color: "bg-teal-100 text-teal-800 border-teal-200" 
         };
       case "profile_updated":
-      case "payment_processed":
         return { 
           icon: <Settings className="h-4 w-4" />, 
           color: "bg-gray-100 text-gray-800 border-gray-200" 
         };
-      case "system_alert":
+      case "payment_processed":
+        return { 
+          icon: <CreditCard className="h-4 w-4" />, 
+          color: "bg-emerald-100 text-emerald-800 border-emerald-200" 
+        };
+      case "payment_failed":
         return { 
           icon: <AlertCircle className="h-4 w-4" />, 
           color: "bg-red-100 text-red-800 border-red-200" 
+        };
+      case "system_alert":
+        return { 
+          icon: <Bell className="h-4 w-4" />, 
+          color: "bg-amber-100 text-amber-800 border-amber-200" 
+        };
+      case "delivery_status_updated":
+        return { 
+          icon: <Clock className="h-4 w-4" />, 
+          color: "bg-cyan-100 text-cyan-800 border-cyan-200" 
         };
       default:
         return { 
@@ -97,7 +120,7 @@ export const ActivityItem = ({ activity, onMarkRead }: ActivityItemProps) => {
   return (
     <div 
       className={cn(
-        "p-3 border rounded-md mb-2 cursor-pointer flex relative",
+        "p-3 border rounded-md mb-2 cursor-pointer flex relative hover:shadow-sm transition-all duration-200",
         activity.read ? "opacity-70 bg-gray-50" : color,
         "hover:opacity-90 transition-all"
       )}

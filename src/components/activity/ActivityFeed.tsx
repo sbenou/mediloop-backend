@@ -19,16 +19,24 @@ export const ActivityFeed = () => {
   const [activeTab, setActiveTab] = useState<"all" | ActivityType>("all");
   
   useEffect(() => {
+    console.log("ActivityFeed: Fetching activities");
     fetchActivities();
     const cleanup = setupRealtimeSubscription();
     return cleanup;
   }, [fetchActivities, setupRealtimeSubscription]);
+  
+  useEffect(() => {
+    console.log("Loaded activities:", activities.length, activities);
+  }, [activities]);
   
   const filteredActivities = activeTab === "all" 
     ? activities 
     : activities.filter(activity => activity.type === activeTab);
   
   const unreadCount = activities.filter(a => !a.read).length;
+  
+  // Get unique activity types from the loaded activities
+  const activityTypes = Array.from(new Set(activities.map(activity => activity.type)));
   
   // Group activities by date (today, yesterday, earlier this week, earlier)
   const groupActivitiesByDate = (activities: Activity[]) => {
@@ -81,10 +89,23 @@ export const ActivityFeed = () => {
       </div>
       
       <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setActiveTab(value as "all" | ActivityType)}>
-        <TabsList className="grid grid-cols-3 mb-4 w-full">
+        <TabsList className={`grid ${activityTypes.length > 3 ? 'grid-cols-4' : 'grid-cols-3'} mb-4 w-full`}>
           <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-          <TabsTrigger value="prescription_created" className="text-xs whitespace-normal p-1">Prescriptions</TabsTrigger>
-          <TabsTrigger value="order_placed" className="text-xs">Orders</TabsTrigger>
+          {activityTypes.includes("prescription_created") && (
+            <TabsTrigger value="prescription_created" className="text-xs whitespace-normal p-1">Prescriptions</TabsTrigger>
+          )}
+          {activityTypes.includes("order_placed") && (
+            <TabsTrigger value="order_placed" className="text-xs">Orders</TabsTrigger>
+          )}
+          {activityTypes.includes("doctor_connected") && (
+            <TabsTrigger value="doctor_connected" className="text-xs">Connections</TabsTrigger>
+          )}
+          {activityTypes.includes("appointment_scheduled") && (
+            <TabsTrigger value="appointment_scheduled" className="text-xs">Appointments</TabsTrigger>
+          )}
+          {activityTypes.includes("system_alert") && (
+            <TabsTrigger value="system_alert" className="text-xs">Alerts</TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="all" className="mt-0">
@@ -159,45 +180,28 @@ export const ActivityFeed = () => {
           </ScrollArea>
         </TabsContent>
         
-        <TabsContent value="prescription_created" className="mt-0">
-          <ScrollArea className="h-[calc(100vh-180px)]">
-            {filteredActivities.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No prescription activities to display
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filteredActivities.map(activity => (
-                  <ActivityItem 
-                    key={activity.id} 
-                    activity={activity} 
-                    onMarkRead={markAsRead} 
-                  />
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </TabsContent>
-        
-        <TabsContent value="order_placed" className="mt-0">
-          <ScrollArea className="h-[calc(100vh-180px)]">
-            {filteredActivities.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No order activities to display
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filteredActivities.map(activity => (
-                  <ActivityItem 
-                    key={activity.id} 
-                    activity={activity} 
-                    onMarkRead={markAsRead} 
-                  />
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </TabsContent>
+        {/* Dynamically generate tab content for each activity type */}
+        {activityTypes.map(type => (
+          <TabsContent key={type} value={type} className="mt-0">
+            <ScrollArea className="h-[calc(100vh-180px)]">
+              {filteredActivities.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  No {type.replace('_', ' ')} activities to display
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredActivities.map(activity => (
+                    <ActivityItem 
+                      key={activity.id} 
+                      activity={activity} 
+                      onMarkRead={markAsRead} 
+                    />
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
