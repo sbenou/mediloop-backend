@@ -2,6 +2,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.16";
 
+// CORS headers to allow requests from any origin
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 type NotificationType = 
   | "payment_failed" 
   | "payment_successful" 
@@ -27,6 +33,16 @@ interface NotificationData {
 }
 
 serve(async (req) => {
+  console.log("Seed notifications function called");
+  
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204
+    });
+  }
+  
   try {
     // Create a Supabase client with the Admin key
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -34,11 +50,12 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { user_id } = await req.json();
+    console.log("User ID received:", user_id);
 
     if (!user_id) {
       return new Response(
         JSON.stringify({ error: "User ID is required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -50,9 +67,10 @@ serve(async (req) => {
       .single();
 
     if (userError || !user) {
+      console.error("User not found:", userError);
       return new Response(
         JSON.stringify({ error: "User not found" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -70,6 +88,7 @@ serve(async (req) => {
     // Generate mock notifications based on role
     let mockNotifications: NotificationData[] = [];
     const role = user.role;
+    console.log("User role:", role);
     
     if (role === 'doctor') {
       mockNotifications = [
@@ -165,18 +184,23 @@ serve(async (req) => {
       created_at: notification.created_at
     }));
 
+    console.log(`Inserting ${notificationsToInsert.length} notifications for user ${user_id}`);
+    
     const { data, error } = await supabase
       .from("notifications")
       .insert(notificationsToInsert)
       .select();
 
     if (error) {
+      console.error("Error inserting notifications:", error);
       return new Response(
         JSON.stringify({ error: error.message }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log(`Successfully inserted ${data.length} notifications`);
+    
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -184,12 +208,13 @@ serve(async (req) => {
         count: data.length,
         data 
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error("Unexpected error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
