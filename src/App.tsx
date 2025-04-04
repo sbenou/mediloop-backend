@@ -8,6 +8,7 @@ import { RecoilRoot } from "recoil";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { ActivityDataLoader } from "@/components/activity/ActivityDataLoader";
 
 function App() {
   const queryClient = new QueryClient()
@@ -34,7 +35,8 @@ function App() {
         </AuthProvider>
       </RecoilRoot>
       
-      {/* Test Data Loader removed */}
+      {/* Add the activity data loader for development */}
+      {import.meta.env.DEV && <ActivityDataLoader />}
     </div>
   );
 }
