@@ -143,19 +143,19 @@ export const useAvailabilityData = (
         const defaultPatient = { full_name: 'Unknown Patient', email: null };
         const defaultDoctor = { full_name: 'Unknown Doctor', email: null };
         
-        // Check if patient exists and has no errors
-        const patientData = item.patient && typeof item.patient === 'object' && !('error' in item.patient) 
+        // Use type guards to check if patient data is valid
+        const patientData = typeof item.patient === 'object' && item.patient !== null && !('error' in item.patient)
           ? { 
-              full_name: item.patient?.full_name || 'Unknown Patient',
-              email: item.patient?.email
+              full_name: item.patient.full_name || 'Unknown Patient',
+              email: item.patient.email
             }
           : defaultPatient;
         
-        // Check if doctor exists and has no errors
-        const doctorData = item.doctor && typeof item.doctor === 'object' && !('error' in item.doctor)
+        // Use type guards to check if doctor data is valid
+        const doctorData = typeof item.doctor === 'object' && item.doctor !== null && !('error' in item.doctor)
           ? {
-              full_name: item.doctor?.full_name || 'Unknown Doctor',
-              email: item.doctor?.email
+              full_name: item.doctor.full_name || 'Unknown Doctor',
+              email: item.doctor.email
             }
           : defaultDoctor;
         
