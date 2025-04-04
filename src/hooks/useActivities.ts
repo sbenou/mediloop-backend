@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Activity } from '@/components/activity/ActivityItem';
@@ -5,7 +6,7 @@ import { toast } from '@/components/ui/use-toast';
 
 // Define type for activities table in Supabase
 interface ActivitiesResponse {
-  id: string;
+  id: string; // Now using string for UUID compatibility
   user_id: string;
   type: string;
   title: string;

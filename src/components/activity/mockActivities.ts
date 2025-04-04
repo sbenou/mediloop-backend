@@ -1,5 +1,6 @@
 
 import { Activity } from "./ActivityItem";
+import { v4 as uuidv4 } from "uuid";
 
 // Generate a random date within the last 30 days
 const getRandomDate = (daysAgo: number = 30) => {
@@ -10,7 +11,7 @@ const getRandomDate = (daysAgo: number = 30) => {
 
 export const mockActivities: Activity[] = [
   {
-    id: "1",
+    id: uuidv4(),
     type: "prescription_created",
     title: "New Prescription Added",
     description: "Dr. Smith has created a new prescription for Amoxicillin 500mg.",
@@ -18,7 +19,7 @@ export const mockActivities: Activity[] = [
     read: false
   },
   {
-    id: "2",
+    id: uuidv4(),
     type: "order_placed",
     title: "Order Placed",
     description: "Your order #12345 for $78.50 has been placed successfully.",
@@ -26,7 +27,7 @@ export const mockActivities: Activity[] = [
     read: false
   },
   {
-    id: "3",
+    id: uuidv4(),
     type: "doctor_connected",
     title: "New Doctor Connection",
     description: "Dr. Johnson, Cardiologist, has accepted your connection request.",
@@ -34,7 +35,7 @@ export const mockActivities: Activity[] = [
     read: true
   },
   {
-    id: "4",
+    id: uuidv4(),
     type: "order_shipped",
     title: "Order Shipped",
     description: "Your medication order #12345 has been shipped and is on its way.",
@@ -42,7 +43,7 @@ export const mockActivities: Activity[] = [
     read: false
   },
   {
-    id: "5",
+    id: uuidv4(),
     type: "appointment_scheduled",
     title: "Teleconsultation Scheduled",
     description: "Your teleconsultation with Dr. Williams is confirmed for tomorrow at 10:00 AM.",
@@ -50,7 +51,7 @@ export const mockActivities: Activity[] = [
     read: true
   },
   {
-    id: "6",
+    id: uuidv4(),
     type: "prescription_updated",
     title: "Prescription Updated",
     description: "Your prescription for Lisinopril has been updated from 10mg to 20mg daily.",
@@ -58,7 +59,7 @@ export const mockActivities: Activity[] = [
     read: false
   },
   {
-    id: "7",
+    id: uuidv4(),
     type: "system_alert",
     title: "Payment Failed",
     description: "Your payment for order #54321 was declined. Please update your payment method.",
@@ -66,7 +67,7 @@ export const mockActivities: Activity[] = [
     read: false
   },
   {
-    id: "8",
+    id: uuidv4(),
     type: "profile_updated",
     title: "Profile Information Updated",
     description: "Your profile information has been successfully updated.",
@@ -74,7 +75,7 @@ export const mockActivities: Activity[] = [
     read: true
   },
   {
-    id: "9",
+    id: uuidv4(),
     type: "order_delivered",
     title: "Order Delivered",
     description: "Your order #98765 has been delivered to your default address.",
@@ -82,7 +83,7 @@ export const mockActivities: Activity[] = [
     read: true
   },
   {
-    id: "10",
+    id: uuidv4(),
     type: "payment_processed",
     title: "Payment Processed",
     description: "Your payment of $45.99 for order #87654 has been processed successfully.",
@@ -90,7 +91,7 @@ export const mockActivities: Activity[] = [
     read: true
   },
   {
-    id: "11",
+    id: uuidv4(),
     type: "prescription_created",
     title: "New Prescription Added",
     description: "Dr. Brown has created a new prescription for Metformin 1000mg.",
@@ -98,7 +99,7 @@ export const mockActivities: Activity[] = [
     read: true
   },
   {
-    id: "12",
+    id: uuidv4(),
     type: "appointment_scheduled",
     title: "Appointment Confirmed",
     description: "Your in-person appointment with Dr. Garcia is confirmed for next Tuesday at 2:00 PM.",

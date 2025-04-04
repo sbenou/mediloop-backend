@@ -33,7 +33,7 @@ export const seedTimBurtonData = async () => {
     
     console.log("Profile data found:", profile);
 
-    // 2. Delete existing records first to avoid constraints on the primary key
+    // 2. Delete existing records first to avoid conflicts
     const { error: deleteError } = await supabase
       .from('activities')
       .delete()
@@ -46,6 +46,7 @@ export const seedTimBurtonData = async () => {
 
     // 3. Insert mock activities for the current user
     const activitiesForUser = mockActivities.map(activity => ({
+      // Use the UUID from mockActivities directly instead of numeric strings
       id: activity.id,
       user_id: userId,
       type: activity.type,

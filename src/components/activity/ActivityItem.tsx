@@ -40,7 +40,7 @@ export type ActivityType =
   | string; // Allow any string to support future activity types
 
 export interface Activity {
-  id: string;
+  id: string;  // This can now be a UUID string
   type: ActivityType;
   title: string;
   description: string;
