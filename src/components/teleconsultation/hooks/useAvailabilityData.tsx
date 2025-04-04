@@ -159,6 +159,9 @@ export const useAvailabilityData = (
             }
           : defaultDoctor;
         
+        // Ensure the meta field exists, even if it's empty
+        const meta = item.meta || {};
+        
         return {
           id: item.id,
           patient_id: item.patient_id,
@@ -172,7 +175,7 @@ export const useAvailabilityData = (
           updated_at: item.updated_at,
           patient: patientData,
           doctor: doctorData,
-          meta: item.meta
+          meta: meta
         } as Teleconsultation;
       });
       

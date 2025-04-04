@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +15,7 @@ interface DoctorAvailabilityCalendarProps {
   doctorName?: string;
   onBookingConfirmed?: () => void;
   isManagementMode?: boolean;
-  appointmentType?: 'teleconsultation' | 'in-person' | 'both';
+  appointmentType?: AppointmentType;
 }
 
 // Define constant for days of week
@@ -144,6 +143,7 @@ const DoctorAvailabilityCalendar = ({
             console.error('Error processing additional time slots:', e);
           }
           
+          // Use as unknown as DoctorAvailability to safely add the missing properties
           return {
             id: item.id,
             doctor_id: item.doctor_id,
@@ -155,7 +155,7 @@ const DoctorAvailabilityCalendar = ({
             updated_at: item.updated_at,
             additional_time_slots: additionalTimeSlots,
             time_slots: allTimeSlots,
-            appointment_type: (item.appointment_type as AppointmentType) || appointmentType || 'both'
+            appointment_type: item.appointment_type as AppointmentType || appointmentType || 'both'
           } as DoctorAvailability;
         });
         

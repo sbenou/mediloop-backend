@@ -1,42 +1,69 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { format, addHours, setHours, setMinutes, parse } from 'date-fns';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { toast } from '@/components/ui/use-toast';
-import { useAuth } from '@/hooks/auth/useAuth';
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format, setMinutes, setHours, addHours, parseISO } from "date-fns";
+import { z } from "zod";
+import { toast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Calendar as CalendarIcon, User, Clock, CircleAlert } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { AppointmentType } from "@/types/supabase";
 
+// Define props for the component
 interface TeleconsultationBookingDialogProps {
   isOpen: boolean;
   onClose: () => void;
   selectedDate?: Date;
   selectedTime?: string;
   doctorId: string;
-  patients?: Array<{ id: string; name: string }>;
+  patients?: Array<{ id: string, name: string, email?: string }>;
   onBookingCreated?: () => void;
   appointmentType?: 'teleconsultation' | 'in-person';
 }
 
+// Create a schema for form validation
 const bookingSchema = z.object({
-  patientId: z.string().nonempty('Please select a patient'),
-  date: z.date(),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please enter a valid time (e.g. 14:30)'),
-  duration: z.number().min(15, 'Minimum duration is 15 minutes').max(120, 'Maximum duration is 120 minutes'),
-  reason: z.string().optional(),
+  date: z.date({
+    required_error: "A date is required",
+  }),
+  time: z.string({
+    required_error: "A time is required",
+  }),
+  patientId: z.string({
+    required_error: "A patient is required",
+  }),
+  reason: z.string().min(5, {
+    message: "Reason must be at least 5 characters",
+  }).max(500, {
+    message: "Reason must not be more than 500 characters",
+  }),
+  duration: z.number().min(10, {
+    message: "Duration must be at least 10 minutes",
+  }).max(120, {
+    message: "Duration must not be more than 120 minutes",
+  }),
 });
 
-type BookingFormData = z.infer<typeof bookingSchema>;
+// Generate available time options in 15-minute intervals from 8 AM to 8 PM
+const generateTimeOptions = () => {
+  const times = [];
+  for (let hour = 8; hour < 20; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const formattedHour = hour.toString().padStart(2, '0');
+      const formattedMinute = minute.toString().padStart(2, '0');
+      times.push(`${formattedHour}:${formattedMinute}`);
+    }
+  }
+  return times;
+};
+
+const TIME_OPTIONS = generateTimeOptions();
 
 const TeleconsultationBookingDialog = ({
   isOpen,
@@ -48,283 +75,246 @@ const TeleconsultationBookingDialog = ({
   onBookingCreated,
   appointmentType = 'teleconsultation'
 }: TeleconsultationBookingDialogProps) => {
-  const { profile } = useAuth();
-  const isDoctor = profile?.role === 'doctor';
+  const [date, setDate] = useState<Date | undefined>(selectedDate);
+  const [time, setTime] = useState<string | undefined>(selectedTime);
+  const [patientId, setPatientId] = useState<string>("");
+  const [reason, setReason] = useState<string>("");
+  const [duration, setDuration] = useState<number>(30);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>(patients.length > 0 ? 'existing' : 'new');
-
-  const defaultDate = selectedDate || new Date();
-  const defaultTime = selectedTime || '09:00';
-  const defaultDuration = 30;
-
-  const form = useForm<BookingFormData>({
-    resolver: zodResolver(bookingSchema),
-    defaultValues: {
-      patientId: patients.length > 0 ? patients[0].id : '',
-      date: defaultDate,
-      time: defaultTime,
-      duration: defaultDuration,
-      reason: '',
-    },
-  });
-
-  const onSubmit = async (data: BookingFormData) => {
+  const [activeTab, setActiveTab] = useState("details");
+  
+  // Populate fields if values are provided
+  useEffect(() => {
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+    if (selectedTime) {
+      setTime(selectedTime);
+    }
+    // Set first patient as default if available
+    if (patients.length > 0 && !patientId) {
+      setPatientId(patients[0].id);
+    }
+  }, [selectedDate, selectedTime, patients, patientId]);
+  
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
-      setIsSubmitting(true);
-
-      // Create start and end times from the form data
-      const dateStr = format(data.date, 'yyyy-MM-dd');
-      const [hours, minutes] = data.time.split(':').map(Number);
-      const startTime = new Date(`${dateStr}T${data.time}`);
-      const endTime = addHours(startTime, data.duration / 60);
-
-      const appointmentMeta: Record<string, any> = {};
-      
-      // Set the appointment type metadata
-      if (appointmentType === 'teleconsultation') {
-        appointmentMeta.is_teleconsultation = true;
-        appointmentMeta.appointment_type = 'teleconsultation';
-      } else {
-        appointmentMeta.is_in_person = true;
-        appointmentMeta.appointment_type = 'in-person';
+      // Validate form data
+      if (!date || !time || !patientId || !reason) {
+        toast({
+          variant: "destructive",
+          title: "Missing information",
+          description: "Please fill in all required fields."
+        });
+        return;
       }
-
-      // Create the teleconsultation
-      const { data: newConsultation, error } = await supabase
+      
+      setIsSubmitting(true);
+      
+      // Create start and end time by combining date and time
+      const [hours, minutes] = time.split(':').map(Number);
+      const startDateTime = setMinutes(setHours(date, hours), minutes);
+      const endDateTime = addHours(startDateTime, duration / 60);
+      
+      // Create the teleconsultation record
+      const { data, error } = await supabase
         .from('teleconsultations')
-        .insert({
-          doctor_id: doctorId,
-          patient_id: data.patientId,
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-          status: 'confirmed',
-          reason: data.reason || `${appointmentType === 'teleconsultation' ? 'Teleconsultation' : 'In-person appointment'} at ${format(startTime, 'p')}`,
-          meta: appointmentMeta
-        })
-        .select()
-        .single();
-
+        .insert([
+          {
+            doctor_id: doctorId,
+            patient_id: patientId,
+            start_time: startDateTime.toISOString(),
+            end_time: endDateTime.toISOString(),
+            reason: reason,
+            status: 'confirmed',
+            meta: {
+              appointment_type: appointmentType,
+              is_teleconsultation: appointmentType === 'teleconsultation',
+              is_in_person: appointmentType === 'in-person',
+              duration_minutes: duration
+            }
+          }
+        ])
+        .select();
+        
       if (error) {
         throw error;
       }
-
+      
       toast({
-        title: `${appointmentType === 'teleconsultation' ? 'Teleconsultation' : 'Appointment'} scheduled`,
-        description: `The ${appointmentType === 'teleconsultation' ? 'teleconsultation' : 'appointment'} has been successfully scheduled.`,
+        title: "Appointment created",
+        description: `Your ${appointmentType} appointment has been successfully scheduled.`
       });
-
+      
+      // Call the callback if provided
       if (onBookingCreated) {
         onBookingCreated();
       }
-
+      
+      // Close the dialog
       onClose();
+      
     } catch (error) {
       console.error('Error creating teleconsultation:', error);
       toast({
-        variant: 'destructive',
-        title: 'Failed to schedule',
-        description: 'There was an error creating the appointment. Please try again.',
+        variant: "destructive",
+        title: "Failed to create appointment",
+        description: "There was an error scheduling your appointment. Please try again."
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+  
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
 
-  const formattedDate = form.watch('date') ? format(form.watch('date'), 'EEEE, MMMM d, yyyy') : '';
+  const getAppointmentTypeTitle = () => {
+    return appointmentType === 'teleconsultation' 
+      ? 'Schedule Teleconsultation'
+      : 'Schedule In-Person Appointment';
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md md:max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {appointmentType === 'teleconsultation' ? 'Schedule Teleconsultation' : 'Schedule In-Person Appointment'}
-          </DialogTitle>
-          <DialogDescription>
-            {appointmentType === 'teleconsultation' 
-              ? 'Book a virtual consultation with your patient' 
-              : 'Book an in-person appointment at your clinic'}
-          </DialogDescription>
+          <DialogTitle className="text-xl">{getAppointmentTypeTitle()}</DialogTitle>
         </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {isDoctor && patients.length > 0 && (
-              <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-                <TabsList>
-                  <TabsTrigger value="existing">Existing Patient</TabsTrigger>
-                  <TabsTrigger value="new">New Patient</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="existing">
-                  <FormField
-                    control={form.control}
-                    name="patientId"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Select Patient</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          disabled={isSubmitting}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a patient" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {patients.map(patient => (
-                              <SelectItem key={patient.id} value={patient.id}>
-                                {patient.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </TabsContent>
-
-                <TabsContent value="new">
-                  <div className="space-y-2">
-                    <Label>New patient functionality coming soon</Label>
-                    <p className="text-sm text-muted-foreground">
-                      You can only book with existing connected patients for now.
-                    </p>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel>Date</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        value={format(field.value, 'yyyy-MM-dd')}
-                        onChange={(e) => {
-                          const date = e.target.value ? new Date(e.target.value) : new Date();
-                          field.onChange(date);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="time"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel>Time</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="time"
-                        {...field}
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="duration"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>Duration (minutes)</FormLabel>
-                  <FormControl>
-                    <Select
-                      value={field.value.toString()}
-                      onValueChange={(value) => field.onChange(parseInt(value))}
-                      disabled={isSubmitting}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="45">45 minutes</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="90">1.5 hours</SelectItem>
-                        <SelectItem value="120">2 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="reason"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>Reason (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder={appointmentType === 'teleconsultation' 
-                        ? "Brief description of the teleconsultation" 
-                        : "Brief description of the in-person visit"}
-                      className="resize-none"
-                      disabled={isSubmitting}
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{formattedDate}</div>
-              <div className="text-sm text-muted-foreground">
-                {form.watch('time') && form.watch('duration') && (
-                  <>
-                    {form.watch('time')} - {getEndTimeString(form.watch('time'), form.watch('duration'))}
-                    {' '}({form.watch('duration')} minutes)
-                  </>
-                )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="details">
+                <div className="flex items-center">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Details</span>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger value="time">
+                <div className="flex items-center">
+                  <Clock className="mr-2 h-4 w-4" />
+                  <span>Date & Time</span>
+                </div>
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="details" className="space-y-4 pt-4">
+              {/* Patient Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="patient">Patient</Label>
+                <Select 
+                  value={patientId} 
+                  onValueChange={setPatientId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a patient" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {patients.map(patient => (
+                      <SelectItem key={patient.id} value={patient.id}>
+                        {patient.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Schedule {appointmentType === 'teleconsultation' ? 'Teleconsultation' : 'Appointment'}
-              </Button>
-            </div>
-          </form>
-        </Form>
+              
+              {/* Reason for Visit */}
+              <div className="space-y-2">
+                <Label htmlFor="reason">Reason for {appointmentType === 'teleconsultation' ? 'Teleconsultation' : 'Visit'}</Label>
+                <Textarea
+                  id="reason"
+                  placeholder={`Please provide details about the reason for this ${appointmentType}`}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  rows={4}
+                />
+              </div>
+              
+              {/* Duration */}
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration (minutes)</Label>
+                <Select 
+                  value={duration.toString()} 
+                  onValueChange={(value) => setDuration(parseInt(value, 10))}
+                >
+                  <SelectTrigger id="duration">
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="15">15 minutes</SelectItem>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="45">45 minutes</SelectItem>
+                    <SelectItem value="60">60 minutes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="time" className="space-y-4 pt-4">
+              {/* Date Selection */}
+              <div className="space-y-2">
+                <Label className="block">Date</Label>
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  className="rounded-md border"
+                  disabled={(date) => date < new Date()}
+                />
+              </div>
+              
+              {/* Time Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="time">Time</Label>
+                <Select 
+                  value={time} 
+                  onValueChange={setTime}
+                >
+                  <SelectTrigger id="time">
+                    <SelectValue placeholder="Select a time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_OPTIONS.map(timeOption => (
+                      <SelectItem key={timeOption} value={timeOption}>
+                        {timeOption}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          {/* Notes */}
+          <div className="flex items-start text-sm text-muted-foreground">
+            <CircleAlert className="h-4 w-4 mr-2 mt-0.5" />
+            <p>
+              {appointmentType === 'teleconsultation' 
+                ? 'A video conference link will be provided once the teleconsultation is confirmed.'
+                : 'Please arrive 15 minutes before your scheduled appointment time.'}
+            </p>
+          </div>
+          
+          {/* Action buttons */}
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Scheduling...' : 'Schedule Appointment'}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
 };
-
-function getEndTimeString(timeString: string, durationMinutes: number): string {
-  const [hours, minutes] = timeString.split(':').map(Number);
-  const date = new Date();
-  date.setHours(hours, minutes, 0);
-  
-  const endTime = new Date(date.getTime() + durationMinutes * 60000);
-  return format(endTime, 'HH:mm');
-}
 
 export default TeleconsultationBookingDialog;
