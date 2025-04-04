@@ -5,23 +5,29 @@ import { RouterProvider } from "@/router/RouterProvider"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Suspense } from "react"
 import { TestDataLoader } from "@/components/testing/TestDataLoader";
+import { RecoilRoot } from "recoil";
+import { AuthProvider } from "@/providers/AuthProvider";
 
 function App() {
   const queryClient = new QueryClient()
   
   return (
     <div className="app">
-      <QueryClientProvider client={queryClient}>
-        <Suspense fallback={<div>Loading...</div>}>
-          <ThemeProvider
-            defaultTheme="system"
-            storageKey="vite-react-theme"
-          >
-            <RouterProvider />
-            <Toaster />
-          </ThemeProvider>
-        </Suspense>
-      </QueryClientProvider>
+      <RecoilRoot>
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <Suspense fallback={<div>Loading...</div>}>
+              <ThemeProvider
+                defaultTheme="system"
+                storageKey="vite-react-theme"
+              >
+                <RouterProvider />
+                <Toaster />
+              </ThemeProvider>
+            </Suspense>
+          </QueryClientProvider>
+        </AuthProvider>
+      </RecoilRoot>
       
       {/* Test Data Loader for development */}
       {import.meta.env.DEV && <TestDataLoader />}
