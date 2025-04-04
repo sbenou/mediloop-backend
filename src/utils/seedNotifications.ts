@@ -5,7 +5,7 @@ export async function seedUserNotifications(userId: string) {
   try {
     console.log("Seeding notifications for user:", userId);
     
-    // Use the supabase service role client to bypass RLS policies
+    // Define the test notifications
     const notifications = [
       {
         user_id: userId,
@@ -37,12 +37,22 @@ export async function seedUserNotifications(userId: string) {
       }
     ];
     
-    // Use rpc function call to insert the notifications which bypasses RLS
-    // This is safer than using service role credentials in the frontend
-    const { data, error } = await supabase.rpc('seed_user_notifications', {
-      p_user_id: userId,
-      p_notifications: JSON.stringify(notifications)
-    });
+    // First delete existing notifications for the user for clean testing
+    const { error: deleteError } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', userId);
+      
+    if (deleteError) {
+      console.error("Error deleting existing notifications:", deleteError);
+      // Continue anyway - this is not critical
+    }
+    
+    // Now insert the new notifications
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert(notifications)
+      .select();
       
     if (error) {
       console.error("Error seeding notifications:", error);
