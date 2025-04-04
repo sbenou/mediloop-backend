@@ -42,7 +42,7 @@ serve(async (req) => {
       );
     }
 
-    // First, check if the user exists
+    // First check if the user exists
     const { data: user, error: userError } = await supabase
       .from("profiles")
       .select("id, role")
@@ -54,6 +54,17 @@ serve(async (req) => {
         JSON.stringify({ error: "User not found" }),
         { status: 404, headers: { "Content-Type": "application/json" } }
       );
+    }
+
+    // First delete existing notifications for the user for clean testing
+    const { error: deleteError } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', user_id);
+      
+    if (deleteError) {
+      console.error("Error deleting existing notifications:", deleteError);
+      // Continue anyway - this is not critical
     }
 
     // Generate mock notifications based on role
@@ -170,6 +181,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: `${data.length} notifications created for user ${user_id}`,
+        count: data.length,
         data 
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
