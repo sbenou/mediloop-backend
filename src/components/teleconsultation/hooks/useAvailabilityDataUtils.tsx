@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { 
@@ -180,8 +181,8 @@ export const fetchTeleconsultations = async (
         };
       })();
       
-      // Ensure the meta field exists, even if it's empty
-      const metaData = item.meta || {};
+      // Initialize metaData as an empty object if it doesn't exist in the item
+      const metaData = (item as any).meta || {};
       
       return {
         id: item.id,
