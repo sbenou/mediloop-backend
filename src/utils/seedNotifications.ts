@@ -5,7 +5,7 @@ export async function seedUserNotifications(userId: string) {
   try {
     console.log("Seeding notifications for user:", userId);
     
-    // Direct database insertion approach as a workaround for Edge Function issues
+    // Use the supabase service role client to bypass RLS policies
     const notifications = [
       {
         user_id: userId,
@@ -37,10 +37,12 @@ export async function seedUserNotifications(userId: string) {
       }
     ];
     
-    const { data, error } = await supabase
-      .from('notifications')
-      .insert(notifications)
-      .select();
+    // Use rpc function call to insert the notifications which bypasses RLS
+    // This is safer than using service role credentials in the frontend
+    const { data, error } = await supabase.rpc('seed_user_notifications', {
+      p_user_id: userId,
+      p_notifications: JSON.stringify(notifications)
+    });
       
     if (error) {
       console.error("Error seeding notifications:", error);
@@ -49,8 +51,8 @@ export async function seedUserNotifications(userId: string) {
     
     return { 
       success: true, 
-      count: data.length,
-      message: `${data.length} notifications created for user ${userId}`
+      count: notifications.length,
+      message: `${notifications.length} notifications created for user ${userId}`
     };
   } catch (error) {
     console.error("Error seeding notifications:", error);

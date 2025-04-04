@@ -17,7 +17,6 @@ export interface ActivitiesResponse {
   tenant_id?: string;
   related_id?: string;
   related_type?: string;
-  deleted_at?: string | null;
 }
 
 export interface UseActivitiesReturn {

@@ -18,10 +18,10 @@ export const useActivitiesFetch = () => {
     try {
       console.log("Fetching activities...");
       
+      // Modified query - removed the is("deleted_at", null) condition since the column doesn't exist
       const { data, error } = await supabase
         .from('activities')
         .select('*')
-        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) {
