@@ -21,6 +21,7 @@ interface AvailabilityWeeklyCalendarProps {
   doctorName?: string;
   isManagementMode?: boolean;
   showBankHolidays?: boolean;
+  appointmentType?: 'teleconsultation' | 'in-person';
 }
 
 // Create array of hours from 8 AM to 8 PM
@@ -30,7 +31,8 @@ const AvailabilityWeeklyCalendar = ({
   doctorId,
   doctorName = "your",
   isManagementMode = false,
-  showBankHolidays = true
+  showBankHolidays = true,
+  appointmentType = 'teleconsultation'
 }: AvailabilityWeeklyCalendarProps) => {
   const { profile } = useAuth();
   const [selectedCountry] = useState<SupportedCountry>("Luxembourg");
@@ -56,7 +58,7 @@ const AvailabilityWeeklyCalendar = ({
     getTeleconsultationAtTime,
     fetchDoctors,
     refreshTeleconsultations
-  } = useAvailabilityCalendar(doctorId, selectedCountry, showBankHolidays);
+  } = useAvailabilityCalendar(doctorId, selectedCountry, showBankHolidays, appointmentType);
   
   // Get the patients connected to the doctor
   const { patients } = useDoctorPatients(selectedDoctorId);
@@ -91,6 +93,13 @@ const AvailabilityWeeklyCalendar = ({
 
   const showBookingControls = profile?.role === 'doctor' || profile?.role === 'pharmacist' || isManagementMode;
 
+  // Customize button text based on appointment type
+  const getNewButtonText = () => {
+    return appointmentType === 'teleconsultation' 
+      ? 'New Teleconsultation'
+      : 'New In-Person Appointment';
+  };
+
   return (
     <Card className="shadow-md">
       <CardHeader>
@@ -98,7 +107,7 @@ const AvailabilityWeeklyCalendar = ({
           <div>
             <CardTitle>Weekly Availability Calendar</CardTitle>
             <CardDescription className="mb-8">
-              View {doctorName} schedule including available time slots and booked consultations
+              View {doctorName} schedule including available time slots and booked {appointmentType === 'teleconsultation' ? 'teleconsultations' : 'appointments'}
             </CardDescription>
           </div>
         </div>
@@ -123,13 +132,13 @@ const AvailabilityWeeklyCalendar = ({
             )}
           </div>
           
-          {/* Add New Teleconsultation button */}
+          {/* Add New Appointment/Teleconsultation button */}
           {showBookingControls && (
             <Button 
               onClick={handleNewAppointment} 
               className="flex items-center gap-1"
             >
-              <Plus className="h-4 w-4" /> New Teleconsultation
+              <Plus className="h-4 w-4" /> {getNewButtonText()}
             </Button>
           )}
         </div>
@@ -167,6 +176,7 @@ const AvailabilityWeeklyCalendar = ({
           doctorId={selectedDoctorId || profile?.id || ''}
           patients={patients}
           onBookingCreated={handleBookingCreated}
+          appointmentType={appointmentType}
         />
       )}
     </Card>

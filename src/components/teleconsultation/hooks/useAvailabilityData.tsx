@@ -7,7 +7,8 @@ import { BankHoliday, DoctorAvailability, Teleconsultation, TimeSlot, SupportedC
 export const useAvailabilityData = (
   selectedDoctorId?: string,
   selectedCountry: SupportedCountry = "Luxembourg",
-  showBankHolidays: boolean = true
+  showBankHolidays: boolean = true,
+  appointmentType: 'teleconsultation' | 'in-person' = 'teleconsultation'
 ) => {
   const [isLoading, setIsLoading] = useState(true);
   const [doctorAvailability, setDoctorAvailability] = useState<DoctorAvailability[]>([]);
@@ -24,10 +25,19 @@ export const useAvailabilityData = (
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('doctor_availability')
         .select('*')
         .eq('doctor_id', selectedDoctorId);
+
+      // Filter by appointment type if specified
+      if (appointmentType === 'teleconsultation') {
+        query.or('appointment_type.eq.teleconsultation,appointment_type.eq.both,appointment_type.is.null');
+      } else if (appointmentType === 'in-person') {
+        query.or('appointment_type.eq.in-person,appointment_type.eq.both,appointment_type.is.null');
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         throw error;
@@ -75,7 +85,8 @@ export const useAvailabilityData = (
             : item.additional_time_slots === null 
               ? null 
               : String(item.additional_time_slots),
-          time_slots: timeSlots
+          time_slots: timeSlots,
+          appointment_type: item.appointment_type || 'both'
         };
         
         return availabilityItem;
@@ -102,11 +113,20 @@ export const useAvailabilityData = (
     }
     
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('teleconsultations')
-        .select('*')
+        .select('*, patient:patient_id(full_name, email), doctor:doctor_id(full_name, email)')
         .eq('doctor_id', selectedDoctorId)
         .eq('status', 'confirmed');
+
+      // Add filtering for appointment type
+      if (appointmentType === 'teleconsultation') {
+        query.or('meta->is_teleconsultation.eq.true,meta->appointment_type.eq.teleconsultation,reason.ilike.%teleconsultation%');
+      } else if (appointmentType === 'in-person') {
+        query.or('meta->is_in_person.eq.true,meta->appointment_type.eq.in-person,reason.ilike.%in-person%,reason.ilike.%in person%');
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         throw error;

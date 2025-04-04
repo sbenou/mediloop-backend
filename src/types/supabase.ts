@@ -34,6 +34,7 @@ export interface DoctorAvailability {
   updated_at: string;
   additional_time_slots: string | null;
   time_slots: TimeSlot[];
+  appointment_type?: 'teleconsultation' | 'in-person' | 'both';
 }
 
 export interface Teleconsultation {
@@ -58,6 +59,7 @@ export interface Teleconsultation {
   meta?: {
     appointment_type?: string;
     is_teleconsultation?: boolean;
+    is_in_person?: boolean;
     [key: string]: any;
   };
 }
@@ -78,6 +80,7 @@ export interface Notification {
 // Adding the missing types reported in the errors
 export type TeleconsultationStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 export type ConnectionStatus = 'pending' | 'accepted' | 'rejected';
+export type AppointmentType = 'teleconsultation' | 'in-person' | 'both';
 
 export interface Address {
   id: string;

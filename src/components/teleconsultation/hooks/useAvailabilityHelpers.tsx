@@ -5,11 +5,24 @@ import { BankHoliday, DoctorAvailability, Teleconsultation } from "@/types/supab
 export const useAvailabilityHelpers = (
   doctorAvailability: DoctorAvailability[],
   teleconsultations: Teleconsultation[],
-  bankHolidays: BankHoliday[]
+  bankHolidays: BankHoliday[],
+  appointmentType: 'teleconsultation' | 'in-person' = 'teleconsultation'
 ) => {
   // Get the availability for a specific day
   const getDayAvailability = (dayOfWeek: number) => {
-    return doctorAvailability.find(day => day.day_of_week === dayOfWeek);
+    return doctorAvailability.find(day => {
+      // Day must match and be available
+      const isDayMatching = day.day_of_week === dayOfWeek && day.is_available;
+      
+      // If appointment type is specified, filter by it
+      if (appointmentType === 'teleconsultation') {
+        return isDayMatching && (!day.appointment_type || day.appointment_type === 'teleconsultation' || day.appointment_type === 'both');
+      } else if (appointmentType === 'in-person') {
+        return isDayMatching && (!day.appointment_type || day.appointment_type === 'in-person' || day.appointment_type === 'both');
+      }
+      
+      return isDayMatching;
+    });
   };
   
   // Check if a date is a bank holiday

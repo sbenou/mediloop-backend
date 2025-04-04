@@ -3,14 +3,15 @@ import { useState, useEffect } from "react";
 import { addDays, startOfWeek } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { BankHoliday, DoctorAvailability, Teleconsultation, SupportedCountry } from "@/types/supabase";
+import { BankHoliday, DoctorAvailability, Teleconsultation, SupportedCountry, AppointmentType } from "@/types/supabase";
 import { useAvailabilityData } from "./useAvailabilityData";
 import { useAvailabilityHelpers } from "./useAvailabilityHelpers";
 
 export const useAvailabilityCalendar = (
   doctorId?: string,
   selectedCountry: SupportedCountry = "Luxembourg",
-  showBankHolidays: boolean = true
+  showBankHolidays: boolean = true,
+  appointmentType: 'teleconsultation' | 'in-person' = 'teleconsultation'
 ) => {
   const [currentWeek, setCurrentWeek] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | undefined>(doctorId);
@@ -27,14 +28,14 @@ export const useAvailabilityCalendar = (
     fetchDoctorAvailability,
     fetchTeleconsultations,
     fetchBankHolidays
-  } = useAvailabilityData(selectedDoctorId, selectedCountry, showBankHolidays);
+  } = useAvailabilityData(selectedDoctorId, selectedCountry, showBankHolidays, appointmentType);
   
   const {
     getDayAvailability,
     isBankHoliday,
     isTimeSlotAvailable,
     getTeleconsultationAtTime
-  } = useAvailabilityHelpers(doctorAvailability, teleconsultations, bankHolidays);
+  } = useAvailabilityHelpers(doctorAvailability, teleconsultations, bankHolidays, appointmentType);
 
   // Initial load when selectedDoctorId changes
   useEffect(() => {
@@ -42,7 +43,7 @@ export const useAvailabilityCalendar = (
       fetchDoctorAvailability();
       fetchTeleconsultations();
     }
-  }, [selectedDoctorId]);
+  }, [selectedDoctorId, appointmentType]);
 
   // Load bank holidays when country changes
   useEffect(() => {

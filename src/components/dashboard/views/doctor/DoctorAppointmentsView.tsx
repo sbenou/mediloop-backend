@@ -10,6 +10,7 @@ import WeekNavigation from "@/components/teleconsultation/calendar/WeekNavigatio
 import { useAvailabilityCalendar } from "@/components/teleconsultation/hooks/useAvailabilityCalendar";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Teleconsultation } from "@/types/supabase";
+import DoctorAvailabilityCalendar from "@/components/teleconsultation/DoctorAvailabilityCalendar";
 
 const DoctorAppointmentsView = () => {
   const { profile } = useAuth();
@@ -35,8 +36,13 @@ const DoctorAppointmentsView = () => {
   }, [doctorId, currentWeek, refreshTeleconsultations]);
 
   // Filter to show only in-person appointments
-  // We can assume teleconsultations with reason containing "in-person" are in-person appointments
   const inPersonAppointments = teleconsultations.filter(appointment => {
+    // Check if appointment has in-person metadata
+    if (appointment.meta?.is_in_person || appointment.meta?.appointment_type === 'in-person') {
+      return true;
+    }
+    
+    // Fallback to checking the reason field
     const reason = appointment.reason?.toLowerCase() || '';
     return reason.includes('in-person') || reason.includes('in person');
   });
@@ -116,6 +122,9 @@ const DoctorAppointmentsView = () => {
             <Users className="mr-2 h-4 w-4" />
             List View
           </TabsTrigger>
+          <TabsTrigger value="availability">
+            Availability Settings
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4">
@@ -153,7 +162,7 @@ const DoctorAppointmentsView = () => {
                             key={appointment.id}
                             className="bg-primary/10 text-xs p-2 rounded border border-primary/20 mb-1 cursor-pointer hover:bg-primary/20 transition-colors"
                           >
-                            <p className="font-medium truncate">{appointment.patient?.full_name || 'Unknown Patient'}</p>
+                            <p className="font-semibold truncate">{appointment.patient?.full_name || 'Unknown Patient'}</p>
                             <p>{format(new Date(appointment.start_time), 'h:mm a')}</p>
                           </div>
                         ))}
@@ -207,6 +216,24 @@ const DoctorAppointmentsView = () => {
                   </p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="availability">
+          <Card>
+            <CardHeader>
+              <CardTitle>In-Person Availability Settings</CardTitle>
+              <CardDescription>
+                Set your weekly availability for in-person appointments at your clinic
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DoctorAvailabilityCalendar 
+                doctorId={profile?.id || ''} 
+                isManagementMode={true}
+                appointmentType="in-person"
+              />
             </CardContent>
           </Card>
         </TabsContent>
