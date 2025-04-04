@@ -16,6 +16,7 @@ function App() {
       queries: {
         retry: 1,
         refetchOnWindowFocus: false,
+        staleTime: 5 * 60 * 1000, // 5 minutes
       },
     },
   });
@@ -35,7 +36,7 @@ function App() {
                     <RouterProvider />
                     <Toaster />
                     
-                    {/* Add the activity data loader for development */}
+                    {/* Always show the activity data loader in development */}
                     {import.meta.env.DEV && <ActivityDataLoader />}
                   </ThemeProvider>
                 </Suspense>

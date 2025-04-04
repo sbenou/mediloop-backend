@@ -1,9 +1,7 @@
-
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Activity } from '@/components/activity/ActivityItem';
 import { toast } from '@/components/ui/use-toast';
-import { formatDistanceToNow } from 'date-fns';
 
 // Define type for activities table in Supabase
 interface ActivitiesResponse {
@@ -29,8 +27,13 @@ export const useActivities = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const [error, setError] = useState<Error | null>(null);
+  const channelRef = useRef<any>(null);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchActivities = useCallback(async () => {
+    // Prevent multiple simultaneous fetches
+    if (isLoading) return;
+    
     setIsLoading(true);
     setError(null);
     
@@ -51,7 +54,7 @@ export const useActivities = () => {
 
       console.log("Raw activities data from Supabase:", data);
 
-      if (data) {
+      if (data && Array.isArray(data)) {
         // Transform the data into the Activity format
         const formattedActivities: Activity[] = (data as ActivitiesResponse[]).map(item => ({
           id: item.id,
@@ -84,7 +87,7 @@ export const useActivities = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isLoading]);
 
   // Add a refresh function that can be called to force a reload
   const refreshActivities = useCallback(() => {
@@ -92,7 +95,16 @@ export const useActivities = () => {
     // to prevent too many refreshes happening at once
     if (Date.now() - lastFetchTime > 1000) {
       console.log("Refreshing activities...");
-      fetchActivities();
+      
+      // Clear any pending fetch timeout
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+      
+      // Set a small timeout to debounce multiple refresh calls
+      fetchTimeoutRef.current = setTimeout(() => {
+        fetchActivities();
+      }, 300);
     } else {
       console.log("Skipping refresh - too soon since last fetch");
     }
@@ -165,6 +177,11 @@ export const useActivities = () => {
   const setupRealtimeSubscription = useCallback(() => {
     console.log("Setting up realtime subscription for activities...");
     
+    // Clean up any existing subscription first
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+    
     const channel = supabase
       .channel('activities_changes')
       .on('postgres_changes', {
@@ -178,10 +195,19 @@ export const useActivities = () => {
       .subscribe((status) => {
         console.log("Supabase channel status:", status);
       });
+    
+    // Keep a reference to the channel for cleanup
+    channelRef.current = channel;
 
     return () => {
       console.log("Cleaning up activities subscription");
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+      // Also clear any pending fetch timeout
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
     };
   }, [refreshActivities]);
 

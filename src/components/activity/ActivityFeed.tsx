@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,18 @@ export const ActivityFeed = () => {
   
   const [activeTab, setActiveTab] = useState<"all" | ActivityType>("all");
   
-  useEffect(() => {
+  // Use a stable function for fetching activities
+  const fetchActivitiesOnce = useCallback(() => {
     console.log("ActivityFeed: Fetching activities");
     fetchActivities();
+  }, [fetchActivities]);
+  
+  // Initial fetch and subscription setup
+  useEffect(() => {
+    fetchActivitiesOnce();
     const cleanup = setupRealtimeSubscription();
     return cleanup;
-  }, [fetchActivities, setupRealtimeSubscription]);
+  }, [fetchActivitiesOnce, setupRealtimeSubscription]);
   
   useEffect(() => {
     console.log("Loaded activities:", activities.length, activities);
@@ -61,7 +67,7 @@ export const ActivityFeed = () => {
   
   const hasActivities = filteredActivities.length > 0;
   
-  if (isLoading) {
+  if (isLoading && activities.length === 0) {
     return (
       <div className="h-full flex flex-col">
         <h2 className="text-xl font-semibold mb-4">Activity Feed</h2>
@@ -89,30 +95,21 @@ export const ActivityFeed = () => {
       </div>
       
       <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setActiveTab(value as "all" | ActivityType)}>
-        <TabsList className={`grid ${activityTypes.length > 3 ? 'grid-cols-4' : 'grid-cols-3'} mb-4 w-full`}>
+        <TabsList className="grid grid-cols-2 mb-4 w-full">
           <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-          {activityTypes.includes("prescription_created") && (
-            <TabsTrigger value="prescription_created" className="text-xs whitespace-normal p-1">Prescriptions</TabsTrigger>
-          )}
-          {activityTypes.includes("order_placed") && (
-            <TabsTrigger value="order_placed" className="text-xs">Orders</TabsTrigger>
-          )}
-          {activityTypes.includes("doctor_connected") && (
-            <TabsTrigger value="doctor_connected" className="text-xs">Connections</TabsTrigger>
-          )}
-          {activityTypes.includes("appointment_scheduled") && (
-            <TabsTrigger value="appointment_scheduled" className="text-xs">Appointments</TabsTrigger>
-          )}
-          {activityTypes.includes("system_alert") && (
-            <TabsTrigger value="system_alert" className="text-xs">Alerts</TabsTrigger>
+          {activityTypes.length > 0 && activityTypes[0] && (
+            <TabsTrigger value={activityTypes[0]} className="text-xs whitespace-normal p-1">
+              {activityTypes[0].replace(/_/g, ' ')}
+            </TabsTrigger>
           )}
         </TabsList>
         
+        {/* All activities tab */}
         <TabsContent value="all" className="mt-0">
           <ScrollArea className="h-[calc(100vh-180px)]">
             {!hasActivities ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                No activities to display
+                No activities to display. Try clicking the "Load Activities Data" button at the bottom right.
               </div>
             ) : (
               <div className="space-y-6">
