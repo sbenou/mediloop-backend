@@ -22,7 +22,7 @@ function App() {
               <CartProvider>
                 <Suspense fallback={<div>Loading...</div>}>
                   <ThemeProvider
-                    defaultTheme="system"
+                    defaultTheme="light"
                     storageKey="vite-react-theme"
                   >
                     <RouterProvider />
