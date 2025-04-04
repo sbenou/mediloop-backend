@@ -70,6 +70,11 @@ const NotificationTabs = ({
     ));
   };
 
+  // Handle navigation to the full notifications page
+  const handleViewAll = () => {
+    navigate("/notifications");
+  };
+
   return (
     <div className="w-full">
       <div className="flex justify-between items-center p-3 border-b">
@@ -102,7 +107,7 @@ const NotificationTabs = ({
         <Button 
           variant="outline" 
           className="w-full"
-          onClick={() => navigate("/notifications")}
+          onClick={handleViewAll}
         >
           View all notifications
         </Button>

@@ -8,6 +8,7 @@ import DoctorDashboard from '@/pages/DoctorDashboard';
 import UniversalDashboard from '@/pages/UniversalDashboard';
 import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import DoctorProfilePage from '@/pages/doctor/DoctorProfilePage';
+import Notifications from '@/pages/Notifications';
 
 const router = createBrowserRouter([
   {
@@ -41,6 +42,10 @@ const router = createBrowserRouter([
   {
     path: '/doctor/profile',
     element: <DoctorProfilePage />,
+  },
+  {
+    path: '/notifications',
+    element: <Notifications />,
   }
 ]);
 
