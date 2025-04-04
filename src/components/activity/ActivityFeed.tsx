@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Activity, ActivityItem, ActivityType } from "./ActivityItem";
-import { useActivities } from "@/hooks/useActivities";
+import { useActivities } from "@/hooks/activity";
 
 export const ActivityFeed = () => {
   const { 
