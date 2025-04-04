@@ -3,95 +3,51 @@ import { supabase } from "@/lib/supabase";
 import { mockActivities } from "@/components/activity/mockActivities";
 import { toast } from "@/components/ui/use-toast";
 
-// Use a proper UUID format for Tim Burton
-const timBurtonId = "00000000-0000-4000-a000-000000000001"; // Fixed UUID for Tim Burton
-
-// Mock doctor data for Tim Burton
-const timBurtonDoctorData = {
-  id: timBurtonId,
-  full_name: "Dr. Tim Burton",
-  email: "tim.burton@example.com",
-  role: "doctor",
-  license_number: "MED-12345-TB",
-  city: "Gotham City",
-  avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=TimBurton",
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString()
-};
-
-// Mock notifications for Tim Burton
-const timBurtonNotifications = [
-  {
-    id: "notif-1",
-    user_id: timBurtonId,
-    type: "patient_connected",
-    title: "New Patient Connection",
-    message: "Patient Jack Skellington has connected with you",
-    read: false,
-    created_at: new Date(Date.now() - 1800000).toISOString() // 30 minutes ago
-  },
-  {
-    id: "notif-2",
-    user_id: timBurtonId,
-    type: "prescription_created",
-    title: "Prescription Sent",
-    message: "Prescription #PR-2023-001 for patient Sally has been sent",
-    read: true,
-    created_at: new Date(Date.now() - 86400000).toISOString() // 1 day ago
-  },
-  {
-    id: "notif-3",
-    user_id: timBurtonId,
-    type: "payment_failed",
-    title: "Payment Failed",
-    message: "Your subscription payment has failed. Please update your payment method.",
-    read: false,
-    created_at: new Date(Date.now() - 3600000).toISOString() // 1 hour ago
-  },
-  {
-    id: "notif-4",
-    user_id: timBurtonId,
-    type: "new_teleconsultation",
-    title: "New Teleconsultation",
-    message: "You have a new teleconsultation scheduled with Edward Scissorhands at 3:00 PM tomorrow",
-    read: false,
-    created_at: new Date(Date.now() - 7200000).toISOString() // 2 hours ago
-  }
-];
-
-// Function to seed Tim Burton's mock data
+// Function to seed mock activities for the current user
 export const seedTimBurtonData = async () => {
   try {
-    console.log("Starting to seed Tim Burton data...");
+    console.log("Starting to seed activity data for current user...");
     
-    // 1. Insert or update Tim Burton's profile
-    const { error: profileError } = await supabase
+    // Get the current authenticated user
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) {
+      const error = new Error("No authenticated user found. Please log in first.");
+      console.error(error);
+      return { success: false, error };
+    }
+    
+    const userId = authData.user.id;
+    console.log(`Using current user ID: ${userId} for seeding data`);
+    
+    // 1. First check if the user has a profile
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .upsert(timBurtonDoctorData, { onConflict: 'id' });
-
+      .select('*')
+      .eq('id', userId)
+      .single();
+      
     if (profileError) {
-      console.error("Error inserting profile:", profileError);
+      console.error("Error fetching user profile:", profileError);
       return { success: false, error: profileError };
     }
+    
+    console.log("Profile data found:", profile);
 
-    console.log("Profile data inserted successfully");
-
-    // 2. Insert mock notifications
-    const { error: notificationsError } = await supabase
-      .from('notifications')
-      .upsert(timBurtonNotifications, { onConflict: 'id' });
-
-    if (notificationsError) {
-      console.error("Error inserting notifications:", notificationsError);
-      return { success: false, error: notificationsError };
+    // 2. Delete existing records first to avoid constraints on the primary key
+    const { error: deleteError } = await supabase
+      .from('activities')
+      .delete()
+      .eq('user_id', userId);
+      
+    if (deleteError) {
+      console.error("Error deleting existing activities:", deleteError);
+      // Continue anyway as this might just mean there are no activities yet
     }
 
-    console.log("Notifications inserted successfully");
-
-    // 3. Insert mock activities (convert from mockActivities format)
-    const activitiesForTimBurton = mockActivities.map(activity => ({
+    // 3. Insert mock activities for the current user
+    const activitiesForUser = mockActivities.map(activity => ({
       id: activity.id,
-      user_id: timBurtonId, // Use the fixed UUID format
+      user_id: userId,
       type: activity.type,
       title: activity.title,
       description: activity.description,
@@ -101,23 +57,11 @@ export const seedTimBurtonData = async () => {
       updated_at: activity.timestamp.toISOString()
     }));
 
-    console.log("Preparing to insert activities:", activitiesForTimBurton);
+    console.log("Preparing to insert activities:", activitiesForUser);
 
-    // Delete existing records first to avoid constraints on the primary key
-    const { error: deleteError } = await supabase
-      .from('activities')
-      .delete()
-      .eq('user_id', timBurtonId);
-      
-    if (deleteError) {
-      console.error("Error deleting existing activities:", deleteError);
-      // Continue anyway as this might just mean there are no activities yet
-    }
-
-    // Insert new activities
     const { data: activitiesData, error: activitiesError } = await supabase
       .from('activities')
-      .insert(activitiesForTimBurton)
+      .insert(activitiesForUser)
       .select();
 
     if (activitiesError) {
@@ -129,8 +73,8 @@ export const seedTimBurtonData = async () => {
 
     return {
       success: true,
-      doctorId: timBurtonId,
-      activitiesCount: activitiesForTimBurton.length
+      userId: userId,
+      activitiesCount: activitiesForUser.length
     };
   } catch (error) {
     console.error("Error loading test data:", error);
@@ -173,9 +117,6 @@ export const loginAsTimBurton = async () => {
     // we can simulate it by setting session data
     // This approach depends on your authentication setup
     // This is a simplified example - actual implementation will vary
-    
-    // First ensure Tim Burton exists
-    await seedTimBurtonData();
     
     // Note: In a real app, you would use proper auth methods
     // This is just for testing and would normally be

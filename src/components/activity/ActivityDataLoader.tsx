@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { seedTimBurtonData } from "@/utils/mockDataSeeder";
-import { seedUserNotifications } from "@/utils/seedNotifications";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
@@ -13,6 +12,15 @@ export const ActivityDataLoader = () => {
   const { user } = useAuth();
 
   const handleLoadActivitiesData = async () => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to load activities",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoadingActivities(true);
     try {
       console.log("Starting to load activities data...");
@@ -83,7 +91,7 @@ export const ActivityDataLoader = () => {
         size="sm"
         variant="outline"
         onClick={handleLoadActivitiesData}
-        disabled={isLoadingActivities || isLoadingNotifications}
+        disabled={isLoadingActivities || isLoadingNotifications || !user}
         className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 min-w-[180px] justify-between shadow-md"
       >
         {isLoadingActivities ? (
