@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { seedTimBurtonData } from "@/utils/mockDataSeeder";
+import { seedTimBurtonData, seedUserNotifications } from "@/utils/mockDataSeeder";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
