@@ -28,7 +28,7 @@ export const useActivitiesFetch = () => {
         throw error;
       }
 
-      const formattedActivities: Activity[] = (data as ActivitiesResponse[]).map(item => ({
+      const formattedActivities: Activity[] = (data || []).map((item: ActivitiesResponse) => ({
         id: item.id,
         type: item.type,
         title: item.title,

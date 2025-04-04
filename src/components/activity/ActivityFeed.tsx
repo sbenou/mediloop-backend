@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+
+import { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ export const ActivityFeed = () => {
   const { 
     activities, 
     isLoading, 
+    unreadCount,
     fetchActivities, 
     markAsRead, 
     markAllAsRead,
@@ -17,28 +19,22 @@ export const ActivityFeed = () => {
   
   const [activeTab, setActiveTab] = useState<"all" | ActivityType>("all");
   
-  // Use a stable function for fetching activities
-  const fetchActivitiesOnce = useCallback(() => {
-    console.log("ActivityFeed: Fetching activities");
-    fetchActivities();
-  }, [fetchActivities]);
-  
-  // Initial fetch and subscription setup
+  // Set up initial data fetching and subscription
   useEffect(() => {
-    fetchActivitiesOnce();
+    console.log("ActivityFeed: Setting up data fetching and realtime subscription");
+    fetchActivities();
     const cleanup = setupRealtimeSubscription();
     return cleanup;
-  }, [fetchActivitiesOnce, setupRealtimeSubscription]);
+  }, [fetchActivities, setupRealtimeSubscription]);
   
+  // Log when activities are updated
   useEffect(() => {
-    console.log("Loaded activities:", activities.length, activities);
+    console.log("Activities updated:", activities.length, activities);
   }, [activities]);
   
   const filteredActivities = activeTab === "all" 
     ? activities 
     : activities.filter(activity => activity.type === activeTab);
-  
-  const unreadCount = activities.filter(a => !a.read).length;
   
   // Get unique activity types from the loaded activities
   const activityTypes = Array.from(new Set(activities.map(activity => activity.type)));
