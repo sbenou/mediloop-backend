@@ -7,6 +7,8 @@ import { Suspense } from "react"
 import { TestDataLoader } from "@/components/testing/TestDataLoader";
 import { RecoilRoot } from "recoil";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { CartProvider } from "@/contexts/CartContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 
 function App() {
   const queryClient = new QueryClient()
@@ -16,15 +18,19 @@ function App() {
       <RecoilRoot>
         <AuthProvider>
           <QueryClientProvider client={queryClient}>
-            <Suspense fallback={<div>Loading...</div>}>
-              <ThemeProvider
-                defaultTheme="system"
-                storageKey="vite-react-theme"
-              >
-                <RouterProvider />
-                <Toaster />
-              </ThemeProvider>
-            </Suspense>
+            <CurrencyProvider>
+              <CartProvider>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <ThemeProvider
+                    defaultTheme="system"
+                    storageKey="vite-react-theme"
+                  >
+                    <RouterProvider />
+                    <Toaster />
+                  </ThemeProvider>
+                </Suspense>
+              </CartProvider>
+            </CurrencyProvider>
           </QueryClientProvider>
         </AuthProvider>
       </RecoilRoot>
