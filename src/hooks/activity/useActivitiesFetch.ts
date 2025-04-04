@@ -1,21 +1,17 @@
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Activity } from '@/components/activity/ActivityItem';
-import { toast } from '@/components/ui/use-toast';
 import { ActivitiesResponse } from './types';
 
-export function useActivitiesFetch() {
+export const useActivitiesFetch = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const lastFetchTimeRef = useRef<number>(0);
 
   const fetchActivities = useCallback(async () => {
-    // Prevent multiple simultaneous fetches
-    if (isLoading) return;
-    
     setIsLoading(true);
     setError(null);
     
@@ -25,50 +21,35 @@ export function useActivitiesFetch() {
       const { data, error } = await supabase
         .from('activities')
         .select('*')
-        .order('timestamp', { ascending: false });
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error from Supabase:", error);
-        setError(new Error(error.message));
         throw error;
       }
 
-      console.log("Raw activities data from Supabase:", data);
+      const formattedActivities: Activity[] = (data as ActivitiesResponse[]).map(item => ({
+        id: item.id,
+        type: item.type,
+        title: item.title,
+        description: item.description,
+        timestamp: new Date(item.timestamp),
+        read: item.read,
+        meta: item.meta || {}
+      }));
 
-      if (data && Array.isArray(data)) {
-        // Transform the data into the Activity format
-        const formattedActivities: Activity[] = (data as ActivitiesResponse[]).map(item => ({
-          id: item.id,
-          type: item.type as any,
-          title: item.title,
-          description: item.description,
-          timestamp: new Date(item.timestamp),
-          read: item.read
-        }));
-        
-        console.log("Formatted activities:", formattedActivities);
-        
-        setActivities(formattedActivities);
-        setUnreadCount(formattedActivities.filter(activity => !activity.read).length);
-        setLastFetchTime(Date.now());
-      } else {
-        // Handle empty data case
-        console.log("No activities data returned from Supabase");
-        setActivities([]);
-        setUnreadCount(0);
-      }
-    } catch (error) {
-      console.error('Error fetching activities:', error);
-      setError(error instanceof Error ? error : new Error('Unknown error fetching activities'));
-      toast({
-        title: 'Error',
-        description: 'Failed to load activities',
-        variant: 'destructive',
-      });
+      setActivities(formattedActivities);
+      setUnreadCount(formattedActivities.filter(a => !a.read).length);
+      lastFetchTimeRef.current = Date.now();
+      
+      console.log(`Fetched ${formattedActivities.length} activities, ${formattedActivities.filter(a => !a.read).length} unread`);
+    } catch (err) {
+      console.error('Error fetching activities:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch activities'));
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, []);
 
   return {
     activities,
@@ -77,7 +58,7 @@ export function useActivitiesFetch() {
     error,
     unreadCount,
     setUnreadCount,
-    lastFetchTime,
+    lastFetchTime: lastFetchTimeRef.current,
     fetchActivities
   };
-}
+};

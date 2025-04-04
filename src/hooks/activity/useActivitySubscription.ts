@@ -1,22 +1,16 @@
-import { useCallback, useRef } from 'react';
+
+import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 
 interface UseActivitySubscriptionProps {
   refreshActivities: () => void;
 }
 
-export function useActivitySubscription({ 
+export const useActivitySubscription = ({ 
   refreshActivities 
-}: UseActivitySubscriptionProps) {
-  const channelRef = useRef<any>(null);
-
+}: UseActivitySubscriptionProps) => {
   const setupRealtimeSubscription = useCallback(() => {
-    console.log("Setting up realtime subscription for activities...");
-    
-    // Clean up any existing subscription first
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-    }
+    console.log("Setting up realtime subscription for activities");
     
     const channel = supabase
       .channel('activities_changes')
@@ -25,25 +19,19 @@ export function useActivitySubscription({
         schema: 'public',
         table: 'activities'
       }, (payload) => {
-        console.log("Realtime update received:", payload);
+        console.log("Activity change detected:", payload);
         refreshActivities();
       })
-      .subscribe((status) => {
-        console.log("Supabase channel status:", status);
-      });
-    
-    // Keep a reference to the channel for cleanup
-    channelRef.current = channel;
+      .subscribe();
 
+    // Return cleanup function
     return () => {
-      console.log("Cleaning up activities subscription");
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
+      console.log("Cleaning up activities realtime subscription");
+      supabase.removeChannel(channel);
     };
   }, [refreshActivities]);
 
   return {
     setupRealtimeSubscription
   };
-}
+};

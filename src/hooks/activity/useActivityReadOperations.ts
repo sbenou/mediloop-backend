@@ -1,8 +1,8 @@
 
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from '@/components/ui/use-toast';
 import { Activity } from '@/components/activity/ActivityItem';
+import { toast } from '@/components/ui/use-toast';
 
 interface UseActivityReadOperationsProps {
   activities: Activity[];
@@ -10,32 +10,29 @@ interface UseActivityReadOperationsProps {
   setUnreadCount: React.Dispatch<React.SetStateAction<number>>;
 }
 
-export function useActivityReadOperations({
+export const useActivityReadOperations = ({
   activities,
   setActivities,
   setUnreadCount
-}: UseActivityReadOperationsProps) {
-  
+}: UseActivityReadOperationsProps) => {
   const markAsRead = useCallback(async (id: string) => {
     try {
-      console.log(`Marking activity ${id} as read`);
-      // Use the explicit function call for the stored procedure
       const { error } = await supabase.rpc('mark_activity_read', {
         activity_id: id
       });
 
       if (error) {
-        console.error("Error marking activity as read:", error);
         throw error;
       }
 
       // Update local state
-      setActivities(prev => 
-        prev.map(activity => 
+      setActivities(prevActivities =>
+        prevActivities.map(activity =>
           activity.id === id ? { ...activity, read: true } : activity
         )
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      
+      setUnreadCount(prevCount => Math.max(0, prevCount - 1));
 
       toast({
         title: 'Activity marked as read',
@@ -52,18 +49,15 @@ export function useActivityReadOperations({
 
   const markAllAsRead = useCallback(async () => {
     try {
-      console.log("Marking all activities as read");
-      // Use the explicit function call for the stored procedure
       const { error } = await supabase.rpc('mark_all_activities_read');
 
       if (error) {
-        console.error("Error marking all activities as read:", error);
         throw error;
       }
 
       // Update local state
-      setActivities(prev => 
-        prev.map(activity => ({ ...activity, read: true }))
+      setActivities(prevActivities =>
+        prevActivities.map(activity => ({ ...activity, read: true }))
       );
       setUnreadCount(0);
 
@@ -84,4 +78,4 @@ export function useActivityReadOperations({
     markAsRead,
     markAllAsRead
   };
-}
+};
