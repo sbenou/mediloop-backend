@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Activity, ActivityItem, ActivityType } from "./ActivityItem";
 import { useActivities } from "@/hooks/activity";
+import { useNavigate } from "react-router-dom";
 
 export const ActivityFeed = () => {
   const { 
@@ -18,6 +19,7 @@ export const ActivityFeed = () => {
   } = useActivities();
   
   const [activeTab, setActiveTab] = useState<"all" | ActivityType>("all");
+  const navigate = useNavigate();
   
   // Set up initial data fetching and subscription
   useEffect(() => {
@@ -62,6 +64,11 @@ export const ActivityFeed = () => {
   
   const hasActivities = filteredActivities.length > 0;
   
+  // Handle navigation to the full activities page
+  const handleViewAll = () => {
+    navigate("/activities");
+  };
+  
   if (isLoading && activities.length === 0) {
     return (
       <div className="h-full flex flex-col">
@@ -101,7 +108,7 @@ export const ActivityFeed = () => {
         
         {/* All activities tab */}
         <TabsContent value="all" className="mt-0">
-          <ScrollArea className="h-[calc(100vh-180px)]">
+          <ScrollArea className="h-[calc(100vh-250px)]">
             {!hasActivities ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 No activities to display. Try clicking the "Load Activities Data" button at the bottom right.
@@ -175,7 +182,7 @@ export const ActivityFeed = () => {
         {/* Dynamically generate tab content for each activity type */}
         {activityTypes.map(type => (
           <TabsContent key={type} value={type} className="mt-0">
-            <ScrollArea className="h-[calc(100vh-180px)]">
+            <ScrollArea className="h-[calc(100vh-250px)]">
               {filteredActivities.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">
                   No {type.replace('_', ' ')} activities to display
@@ -195,6 +202,17 @@ export const ActivityFeed = () => {
           </TabsContent>
         ))}
       </Tabs>
+      
+      {/* Add "View all activities" button at the bottom */}
+      <div className="p-3 mt-auto border-t">
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={handleViewAll}
+        >
+          View all activities
+        </Button>
+      </div>
     </div>
   );
 };
