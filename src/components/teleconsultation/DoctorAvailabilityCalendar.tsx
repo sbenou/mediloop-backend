@@ -155,7 +155,7 @@ const DoctorAvailabilityCalendar = ({
             updated_at: item.updated_at,
             additional_time_slots: additionalTimeSlots,
             time_slots: allTimeSlots,
-            appointment_type: item.appointment_type as AppointmentType || appointmentType || 'both'
+            appointment_type: (item.appointment_type as AppointmentType) || appointmentType || 'both'
           } as DoctorAvailability;
         });
         

@@ -176,7 +176,7 @@ const AvailabilityWeeklyCalendar = ({
           doctorId={selectedDoctorId || profile?.id || ''}
           patients={patients}
           onBookingCreated={handleBookingCreated}
-          appointmentType={appointmentType === 'both' ? 'teleconsultation' : appointmentType}
+          appointmentType={appointmentType}
         />
       )}
     </Card>
