@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { BankHoliday, DoctorAvailability, Teleconsultation, TimeSlot, SupportedCountry, isTimeSlot } from "@/types/supabase";
+import { BankHoliday, DoctorAvailability, Teleconsultation, TimeSlot, SupportedCountry, isTimeSlot, AppointmentType } from "@/types/supabase";
 
 export const useAvailabilityData = (
   selectedDoctorId?: string,
@@ -86,7 +86,7 @@ export const useAvailabilityData = (
               ? null 
               : String(item.additional_time_slots),
           time_slots: timeSlots,
-          appointment_type: item.appointment_type || 'both'
+          appointment_type: (item.appointment_type as AppointmentType) || 'both'
         };
         
         return availabilityItem;
@@ -132,9 +132,54 @@ export const useAvailabilityData = (
         throw error;
       }
       
-      setTeleconsultations(data || []);
+      if (!data) {
+        setTeleconsultations([]);
+        return;
+      }
+      
+      // Process the data to ensure it matches the Teleconsultation type
+      const processedData: Teleconsultation[] = data.map(item => {
+        // Create default values for patient and doctor if they don't exist or have errors
+        const defaultPatient = { full_name: 'Unknown Patient', email: null };
+        const defaultDoctor = { full_name: 'Unknown Doctor', email: null };
+        
+        // Check if patient exists and has no errors
+        const patientData = item.patient && typeof item.patient === 'object' && !('error' in item.patient) 
+          ? { 
+              full_name: item.patient.full_name || 'Unknown Patient',
+              email: item.patient.email
+            }
+          : defaultPatient;
+        
+        // Check if doctor exists and has no errors
+        const doctorData = item.doctor && typeof item.doctor === 'object' && !('error' in item.doctor)
+          ? {
+              full_name: item.doctor.full_name || 'Unknown Doctor',
+              email: item.doctor.email
+            }
+          : defaultDoctor;
+        
+        return {
+          id: item.id,
+          patient_id: item.patient_id,
+          doctor_id: item.doctor_id,
+          start_time: item.start_time,
+          end_time: item.end_time,
+          status: item.status,
+          reason: item.reason,
+          room_id: item.room_id,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          patient: patientData,
+          doctor: doctorData,
+          meta: item.meta
+        } as Teleconsultation;
+      });
+      
+      setTeleconsultations(processedData);
     } catch (error) {
       console.error('Error fetching teleconsultations:', error);
+      setTeleconsultations([]);
     }
   };
   

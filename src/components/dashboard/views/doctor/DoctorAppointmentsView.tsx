@@ -26,7 +26,7 @@ const DoctorAppointmentsView = () => {
     resetToCurrentWeek,
     isLoading,
     refreshTeleconsultations,
-  } = useAvailabilityCalendar(doctorId);
+  } = useAvailabilityCalendar(doctorId, "Luxembourg", true, "in-person");
 
   // Fetch appointments initially and whenever the date range changes
   useEffect(() => {
@@ -38,7 +38,7 @@ const DoctorAppointmentsView = () => {
   // Filter to show only in-person appointments
   const inPersonAppointments = teleconsultations.filter(appointment => {
     // Check if appointment has in-person metadata
-    if (appointment.meta?.is_in_person || appointment.meta?.appointment_type === 'in-person') {
+    if (appointment.meta && (appointment.meta.is_in_person || appointment.meta.appointment_type === 'in-person')) {
       return true;
     }
     

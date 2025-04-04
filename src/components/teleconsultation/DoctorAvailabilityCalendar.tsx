@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Plus, X, Save, Clock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { DoctorAvailability, TimeSlot, isTimeSlot } from "@/types/supabase";
+import { DoctorAvailability, TimeSlot, isTimeSlot, AppointmentType } from "@/types/supabase";
 
 interface DoctorAvailabilityCalendarProps {
   doctorId: string;
   doctorName?: string;
   onBookingConfirmed?: () => void;
   isManagementMode?: boolean;
+  appointmentType?: 'teleconsultation' | 'in-person' | 'both';
 }
 
 // Define constant for days of week
@@ -33,7 +35,8 @@ const DoctorAvailabilityCalendar = ({
   doctorId, 
   doctorName = "the doctor", 
   onBookingConfirmed,
-  isManagementMode = false
+  isManagementMode = false,
+  appointmentType = 'teleconsultation'
 }: DoctorAvailabilityCalendarProps) => {
   const { profile } = useAuth();
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -60,10 +63,19 @@ const DoctorAvailabilityCalendar = ({
       setLoadError(null);
       console.log('Loading availability for doctor:', doctorId);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('doctor_availability')
         .select('*')
         .eq('doctor_id', doctorId);
+      
+      // Filter by appointment type if specified
+      if (appointmentType === 'teleconsultation') {
+        query = query.or('appointment_type.eq.teleconsultation,appointment_type.eq.both,appointment_type.is.null');
+      } else if (appointmentType === 'in-person') {
+        query = query.or('appointment_type.eq.in-person,appointment_type.eq.both,appointment_type.is.null');
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching doctor availability:', error);
@@ -142,7 +154,8 @@ const DoctorAvailabilityCalendar = ({
             created_at: item.created_at,
             updated_at: item.updated_at,
             additional_time_slots: additionalTimeSlots,
-            time_slots: allTimeSlots
+            time_slots: allTimeSlots,
+            appointment_type: (item.appointment_type as AppointmentType) || appointmentType || 'both'
           } as DoctorAvailability;
         });
         
@@ -164,7 +177,8 @@ const DoctorAvailabilityCalendar = ({
           time_slots: [{
             startTime: '09:00',
             endTime: '17:00'
-          }]
+          }],
+          appointment_type: appointmentType || 'both'
         }));
         setAvailabilityData(defaultAvailability);
       }
@@ -343,6 +357,7 @@ const DoctorAvailabilityCalendar = ({
             start_time: primaryTimeSlot.startTime,
             end_time: primaryTimeSlot.endTime,
             additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
+            appointment_type: appointmentType,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingDay.id);
@@ -364,7 +379,8 @@ const DoctorAvailabilityCalendar = ({
             start_time: primaryTimeSlot.startTime,
             end_time: primaryTimeSlot.endTime,
             additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
-            is_available: isAvailable
+            is_available: isAvailable,
+            appointment_type: appointmentType
           }])
           .select();
           
@@ -405,11 +421,12 @@ const DoctorAvailabilityCalendar = ({
       setIsSaving(true);
       console.log('Updating availability for all days');
       
-      // First, delete all existing availability records
+      // First, delete all existing availability records for this appointment type
       const { error: deleteError } = await supabase
         .from('doctor_availability')
         .delete()
-        .eq('doctor_id', doctorId);
+        .eq('doctor_id', doctorId)
+        .or(`appointment_type.eq.${appointmentType},appointment_type.is.null`);
         
       if (deleteError) {
         console.error('Error deleting existing availability:', deleteError);
@@ -427,7 +444,8 @@ const DoctorAvailabilityCalendar = ({
         start_time: primaryTimeSlot.startTime,
         end_time: primaryTimeSlot.endTime,
         additional_time_slots: additionalTimeSlots.length > 0 ? JSON.stringify(additionalTimeSlots) : null,
-        is_available: isAvailable
+        is_available: isAvailable,
+        appointment_type: appointmentType
       }));
       
       console.log('Creating availability records for all days:', newAvailabilityRecords);

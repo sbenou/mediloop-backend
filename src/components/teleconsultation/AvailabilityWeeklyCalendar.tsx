@@ -6,7 +6,7 @@ import {
   Loader2,
   Plus
 } from "lucide-react";
-import { SupportedCountry } from "@/types/supabase";
+import { SupportedCountry, AppointmentType } from "@/types/supabase";
 import { useAuth } from "@/hooks/auth/useAuth";
 import TeleconsultationBookingDialog from "./TeleconsultationBookingDialog";
 import { useDoctorPatients } from "@/hooks/teleconsultation/useDoctorPatients";
@@ -21,7 +21,7 @@ interface AvailabilityWeeklyCalendarProps {
   doctorName?: string;
   isManagementMode?: boolean;
   showBankHolidays?: boolean;
-  appointmentType?: 'teleconsultation' | 'in-person';
+  appointmentType?: AppointmentType;
 }
 
 // Create array of hours from 8 AM to 8 PM

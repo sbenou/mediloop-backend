@@ -1,12 +1,12 @@
 
 import { format } from "date-fns";
-import { BankHoliday, DoctorAvailability, Teleconsultation } from "@/types/supabase";
+import { BankHoliday, DoctorAvailability, Teleconsultation, AppointmentType } from "@/types/supabase";
 
 export const useAvailabilityHelpers = (
   doctorAvailability: DoctorAvailability[],
   teleconsultations: Teleconsultation[],
   bankHolidays: BankHoliday[],
-  appointmentType: 'teleconsultation' | 'in-person' = 'teleconsultation'
+  appointmentType: AppointmentType | string = 'teleconsultation'
 ) => {
   // Get the availability for a specific day
   const getDayAvailability = (dayOfWeek: number) => {
