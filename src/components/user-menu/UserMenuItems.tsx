@@ -109,7 +109,7 @@ export const UserMenuItems = () => {
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
         { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
-        { icon: Video, label: 'Teleconsultations', path: '/dashboard?view=teleconsultations' },
+        { icon: HeartPulse, label: 'Consultations', path: '/dashboard?view=teleconsultations' },
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
@@ -121,8 +121,7 @@ export const UserMenuItems = () => {
         { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
-        { icon: Video, label: 'Teleconsultations', path: '/dashboard?section=teleconsultations' },
-        { icon: Calendar, label: 'Appointments', path: '/dashboard?section=appointments' },
+        { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }

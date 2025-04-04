@@ -9,6 +9,7 @@ export const useSidebarNavigation = (userRole: string) => {
   const { params, updateParams } = useDashboardParams();
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isConsultationsOpen, setIsConsultationsOpen] = useState(false);
   
   // Determine if a section is expanded based on URL
   useEffect(() => {
@@ -21,6 +22,10 @@ export const useSidebarNavigation = (userRole: string) => {
       if (params.section === 'profile') {
         setIsProfileOpen(true);
       }
+      
+      if (params.section === 'teleconsultations' || params.section === 'appointments') {
+        setIsConsultationsOpen(true);
+      }
     } else {
       // For patients and other roles
       if (params.view === 'orders') {
@@ -29,6 +34,10 @@ export const useSidebarNavigation = (userRole: string) => {
       
       if (params.view === 'profile') {
         setIsProfileOpen(true);
+      }
+      
+      if (params.view === 'teleconsultations' || params.view === 'appointments') {
+        setIsConsultationsOpen(true);
       }
     }
   }, [location, params.section, params.view, userRole]);
@@ -135,6 +144,8 @@ export const useSidebarNavigation = (userRole: string) => {
     setIsOrdersOpen,
     isProfileOpen,
     setIsProfileOpen,
+    isConsultationsOpen,
+    setIsConsultationsOpen,
     navigateToLink,
     isSectionActive,
     isTabActive,

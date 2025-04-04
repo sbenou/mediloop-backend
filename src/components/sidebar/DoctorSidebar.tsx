@@ -5,7 +5,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
-  MapPin, Video, Stethoscope, Calendar 
+  MapPin, Video, Stethoscope, Calendar,
+  HeartPulse
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -47,6 +48,8 @@ const DoctorSidebar = ({
   const {
     isProfileOpen,
     setIsProfileOpen,
+    isConsultationsOpen,
+    setIsConsultationsOpen,
     navigateToLink
   } = useSidebarNavigation("doctor");
 
@@ -109,19 +112,26 @@ const DoctorSidebar = ({
             />
           )}
           
-          <SidebarItem
-            icon={<Video className="w-5 h-5 mr-3" />}
-            label="Teleconsultations"
-            isActive={section === "teleconsultations"}
-            onClick={() => navigateToDoctorView('teleconsultations')}
-          />
-          
-          <SidebarItem
-            icon={<Calendar className="w-5 h-5 mr-3" />}
-            label="Appointments"
-            isActive={section === "appointments"}
-            onClick={() => navigateToDoctorView('appointments')}
-          />
+          <SidebarCollapsibleItem 
+            icon={<HeartPulse className="w-5 h-5 mr-3" />}
+            label="Consultations"
+            isOpen={isConsultationsOpen}
+            isActive={section === "teleconsultations" || section === "appointments"}
+            onOpenChange={(isOpen) => setIsConsultationsOpen(isOpen)}
+          >
+            <SidebarSubItem
+              icon={<Video className="w-4 h-4 mr-3" />}
+              label="Teleconsultations"
+              isActive={section === "teleconsultations"}
+              onClick={() => navigateToDoctorView('teleconsultations')}
+            />
+            <SidebarSubItem
+              icon={<Calendar className="w-4 h-4 mr-3" />}
+              label="Appointments"
+              isActive={section === "appointments"}
+              onClick={() => navigateToDoctorView('appointments')}
+            />
+          </SidebarCollapsibleItem>
           
           <SidebarCollapsibleItem 
             icon={<UserCircle className="w-5 h-5 mr-3" />}

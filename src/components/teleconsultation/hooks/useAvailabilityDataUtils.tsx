@@ -12,6 +12,66 @@ import {
 } from "@/types/supabase";
 
 /**
+ * Processes time slots from a doctor availability item
+ */
+const processTimeSlots = (item: any): TimeSlot[] => {
+  let timeSlots: TimeSlot[] = [];
+  
+  // Set default time slot from start_time and end_time
+  if (item.start_time && item.end_time) {
+    timeSlots.push({
+      startTime: item.start_time,
+      endTime: item.end_time
+    });
+  }
+  
+  // Process additional time slots if they exist
+  if (item.additional_time_slots) {
+    try {
+      const additionalSlots = typeof item.additional_time_slots === 'string'
+        ? JSON.parse(item.additional_time_slots)
+        : item.additional_time_slots;
+        
+      if (Array.isArray(additionalSlots)) {
+        additionalSlots.forEach(slot => {
+          if (isTimeSlot(slot)) {
+            timeSlots.push({
+              startTime: slot.startTime,
+              endTime: slot.endTime
+            });
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Error parsing additional time slots:', e);
+    }
+  }
+  
+  return timeSlots;
+};
+
+/**
+ * Safely extracts patient or doctor data from a teleconsultation record
+ */
+const extractEntityData = (entity: any, defaultName: string) => {
+  if (!entity) return { full_name: defaultName, email: null };
+  
+  const entityObj = entity as Record<string, any>;
+  
+  return {
+    full_name: typeof entityObj === 'object' && 
+              'full_name' in entityObj &&
+              entityObj.full_name !== null
+      ? entityObj.full_name 
+      : defaultName,
+    email: typeof entityObj === 'object' && 
+          'email' in entityObj
+      ? entityObj.email
+      : null
+  };
+};
+
+/**
  * Fetches doctor availability data from Supabase
  */
 export const fetchDoctorAvailability = async (
@@ -41,39 +101,9 @@ export const fetchDoctorAvailability = async (
       throw error;
     }
     
-    // Process time slots
+    // Process data and return
     const processedData = data.map(item => {
-      let timeSlots: TimeSlot[] = [];
-      
-      // Set default time slot from start_time and end_time
-      if (item.start_time && item.end_time) {
-        timeSlots.push({
-          startTime: item.start_time,
-          endTime: item.end_time
-        });
-      }
-      
-      // Process additional time slots if they exist
-      if (item.additional_time_slots) {
-        try {
-          const additionalSlots = typeof item.additional_time_slots === 'string'
-            ? JSON.parse(item.additional_time_slots)
-            : item.additional_time_slots;
-            
-          if (Array.isArray(additionalSlots)) {
-            additionalSlots.forEach(slot => {
-              if (isTimeSlot(slot)) {
-                timeSlots.push({
-                  startTime: slot.startTime,
-                  endTime: slot.endTime
-                });
-              }
-            });
-          }
-        } catch (e) {
-          console.error('Error parsing additional time slots:', e);
-        }
-      }
+      const timeSlots = processTimeSlots(item);
       
       // Create proper DoctorAvailability object to fix type issues
       const availabilityItem: DoctorAvailability = {
@@ -139,47 +169,9 @@ export const fetchTeleconsultations = async (
     
     // Process the data to ensure it matches the Teleconsultation type
     const processedData: Teleconsultation[] = data.map(item => {
-      // Create default values for patient and doctor if they don't exist or have errors
-      const defaultPatient = { full_name: 'Unknown Patient', email: null };
-      const defaultDoctor = { full_name: 'Unknown Doctor', email: null };
-      
-      // Extract patient data safely with proper null checks
-      const patientData = (() => {
-        if (!item.patient) return defaultPatient;
-        
-        const patientObj = item.patient as Record<string, any>;
-        
-        return {
-          full_name: typeof patientObj === 'object' && 
-                    'full_name' in patientObj &&
-                    patientObj.full_name !== null
-            ? patientObj.full_name 
-            : 'Unknown Patient',
-          email: typeof patientObj === 'object' && 
-                'email' in patientObj
-            ? patientObj.email
-            : null
-        };
-      })();
-      
-      // Extract doctor data safely with proper null checks
-      const doctorData = (() => {
-        if (!item.doctor) return defaultDoctor;
-        
-        const doctorObj = item.doctor as Record<string, any>;
-        
-        return {
-          full_name: typeof doctorObj === 'object' && 
-                    'full_name' in doctorObj &&
-                    doctorObj.full_name !== null
-            ? doctorObj.full_name 
-            : 'Unknown Doctor',
-          email: typeof doctorObj === 'object' && 
-                'email' in doctorObj
-            ? doctorObj.email 
-            : null
-        };
-      })();
+      // Extract patient and doctor data safely
+      const patientData = extractEntityData(item.patient, 'Unknown Patient');
+      const doctorData = extractEntityData(item.doctor, 'Unknown Doctor');
       
       // Initialize metaData as an empty object if it doesn't exist in the item
       const metaData = (item as any).meta || {};

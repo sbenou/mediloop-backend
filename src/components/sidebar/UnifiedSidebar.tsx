@@ -1,8 +1,9 @@
+
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   Home, User, ShoppingBag, Settings, Calendar, 
   Pill, Users, UserCircle, MapPin, Store, Heart,
-  CreditCard
+  CreditCard, Video, HeartPulse
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -26,6 +27,8 @@ const UnifiedSidebar = () => {
     setIsOrdersOpen,
     isProfileOpen,
     setIsProfileOpen,
+    isConsultationsOpen,
+    setIsConsultationsOpen,
     isPharmacistSectionActive,
     isPharmacistTabActive,
     isLinkActive,
@@ -114,6 +117,23 @@ const UnifiedSidebar = () => {
     }
   ];
 
+  const consultationsSubItems = [
+    {
+      label: 'Teleconsultations',
+      icon: <Video className="w-4 h-4 mr-3" />,
+      path: '/dashboard?view=teleconsultations',
+      active: (location.pathname === '/dashboard' && location.search.includes('view=teleconsultations')) ||
+              location.pathname.includes('/teleconsultations')
+    },
+    {
+      label: 'Appointments',
+      icon: <Calendar className="w-4 h-4 mr-3" />,
+      path: '/dashboard?view=appointments',
+      active: (location.pathname === '/dashboard' && location.search.includes('view=appointments')) ||
+              location.pathname.includes('/appointments')
+    }
+  ];
+
   const filteredProfileSubItems = userRole === 'pharmacist' 
     ? profileSubItems.filter(item => !['Pharmacy', 'My Doctor'].includes(item.label)) 
     : profileSubItems;
@@ -199,13 +219,27 @@ const UnifiedSidebar = () => {
           )}
           
           {userRole !== 'pharmacist' && (
-            <SidebarItem
-              icon={<Calendar className="w-5 h-5 mr-3" />}
-              label="Teleconsultations"
-              isActive={(location.pathname === '/dashboard' && location.search.includes('view=teleconsultations')) ||
-                        location.pathname.includes('/teleconsultations')}
-              onClick={() => navigateToLink('/dashboard?view=teleconsultations')}
-            />
+            <SidebarCollapsibleItem
+              icon={<HeartPulse className="w-5 h-5 mr-3" />}
+              label="Consultations"
+              isOpen={isConsultationsOpen}
+              isActive={(location.pathname === '/dashboard' && (
+                        location.search.includes('view=teleconsultations') || 
+                        location.search.includes('view=appointments'))) ||
+                        location.pathname.includes('/teleconsultations') ||
+                        location.pathname.includes('/appointments')}
+              onOpenChange={(isOpen) => setIsConsultationsOpen(isOpen)}
+            >
+              {consultationsSubItems.map((subItem, index) => (
+                <SidebarSubItem
+                  key={index}
+                  icon={subItem.icon}
+                  label={subItem.label}
+                  isActive={subItem.active}
+                  onClick={() => navigateToLink(subItem.path)}
+                />
+              ))}
+            </SidebarCollapsibleItem>
           )}
         </SidebarSection>
         
