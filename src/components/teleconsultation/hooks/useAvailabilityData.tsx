@@ -8,7 +8,7 @@ export const useAvailabilityData = (
   selectedDoctorId?: string,
   selectedCountry: SupportedCountry = "Luxembourg",
   showBankHolidays: boolean = true,
-  appointmentType: 'teleconsultation' | 'in-person' = 'teleconsultation'
+  appointmentType: AppointmentType = 'teleconsultation'
 ) => {
   const [isLoading, setIsLoading] = useState(true);
   const [doctorAvailability, setDoctorAvailability] = useState<DoctorAvailability[]>([]);

@@ -11,7 +11,7 @@ export const useAvailabilityCalendar = (
   doctorId?: string,
   selectedCountry: SupportedCountry = "Luxembourg",
   showBankHolidays: boolean = true,
-  appointmentType: 'teleconsultation' | 'in-person' = 'teleconsultation'
+  appointmentType: AppointmentType = 'teleconsultation'
 ) => {
   const [currentWeek, setCurrentWeek] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | undefined>(doctorId);
