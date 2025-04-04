@@ -5,6 +5,24 @@ import { Activity } from '@/components/activity/ActivityItem';
 import { toast } from '@/components/ui/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
+// Define type for activities table in Supabase
+interface ActivitiesResponse {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  read: boolean;
+  created_at: string;
+  updated_at: string;
+  meta?: any;
+  team_id?: string;
+  tenant_id?: string;
+  related_id?: string;
+  related_type?: string;
+}
+
 export const useActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -13,6 +31,7 @@ export const useActivities = () => {
   const fetchActivities = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Use the explicit cast to tell TypeScript we're using the custom activities table
       const { data, error } = await supabase
         .from('activities')
         .select('*')
@@ -24,7 +43,7 @@ export const useActivities = () => {
 
       if (data) {
         // Transform the data into the Activity format
-        const formattedActivities: Activity[] = data.map(item => ({
+        const formattedActivities: Activity[] = (data as ActivitiesResponse[]).map(item => ({
           id: item.id,
           type: item.type as any,
           title: item.title,
@@ -50,6 +69,7 @@ export const useActivities = () => {
 
   const markAsRead = useCallback(async (id: string) => {
     try {
+      // Use the explicit function call for the stored procedure
       const { error } = await supabase.rpc('mark_activity_read', {
         activity_id: id
       });
@@ -81,6 +101,7 @@ export const useActivities = () => {
 
   const markAllAsRead = useCallback(async () => {
     try {
+      // Use the explicit function call for the stored procedure
       const { error } = await supabase.rpc('mark_all_activities_read');
 
       if (error) {

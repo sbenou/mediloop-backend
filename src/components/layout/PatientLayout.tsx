@@ -9,10 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { Advertisements } from "@/components/activity/Advertisements";
-import { mockActivities } from "@/components/activity/mockActivities";
-import { Activity } from "@/components/activity/ActivityItem";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/use-toast";
 import UserMenu from "@/components/UserMenu";
 
 interface PatientLayoutProps {
@@ -22,31 +19,8 @@ interface PatientLayoutProps {
 const PatientLayout = ({ children }: PatientLayoutProps) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
-  const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
   const navigate = useNavigate();
-  
-  const handleMarkRead = (id: string) => {
-    setActivities(prevActivities => 
-      prevActivities.map(activity => 
-        activity.id === id ? { ...activity, read: true } : activity
-      )
-    );
-    toast({
-      title: "Activity marked as read",
-      duration: 2000,
-    });
-  };
-
-  const handleMarkAllRead = () => {
-    setActivities(prevActivities => 
-      prevActivities.map(activity => ({ ...activity, read: true }))
-    );
-    toast({
-      title: "All activities marked as read",
-      duration: 2000,
-    });
-  };
   
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -105,11 +79,7 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
                 </TabsContent>
                 
                 <TabsContent value="activity" className="mt-0">
-                  <ActivityFeed 
-                    activities={activities}
-                    onMarkRead={handleMarkRead}
-                    onMarkAllRead={handleMarkAllRead}
-                  />
+                  <ActivityFeed />
                 </TabsContent>
               </Tabs>
             </div>

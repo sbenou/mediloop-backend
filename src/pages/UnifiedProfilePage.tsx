@@ -6,34 +6,16 @@ import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { Advertisements } from "@/components/activity/Advertisements";
-import { mockActivities } from "@/components/activity/mockActivities";
-import { Activity } from "@/components/activity/ActivityItem";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const UnifiedProfilePage = () => {
   const [isOpen, setIsOpen] = useState(true);
-  const [activities, setActivities] = useState<Activity[]>(mockActivities);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
   
   // Mock profile data for UI template
   const mockProfile = {
     full_name: "Demo User"
-  };
-
-  // Handle UI interactions - purely for demonstration
-  const handleMarkRead = (id: string) => {
-    setActivities(prevActivities => 
-      prevActivities.map(activity => 
-        activity.id === id ? { ...activity, read: true } : activity
-      )
-    );
-  };
-
-  const handleMarkAllRead = () => {
-    setActivities(prevActivities => 
-      prevActivities.map(activity => ({ ...activity, read: true }))
-    );
   };
 
   // Apply transition effect when drawer opens/closes
@@ -123,11 +105,7 @@ const UnifiedProfilePage = () => {
               </TabsContent>
               
               <TabsContent value="activity" className="mt-0">
-                <ActivityFeed 
-                  activities={activities}
-                  onMarkRead={handleMarkRead}
-                  onMarkAllRead={handleMarkAllRead}
-                />
+                <ActivityFeed />
               </TabsContent>
             </Tabs>
           </div>
