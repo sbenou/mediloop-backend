@@ -27,6 +27,9 @@ function App() {
                   >
                     <RouterProvider />
                     <Toaster />
+                    
+                    {/* Add the activity data loader for development */}
+                    {import.meta.env.DEV && <ActivityDataLoader />}
                   </ThemeProvider>
                 </Suspense>
               </CartProvider>
@@ -34,9 +37,6 @@ function App() {
           </QueryClientProvider>
         </AuthProvider>
       </RecoilRoot>
-      
-      {/* Add the activity data loader for development */}
-      {import.meta.env.DEV && <ActivityDataLoader />}
     </div>
   );
 }
