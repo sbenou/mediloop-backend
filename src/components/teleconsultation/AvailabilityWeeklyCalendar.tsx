@@ -100,6 +100,13 @@ const AvailabilityWeeklyCalendar = ({
       : 'New In-Person Appointment';
   };
 
+  // Filter appointment type to ensure compatibility with TeleconsultationBookingDialog
+  const getBookingAppointmentType = (): 'teleconsultation' | 'in-person' => {
+    return appointmentType === 'both' ? 'teleconsultation' : 
+          (appointmentType === 'teleconsultation' || appointmentType === 'in-person' ? 
+           appointmentType : 'teleconsultation');
+  };
+
   return (
     <Card className="shadow-md">
       <CardHeader>
@@ -176,7 +183,7 @@ const AvailabilityWeeklyCalendar = ({
           doctorId={selectedDoctorId || profile?.id || ''}
           patients={patients}
           onBookingCreated={handleBookingCreated}
-          appointmentType={appointmentType}
+          appointmentType={getBookingAppointmentType()}
         />
       )}
     </Card>

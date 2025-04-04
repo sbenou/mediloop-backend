@@ -146,16 +146,16 @@ export const useAvailabilityData = (
         // Check if patient exists and has no errors
         const patientData = item.patient && typeof item.patient === 'object' && !('error' in item.patient) 
           ? { 
-              full_name: item.patient.full_name || 'Unknown Patient',
-              email: item.patient.email
+              full_name: item.patient?.full_name || 'Unknown Patient',
+              email: item.patient?.email
             }
           : defaultPatient;
         
         // Check if doctor exists and has no errors
         const doctorData = item.doctor && typeof item.doctor === 'object' && !('error' in item.doctor)
           ? {
-              full_name: item.doctor.full_name || 'Unknown Doctor',
-              email: item.doctor.email
+              full_name: item.doctor?.full_name || 'Unknown Doctor',
+              email: item.doctor?.email
             }
           : defaultDoctor;
         
