@@ -21,6 +21,9 @@ function App() {
     },
   });
   
+  // Force development mode detection to ensure the data loader is always available
+  const isDevelopmentMode = import.meta.env.DEV || import.meta.env.MODE === 'development';
+  
   return (
     <div className="app">
       <RecoilRoot>
@@ -37,7 +40,9 @@ function App() {
                     <Toaster />
                     
                     {/* Always show the activity data loader in development */}
-                    {import.meta.env.DEV && <ActivityDataLoader />}
+                    {isDevelopmentMode && (
+                      <ActivityDataLoader />
+                    )}
                   </ThemeProvider>
                 </Suspense>
               </CartProvider>

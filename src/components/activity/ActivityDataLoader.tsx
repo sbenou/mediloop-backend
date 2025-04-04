@@ -78,13 +78,13 @@ export const ActivityDataLoader = () => {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 opacity-90 hover:opacity-100">
+    <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 opacity-90 hover:opacity-100">
       <Button 
         size="sm"
         variant="outline"
         onClick={handleLoadActivitiesData}
         disabled={isLoadingActivities || isLoadingNotifications}
-        className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 min-w-[180px] justify-between"
+        className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 min-w-[180px] justify-between shadow-md"
       >
         {isLoadingActivities ? (
           <>
@@ -100,7 +100,7 @@ export const ActivityDataLoader = () => {
         variant="outline"
         onClick={handleLoadNotifications}
         disabled={isLoadingActivities || isLoadingNotifications || !user}
-        className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 min-w-[180px] justify-between"
+        className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 min-w-[180px] justify-between shadow-md"
       >
         {isLoadingNotifications ? (
           <>
