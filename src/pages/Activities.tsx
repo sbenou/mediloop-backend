@@ -109,8 +109,8 @@ const Activities = () => {
   };
 
   // Format activity timestamp
-  const formatActivityTime = (timestamp: string) => {
-    const date = new Date(timestamp);
+  const formatActivityTime = (timestamp: string | Date) => {
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
