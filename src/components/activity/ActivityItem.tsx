@@ -14,7 +14,10 @@ import {
   FileText,
   Clock,
   Award,
-  Bell
+  Bell,
+  Phone,
+  Users,
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,9 +33,11 @@ export type ActivityType =
   | "payment_processed" 
   | "system_alert"
   | "payment_failed"
-  | "profile_updated"
   | "teleconsultation_scheduled"
-  | "delivery_status_updated";
+  | "delivery_status_updated"
+  | "patient_connected"
+  | "new_teleconsultation"
+  | string; // Allow any string to support future activity types
 
 export interface Activity {
   id: string;
@@ -67,17 +72,20 @@ export const ActivityItem = ({ activity, onMarkRead }: ActivityItemProps) => {
         };
       case "order_shipped":
       case "order_delivered":
+      case "delivery_status_updated":
         return { 
           icon: <Package className="h-4 w-4" />, 
           color: "bg-green-100 text-green-800 border-green-200" 
         };
       case "appointment_scheduled":
       case "teleconsultation_scheduled":
+      case "new_teleconsultation":
         return { 
           icon: <Calendar className="h-4 w-4" />, 
           color: "bg-indigo-100 text-indigo-800 border-indigo-200" 
         };
       case "doctor_connected":
+      case "patient_connected":
         return { 
           icon: <UserPlus className="h-4 w-4" />, 
           color: "bg-teal-100 text-teal-800 border-teal-200" 
@@ -102,12 +110,51 @@ export const ActivityItem = ({ activity, onMarkRead }: ActivityItemProps) => {
           icon: <Bell className="h-4 w-4" />, 
           color: "bg-amber-100 text-amber-800 border-amber-200" 
         };
-      case "delivery_status_updated":
-        return { 
-          icon: <Clock className="h-4 w-4" />, 
-          color: "bg-cyan-100 text-cyan-800 border-cyan-200" 
-        };
       default:
+        // Check for common patterns in the type string to guess the appropriate icon
+        if (type.includes('order') || type.includes('purchase')) {
+          return { 
+            icon: <ShoppingCart className="h-4 w-4" />, 
+            color: "bg-blue-100 text-blue-800 border-blue-200" 
+          };
+        } else if (type.includes('prescription') || type.includes('medication')) {
+          return { 
+            icon: <Pill className="h-4 w-4" />, 
+            color: "bg-purple-100 text-purple-800 border-purple-200" 
+          };
+        } else if (type.includes('appointment') || type.includes('consultation') || type.includes('teleconsultation')) {
+          return { 
+            icon: <Calendar className="h-4 w-4" />, 
+            color: "bg-indigo-100 text-indigo-800 border-indigo-200" 
+          };
+        } else if (type.includes('patient') || type.includes('doctor') || type.includes('connected')) {
+          return { 
+            icon: <UserPlus className="h-4 w-4" />, 
+            color: "bg-teal-100 text-teal-800 border-teal-200" 
+          };
+        } else if (type.includes('payment') || type.includes('billing')) {
+          return { 
+            icon: <CreditCard className="h-4 w-4" />, 
+            color: "bg-emerald-100 text-emerald-800 border-emerald-200" 
+          };
+        } else if (type.includes('delivery') || type.includes('shipped')) {
+          return { 
+            icon: <Package className="h-4 w-4" />, 
+            color: "bg-green-100 text-green-800 border-green-200" 
+          };
+        } else if (type.includes('alert') || type.includes('warning') || type.includes('error')) {
+          return { 
+            icon: <AlertCircle className="h-4 w-4" />, 
+            color: "bg-red-100 text-red-800 border-red-200" 
+          };
+        } else if (type.includes('profile') || type.includes('settings')) {
+          return { 
+            icon: <User className="h-4 w-4" />, 
+            color: "bg-gray-100 text-gray-800 border-gray-200" 
+          };
+        }
+        
+        // Default fallback
         return { 
           icon: <RefreshCw className="h-4 w-4" />, 
           color: "bg-gray-100 text-gray-800 border-gray-200" 

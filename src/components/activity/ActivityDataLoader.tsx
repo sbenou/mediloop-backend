@@ -15,22 +15,24 @@ export const ActivityDataLoader = () => {
   const handleLoadActivitiesData = async () => {
     setIsLoadingActivities(true);
     try {
+      console.log("Starting to load activities data...");
       const result = await seedTimBurtonData();
       console.log("Activities data loading result:", result);
       
       if (result?.success) {
         toast({
           title: "Activities test data loaded",
-          description: "Mock activities have been loaded successfully"
+          description: `Mock activities have been loaded successfully (${result.activitiesCount || 0} activities)`
         });
       } else {
-        throw new Error("Failed to load activities data");
+        console.error("Failed to load activities data:", result?.error || "Unknown error");
+        throw new Error(result?.error?.message || "Failed to load activities data");
       }
     } catch (error) {
       console.error("Error loading activities data:", error);
       toast({
         title: "Error",
-        description: "Failed to load activities test data",
+        description: `Failed to load activities test data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
@@ -50,18 +52,24 @@ export const ActivityDataLoader = () => {
     
     setIsLoadingNotifications(true);
     try {
+      console.log("Starting to load notifications data for user:", user.id);
       const result = await seedUserNotifications(user.id);
       console.log("Notifications data loading result:", result);
       
-      toast({
-        title: "Notifications test data loaded",
-        description: "Mock notifications have been loaded successfully"
-      });
+      if (result?.success) {
+        toast({
+          title: "Notifications test data loaded",
+          description: `Mock notifications have been loaded successfully (${result.count || 0} notifications)`
+        });
+      } else {
+        console.error("Failed to load notifications:", result?.error || "Unknown error");
+        throw new Error(result?.error?.message || "Failed to load notifications");
+      }
     } catch (error) {
       console.error("Error loading notifications data:", error);
       toast({
         title: "Error",
-        description: "Failed to load notifications test data",
+        description: `Failed to load notifications test data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {

@@ -28,9 +28,12 @@ export const useActivities = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchActivities = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
       console.log("Fetching activities...");
       
@@ -42,6 +45,7 @@ export const useActivities = () => {
 
       if (error) {
         console.error("Error from Supabase:", error);
+        setError(new Error(error.message));
         throw error;
       }
 
@@ -63,9 +67,15 @@ export const useActivities = () => {
         setActivities(formattedActivities);
         setUnreadCount(formattedActivities.filter(activity => !activity.read).length);
         setLastFetchTime(Date.now());
+      } else {
+        // Handle empty data case
+        console.log("No activities data returned from Supabase");
+        setActivities([]);
+        setUnreadCount(0);
       }
     } catch (error) {
       console.error('Error fetching activities:', error);
+      setError(error instanceof Error ? error : new Error('Unknown error fetching activities'));
       toast({
         title: 'Error',
         description: 'Failed to load activities',
@@ -78,21 +88,26 @@ export const useActivities = () => {
 
   // Add a refresh function that can be called to force a reload
   const refreshActivities = useCallback(() => {
-    // Only refresh if it's been more than 2 seconds since the last fetch
+    // Only refresh if it's been more than 1 second since the last fetch
     // to prevent too many refreshes happening at once
-    if (Date.now() - lastFetchTime > 2000) {
+    if (Date.now() - lastFetchTime > 1000) {
+      console.log("Refreshing activities...");
       fetchActivities();
+    } else {
+      console.log("Skipping refresh - too soon since last fetch");
     }
   }, [fetchActivities, lastFetchTime]);
 
   const markAsRead = useCallback(async (id: string) => {
     try {
+      console.log(`Marking activity ${id} as read`);
       // Use the explicit function call for the stored procedure
       const { error } = await supabase.rpc('mark_activity_read', {
         activity_id: id
       });
 
       if (error) {
+        console.error("Error marking activity as read:", error);
         throw error;
       }
 
@@ -119,10 +134,12 @@ export const useActivities = () => {
 
   const markAllAsRead = useCallback(async () => {
     try {
+      console.log("Marking all activities as read");
       // Use the explicit function call for the stored procedure
       const { error } = await supabase.rpc('mark_all_activities_read');
 
       if (error) {
+        console.error("Error marking all activities as read:", error);
         throw error;
       }
 
@@ -158,7 +175,9 @@ export const useActivities = () => {
         console.log("Realtime update received:", payload);
         refreshActivities();
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Supabase channel status:", status);
+      });
 
     return () => {
       console.log("Cleaning up activities subscription");
@@ -169,6 +188,7 @@ export const useActivities = () => {
   return {
     activities,
     isLoading,
+    error,
     unreadCount,
     fetchActivities,
     refreshActivities,

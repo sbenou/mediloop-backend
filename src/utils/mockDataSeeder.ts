@@ -68,7 +68,7 @@ export const seedTimBurtonData = async () => {
 
     if (profileError) {
       console.error("Error inserting profile:", profileError);
-      throw profileError;
+      return { success: false, error: profileError };
     }
 
     console.log("Profile data inserted successfully");
@@ -80,7 +80,7 @@ export const seedTimBurtonData = async () => {
 
     if (notificationsError) {
       console.error("Error inserting notifications:", notificationsError);
-      throw notificationsError;
+      return { success: false, error: notificationsError };
     }
 
     console.log("Notifications inserted successfully");
@@ -108,7 +108,7 @@ export const seedTimBurtonData = async () => {
       
     if (deleteError) {
       console.error("Error deleting existing activities:", deleteError);
-      // Continue anyway
+      // Continue anyway as this might just mean there are no activities yet
     }
 
     // Insert new activities
@@ -119,15 +119,10 @@ export const seedTimBurtonData = async () => {
 
     if (activitiesError) {
       console.error("Error inserting activities:", activitiesError);
-      throw activitiesError;
+      return { success: false, error: activitiesError };
     }
 
     console.log("Activities inserted successfully:", activitiesData);
-
-    toast({
-      title: "Test data loaded successfully",
-      description: "Dr. Tim Burton's data has been loaded for testing",
-    });
 
     return {
       success: true,
@@ -136,15 +131,35 @@ export const seedTimBurtonData = async () => {
     };
   } catch (error) {
     console.error("Error loading test data:", error);
-    toast({
-      title: "Error loading test data",
-      description: "Check console for details",
-      variant: "destructive"
-    });
     return {
       success: false,
       error
     };
+  }
+};
+
+// Function to seed user notifications
+export const seedUserNotifications = async (userId) => {
+  if (!userId) {
+    console.error("No user ID provided for seeding notifications");
+    return { success: false, error: new Error("No user ID provided") };
+  }
+  
+  try {
+    console.log(`Seeding notifications for user: ${userId}`);
+    const { data, error } = await supabase.functions.invoke('seed-notifications', {
+      body: { user_id: userId }
+    });
+
+    if (error) {
+      console.error('Error seeding notifications:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, count: data?.count || 0, data };
+  } catch (error) {
+    console.error('Error seeding notifications:', error);
+    return { success: false, error };
   }
 };
 

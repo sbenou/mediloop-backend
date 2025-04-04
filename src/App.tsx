@@ -11,7 +11,14 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ActivityDataLoader } from "@/components/activity/ActivityDataLoader";
 
 function App() {
-  const queryClient = new QueryClient()
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
   
   return (
     <div className="app">
