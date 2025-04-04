@@ -143,21 +143,43 @@ export const useAvailabilityData = (
         const defaultPatient = { full_name: 'Unknown Patient', email: null };
         const defaultDoctor = { full_name: 'Unknown Doctor', email: null };
         
-        // Use type guards to check if patient data is valid
-        const patientData = typeof item.patient === 'object' && item.patient !== null && !('error' in item.patient)
-          ? { 
-              full_name: item.patient.full_name || 'Unknown Patient',
-              email: item.patient.email
-            }
-          : defaultPatient;
+        // Extract patient data safely with proper null checks
+        const patientData = (() => {
+          if (!item.patient) return defaultPatient;
+          
+          const patientObj = item.patient as Record<string, any>;
+          
+          return {
+            full_name: typeof patientObj === 'object' && 
+                      'full_name' in patientObj &&
+                      patientObj.full_name !== null
+              ? patientObj.full_name 
+              : 'Unknown Patient',
+            email: typeof patientObj === 'object' && 
+                  'email' in patientObj
+              ? patientObj.email
+              : null
+          };
+        })();
         
-        // Use type guards to check if doctor data is valid
-        const doctorData = typeof item.doctor === 'object' && item.doctor !== null && !('error' in item.doctor)
-          ? {
-              full_name: item.doctor.full_name || 'Unknown Doctor',
-              email: item.doctor.email
-            }
-          : defaultDoctor;
+        // Extract doctor data safely with proper null checks
+        const doctorData = (() => {
+          if (!item.doctor) return defaultDoctor;
+          
+          const doctorObj = item.doctor as Record<string, any>;
+          
+          return {
+            full_name: typeof doctorObj === 'object' && 
+                      'full_name' in doctorObj &&
+                      doctorObj.full_name !== null
+              ? doctorObj.full_name 
+              : 'Unknown Doctor',
+            email: typeof doctorObj === 'object' && 
+                  'email' in doctorObj
+              ? doctorObj.email 
+              : null
+          };
+        })();
         
         // Ensure the meta field exists, even if it's empty
         const meta = item.meta || {};
