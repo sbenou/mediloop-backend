@@ -9,7 +9,6 @@ import DoctorDashboard from '@/pages/DoctorDashboard';
 import UniversalDashboard from '@/pages/UniversalDashboard';
 import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import DoctorProfilePage from '@/pages/doctor/DoctorProfilePage';
-import PharmacyProfile from '@/pages/pharmacy/PharmacyProfile';
 import Activities from '@/pages/Activities';
 import NotFound from '@/pages/NotFound';
 import { CartProvider } from '@/contexts/CartContext';
@@ -17,17 +16,6 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 
 // Create a wrapper component for products routes that provides context
 const ProductsLayout = () => {
-  return (
-    <CurrencyProvider>
-      <CartProvider>
-        <Outlet />
-      </CartProvider>
-    </CurrencyProvider>
-  );
-};
-
-// Create a wrapper for professional profiles (doctor/pharmacy) with necessary contexts
-const ProfessionalProfileLayout = () => {
   return (
     <CurrencyProvider>
       <CartProvider>
@@ -76,20 +64,9 @@ const router = createBrowserRouter([
     path: '/unauthorized',
     element: <UnauthorizedPage />,
   },
-  // Professional profile routes with shared context
   {
-    path: '/',
-    element: <ProfessionalProfileLayout />,
-    children: [
-      {
-        path: 'doctor/profile',
-        element: <DoctorProfilePage />,
-      },
-      {
-        path: 'pharmacy/profile',
-        element: <PharmacyProfile />,
-      },
-    ]
+    path: '/doctor/profile',
+    element: <DoctorProfilePage />,
   },
   {
     path: '/notifications',
