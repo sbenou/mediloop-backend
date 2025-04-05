@@ -18,7 +18,7 @@ import NotificationItem from "@/components/notifications/NotificationItem";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollToTopButton } from "@/components/ui/scroll-to-top";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Tooltip,
@@ -37,7 +37,18 @@ interface ActivitiesProps {
 const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
   // Get search params to determine view from URL
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const viewParam = searchParams.get("view");
+  
+  // Check if there are dashboard navigation parameters
+  useEffect(() => {
+    // If there are dashboard navigation params in the URL, redirect to dashboard
+    if ((viewParam === "doctor" || viewParam === "pharmacy") || searchParams.get("section")) {
+      console.log("Redirecting to dashboard with params:", Object.fromEntries(searchParams.entries()));
+      navigate(`/dashboard?${searchParams.toString()}`);
+    }
+  }, [viewParam, searchParams, navigate]);
   
   // Activities data
   const { 

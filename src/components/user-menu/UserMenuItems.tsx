@@ -1,11 +1,10 @@
-
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useMemo } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
@@ -31,9 +30,14 @@ import { useAuth } from "@/hooks/auth/useAuth";
 
 export const UserMenuItems = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [auth, setAuth] = useRecoilState(authState);
   const { isPharmacist } = useAuth();
   const userRole = auth.profile?.role || 'user';
+  
+  // Check if we're on the activities or notifications page
+  const isActivitiesPage = location.pathname.includes('/activities') || 
+                          location.pathname.includes('/notifications');
   
   // Debugging logs
   console.log('UserMenuItems rendering with userRole:', userRole);
@@ -99,6 +103,19 @@ export const UserMenuItems = () => {
     }
   };
 
+  // Function to handle navigation with proper path resolution
+  const handleNavigation = (path: string) => {
+    console.log(`Navigating to ${path} from UserMenuItems`);
+    
+    // If on activities page and trying to go to dashboard with params,
+    // ensure we navigate properly
+    if (isActivitiesPage && path.startsWith('/dashboard?')) {
+      navigate(path);
+    } else {
+      navigate(path);
+    }
+  };
+
   // Generate menu items based on user role - this now exactly matches the sidebar navigation
   const getMenuItemsByRole = () => {
     // Default items (patient/user role)
@@ -110,7 +127,7 @@ export const UserMenuItems = () => {
         { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
         { icon: HeartPulse, label: 'Consultations', path: '/dashboard?view=teleconsultations' },
-        { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
+        { icon: Bell, label: 'Notifications', path: '/activities' },
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
@@ -123,7 +140,7 @@ export const UserMenuItems = () => {
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
         { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
-        { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
+        { icon: Bell, label: 'Notifications', path: '/activities' },
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
@@ -137,7 +154,7 @@ export const UserMenuItems = () => {
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
         { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
-        { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
+        { icon: Bell, label: 'Notifications', path: '/activities' },
         { icon: BarChart, label: 'Analytics', path: '/dashboard?view=pharmacy&section=analytics' },
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
@@ -151,7 +168,7 @@ export const UserMenuItems = () => {
         { icon: Store, label: 'Pharmacies', path: '/superadmin/pharmacies' },
         { icon: HeartPulse, label: 'Doctors', path: '/superadmin/doctors' },
         { icon: ShoppingBag, label: 'Products', path: '/superadmin/products' },
-        { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
+        { icon: Bell, label: 'Notifications', path: '/activities' },
         { icon: Settings, label: 'Settings', path: '/superadmin/settings' }
       ];
     }
@@ -160,7 +177,7 @@ export const UserMenuItems = () => {
     return [
       { icon: Home, label: 'Dashboard', path: '/dashboard' },
       { icon: User, label: 'Profile', path: '/settings?tab=profile' },
-      { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
+      { icon: Bell, label: 'Notifications', path: '/activities' },
       { icon: Settings, label: 'Settings', path: '/settings' }
     ];
   };
@@ -188,7 +205,7 @@ export const UserMenuItems = () => {
               key={`${item.label}-${index}`} 
               onClick={() => {
                 console.log(`Navigating to ${item.path} from UserMenuItems`);
-                navigate(item.path);
+                handleNavigation(item.path);
               }}
             >
               <item.icon className="mr-2 h-4 w-4" />
@@ -206,7 +223,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist]);
+  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage]);
 
   return menuItems;
 };
