@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { ActivityType } from "@/components/activity/ActivityItem";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ interface ActivitiesFiltersProps {
   onClearFilters?: () => void;
   dateRange?: string;
   onDateRangeChange?: (range: string) => void;
+  renderViewToggle?: (currentView: "table" | "card", onChange: (view: "table" | "card") => void) => React.ReactNode;
 }
 
 export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
@@ -55,6 +57,7 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
   onClearFilters = () => {},
   dateRange,
   onDateRangeChange = () => {},
+  renderViewToggle
 }) => {
   // For type filter dropdown state
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
@@ -101,26 +104,31 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
               <SelectItem value="type">Type</SelectItem>
             </SelectContent>
           </Select>
-          <div className="border rounded-md p-1">
-            <Button
-              variant={view === "table" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => onViewChange("table")}
-              className="h-8 w-8"
-            >
-              <List className="h-4 w-4" />
-              <span className="sr-only">Table view</span>
-            </Button>
-            <Button
-              variant={view === "card" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => onViewChange("card")}
-              className="h-8 w-8"
-            >
-              <Grid className="h-4 w-4" />
-              <span className="sr-only">Card view</span>
-            </Button>
-          </div>
+          
+          {renderViewToggle ? (
+            renderViewToggle(view, onViewChange)
+          ) : (
+            <div className="border rounded-md p-1">
+              <Button
+                variant={view === "table" ? "default" : "ghost"}
+                size="icon"
+                onClick={() => onViewChange("table")}
+                className="h-8 w-8"
+              >
+                <List className="h-4 w-4" />
+                <span className="sr-only">Table view</span>
+              </Button>
+              <Button
+                variant={view === "card" ? "default" : "ghost"}
+                size="icon"
+                onClick={() => onViewChange("card")}
+                className="h-8 w-8"
+              >
+                <Grid className="h-4 w-4" />
+                <span className="sr-only">Card view</span>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

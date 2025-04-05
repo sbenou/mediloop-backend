@@ -20,6 +20,12 @@ import { ScrollToTopButton } from "@/components/ui/scroll-to-top";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -61,6 +67,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
   const [view, setView] = useState<"table" | "card">("table");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "type">("newest");
   const [dateRange, setDateRange] = useState<string>("all");
+  const [notificationsView, setNotificationsView] = useState<"table" | "card">("table");
 
   // Update URL when changing views without causing a navigation
   const handleViewChange = (view: "activities" | "notifications") => {
@@ -171,6 +178,34 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
       );
     }
 
+    // Rendering notifications based on view mode (table or card)
+    if (notificationsView === "card") {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
+          {(paginatedContent as Notification[]).map((notification) => (
+            <div key={notification.id} className="border rounded-lg p-4 bg-white shadow-sm">
+              <h3 className="font-medium mb-1">{notification.title}</h3>
+              <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">
+                  {new Date(notification.created_at).toLocaleDateString()}
+                </span>
+                {!notification.read && (
+                  <button 
+                    onClick={() => markNotificationAsRead(notification.id)}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Mark as read
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Default table view for notifications
     return (
       <ScrollArea className="h-[calc(100vh-350px)]">
         <div className="space-y-2 p-1">
@@ -242,8 +277,14 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
             activeFilter={selectedTypeFilters.length === 1 ? selectedTypeFilters[0] : "all"}
             onFilterChange={() => {}}
             activityTypes={activityTypes}
-            view={view}
-            onViewChange={setView}
+            view={activeView === "activities" ? view : notificationsView}
+            onViewChange={(newView) => {
+              if (activeView === "activities") {
+                setView(newView);
+              } else {
+                setNotificationsView(newView);
+              }
+            }}
             sortBy={sortBy}
             onSortChange={setSortBy}
             selectedFilters={selectedTypeFilters}
@@ -252,6 +293,57 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
             onClearFilters={handleClearFilters}
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
+            renderViewToggle={(currentView, onChange) => (
+              <div className="border rounded-md p-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className={`h-8 w-8 inline-flex items-center justify-center rounded-sm ${
+                          currentView === "table" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                        onClick={() => onChange("table")}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-list">
+                          <line x1="8" y1="6" x2="21" y2="6"></line>
+                          <line x1="8" y1="12" x2="21" y2="12"></line>
+                          <line x1="8" y1="18" x2="21" y2="18"></line>
+                          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>List view</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className={`h-8 w-8 inline-flex items-center justify-center rounded-sm ${
+                          currentView === "card" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                        onClick={() => onChange("card")}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-grid">
+                          <rect x="3" y="3" width="7" height="7"></rect>
+                          <rect x="14" y="3" width="7" height="7"></rect>
+                          <rect x="14" y="14" width="7" height="7"></rect>
+                          <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Card view</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
           />
 
           {/* Content based on active view */}
