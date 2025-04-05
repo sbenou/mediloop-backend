@@ -9,6 +9,7 @@ import { FeaturesGrid } from '@/components/home/FeaturesGrid';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
+import { CookieConsent } from '@/components/cookies/CookieConsent';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ const Home = () => {
           </main>
           <Footer />
           <ScrollToTopButton />
+          <CookieConsent />
         </div>
       </CartProvider>
     </CurrencyProvider>
