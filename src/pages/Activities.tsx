@@ -14,7 +14,7 @@ import { ActivitiesTableView } from "@/components/activities/ActivitiesTableView
 import { ActivitiesCardView } from "@/components/activities/ActivitiesCardView";
 import { ActivitiesPagination } from "@/components/activities/ActivitiesPagination";
 import { ActivitiesFilters } from "@/components/activities/ActivitiesFilters";
-import { NotificationItem } from "@/components/notifications/NotificationItem";
+import NotificationItem from "@/components/notifications/NotificationItem";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollToTopButton } from "@/components/ui/scroll-to-top";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -118,9 +118,13 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
   }, [notifications, searchQuery]);
 
   // Calculate pagination for active content
-  const activeContent = activeView === "activities" ? filteredActivities : filteredNotifications;
-  const totalPages = Math.ceil(activeContent.length / ITEMS_PER_PAGE);
+  const totalItems = activeView === "activities" 
+    ? filteredActivities.length 
+    : filteredNotifications.length;
+    
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   
+  // Paginate the appropriate content based on active view
   const paginatedContent = useMemo(() => {
     if (activeView === "activities") {
       return paginateActivities(filteredActivities, currentPage, ITEMS_PER_PAGE);
@@ -170,7 +174,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
     return (
       <ScrollArea className="h-[calc(100vh-350px)]">
         <div className="space-y-2 p-1">
-          {paginatedContent.map((notification: Notification) => (
+          {(paginatedContent as Notification[]).map((notification) => (
             <NotificationItem
               key={notification.id}
               notification={notification}
@@ -194,12 +198,12 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
     
     return view === "table" ? (
       <ActivitiesTableView
-        activities={paginatedContent}
+        activities={paginatedContent as any[]}
         markAsRead={markActivityAsRead}
       />
     ) : (
       <ActivitiesCardView
-        activities={paginatedContent}
+        activities={paginatedContent as any[]}
         markAsRead={markActivityAsRead}
       />
     );
@@ -252,7 +256,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
 
           {/* Content based on active view */}
           <div>
-            {isLoading && activeContent.length === 0 ? (
+            {isLoading && (activeView === "activities" ? filteredActivities.length === 0 : filteredNotifications.length === 0) ? (
               renderLoadingState()
             ) : activeView === "activities" ? (
               renderActivities()
@@ -261,7 +265,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
             )}
 
             {/* Only show pagination when we have content and it's loaded */}
-            {!isLoading && activeContent.length > 0 && (
+            {!isLoading && totalItems > 0 && (
               <ActivitiesPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
