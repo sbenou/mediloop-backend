@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ActivityGroup } from "./ActivityGroup";
 import { ActivityEmptyState } from "./ActivityEmptyState";
@@ -17,11 +17,18 @@ export const ActivityContent: React.FC<ActivityContentProps> = ({
   onMarkRead,
   activeTab
 }) => {
-  const filteredActivities = activeTab === "all" 
-    ? activities 
-    : activities.filter(activity => activity.type === activeTab);
+  // Memoize filtered activities to avoid unnecessary recalculations
+  const filteredActivities = useMemo(() => {
+    return activeTab === "all" 
+      ? activities 
+      : activities.filter(activity => activity.type === activeTab);
+  }, [activities, activeTab]);
   
-  const groupedActivities = groupActivitiesByDate(filteredActivities);
+  // Memoize grouped activities to avoid unnecessary recalculations
+  const groupedActivities = useMemo(() => {
+    return groupActivitiesByDate(filteredActivities);
+  }, [filteredActivities]);
+  
   const hasActivities = filteredActivities.length > 0;
   
   return (

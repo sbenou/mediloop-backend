@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -371,7 +370,6 @@ const Notifications = () => {
           <CardTitle>Your Notifications</CardTitle>
           <div className="flex flex-col md:flex-row justify-between gap-4 mt-4">
             <div className="flex flex-wrap gap-2">
-              {/* Search box */}
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -383,7 +381,6 @@ const Notifications = () => {
                 />
               </div>
 
-              {/* Filter dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="gap-1">
@@ -397,16 +394,16 @@ const Notifications = () => {
                     <div className="p-2">
                       <p className="text-sm font-medium mb-2">Notification Type</p>
                       <Select
-                        value={filters.type || ""}
+                        value={filters.type || "all_types"}
                         onValueChange={(value) =>
-                          setFilters({ ...filters, type: value || null })
+                          setFilters({ ...filters, type: value === "all_types" ? null : value })
                         }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="All types" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All types</SelectItem>
+                          <SelectItem value="all_types">All types</SelectItem>
                           {notificationTypes.map((type) => (
                             <SelectItem key={type} value={type}>
                               {formatNotificationType(type)}
@@ -437,16 +434,16 @@ const Notifications = () => {
 
                       <p className="text-sm font-medium mb-2 mt-4">Date Range</p>
                       <Select
-                        value={filters.dateRange || ""}
+                        value={filters.dateRange || "all_time"}
                         onValueChange={(value) =>
-                          setFilters({ ...filters, dateRange: value || null })
+                          setFilters({ ...filters, dateRange: value === "all_time" ? null : value })
                         }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="All time" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All time</SelectItem>
+                          <SelectItem value="all_time">All time</SelectItem>
                           <SelectItem value="today">Today</SelectItem>
                           <SelectItem value="yesterday">Yesterday</SelectItem>
                           <SelectItem value="week">Last 7 days</SelectItem>
@@ -469,7 +466,6 @@ const Notifications = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Sort dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="gap-1">
@@ -500,7 +496,6 @@ const Notifications = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* View mode toggle */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
@@ -518,7 +513,6 @@ const Notifications = () => {
               </DropdownMenu>
             </div>
 
-            {/* Filter indicator */}
             {(filters.type || filters.readStatus !== "all" || filters.dateRange || filters.searchTerm) && (
               <div className="flex items-center">
                 <Badge variant="secondary" className="mr-2">

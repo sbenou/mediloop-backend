@@ -23,16 +23,10 @@ export const ActivityFeed = () => {
   
   // Set up initial data fetching and subscription
   useEffect(() => {
-    console.log("ActivityFeed: Setting up data fetching and realtime subscription");
     fetchActivities();
     const cleanup = setupRealtimeSubscription();
     return cleanup;
   }, [fetchActivities, setupRealtimeSubscription]);
-  
-  // Log when activities are updated
-  useEffect(() => {
-    console.log("Activities updated:", activities.length, activities);
-  }, [activities]);
   
   // Get unique activity types from the loaded activities
   const activityTypes = Array.from(new Set(activities.map(activity => activity.type)));

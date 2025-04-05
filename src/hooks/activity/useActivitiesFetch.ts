@@ -16,8 +16,6 @@ export const useActivitiesFetch = () => {
     setError(null);
     
     try {
-      console.log("Fetching activities...");
-      
       // Modified query - removed the is("deleted_at", null) condition since the column doesn't exist
       const { data, error } = await supabase
         .from('activities')
@@ -42,7 +40,10 @@ export const useActivitiesFetch = () => {
       setUnreadCount(formattedActivities.filter(a => !a.read).length);
       lastFetchTimeRef.current = Date.now();
       
-      console.log(`Fetched ${formattedActivities.length} activities, ${formattedActivities.filter(a => !a.read).length} unread`);
+      // Reduced logging to just a summary instead of logging on each activity
+      if (formattedActivities.length > 0) {
+        console.log(`Fetched ${formattedActivities.length} activities, ${formattedActivities.filter(a => !a.read).length} unread`);
+      }
     } catch (err) {
       console.error('Error fetching activities:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch activities'));
