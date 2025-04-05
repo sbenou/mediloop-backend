@@ -6,12 +6,13 @@ import { useActivities } from "@/hooks/activity";
 import { ActivityContent } from "./ActivityContent";
 import { ViewAllActivitiesButton } from "./ViewAllActivitiesButton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Filter } from "lucide-react";
 
 export const ActivityFeed = () => {
@@ -23,7 +24,7 @@ export const ActivityFeed = () => {
     markAllAsRead
   } = useActivities();
   
-  const [activeFilter, setActiveFilter] = useState<"all" | ActivityType>("all");
+  const [selectedTypes, setSelectedTypes] = useState<ActivityType[]>([]);
   
   // Get unique activity types from the loaded activities
   const activityTypes = Array.from(new Set(activities.map(activity => activity.type)));
@@ -45,29 +46,57 @@ export const ActivityFeed = () => {
       </div>
       
       <div className="flex items-center gap-2 mb-4">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <Select 
-          value={activeFilter} 
-          onValueChange={(value) => setActiveFilter(value as "all" | ActivityType)}
-        >
-          <SelectTrigger className="w-full md:w-[220px]">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Activities</SelectItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="flex gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span>
+                {selectedTypes.length === 0 
+                  ? "All Activities" 
+                  : `${selectedTypes.length} type${selectedTypes.length > 1 ? 's' : ''} selected`}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuLabel>Filter by type</DropdownMenuLabel>
+            <DropdownMenuSeparator />
             {activityTypes.map((type) => (
-              <SelectItem key={type} value={type}>
+              <DropdownMenuCheckboxItem
+                key={type}
+                checked={selectedTypes.includes(type)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedTypes((prev) => [...prev, type]);
+                  } else {
+                    setSelectedTypes((prev) => prev.filter((item) => item !== type));
+                  }
+                }}
+              >
                 {type.replace(/_/g, ' ')}
-              </SelectItem>
+              </DropdownMenuCheckboxItem>
             ))}
-          </SelectContent>
-        </Select>
+            {selectedTypes.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full text-xs justify-center mt-2"
+                  onClick={() => setSelectedTypes([])}
+                >
+                  Clear filters
+                </Button>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       <ActivityContent 
         activities={activities}
         onMarkRead={markAsRead}
-        activeTab={activeFilter}
+        activeTab="all"
+        selectedTypes={selectedTypes}
         isLoading={isLoading}
       />
       

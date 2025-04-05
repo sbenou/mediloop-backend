@@ -1,4 +1,3 @@
-
 import React, { useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ActivityGroup } from "./ActivityGroup";
@@ -11,6 +10,7 @@ interface ActivityContentProps {
   activities: Activity[];
   onMarkRead: (id: string) => void;
   activeTab: "all" | ActivityType;
+  selectedTypes?: ActivityType[];
   isLoading: boolean;
 }
 
@@ -18,14 +18,21 @@ export const ActivityContent: React.FC<ActivityContentProps> = ({
   activities, 
   onMarkRead,
   activeTab,
+  selectedTypes = [],
   isLoading
 }) => {
   // Memoize filtered activities to avoid unnecessary recalculations
   const filteredActivities = useMemo(() => {
+    // If selectedTypes has items, filter by those types
+    if (selectedTypes.length > 0) {
+      return activities.filter(activity => selectedTypes.includes(activity.type as ActivityType));
+    }
+    
+    // Otherwise use the activeTab filter (for backwards compatibility)
     return activeTab === "all" 
       ? activities 
       : activities.filter(activity => activity.type === activeTab);
-  }, [activities, activeTab]);
+  }, [activities, activeTab, selectedTypes]);
   
   // Memoize grouped activities to avoid unnecessary recalculations
   const groupedActivities = useMemo(() => {
