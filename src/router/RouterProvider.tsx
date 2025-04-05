@@ -1,5 +1,5 @@
 
-import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Products from '@/pages/Products';
 import ProductDetail from '@/pages/ProductDetail';
 import Home from '@/pages/Home';
@@ -11,6 +11,19 @@ import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import DoctorProfilePage from '@/pages/doctor/DoctorProfilePage';
 import Activities from '@/pages/Activities';
 import NotFound from '@/pages/NotFound';
+import { CartProvider } from '@/contexts/CartContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
+
+// Create a wrapper component for products routes that provides context
+const ProductsLayout = () => {
+  return (
+    <CurrencyProvider>
+      <CartProvider>
+        <Outlet />
+      </CartProvider>
+    </CurrencyProvider>
+  );
+};
 
 const router = createBrowserRouter([
   {
@@ -19,11 +32,17 @@ const router = createBrowserRouter([
   },
   {
     path: '/products',
-    element: <Products />,
-  },
-  {
-    path: '/products/:id',
-    element: <ProductDetail />,
+    element: <ProductsLayout />,
+    children: [
+      {
+        index: true,
+        element: <Products />,
+      },
+      {
+        path: ':id',
+        element: <ProductDetail />,
+      }
+    ]
   },
   {
     path: '/login',
