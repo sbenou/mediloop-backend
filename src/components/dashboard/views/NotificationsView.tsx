@@ -2,7 +2,6 @@
 import React from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 import NotificationTabs from '@/components/notifications/NotificationTabs';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect } from 'react';
 
