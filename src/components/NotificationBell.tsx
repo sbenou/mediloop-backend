@@ -5,9 +5,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationTabs from "./notifications/NotificationTabs";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { 
     notifications, 
@@ -27,6 +30,12 @@ const NotificationBell = () => {
       return cleanup;
     }
   }, [isAuthenticated, fetchNotifications, setupRealtimeSubscription]);
+
+  // Handle view all notifications click
+  const handleViewAllClick = () => {
+    setIsOpen(false);
+    navigate("/dashboard?view=notifications");
+  };
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -48,6 +57,15 @@ const NotificationBell = () => {
           onMarkRead={markAsRead}
           onMarkAllRead={markAllAsRead}
         />
+        <div className="p-2 border-t">
+          <Button 
+            variant="ghost" 
+            className="w-full text-sm"
+            onClick={handleViewAllClick}
+          >
+            View all notifications
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

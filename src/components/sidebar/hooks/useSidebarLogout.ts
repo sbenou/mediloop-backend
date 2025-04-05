@@ -10,7 +10,7 @@ export const useSidebarLogout = () => {
   
   const handleLogout = async () => {
     try {
-      console.log("Logout initiated from UnifiedSidebar");
+      console.log("Logout initiated from Sidebar");
       
       try {
         localStorage.clear();
@@ -19,6 +19,7 @@ export const useSidebarLogout = () => {
         console.error("Error clearing storage:", e);
       }
       
+      // Clear auth storage
       clearAllAuthStorage();
       clearAllCookies();
       
@@ -28,6 +29,7 @@ export const useSidebarLogout = () => {
         console.error("Error removing selectedCountry:", err);
       }
       
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
@@ -43,8 +45,8 @@ export const useSidebarLogout = () => {
         description: "You have been successfully logged out",
       });
       
-      // Use navigate instead of directly setting window.location
-      navigate("/login");
+      // Direct window location change instead of using navigate
+      window.location.href = "/login";
     } catch (error) {
       console.error("Logout error:", error);
       toast({

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useActivities } from "@/hooks/activity";
 import { ActivityType } from "@/components/activity/ActivityItem";
@@ -13,6 +12,7 @@ import { ActivitiesCardView } from "@/components/activities/ActivitiesCardView";
 import { ActivitiesPagination } from "@/components/activities/ActivitiesPagination";
 import { ActivitiesFilters } from "@/components/activities/ActivitiesFilters";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollToTopButton } from "@/components/ui/scroll-to-top";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -144,6 +144,9 @@ const Activities = () => {
           </div>
         </div>
       </div>
+      
+      {/* Add scroll to top button */}
+      <ScrollToTopButton />
     </UnifiedLayoutTemplate>
   );
 };

@@ -2,8 +2,7 @@
 import React from "react";
 import { ActivityType } from "@/components/activity/ActivityItem";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -11,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Grid, List } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Grid, List, Search, X } from "lucide-react";
 
 interface ActivitiesFiltersProps {
   searchQuery: string;
@@ -23,6 +23,10 @@ interface ActivitiesFiltersProps {
   onViewChange: (view: "table" | "card") => void;
   sortBy: "newest" | "oldest" | "type";
   onSortChange: (sortBy: "newest" | "oldest" | "type") => void;
+  selectedFilters?: ActivityType[];
+  onSelectFilter?: (type: ActivityType) => void;
+  onRemoveFilter?: (type: ActivityType) => void;
+  onClearFilters?: () => void;
 }
 
 export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
@@ -35,9 +39,13 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
   onViewChange,
   sortBy,
   onSortChange,
+  selectedFilters = [],
+  onSelectFilter = () => {},
+  onRemoveFilter = () => {},
+  onClearFilters = () => {},
 }) => {
   return (
-    <>
+    <div className="space-y-4">
       {/* Filters, search and view toggles */}
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="flex flex-1 items-center relative max-w-sm">
@@ -86,19 +94,65 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
         </div>
       </div>
 
-      {/* Type filtering tabs */}
-      <Tabs defaultValue="all" value={activeFilter} onValueChange={(v) => {
-        onFilterChange(v as "all" | ActivityType);
-      }}>
-        <TabsList className="mb-4 flex flex-wrap h-auto">
-          <TabsTrigger value="all">All</TabsTrigger>
-          {activityTypes.map(type => (
-            <TabsTrigger key={type} value={type}>
-              {type.replace(/_/g, ' ')}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-    </>
+      {/* Filter type selector */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-sm font-medium">Filter by type:</h3>
+          <Select 
+            value={activeFilter === "all" ? "all" : activeFilter} 
+            onValueChange={(value) => {
+              if (value === "all") {
+                onFilterChange("all");
+              } else {
+                onFilterChange(value as ActivityType);
+              }
+            }}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select a type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {activityTypes.map(type => (
+                <SelectItem key={type} value={type}>
+                  {type.replace(/_/g, ' ')}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Display selected filters as badges */}
+        {selectedFilters.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {selectedFilters.map(filter => (
+              <Badge key={filter} variant="secondary" className="flex items-center gap-1">
+                {filter.replace(/_/g, ' ')}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 p-0 ml-1"
+                  onClick={() => onRemoveFilter(filter)}
+                >
+                  <X className="h-3 w-3" />
+                  <span className="sr-only">Remove {filter}</span>
+                </Button>
+              </Badge>
+            ))}
+            
+            {selectedFilters.length > 1 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs h-6"
+                onClick={onClearFilters}
+              >
+                Clear all
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
