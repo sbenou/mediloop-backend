@@ -44,14 +44,8 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) throw new Error('User not authenticated');
 
-      // Determine the correct bucket based on context
-      let bucketName = 'avatars'; // Default bucket for regular avatars
       const filePath = `${userId}/${crypto.randomUUID()}`;
-      
-      // For pharmacists uploading logo, use the pharmacy-logos bucket
-      if (userRole === 'pharmacist') {
-        bucketName = 'pharmacy-logos';
-      }
+      const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 'avatars';
       
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
@@ -65,13 +59,7 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
         .from(bucketName)
         .getPublicUrl(filePath);
 
-      // Determine which field to update based on role and context
-      let fieldToUpdate = 'avatar_url'; // Default for profile avatars
-      
-      // For pharmacists updating from sidebar, update the pharmacy logo
-      if (userRole === 'pharmacist') {
-        fieldToUpdate = 'pharmacy_logo_url';
-      }
+      const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'avatar_url';
       
       const { error: updateError } = await supabase
         .from('profiles')
