@@ -52,7 +52,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/notifications',
-    element: <Navigate to="/dashboard?view=notifications" replace />,
+    element: <Notifications />,
   },
   {
     path: '/activities',

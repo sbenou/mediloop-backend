@@ -34,7 +34,7 @@ const NotificationBell = () => {
   // Handle view all notifications click
   const handleViewAllClick = () => {
     setIsOpen(false);
-    navigate("/dashboard?view=notifications");
+    navigate("/notifications");
   };
 
   return (

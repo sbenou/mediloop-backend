@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { ActivityType } from "@/components/activity/ActivityItem";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Grid, List, Search, X } from "lucide-react";
+import { Grid, List, Search, X, Calendar, Filter } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ActivitiesFiltersProps {
   searchQuery: string;
@@ -27,6 +37,8 @@ interface ActivitiesFiltersProps {
   onSelectFilter?: (type: ActivityType) => void;
   onRemoveFilter?: (type: ActivityType) => void;
   onClearFilters?: () => void;
+  dateRange?: string;
+  onDateRangeChange?: (range: string) => void;
 }
 
 export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
@@ -43,7 +55,12 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
   onSelectFilter = () => {},
   onRemoveFilter = () => {},
   onClearFilters = () => {},
+  dateRange,
+  onDateRangeChange = () => {},
 }) => {
+  // For type filter dropdown state
+  const [typeMenuOpen, setTypeMenuOpen] = useState(false);
+
   return (
     <div className="space-y-4">
       {/* Filters, search and view toggles */}
@@ -94,65 +111,105 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
         </div>
       </div>
 
-      {/* Filter type selector */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-sm font-medium">Filter by type:</h3>
-          <Select 
-            value={activeFilter === "all" ? "all" : activeFilter} 
-            onValueChange={(value) => {
-              if (value === "all") {
-                onFilterChange("all");
-              } else {
-                onFilterChange(value as ActivityType);
-              }
-            }}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select a type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {activityTypes.map(type => (
-                <SelectItem key={type} value={type}>
-                  {type.replace(/_/g, ' ')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Display selected filters as badges */}
-        {selectedFilters.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {selectedFilters.map(filter => (
-              <Badge key={filter} variant="secondary" className="flex items-center gap-1">
-                {filter.replace(/_/g, ' ')}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 p-0 ml-1"
-                  onClick={() => onRemoveFilter(filter)}
-                >
-                  <X className="h-3 w-3" />
-                  <span className="sr-only">Remove {filter}</span>
-                </Button>
-              </Badge>
-            ))}
-            
-            {selectedFilters.length > 1 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs h-6"
-                onClick={onClearFilters}
+      {/* Filters section */}
+      <div className="flex flex-wrap gap-3">
+        {/* Type filter dropdown */}
+        <DropdownMenu open={typeMenuOpen} onOpenChange={setTypeMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-1">
+              <Filter className="h-4 w-4 mr-1" />
+              Activity Types
+              {selectedFilters.length > 0 && (
+                <Badge variant="secondary" className="ml-1 px-1 min-w-4 text-xs">
+                  {selectedFilters.length}
+                </Badge>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuLabel>Select activity types</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {activityTypes.map(type => (
+              <DropdownMenuCheckboxItem
+                key={type}
+                checked={selectedFilters.includes(type)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onSelectFilter(type);
+                  } else {
+                    onRemoveFilter(type);
+                  }
+                }}
               >
-                Clear all
-              </Button>
+                {type.replace(/_/g, ' ')}
+              </DropdownMenuCheckboxItem>
+            ))}
+            {selectedFilters.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => {
+                  e.preventDefault();
+                  onClearFilters();
+                }}>
+                  Clear all filters
+                </DropdownMenuItem>
+              </>
             )}
-          </div>
-        )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Date range filter */}
+        <Select
+          value={dateRange}
+          onValueChange={onDateRangeChange}
+        >
+          <SelectTrigger className="gap-1 w-[180px]">
+            <Calendar className="h-4 w-4 mr-1" />
+            <SelectValue placeholder="Date range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All time</SelectItem>
+            <SelectItem value="this_month">This month</SelectItem>
+            <SelectItem value="last_3_months">Last 3 months</SelectItem>
+            <SelectItem value="last_6_months">Last 6 months</SelectItem>
+            <SelectItem value="this_year">This year</SelectItem>
+            <SelectItem value="2025">Year 2025</SelectItem>
+            <SelectItem value="2024">Year 2024</SelectItem>
+            <SelectItem value="2023">Year 2023</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+
+      {/* Display selected filters as badges */}
+      {selectedFilters.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {selectedFilters.map(filter => (
+            <Badge key={filter} variant="secondary" className="flex items-center gap-1">
+              {filter.replace(/_/g, ' ')}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0 ml-1"
+                onClick={() => onRemoveFilter(filter)}
+              >
+                <X className="h-3 w-3" />
+                <span className="sr-only">Remove {filter}</span>
+              </Button>
+            </Badge>
+          ))}
+          
+          {selectedFilters.length > 1 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs h-6"
+              onClick={onClearFilters}
+            >
+              Clear all
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
