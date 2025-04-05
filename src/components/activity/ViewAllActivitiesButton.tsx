@@ -12,7 +12,7 @@ export const ViewAllActivitiesButton: React.FC = () => {
       <Button 
         variant="ghost" 
         className="w-full justify-between"
-        onClick={() => navigate("/activities")}
+        onClick={() => navigate("/activities?view=activities")}
       >
         View all activities
         <ExternalLink className="h-4 w-4" />

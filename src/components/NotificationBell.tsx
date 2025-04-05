@@ -34,11 +34,10 @@ const NotificationBell = () => {
     }
   }, [isAuthenticated, fetchNotifications, setupRealtimeSubscription]);
 
-  // Updated navigation to be consistent with the activities page
+  // Navigate to notifications view
   const handleViewAllClick = () => {
     setIsOpen(false);
-    // Redirect to the activities page which now handles both activities and notifications
-    navigate("/activities");
+    navigate("/notifications?view=notifications");
   };
 
   return (

@@ -1,7 +1,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useActivities } from "@/hooks/activity";
+import { useNotifications } from "@/hooks/useNotifications";
 import { ActivityType } from "@/components/activity/ActivityItem";
+import { Notification } from "@/types/supabase";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { 
   filterAndSortActivities, 
@@ -12,20 +14,47 @@ import { ActivitiesTableView } from "@/components/activities/ActivitiesTableView
 import { ActivitiesCardView } from "@/components/activities/ActivitiesCardView";
 import { ActivitiesPagination } from "@/components/activities/ActivitiesPagination";
 import { ActivitiesFilters } from "@/components/activities/ActivitiesFilters";
+import { NotificationItem } from "@/components/notifications/NotificationItem";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollToTopButton } from "@/components/ui/scroll-to-top";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSearchParams } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ITEMS_PER_PAGE = 10;
 
-const Activities = () => {
+interface ActivitiesProps {
+  initialView?: "activities" | "notifications";
+}
+
+const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
+  // Get search params to determine view from URL
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewParam = searchParams.get("view");
+  
+  // Activities data
   const { 
     activities, 
-    isLoading, 
+    isLoading: isActivitiesLoading, 
     fetchActivities, 
-    markAsRead
+    markAsRead: markActivityAsRead
   } = useActivities();
 
+  // Notifications data
+  const {
+    notifications,
+    isLoading: isNotificationsLoading,
+    fetchNotifications,
+    markAsRead: markNotificationAsRead,
+    markAllAsRead
+  } = useNotifications();
+  
   // UI State
+  const [activeView, setActiveView] = useState<"activities" | "notifications">(
+    viewParam === "notifications" ? "notifications" : 
+    viewParam === "activities" ? "activities" : 
+    initialView
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypeFilters, setSelectedTypeFilters] = useState<ActivityType[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,11 +62,18 @@ const Activities = () => {
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "type">("newest");
   const [dateRange, setDateRange] = useState<string>("all");
 
-  // Set up initial data fetching
+  // Update URL when changing views without causing a navigation
+  const handleViewChange = (view: "activities" | "notifications") => {
+    setActiveView(view);
+    setSearchParams({ view });
+  };
+
+  // Set up initial data fetching for both activities and notifications
   useEffect(() => {
     console.log("Activities page: Initial data fetch");
     fetchActivities();
-  }, [fetchActivities]);
+    fetchNotifications();
+  }, [fetchActivities, fetchNotifications]);
 
   // Get unique activity types
   const activityTypes = useMemo(() => {
@@ -69,15 +105,31 @@ const Activities = () => {
     );
   }, [activities, selectedTypeFilters, searchQuery, sortBy, dateRange]);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE);
-  const paginatedActivities = useMemo(() => {
-    return paginateActivities(
-      filteredActivities,
-      currentPage,
-      ITEMS_PER_PAGE
-    );
-  }, [filteredActivities, currentPage]);
+  // Filter notifications (basic filtering for now)
+  const filteredNotifications = useMemo(() => {
+    if (searchQuery) {
+      return notifications.filter(
+        (notif) => 
+          notif.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          notif.message.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return notifications;
+  }, [notifications, searchQuery]);
+
+  // Calculate pagination for active content
+  const activeContent = activeView === "activities" ? filteredActivities : filteredNotifications;
+  const totalPages = Math.ceil(activeContent.length / ITEMS_PER_PAGE);
+  
+  const paginatedContent = useMemo(() => {
+    if (activeView === "activities") {
+      return paginateActivities(filteredActivities, currentPage, ITEMS_PER_PAGE);
+    } else {
+      // Simple pagination for notifications
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      return filteredNotifications.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }
+  }, [activeView, filteredActivities, filteredNotifications, currentPage]);
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -85,10 +137,13 @@ const Activities = () => {
     window.scrollTo(0, 0);
   };
 
-  // Reset to first page when filters change
+  // Reset to first page when filters change or view changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedTypeFilters, searchQuery, sortBy, dateRange]);
+  }, [selectedTypeFilters, searchQuery, sortBy, dateRange, activeView]);
+
+  // Determine if we're in loading state
+  const isLoading = activeView === "activities" ? isActivitiesLoading : isNotificationsLoading;
 
   // Render loading skeletons
   const renderLoadingState = () => (
@@ -102,15 +157,77 @@ const Activities = () => {
     </div>
   );
 
+  // Render notifications section
+  const renderNotifications = () => {
+    if (filteredNotifications.length === 0) {
+      return (
+        <div className="text-center py-10 border rounded-lg bg-gray-50">
+          <p className="text-muted-foreground">No notifications found</p>
+        </div>
+      );
+    }
+
+    return (
+      <ScrollArea className="h-[calc(100vh-350px)]">
+        <div className="space-y-2 p-1">
+          {paginatedContent.map((notification: Notification) => (
+            <NotificationItem
+              key={notification.id}
+              notification={notification}
+              onMarkRead={markNotificationAsRead}
+            />
+          ))}
+        </div>
+      </ScrollArea>
+    );
+  };
+
+  // Render activities section
+  const renderActivities = () => {
+    if (filteredActivities.length === 0) {
+      return (
+        <div className="text-center py-10 border rounded-lg bg-gray-50">
+          <p className="text-muted-foreground">No activities found matching your criteria</p>
+        </div>
+      );
+    }
+    
+    return view === "table" ? (
+      <ActivitiesTableView
+        activities={paginatedContent}
+        markAsRead={markActivityAsRead}
+      />
+    ) : (
+      <ActivitiesCardView
+        activities={paginatedContent}
+        markAsRead={markActivityAsRead}
+      />
+    );
+  };
+
   return (
     <UnifiedLayoutTemplate>
       <div className="container py-6">
         <div className="flex flex-col space-y-8">
-          {/* Header with title */}
-          <div className="flex flex-col space-y-2">
-            <h1 className="text-3xl font-bold">Activities</h1>
+          {/* Header with title and view tabs */}
+          <div className="flex flex-col space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h1 className="text-3xl font-bold">
+                {activeView === "activities" ? "Activities" : "Notifications"}
+              </h1>
+              
+              <Tabs value={activeView} onValueChange={(value) => handleViewChange(value as "activities" | "notifications")}>
+                <TabsList>
+                  <TabsTrigger value="activities">Activities</TabsTrigger>
+                  <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            
             <p className="text-muted-foreground">
-              View and manage your recent activities
+              {activeView === "activities" 
+                ? "View and manage your recent activities" 
+                : "View and manage your notifications and alerts"}
             </p>
           </div>
 
@@ -133,28 +250,18 @@ const Activities = () => {
             onDateRangeChange={setDateRange}
           />
 
-          {/* Activities content */}
+          {/* Content based on active view */}
           <div>
-            {isLoading && activities.length === 0 ? (
+            {isLoading && activeContent.length === 0 ? (
               renderLoadingState()
-            ) : filteredActivities.length === 0 ? (
-              <div className="text-center py-10 border rounded-lg bg-gray-50">
-                <p className="text-muted-foreground">No activities found matching your criteria</p>
-              </div>
-            ) : view === "table" ? (
-              <ActivitiesTableView
-                activities={paginatedActivities}
-                markAsRead={markAsRead}
-              />
+            ) : activeView === "activities" ? (
+              renderActivities()
             ) : (
-              <ActivitiesCardView
-                activities={paginatedActivities}
-                markAsRead={markAsRead}
-              />
+              renderNotifications()
             )}
 
-            {/* Only show pagination when we have activities and they're loaded */}
-            {!isLoading && filteredActivities.length > 0 && (
+            {/* Only show pagination when we have content and it's loaded */}
+            {!isLoading && activeContent.length > 0 && (
               <ActivitiesPagination
                 currentPage={currentPage}
                 totalPages={totalPages}

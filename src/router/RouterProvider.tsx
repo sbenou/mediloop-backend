@@ -51,12 +51,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/notifications',
-    // Redirect to activities page which now handles both activities and notifications
-    element: <Navigate to="/activities" replace />,
+    element: <Activities initialView="notifications" />,
   },
   {
     path: '/activities',
-    element: <Activities />,
+    element: <Activities initialView="activities" />,
   },
   {
     path: '*',
