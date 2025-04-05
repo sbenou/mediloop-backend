@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { RouterProvider } from '@/router/RouterProvider';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProviderWithRecoil as AuthProvider } from '@/contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster"
 
