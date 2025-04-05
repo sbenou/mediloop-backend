@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ActivitiesCardViewProps {
   activities: Activity[];
@@ -87,46 +88,48 @@ export const ActivitiesCardView: React.FC<ActivitiesCardViewProps> = ({
   markAsRead,
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {activities.map((activity) => {
-        const { color } = getActivityTypeStyles(activity.type);
-        
-        return (
-          <Card 
-            key={activity.id} 
-            className={cn(
-              "p-4 border-l-4", 
-              color,
-              !activity.read ? '' : 'opacity-70'
-            )}
-          >
-            <div className="flex justify-between items-start">
-              <div className="text-sm font-medium text-muted-foreground">
-                {activity.type.replace(/_/g, ' ')}
-              </div>
-              {!activity.read && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => markAsRead(activity.id)}
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  <span className="sr-only">Mark as read</span>
-                </Button>
+    <ScrollArea className="h-[calc(100vh-350px)]">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
+        {activities.map((activity) => {
+          const { color } = getActivityTypeStyles(activity.type);
+          
+          return (
+            <Card 
+              key={activity.id} 
+              className={cn(
+                "p-4 border-l-4", 
+                color,
+                !activity.read ? '' : 'opacity-70'
               )}
-            </div>
-            <div className="mt-2">
-              <h3 className="font-medium">{activity.title}</h3>
-              <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
-            </div>
-            <div className="flex items-center mt-4 text-sm text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5 mr-1" />
-              {formatActivityTime(activity.timestamp)}
-            </div>
-          </Card>
-        );
-      })}
-    </div>
+            >
+              <div className="flex justify-between items-start">
+                <div className="text-sm font-medium text-muted-foreground">
+                  {activity.type.replace(/_/g, ' ')}
+                </div>
+                {!activity.read && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => markAsRead(activity.id)}
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="sr-only">Mark as read</span>
+                  </Button>
+                )}
+              </div>
+              <div className="mt-2">
+                <h3 className="font-medium">{activity.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
+              </div>
+              <div className="flex items-center mt-4 text-sm text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5 mr-1" />
+                {formatActivityTime(activity.timestamp)}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </ScrollArea>
   );
 };

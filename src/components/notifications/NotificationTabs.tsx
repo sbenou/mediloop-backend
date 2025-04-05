@@ -91,39 +91,47 @@ const NotificationTabs = ({
 
     if (viewMode === "card") {
       return (
-        <div className="grid grid-cols-1 gap-3">
-          {allNotifications.map((notification) => {
-            const borderColorClass = getNotificationStyle(notification.type);
-            return (
-              <Card 
-                key={notification.id}
-                className={cn(
-                  "border-l-4 overflow-hidden",
-                  borderColorClass,
-                  notification.read ? "opacity-70" : ""
-                )}
-                onClick={() => !notification.read && onMarkRead(notification.id)}
-              >
-                <div className="p-3">
-                  <NotificationItem
-                    notification={notification}
-                    onMarkRead={onMarkRead}
-                  />
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        <ScrollArea className="h-[400px]">
+          <div className="grid grid-cols-1 gap-3 p-1">
+            {allNotifications.map((notification) => {
+              const borderColorClass = getNotificationStyle(notification.type);
+              return (
+                <Card 
+                  key={notification.id}
+                  className={cn(
+                    "border-l-4 overflow-hidden",
+                    borderColorClass,
+                    notification.read ? "opacity-70" : ""
+                  )}
+                  onClick={() => !notification.read && onMarkRead(notification.id)}
+                >
+                  <div className="p-3">
+                    <NotificationItem
+                      notification={notification}
+                      onMarkRead={onMarkRead}
+                    />
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </ScrollArea>
       );
     }
 
-    return allNotifications.map((notification) => (
-      <NotificationItem
-        key={notification.id}
-        notification={notification}
-        onMarkRead={onMarkRead}
-      />
-    ));
+    return (
+      <ScrollArea className="h-[400px]">
+        <div className="px-3">
+          {allNotifications.map((notification) => (
+            <NotificationItem
+              key={notification.id}
+              notification={notification}
+              onMarkRead={onMarkRead}
+            />
+          ))}
+        </div>
+      </ScrollArea>
+    );
   };
 
   // Navigate to the notifications view
@@ -152,15 +160,11 @@ const NotificationTabs = ({
         </TabsList>
         
         <TabsContent value="all" className="py-2">
-          <ScrollArea className="h-[400px] px-3">
-            {renderContent()}
-          </ScrollArea>
+          {renderContent()}
         </TabsContent>
         
         <TabsContent value="alerts" className="py-2">
-          <ScrollArea className="h-[400px] px-3">
-            {renderContent()}
-          </ScrollArea>
+          {renderContent()}
         </TabsContent>
       </Tabs>
       
