@@ -1,11 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ActivityType } from "./ActivityItem";
 import { useActivities } from "@/hooks/activity";
 import { ActivityContent } from "./ActivityContent";
-import { ActivityLoadingState } from "./ActivityLoadingState";
 import { ViewAllActivitiesButton } from "./ViewAllActivitiesButton";
 
 export const ActivityFeed = () => {
@@ -30,10 +29,6 @@ export const ActivityFeed = () => {
   
   // Get unique activity types from the loaded activities
   const activityTypes = Array.from(new Set(activities.map(activity => activity.type)));
-  
-  if (isLoading && activities.length === 0) {
-    return <ActivityLoadingState />;
-  }
   
   return (
     <div className="h-full flex flex-col">
@@ -67,6 +62,7 @@ export const ActivityFeed = () => {
             activities={activities}
             onMarkRead={markAsRead}
             activeTab="all"
+            isLoading={isLoading}
           />
         </TabsContent>
         
@@ -77,6 +73,7 @@ export const ActivityFeed = () => {
               activities={activities}
               onMarkRead={markAsRead}
               activeTab={type}
+              isLoading={isLoading}
             />
           </TabsContent>
         ))}
