@@ -10,6 +10,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CountrySelector from "@/components/CountrySelector";
 import { CookieConsent } from "@/components/cookies/CookieConsent";
+import { CartProvider } from '@/contexts/CartContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { ScrollToTopButton } from "@/components/ui/scroll-to-top";
 
 export default function Index() {
   // Add detailed logging to help debug
@@ -25,21 +28,26 @@ export default function Index() {
   console.log("Index page rendering components");
 
   return (
-    <>
-      <Header />
-      <CountrySelector />
-      <HeroSection />
-      <div className="container mx-auto px-4">
-        <FeaturesGrid />
-        <GetStartedSteps />
-      </div>
-      <StatsSection />
-      <div className="container mx-auto px-4">
-        <TestimonialsSection />
-      </div>
-      <PartnerSection />
-      <Footer />
-      <CookieConsent />
-    </>
+    <CurrencyProvider>
+      <CartProvider>
+        <>
+          <Header />
+          <CountrySelector />
+          <HeroSection />
+          <div className="container mx-auto px-4">
+            <FeaturesGrid />
+            <GetStartedSteps />
+          </div>
+          <StatsSection />
+          <div className="container mx-auto px-4">
+            <TestimonialsSection />
+          </div>
+          <PartnerSection />
+          <Footer />
+          <CookieConsent />
+          <ScrollToTopButton />
+        </>
+      </CartProvider>
+    </CurrencyProvider>
   );
 }

@@ -6,6 +6,9 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { HeroSection } from '@/components/home/HeroSection';
 import { FeaturesGrid } from '@/components/home/FeaturesGrid';
+import { CartProvider } from '@/contexts/CartContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -20,14 +23,19 @@ const Home = () => {
   console.log("Home page rendering components");
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1">
-        <HeroSection />
-        <FeaturesGrid />
-      </main>
-      <Footer />
-    </div>
+    <CurrencyProvider>
+      <CartProvider>
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-1">
+            <HeroSection />
+            <FeaturesGrid />
+          </main>
+          <Footer />
+          <ScrollToTopButton />
+        </div>
+      </CartProvider>
+    </CurrencyProvider>
   );
 };
 
