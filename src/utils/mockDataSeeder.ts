@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { mockActivities } from "@/components/activity/mockActivities";
 import { toast } from "@/components/ui/use-toast";
