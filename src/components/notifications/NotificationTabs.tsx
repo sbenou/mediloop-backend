@@ -70,9 +70,9 @@ const NotificationTabs = ({
     ));
   };
 
-  // Handle navigation to the full notifications page
+  // Updated navigation to use the Activities page consistent with the activity feed
   const handleViewAll = () => {
-    navigate("/dashboard?view=notifications");
+    navigate("/activities");
   };
 
   return (

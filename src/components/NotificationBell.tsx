@@ -34,10 +34,11 @@ const NotificationBell = () => {
     }
   }, [isAuthenticated, fetchNotifications, setupRealtimeSubscription]);
 
-  // Handle view all notifications click
+  // Updated navigation to be consistent with the activities page
   const handleViewAllClick = () => {
     setIsOpen(false);
-    navigate("/notifications");
+    // Redirect to the activities page which now handles both activities and notifications
+    navigate("/activities");
   };
 
   return (
@@ -60,15 +61,6 @@ const NotificationBell = () => {
           onMarkRead={markAsRead}
           onMarkAllRead={markAllAsRead}
         />
-        <div className="p-2 border-t">
-          <Button 
-            variant="ghost" 
-            className="w-full text-sm"
-            onClick={handleViewAllClick}
-          >
-            View all notifications
-          </Button>
-        </div>
       </PopoverContent>
     </Popover>
   );

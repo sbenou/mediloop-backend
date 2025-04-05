@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { ActivityType } from "@/components/activity/ActivityItem";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +20,6 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface ActivitiesFiltersProps {
   searchQuery: string;
@@ -60,6 +58,21 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
 }) => {
   // For type filter dropdown state
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
+
+  // Generate available years dynamically, from user registration year to current year
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    
+    // TODO: In a real implementation, we would fetch the user's registration date
+    // and use that year as the starting point
+    const registrationYear = currentYear; // For now, we only show current year
+    
+    const years = [];
+    for (let year = currentYear; year >= registrationYear; year--) {
+      years.push(year.toString());
+    }
+    return years;
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -158,7 +171,7 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Date range filter */}
+        {/* Date range filter - with dynamic years */}
         <Select
           value={dateRange}
           onValueChange={onDateRangeChange}
@@ -173,9 +186,9 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
             <SelectItem value="last_3_months">Last 3 months</SelectItem>
             <SelectItem value="last_6_months">Last 6 months</SelectItem>
             <SelectItem value="this_year">This year</SelectItem>
-            <SelectItem value="2025">Year 2025</SelectItem>
-            <SelectItem value="2024">Year 2024</SelectItem>
-            <SelectItem value="2023">Year 2023</SelectItem>
+            {availableYears.map(year => (
+              <SelectItem key={year} value={year}>Year {year}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

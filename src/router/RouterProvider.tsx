@@ -1,5 +1,5 @@
 
-import { createBrowserRouter, RouterProvider as ReactRouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate } from 'react-router-dom';
 import Products from '@/pages/Products';
 import ProductDetail from '@/pages/ProductDetail';
 import Home from '@/pages/Home';
@@ -9,7 +9,6 @@ import DoctorDashboard from '@/pages/DoctorDashboard';
 import UniversalDashboard from '@/pages/UniversalDashboard';
 import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import DoctorProfilePage from '@/pages/doctor/DoctorProfilePage';
-import Notifications from '@/pages/Notifications';
 import Activities from '@/pages/Activities';
 import NotFound from '@/pages/NotFound';
 
@@ -52,7 +51,8 @@ const router = createBrowserRouter([
   },
   {
     path: '/notifications',
-    element: <Notifications />,
+    // Redirect to activities page which now handles both activities and notifications
+    element: <Navigate to="/activities" replace />,
   },
   {
     path: '/activities',

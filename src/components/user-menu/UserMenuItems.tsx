@@ -110,6 +110,7 @@ export const UserMenuItems = () => {
         { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
         { icon: HeartPulse, label: 'Consultations', path: '/dashboard?view=teleconsultations' },
+        { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
@@ -122,6 +123,7 @@ export const UserMenuItems = () => {
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
         { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
+        { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
@@ -135,6 +137,7 @@ export const UserMenuItems = () => {
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
         { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
+        { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
         { icon: BarChart, label: 'Analytics', path: '/dashboard?view=pharmacy&section=analytics' },
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
@@ -148,6 +151,7 @@ export const UserMenuItems = () => {
         { icon: Store, label: 'Pharmacies', path: '/superadmin/pharmacies' },
         { icon: HeartPulse, label: 'Doctors', path: '/superadmin/doctors' },
         { icon: ShoppingBag, label: 'Products', path: '/superadmin/products' },
+        { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
         { icon: Settings, label: 'Settings', path: '/superadmin/settings' }
       ];
     }
@@ -156,6 +160,7 @@ export const UserMenuItems = () => {
     return [
       { icon: Home, label: 'Dashboard', path: '/dashboard' },
       { icon: User, label: 'Profile', path: '/settings?tab=profile' },
+      { icon: Bell, label: 'Notifications', path: '/activities' }, // Updated to use the activities page
       { icon: Settings, label: 'Settings', path: '/settings' }
     ];
   };
