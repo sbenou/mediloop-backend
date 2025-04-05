@@ -22,8 +22,7 @@ const Activities = () => {
     activities, 
     isLoading, 
     fetchActivities, 
-    markAsRead,
-    setupRealtimeSubscription 
+    markAsRead
   } = useActivities();
 
   // UI State
@@ -34,13 +33,11 @@ const Activities = () => {
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "type">("newest");
   const [dateRange, setDateRange] = useState<string>("all");
 
-  // Set up initial data fetching and subscription
+  // Set up initial data fetching
   useEffect(() => {
-    console.log("Activities page: Setting up data fetching and realtime subscription");
+    console.log("Activities page: Initial data fetch");
     fetchActivities();
-    const cleanup = setupRealtimeSubscription();
-    return cleanup;
-  }, [fetchActivities, setupRealtimeSubscription]);
+  }, [fetchActivities]);
 
   // Get unique activity types
   const activityTypes = useMemo(() => {
@@ -60,85 +57,16 @@ const Activities = () => {
     setSelectedTypeFilters([]);
   };
 
-  // Filter by date range
-  const filterByDateRange = (activities: any[]) => {
-    if (dateRange === "all") return activities;
-    
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (dateRange) {
-      case "this_month":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case "last_3_months":
-        startDate = new Date(now);
-        startDate.setMonth(now.getMonth() - 3);
-        break;
-      case "last_6_months":
-        startDate = new Date(now);
-        startDate.setMonth(now.getMonth() - 6);
-        break;
-      case "this_year":
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      default:
-        // Check if it's a year filter (e.g., "2023")
-        if (/^\d{4}$/.test(dateRange)) {
-          const year = parseInt(dateRange, 10);
-          startDate = new Date(year, 0, 1);
-          const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
-          return activities.filter(activity => {
-            const activityDate = new Date(activity.timestamp);
-            return activityDate >= startDate && activityDate <= endDate;
-          });
-        }
-        return activities;
-    }
-    
-    return activities.filter(activity => {
-      const activityDate = new Date(activity.timestamp);
-      return activityDate >= startDate;
-    });
-  };
-
   // Filter and sort activities
   const filteredActivities = useMemo(() => {
-    // First filter by type filters
-    let filtered = activities;
-    
-    if (selectedTypeFilters.length > 0) {
-      filtered = filtered.filter(activity => 
-        selectedTypeFilters.includes(activity.type as ActivityType)
-      );
-    }
-    
-    // Then apply search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(activity => 
-        activity.title.toLowerCase().includes(query) ||
-        activity.description.toLowerCase().includes(query) ||
-        activity.type.toLowerCase().includes(query)
-      );
-    }
-    
-    // Apply date range filter
-    filtered = filterByDateRange(filtered);
-    
-    // Finally sort the results
-    return filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-        case "oldest":
-          return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-        case "type":
-          return a.type.localeCompare(b.type);
-        default:
-          return 0;
-      }
-    });
+    return filterAndSortActivities(
+      activities,
+      "all",
+      searchQuery,
+      sortBy,
+      dateRange,
+      selectedTypeFilters
+    );
   }, [activities, selectedTypeFilters, searchQuery, sortBy, dateRange]);
 
   // Calculate pagination
@@ -225,7 +153,7 @@ const Activities = () => {
               />
             )}
 
-            {/* Only show pagination when we have activities and not loading */}
+            {/* Only show pagination when we have activities and they're loaded */}
             {!isLoading && filteredActivities.length > 0 && (
               <ActivitiesPagination
                 currentPage={currentPage}

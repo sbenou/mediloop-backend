@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ActivityType } from "./ActivityItem";
@@ -14,18 +14,16 @@ export const ActivityFeed = () => {
     unreadCount,
     fetchActivities, 
     markAsRead, 
-    markAllAsRead,
-    setupRealtimeSubscription 
+    markAllAsRead
   } = useActivities();
   
   const [activeTab, setActiveTab] = useState<"all" | ActivityType>("all");
   
-  // Set up initial data fetching and subscription
+  // Set up initial data fetching only
   useEffect(() => {
+    console.log("ActivityFeed: Initial data fetch");
     fetchActivities();
-    const cleanup = setupRealtimeSubscription();
-    return cleanup;
-  }, [fetchActivities, setupRealtimeSubscription]);
+  }, [fetchActivities]);
   
   // Get unique activity types from the loaded activities
   const activityTypes = Array.from(new Set(activities.map(activity => activity.type)));

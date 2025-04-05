@@ -1,5 +1,5 @@
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useActivitiesFetch } from './useActivitiesFetch';
 import { useActivityReadOperations } from './useActivityReadOperations';
 import { useActivitySubscription } from './useActivitySubscription';
@@ -18,6 +18,7 @@ export const useActivities = (): UseActivitiesReturn => {
   } = useActivitiesFetch();
   
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasSetupSubscription = useRef<boolean>(false);
 
   // Add a refresh function that can be called to force a reload
   const refreshActivities = useCallback(() => {
@@ -54,6 +55,25 @@ export const useActivities = (): UseActivitiesReturn => {
   } = useActivitySubscription({
     refreshActivities
   });
+  
+  // Set up subscription only once
+  useEffect(() => {
+    if (hasSetupSubscription.current) return;
+    
+    hasSetupSubscription.current = true;
+    const cleanup = setupRealtimeSubscription();
+    
+    return cleanup;
+  }, [setupRealtimeSubscription]);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     activities,
