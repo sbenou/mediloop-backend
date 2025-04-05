@@ -96,6 +96,9 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
       : "Notification Types";
   };
 
+  // Current year as a string for comparison
+  const currentYear = new Date().getFullYear().toString();
+
   return (
     <div className="space-y-4">
       {/* Filters, search and view toggles */}
@@ -213,8 +216,11 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
             <SelectItem value="last_3_months">Last 3 months</SelectItem>
             <SelectItem value="last_6_months">Last 6 months</SelectItem>
             <SelectItem value="this_year">This year</SelectItem>
+            {/* Only show year numbers that aren't the current year */}
             {availableYears.map(year => (
-              <SelectItem key={year} value={year}>Year {year}</SelectItem>
+              year !== currentYear && (
+                <SelectItem key={year} value={year}>Year {year}</SelectItem>
+              )
             ))}
           </SelectContent>
         </Select>
