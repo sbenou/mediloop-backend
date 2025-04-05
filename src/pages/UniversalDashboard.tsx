@@ -14,6 +14,7 @@ import TeleconsultationsView from "@/components/dashboard/views/Teleconsultation
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import NotificationsView from "@/components/dashboard/views/NotificationsView";
 
 const UniversalDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -79,6 +80,8 @@ const UniversalDashboard = () => {
         return <PharmacyView userRole={userRole} section={pharmacySection} />;
       case "teleconsultations":
         return <TeleconsultationsView userRole={userRole} />;
+      case "notifications":
+        return <NotificationsView userRole={userRole} />;
       case "home":
       default:
         return <HomeView userRole={userRole} />;

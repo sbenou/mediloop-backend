@@ -72,7 +72,7 @@ const NotificationTabs = ({
 
   // Handle navigation to the full notifications page
   const handleViewAll = () => {
-    navigate("/notifications");
+    navigate("/dashboard?view=notifications");
   };
 
   return (

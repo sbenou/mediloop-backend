@@ -1,5 +1,5 @@
 
-import { createBrowserRouter, RouterProvider as ReactRouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate } from 'react-router-dom';
 import Products from '@/pages/Products';
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
@@ -46,7 +46,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/notifications',
-    element: <Notifications />,
+    element: <Navigate to="/dashboard?view=notifications" replace />,
   },
   {
     path: '/activities',
