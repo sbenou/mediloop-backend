@@ -9,6 +9,7 @@ import DoctorDashboard from '@/pages/DoctorDashboard';
 import UniversalDashboard from '@/pages/UniversalDashboard';
 import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import DoctorProfilePage from '@/pages/doctor/DoctorProfilePage';
+import PharmacyProfile from '@/pages/pharmacy/PharmacyProfile';
 import Activities from '@/pages/Activities';
 import NotFound from '@/pages/NotFound';
 import { CartProvider } from '@/contexts/CartContext';
@@ -67,6 +68,10 @@ const router = createBrowserRouter([
   {
     path: '/doctor/profile',
     element: <DoctorProfilePage />,
+  },
+  {
+    path: '/pharmacy/profile',
+    element: <PharmacyProfile />,
   },
   {
     path: '/notifications',

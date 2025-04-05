@@ -45,7 +45,7 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
       if (!userId) throw new Error('User not authenticated');
 
       const filePath = `${userId}/${crypto.randomUUID()}`;
-      const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 'avatars';
+      const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 'doctor-cabinet';
       
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
@@ -59,7 +59,7 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
         .from(bucketName)
         .getPublicUrl(filePath);
 
-      const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'avatar_url';
+      const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'doctor_stamp_url';
       
       const { error: updateError } = await supabase
         .from('profiles')
@@ -73,14 +73,14 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
 
       toast({
         title: "Success",
-        description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : 'Profile picture'} updated successfully`,
+        description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : 'Doctor cabinet'} updated successfully`,
       });
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to update ${userRole === 'pharmacist' ? 'pharmacy logo' : 'profile picture'}`,
+        description: `Failed to update ${userRole === 'pharmacist' ? 'pharmacy logo' : 'doctor cabinet'}`,
       });
     }
   };
