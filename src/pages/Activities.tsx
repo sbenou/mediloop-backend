@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useActivities } from "@/hooks/activity";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -293,6 +292,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
             onClearFilters={handleClearFilters}
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
+            activeView={activeView}
             renderViewToggle={(currentView, onChange) => (
               <div className="border rounded-md p-1">
                 <TooltipProvider>

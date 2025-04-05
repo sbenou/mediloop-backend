@@ -39,6 +39,7 @@ interface ActivitiesFiltersProps {
   dateRange?: string;
   onDateRangeChange?: (range: string) => void;
   renderViewToggle?: (currentView: "table" | "card", onChange: (view: "table" | "card") => void) => React.ReactNode;
+  activeView?: "activities" | "notifications"; // New prop for determining the active view
 }
 
 export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
@@ -57,7 +58,8 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
   onClearFilters = () => {},
   dateRange,
   onDateRangeChange = () => {},
-  renderViewToggle
+  renderViewToggle,
+  activeView = "activities" // Default to activities view
 }) => {
   // For type filter dropdown state
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
@@ -76,6 +78,19 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
     }
     return years;
   }, []);
+  
+  // Determine labels based on active view
+  const getSearchPlaceholder = () => {
+    return activeView === "activities" 
+      ? "Search activities..." 
+      : "Search notifications and alerts...";
+  };
+  
+  const getFilterLabel = () => {
+    return activeView === "activities" 
+      ? "Activity Types" 
+      : "Notification Types";
+  };
 
   return (
     <div className="space-y-4">
@@ -84,7 +99,7 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
         <div className="flex flex-1 items-center relative max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search activities..."
+            placeholder={getSearchPlaceholder()}
             className="pl-8"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -139,7 +154,7 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-1">
               <Filter className="h-4 w-4 mr-1" />
-              Activity Types
+              {getFilterLabel()}
               {selectedFilters.length > 0 && (
                 <Badge variant="secondary" className="ml-1 px-1 min-w-4 text-xs">
                   {selectedFilters.length}
@@ -148,7 +163,7 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuLabel>Select activity types</DropdownMenuLabel>
+            <DropdownMenuLabel>Select {activeView === "activities" ? "activity" : "notification"} types</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {activityTypes.map(type => (
               <DropdownMenuCheckboxItem
@@ -234,3 +249,4 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
     </div>
   );
 };
+
