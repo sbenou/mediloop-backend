@@ -25,50 +25,50 @@ const getActivityTypeBorderColor = (type: ActivityType) => {
   switch (type) {
     case "prescription_created":
     case "prescription_updated":
-      return "border-r-purple-500"; 
+      return "border-l-purple-500"; 
     case "order_placed":
-      return "border-r-blue-500";
+      return "border-l-blue-500";
     case "order_shipped":
     case "order_delivered":
     case "delivery_status_updated":
-      return "border-r-green-500";
+      return "border-l-green-500";
     case "appointment_scheduled":
     case "teleconsultation_scheduled":
     case "new_teleconsultation":
-      return "border-r-indigo-500";
+      return "border-l-indigo-500";
     case "doctor_connected":
     case "patient_connected":
-      return "border-r-teal-500";
+      return "border-l-teal-500";
     case "profile_updated":
-      return "border-r-gray-500";
+      return "border-l-gray-500";
     case "payment_processed":
-      return "border-r-emerald-500";
+      return "border-l-emerald-500";
     case "payment_failed":
-      return "border-r-red-500";
+      return "border-l-red-500";
     case "system_alert":
-      return "border-r-amber-500";
+      return "border-l-amber-500";
     default:
       // Check for common patterns in the type string
       if (type.includes('order') || type.includes('purchase')) {
-        return "border-r-blue-500";
+        return "border-l-blue-500";
       } else if (type.includes('prescription') || type.includes('medication')) {
-        return "border-r-purple-500";
+        return "border-l-purple-500";
       } else if (type.includes('appointment') || type.includes('consultation')) {
-        return "border-r-indigo-500";
+        return "border-l-indigo-500";
       } else if (type.includes('patient') || type.includes('doctor') || type.includes('connected')) {
-        return "border-r-teal-500";
+        return "border-l-teal-500";
       } else if (type.includes('payment') || type.includes('billing')) {
-        return "border-r-emerald-500";
+        return "border-l-emerald-500";
       } else if (type.includes('delivery') || type.includes('shipped')) {
-        return "border-r-green-500";
+        return "border-l-green-500";
       } else if (type.includes('alert') || type.includes('warning') || type.includes('error')) {
-        return "border-r-red-500";
+        return "border-l-red-500";
       } else if (type.includes('profile') || type.includes('settings')) {
-        return "border-r-gray-500";
+        return "border-l-gray-500";
       }
       
       // Default fallback
-      return "border-r-gray-500";
+      return "border-l-gray-500";
   }
 };
 
@@ -97,7 +97,7 @@ export const ActivitiesTableView: React.FC<ActivitiesTableViewProps> = ({
                 <TableRow 
                   key={activity.id}
                   className={cn(
-                    "border-r-2", 
+                    "border-l-2", 
                     borderColorClass,
                     activity.read ? "opacity-70" : ""
                   )}
