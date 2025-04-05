@@ -18,7 +18,7 @@ export const useActivities = (): UseActivitiesReturn => {
   } = useActivitiesFetch();
   
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasSetupSubscription = useRef<boolean>(false);
+  const hasInitiatedFetchRef = useRef<boolean>(false);
 
   // Add a refresh function that can be called to force a reload
   const refreshActivities = useCallback(() => {
@@ -56,15 +56,18 @@ export const useActivities = (): UseActivitiesReturn => {
     refreshActivities
   });
   
-  // Set up subscription only once
+  // Fetch activities once on mount
   useEffect(() => {
-    if (hasSetupSubscription.current) return;
-    
-    hasSetupSubscription.current = true;
-    const cleanup = setupRealtimeSubscription();
-    
-    return cleanup;
-  }, [setupRealtimeSubscription]);
+    if (!hasInitiatedFetchRef.current) {
+      console.log("useActivities: Initial fetch");
+      hasInitiatedFetchRef.current = true;
+      fetchActivities();
+      
+      // Set up subscription
+      const cleanup = setupRealtimeSubscription();
+      return cleanup;
+    }
+  }, [fetchActivities, setupRealtimeSubscription]);
 
   // Clean up timeout on unmount
   useEffect(() => {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ActivityType } from "./ActivityItem";
@@ -11,19 +11,11 @@ export const ActivityFeed = () => {
   const { 
     activities, 
     isLoading, 
-    unreadCount,
-    fetchActivities, 
-    markAsRead, 
+    unreadCount, 
     markAllAsRead
   } = useActivities();
   
   const [activeTab, setActiveTab] = useState<"all" | ActivityType>("all");
-  
-  // Set up initial data fetching only
-  useEffect(() => {
-    console.log("ActivityFeed: Initial data fetch");
-    fetchActivities();
-  }, [fetchActivities]);
   
   // Get unique activity types from the loaded activities
   const activityTypes = Array.from(new Set(activities.map(activity => activity.type)));
@@ -82,3 +74,6 @@ export const ActivityFeed = () => {
     </div>
   );
 };
+
+import { useState } from "react"; // Add missing import
+import { markAsRead } from "@/hooks/activity/useActivityReadOperations"; // Add missing import

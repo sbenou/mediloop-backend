@@ -1,5 +1,5 @@
 
-import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider as ReactRouterProvider } from 'react-router-dom';
 import Products from '@/pages/Products';
 import ProductDetail from '@/pages/ProductDetail';
 import Home from '@/pages/Home';

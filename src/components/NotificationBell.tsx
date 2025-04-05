@@ -22,10 +22,13 @@ const NotificationBell = () => {
     setupRealtimeSubscription 
   } = useNotifications();
 
-  // Fetch notifications when authenticated
+  // Fetch notifications when authenticated - only once
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("NotificationBell: Initial data fetch");
       fetchNotifications();
+      
+      // Only set up subscription once
       const cleanup = setupRealtimeSubscription();
       return cleanup;
     }

@@ -11,6 +11,7 @@ export const useActivitiesFetch = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const lastFetchTimeRef = useRef<number>(0);
   const isMountedRef = useRef(true);
+  const fetchInProgressRef = useRef(false);
 
   // Cleanup function to prevent state updates after unmount
   useEffect(() => {
@@ -21,8 +22,13 @@ export const useActivitiesFetch = () => {
   }, []);
 
   const fetchActivities = useCallback(async () => {
-    if (isLoading) return; // Prevent multiple simultaneous fetches
+    // Prevent multiple concurrent fetches
+    if (fetchInProgressRef.current) {
+      console.log("Fetch already in progress, skipping duplicate request");
+      return;
+    }
     
+    fetchInProgressRef.current = true;
     setIsLoading(true);
     setError(null);
     
@@ -38,7 +44,10 @@ export const useActivitiesFetch = () => {
       }
 
       // Bail out if component unmounted during fetch
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {
+        fetchInProgressRef.current = false;
+        return;
+      }
 
       const formattedActivities: Activity[] = (data || []).map((item: ActivitiesResponse) => ({
         id: item.id,
@@ -67,8 +76,9 @@ export const useActivitiesFetch = () => {
       if (isMountedRef.current) {
         setIsLoading(false);
       }
+      fetchInProgressRef.current = false;
     }
-  }, [isLoading]);
+  }, []);
 
   return {
     activities,
