@@ -4,7 +4,7 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   ProfileView, 
-  SettingsView, 
+  SettingsView,
   HomeView
 } from "@/components/dashboard/views";
 import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatientView";

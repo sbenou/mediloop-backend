@@ -7,6 +7,7 @@ import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
 import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
 import DashboardStats from "@/components/dashboard/views/pharmacy/DashboardStats";
 import { usePharmacyDashboardStats } from "@/hooks/admin/useDashboardStats";
+import DoctorHomeView from "./doctor/DoctorHomeView";
 
 interface HomeViewProps {
   userRole: string | null;
@@ -17,6 +18,11 @@ const HomeView: React.FC<HomeViewProps> = ({ userRole }) => {
   const navigate = useNavigate();
   // Fetch stats data for the dashboard
   const { data: statsData, isLoading: isStatsLoading } = usePharmacyDashboardStats();
+
+  // If the user is a doctor, render the DoctorHomeView
+  if (userRole === 'doctor') {
+    return <DoctorHomeView userRole={userRole} />;
+  }
 
   const handleViewChange = (view: string, tab?: string) => {
     if (tab) {
