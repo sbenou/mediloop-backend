@@ -6,12 +6,14 @@ import { ActivityType } from "./ActivityItem";
 import { useActivities } from "@/hooks/activity";
 import { ActivityContent } from "./ActivityContent";
 import { ViewAllActivitiesButton } from "./ViewAllActivitiesButton";
+import { useState } from "react"; // Keep existing import
 
 export const ActivityFeed = () => {
   const { 
     activities, 
     isLoading, 
     unreadCount, 
+    markAsRead,
     markAllAsRead
   } = useActivities();
   
@@ -74,6 +76,3 @@ export const ActivityFeed = () => {
     </div>
   );
 };
-
-import { useState } from "react"; // Add missing import
-import { markAsRead } from "@/hooks/activity/useActivityReadOperations"; // Add missing import
