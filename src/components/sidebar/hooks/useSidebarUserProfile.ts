@@ -44,9 +44,14 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) throw new Error('User not authenticated');
 
+      // Determine the correct bucket based on context
+      let bucketName = 'avatars'; // Default bucket for regular avatars
       const filePath = `${userId}/${crypto.randomUUID()}`;
-      const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 
-                         userRole === 'doctor' ? 'doctor-images' : 'avatars';
+      
+      // For pharmacists uploading logo, use the pharmacy-logos bucket
+      if (userRole === 'pharmacist') {
+        bucketName = 'pharmacy-logos';
+      }
       
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
@@ -60,12 +65,12 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
         .from(bucketName)
         .getPublicUrl(filePath);
 
-      // Determine which field to update based on role
-      let fieldToUpdate = 'avatar_url';
+      // Determine which field to update based on role and context
+      let fieldToUpdate = 'avatar_url'; // Default for profile avatars
+      
+      // For pharmacists updating from sidebar, update the pharmacy logo
       if (userRole === 'pharmacist') {
         fieldToUpdate = 'pharmacy_logo_url';
-      } else if (userRole === 'doctor') {
-        fieldToUpdate = 'doctor_stamp_url';
       }
       
       const { error: updateError } = await supabase
@@ -80,14 +85,14 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
 
       toast({
         title: "Success",
-        description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : userRole === 'doctor' ? 'Doctor stamp' : 'Profile picture'} updated successfully`,
+        description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : 'Profile picture'} updated successfully`,
       });
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to update ${userRole === 'pharmacist' ? 'pharmacy logo' : userRole === 'doctor' ? 'doctor stamp' : 'profile picture'}`,
+        description: `Failed to update ${userRole === 'pharmacist' ? 'pharmacy logo' : 'profile picture'}`,
       });
     }
   };

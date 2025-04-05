@@ -52,11 +52,11 @@ const SidebarUserMenu = ({
   
   // Determine which avatar URL to use based on user role
   const getAvatarUrl = () => {
+    // For pharmacist, we display the pharmacy logo
     if (userRole === 'pharmacist' && pharmacyLogoUrl) {
       return pharmacyLogoUrl;
-    } else if (userRole === 'doctor' && doctorStampUrl) {
-      return doctorStampUrl;
     } else {
+      // For all other users, including doctors, use the regular avatar
       return userAvatar || profile?.avatar_url;
     }
   };
@@ -97,7 +97,7 @@ const SidebarUserMenu = ({
               handleAvatarClick(e);
             }}
             fallbackText={getUserInitials()} 
-            isSquare={true} // Make all avatars square in the sidebar
+            isSquare={userRole === 'pharmacist'} // Only make pharmacy avatars square
           />
         </div>
         

@@ -56,21 +56,15 @@ const UserAvatar = ({
     }
   };
 
-  // Determine which avatar URL to use based on user role and context
+  // Determine which avatar URL to use based on user role
   let displayAvatarUrl = userProfile?.avatar_url;
   
-  // If we're in a sidebar menu and have a specific role
-  if (isSquare && userProfile?.role) {
-    if (userProfile.role === 'pharmacist' && pharmacyLogoUrl) {
-      displayAvatarUrl = pharmacyLogoUrl;
-    } else if (userProfile.role === 'doctor' && doctorStampUrl) {
-      displayAvatarUrl = doctorStampUrl;
-    } else if (globalAvatarUrl) {
-      displayAvatarUrl = globalAvatarUrl;
-    }
+  // Only for pharmacy users and only when isSquare is true, use the logo
+  if (isSquare && userProfile?.role === 'pharmacist' && pharmacyLogoUrl) {
+    displayAvatarUrl = pharmacyLogoUrl;
   } 
-  // For non-squared (regular) avatars, use the standard user avatar
-  else if (!isSquare && globalAvatarUrl && userProfile?.id === globalAvatarUrl.split('/').slice(-2)[0]) {
+  // For regular users including doctors, use the standard avatar
+  else if (globalAvatarUrl && userProfile?.id === globalAvatarUrl.split('/').slice(-2)[0]) {
     displayAvatarUrl = globalAvatarUrl;
   }
 
