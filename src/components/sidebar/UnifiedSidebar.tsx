@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   Home, User, ShoppingBag, Settings, Calendar, 
