@@ -1,57 +1,114 @@
 
-import { formatDistanceToNow } from "date-fns";
-import { Badge } from "@/components/ui/badge";
+import React from "react";
 import { Notification } from "@/types/supabase";
+import { Check, BellRing, AlertTriangle } from "lucide-react";
+import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+
+// Notification variants based on type
+const notificationVariants = cva(
+  "relative flex items-start gap-4 rounded-lg border p-4 shadow-sm transition-all",
+  {
+    variants: {
+      variant: {
+        default: "bg-card",
+        alert: "bg-amber-50 border-amber-200",
+        error: "bg-rose-50 border-rose-200",
+        success: "bg-green-50 border-green-200",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+// Determine if notification is an alert based on type
+const isAlertNotification = (type: string): boolean => {
+  const alertTypes = ["payment_failed", "delivery_late", "delivery_failed"];
+  return alertTypes.includes(type);
+};
+
+// Get appropriate variant based on notification type
+const getVariantFromType = (type: string): "default" | "alert" | "error" | "success" => {
+  if (type === "payment_failed") return "error";
+  if (["delivery_late", "delivery_failed"].includes(type)) return "alert";
+  if (type.includes("success") || type.includes("completed")) return "success";
+  return "default";
+};
+
+// Format notification type for display
+const formatNotificationType = (type: string): string => {
+  return type
+    .replace(/_/g, " ")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
 interface NotificationItemProps {
   notification: Notification;
   onMarkRead: (id: string) => void;
 }
 
-const getNotificationColor = (type: string) => {
-  switch (type) {
-    case "payment_failed":
-      return "bg-red-100 text-red-800 border-red-200";
-    case "payment_successful":
-      return "bg-green-100 text-green-800 border-green-200";
-    case "delivery_incoming":
-    case "delivery_successful":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    case "delivery_late":
-    case "delivery_failed":
-      return "bg-amber-100 text-amber-800 border-amber-200";
-    case "prescription_created":
-    case "prescription_updated":
-      return "bg-purple-100 text-purple-800 border-purple-200";
-    case "patient_connected":
-    case "new_user_registered":
-    case "new_subscription":
-    case "new_teleconsultation":
-    case "new_doctor":
-    case "new_pharmacy":
-      return "bg-indigo-100 text-indigo-800 border-indigo-200";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
-  }
-};
-
 const NotificationItem = ({ notification, onMarkRead }: NotificationItemProps) => {
-  const notificationColor = getNotificationColor(notification.type);
-  const timeAgo = formatDistanceToNow(new Date(notification.created_at), { addSuffix: true });
+  const variant = getVariantFromType(notification.type);
+  const isAlert = isAlertNotification(notification.type);
   
   return (
-    <div 
-      className={`p-3 border rounded-md mb-2 cursor-pointer relative ${notification.read ? 'opacity-70' : notificationColor}`}
+    <div
+      className={cn(
+        notificationVariants({ variant }),
+        notification.read ? "opacity-70" : "",
+        "mb-2 relative"
+      )}
       onClick={() => !notification.read && onMarkRead(notification.id)}
     >
-      <div className="flex justify-between items-start">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
-        {!notification.read && (
-          <Badge variant="default" className="bg-primary text-white">New</Badge>
+      {!notification.read && (
+        <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
+      )}
+      <div className="flex-shrink-0">
+        {isAlert ? (
+          <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+          </div>
+        ) : (
+          <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+            <BellRing className="h-4 w-4 text-blue-600" />
+          </div>
         )}
       </div>
-      <p className="text-sm mt-1">{notification.message}</p>
-      <div className="text-xs text-muted-foreground mt-2">{timeAgo}</div>
+      <div className="flex-1">
+        <div className="flex items-center justify-between">
+          <h4 className="font-medium text-sm">{notification.title}</h4>
+          <time className="text-xs text-muted-foreground">
+            {format(new Date(notification.created_at), "MMM d, h:mm a")}
+          </time>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs bg-secondary px-2 py-0.5 rounded">
+            {formatNotificationType(notification.type)}
+          </span>
+          {notification.read ? (
+            <span className="text-xs text-muted-foreground flex items-center">
+              <Check className="h-3 w-3 mr-1" />
+              Read
+            </span>
+          ) : (
+            <button
+              className="text-xs text-primary hover:underline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkRead(notification.id);
+              }}
+            >
+              Mark as read
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

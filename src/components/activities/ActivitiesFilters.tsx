@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Grid, List, Search, X, Calendar, Filter } from "lucide-react";
+import { Grid, List, Search, X, Calendar, Filter, AlertTriangle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +40,8 @@ interface ActivitiesFiltersProps {
   onDateRangeChange?: (range: string) => void;
   renderViewToggle?: (currentView: "table" | "card", onChange: (view: "table" | "card") => void) => React.ReactNode;
   activeView?: "activities" | "notifications"; // New prop for determining the active view
+  alertsOnly?: boolean; // New prop to filter alerts only
+  onAlertsOnlyChange?: (alertsOnly: boolean) => void; // Handler for alerts toggle
 }
 
 export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
@@ -59,7 +61,9 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
   dateRange,
   onDateRangeChange = () => {},
   renderViewToggle,
-  activeView = "activities" // Default to activities view
+  activeView = "activities", // Default to activities view
+  alertsOnly = false,
+  onAlertsOnlyChange = () => {},
 }) => {
   // For type filter dropdown state
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
@@ -214,6 +218,18 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
             ))}
           </SelectContent>
         </Select>
+
+        {/* Show alerts only toggle - only show for notifications view */}
+        {activeView === "notifications" && (
+          <Button 
+            variant={alertsOnly ? "default" : "outline"}
+            className="gap-1"
+            onClick={() => onAlertsOnlyChange(!alertsOnly)}
+          >
+            <AlertTriangle className={`h-4 w-4 mr-1 ${alertsOnly ? "text-white" : "text-amber-500"}`} />
+            {alertsOnly ? "All Notifications" : "Alerts Only"}
+          </Button>
+        )}
       </div>
 
       {/* Display selected filters as badges */}
@@ -249,4 +265,3 @@ export const ActivitiesFilters: React.FC<ActivitiesFiltersProps> = ({
     </div>
   );
 };
-

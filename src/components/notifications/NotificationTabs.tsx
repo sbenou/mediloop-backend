@@ -72,7 +72,7 @@ const NotificationTabs = ({
 
   // Navigate to the notifications view
   const handleViewAll = () => {
-    navigate("/notifications?view=notifications");
+    navigate(`/notifications?view=notifications${activeTab === "alerts" ? "&alertsOnly=true" : ""}`);
   };
 
   return (
@@ -109,7 +109,7 @@ const NotificationTabs = ({
           className="w-full"
           onClick={handleViewAll}
         >
-          View all notifications
+          View all {activeTab === "alerts" ? "alerts" : "notifications"}
         </Button>
       </div>
     </div>

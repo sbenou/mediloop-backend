@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { useActivities } from "@/hooks/activity";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/tooltip";
 
 const ITEMS_PER_PAGE = 10;
+const ALERT_TYPES = ["payment_failed", "delivery_late", "delivery_failed"];
 
 interface ActivitiesProps {
   initialView?: "activities" | "notifications";
@@ -62,6 +64,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypeFilters, setSelectedTypeFilters] = useState<ActivityType[]>([]);
+  const [alertsOnly, setAlertsOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [view, setView] = useState<"table" | "card">("table");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "type">("newest");
@@ -86,6 +89,11 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
     return getActivityTypes(activities);
   }, [activities]);
 
+  // Get unique notification types
+  const notificationTypes = useMemo(() => {
+    return Array.from(new Set(notifications.map(n => n.type))) as ActivityType[];
+  }, [notifications]);
+
   // Handle filters for activity types
   const handleSelectFilter = (type: ActivityType) => {
     setSelectedTypeFilters(prev => [...prev, type]);
@@ -97,6 +105,19 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
 
   const handleClearFilters = () => {
     setSelectedTypeFilters([]);
+    setAlertsOnly(false);
+  };
+
+  // Handle alerts only toggle
+  const handleAlertsOnlyChange = (value: boolean) => {
+    setAlertsOnly(value);
+    
+    if (value) {
+      // When enabling alerts only, clear any existing type filters that aren't alerts
+      setSelectedTypeFilters(prev => 
+        prev.filter(type => ALERT_TYPES.includes(type))
+      );
+    }
   };
 
   // Filter and sort activities
@@ -111,17 +132,48 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
     );
   }, [activities, selectedTypeFilters, searchQuery, sortBy, dateRange]);
 
-  // Filter notifications (basic filtering for now)
+  // Filter notifications (based on search, type filters, and alerts filter)
   const filteredNotifications = useMemo(() => {
+    let filtered = [...notifications];
+    
+    // Apply search filter
     if (searchQuery) {
-      return notifications.filter(
+      filtered = filtered.filter(
         (notif) => 
           notif.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
           notif.message.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    return notifications;
-  }, [notifications, searchQuery]);
+    
+    // Apply type filters
+    if (selectedTypeFilters.length > 0) {
+      filtered = filtered.filter((notif) => 
+        selectedTypeFilters.includes(notif.type as ActivityType)
+      );
+    }
+    
+    // Apply alerts filter
+    if (alertsOnly) {
+      filtered = filtered.filter((notif) => 
+        ALERT_TYPES.includes(notif.type)
+      );
+    }
+    
+    // Apply sort
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "type":
+          return a.type.localeCompare(b.type);
+        case "newest":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    
+    return filtered;
+  }, [notifications, searchQuery, selectedTypeFilters, alertsOnly, sortBy]);
 
   // Calculate pagination for active content
   const totalItems = activeView === "activities" 
@@ -150,7 +202,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
   // Reset to first page when filters change or view changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedTypeFilters, searchQuery, sortBy, dateRange, activeView]);
+  }, [selectedTypeFilters, searchQuery, sortBy, dateRange, activeView, alertsOnly]);
 
   // Determine if we're in loading state
   const isLoading = activeView === "activities" ? isActivitiesLoading : isNotificationsLoading;
@@ -172,7 +224,9 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
     if (filteredNotifications.length === 0) {
       return (
         <div className="text-center py-10 border rounded-lg bg-gray-50">
-          <p className="text-muted-foreground">No notifications found</p>
+          <p className="text-muted-foreground">
+            {alertsOnly ? "No alerts found" : "No notifications found"}
+          </p>
         </div>
       );
     }
@@ -183,21 +237,10 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
           {(paginatedContent as Notification[]).map((notification) => (
             <div key={notification.id} className="border rounded-lg p-4 bg-white shadow-sm">
-              <h3 className="font-medium mb-1">{notification.title}</h3>
-              <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">
-                  {new Date(notification.created_at).toLocaleDateString()}
-                </span>
-                {!notification.read && (
-                  <button 
-                    onClick={() => markNotificationAsRead(notification.id)}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Mark as read
-                  </button>
-                )}
-              </div>
+              <NotificationItem 
+                notification={notification}
+                onMarkRead={markNotificationAsRead}
+              />
             </div>
           ))}
         </div>
@@ -251,7 +294,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
           <div className="flex flex-col space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h1 className="text-3xl font-bold">
-                {activeView === "activities" ? "Activities" : "Notifications"}
+                {activeView === "activities" ? "Activities" : alertsOnly ? "Alerts" : "Notifications"}
               </h1>
               
               <Tabs value={activeView} onValueChange={(value) => handleViewChange(value as "activities" | "notifications")}>
@@ -265,7 +308,9 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
             <p className="text-muted-foreground">
               {activeView === "activities" 
                 ? "View and manage your recent activities" 
-                : "View and manage your notifications and alerts"}
+                : alertsOnly 
+                  ? "View and manage your important alerts" 
+                  : "View and manage your notifications and alerts"}
             </p>
           </div>
 
@@ -275,7 +320,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
             onSearchChange={setSearchQuery}
             activeFilter={selectedTypeFilters.length === 1 ? selectedTypeFilters[0] : "all"}
             onFilterChange={() => {}}
-            activityTypes={activityTypes}
+            activityTypes={activeView === "activities" ? activityTypes : notificationTypes}
             view={activeView === "activities" ? view : notificationsView}
             onViewChange={(newView) => {
               if (activeView === "activities") {
@@ -293,6 +338,8 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
             activeView={activeView}
+            alertsOnly={alertsOnly}
+            onAlertsOnlyChange={handleAlertsOnlyChange}
             renderViewToggle={(currentView, onChange) => (
               <div className="border rounded-md p-1">
                 <TooltipProvider>
