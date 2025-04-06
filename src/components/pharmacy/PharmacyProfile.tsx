@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -25,7 +26,7 @@ interface PharmacyData {
 
 const PharmacyProfile = () => {
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState("info");
+  const [activeTab, setActiveTab] = useState("team");
   const [isUploading, setIsUploading] = useState(false);
   const [pharmacyData, setPharmacyData] = useState<PharmacyData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +84,10 @@ const PharmacyProfile = () => {
     } catch (error) {
       console.error('Error fetching pharmacy data:', error);
     }
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
   };
 
   const handleImageClick = () => {
@@ -144,10 +149,6 @@ const PharmacyProfile = () => {
     }
   };
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-
   if (!pharmacyData) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -164,6 +165,20 @@ const PharmacyProfile = () => {
           Manage your pharmacy information, opening hours, and staff.
         </p>
       </div>
+
+      {/* Team and Staff Management Tabs - Moved above the image uploader */}
+      <Tabs defaultValue="team" value={activeTab} onValueChange={handleTabChange}>
+        <TabsList>
+          <TabsTrigger value="team" className="flex items-center">
+            <Users className="mr-2 h-4 w-4" />
+            Team
+          </TabsTrigger>
+          <TabsTrigger value="staff" className="flex items-center">
+            <UserCog className="mr-2 h-4 w-4" />
+            Staff Management
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Pharmacy Image Section */}
       <div 
@@ -251,28 +266,14 @@ const PharmacyProfile = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Team and Staff Management Tabs */}
-      <Tabs defaultValue="team" value={activeTab} onValueChange={handleTabChange}>
-        <TabsList>
-          <TabsTrigger value="team" className="flex items-center">
-            <Users className="mr-2 h-4 w-4" />
-            Team
-          </TabsTrigger>
-          <TabsTrigger value="staff" className="flex items-center">
-            <UserCog className="mr-2 h-4 w-4" />
-            Staff Management
-          </TabsTrigger>
-        </TabsList>
         
-        <TabsContent value="team" className="mt-6">
-          <PharmacyTeam pharmacyId={pharmacyData.id} />
-        </TabsContent>
+      <TabsContent value="team" className="mt-6">
+        <PharmacyTeam pharmacyId={pharmacyData.id} />
+      </TabsContent>
         
-        <TabsContent value="staff" className="mt-6">
-          <PharmacyStaff pharmacyId={pharmacyData.id} />
-        </TabsContent>
-      </Tabs>
+      <TabsContent value="staff" className="mt-6">
+        <PharmacyStaff pharmacyId={pharmacyData.id} />
+      </TabsContent>
     </div>
   );
 };
