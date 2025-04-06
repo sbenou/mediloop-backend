@@ -152,7 +152,7 @@ export const UserMenuItems = () => {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
-        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
+        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' }, // Direct link to pharmacy profile component
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
         { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
