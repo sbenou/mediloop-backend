@@ -28,7 +28,7 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { profile } = useAuth();
-  const activeTab = searchParams.get("tab") || "personal";
+  const activeTab = searchParams.get("tab") || "profile";
   
   // Get appropriate stamp and signature URLs based on role
   const stampUrl = userRole === "doctor" 
@@ -46,6 +46,7 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
   // Determine tabs based on role
   const getTabs = () => {
     const tabs = [
+      { id: 'profile', label: 'Profile' },
       { id: 'personal', label: 'Personal Info' },
       { id: 'addresses', label: 'Addresses' },
       { id: 'nextofkin', label: 'Next of Kin' },
@@ -81,6 +82,29 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
             </TabsTrigger>
           ))}
         </TabsList>
+        
+        <TabsContent value="profile" className="mt-4">
+          <div className="space-y-6">
+            {/* This is the new "Profile" tab that contains the 3 cards */}
+            <p className="text-muted-foreground">Your essential professional information, hours of operation, and location.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Professional Information</h2>
+                <p>{userRole === "doctor" ? "Your doctor information" : "Your pharmacy information"} will be displayed here.</p>
+              </div>
+              
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Hours of Operation</h2>
+                <p>Your business hours will be displayed here.</p>
+              </div>
+              
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Location</h2>
+                <p>Your {userRole === "doctor" ? "practice" : "pharmacy"} location will be displayed here.</p>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
         
         <TabsContent value="personal" className="mt-4">
           <div className="bg-white shadow rounded-lg p-6">
