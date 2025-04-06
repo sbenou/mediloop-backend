@@ -1,16 +1,16 @@
 
 import React from "react";
-import UniversalProfessionalProfile from "@/components/profile/UniversalProfessionalProfile";
+import PharmacyProfile from "@/components/pharmacy/PharmacyProfile";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
 
-const PharmacyProfile = () => {
+const PharmacyProfilePage = () => {
   return (
     <PharmacistLayout>
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl">
-        <UniversalProfessionalProfile userRole="pharmacist" renderLayout={false} />
+        <PharmacyProfile />
       </div>
     </PharmacistLayout>
   );
 };
 
-export default PharmacyProfile;
+export default PharmacyProfilePage;
