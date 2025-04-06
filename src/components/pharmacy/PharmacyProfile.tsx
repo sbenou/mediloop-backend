@@ -166,7 +166,7 @@ const PharmacyProfile = () => {
         </p>
       </div>
 
-      {/* Team and Staff Management Tabs - Moved above the image uploader */}
+      {/* Team and Staff Management Tabs - Above the image uploader */}
       <Tabs defaultValue="team" value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="team" className="flex items-center">
@@ -178,6 +178,15 @@ const PharmacyProfile = () => {
             Staff Management
           </TabsTrigger>
         </TabsList>
+        
+        {/* Tabs Content - Moved inside the Tabs component to fix the error */}
+        <TabsContent value="team" className="mt-6">
+          <PharmacyTeam pharmacyId={pharmacyData.id} />
+        </TabsContent>
+          
+        <TabsContent value="staff" className="mt-6">
+          <PharmacyStaff pharmacyId={pharmacyData.id} />
+        </TabsContent>
       </Tabs>
 
       {/* Pharmacy Image Section */}
@@ -266,14 +275,6 @@ const PharmacyProfile = () => {
           </CardContent>
         </Card>
       </div>
-        
-      <TabsContent value="team" className="mt-6">
-        <PharmacyTeam pharmacyId={pharmacyData.id} />
-      </TabsContent>
-        
-      <TabsContent value="staff" className="mt-6">
-        <PharmacyStaff pharmacyId={pharmacyData.id} />
-      </TabsContent>
     </div>
   );
 };
