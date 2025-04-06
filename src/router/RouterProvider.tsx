@@ -26,6 +26,17 @@ const ProductsLayout = () => {
   );
 };
 
+// Create a wrapper component for profile routes that provides context
+const ProfileLayout = () => {
+  return (
+    <CurrencyProvider>
+      <CartProvider>
+        <Outlet />
+      </CartProvider>
+    </CurrencyProvider>
+  );
+};
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -66,12 +77,18 @@ const router = createBrowserRouter([
     element: <UnauthorizedPage />,
   },
   {
-    path: '/doctor/profile',
-    element: <DoctorProfilePage />,
-  },
-  {
-    path: '/pharmacy/profile',
-    element: <PharmacyProfile />,
+    path: '/',
+    element: <ProfileLayout />,
+    children: [
+      {
+        path: 'doctor/profile',
+        element: <DoctorProfilePage />,
+      },
+      {
+        path: 'pharmacy/profile',
+        element: <PharmacyProfile />,
+      },
+    ]
   },
   {
     path: '/notifications',
