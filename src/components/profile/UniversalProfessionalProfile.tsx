@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -48,7 +49,9 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
       { id: 'personal', label: 'Personal Info' },
       { id: 'addresses', label: 'Addresses' },
       { id: 'nextofkin', label: 'Next of Kin' },
-      { id: 'stamp', label: 'Stamp & Signature' }
+      { id: 'stamp', label: 'Stamp & Signature' },
+      { id: 'team', label: 'Team' },
+      { id: 'staff', label: 'Staff Management' }
     ];
     
     if (userRole === "doctor") {
@@ -108,6 +111,20 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
               stampUrl={stampUrl || profile?.[userRole === "doctor" ? "doctor_stamp_url" : "pharmacist_stamp_url"] || null} 
               signatureUrl={signatureUrl || profile?.[userRole === "doctor" ? "doctor_signature_url" : "pharmacist_signature_url"] || null} 
             />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="team" className="mt-4">
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Team</h2>
+            <p>Your team management will be displayed here.</p>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="staff" className="mt-4">
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Staff Management</h2>
+            <p>Your staff management will be displayed here.</p>
           </div>
         </TabsContent>
         
