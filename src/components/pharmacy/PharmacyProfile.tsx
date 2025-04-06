@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -84,6 +85,16 @@ const PharmacyProfile = () => {
         ...pharmacy,
         logo_url: logoUrl
       });
+      
+      // Update profile with pharmacy name and logo for sidebar display
+      if (pharmacy?.name) {
+        await supabase
+          .from('profiles')
+          .update({ 
+            pharmacy_name: pharmacy.name 
+          })
+          .eq('id', profile.id);
+      }
     } catch (error) {
       console.error('Error fetching pharmacy data:', error);
     }
@@ -112,9 +123,8 @@ const PharmacyProfile = () => {
       
       const bucketName = 'pharmacy-images';
       
-      // Create a unique filename for the image with path that includes both user ID and pharmacy ID for better RLS
-      const userId = profile?.id;
-      const filePath = `pharmacies/${pharmacyData.id}/users/${userId}/${crypto.randomUUID()}`;
+      // Create a unique filename for the image with path that includes pharmacy ID
+      const filePath = `pharmacies/${pharmacyData.id}/${crypto.randomUUID()}`;
       
       // Enable RLS debugging
       console.log('Attempting to upload to:', bucketName, filePath);
@@ -179,7 +189,7 @@ const PharmacyProfile = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to update pharmacy image: ${error.message || 'Unknown error'}`,
+        description: `Error uploading pharmacy image: ${error.message || 'Unknown error'}`,
       });
     } finally {
       setIsUploading(false);

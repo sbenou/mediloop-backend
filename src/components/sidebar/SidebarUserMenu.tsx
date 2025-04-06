@@ -57,7 +57,13 @@ const SidebarUserMenu = ({
     const fetchPharmacyName = async () => {
       if (userRole === 'pharmacist' && profile?.id) {
         try {
-          // First get the pharmacy_id from user_pharmacies
+          // First check if pharmacy name is already in the profile
+          if (profile.pharmacy_name) {
+            setPharmacyName(profile.pharmacy_name);
+            return;
+          }
+          
+          // If not, get the pharmacy_id from user_pharmacies
           const { data: pharmacyRelation, error: relationError } = await supabase
             .from('user_pharmacies')
             .select('pharmacy_id')
@@ -82,6 +88,12 @@ const SidebarUserMenu = ({
           }
 
           setPharmacyName(pharmacy.name);
+          
+          // Update the user profile with the pharmacy name for future use
+          await supabase
+            .from('profiles')
+            .update({ pharmacy_name: pharmacy.name })
+            .eq('id', profile.id);
         } catch (error) {
           console.error('Error fetching pharmacy name:', error);
         }
@@ -89,7 +101,7 @@ const SidebarUserMenu = ({
     };
 
     fetchPharmacyName();
-  }, [profile?.id, userRole]);
+  }, [profile?.id, userRole, profile?.pharmacy_name]);
   
   // Determine which avatar URL to use based on user role
   const getAvatarUrl = () => {
