@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -106,35 +105,21 @@ const PharmacyProfile = () => {
 
     try {
       setIsUploading(true);
-      
-      // Check if pharmacy-images bucket exists, create if not
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-      
-      if (bucketsError) {
-        throw bucketsError;
-      }
+      toast({
+        title: "Uploading image",
+        description: "Please wait while we upload your pharmacy image...",
+      });
       
       const bucketName = 'pharmacy-images';
-      const bucketExists = buckets.some(bucket => bucket.name === bucketName);
       
-      if (!bucketExists) {
-        const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
-          public: true,
-          fileSizeLimit: 5242880 // 5MB
-        });
-        
-        if (createBucketError) {
-          throw createBucketError;
-        }
-      }
-      
-      // Create a unique filename for the image
-      const filePath = `pharmacies/${pharmacyData.id}/${crypto.randomUUID()}`;
+      // Create a unique filename for the image with path that includes both user ID and pharmacy ID for better RLS
+      const userId = profile?.id;
+      const filePath = `pharmacies/${pharmacyData.id}/users/${userId}/${crypto.randomUUID()}`;
       
       // Enable RLS debugging
       console.log('Attempting to upload to:', bucketName, filePath);
       
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file, {
           upsert: true,
@@ -173,17 +158,28 @@ const PharmacyProfile = () => {
       
       // Update the Recoil state for global access
       setPharmacyLogoUrl(publicUrl);
+      
+      // Also update the pharmacy_logo_url in the profiles table for the current user
+      const { error: profileUpdateError } = await supabase
+        .from('profiles')
+        .update({ pharmacy_logo_url: publicUrl })
+        .eq('id', profile?.id);
+        
+      if (profileUpdateError) {
+        console.error('Error updating profile with logo URL:', profileUpdateError);
+        // Not throwing here as the main upload was successful
+      }
 
       toast({
         title: "Success",
         description: "Pharmacy image updated successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading pharmacy image:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update pharmacy image",
+        description: `Failed to update pharmacy image: ${error.message || 'Unknown error'}`,
       });
     } finally {
       setIsUploading(false);

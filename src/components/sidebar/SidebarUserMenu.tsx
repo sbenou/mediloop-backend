@@ -15,6 +15,7 @@ import { RefObject, useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
 import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
+import { supabase } from "@/lib/supabase";
 
 interface SidebarUserMenuProps {
   profile: UserProfile | null;
@@ -49,6 +50,46 @@ const SidebarUserMenu = ({
   const userAvatar = useRecoilValue(userAvatarState);
   const doctorStampUrl = useRecoilValue(doctorStampUrlState);
   const pharmacyLogoUrl = useRecoilValue(pharmacyLogoUrlState);
+  const [pharmacyName, setPharmacyName] = useState<string | null>(null);
+  
+  // Fetch pharmacy name if user is a pharmacist
+  useEffect(() => {
+    const fetchPharmacyName = async () => {
+      if (userRole === 'pharmacist' && profile?.id) {
+        try {
+          // First get the pharmacy_id from user_pharmacies
+          const { data: pharmacyRelation, error: relationError } = await supabase
+            .from('user_pharmacies')
+            .select('pharmacy_id')
+            .eq('user_id', profile.id)
+            .single();
+
+          if (relationError || !pharmacyRelation?.pharmacy_id) {
+            console.error('Error fetching pharmacy relation:', relationError);
+            return;
+          }
+
+          // Then get the pharmacy name
+          const { data: pharmacy, error: pharmacyError } = await supabase
+            .from('pharmacies')
+            .select('name')
+            .eq('id', pharmacyRelation.pharmacy_id)
+            .single();
+
+          if (pharmacyError || !pharmacy) {
+            console.error('Error fetching pharmacy:', pharmacyError);
+            return;
+          }
+
+          setPharmacyName(pharmacy.name);
+        } catch (error) {
+          console.error('Error fetching pharmacy name:', error);
+        }
+      }
+    };
+
+    fetchPharmacyName();
+  }, [profile?.id, userRole]);
   
   // Determine which avatar URL to use based on user role
   const getAvatarUrl = () => {
@@ -63,7 +104,7 @@ const SidebarUserMenu = ({
   
   // Determine display name based on user role - prioritize pharmacy_name for pharmacists
   const displayName = userRole === 'pharmacist' 
-    ? profile?.pharmacy_name || 'Pharmacy' 
+    ? pharmacyName || 'Pharmacy'
     : profile?.full_name || 'User';
   
   // Determine email or secondary text
