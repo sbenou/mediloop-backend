@@ -85,7 +85,7 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
         
         <TabsContent value="profile" className="mt-4">
           <div className="space-y-6">
-            {/* This is the new "Profile" tab that contains the 3 cards */}
+            {/* This is the Profile tab that contains the 3 cards */}
             <p className="text-muted-foreground">Your essential professional information, hours of operation, and location.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
               <div className="bg-white shadow rounded-lg p-6">
