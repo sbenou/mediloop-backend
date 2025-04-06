@@ -12,6 +12,8 @@ import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import PharmacyTeam from "@/components/pharmacy/PharmacyTeam";
 import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
+import { useSetRecoilState } from "recoil";
+import { pharmacyLogoUrlState } from "@/store/images/atoms";
 
 interface PharmacyData {
   id: string;
@@ -30,6 +32,8 @@ const PharmacyProfile = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [pharmacyData, setPharmacyData] = useState<PharmacyData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Get the setter function for the Recoil state
+  const setPharmacyLogoUrl = useSetRecoilState(pharmacyLogoUrlState);
 
   useEffect(() => {
     fetchPharmacyData();
@@ -70,17 +74,17 @@ const PharmacyProfile = () => {
         .eq('pharmacy_id', pharmacy.id)
         .maybeSingle();
 
-      if (!metadataError && pharmacyMetadata) {
-        setPharmacyData({
-          ...pharmacy,
-          logo_url: pharmacyMetadata.logo_url
-        });
-      } else {
-        setPharmacyData({
-          ...pharmacy,
-          logo_url: null
-        });
+      let logoUrl = null;
+      if (!metadataError && pharmacyMetadata?.logo_url) {
+        logoUrl = pharmacyMetadata.logo_url;
+        // Set the pharmacy logo in Recoil state when fetched
+        setPharmacyLogoUrl(logoUrl);
       }
+
+      setPharmacyData({
+        ...pharmacy,
+        logo_url: logoUrl
+      });
     } catch (error) {
       console.error('Error fetching pharmacy data:', error);
     }
@@ -132,6 +136,9 @@ const PharmacyProfile = () => {
         ...pharmacyData,
         logo_url: publicUrl
       });
+      
+      // Update the Recoil state for global access
+      setPharmacyLogoUrl(publicUrl);
 
       toast({
         title: "Success",
