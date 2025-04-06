@@ -44,8 +44,28 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) throw new Error('User not authenticated');
 
+      // Check if storage bucket exists, create if not
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        throw bucketsError;
+      }
+      
+      const bucketName = userRole === 'pharmacist' ? 'pharmacy-images' : 'doctor-cabinet';
+      const bucketExists = buckets.some(bucket => bucket.name === bucketName);
+      
+      if (!bucketExists) {
+        const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
+          public: true,
+          fileSizeLimit: 5242880 // 5MB
+        });
+        
+        if (createBucketError) {
+          throw createBucketError;
+        }
+      }
+
       const filePath = `${userId}/${crypto.randomUUID()}`;
-      const bucketName = userRole === 'pharmacist' ? 'pharmacy-logos' : 'doctor-cabinet';
       
       const { error: uploadError } = await supabase.storage
         .from(bucketName)

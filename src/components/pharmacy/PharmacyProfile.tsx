@@ -107,6 +107,26 @@ const PharmacyProfile = () => {
     try {
       setIsUploading(true);
       
+      // Check if pharmacy-images bucket exists, create if not
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        throw bucketsError;
+      }
+      
+      const bucketExists = buckets.some(bucket => bucket.name === 'pharmacy-images');
+      
+      if (!bucketExists) {
+        const { error: createBucketError } = await supabase.storage.createBucket('pharmacy-images', {
+          public: true,
+          fileSizeLimit: 5242880 // 5MB
+        });
+        
+        if (createBucketError) {
+          throw createBucketError;
+        }
+      }
+      
       const filePath = `pharmacies/${pharmacyData.id}/${crypto.randomUUID()}`;
       
       const { error: uploadError } = await supabase.storage

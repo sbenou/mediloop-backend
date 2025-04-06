@@ -63,7 +63,7 @@ const SidebarUserMenu = ({
   
   // Determine display name based on user role
   const displayName = userRole === 'pharmacist' 
-    ? profile?.pharmacy_name || 'Pharmacy' 
+    ? profile?.pharmacy_name || profile?.full_name || 'Pharmacy' 
     : profile?.full_name || 'User';
   
   // Determine email or secondary text
