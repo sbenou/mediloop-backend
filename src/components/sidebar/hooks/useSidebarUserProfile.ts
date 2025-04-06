@@ -51,22 +51,27 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
         throw bucketsError;
       }
       
-      const bucketName = userRole === 'pharmacist' ? 'pharmacy-images' : 'doctor-cabinet';
-      const bucketExists = buckets.some(bucket => bucket.name === bucketName);
+      // Use consistent bucket names and paths
+      const bucketName = 'pharmacy-images';
+      let filePath;
       
-      if (!bucketExists) {
-        const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
-          public: true,
-          fileSizeLimit: 5242880 // 5MB
-        });
+      if (userRole === 'pharmacist') {
+        // Consistent path for pharmacy images
+        // Get pharmacy_id if available
+        const { data: pharmacyData } = await supabase
+          .from('user_pharmacies')
+          .select('pharmacy_id')
+          .eq('user_id', userId)
+          .single();
         
-        if (createBucketError) {
-          throw createBucketError;
-        }
+        const pharmacyId = pharmacyData?.pharmacy_id;
+        filePath = pharmacyId 
+          ? `pharmacies/${pharmacyId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`
+          : `users/${userId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+      } else {
+        // For doctors or regular users
+        filePath = `users/${userId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
       }
-
-      // Generate a unique filename
-      const filePath = `${userId}/${crypto.randomUUID()}`;
       
       console.log('Attempting to upload to bucket:', bucketName, 'path:', filePath);
       
@@ -88,7 +93,10 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
 
       console.log('Successfully uploaded, publicUrl:', publicUrl);
 
-      const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'doctor_stamp_url';
+      // Use consistent field names for different user types
+      const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 
+                            userRole === 'doctor' ? 'doctor_stamp_url' : 
+                            'avatar_url';
       
       const { error: updateError } = await supabase
         .from('profiles')
@@ -105,14 +113,14 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
 
       toast({
         title: "Success",
-        description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : 'Doctor cabinet'} updated successfully`,
+        description: `${userRole === 'pharmacist' ? 'Pharmacy logo' : userRole === 'doctor' ? 'Doctor cabinet' : 'Profile image'} updated successfully`,
       });
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to update ${userRole === 'pharmacist' ? 'pharmacy logo' : 'doctor cabinet'}`,
+        description: `Failed to update ${userRole === 'pharmacist' ? 'pharmacy logo' : userRole === 'doctor' ? 'doctor cabinet' : 'profile image'}`,
       });
     }
   };

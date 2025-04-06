@@ -77,7 +77,9 @@ const PharmacyProfile = () => {
       let logoUrl = null;
       if (!metadataError && pharmacyMetadata?.logo_url) {
         logoUrl = pharmacyMetadata.logo_url;
+        
         // Set the pharmacy logo in Recoil state when fetched
+        console.log("Setting pharmacy logo from metadata:", logoUrl);
         setPharmacyLogoUrl(logoUrl);
       }
 
@@ -91,7 +93,8 @@ const PharmacyProfile = () => {
         await supabase
           .from('profiles')
           .update({ 
-            pharmacy_name: pharmacy.name 
+            pharmacy_name: pharmacy.name,
+            pharmacy_logo_url: logoUrl
           })
           .eq('id', profile.id);
       }
@@ -123,10 +126,9 @@ const PharmacyProfile = () => {
       
       const bucketName = 'pharmacy-images';
       
-      // Create a unique filename for the image with path that includes pharmacy ID
-      const filePath = `pharmacies/${pharmacyData.id}/${crypto.randomUUID()}`;
+      // Create a consistent path for pharmacy images - always use the same structure
+      const filePath = `pharmacies/${pharmacyData.id}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
       
-      // Enable RLS debugging
       console.log('Attempting to upload to:', bucketName, filePath);
       
       const { error: uploadError, data } = await supabase.storage
@@ -167,6 +169,7 @@ const PharmacyProfile = () => {
       });
       
       // Update the Recoil state for global access
+      console.log("Setting pharmacy logo after upload:", publicUrl);
       setPharmacyLogoUrl(publicUrl);
       
       // Also update the pharmacy_logo_url in the profiles table for the current user

@@ -103,14 +103,26 @@ const SidebarUserMenu = ({
     fetchPharmacyName();
   }, [profile?.id, userRole, profile?.pharmacy_name]);
   
+  // Log the pharmacy logo URL to help debug
+  useEffect(() => {
+    if (userRole === 'pharmacist') {
+      console.log("SidebarUserMenu: Pharmacy logo URL =", pharmacyLogoUrl || profile?.pharmacy_logo_url);
+    }
+  }, [pharmacyLogoUrl, profile?.pharmacy_logo_url, userRole]);
+  
   // Determine which avatar URL to use based on user role
   const getAvatarUrl = () => {
-    if (userRole === 'pharmacist' && pharmacyLogoUrl) {
-      return pharmacyLogoUrl;
-    } else if (userRole === 'doctor' && doctorStampUrl) {
-      return doctorStampUrl;
-    } else {
-      return userAvatar || profile?.avatar_url;
+    // For pharmacists, prioritize Recoil state, then profile's pharmacy_logo_url
+    if (userRole === 'pharmacist') {
+      return pharmacyLogoUrl || profile?.pharmacy_logo_url || null;
+    } 
+    // For doctors, use doctor stamp
+    else if (userRole === 'doctor') {
+      return doctorStampUrl || null;
+    } 
+    // For other users, use regular avatar
+    else {
+      return userAvatar || profile?.avatar_url || null;
     }
   };
   

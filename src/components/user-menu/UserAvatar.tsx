@@ -28,6 +28,13 @@ const UserAvatar = ({
   const doctorStampUrl = useRecoilValue(doctorStampUrlState);
   const pharmacyLogoUrl = useRecoilValue(pharmacyLogoUrlState);
   
+  // Log relevant state for debugging
+  if (userProfile?.role === 'pharmacist') {
+    console.log("UserAvatar: Pharmacy user detected");
+    console.log("UserAvatar: pharmacyLogoUrl from Recoil =", pharmacyLogoUrl);
+    console.log("UserAvatar: pharmacy_logo_url from profile =", userProfile?.pharmacy_logo_url);
+  }
+  
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
     md: "h-10 w-10 text-sm",
@@ -59,19 +66,28 @@ const UserAvatar = ({
   // Determine which avatar URL to use based on user role and context
   let displayAvatarUrl = userProfile?.avatar_url;
   
-  // If we're in a sidebar menu and have a specific role
+  // If we're in a sidebar menu (isSquare=true) and have a specific role
   if (isSquare && userProfile?.role) {
-    if (userProfile.role === 'pharmacist' && pharmacyLogoUrl) {
-      displayAvatarUrl = pharmacyLogoUrl;
-    } else if (userProfile.role === 'doctor' && doctorStampUrl) {
-      displayAvatarUrl = doctorStampUrl;
+    if (userProfile.role === 'pharmacist') {
+      // For pharmacists, prioritize Recoil state, then profile.pharmacy_logo_url
+      displayAvatarUrl = pharmacyLogoUrl || userProfile.pharmacy_logo_url || displayAvatarUrl;
+    } else if (userProfile.role === 'doctor') {
+      // For doctors, prioritize stamp image
+      displayAvatarUrl = doctorStampUrl || displayAvatarUrl;
     } else if (globalAvatarUrl) {
+      // For regular users, use global avatar if available
       displayAvatarUrl = globalAvatarUrl;
     }
   } 
   // For non-squared (regular) avatars, use the standard user avatar
-  else if (!isSquare && globalAvatarUrl && userProfile?.id === globalAvatarUrl.split('/').slice(-2)[0]) {
+  else if (!isSquare && globalAvatarUrl) {
     displayAvatarUrl = globalAvatarUrl;
+  }
+
+  // Add timestamp to prevent caching if URL exists
+  if (displayAvatarUrl) {
+    const hasQueryParams = displayAvatarUrl.includes('?');
+    displayAvatarUrl = `${displayAvatarUrl}${hasQueryParams ? '&' : '?'}t=${Date.now()}`;
   }
 
   return (
@@ -79,6 +95,7 @@ const UserAvatar = ({
       <AvatarImage 
         src={displayAvatarUrl || undefined} 
         alt={userProfile?.full_name || "User"} 
+        crossOrigin="anonymous"
       />
       <AvatarFallback className={isSquare ? "rounded-md" : "rounded-full"}>
         {initials}
