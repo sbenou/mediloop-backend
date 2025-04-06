@@ -114,10 +114,11 @@ const PharmacyProfile = () => {
         throw bucketsError;
       }
       
-      const bucketExists = buckets.some(bucket => bucket.name === 'pharmacy-images');
+      const bucketName = 'pharmacy-images';
+      const bucketExists = buckets.some(bucket => bucket.name === bucketName);
       
       if (!bucketExists) {
-        const { error: createBucketError } = await supabase.storage.createBucket('pharmacy-images', {
+        const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
           public: true,
           fileSizeLimit: 5242880 // 5MB
         });
@@ -127,19 +128,29 @@ const PharmacyProfile = () => {
         }
       }
       
+      // Create a unique filename for the image
       const filePath = `pharmacies/${pharmacyData.id}/${crypto.randomUUID()}`;
       
+      // Enable RLS debugging
+      console.log('Attempting to upload to:', bucketName, filePath);
+      
       const { error: uploadError } = await supabase.storage
-        .from('pharmacy-images')
+        .from(bucketName)
         .upload(filePath, file, {
           upsert: true,
+          cacheControl: '3600'
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error details:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
-        .from('pharmacy-images')
+        .from(bucketName)
         .getPublicUrl(filePath);
+
+      console.log('Successfully uploaded, publicUrl:', publicUrl);
 
       // Create or update pharmacy metadata with the logo URL
       const { error: metadataError } = await supabase
@@ -149,7 +160,10 @@ const PharmacyProfile = () => {
           logo_url: publicUrl
         });
 
-      if (metadataError) throw metadataError;
+      if (metadataError) {
+        console.error('Metadata error:', metadataError);
+        throw metadataError;
+      }
 
       // Update local state
       setPharmacyData({

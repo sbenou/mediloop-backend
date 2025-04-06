@@ -65,19 +65,28 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
         }
       }
 
+      // Generate a unique filename
       const filePath = `${userId}/${crypto.randomUUID()}`;
+      
+      console.log('Attempting to upload to bucket:', bucketName, 'path:', filePath);
       
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file, {
           upsert: true,
+          cacheControl: '3600'
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error details:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from(bucketName)
         .getPublicUrl(filePath);
+
+      console.log('Successfully uploaded, publicUrl:', publicUrl);
 
       const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 'doctor_stamp_url';
       
@@ -86,7 +95,10 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
         .update({ [fieldToUpdate]: publicUrl })
         .eq('id', userId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Update error details:', updateError);
+        throw updateError;
+      }
 
       // Invalidate the profile query to refresh the data
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
