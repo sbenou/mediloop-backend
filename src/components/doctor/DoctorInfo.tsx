@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
@@ -27,11 +28,23 @@ const DoctorInfo = ({ doctor, isEditing, setIsEditing }: DoctorInfoProps) => {
   const [email, setEmail] = useState(doctor.email || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    // Update local state when doctor prop changes
+    setName(doctor.name || '');
+    setAddress(doctor.address || '');
+    setCity(doctor.city || '');
+    setPostalCode(doctor.postal_code || '');
+    setPhone(doctor.phone || '');
+    setEmail(doctor.email || '');
+  }, [doctor]);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      console.log('Saving doctor info for ID:', doctor.id);
+
       // First, update the profile with basic info
       const { error: profileError } = await supabase
         .from('profiles')
@@ -41,10 +54,15 @@ const DoctorInfo = ({ doctor, isEditing, setIsEditing }: DoctorInfoProps) => {
         })
         .eq('id', doctor.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        throw profileError;
+      }
+      
+      console.log('Profile updated successfully, now updating doctor_metadata');
 
       // Then, update or create doctor_metadata with address info
-      const { error: metadataError } = await supabase
+      const { data: metadataResult, error: metadataError } = await supabase
         .from('doctor_metadata')
         .upsert({
           doctor_id: doctor.id,
@@ -55,12 +73,23 @@ const DoctorInfo = ({ doctor, isEditing, setIsEditing }: DoctorInfoProps) => {
           onConflict: 'doctor_id'
         });
 
-      if (metadataError) throw metadataError;
+      if (metadataError) {
+        console.error('Error updating doctor_metadata:', metadataError);
+        throw metadataError;
+      }
+
+      console.log('Doctor metadata updated successfully:', metadataResult);
 
       toast({
         title: "Success",
         description: "Doctor information updated successfully"
       });
+      
+      // Force a page refresh to show the updated information
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating doctor info:', error);
