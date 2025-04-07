@@ -1,12 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { UserPlus } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from '@/hooks/auth/useAuth';
-import { TeamMemberDialog } from './team/TeamMemberDialog';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useRecoilValue } from 'recoil';
 import { userAvatarState } from '@/store/user/atoms';
@@ -23,8 +20,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [phoneValue, setPhoneValue] = useState('');
-  const [nokPhoneValue, setNokPhoneValue] = useState('');
   const { profile } = useAuth();
   const userAvatar = useRecoilValue(userAvatarState);
 
@@ -44,7 +39,8 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
           email: profile.email || '',
           role: 'doctor',
           status: 'active',
-          avatar_url: profile.avatar_url
+          avatar_url: profile.avatar_url,
+          user_id: profile.id
         }]);
       } else {
         // For pharmacy view, fetch staff from pharmacy team members
@@ -57,7 +53,8 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
               full_name,
               email,
               role,
-              avatar_url
+              avatar_url,
+              is_blocked
             )
           `)
           .eq('pharmacy_id', pharmacyId)
@@ -77,8 +74,9 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
                 full_name: item.profiles.full_name || 'Unknown',
                 email: item.profiles.email || '',
                 role: item.profiles.role || 'staff',
-                status: 'active',
-                avatar_url: item.profiles.avatar_url
+                status: item.profiles.is_blocked ? 'inactive' : 'active',
+                avatar_url: item.profiles.avatar_url,
+                user_id: item.profiles.id
               });
             }
           });
@@ -92,7 +90,8 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
             email: profile.email || '',
             role: profile.role || 'pharmacist',
             status: 'active',
-            avatar_url: profile.avatar_url
+            avatar_url: profile.avatar_url,
+            user_id: profile.id
           });
         }
         
@@ -109,7 +108,8 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
           email: profile.email || '',
           role: profile.role || (entityType === 'doctor' ? 'doctor' : 'pharmacist'),
           status: 'active',
-          avatar_url: profile.avatar_url
+          avatar_url: profile.avatar_url,
+          user_id: profile.id
         }]);
       }
     } finally {
@@ -117,16 +117,25 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
     }
   };
 
-  const toggleStaffStatus = async (staffId: string, currentStatus: string) => {
+  const toggleStaffStatus = async (staffId: string, currentStatus: 'active' | 'inactive') => {
     try {
+      // Determine new status
       const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const isActive = newStatus === 'active';
       
-      // In a real app, update the database
-      // For now, just update the local state
+      // Update in the database
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_blocked: !isActive })
+        .eq('id', staffId);
+        
+      if (error) throw error;
+      
+      // Update local state
       setStaff(prev => 
         prev.map(member => 
-          member.id === staffId 
-            ? { ...member, status: newStatus as 'active' | 'inactive' } 
+          member.user_id === staffId 
+            ? { ...member, status: newStatus } 
             : member
         )
       );
@@ -143,17 +152,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
         description: "Failed to update staff status.",
       });
     }
-  };
-
-  const handleAddStaff = (data: any) => {
-    console.log('Adding new staff member:', data);
-    toast({
-      title: "Staff Member Added",
-      description: `${data.full_name} has been added to your team.`,
-    });
-    setDialogOpen(false);
-    setPhoneValue('');
-    setNokPhoneValue('');
   };
 
   const handleViewMember = (memberId: string) => {
@@ -194,29 +192,13 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
               onViewMember={handleViewMember}
               onEditMember={handleEditMember}
               onTerminateMember={handleTerminateMember}
+              onToggleActive={toggleStaffStatus}
             />
           </TooltipProvider>
         )}
       </CardContent>
 
-      <div className="mt-4">
-        <Button onClick={() => setDialogOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Staff Member
-        </Button>
-      </div>
-
-      <TeamMemberDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSubmit={handleAddStaff}
-        phoneValue={phoneValue}
-        setPhoneValue={setPhoneValue}
-        nokPhoneValue={nokPhoneValue}
-        setNokPhoneValue={setNokPhoneValue}
-        entityType={entityType}
-        showAllTabs={true}
-      />
+      {/* Removed the "Add Staff Member" button here as it's redundant */}
     </Card>
   );
 };
