@@ -1,43 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { UserPlus, Eye, Edit, Trash } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from '@/hooks/auth/useAuth';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
 import { TeamMemberDialog } from './team/TeamMemberDialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useRecoilValue } from 'recoil';
 import { userAvatarState } from '@/store/user/atoms';
+import StaffMemberList from './staff/StaffMemberList';
+import StaffEmptyState from './staff/StaffEmptyState';
+import { StaffMember } from './staff/types';
 
 interface PharmacyStaffProps {
   pharmacyId: string;
   entityType?: 'doctor' | 'pharmacy';
-}
-
-interface StaffMember {
-  id: string;
-  full_name: string;
-  email: string;
-  role: string;
-  status: 'active' | 'inactive';
-  avatar_url?: string;
 }
 
 const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 'pharmacy' }) => {
@@ -205,116 +184,27 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
         {loading ? (
           <div className="text-center py-6">Loading staff...</div>
         ) : staff.length === 0 ? (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">No staff members found.</p>
-          </div>
+          <StaffEmptyState onAddStaff={() => setDialogOpen(true)} />
         ) : (
           <TooltipProvider>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {staff.map((member) => {
-                  // Check if this is the current user to use the correct avatar
-                  const avatarUrl = userAvatar && 
-                    profile?.id === member.id ? 
-                    userAvatar : member.avatar_url;
-                    
-                  return (
-                    <TableRow key={member.id}>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Avatar className="h-8 w-8 mr-2">
-                            <AvatarImage src={avatarUrl} />
-                            <AvatarFallback>{member.full_name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{member.full_name}</span>
-                            {profile?.id === member.id && (
-                              <span className="text-xs text-muted-foreground">(You)</span>
-                            )}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{member.email}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={
-                          member.role === 'doctor' ? 'bg-blue-100 text-blue-800' :
-                          member.role === 'pharmacist' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }>
-                          {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={member.status === 'active' ? 'success' : 'destructive'}>
-                          {member.status === 'active' ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleViewMember(member.id)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>View Team Member</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleEditMember(member.id)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Edit Team Member</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                className="text-destructive hover:text-destructive/90"
-                                onClick={() => handleTerminateMember(member.id)}
-                              >
-                                <Trash className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Terminate Team Member</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <StaffMemberList 
+              staff={staff}
+              currentUserId={profile?.id}
+              userAvatar={userAvatar}
+              onViewMember={handleViewMember}
+              onEditMember={handleEditMember}
+              onTerminateMember={handleTerminateMember}
+            />
           </TooltipProvider>
         )}
       </CardContent>
+
+      <div className="mt-4">
+        <Button onClick={() => setDialogOpen(true)}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Add Staff Member
+        </Button>
+      </div>
 
       <TeamMemberDialog
         open={dialogOpen}
