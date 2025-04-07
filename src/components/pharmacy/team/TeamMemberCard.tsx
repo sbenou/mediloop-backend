@@ -32,12 +32,14 @@ interface TeamMemberCardProps {
   member: TeamMember;
   onToggleActive: (memberId: string, status: 'active' | 'inactive') => void;
   showMainDoctorBadge?: boolean;
+  hideControls?: boolean;
 }
 
 export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ 
   member, 
   onToggleActive,
-  showMainDoctorBadge = true
+  showMainDoctorBadge = true,
+  hideControls = false
 }) => {
   const isActive = member.status === 'active';
   // Get user avatar from Recoil state for the current user
@@ -109,28 +111,30 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
     <Card className="w-full overflow-hidden hover:shadow-md transition-shadow">
       <CardHeader className="p-0">
         <div className="bg-primary/5 h-24 flex items-center justify-center relative">
-          {/* Moved 3-dot menu to top right corner */}
-          <div className="absolute top-2 right-2 z-10">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleViewMember}>
-                  <Eye className="h-4 w-4 mr-2" /> View Team Member
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleEditMember}>
-                  <Edit className="h-4 w-4 mr-2" /> Edit Team Member
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={handleTerminateMember}>
-                  <Trash className="h-4 w-4 mr-2" /> Terminate Team Member
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          {/* Only show 3-dot menu if hideControls is false */}
+          {!hideControls && (
+            <div className="absolute top-2 right-2 z-10">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleViewMember}>
+                    <Eye className="h-4 w-4 mr-2" /> View Team Member
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleEditMember}>
+                    <Edit className="h-4 w-4 mr-2" /> Edit Team Member
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive" onClick={handleTerminateMember}>
+                    <Trash className="h-4 w-4 mr-2" /> Terminate Team Member
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
           
           {member.role === 'doctor' && showMainDoctorBadge && (
             <Badge 
@@ -161,25 +165,37 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           
           <p className="text-sm text-muted-foreground mt-2">{member.email}</p>
           
-          <div className="w-full mt-4 flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <Switch 
-                checked={isActive} 
-                onCheckedChange={handleStatusToggle}
-                id={`status-${member.id}`}
-              />
-              <label 
-                htmlFor={`status-${member.id}`}
-                className="text-sm cursor-pointer"
-              >
+          {/* Only show toggle controls if hideControls is false */}
+          {!hideControls && (
+            <div className="w-full mt-4 flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  checked={isActive} 
+                  onCheckedChange={handleStatusToggle}
+                  id={`status-${member.id}`}
+                />
+                <label 
+                  htmlFor={`status-${member.id}`}
+                  className="text-sm cursor-pointer"
+                >
+                  {isActive ? 'Active' : 'Inactive'}
+                </label>
+              </div>
+              
+              <span className={`px-2 py-1 rounded-full text-xs ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                 {isActive ? 'Active' : 'Inactive'}
-              </label>
+              </span>
             </div>
-            
-            <span className={`px-2 py-1 rounded-full text-xs ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-              {isActive ? 'Active' : 'Inactive'}
-            </span>
-          </div>
+          )}
+          
+          {/* Always show status badge for read-only cards when controls are hidden */}
+          {hideControls && (
+            <div className="mt-3">
+              <span className={`px-2 py-1 rounded-full text-xs ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {isActive ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

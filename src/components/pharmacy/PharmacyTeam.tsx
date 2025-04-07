@@ -1,9 +1,6 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { UserPlus } from 'lucide-react'; 
 import { usePharmacyTeam } from './team/usePharmacyTeam';
-import { TeamMemberDialog } from './team/TeamMemberDialog';
 import { TeamMemberCard } from './team/TeamMemberCard';
 import { EmptyTeamState } from './team/EmptyTeamState';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -20,15 +17,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
   const userAvatar = useRecoilValue(userAvatarState);
   const {
     teamMembers,
-    loading,
-    addUserOpen,
-    setAddUserOpen,
-    handleToggleActive,
-    handleAddMember,
-    phoneValue,
-    setPhoneValue,
-    nokPhoneValue,
-    setNokPhoneValue
+    loading
   } = usePharmacyTeam(pharmacyId);
 
   // Function to transform TeamMember from the hook to the format expected by TeamMemberCard
@@ -50,21 +39,13 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
     };
   };
 
-  // Function to adapt the handleToggleActive function to match expected signature
-  const handleCardToggleActive = (memberId: string, currentStatus: 'active' | 'inactive') => {
-    // If the current status is 'active', we want to deactivate, and vice versa
-    const isActive = currentStatus === 'active';
-    handleToggleActive(memberId, isActive);
-  };
+  // Dummy function that does nothing - we've removed the toggle functionality
+  const dummyToggleFunction = () => {};
 
   return (
     <div className="space-y-6 container mx-auto px-4">
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold">{entityType === 'doctor' ? 'Doctor Team' : 'Pharmacy Team'}</h3>
-        <Button onClick={() => setAddUserOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Team Member
-        </Button>
       </div>
       
       {loading ? (
@@ -88,8 +69,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                     status: 'active',
                     profile_image: userAvatar || profile.avatar_url,
                   }}
-                  onToggleActive={handleCardToggleActive}
+                  onToggleActive={dummyToggleFunction}
                   showMainDoctorBadge={false}
+                  hideControls={true}
                 />
               )}
               
@@ -98,8 +80,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                   <TeamMemberCard 
                     key={member.id}
                     member={mapTeamMemberToCardMember(member)}
-                    onToggleActive={handleCardToggleActive}
+                    onToggleActive={dummyToggleFunction}
                     showMainDoctorBadge={false}
+                    hideControls={true}
                   />
                 ))
               ) : profile ? (
@@ -118,26 +101,15 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                 <TeamMemberCard 
                   key={member.id}
                   member={mapTeamMemberToCardMember(member)}
-                  onToggleActive={handleCardToggleActive}
+                  onToggleActive={dummyToggleFunction}
                   showMainDoctorBadge={false}
+                  hideControls={true}
                 />
               ))}
             </div>
           ) : null}
         </div>
       )}
-
-      <TeamMemberDialog
-        open={addUserOpen}
-        onOpenChange={setAddUserOpen}
-        onSubmit={handleAddMember}
-        phoneValue={phoneValue}
-        setPhoneValue={setPhoneValue}
-        nokPhoneValue={nokPhoneValue}
-        setNokPhoneValue={setNokPhoneValue}
-        entityType={entityType}
-        showAllTabs={true}
-      />
     </div>
   );
 };

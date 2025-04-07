@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
@@ -10,6 +9,9 @@ import { userAvatarState } from '@/store/user/atoms';
 import StaffMemberList from './staff/StaffMemberList';
 import StaffEmptyState from './staff/StaffEmptyState';
 import { StaffMember } from './staff/types';
+import { Button } from "@/components/ui/button";
+import { UserPlus, LayoutList, LayoutGrid } from 'lucide-react';
+import { TeamMemberDialog } from './team/TeamMemberDialog';
 
 interface PharmacyStaffProps {
   pharmacyId: string;
@@ -20,6 +22,9 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [phoneValue, setPhoneValue] = useState('');
+  const [nokPhoneValue, setNokPhoneValue] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
   const { profile } = useAuth();
   const userAvatar = useRecoilValue(userAvatarState);
 
@@ -176,27 +181,166 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
     });
   };
 
+  const handleAddMember = async (values: any) => {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password || 'temporary' + Math.random().toString(36).slice(2, 10),
+        options: {
+          data: {
+            full_name: values.full_name,
+            role: values.role,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Failed to create user");
+
+      const userId = authData.user.id;
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          full_name: values.full_name,
+          email: values.email,
+          role: values.role,
+        });
+
+      if (profileError) throw profileError;
+
+      const { error: pharmacyAssocError } = await supabase
+        .from('user_pharmacies')
+        .insert({
+          user_id: userId,
+          pharmacy_id: pharmacyId,
+        });
+
+      if (pharmacyAssocError) throw pharmacyAssocError;
+
+      toast({
+        title: "Success",
+        description: "New team member added successfully",
+      });
+
+      setDialogOpen(false);
+      fetchStaff();
+    } catch (error) {
+      console.error('Error adding new user:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add new team member",
+      });
+    }
+  };
+
+  const StaffCardView = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      {staff.map(member => (
+        <Card key={member.id} className="overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                {member.avatar_url ? (
+                  <img 
+                    src={member.avatar_url} 
+                    alt={member.full_name} 
+                    className="h-12 w-12 rounded-full"
+                  />
+                ) : (
+                  <span className="text-lg font-semibold">
+                    {member.full_name.charAt(0)}
+                  </span>
+                )}
+              </div>
+              <div>
+                <h3 className="font-medium">{member.full_name}</h3>
+                <p className="text-sm text-muted-foreground">{member.email}</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-4">
+              <div className="text-sm">
+                <span className={`px-2 py-1 rounded-full text-xs ${member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {member.status}
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleViewMember(member.user_id)}
+              >
+                View Profile
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
     <Card className="shadow-none border-0">
       <CardContent className="p-0">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center space-x-2">
+            <Button
+              variant={viewMode === 'list' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <LayoutList className="h-4 w-4 mr-1" /> List
+            </Button>
+            <Button
+              variant={viewMode === 'card' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode('card')}
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" /> Cards
+            </Button>
+          </div>
+          <Button onClick={() => setDialogOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add Team Member
+          </Button>
+        </div>
+        
         {loading ? (
           <div className="text-center py-6">Loading staff...</div>
         ) : staff.length === 0 ? (
           <StaffEmptyState onAddStaff={() => setDialogOpen(true)} />
         ) : (
           <TooltipProvider>
-            <StaffMemberList 
-              staff={staff}
-              currentUserId={profile?.id}
-              userAvatar={userAvatar}
-              onViewMember={handleViewMember}
-              onEditMember={handleEditMember}
-              onTerminateMember={handleTerminateMember}
-              onToggleActive={toggleStaffStatus}
-            />
+            {viewMode === 'list' ? (
+              <StaffMemberList 
+                staff={staff}
+                currentUserId={profile?.id}
+                userAvatar={userAvatar}
+                onViewMember={handleViewMember}
+                onEditMember={handleEditMember}
+                onTerminateMember={handleTerminateMember}
+                onToggleActive={toggleStaffStatus}
+              />
+            ) : (
+              <StaffCardView />
+            )}
           </TooltipProvider>
         )}
       </CardContent>
+      
+      <TeamMemberDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={handleAddMember}
+        phoneValue={phoneValue}
+        setPhoneValue={setPhoneValue}
+        nokPhoneValue={nokPhoneValue}
+        setNokPhoneValue={setNokPhoneValue}
+        entityType={entityType}
+        showAllTabs={false}
+      />
     </Card>
   );
 };
