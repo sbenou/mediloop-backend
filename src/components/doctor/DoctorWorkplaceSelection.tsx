@@ -68,18 +68,18 @@ const DoctorWorkplaceSelection = () => {
     if (!user?.id) return;
 
     try {
+      // We'll use a raw query since TypeScript doesn't recognize the doctor_workplaces table yet
       const { data, error } = await supabase
-        .from('doctor_workplaces')
-        .select('workplace_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .rpc('get_doctor_workplace', { 
+          p_user_id: user.id 
+        });
 
       if (error) {
         throw error;
       }
 
       if (data) {
-        setSelectedWorkplaceId(data.workplace_id);
+        setSelectedWorkplaceId(data);
       }
     } catch (error) {
       console.error('Error fetching current workplace:', error);
@@ -93,14 +93,22 @@ const DoctorWorkplaceSelection = () => {
       setIsSaving(true);
       setSelectedWorkplaceId(workplaceId);
 
-      const { error } = await supabase
-        .rpc('upsert_doctor_workplace', { 
-          p_user_id: user.id, 
-          p_workplace_id: workplaceId 
-        });
+      // Use the edge function instead of RPC
+      const response = await fetch('https://hrrlefgnhkbzuwyklejj.functions.supabase.co/upsert-doctor-workplace', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+        },
+        body: JSON.stringify({ 
+          userId: user.id, 
+          workplaceId: workplaceId 
+        })
+      });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Unknown error occurred');
       }
 
       toast({
@@ -109,6 +117,8 @@ const DoctorWorkplaceSelection = () => {
       });
     } catch (error) {
       console.error('Error updating workplace:', error);
+      // Revert selection on error
+      fetchCurrentWorkplace();
       toast({
         variant: "destructive",
         title: "Error",

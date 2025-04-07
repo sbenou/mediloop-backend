@@ -28,6 +28,18 @@ Deno.serve(async (req) => {
       }
     )
 
+    // Get the current user's session
+    const {
+      data: { session },
+    } = await supabaseClient.auth.getSession()
+
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Get the request body
     const { userId, workplaceId } = await req.json()
 
@@ -44,19 +56,38 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Security check - ensure user can only update their own data
+    if (userId !== session.user.id) {
+      return new Response(
+        JSON.stringify({
+          error: 'Unauthorized: You can only update your own workplace',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        }
+      )
+    }
+
     console.log(`Calling upsert_doctor_workplace for user ${userId} with workplace ${workplaceId}`)
 
-    // Call the database function
-    const { data, error } = await supabaseClient.rpc(
-      'upsert_doctor_workplace',
-      {
-        p_user_id: userId,
-        p_workplace_id: workplaceId,
-      }
-    )
+    // Instead of RPC, use direct SQL query with prepared statement
+    const { data, error } = await supabaseClient
+      .from('doctor_workplaces')
+      .upsert(
+        { 
+          user_id: userId, 
+          workplace_id: workplaceId,
+          created_at: new Date().toISOString()
+        },
+        { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false
+        }
+      )
 
     if (error) {
-      console.error('Error calling upsert_doctor_workplace:', error)
+      console.error('Error updating doctor workplace:', error)
       return new Response(
         JSON.stringify({ error: error.message }),
         {
