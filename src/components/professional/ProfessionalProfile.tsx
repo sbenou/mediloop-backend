@@ -133,47 +133,64 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
         entityId = profile.id;
         
         // Check for existing doctor_metadata
-        const { data: metadata, error: metadataError } = await supabase
-          .from('doctor_metadata')
-          .select('logo_url')
-          .eq('doctor_id', entityId)
-          .maybeSingle();
-        
-        let doctorLogoUrl = null;
-        if (!metadataError && metadata?.logo_url) {
-          doctorLogoUrl = metadata.logo_url;
-          setLogoUrl(doctorLogoUrl);
-        } else if (profile.doctor_stamp_url) {
-          doctorLogoUrl = profile.doctor_stamp_url;
-          setLogoUrl(doctorLogoUrl);
+        try {
+          // This can throw if the table doesn't exist yet
+          const { data: metadata } = await supabase
+            .from('doctor_metadata')
+            .select('logo_url')
+            .eq('doctor_id', entityId)
+            .maybeSingle();
           
-          // Update doctor_metadata with the logo from profile
-          if (doctorLogoUrl) {
-            // Attempt to create/update doctor_metadata entry
-            try {
-              await supabase
-                .from('doctor_metadata')
-                .upsert({ 
-                  doctor_id: entityId, 
-                  logo_url: doctorLogoUrl 
-                });
-            } catch (metaError) {
-              console.log("Note: doctor_metadata table might not exist yet:", metaError);
+          let doctorLogoUrl = null;
+          
+          if (metadata?.logo_url) {
+            doctorLogoUrl = metadata.logo_url;
+            setLogoUrl(doctorLogoUrl);
+          } else if (profile.doctor_stamp_url) {
+            doctorLogoUrl = profile.doctor_stamp_url;
+            setLogoUrl(doctorLogoUrl);
+            
+            // Update doctor_metadata with the logo from profile
+            if (doctorLogoUrl) {
+              try {
+                await supabase
+                  .from('doctor_metadata')
+                  .upsert({ 
+                    doctor_id: entityId, 
+                    logo_url: doctorLogoUrl 
+                  });
+              } catch (metaError) {
+                console.error("Error updating doctor_metadata:", metaError);
+              }
             }
           }
-        }
         
-        // Create placeholder entity data based on profile info
-        setEntityData({
-          id: profile.id,
-          name: profile.full_name || "Doctor",
-          address: "Office address",
-          city: "City",
-          postal_code: "Postal code",
-          phone: null,
-          hours: null,
-          logo_url: doctorLogoUrl
-        });
+          // Create placeholder entity data based on profile info
+          setEntityData({
+            id: profile.id,
+            name: profile.full_name || "Doctor",
+            address: "Office address",
+            city: "City",
+            postal_code: "Postal code",
+            phone: null,
+            hours: null,
+            logo_url: doctorLogoUrl
+          });
+        } catch (error) {
+          console.error("Error fetching doctor_metadata:", error);
+          
+          // Still create entity data even if there was an error fetching metadata
+          setEntityData({
+            id: profile.id,
+            name: profile.full_name || "Doctor",
+            address: "Office address",
+            city: "City",
+            postal_code: "Postal code",
+            phone: null,
+            hours: null,
+            logo_url: profile.doctor_stamp_url
+          });
+        }
       }
     } catch (error) {
       console.error(`Error fetching ${role} data:`, error);

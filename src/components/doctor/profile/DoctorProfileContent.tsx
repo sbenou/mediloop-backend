@@ -53,8 +53,17 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
     try {
       setIsSubmitting(true);
       
-      // For now, we'll just show a success message since the doctor table doesn't exist yet
-      // In a real implementation, you would update the doctor table here
+      if (userId) {
+        // Update the profile data
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: formData.name
+          })
+          .eq('id', userId);
+      
+        if (error) throw error;
+      }
       
       toast({
         title: "Profile Updated",

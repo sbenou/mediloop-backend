@@ -94,22 +94,27 @@ const ProfessionalImageUpload: React.FC<ProfessionalImageUploadProps> = ({
         setPharmacyLogoUrl(publicUrlWithCacheBust);
         
       } else {
-        // Update doctor metadata
-        const { error: metadataError } = await supabase
-          .from('doctor_metadata')
-          .upsert({ 
-            doctor_id: entityId,
-            logo_url: publicUrlWithCacheBust
-          });
-
-        if (metadataError) {
-          console.error('Metadata error:', metadataError);
-          throw metadataError;
+        // Handle doctor metadata - we'll use a try-catch because the doctor_metadata might be new
+        try {
+          // Try to update doctor metadata
+          const { error: metadataError } = await supabase
+            .from('doctor_metadata')
+            .upsert({ 
+              doctor_id: entityId,
+              logo_url: publicUrlWithCacheBust
+            });
+            
+          if (metadataError) {
+            console.error('Doctor metadata error:', metadataError);
+            // We'll just log this for now, but still update the profile
+          }
+          
+          // Update the Recoil state for global access
+          console.log("Setting doctor logo after upload:", publicUrlWithCacheBust);
+          setDoctorLogoUrl(publicUrlWithCacheBust);
+        } catch (metaError) {
+          console.error('Error with doctor_metadata:', metaError);
         }
-
-        // Update the Recoil state for global access
-        console.log("Setting doctor logo after upload:", publicUrlWithCacheBust);
-        setDoctorLogoUrl(publicUrlWithCacheBust);
       }
       
       // Also update the profile with appropriate field based on entity type

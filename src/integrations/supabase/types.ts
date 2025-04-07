@@ -186,6 +186,30 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_metadata: {
+        Row: {
+          created_at: string | null
+          doctor_id: string | null
+          id: string
+          logo_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          logo_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          logo_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       doctor_patient_connections: {
         Row: {
           created_at: string
