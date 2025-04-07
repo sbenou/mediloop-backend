@@ -30,11 +30,16 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
       console.log('Saving hours with doctor_id:', doctorId);
       
       // First check if a record exists for this doctor
-      const { data: existingData } = await supabase
+      const { data: existingData, error: fetchError } = await supabase
         .from('doctor_metadata')
-        .select('id, hours')
+        .select('id')
         .eq('doctor_id', doctorId)
         .maybeSingle();
+      
+      if (fetchError) {
+        console.error('Error checking for existing record:', fetchError);
+        throw fetchError;
+      }
       
       let result;
       
