@@ -75,12 +75,12 @@ const DoctorWorkplaceSelection = () => {
     if (!user?.id) return;
 
     try {
-      // Use a direct SQL query to avoid TypeScript issues
+      // Use a direct SQL query with type assertion to avoid TypeScript issues
       const { data, error } = await supabase
         .from('doctor_workplaces')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .maybeSingle() as { data: DoctorWorkplace | null; error: any };
 
       if (error) {
         throw error;
