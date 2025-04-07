@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useProfessionalTeam } from './useProfessionalTeam';
+import { useProfessionalTeam, TeamMember } from './useProfessionalTeam';
 import { TeamMemberCard } from '@/components/pharmacy/team/TeamMemberCard';
 import { EmptyTeamState } from '@/components/pharmacy/team/EmptyTeamState';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -12,6 +12,7 @@ interface ProfessionalTeamProps {
   entityType: 'doctor' | 'pharmacy';
 }
 
+// Create an extended team member interface that matches what TeamMemberCard expects
 interface ExtendedTeamMember {
   id: string;
   full_name: string;
@@ -30,7 +31,7 @@ const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityTyp
   const { teamMembers, loading } = useProfessionalTeam(entityId, entityType);
 
   // Function to transform TeamMember from the hook to the format expected by TeamMemberCard
-  const mapTeamMemberToCardMember = (member: any): ExtendedTeamMember => {
+  const mapTeamMemberToCardMember = (member: TeamMember): ExtendedTeamMember => {
     // Check if this member is the current user to use the correct avatar
     const avatarUrl = userAvatar && 
       profile?.id === member.id ? 
@@ -74,7 +75,9 @@ const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityTyp
                     email: profile.email || '',
                     phone_number: '',
                     role: 'doctor',
+                    // Use optional pharmacy_id here
                     pharmacy_id: undefined,
+                    // Add doctor_id property
                     doctor_id: entityId,
                     status: 'active',
                     profile_image: userAvatar || profile.avatar_url,

@@ -12,7 +12,8 @@ interface TeamMember {
   email: string;
   phone_number?: string;
   role: string;
-  pharmacy_id: string;
+  pharmacy_id?: string;
+  doctor_id?: string; // Add doctor_id property
   status: 'active' | 'inactive';
   profile_image?: string | null;
 }

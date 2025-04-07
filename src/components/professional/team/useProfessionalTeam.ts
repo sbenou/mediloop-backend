@@ -12,6 +12,8 @@ export interface TeamMember {
   role: string;
   is_active: boolean;
   phone_number?: string;
+  pharmacy_id?: string; // Make pharmacy_id optional
+  doctor_id?: string;   // Add doctor_id as optional
 }
 
 export const useProfessionalTeam = (entityId: string, entityType: 'doctor' | 'pharmacy') => {
@@ -60,6 +62,7 @@ export const useProfessionalTeam = (entityId: string, entityType: 'doctor' | 'ph
             role: profile.role || 'pharmacy_user',
             is_active: !profile.is_blocked,
             phone_number: undefined,
+            pharmacy_id: entityId,
           }));
           
           setTeamMembers(members);
