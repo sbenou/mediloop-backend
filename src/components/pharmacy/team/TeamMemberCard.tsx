@@ -89,14 +89,57 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
     });
   };
 
+  // Helper function to get formatted role display
+  const getRoleDisplay = () => {
+    const roleName = member.role.replace(/_/g, ' ');
+    return roleName.charAt(0).toUpperCase() + roleName.slice(1);
+  };
+
+  // Determine role badge styling
+  const getRoleBadgeStyles = () => {
+    switch (member.role) {
+      case 'doctor':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'pharmacist':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'admin':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   return (
     <Card className="w-full overflow-hidden hover:shadow-md transition-shadow">
       <CardHeader className="p-0">
         <div className="bg-primary/5 h-24 flex items-center justify-center relative">
+          {/* Moved 3-dot menu to top right corner */}
+          <div className="absolute top-2 right-2 z-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleViewMember}>
+                  <Eye className="h-4 w-4 mr-2" /> View Team Member
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleEditMember}>
+                  <Edit className="h-4 w-4 mr-2" /> Edit Team Member
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive" onClick={handleTerminateMember}>
+                  <Trash className="h-4 w-4 mr-2" /> Terminate Team Member
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
           {member.role === 'doctor' && showMainDoctorBadge && (
             <Badge 
               variant="outline" 
-              className="absolute top-2 right-2 bg-blue-100 text-blue-800 border-blue-200"
+              className="absolute top-2 left-2 bg-blue-100 text-blue-800 border-blue-200"
             >
               Main Doctor
             </Badge>
@@ -112,13 +155,13 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           
           <h3 className="font-medium text-lg mt-2">{member.full_name}</h3>
           
-          <Badge className="mt-1" variant={isActive ? "default" : "secondary"}>
-            {isActive ? (
-              <UserCheck className="h-3 w-3 mr-1" />
-            ) : (
-              <UserMinus className="h-3 w-3 mr-1" />
-            )}
-            {isActive ? 'Active' : 'Inactive'}
+          {/* Replace Active/Inactive tag with role tag */}
+          <Badge 
+            className="mt-1" 
+            variant="outline"
+            className={`mt-1 ${getRoleBadgeStyles()}`}
+          >
+            {getRoleDisplay()}
           </Badge>
           
           <p className="text-sm text-muted-foreground mt-2">{member.email}</p>
@@ -138,25 +181,9 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
               </label>
             </div>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleViewMember}>
-                  <Eye className="h-4 w-4 mr-2" /> View Team Member
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleEditMember}>
-                  <Edit className="h-4 w-4 mr-2" /> Edit Team Member
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={handleTerminateMember}>
-                  <Trash className="h-4 w-4 mr-2" /> Terminate Team Member
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <span className={`px-2 py-1 rounded-full text-xs ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {isActive ? 'Active' : 'Inactive'}
+            </span>
           </div>
         </div>
       </CardContent>
