@@ -1,8 +1,9 @@
 
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface DoctorHoursProps {
   hours: string | null;
@@ -17,12 +18,25 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
   isEditing = false,
   setIsEditing
 }) => {
-  const [hoursText, setHoursText] = React.useState(hours || '');
+  const [hoursText, setHoursText] = useState(hours || '');
+  const [isSaving, setIsSaving] = useState(false);
   
   const handleSave = async () => {
+    if (!doctorId) return;
+    
     try {
-      // In a real implementation, we would save to the database
-      // For now, we'll just update the UI state
+      setIsSaving(true);
+      
+      // Update doctor_metadata table with new hours
+      const { error } = await supabase
+        .from('doctor_metadata')
+        .upsert({ 
+          doctor_id: doctorId,
+          hours: hoursText,
+          updated_at: new Date()
+        });
+
+      if (error) throw error;
       
       toast({
         title: "Success",
@@ -37,6 +51,8 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
         title: "Error",
         description: "Failed to update consultation hours",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -51,11 +67,20 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
         />
         
         <div className="flex justify-end space-x-2">
-          <Button variant="outline" size="sm" onClick={() => setIsEditing && setIsEditing(false)}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setIsEditing && setIsEditing(false)}
+            disabled={isSaving}
+          >
             Cancel
           </Button>
-          <Button size="sm" onClick={handleSave}>
-            Save
+          <Button 
+            size="sm" 
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>
