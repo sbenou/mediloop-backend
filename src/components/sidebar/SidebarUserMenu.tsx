@@ -1,3 +1,4 @@
+
 import { UserProfile } from "@/types/user";
 import { ChevronDown, CreditCard, LogOut, User, Store } from "lucide-react";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -53,7 +54,7 @@ const SidebarUserMenu = ({
   
   // Fetch pharmacy name if user is a pharmacist
   useEffect(() => {
-    const fetchPharmacyName = async () => {
+    const fetchPharmacyData = async () => {
       if (userRole === 'pharmacist' && profile?.id) {
         try {
           // First check if pharmacy name is already in the profile
@@ -93,13 +94,30 @@ const SidebarUserMenu = ({
             .from('profiles')
             .update({ pharmacy_name: pharmacy.name })
             .eq('id', profile.id);
+            
+          // Also check and fetch pharmacy logo if it's not already set
+          if (!profile.pharmacy_logo_url) {
+            const { data: metadata } = await supabase
+              .from('pharmacy_metadata')
+              .select('logo_url')
+              .eq('pharmacy_id', pharmacyRelation.pharmacy_id)
+              .maybeSingle();
+              
+            if (metadata?.logo_url) {
+              // Update user profile with the pharmacy logo
+              await supabase
+                .from('profiles')
+                .update({ pharmacy_logo_url: metadata.logo_url })
+                .eq('id', profile.id);
+            }
+          }
         } catch (error) {
-          console.error('Error fetching pharmacy name:', error);
+          console.error('Error fetching pharmacy data:', error);
         }
       }
     };
 
-    fetchPharmacyName();
+    fetchPharmacyData();
   }, [profile?.id, userRole, profile?.pharmacy_name]);
   
   // Log the pharmacy logo URL to help debug
@@ -148,7 +166,7 @@ const SidebarUserMenu = ({
             userProfile={profile ? {
               ...profile,
               pharmacy_name: pharmacyName || profile.pharmacy_name,
-              avatar_url: getAvatarUrl() || undefined
+              pharmacy_logo_url: getAvatarUrl() || undefined
             } : undefined} 
             canUpload={true}
             onAvatarClick={(e) => {

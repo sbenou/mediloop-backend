@@ -43,6 +43,8 @@ const PharmacyProfile = () => {
     if (!profile?.id) return;
 
     try {
+      console.log("Fetching pharmacy data for user:", profile.id);
+      
       // Fetch the pharmacy associated with this pharmacist
       const { data: pharmacyRelation, error: relationError } = await supabase
         .from('user_pharmacies')
@@ -55,6 +57,8 @@ const PharmacyProfile = () => {
         return;
       }
 
+      console.log("Found pharmacy relation with pharmacy_id:", pharmacyRelation.pharmacy_id);
+
       // Now fetch the pharmacy details
       const { data: pharmacy, error: pharmacyError } = await supabase
         .from('pharmacies')
@@ -66,6 +70,8 @@ const PharmacyProfile = () => {
         console.error('Error fetching pharmacy:', pharmacyError);
         return;
       }
+
+      console.log("Fetched pharmacy data:", pharmacy);
 
       // Check if pharmacy metadata exists with logo_url
       const { data: pharmacyMetadata, error: metadataError } = await supabase
@@ -81,6 +87,24 @@ const PharmacyProfile = () => {
         // Set the pharmacy logo in Recoil state when fetched
         console.log("Setting pharmacy logo from metadata:", logoUrl);
         setPharmacyLogoUrl(logoUrl);
+      } else {
+        // If no logo in metadata, check if it's in the profile
+        if (profile?.pharmacy_logo_url) {
+          logoUrl = profile.pharmacy_logo_url;
+          console.log("Using pharmacy logo from profile:", logoUrl);
+          setPharmacyLogoUrl(logoUrl);
+          
+          // Also update metadata if we have a logo in the profile
+          if (logoUrl) {
+            console.log("Updating pharmacy_metadata with logo from profile");
+            await supabase
+              .from('pharmacy_metadata')
+              .upsert({ 
+                pharmacy_id: pharmacy.id, 
+                logo_url: logoUrl 
+              });
+          }
+        }
       }
 
       setPharmacyData({
@@ -148,13 +172,16 @@ const PharmacyProfile = () => {
         .getPublicUrl(filePath);
 
       console.log('Successfully uploaded, publicUrl:', publicUrl);
+      
+      // Add cache-busting parameter
+      const publicUrlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
 
       // Create or update pharmacy metadata with the logo URL
       const { error: metadataError } = await supabase
         .from('pharmacy_metadata')
         .upsert({ 
           pharmacy_id: pharmacyData.id,
-          logo_url: publicUrl
+          logo_url: publicUrlWithCacheBust
         });
 
       if (metadataError) {
@@ -165,17 +192,17 @@ const PharmacyProfile = () => {
       // Update local state
       setPharmacyData({
         ...pharmacyData,
-        logo_url: publicUrl
+        logo_url: publicUrlWithCacheBust
       });
       
       // Update the Recoil state for global access
-      console.log("Setting pharmacy logo after upload:", publicUrl);
-      setPharmacyLogoUrl(publicUrl);
+      console.log("Setting pharmacy logo after upload:", publicUrlWithCacheBust);
+      setPharmacyLogoUrl(publicUrlWithCacheBust);
       
       // Also update the pharmacy_logo_url in the profiles table for the current user
       const { error: profileUpdateError } = await supabase
         .from('profiles')
-        .update({ pharmacy_logo_url: publicUrl })
+        .update({ pharmacy_logo_url: publicUrlWithCacheBust })
         .eq('id', profile?.id);
         
       if (profileUpdateError) {

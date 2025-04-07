@@ -184,6 +184,12 @@ export const useProfileFetch = () => {
                 if (metadata?.logo_url) {
                   pharmacyLogoUrl = metadata.logo_url;
                   console.log('Fetched pharmacy logo from metadata:', pharmacyLogoUrl);
+                  
+                  // Update the profile with this logo URL immediately
+                  await supabase
+                    .from('profiles')
+                    .update({ pharmacy_logo_url: pharmacyLogoUrl })
+                    .eq('id', userId);
                 }
               }
               

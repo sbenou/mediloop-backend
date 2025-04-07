@@ -62,6 +62,8 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
         filePath = pharmacyId 
           ? `pharmacies/${pharmacyId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`
           : `users/${userId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+          
+        console.log('Using pharmacy image path:', filePath);
       } else {
         // For doctors or regular users
         filePath = `users/${userId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
@@ -86,6 +88,9 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
         .getPublicUrl(filePath);
 
       console.log('Successfully uploaded, publicUrl:', publicUrl);
+      
+      // Add cache busting parameter
+      const urlWithCache = `${publicUrl}?t=${Date.now()}`;
 
       // Use consistent field names for different user types
       const fieldToUpdate = userRole === 'pharmacist' ? 'pharmacy_logo_url' : 
@@ -94,7 +99,7 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
       
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ [fieldToUpdate]: publicUrl })
+        .update({ [fieldToUpdate]: urlWithCache })
         .eq('id', userId);
 
       if (updateError) {
@@ -115,7 +120,7 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
             .from('pharmacy_metadata')
             .upsert({ 
               pharmacy_id: pharmacyData.pharmacy_id,
-              logo_url: publicUrl
+              logo_url: urlWithCache
             });
             
           if (metadataError) {
