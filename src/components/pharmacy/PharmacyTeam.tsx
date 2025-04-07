@@ -39,9 +39,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
     };
   };
 
-  // Dummy function that does nothing - we've removed the toggle functionality
-  const dummyToggleFunction = () => {};
-
   return (
     <div className="space-y-6 container mx-auto px-4">
       <div className="flex justify-between items-center">
@@ -69,7 +66,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                     status: 'active',
                     profile_image: userAvatar || profile.avatar_url,
                   }}
-                  onToggleActive={dummyToggleFunction}
                   showMainDoctorBadge={false}
                   hideControls={true}
                 />
@@ -80,7 +76,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                   <TeamMemberCard 
                     key={member.id}
                     member={mapTeamMemberToCardMember(member)}
-                    onToggleActive={dummyToggleFunction}
                     showMainDoctorBadge={false}
                     hideControls={true}
                   />
@@ -101,7 +96,6 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                 <TeamMemberCard 
                   key={member.id}
                   member={mapTeamMemberToCardMember(member)}
-                  onToggleActive={dummyToggleFunction}
                   showMainDoctorBadge={false}
                   hideControls={true}
                 />
