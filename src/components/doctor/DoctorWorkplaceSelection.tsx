@@ -16,6 +16,13 @@ interface Workplace {
   city?: string;
 }
 
+// Define a type for the doctor_workplaces table data
+interface DoctorWorkplace {
+  user_id: string;
+  workplace_id: string;
+  created_at: string;
+}
+
 const DoctorWorkplaceSelection = () => {
   const { profile, user } = useAuth();
   const [workplaces, setWorkplaces] = useState<Workplace[]>([]);
@@ -68,10 +75,10 @@ const DoctorWorkplaceSelection = () => {
     if (!user?.id) return;
 
     try {
-      // Use SQL query instead of RPC to get around type issues
+      // Use a direct SQL query to avoid TypeScript issues
       const { data, error } = await supabase
         .from('doctor_workplaces')
-        .select('workplace_id')
+        .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -79,7 +86,7 @@ const DoctorWorkplaceSelection = () => {
         throw error;
       }
 
-      if (data && data.workplace_id) {
+      if (data) {
         setSelectedWorkplaceId(data.workplace_id);
       }
     } catch (error) {
