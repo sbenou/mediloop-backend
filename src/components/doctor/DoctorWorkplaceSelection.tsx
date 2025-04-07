@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
-import { Profile } from '@/types/supabase';
+import { Profile, DoctorWorkplace } from '@/types/supabase';
 import { Loader2 } from 'lucide-react';
 
 interface Workplace {
@@ -14,13 +14,6 @@ interface Workplace {
   name: string;
   address?: string;
   city?: string;
-}
-
-// Define a type for the doctor_workplaces table data
-interface DoctorWorkplace {
-  user_id: string;
-  workplace_id: string;
-  created_at: string;
 }
 
 const DoctorWorkplaceSelection = () => {
@@ -75,12 +68,12 @@ const DoctorWorkplaceSelection = () => {
     if (!user?.id) return;
 
     try {
-      // Use a direct SQL query with type assertion to avoid TypeScript issues
+      // Use dynamic query with explicit type casting to handle newly created table
       const { data, error } = await supabase
         .from('doctor_workplaces')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle() as { data: DoctorWorkplace | null; error: any };
+        .maybeSingle();
 
       if (error) {
         throw error;

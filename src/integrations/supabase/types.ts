@@ -258,6 +258,32 @@ export type Database = {
           },
         ]
       }
+      doctor_workplaces: {
+        Row: {
+          created_at: string
+          user_id: string
+          workplace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+          workplace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+          workplace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_workplaces_workplace_id_fkey"
+            columns: ["workplace_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       next_of_kin: {
         Row: {
           city: string
@@ -627,6 +653,7 @@ export type Database = {
           created_at: string | null
           date_of_birth: string | null
           deleted_at: string | null
+          doctor_id: string | null
           doctor_signature_url: string | null
           doctor_stamp_url: string | null
           email: string | null
@@ -652,6 +679,7 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           deleted_at?: string | null
+          doctor_id?: string | null
           doctor_signature_url?: string | null
           doctor_stamp_url?: string | null
           email?: string | null
@@ -677,6 +705,7 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           deleted_at?: string | null
+          doctor_id?: string | null
           doctor_signature_url?: string | null
           doctor_stamp_url?: string | null
           email?: string | null
@@ -693,6 +722,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_role_id_fkey"
             columns: ["role_id"]
@@ -942,6 +978,10 @@ export type Database = {
           total_permissions: number
           total_products: number
         }[]
+      }
+      get_doctor_workplace: {
+        Args: { p_user_id: string }
+        Returns: string
       }
       handle_connection_request: {
         Args: {
