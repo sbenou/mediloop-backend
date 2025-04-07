@@ -68,18 +68,21 @@ const DoctorWorkplaceSelection = () => {
     if (!user?.id) return;
 
     try {
-      // Use dynamic query with explicit type casting to handle newly created table
-      const { data, error } = await supabase
-        .from('doctor_workplaces')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) {
-        throw error;
+      // Use edge function instead of direct query to avoid TypeScript issues
+      const response = await fetch('https://hrrlefgnhkbzuwyklejj.functions.supabase.co/upsert-doctor-workplace', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch workplace');
       }
-
-      if (data) {
+      
+      const data = await response.json();
+      if (data && data.workplace_id) {
         setSelectedWorkplaceId(data.workplace_id);
       }
     } catch (error) {

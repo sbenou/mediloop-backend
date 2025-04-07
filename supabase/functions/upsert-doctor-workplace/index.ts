@@ -40,6 +40,35 @@ Deno.serve(async (req) => {
       })
     }
 
+    // For GET requests, fetch the current workplace
+    if (req.method === 'GET') {
+      const { data, error } = await supabaseClient
+        .from('doctor_workplaces')
+        .select('workplace_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle()
+
+      if (error) {
+        console.error('Error fetching doctor workplace:', error)
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          }
+        )
+      }
+
+      return new Response(
+        JSON.stringify(data || { workplace_id: null }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
+    }
+
+    // For POST requests, update the workplace
     // Get the request body
     const { userId, workplaceId } = await req.json()
 
