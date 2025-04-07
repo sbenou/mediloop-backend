@@ -68,18 +68,19 @@ const DoctorWorkplaceSelection = () => {
     if (!user?.id) return;
 
     try {
-      // Use raw SQL query to get around type issues
-      const { data, error } = await supabase.rpc(
-        'get_doctor_workplace',
-        { p_user_id: user.id }
-      ) as { data: string | null; error: any };
+      // Use SQL query instead of RPC to get around type issues
+      const { data, error } = await supabase
+        .from('doctor_workplaces')
+        .select('workplace_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (error) {
         throw error;
       }
 
-      if (data) {
-        setSelectedWorkplaceId(data);
+      if (data && data.workplace_id) {
+        setSelectedWorkplaceId(data.workplace_id);
       }
     } catch (error) {
       console.error('Error fetching current workplace:', error);
