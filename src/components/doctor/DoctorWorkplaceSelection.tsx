@@ -68,19 +68,18 @@ const DoctorWorkplaceSelection = () => {
     if (!user?.id) return;
 
     try {
-      // Use a raw SQL query instead of RPC since TypeScript doesn't recognize the function
-      const { data, error } = await supabase
-        .from('doctor_workplaces')
-        .select('workplace_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Use raw SQL query to get around type issues
+      const { data, error } = await supabase.rpc(
+        'get_doctor_workplace',
+        { p_user_id: user.id }
+      ) as { data: string | null; error: any };
 
       if (error) {
         throw error;
       }
 
-      if (data && data.workplace_id) {
-        setSelectedWorkplaceId(data.workplace_id);
+      if (data) {
+        setSelectedWorkplaceId(data);
       }
     } catch (error) {
       console.error('Error fetching current workplace:', error);
