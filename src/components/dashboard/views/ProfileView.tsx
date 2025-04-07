@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
@@ -17,6 +18,7 @@ import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import NextOfKinManagement from "@/components/settings/NextOfKinManagement";
 import ProfessionalStampSignature from "@/components/settings/profile/ProfessionalStampSignature";
+import DoctorWorkplaceSelection from "@/components/doctor/DoctorWorkplaceSelection";
 import { UserRole } from "@/types/role";
 
 interface ProfileViewProps {
@@ -75,6 +77,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
           ...commonTabs,
           { id: 'stamp', label: 'Stamp & Signature' },
           { id: 'qualifications', label: 'Qualifications' },
+          { id: 'workplace', label: 'Workplace' },
           { id: 'clinic', label: 'Clinic Details' }
         ];
       case 'pharmacist':
@@ -169,6 +172,16 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
                 stampUrl={doctorStampUrl || profile?.doctor_stamp_url || null} 
                 signatureUrl={doctorSignatureUrl || profile?.doctor_signature_url || null} 
               />
+            </div>
+          </TabsContent>
+        )}
+        
+        {/* Workplace Tab - Only for doctors */}
+        {userRole === 'doctor' && (
+          <TabsContent value="workplace" className="mt-4">
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Workplace Selection</h2>
+              <DoctorWorkplaceSelection />
             </div>
           </TabsContent>
         )}

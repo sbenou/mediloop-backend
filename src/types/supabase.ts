@@ -127,6 +127,21 @@ export interface Profile {
   license_number: string | null;
 }
 
+export interface DoctorWorkplace {
+  user_id: string;
+  workplace_id: string;
+  created_at: string;
+}
+
+export interface DoctorMetadata {
+  id: string;
+  doctor_id: string | null;
+  logo_url: string | null;
+  hours: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export function isTimeSlot(obj: any): obj is TimeSlot {
   return (
     typeof obj === 'object' &&
