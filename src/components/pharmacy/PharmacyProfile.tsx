@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -273,7 +272,7 @@ const PharmacyProfile = () => {
             {pharmacyData?.logo_url ? (
               <div className="w-full h-full relative">
                 <img 
-                  src={`${pharmacyData.logo_url}?t=${Date.now()}`} 
+                  src={`${pharmacyData.logo_url}${pharmacyData.logo_url.includes('?') ? '&' : '?'}t=${Date.now()}`}
                   alt={pharmacyData.name} 
                   className="w-full h-full object-cover"
                 />

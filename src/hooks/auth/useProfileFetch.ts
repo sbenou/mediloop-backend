@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, safeQueryResult } from '@/types/user';
@@ -190,6 +189,49 @@ export const useProfileFetch = () => {
                     .from('profiles')
                     .update({ pharmacy_logo_url: pharmacyLogoUrl })
                     .eq('id', userId);
+                } else {
+                  // Try looking in pharmacy storage folder
+                  console.log('Checking pharmacy storage for logo...');
+                  try {
+                    // List files in the pharmacy's folder
+                    const { data: storageFiles, error: storageError } = await supabase.storage
+                      .from('pharmacy-images')
+                      .list(`pharmacies/${pharmacyId}`);
+                      
+                    if (!storageError && storageFiles && storageFiles.length > 0) {
+                      // Use the first image file found
+                      const imageFile = storageFiles.find(file => 
+                        file.name.endsWith('.jpg') || 
+                        file.name.endsWith('.jpeg') || 
+                        file.name.endsWith('.png') || 
+                        file.name.endsWith('.gif')
+                      );
+                      
+                      if (imageFile) {
+                        const { data: { publicUrl } } = supabase.storage
+                          .from('pharmacy-images')
+                          .getPublicUrl(`pharmacies/${pharmacyId}/${imageFile.name}`);
+                          
+                        pharmacyLogoUrl = publicUrl;
+                        console.log('Found pharmacy logo in storage:', pharmacyLogoUrl);
+                        
+                        // Update both profile and metadata with this URL
+                        await supabase
+                          .from('profiles')
+                          .update({ pharmacy_logo_url: pharmacyLogoUrl })
+                          .eq('id', userId);
+                          
+                        await supabase
+                          .from('pharmacy_metadata')
+                          .upsert({ 
+                            pharmacy_id: pharmacyId,
+                            logo_url: pharmacyLogoUrl 
+                          });
+                      }
+                    }
+                  } catch (storageError) {
+                    console.error('Error checking pharmacy storage:', storageError);
+                  }
                 }
               }
               

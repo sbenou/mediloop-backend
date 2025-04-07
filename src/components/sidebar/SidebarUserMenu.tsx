@@ -109,6 +109,45 @@ const SidebarUserMenu = ({
                 .from('profiles')
                 .update({ pharmacy_logo_url: metadata.logo_url })
                 .eq('id', profile.id);
+            } else {
+              // Check pharmacy storage folder for images
+              try {
+                const { data: storageFiles, error: storageError } = await supabase.storage
+                  .from('pharmacy-images')
+                  .list(`pharmacies/${pharmacyRelation.pharmacy_id}`);
+                  
+                if (!storageError && storageFiles && storageFiles.length > 0) {
+                  // Find first image file
+                  const imageFile = storageFiles.find(file => 
+                    file.name.endsWith('.jpg') || 
+                    file.name.endsWith('.jpeg') || 
+                    file.name.endsWith('.png') || 
+                    file.name.endsWith('.gif')
+                  );
+                  
+                  if (imageFile) {
+                    const { data: { publicUrl } } = supabase.storage
+                      .from('pharmacy-images')
+                      .getPublicUrl(`pharmacies/${pharmacyRelation.pharmacy_id}/${imageFile.name}`);
+                      
+                    // Update user profile with the logo
+                    await supabase
+                      .from('profiles')
+                      .update({ pharmacy_logo_url: publicUrl })
+                      .eq('id', profile.id);
+                      
+                    // Also update metadata
+                    await supabase
+                      .from('pharmacy_metadata')
+                      .upsert({ 
+                        pharmacy_id: pharmacyRelation.pharmacy_id, 
+                        logo_url: publicUrl 
+                      });
+                  }
+                }
+              } catch (storageError) {
+                console.error('Error checking pharmacy storage:', storageError);
+              }
             }
           }
         } catch (error) {

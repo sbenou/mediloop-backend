@@ -72,25 +72,21 @@ const UserAvatar = ({
   };
 
   // Determine which avatar URL to use based on user role and context
-  let displayAvatarUrl = userProfile?.avatar_url;
+  let displayAvatarUrl = null;
   
-  // If we're in a sidebar menu (isSquare=true) and have a specific role
-  if (isSquare && userProfile?.role) {
-    if (userProfile.role === 'pharmacist') {
-      // For pharmacists, prioritize Recoil state, then profile.pharmacy_logo_url
-      displayAvatarUrl = pharmacyLogoUrl || userProfile.pharmacy_logo_url || displayAvatarUrl;
-      console.log("UserAvatar: Using pharmacy logo for display:", displayAvatarUrl);
-    } else if (userProfile.role === 'doctor') {
-      // For doctors, prioritize stamp image
-      displayAvatarUrl = doctorStampUrl || displayAvatarUrl;
-    } else if (globalAvatarUrl) {
-      // For regular users, use global avatar if available
-      displayAvatarUrl = globalAvatarUrl;
-    }
-  } 
-  // For non-squared (regular) avatars, use the standard user avatar
-  else if (!isSquare && globalAvatarUrl) {
-    displayAvatarUrl = globalAvatarUrl;
+  // Special handling for pharmacists in sidebar (isSquare=true)
+  if (userProfile?.role === 'pharmacist' && isSquare) {
+    // For pharmacists in sidebar, ONLY use pharmacy logo or nothing
+    displayAvatarUrl = pharmacyLogoUrl || userProfile.pharmacy_logo_url;
+    console.log("UserAvatar: Using pharmacy logo for display:", displayAvatarUrl);
+  }
+  // For doctors in sidebar
+  else if (userProfile?.role === 'doctor' && isSquare) {
+    displayAvatarUrl = doctorStampUrl || userProfile.doctor_stamp_url;
+  }
+  // For regular users or non-sidebar contexts
+  else if (!isSquare || userProfile?.role === 'user') {
+    displayAvatarUrl = globalAvatarUrl || userProfile?.avatar_url;
   }
 
   // Add timestamp to prevent caching if URL exists
