@@ -49,22 +49,30 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
     try {
       console.log(`Fetching ${role} data for user:`, profile.id);
       
-      let entityId: string | null = null;
+      // Table and field names based on role
+      const relationTable = role === 'doctor' ? 'user_doctors' : 'user_pharmacies';
+      const entityIdField = role === 'doctor' ? 'doctor_id' : 'pharmacy_id';
+      const entityTable = role === 'doctor' ? 'doctors' : 'pharmacies';
+      const metadataTable = role === 'doctor' ? 'doctor_metadata' : 'pharmacy_metadata';
+      const profileLogoField = role === 'doctor' ? 'doctor_logo_url' : 'pharmacy_logo_url';
+      const profileNameField = role === 'doctor' ? 'doctor_name' : 'pharmacy_name';
+      
+      let entityId: string;
       
       if (role === 'pharmacy') {
-        // For pharmacy - use the existing code
-        const { data: relation, error } = await supabase
+        // For pharmacy users - fetch their associated pharmacy
+        const { data: pharmacyRelation, error: relationError } = await supabase
           .from('user_pharmacies')
           .select('pharmacy_id')
           .eq('user_id', profile.id)
           .single();
           
-        if (error || !relation) {
-          console.error('Error fetching pharmacy relation:', error);
+        if (relationError || !pharmacyRelation) {
+          console.error('Error fetching pharmacy relation:', relationError);
           return;
         }
         
-        entityId = relation.pharmacy_id;
+        entityId = pharmacyRelation.pharmacy_id;
         console.log("Found pharmacy relation with ID:", entityId);
         
         // Fetch pharmacy details
@@ -134,7 +142,6 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
         
         // Check for existing doctor_metadata
         try {
-          // Use a type assertion to work around TypeScript not knowing about the doctor_metadata table yet
           // @ts-ignore - The doctor_metadata table exists in the database but not in types yet
           const { data: metadata } = await supabase
             .from('doctor_metadata')
