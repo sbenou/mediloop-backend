@@ -1,12 +1,11 @@
 
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { Edit, Save, MapPin, Clock } from "lucide-react";
+import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
+import PharmacyHours from "@/components/pharmacy/PharmacyHours";
+import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import ProfessionalImageUpload from "./ProfessionalImageUpload";
 
 interface ProfileData {
@@ -18,6 +17,7 @@ interface ProfileData {
   phone: string | null;
   hours: string | null;
   logo_url?: string | null;
+  email?: string;
 }
 
 interface PharmacyProfileContentProps {
@@ -31,71 +31,8 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
   userId,
   onLogoUpdate
 }) => {
-  const [formData, setFormData] = useState({
-    name: pharmacyData.name || "",
-    address: pharmacyData.address || "",
-    city: pharmacyData.city || "",
-    postal_code: pharmacyData.postal_code || "",
-    phone: pharmacyData.phone || "",
-    hours: pharmacyData.hours || ""
-  });
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      setIsSubmitting(true);
-      
-      const { error } = await supabase
-        .from('pharmacies')
-        .update({
-          name: formData.name,
-          address: formData.address,
-          city: formData.city,
-          postal_code: formData.postal_code,
-          phone: formData.phone,
-          hours: formData.hours
-        })
-        .eq('id', pharmacyData.id);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Profile Updated",
-        description: "Your pharmacy profile has been updated successfully.",
-      });
-      
-      // Also update user's pharmacy_name in the profiles table if userId is provided
-      if (userId && formData.name !== pharmacyData.name) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ pharmacy_name: formData.name })
-          .eq('id', userId);
-          
-        if (profileError) {
-          console.error('Error updating profile with pharmacy name:', profileError);
-          // Non-blocking error
-        }
-      }
-      
-    } catch (error: any) {
-      console.error('Error updating pharmacy profile:', error);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: error.message || "Failed to update profile. Please try again.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [isEditingHours, setIsEditingHours] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -114,100 +51,72 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
         </CardContent>
       </Card>
       
-      <form onSubmit={handleSubmit}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Pharmacy Information Card */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Pharmacy Information</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setIsEditingInfo(!isEditingInfo)}
+            >
+              {isEditingInfo ? (
+                <Save className="h-4 w-4" />
+              ) : (
+                <Edit className="h-4 w-4" />
+              )}
+            </Button>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Pharmacy Name</Label>
-                <Input 
-                  id="name" 
-                  name="name" 
-                  value={formData.name} 
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input 
-                  id="phone" 
-                  name="phone" 
-                  value={formData.phone || ''} 
-                  onChange={handleChange}
-                  placeholder="+352 123 456 789"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="address">Street Address</Label>
-              <Input 
-                id="address" 
-                name="address" 
-                value={formData.address} 
-                onChange={handleChange}
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input 
-                  id="city" 
-                  name="city" 
-                  value={formData.city} 
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="postal_code">Postal Code</Label>
-                <Input 
-                  id="postal_code" 
-                  name="postal_code" 
-                  value={formData.postal_code} 
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="country">Country</Label>
-                <Input 
-                  id="country" 
-                  value="Luxembourg" 
-                  disabled
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="hours">Opening Hours</Label>
-              <Textarea 
-                id="hours" 
-                name="hours" 
-                value={formData.hours || ''} 
-                onChange={handleChange}
-                placeholder="Monday to Friday: 8:00 - 18:00&#10;Saturday: 9:00 - 12:00&#10;Sunday: Closed"
-                rows={5}
-              />
-            </div>
-            
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Updating...' : 'Save Changes'}
-              </Button>
-            </div>
+          <CardContent>
+            <PharmacyInfo 
+              pharmacy={pharmacyData} 
+              isEditing={isEditingInfo} 
+              setIsEditing={setIsEditingInfo} 
+            />
           </CardContent>
         </Card>
-      </form>
+        
+        {/* Opening Hours Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center">
+              <Clock className="h-5 w-5 mr-2 text-primary" />
+              <CardTitle>Opening Hours</CardTitle>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setIsEditingHours(!isEditingHours)}
+            >
+              {isEditingHours ? (
+                <Save className="h-4 w-4" />
+              ) : (
+                <Edit className="h-4 w-4" />
+              )}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <PharmacyHours 
+              hours={pharmacyData.hours} 
+              pharmacyId={pharmacyData.id}
+              isEditing={isEditingHours}
+              setIsEditing={setIsEditingHours}
+            />
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Location Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center">
+          <MapPin className="h-5 w-5 mr-2 text-primary" />
+          <CardTitle>Location</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PharmacyMap pharmacy={pharmacyData} />
+        </CardContent>
+      </Card>
     </div>
   );
 };
