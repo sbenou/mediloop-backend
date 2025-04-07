@@ -12,7 +12,7 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
   const { userRole } = useAuth();
 
   const getUserInitials = () => {
-    // For pharmacists, use pharmacy name if available
+    // For pharmacists, always prioritize pharmacy name if available
     if (userRole === 'pharmacist' && profile?.pharmacy_name) {
       const pharmacyNames = profile.pharmacy_name.split(' ');
       if (pharmacyNames.length === 1) return pharmacyNames[0].charAt(0).toUpperCase();
@@ -44,19 +44,11 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) throw new Error('User not authenticated');
 
-      // Check if storage bucket exists, create if not
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-      
-      if (bucketsError) {
-        throw bucketsError;
-      }
-      
-      // Use consistent bucket names and paths
+      // Standardize the path - always use pharmacies folder for pharmacy images
       const bucketName = 'pharmacy-images';
       let filePath;
       
       if (userRole === 'pharmacist') {
-        // Consistent path for pharmacy images
         // Get pharmacy_id if available
         const { data: pharmacyData } = await supabase
           .from('user_pharmacies')
@@ -65,6 +57,8 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
           .single();
         
         const pharmacyId = pharmacyData?.pharmacy_id;
+        
+        // Standard path for pharmacy logos - always use 'pharmacies' folder
         filePath = pharmacyId 
           ? `pharmacies/${pharmacyId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`
           : `users/${userId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
@@ -106,6 +100,29 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
       if (updateError) {
         console.error('Update error details:', updateError);
         throw updateError;
+      }
+
+      // If this is a pharmacy logo, also update the pharmacy_metadata table
+      if (userRole === 'pharmacist') {
+        const { data: pharmacyData } = await supabase
+          .from('user_pharmacies')
+          .select('pharmacy_id')
+          .eq('user_id', userId)
+          .single();
+          
+        if (pharmacyData?.pharmacy_id) {
+          const { error: metadataError } = await supabase
+            .from('pharmacy_metadata')
+            .upsert({ 
+              pharmacy_id: pharmacyData.pharmacy_id,
+              logo_url: publicUrl
+            });
+            
+          if (metadataError) {
+            console.error('Error updating pharmacy metadata:', metadataError);
+            // Continue anyway since the profile was updated
+          }
+        }
       }
 
       // Invalidate the profile query to refresh the data

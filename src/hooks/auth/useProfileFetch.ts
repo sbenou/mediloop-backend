@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, safeQueryResult } from '@/types/user';
@@ -62,6 +63,8 @@ export const useProfileFetch = () => {
             doctor_signature_url,
             pharmacist_stamp_url,
             pharmacist_signature_url,
+            pharmacy_logo_url,
+            pharmacy_name,
             deleted_at,
             created_at,
             updated_at
@@ -137,19 +140,69 @@ export const useProfileFetch = () => {
           }
         }
 
-        // Get the pharmacy_id separately to handle the case where the column might not exist yet
+        // Get the pharmacy info separately for pharmacists
         let pharmacyId = null;
-        try {
-          const { data: pharmacyData } = await supabase
-            .from('user_pharmacies')
-            .select('pharmacy_id')
-            .eq('user_id', userId)
-            .maybeSingle();
-          
-          pharmacyId = pharmacyData?.pharmacy_id || null;
-          console.log('Fetched pharmacy_id from user_pharmacies:', pharmacyId);
-        } catch (pharmacyError) {
-          console.error('Error fetching pharmacy_id:', pharmacyError);
+        let pharmacyName = profile.pharmacy_name;
+        let pharmacyLogoUrl = profile.pharmacy_logo_url;
+        
+        if (profile.role === 'pharmacist') {
+          try {
+            // Get pharmacy_id
+            const { data: pharmacyData } = await supabase
+              .from('user_pharmacies')
+              .select('pharmacy_id')
+              .eq('user_id', userId)
+              .maybeSingle();
+            
+            pharmacyId = pharmacyData?.pharmacy_id || null;
+            
+            if (pharmacyId) {
+              console.log('Fetched pharmacy_id from user_pharmacies:', pharmacyId);
+              
+              // Get pharmacy details if needed
+              if (!pharmacyName) {
+                const { data: pharmacy } = await supabase
+                  .from('pharmacies')
+                  .select('name')
+                  .eq('id', pharmacyId)
+                  .maybeSingle();
+                  
+                if (pharmacy?.name) {
+                  pharmacyName = pharmacy.name;
+                  console.log('Fetched pharmacy name:', pharmacyName);
+                }
+              }
+              
+              // Check for pharmacy logo in metadata if not already set
+              if (!pharmacyLogoUrl) {
+                const { data: metadata } = await supabase
+                  .from('pharmacy_metadata')
+                  .select('logo_url')
+                  .eq('pharmacy_id', pharmacyId)
+                  .maybeSingle();
+                  
+                if (metadata?.logo_url) {
+                  pharmacyLogoUrl = metadata.logo_url;
+                  console.log('Fetched pharmacy logo from metadata:', pharmacyLogoUrl);
+                }
+              }
+              
+              // Update profile with this info if needed
+              if ((pharmacyName && !profile.pharmacy_name) || 
+                  (pharmacyLogoUrl && !profile.pharmacy_logo_url)) {
+                console.log('Updating profile with pharmacy info');
+                await supabase
+                  .from('profiles')
+                  .update({ 
+                    pharmacy_name: pharmacyName || profile.pharmacy_name,
+                    pharmacy_logo_url: pharmacyLogoUrl || profile.pharmacy_logo_url
+                  })
+                  .eq('id', userId);
+              }
+            }
+          } catch (pharmacyError) {
+            console.error('Error fetching pharmacy info:', pharmacyError);
+          }
         }
 
         // Ensure the profile object has all required properties
@@ -157,7 +210,9 @@ export const useProfileFetch = () => {
           ...profile as any,
           // Make sure pharmacist fields are set, even if they're not in the database
           pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile?.pharmacist_signature_url || null
+          pharmacist_signature_url: profile?.pharmacist_signature_url || null,
+          pharmacy_name: pharmacyName || profile?.pharmacy_name || null,
+          pharmacy_logo_url: pharmacyLogoUrl || profile?.pharmacy_logo_url || null
         };
 
         const safeProfile = safeQueryResult<UserProfile>(completeProfile);
@@ -179,6 +234,8 @@ export const useProfileFetch = () => {
           profileId: safeProfile.id, 
           role: safeProfile.role,
           pharmacyId: safeProfile.pharmacy_id,
+          pharmacyName: safeProfile.pharmacy_name,
+          pharmacyLogoUrl: safeProfile.pharmacy_logo_url,
           permissionsCount: permissions.length 
         });
 

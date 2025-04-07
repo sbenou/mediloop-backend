@@ -12,7 +12,7 @@ import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import PharmacyTeam from "@/components/pharmacy/PharmacyTeam";
 import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
-import { useSetRecoilState } from "recoil";
+import { useSetRecoilState, useRecoilState } from "recoil";
 import { pharmacyLogoUrlState } from "@/store/images/atoms";
 
 interface PharmacyData {
@@ -33,7 +33,7 @@ const PharmacyProfile = () => {
   const [pharmacyData, setPharmacyData] = useState<PharmacyData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Get the setter function for the Recoil state
-  const setPharmacyLogoUrl = useSetRecoilState(pharmacyLogoUrlState);
+  const [pharmacyLogoUrl, setPharmacyLogoUrl] = useRecoilState(pharmacyLogoUrlState);
 
   useEffect(() => {
     fetchPharmacyData();
@@ -126,7 +126,7 @@ const PharmacyProfile = () => {
       
       const bucketName = 'pharmacy-images';
       
-      // Create a consistent path for pharmacy images - always use the same structure
+      // Create a consistent path for pharmacy images - always use pharmacies folder
       const filePath = `pharmacies/${pharmacyData.id}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
       
       console.log('Attempting to upload to:', bucketName, filePath);
@@ -246,7 +246,7 @@ const PharmacyProfile = () => {
             {pharmacyData?.logo_url ? (
               <div className="w-full h-full relative">
                 <img 
-                  src={pharmacyData.logo_url} 
+                  src={`${pharmacyData.logo_url}?t=${Date.now()}`} 
                   alt={pharmacyData.name} 
                   className="w-full h-full object-cover"
                 />

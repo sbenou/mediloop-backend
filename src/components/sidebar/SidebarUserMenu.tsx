@@ -1,4 +1,3 @@
-
 import { UserProfile } from "@/types/user";
 import { ChevronDown, CreditCard, LogOut, User, Store } from "lucide-react";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -107,8 +106,9 @@ const SidebarUserMenu = ({
   useEffect(() => {
     if (userRole === 'pharmacist') {
       console.log("SidebarUserMenu: Pharmacy logo URL =", pharmacyLogoUrl || profile?.pharmacy_logo_url);
+      console.log("SidebarUserMenu: Pharmacy name =", pharmacyName || profile?.pharmacy_name);
     }
-  }, [pharmacyLogoUrl, profile?.pharmacy_logo_url, userRole]);
+  }, [pharmacyLogoUrl, profile?.pharmacy_logo_url, pharmacyName, profile?.pharmacy_name, userRole]);
   
   // Determine which avatar URL to use based on user role
   const getAvatarUrl = () => {
@@ -128,20 +128,13 @@ const SidebarUserMenu = ({
   
   // Determine display name based on user role - prioritize pharmacy_name for pharmacists
   const displayName = userRole === 'pharmacist' 
-    ? pharmacyName || 'Pharmacy'
+    ? pharmacyName || profile?.pharmacy_name || 'Pharmacy'
     : profile?.full_name || 'User';
   
   // Determine email or secondary text
   const secondaryText = userRole === 'pharmacist'
     ? 'Pharmacy Account'
     : profile?.email || 'user@example.com';
-
-  // Enhanced debug logs to verify userRole value and navigation function
-  useEffect(() => {
-    console.log("SidebarUserMenu: userRole =", userRole, "navigateToPharmacyProfile =", !!navigateToPharmacyProfile);
-    console.log("SidebarUserMenu: Is pharmacist check =", userRole === 'pharmacist');
-    console.log("SidebarUserMenu: Navigation function type =", typeof navigateToPharmacyProfile);
-  }, [userRole, navigateToPharmacyProfile]);
 
   return (
     <div className="border-t p-4">
@@ -154,6 +147,7 @@ const SidebarUserMenu = ({
           <UserAvatar 
             userProfile={profile ? {
               ...profile,
+              pharmacy_name: pharmacyName || profile.pharmacy_name,
               avatar_url: getAvatarUrl() || undefined
             } : undefined} 
             canUpload={true}

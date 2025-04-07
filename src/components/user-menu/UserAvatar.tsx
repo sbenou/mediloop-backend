@@ -33,6 +33,7 @@ const UserAvatar = ({
     console.log("UserAvatar: Pharmacy user detected");
     console.log("UserAvatar: pharmacyLogoUrl from Recoil =", pharmacyLogoUrl);
     console.log("UserAvatar: pharmacy_logo_url from profile =", userProfile?.pharmacy_logo_url);
+    console.log("UserAvatar: pharmacy_name =", userProfile?.pharmacy_name);
   }
   
   const sizeClasses = {
@@ -48,14 +49,21 @@ const UserAvatar = ({
     canUpload && "cursor-pointer hover:opacity-80 transition-opacity"
   );
   
+  // Generate initials - use pharmacy name for pharmacists if available
   const initials = fallbackText || 
-    (userProfile?.full_name ? 
-      userProfile.full_name.split(' ')
+    (userProfile?.role === 'pharmacist' && userProfile?.pharmacy_name ? 
+      userProfile.pharmacy_name.split(' ')
         .map(name => name[0])
         .join('')
         .toUpperCase()
-        .substring(0, 2) : 
-      "U");
+        .substring(0, 2) :
+      userProfile?.full_name ? 
+        userProfile.full_name.split(' ')
+          .map(name => name[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2) : 
+        "U");
 
   const handleClick = (e: React.MouseEvent) => {
     if (canUpload && onAvatarClick) {
@@ -71,6 +79,7 @@ const UserAvatar = ({
     if (userProfile.role === 'pharmacist') {
       // For pharmacists, prioritize Recoil state, then profile.pharmacy_logo_url
       displayAvatarUrl = pharmacyLogoUrl || userProfile.pharmacy_logo_url || displayAvatarUrl;
+      console.log("UserAvatar: Using pharmacy logo for display:", displayAvatarUrl);
     } else if (userProfile.role === 'doctor') {
       // For doctors, prioritize stamp image
       displayAvatarUrl = doctorStampUrl || displayAvatarUrl;
@@ -94,7 +103,7 @@ const UserAvatar = ({
     <Avatar className={avatarClass} onClick={handleClick}>
       <AvatarImage 
         src={displayAvatarUrl || undefined} 
-        alt={userProfile?.full_name || "User"} 
+        alt={userProfile?.role === 'pharmacist' ? userProfile?.pharmacy_name || "Pharmacy" : userProfile?.full_name || "User"} 
         crossOrigin="anonymous"
       />
       <AvatarFallback className={isSquare ? "rounded-md" : "rounded-full"}>
