@@ -33,7 +33,8 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
         .upsert({ 
           doctor_id: doctorId,
           hours: hoursText,
-          updated_at: new Date()
+          // Convert Date to ISO string format which is compatible with Supabase
+          updated_at: new Date().toISOString()
         });
 
       if (error) throw error;
