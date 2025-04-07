@@ -14,6 +14,7 @@ interface StaffMemberListProps {
   onViewMember: (memberId: string) => void;
   onEditMember: (memberId: string) => void;
   onTerminateMember: (memberId: string) => void;
+  onToggleActive?: (memberId: string, status: 'active' | 'inactive') => void;
 }
 
 const StaffMemberList: React.FC<StaffMemberListProps> = ({ 
@@ -22,7 +23,8 @@ const StaffMemberList: React.FC<StaffMemberListProps> = ({
   userAvatar,
   onViewMember, 
   onEditMember, 
-  onTerminateMember 
+  onTerminateMember,
+  onToggleActive
 }) => {
   return (
     <Table>
@@ -41,6 +43,9 @@ const StaffMemberList: React.FC<StaffMemberListProps> = ({
           const avatarUrl = userAvatar && 
             currentUserId === member.id ? 
             userAvatar : member.avatar_url;
+            
+          // Use the ID from the member object for action callbacks
+          const memberId = member.user_id || member.id;
             
           return (
             <TableRow key={member.id}>
@@ -69,11 +74,14 @@ const StaffMemberList: React.FC<StaffMemberListProps> = ({
                 </Badge>
               </TableCell>
               <TableCell>
-                <StaffMemberStatus status={member.status} />
+                <StaffMemberStatus 
+                  status={member.status} 
+                  onToggle={onToggleActive ? () => onToggleActive(memberId, member.status) : undefined}
+                />
               </TableCell>
               <TableCell className="text-right">
                 <StaffMemberActions 
-                  memberId={member.id}
+                  memberId={memberId}
                   onView={onViewMember}
                   onEdit={onEditMember}
                   onTerminate={onTerminateMember}

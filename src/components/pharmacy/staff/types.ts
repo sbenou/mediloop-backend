@@ -6,4 +6,5 @@ export interface StaffMember {
   role: string;
   status: 'active' | 'inactive';
   avatar_url?: string;
+  user_id?: string; // Adding this to match what we get from the database
 }
