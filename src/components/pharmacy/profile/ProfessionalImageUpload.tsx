@@ -96,7 +96,8 @@ const ProfessionalImageUpload: React.FC<ProfessionalImageUploadProps> = ({
       } else {
         // Handle doctor metadata - we'll use a try-catch because the doctor_metadata might be new
         try {
-          // Try to update doctor metadata
+          // Use the `from` method with a type assertion to tell TypeScript about our table
+          // @ts-ignore - The doctor_metadata table exists in the database but not in types yet
           const { error: metadataError } = await supabase
             .from('doctor_metadata')
             .upsert({ 

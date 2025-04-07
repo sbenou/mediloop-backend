@@ -134,7 +134,8 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
         
         // Check for existing doctor_metadata
         try {
-          // This can throw if the table doesn't exist yet
+          // Use a type assertion to work around TypeScript not knowing about the doctor_metadata table yet
+          // @ts-ignore - The doctor_metadata table exists in the database but not in types yet
           const { data: metadata } = await supabase
             .from('doctor_metadata')
             .select('logo_url')
@@ -143,7 +144,7 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
           
           let doctorLogoUrl = null;
           
-          if (metadata?.logo_url) {
+          if (metadata && 'logo_url' in metadata) {
             doctorLogoUrl = metadata.logo_url;
             setLogoUrl(doctorLogoUrl);
           } else if (profile.doctor_stamp_url) {
@@ -153,6 +154,7 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
             // Update doctor_metadata with the logo from profile
             if (doctorLogoUrl) {
               try {
+                // @ts-ignore - The doctor_metadata table exists in the database but not in types yet
                 await supabase
                   .from('doctor_metadata')
                   .upsert({ 
