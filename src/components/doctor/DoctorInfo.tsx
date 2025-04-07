@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,18 +32,30 @@ const DoctorInfo = ({ doctor, isEditing, setIsEditing }: DoctorInfoProps) => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
+      // First, update the profile with basic info
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: name,
-          address: address,
-          city: city,
-          postal_code: postalCode,
           phone_number: phone,
         })
         .eq('id', doctor.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Then, update or create doctor_metadata with address info
+      const { error: metadataError } = await supabase
+        .from('doctor_metadata')
+        .upsert({
+          doctor_id: doctor.id,
+          address: address,
+          city: city,
+          postal_code: postalCode,
+        }, {
+          onConflict: 'doctor_id'
+        });
+
+      if (metadataError) throw metadataError;
 
       toast({
         title: "Success",
