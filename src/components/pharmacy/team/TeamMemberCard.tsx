@@ -59,12 +59,8 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
     globalUserAvatar : member.profile_image;
   
   const handleStatusToggle = () => {
+    // Pass the current status so the parent component can toggle it appropriately
     onToggleActive(member.id, member.status);
-    
-    toast({
-      title: isActive ? "Member Deactivated" : "Member Activated",
-      description: `${member.full_name} is now ${isActive ? 'inactive' : 'active'}.`
-    });
   };
 
   const handleViewMember = () => {

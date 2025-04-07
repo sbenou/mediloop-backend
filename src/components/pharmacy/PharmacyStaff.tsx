@@ -197,8 +197,6 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
           </TooltipProvider>
         )}
       </CardContent>
-
-      {/* Removed the "Add Staff Member" button here as it's redundant */}
     </Card>
   );
 };

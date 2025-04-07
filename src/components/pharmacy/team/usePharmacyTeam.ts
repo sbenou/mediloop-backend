@@ -69,13 +69,16 @@ export const usePharmacyTeam = (pharmacyId: string) => {
 
   const handleToggleActive = async (userId: string, isActive: boolean) => {
     try {
+      // Note: we're toggling the is_blocked flag which is the opposite of is_active
+      // so we need to negate isActive when setting is_blocked
       const { error } = await supabase
         .from('profiles')
-        .update({ is_blocked: !isActive })
+        .update({ is_blocked: isActive })
         .eq('id', userId);
 
       if (error) throw error;
 
+      // Update local state
       setTeamMembers(prev => 
         prev.map(member => 
           member.user_id === userId 

@@ -52,8 +52,9 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
 
   // Function to adapt the handleToggleActive function to match expected signature
   const handleCardToggleActive = (memberId: string, currentStatus: 'active' | 'inactive') => {
+    // If the current status is 'active', we want to deactivate, and vice versa
     const isActive = currentStatus === 'active';
-    handleToggleActive(memberId, !isActive);
+    handleToggleActive(memberId, isActive);
   };
 
   return (
@@ -87,7 +88,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                     status: 'active',
                     profile_image: userAvatar || profile.avatar_url,
                   }}
-                  onToggleActive={() => {}}
+                  onToggleActive={handleCardToggleActive}
                   showMainDoctorBadge={false}
                 />
               )}
