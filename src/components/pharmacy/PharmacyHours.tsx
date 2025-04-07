@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { WeekHours } from '@/types/pharmacy/hours';
@@ -11,10 +11,16 @@ import { HoursDisplay } from './hours/HoursDisplay';
 interface PharmacyHoursProps {
   hours: string | null;
   pharmacyId: string;
+  isEditing?: boolean;
+  setIsEditing?: Dispatch<SetStateAction<boolean>>;
 }
 
-const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
-  const [isEditing, setIsEditing] = useState(false);
+const PharmacyHours: React.FC<PharmacyHoursProps> = ({ 
+  hours, 
+  pharmacyId, 
+  isEditing = false,
+  setIsEditing
+}) => {
   const [weekHours, setWeekHours] = useState<WeekHours | null>(null);
   const [isJsonFormat, setIsJsonFormat] = useState(false);
   const [hoursString, setHoursString] = useState<string | null>(null);
@@ -78,7 +84,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         description: "Opening hours updated successfully",
       });
       
-      setIsEditing(false);
+      if (setIsEditing) setIsEditing(false);
       setIsJsonFormat(true);
       setHoursString(null);
       setFormattedHours(formatHoursDisplay(weekHours));
@@ -110,7 +116,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         description: "Opening hours updated successfully",
       });
       
-      setIsEditing(false);
+      if (setIsEditing) setIsEditing(false);
       
       // Update the parsed hours from the string
       const parsedHours = parseStringHours(hoursString);
@@ -132,7 +138,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         <StringHoursEditor
           hoursString={hoursString}
           onHoursChange={setHoursString}
-          onCancel={() => setIsEditing(false)}
+          onCancel={() => setIsEditing && setIsEditing(false)}
           onSave={handleSaveStringHours}
         />
       );
@@ -141,7 +147,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({ hours, pharmacyId }) => {
         <HoursEditor
           weekHours={weekHours}
           onHoursChange={setWeekHours}
-          onCancel={() => setIsEditing(false)}
+          onCancel={() => setIsEditing && setIsEditing(false)}
           onSave={handleSaveJsonHours}
         />
       );

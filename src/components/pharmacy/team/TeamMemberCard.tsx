@@ -157,7 +157,6 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           
           {/* Replace Active/Inactive tag with role tag */}
           <Badge 
-            className="mt-1" 
             variant="outline"
             className={`mt-1 ${getRoleBadgeStyles()}`}
           >

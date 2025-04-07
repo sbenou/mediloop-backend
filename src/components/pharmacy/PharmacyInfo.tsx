@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, Dispatch, SetStateAction } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -16,10 +17,15 @@ interface PharmacyInfoProps {
     phone?: string;
     email?: string;
   };
+  isEditing?: boolean;
+  setIsEditing?: Dispatch<SetStateAction<boolean>>;
 }
 
-const PharmacyInfo: React.FC<PharmacyInfoProps> = ({ pharmacy }) => {
-  const [isEditing, setIsEditing] = useState(false);
+const PharmacyInfo: React.FC<PharmacyInfoProps> = ({ 
+  pharmacy, 
+  isEditing = false, 
+  setIsEditing 
+}) => {
   const [formData, setFormData] = useState({
     name: pharmacy.name,
     address: pharmacy.address,
@@ -55,7 +61,7 @@ const PharmacyInfo: React.FC<PharmacyInfoProps> = ({ pharmacy }) => {
         description: "Pharmacy information updated successfully",
       });
       
-      setIsEditing(false);
+      if (setIsEditing) setIsEditing(false);
     } catch (error) {
       console.error('Error updating pharmacy:', error);
       toast({
@@ -137,7 +143,7 @@ const PharmacyInfo: React.FC<PharmacyInfoProps> = ({ pharmacy }) => {
         </div>
         
         <div className="flex justify-end space-x-2 pt-2">
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+          <Button variant="outline" size="sm" onClick={() => setIsEditing && setIsEditing(false)}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>

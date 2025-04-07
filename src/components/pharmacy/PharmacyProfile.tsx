@@ -5,7 +5,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Image, Upload, Clock, MapPin, Users, UserCog, User } from "lucide-react";
+import { Image, Upload, Clock, MapPin, Users, UserCog, User, MoreVertical, Edit } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import PharmacyHours from "@/components/pharmacy/PharmacyHours";
@@ -14,6 +14,12 @@ import PharmacyTeam from "@/components/pharmacy/PharmacyTeam";
 import PharmacyStaff from "@/components/pharmacy/PharmacyStaff";
 import { useSetRecoilState, useRecoilState } from "recoil";
 import { pharmacyLogoUrlState } from "@/store/images/atoms";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface PharmacyData {
   id: string;
@@ -34,7 +40,9 @@ const PharmacyProfile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Get the setter function for the Recoil state
   const [pharmacyLogoUrl, setPharmacyLogoUrl] = useRecoilState(pharmacyLogoUrlState);
-
+  const [isPharmacyInfoEditing, setIsPharmacyInfoEditing] = useState(false);
+  const [isHoursEditing, setIsHoursEditing] = useState(false);
+  
   useEffect(() => {
     fetchPharmacyData();
   }, [profile]);
@@ -226,6 +234,22 @@ const PharmacyProfile = () => {
     }
   };
 
+  const handleEditPharmacyInfo = () => {
+    setIsPharmacyInfoEditing(true);
+    toast({
+      title: "Edit Pharmacy Info",
+      description: "You can now edit your pharmacy information"
+    });
+  };
+
+  const handleEditHours = () => {
+    setIsHoursEditing(true);
+    toast({
+      title: "Edit Opening Hours",
+      description: "You can now edit your pharmacy opening hours"
+    });
+  };
+
   if (!pharmacyData) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -312,32 +336,69 @@ const PharmacyProfile = () => {
               {/* Pharmacy Details Card */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center">
-                    <Users className="mr-2 h-5 w-5" />
-                    Pharmacy Information
-                  </CardTitle>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center">
+                      <Users className="mr-2 h-5 w-5" />
+                      Pharmacy Information
+                    </CardTitle>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleEditPharmacyInfo}>
+                          <Edit className="h-4 w-4 mr-2" /> Edit Information
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                   <CardDescription>
                     Contact details and address
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <PharmacyInfo pharmacy={pharmacyData} />
+                  <PharmacyInfo 
+                    pharmacy={pharmacyData} 
+                    isEditing={isPharmacyInfoEditing}
+                    setIsEditing={setIsPharmacyInfoEditing}
+                  />
                 </CardContent>
               </Card>
 
               {/* Opening Hours */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center">
-                    <Clock className="mr-2 h-5 w-5" />
-                    Opening Hours
-                  </CardTitle>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center">
+                      <Clock className="mr-2 h-5 w-5" />
+                      Opening Hours
+                    </CardTitle>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleEditHours}>
+                          <Edit className="h-4 w-4 mr-2" /> Edit Hours
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                   <CardDescription>
                     When your pharmacy is open
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <PharmacyHours hours={pharmacyData.hours} pharmacyId={pharmacyData.id} />
+                  <PharmacyHours 
+                    hours={pharmacyData.hours} 
+                    pharmacyId={pharmacyData.id}
+                    isEditing={isHoursEditing}
+                    setIsEditing={setIsHoursEditing}
+                  />
                 </CardContent>
               </Card>
 
@@ -363,6 +424,9 @@ const PharmacyProfile = () => {
         {/* Team Tab Content */}
         <TabsContent value="team" className="mt-6">
           <ScrollArea className="h-[calc(100vh-300px)] pr-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold">Pharmacy Team</h3>
+            </div>
             <PharmacyTeam pharmacyId={pharmacyData.id} />
           </ScrollArea>
         </TabsContent>
