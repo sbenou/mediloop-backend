@@ -27,17 +27,47 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
     try {
       setIsSaving(true);
       
-      // Update doctor_metadata table with new hours
-      const { error } = await supabase
+      console.log('Saving hours with doctor_id:', doctorId);
+      
+      // First check if a record exists for this doctor
+      const { data: existingData } = await supabase
         .from('doctor_metadata')
-        .upsert({ 
-          doctor_id: doctorId,
-          hours: hoursText,
-          // Convert Date to ISO string format which is compatible with Supabase
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
+        .select('id, hours')
+        .eq('doctor_id', doctorId)
+        .maybeSingle();
+      
+      let result;
+      
+      if (existingData) {
+        // Update existing record
+        console.log('Updating existing doctor_metadata record:', existingData.id);
+        result = await supabase
+          .from('doctor_metadata')
+          .update({ 
+            hours: hoursText,
+            updated_at: new Date().toISOString()
+          })
+          .eq('doctor_id', doctorId);
+      } else {
+        // Insert new record
+        console.log('Creating new doctor_metadata record');
+        result = await supabase
+          .from('doctor_metadata')
+          .insert({ 
+            doctor_id: doctorId,
+            hours: hoursText,
+            updated_at: new Date().toISOString()
+          });
+      }
+      
+      const { error } = result;
+      
+      if (error) {
+        console.error('Error from Supabase:', error);
+        throw error;
+      }
+      
+      console.log('Hours saved successfully');
       
       toast({
         title: "Success",
