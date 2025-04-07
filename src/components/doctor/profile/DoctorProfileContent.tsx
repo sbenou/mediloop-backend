@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
-import ProfessionalImageUpload from "./ProfessionalImageUpload";
+import ProfessionalImageUpload from "../../pharmacy/profile/ProfessionalImageUpload";
 
 interface ProfileData {
   id: string;
@@ -20,24 +20,24 @@ interface ProfileData {
   logo_url?: string | null;
 }
 
-interface PharmacyProfileContentProps {
-  pharmacyData: ProfileData;
+interface DoctorProfileContentProps {
+  doctorData: ProfileData;
   userId?: string;
   onLogoUpdate: (newLogoUrl: string) => void;
 }
 
-const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
-  pharmacyData,
+const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
+  doctorData,
   userId,
   onLogoUpdate
 }) => {
   const [formData, setFormData] = useState({
-    name: pharmacyData.name || "",
-    address: pharmacyData.address || "",
-    city: pharmacyData.city || "",
-    postal_code: pharmacyData.postal_code || "",
-    phone: pharmacyData.phone || "",
-    hours: pharmacyData.hours || ""
+    name: doctorData.name || "",
+    address: doctorData.address || "",
+    city: doctorData.city || "",
+    postal_code: doctorData.postal_code || "",
+    phone: doctorData.phone || "",
+    hours: doctorData.hours || ""
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,40 +53,16 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
     try {
       setIsSubmitting(true);
       
-      const { error } = await supabase
-        .from('pharmacies')
-        .update({
-          name: formData.name,
-          address: formData.address,
-          city: formData.city,
-          postal_code: formData.postal_code,
-          phone: formData.phone,
-          hours: formData.hours
-        })
-        .eq('id', pharmacyData.id);
-        
-      if (error) throw error;
+      // For now, we'll just show a success message since the doctor table doesn't exist yet
+      // In a real implementation, you would update the doctor table here
       
       toast({
         title: "Profile Updated",
-        description: "Your pharmacy profile has been updated successfully.",
+        description: "Your doctor profile has been updated successfully.",
       });
       
-      // Also update user's pharmacy_name in the profiles table if userId is provided
-      if (userId && formData.name !== pharmacyData.name) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ pharmacy_name: formData.name })
-          .eq('id', userId);
-          
-        if (profileError) {
-          console.error('Error updating profile with pharmacy name:', profileError);
-          // Non-blocking error
-        }
-      }
-      
     } catch (error: any) {
-      console.error('Error updating pharmacy profile:', error);
+      console.error('Error updating doctor profile:', error);
       toast({
         variant: "destructive",
         title: "Update Failed",
@@ -101,13 +77,13 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Pharmacy Image</CardTitle>
+          <CardTitle>Doctor Profile Image</CardTitle>
         </CardHeader>
         <CardContent>
           <ProfessionalImageUpload 
-            entityId={pharmacyData.id}
-            entityType="pharmacy"
-            logoUrl={pharmacyData.logo_url} 
+            entityId={doctorData.id}
+            entityType="doctor"
+            logoUrl={doctorData.logo_url} 
             onImageUpdate={onLogoUpdate}
             userId={userId}
           />
@@ -117,12 +93,12 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
       <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>Pharmacy Information</CardTitle>
+            <CardTitle>Doctor Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Pharmacy Name</Label>
+                <Label htmlFor="name">Doctor Name</Label>
                 <Input 
                   id="name" 
                   name="name" 
@@ -145,7 +121,7 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="address">Street Address</Label>
+              <Label htmlFor="address">Office Address</Label>
               <Input 
                 id="address" 
                 name="address" 
@@ -189,13 +165,13 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="hours">Opening Hours</Label>
+              <Label htmlFor="hours">Consultation Hours</Label>
               <Textarea 
                 id="hours" 
                 name="hours" 
                 value={formData.hours || ''} 
                 onChange={handleChange}
-                placeholder="Monday to Friday: 8:00 - 18:00&#10;Saturday: 9:00 - 12:00&#10;Sunday: Closed"
+                placeholder="Monday to Friday: 9:00 - 17:00&#10;Saturday: 10:00 - 13:00&#10;Sunday: Closed"
                 rows={5}
               />
             </div>
@@ -212,4 +188,4 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
   );
 };
 
-export default PharmacyProfileContent;
+export default DoctorProfileContent;

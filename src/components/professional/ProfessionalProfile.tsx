@@ -10,6 +10,7 @@ import { pharmacyLogoUrlState, doctorLogoUrlState } from "@/store/images/atoms";
 import ProfessionalHeader from "./profile/ProfessionalHeader";
 import ProfessionalTabs from "./profile/ProfessionalTabs";
 import PharmacyProfileContent from "@/components/pharmacy/profile/PharmacyProfileContent";
+import DoctorProfileContent from "@/components/doctor/profile/DoctorProfileContent";
 import ProfessionalTeamContent from "./profile/ProfessionalTeamContent";
 import ProfessionalStaffContent from "./profile/ProfessionalStaffContent";
 
@@ -50,8 +51,8 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
       
       let entityId: string | null = null;
       
-      // First fetch the relation between user and pharmacy/doctor
       if (role === 'pharmacy') {
+        // For pharmacy - use the existing code
         const { data: relation, error } = await supabase
           .from('user_pharmacies')
           .select('pharmacy_id')
@@ -128,20 +129,50 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
             .eq('id', profile.id);
         }
       } else {
-        // For doctors, use a similar approach but adapt to doctor tables
-        // This is a placeholder - you'll need to create the user_doctors table and doctor_metadata
-        console.log("Doctor profile support coming soon");
+        // For doctors - use profile.id as the entityId temporarily
+        entityId = profile.id;
         
-        // For now, create a placeholder entity to avoid errors
+        // Check for existing doctor_metadata
+        const { data: metadata, error: metadataError } = await supabase
+          .from('doctor_metadata')
+          .select('logo_url')
+          .eq('doctor_id', entityId)
+          .maybeSingle();
+        
+        let doctorLogoUrl = null;
+        if (!metadataError && metadata?.logo_url) {
+          doctorLogoUrl = metadata.logo_url;
+          setLogoUrl(doctorLogoUrl);
+        } else if (profile.doctor_stamp_url) {
+          doctorLogoUrl = profile.doctor_stamp_url;
+          setLogoUrl(doctorLogoUrl);
+          
+          // Update doctor_metadata with the logo from profile
+          if (doctorLogoUrl) {
+            // Attempt to create/update doctor_metadata entry
+            try {
+              await supabase
+                .from('doctor_metadata')
+                .upsert({ 
+                  doctor_id: entityId, 
+                  logo_url: doctorLogoUrl 
+                });
+            } catch (metaError) {
+              console.log("Note: doctor_metadata table might not exist yet:", metaError);
+            }
+          }
+        }
+        
+        // Create placeholder entity data based on profile info
         setEntityData({
           id: profile.id,
           name: profile.full_name || "Doctor",
-          address: "Address pending",
-          city: "City pending",
-          postal_code: "Postal code pending",
+          address: "Office address",
+          city: "City",
+          postal_code: "Postal code",
           phone: null,
           hours: null,
-          logo_url: profile.avatar_url
+          logo_url: doctorLogoUrl
         });
       }
     } catch (error) {
@@ -161,6 +192,9 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
         logo_url: newLogoUrl
       });
     }
+    
+    // Update the appropriate Recoil state
+    setLogoUrl(newLogoUrl);
   };
 
   const getHeaderTitle = () => {
@@ -196,11 +230,19 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
         
         {/* Profile Tab Content - Full Width */}
         <TabsContent value="profile" className="mt-6 space-y-6">
-          <PharmacyProfileContent 
-            pharmacyData={entityData} 
-            userId={profile?.id}
-            onLogoUpdate={handleLogoUpdate}
-          />
+          {role === 'pharmacy' ? (
+            <PharmacyProfileContent 
+              pharmacyData={entityData} 
+              userId={profile?.id}
+              onLogoUpdate={handleLogoUpdate}
+            />
+          ) : (
+            <DoctorProfileContent
+              doctorData={entityData}
+              userId={profile?.id}
+              onLogoUpdate={handleLogoUpdate}
+            />
+          )}
         </TabsContent>
         
         {/* Team Tab Content */}
