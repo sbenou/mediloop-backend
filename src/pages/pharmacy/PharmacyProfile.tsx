@@ -1,13 +1,13 @@
 
 import React from "react";
-import PharmacyProfile from "@/components/pharmacy/PharmacyProfile";
+import ProfessionalProfile from "@/components/professional/ProfessionalProfile";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
 
 const PharmacyProfilePage = () => {
   return (
     <PharmacistLayout>
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl">
-        <PharmacyProfile />
+        <ProfessionalProfile role="pharmacy" />
       </div>
     </PharmacistLayout>
   );
