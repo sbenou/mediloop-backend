@@ -26,45 +26,51 @@ export const useProfessionalTeam = (entityId: string, entityType: 'doctor' | 'ph
     try {
       setLoading(true);
       
-      // Determine which relation table to use based on entity type
-      const relationTable = entityType === 'doctor' ? 'user_doctors' : 'user_pharmacies';
-      const entityIdColumn = entityType === 'doctor' ? 'doctor_id' : 'pharmacy_id';
-      
-      // Fetch users associated with this professional entity
-      const { data: entityUsers, error: entityError } = await supabase
-        .from(relationTable)
-        .select('user_id')
-        .eq(entityIdColumn, entityId);
-      
-      if (entityError) throw entityError;
-      
-      if (!entityUsers || entityUsers.length === 0) {
+      if (entityType === 'pharmacy') {
+        // For pharmacy, we can use the existing user_pharmacies table
+        const { data: pharmacyUsers, error: pharmacyError } = await supabase
+          .from('user_pharmacies')
+          .select('user_id')
+          .eq('pharmacy_id', entityId);
+        
+        if (pharmacyError) throw pharmacyError;
+        
+        if (!pharmacyUsers || pharmacyUsers.length === 0) {
+          setTeamMembers([]);
+          return;
+        }
+        
+        const userIds = pharmacyUsers.map(pu => pu.user_id);
+        
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, avatar_url, role, is_blocked')
+          .in('id', userIds);
+          
+        if (profilesError) throw profilesError;
+        
+        if (profiles) {
+          // Fixed type issue by explicitly mapping to TeamMember interface
+          const members: TeamMember[] = profiles.map(profile => ({
+            id: profile.id,
+            user_id: profile.id,
+            full_name: profile.full_name || 'Unknown',
+            email: profile.email || 'No email',
+            avatar_url: profile.avatar_url,
+            role: profile.role || 'pharmacy_user',
+            is_active: !profile.is_blocked,
+            phone_number: undefined,
+          }));
+          
+          setTeamMembers(members);
+        }
+      } else {
+        // For doctor, we'll simulate similar behavior but with a placeholder
+        // In a real implementation, you'd use a user_doctors table
+        console.log("Doctor team support coming soon");
+        
+        // For now, return an empty array to avoid errors
         setTeamMembers([]);
-        return;
-      }
-      
-      const userIds = entityUsers.map(eu => eu.user_id);
-      
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url, role, is_blocked')
-        .in('id', userIds);
-        
-      if (profilesError) throw profilesError;
-      
-      if (profiles) {
-        // Fixed type issue by explicitly mapping to TeamMember interface
-        const members: TeamMember[] = profiles.map(profile => ({
-          id: profile.id,
-          user_id: profile.id,
-          full_name: profile.full_name || 'Unknown',
-          email: profile.email || 'No email',
-          avatar_url: profile.avatar_url,
-          role: profile.role || (entityType === 'doctor' ? 'doctor_staff' : 'pharmacy_user'),
-          is_active: !profile.is_blocked,
-        }));
-        
-        setTeamMembers(members);
       }
     } catch (error) {
       console.error(`Error fetching ${entityType} team members:`, error);

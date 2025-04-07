@@ -12,13 +12,25 @@ interface ProfessionalTeamProps {
   entityType: 'doctor' | 'pharmacy';
 }
 
+interface ExtendedTeamMember {
+  id: string;
+  full_name: string;
+  email: string;
+  phone_number?: string;
+  role: string;
+  pharmacy_id?: string;
+  doctor_id?: string;
+  status: 'active' | 'inactive';
+  profile_image?: string | null;
+}
+
 const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityType }) => {
   const { profile } = useAuth();
   const userAvatar = useRecoilValue(userAvatarState);
   const { teamMembers, loading } = useProfessionalTeam(entityId, entityType);
 
   // Function to transform TeamMember from the hook to the format expected by TeamMemberCard
-  const mapTeamMemberToCardMember = (member: any) => {
+  const mapTeamMemberToCardMember = (member: any): ExtendedTeamMember => {
     // Check if this member is the current user to use the correct avatar
     const avatarUrl = userAvatar && 
       profile?.id === member.id ? 
@@ -32,7 +44,7 @@ const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityTyp
       role: member.role,
       pharmacy_id: entityType === 'pharmacy' ? entityId : undefined,
       doctor_id: entityType === 'doctor' ? entityId : undefined,
-      status: member.is_active ? 'active' : 'inactive' as 'active' | 'inactive',
+      status: member.is_active ? 'active' : 'inactive',
       profile_image: avatarUrl,
     };
   };
@@ -62,8 +74,8 @@ const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityTyp
                     email: profile.email || '',
                     phone_number: '',
                     role: 'doctor',
-                    pharmacy_id: entityType === 'pharmacy' ? entityId : undefined,
-                    doctor_id: entityType === 'doctor' ? entityId : undefined,
+                    pharmacy_id: undefined,
+                    doctor_id: entityId,
                     status: 'active',
                     profile_image: userAvatar || profile.avatar_url,
                   }}

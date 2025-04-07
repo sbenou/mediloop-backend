@@ -48,91 +48,101 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
     try {
       console.log(`Fetching ${role} data for user:`, profile.id);
       
-      // Table and field names based on role
-      const relationTable = role === 'doctor' ? 'user_doctors' : 'user_pharmacies';
-      const entityIdField = role === 'doctor' ? 'doctor_id' : 'pharmacy_id';
-      const entityTable = role === 'doctor' ? 'doctors' : 'pharmacies';
-      const metadataTable = role === 'doctor' ? 'doctor_metadata' : 'pharmacy_metadata';
-      const profileLogoField = role === 'doctor' ? 'doctor_logo_url' : 'pharmacy_logo_url';
-      const profileNameField = role === 'doctor' ? 'doctor_name' : 'pharmacy_name';
+      let entityId: string | null = null;
       
-      // Fetch the entity associated with this professional
-      const { data: entityRelation, error: relationError } = await supabase
-        .from(relationTable)
-        .select(entityIdField)
-        .eq('user_id', profile.id)
-        .single();
-
-      if (relationError || !entityRelation) {
-        console.error(`Error fetching ${role} relation:`, relationError);
-        return;
-      }
-
-      const entityId = entityRelation[entityIdField];
-      console.log(`Found ${role} relation with ${entityIdField}:`, entityId);
-
-      // Now fetch the entity details
-      const { data: entity, error: entityError } = await supabase
-        .from(entityTable)
-        .select('*')
-        .eq('id', entityId)
-        .single();
-
-      if (entityError) {
-        console.error(`Error fetching ${role}:`, entityError);
-        return;
-      }
-
-      console.log(`Fetched ${role} data:`, entity);
-
-      // Check if entity metadata exists with logo_url
-      const { data: entityMetadata, error: metadataError } = await supabase
-        .from(metadataTable)
-        .select('logo_url')
-        .eq(`${role}_id`, entity.id)
-        .maybeSingle();
-
-      let logoUrl = null;
-      if (!metadataError && entityMetadata?.logo_url) {
-        logoUrl = entityMetadata.logo_url;
+      // First fetch the relation between user and pharmacy/doctor
+      if (role === 'pharmacy') {
+        const { data: relation, error } = await supabase
+          .from('user_pharmacies')
+          .select('pharmacy_id')
+          .eq('user_id', profile.id)
+          .single();
+          
+        if (error || !relation) {
+          console.error('Error fetching pharmacy relation:', error);
+          return;
+        }
         
-        // Set the logo in Recoil state when fetched
-        console.log(`Setting ${role} logo from metadata:`, logoUrl);
-        setLogoUrl(logoUrl);
-      } else {
-        // If no logo in metadata, check if it's in the profile
-        if (profile?.[profileLogoField]) {
-          logoUrl = profile[profileLogoField];
-          console.log(`Using ${role} logo from profile:`, logoUrl);
+        entityId = relation.pharmacy_id;
+        console.log("Found pharmacy relation with ID:", entityId);
+        
+        // Fetch pharmacy details
+        const { data: pharmacy, error: pharmacyError } = await supabase
+          .from('pharmacies')
+          .select('*')
+          .eq('id', entityId)
+          .single();
+          
+        if (pharmacyError || !pharmacy) {
+          console.error('Error fetching pharmacy:', pharmacyError);
+          return;
+        }
+        
+        console.log("Fetched pharmacy data:", pharmacy);
+        
+        // Fetch logo from pharmacy_metadata if available
+        const { data: metadata, error: metadataError } = await supabase
+          .from('pharmacy_metadata')
+          .select('logo_url')
+          .eq('pharmacy_id', pharmacy.id)
+          .maybeSingle();
+          
+        let logoUrl = null;
+        if (!metadataError && metadata?.logo_url) {
+          logoUrl = metadata.logo_url;
+          setLogoUrl(logoUrl);
+        } else if (profile.pharmacy_logo_url) {
+          logoUrl = profile.pharmacy_logo_url;
           setLogoUrl(logoUrl);
           
-          // Also update metadata if we have a logo in the profile
+          // Update metadata with logo from profile
           if (logoUrl) {
-            console.log(`Updating ${metadataTable} with logo from profile`);
             await supabase
-              .from(metadataTable)
+              .from('pharmacy_metadata')
               .upsert({ 
-                [`${role}_id`]: entity.id, 
+                pharmacy_id: pharmacy.id, 
                 logo_url: logoUrl 
               });
           }
         }
-      }
-
-      setEntityData({
-        ...entity,
-        logo_url: logoUrl
-      });
-      
-      // Update profile with entity name and logo for sidebar display
-      if (entity?.name) {
-        await supabase
-          .from('profiles')
-          .update({ 
-            [profileNameField]: entity.name,
-            [profileLogoField]: logoUrl
-          })
-          .eq('id', profile.id);
+        
+        setEntityData({
+          id: pharmacy.id,
+          name: pharmacy.name,
+          address: pharmacy.address,
+          city: pharmacy.city,
+          postal_code: pharmacy.postal_code,
+          phone: pharmacy.phone,
+          hours: pharmacy.hours,
+          logo_url: logoUrl
+        });
+        
+        // Update profile with pharmacy name and logo
+        if (pharmacy?.name) {
+          await supabase
+            .from('profiles')
+            .update({ 
+              pharmacy_name: pharmacy.name,
+              pharmacy_logo_url: logoUrl
+            })
+            .eq('id', profile.id);
+        }
+      } else {
+        // For doctors, use a similar approach but adapt to doctor tables
+        // This is a placeholder - you'll need to create the user_doctors table and doctor_metadata
+        console.log("Doctor profile support coming soon");
+        
+        // For now, create a placeholder entity to avoid errors
+        setEntityData({
+          id: profile.id,
+          name: profile.full_name || "Doctor",
+          address: "Address pending",
+          city: "City pending",
+          postal_code: "Postal code pending",
+          phone: null,
+          hours: null,
+          logo_url: profile.avatar_url
+        });
       }
     } catch (error) {
       console.error(`Error fetching ${role} data:`, error);
