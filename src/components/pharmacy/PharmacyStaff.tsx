@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
-import { UserPlus, UserCheck, UserX, Shield, Eye, Edit, Trash } from 'lucide-react';
+import { UserPlus, Eye, Edit, Trash } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from '@/hooks/auth/useAuth';
 import { 
