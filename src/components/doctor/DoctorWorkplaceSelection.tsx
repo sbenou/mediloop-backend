@@ -68,18 +68,19 @@ const DoctorWorkplaceSelection = () => {
     if (!user?.id) return;
 
     try {
-      // We'll use a raw query since TypeScript doesn't recognize the doctor_workplaces table yet
+      // Use a raw SQL query instead of RPC since TypeScript doesn't recognize the function
       const { data, error } = await supabase
-        .rpc('get_doctor_workplace', { 
-          p_user_id: user.id 
-        });
+        .from('doctor_workplaces')
+        .select('workplace_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (error) {
         throw error;
       }
 
-      if (data) {
-        setSelectedWorkplaceId(data);
+      if (data && data.workplace_id) {
+        setSelectedWorkplaceId(data.workplace_id);
       }
     } catch (error) {
       console.error('Error fetching current workplace:', error);
@@ -98,7 +99,7 @@ const DoctorWorkplaceSelection = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         },
         body: JSON.stringify({ 
           userId: user.id, 
