@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -200,19 +199,8 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle>Staff Management</CardTitle>
-          {entityType === 'pharmacy' && (
-            <Button onClick={() => setDialogOpen(true)}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Add Staff
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
+    <Card className="shadow-none border-0">
+      <CardContent className="p-0">
         {loading ? (
           <div className="text-center py-6">Loading staff...</div>
         ) : staff.length === 0 ? (

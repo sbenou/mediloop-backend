@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -267,6 +266,11 @@ const PharmacyProfile = () => {
         {/* Profile Tab Content - Full Width */}
         <TabsContent value="profile" className="mt-6 space-y-6">
           <ScrollArea className="h-[calc(100vh-300px)] pr-4">
+            {/* Add consistent header at the top of content area */}
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold">Pharmacy Details</h3>
+            </div>
+            
             {/* Pharmacy Image Section */}
             <div 
               onClick={handleImageClick}
@@ -366,6 +370,11 @@ const PharmacyProfile = () => {
         {/* Staff Management Tab Content */}
         <TabsContent value="staff" className="mt-6">
           <ScrollArea className="h-[calc(100vh-300px)] pr-4">
+            {/* Add consistent header at the top of content area */}
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold">Staff Management</h3>
+            </div>
+            
             <PharmacyStaff pharmacyId={pharmacyData.id} />
           </ScrollArea>
         </TabsContent>
