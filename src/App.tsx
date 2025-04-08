@@ -47,7 +47,7 @@ function App() {
   return (
     <ThemeProvider
       defaultTheme="system"
-      enableSystem
+      attribute="class"
       disableTransitionOnChange
     >
       <RecoilRoot>
