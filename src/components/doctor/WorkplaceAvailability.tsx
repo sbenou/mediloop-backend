@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +22,7 @@ interface Availability {
   doctor_id: string;
 }
 
-interface AvailabilityData {
+interface AvailabilityRecord {
   id: string;
   doctor_id: string;
   day_of_week: number;
@@ -85,10 +86,10 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Simplified query to avoid complex type issues
+      // Use type assertion approach to avoid deep type instantiation
       const { data: rawData, error } = await supabase
         .from('doctor_availability')
-        .select('id, doctor_id, day_of_week, start_time, end_time, workplace_id')
+        .select('*')
         .eq('doctor_id', user.id)
         .eq('workplace_id', workplaceId)
         .order('day_of_week')

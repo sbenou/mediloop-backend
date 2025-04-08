@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { Workplace, WorkplaceType } from "@/types/workplace";
 import { safeSelectData } from "@/lib/typeUtils";
@@ -12,8 +11,7 @@ export const fetchAllWorkplaces = async (): Promise<Workplace[]> => {
     const { data, error } = await supabase
       .from('workplaces')
       .select('*')
-      .order('name')
-      .returns<Workplace[]>();
+      .order('name');
       
     if (error) throw error;
     
@@ -34,12 +32,11 @@ export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> 
       .from('workplaces')
       .select('*')
       .eq('id', id)
-      .single()
-      .returns<Workplace>();
+      .single();
       
     if (error) throw error;
     
-    return data;
+    return data as Workplace;
   } catch (error) {
     console.error(`Error fetching workplace with ID ${id}:`, error);
     return null;
@@ -51,21 +48,29 @@ export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> 
  */
 export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]> => {
   try {
-    // Simplify by using a direct SQL approach that avoids complex type instantiations
-    const { data: doctorWorkplaces, error: joinError } = await supabase
+    // First get the workplace IDs associated with this doctor
+    const { data: doctorWorkplacesRaw, error: joinError } = await supabase
       .from('doctor_workplaces')
-      .select('workplace_id, is_primary')
-      .eq('user_id', userId);
+      .select('workplace_id, id, is_primary');
       
     if (joinError) throw joinError;
     
-    // If no workplaces are found, return empty array
-    if (!doctorWorkplaces || doctorWorkplaces.length === 0) {
+    // Type-check and filter to ensure we have valid workplace IDs
+    if (!doctorWorkplacesRaw || doctorWorkplacesRaw.length === 0) {
       return [];
     }
     
+    // Safely extract and validate workplace IDs
+    const doctorWorkplaces = doctorWorkplacesRaw.filter(item => 
+      item && typeof item === 'object' && 'workplace_id' in item && item.workplace_id
+    );
+    
     // Extract workplace IDs
     const workplaceIds = doctorWorkplaces.map(item => item.workplace_id);
+    
+    if (workplaceIds.length === 0) {
+      return [];
+    }
     
     // Fetch the actual workplace data
     const { data: workplacesData, error: workplacesError } = await supabase
@@ -159,7 +164,7 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
       if (resetError) throw resetError;
     }
     
-    // Create the record
+    // Create the record with explicit type annotation
     const record = { 
       user_id: userId, 
       workplace_id: workplaceId,
@@ -199,9 +204,9 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
 export const removeDoctorWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
     // Check if this is the primary workplace
-    type WorkplaceCheck = {
+    interface WorkplaceCheck {
       is_primary: boolean;
-    };
+    }
     
     const { data: primaryCheck, error: checkError } = await supabase
       .from('doctor_workplaces')
@@ -210,7 +215,6 @@ export const removeDoctorWorkplace = async (userId: string, workplaceId: string)
       .eq('workplace_id', workplaceId)
       .single();
 
-    // Type safe way to check the result
     if (checkError) throw checkError;
     
     // Cast to the expected type
@@ -256,8 +260,7 @@ export const createWorkplace = async (workplace: Omit<Workplace, 'id' | 'created
       .from('workplaces')
       .insert([workplace])
       .select()
-      .single()
-      .returns<Workplace>();
+      .single();
       
     if (error) throw error;
     
@@ -302,7 +305,9 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
-    // Simplify query to avoid deep type instantiation
+    // Use type assertion for availability data
+    type AvailabilityResult = { workplace_id: string };
+    
     const { data: availabilityData, error: availabilityError } = await supabase
       .from('doctor_availability')
       .select('workplace_id')
@@ -314,9 +319,12 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     if (availabilityError) throw availabilityError;
     
     if (availabilityData && availabilityData.length > 0) {
-      const workplaceId = availabilityData[0].workplace_id;
-      // Get the workplace details
-      return await fetchWorkplaceById(workplaceId);
+      // Type safety check
+      const workplaceResult = availabilityData[0] as unknown as AvailabilityResult;
+      if (workplaceResult && workplaceResult.workplace_id) {
+        // Get the workplace details
+        return await fetchWorkplaceById(workplaceResult.workplace_id);
+      }
     }
     
     // If no current availability, fall back to primary workplace
