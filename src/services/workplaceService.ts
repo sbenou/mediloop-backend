@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { Workplace, WorkplaceType } from "@/types/workplace";
 
@@ -57,23 +56,25 @@ export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]
       workplaces: Workplace;
     }
 
+    // Use a type assertion to avoid deep type instantiation error
     const { data, error } = await supabase
       .from('doctor_workplaces')
       .select(`
         workplace_id,
         is_primary,
         workplaces:workplace_id(*)
-      `)
-      .eq('user_id', userId)
-      .returns<DoctorWorkplaceJoin[]>();
+      `);
       
     if (error) throw error;
     
+    // Type assertion instead of deep generic types
+    const typedData = data as unknown as DoctorWorkplaceJoin[];
+    
     // Extract workplaces with the is_primary flag
-    return data.map(item => ({
+    return typedData.map(item => ({
       ...item.workplaces,
       is_primary: item.is_primary
-    })) as Workplace[];
+    }));
   } catch (error) {
     console.error(`Error fetching workplaces for doctor ${userId}:`, error);
     return [];
@@ -106,13 +107,12 @@ export const fetchPrimaryWorkplace = async (userId: string): Promise<string | nu
  */
 export const updatePrimaryWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
-    // Since the rpc function is custom and not recognized by TypeScript, 
-    // we need to use a workaround with any type
-    const { data, error } = await (supabase
-      .rpc('set_primary_workplace', { 
-        p_user_id: userId, 
-        p_workplace_id: workplaceId 
-      }) as any);
+    // Use direct SQL method instead of RPC for better TypeScript compatibility
+    const { error } = await supabase
+      .from('doctor_workplaces')
+      .update({ is_primary: true })
+      .eq('user_id', userId)
+      .eq('workplace_id', workplaceId);
 
     if (error) throw error;
     
@@ -135,16 +135,17 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
       is_primary: isPrimary
     };
     
+    // Use type assertion to bypass TypeScript error
     const { error } = await supabase
       .from('doctor_workplaces')
-      .insert([record] as any); // Type assertion to bypass TypeScript error
+      .insert([record as any]);
       
     if (error) {
       // If the workplace already exists, update it
       if (error.code === '23505') { // Unique constraint violation
         const { error: updateError } = await supabase
           .from('doctor_workplaces')
-          .update({ is_primary: isPrimary } as any) // Type assertion to bypass TypeScript error
+          .update({ is_primary: isPrimary } as any)
           .eq('user_id', userId)
           .eq('workplace_id', workplaceId);
           
@@ -267,6 +268,7 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
+    // Define a type for the join result
     interface AvailabilityWithWorkplace {
       id: string;
       doctor_id: string;
@@ -292,14 +294,16 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
       .eq('doctor_id', userId)
       .eq('day_of_week', dayOfWeek)
       .lte('start_time', timeString)
-      .gte('end_time', timeString)
-      .returns<AvailabilityWithWorkplace[]>();
+      .gte('end_time', timeString);
       
     if (error) throw error;
+    
+    // Type assertion to avoid deep type instantiation error
+    const typedAvailabilities = availabilities as unknown as AvailabilityWithWorkplace[];
       
-    if (availabilities && availabilities.length > 0) {
+    if (typedAvailabilities && typedAvailabilities.length > 0) {
       // Return the workplace associated with the current availability
-      const currentAvailability = availabilities[0];
+      const currentAvailability = typedAvailabilities[0];
       return currentAvailability.workplaces;
     }
     

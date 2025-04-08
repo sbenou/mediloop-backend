@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +18,15 @@ interface Availability {
   end_time: string;
   workplace_id: string;
   doctor_id: string;
+}
+
+interface AvailabilityData {
+  id: string;
+  doctor_id: string;
+  day_of_week: number;
+  start_time: string | null;
+  end_time: string | null;
+  workplace_id: string;
 }
 
 const daysOfWeek = [
@@ -76,28 +84,19 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      interface AvailabilityData {
-        id: string;
-        doctor_id: string;
-        day_of_week: number;
-        start_time: string | null;
-        end_time: string | null;
-        workplace_id: string;
-      }
-      
+      // Use type assertion to avoid deep type instantiation error
       const { data, error } = await supabase
         .from('doctor_availability')
         .select('*')
         .eq('doctor_id', user.id)
         .eq('workplace_id', workplaceId)
         .order('day_of_week')
-        .order('start_time')
-        .returns<AvailabilityData[]>();
+        .order('start_time');
         
       if (error) throw error;
       
       // Transform data to match our Availability interface
-      const formattedData: Availability[] = (data || []).map(item => ({
+      const formattedData: Availability[] = (data || []).map((item: any) => ({
         id: item.id,
         day_of_week: item.day_of_week,
         start_time: item.start_time || '',
