@@ -11,6 +11,7 @@ export interface Workplace {
   updated_at: string;
   workplace_type: WorkplaceType;
   description: string | null;
+  is_primary?: boolean;
 }
 
 export type WorkplaceType = 'cabinet' | 'clinic' | 'hospital' | 'pharmacy' | 'other';

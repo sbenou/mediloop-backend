@@ -2,15 +2,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Workplace, WorkplaceSelectionOptions } from '@/types/workplace';
-import { toast } from '@/hooks/use-toast';
-import { fetchAllWorkplaces, updatePrimaryWorkplace } from '@/services/workplaceService';
-import { supabase } from '@/lib/supabase';
+import { toast } from '@/components/ui/use-toast';
+import { 
+  fetchAllWorkplaces, 
+  fetchDoctorWorkplaces, 
+  updatePrimaryWorkplace,
+  getCurrentWorkplaceByAvailability
+} from '@/services/workplaceService';
 
 export const useWorkplaceSettings = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [workplaces, setWorkplaces] = useState<Workplace[]>([]);
-  const [selectedWorkplaceId, setSelectedWorkplaceId] = useState<string | null>(null);
+  const [userWorkplaces, setUserWorkplaces] = useState<Workplace[]>([]);
+  const [currentWorkplace, setCurrentWorkplace] = useState<Workplace | null>(null);
+  const [primaryWorkplaceId, setPrimaryWorkplaceId] = useState<string | null>(null);
   const [useMultipleWorkplaces, setUseMultipleWorkplaces] = useState(false);
   const [additionalWorkplaceIds, setAdditionalWorkplaceIds] = useState<string[]>([]);
 
@@ -20,9 +26,31 @@ export const useWorkplaceSettings = () => {
 
     try {
       setIsLoading(true);
-      // Use the service function instead of direct query
-      const data = await fetchAllWorkplaces();
-      setWorkplaces(data);
+      
+      // Get all workplaces
+      const allWorkplaces = await fetchAllWorkplaces();
+      setWorkplaces(allWorkplaces);
+      
+      // Get doctor's workplaces
+      const doctorWorkplaces = await fetchDoctorWorkplaces(user.id);
+      setUserWorkplaces(doctorWorkplaces);
+      
+      // Find primary workplace
+      const primary = doctorWorkplaces.find(w => w.is_primary);
+      if (primary) {
+        setPrimaryWorkplaceId(primary.id);
+      }
+      
+      // Set additional workplace IDs
+      setAdditionalWorkplaceIds(doctorWorkplaces.filter(w => !w.is_primary).map(w => w.id));
+      
+      // Set multiple workplaces flag
+      setUseMultipleWorkplaces(doctorWorkplaces.length > 1);
+      
+      // Determine current workplace based on availability
+      const currentByAvailability = await getCurrentWorkplaceByAvailability(user.id);
+      setCurrentWorkplace(currentByAvailability || primary || null);
+      
     } catch (error) {
       console.error('Error fetching workplaces:', error);
       toast({
@@ -35,31 +63,6 @@ export const useWorkplaceSettings = () => {
     }
   }, [user?.id]);
 
-  // Fetch current workplace settings
-  const fetchCurrentWorkplaceSettings = useCallback(async () => {
-    if (!user?.id) return;
-
-    try {
-      // Fetch primary workplace
-      const { data: primaryWorkplaceData } = await supabase
-        .from('doctor_workplaces')
-        .select('workplace_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (primaryWorkplaceData?.workplace_id) {
-        setSelectedWorkplaceId(primaryWorkplaceData.workplace_id);
-      }
-
-      // In the future, fetch additional workplaces and multiple workplaces setting
-      // For now, we'll just set defaults
-      setUseMultipleWorkplaces(false);
-      setAdditionalWorkplaceIds([]);
-    } catch (error) {
-      console.error('Error fetching workplace settings:', error);
-    }
-  }, [user?.id]);
-
   // Update primary workplace using the service function
   const handleUpdatePrimaryWorkplace = async (workplaceId: string) => {
     if (!user?.id) return false;
@@ -68,7 +71,8 @@ export const useWorkplaceSettings = () => {
       const success = await updatePrimaryWorkplace(user.id, workplaceId);
       
       if (success) {
-        setSelectedWorkplaceId(workplaceId);
+        setPrimaryWorkplaceId(workplaceId);
+        await fetchWorkplaces(); // Refresh data
         return true;
       }
       return false;
@@ -81,27 +85,24 @@ export const useWorkplaceSettings = () => {
   // Toggle multiple workplaces setting
   const toggleMultipleWorkplaces = (enabled: boolean) => {
     setUseMultipleWorkplaces(enabled);
-    // In the future, save this preference to the database
   };
 
   // Load data on component mount
   useEffect(() => {
     fetchWorkplaces();
-    fetchCurrentWorkplaceSettings();
-  }, [fetchWorkplaces, fetchCurrentWorkplaceSettings]);
+  }, [fetchWorkplaces]);
 
   return {
     isLoading,
     workplaces,
-    selectedWorkplaceId,
+    userWorkplaces,
+    currentWorkplace,
+    primaryWorkplaceId,
     useMultipleWorkplaces,
     additionalWorkplaceIds,
     updatePrimaryWorkplace: handleUpdatePrimaryWorkplace,
     toggleMultipleWorkplaces,
-    refreshData: () => {
-      fetchWorkplaces();
-      fetchCurrentWorkplaceSettings();
-    }
+    refreshData: fetchWorkplaces
   };
 };
 

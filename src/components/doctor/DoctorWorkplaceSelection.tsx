@@ -10,9 +10,24 @@ import { toast } from '@/components/ui/use-toast';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { fetchAllWorkplaces, updatePrimaryWorkplace } from '@/services/workplaceService';
+import { 
+  fetchAllWorkplaces, 
+  fetchDoctorWorkplaces, 
+  updatePrimaryWorkplace, 
+  addDoctorWorkplace, 
+  removeDoctorWorkplace 
+} from '@/services/workplaceService';
 import { Workplace, WorkplaceType } from '@/types/workplace';
 import { Badge } from '@/components/ui/badge';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const workplaceTypeLabels: Record<WorkplaceType, string> = {
   cabinet: 'Cabinet',
@@ -24,38 +39,22 @@ const workplaceTypeLabels: Record<WorkplaceType, string> = {
 
 const DoctorWorkplaceSelection = () => {
   const { profile, user } = useAuth();
-  const [workplaces, setWorkplaces] = useState<Workplace[]>([]);
+  const [allWorkplaces, setAllWorkplaces] = useState<Workplace[]>([]);
+  const [userWorkplaces, setUserWorkplaces] = useState<Workplace[]>([]);
   const [selectedWorkplaceId, setSelectedWorkplaceId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [useMultipleWorkplaces, setUseMultipleWorkplaces] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('primary');
-  const [selectedWorkplaces, setSelectedWorkplaces] = useState<string[]>([]);
+  const [availableWorkplaces, setAvailableWorkplaces] = useState<Workplace[]>([]);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [workplaceToAdd, setWorkplaceToAdd] = useState<string | null>(null);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [workplaceToRemove, setWorkplaceToRemove] = useState<Workplace | null>(null);
 
   useEffect(() => {
     fetchWorkplacesData();
-    fetchCurrentWorkplace();
-    checkIfUsingMultipleWorkplaces();
   }, [user?.id]);
-
-  const checkIfUsingMultipleWorkplaces = async () => {
-    if (!user?.id) return;
-
-    try {
-      // For now, we'll just check if the user has more than one workplace
-      // In the future, we can add a specific setting for this
-      const { data, error } = await supabase
-        .from('doctor_workplaces')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setUseMultipleWorkplaces(data && data.length > 1);
-    } catch (error) {
-      console.error('Error checking multiple workplaces setting:', error);
-    }
-  };
 
   const fetchWorkplacesData = async () => {
     if (!user?.id) return;
@@ -63,9 +62,26 @@ const DoctorWorkplaceSelection = () => {
     try {
       setIsLoading(true);
       
-      // Use the service function to fetch workplaces
+      // Fetch all workplaces
       const workplacesData = await fetchAllWorkplaces();
-      setWorkplaces(workplacesData);
+      setAllWorkplaces(workplacesData);
+      
+      // Fetch the workplaces this doctor is associated with
+      const doctorWorkplaces = await fetchDoctorWorkplaces(user.id);
+      setUserWorkplaces(doctorWorkplaces);
+      
+      // Set selected workplace to the primary one
+      const primaryWorkplace = doctorWorkplaces.find(w => w.is_primary);
+      if (primaryWorkplace) {
+        setSelectedWorkplaceId(primaryWorkplace.id);
+      }
+      
+      // Set multiple workplaces flag based on association count
+      setUseMultipleWorkplaces(doctorWorkplaces.length > 1);
+      
+      // Calculate available workplaces (those not already associated)
+      const doctorWorkplaceIds = new Set(doctorWorkplaces.map(w => w.id));
+      setAvailableWorkplaces(workplacesData.filter(w => !doctorWorkplaceIds.has(w.id)));
     } catch (error) {
       console.error('Error fetching workplaces:', error);
       toast({
@@ -78,55 +94,29 @@ const DoctorWorkplaceSelection = () => {
     }
   };
 
-  const fetchCurrentWorkplace = async () => {
-    if (!user?.id) return;
-
-    try {
-      // Use edge function to get current workplace
-      const response = await fetch('https://hrrlefgnhkbzuwyklejj.functions.supabase.co/upsert-doctor-workplace', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch workplace');
-      }
-      
-      const data = await response.json();
-      if (data && data.workplace_id) {
-        setSelectedWorkplaceId(data.workplace_id);
-        setSelectedWorkplaces([data.workplace_id]);
-      }
-    } catch (error) {
-      console.error('Error fetching current workplace:', error);
-    }
-  };
-
-  const handleWorkplaceChange = async (workplaceId: string) => {
+  const handlePrimaryWorkplaceChange = async (workplaceId: string) => {
     if (!user?.id) return;
     
     try {
       setIsSaving(true);
       setSelectedWorkplaceId(workplaceId);
       
-      // Use the service function to update workplace
+      // Update the primary workplace
       const success = await updatePrimaryWorkplace(user.id, workplaceId);
       
       if (!success) {
-        throw new Error('Failed to update workplace');
+        throw new Error('Failed to update primary workplace');
       }
+
+      // Refresh the workplace data
+      await fetchWorkplacesData();
 
       toast({
         title: "Success",
         description: "Primary workplace updated successfully."
       });
     } catch (error) {
-      console.error('Error updating workplace:', error);
-      // Revert selection on error
-      fetchCurrentWorkplace();
+      console.error('Error updating primary workplace:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -137,10 +127,83 @@ const DoctorWorkplaceSelection = () => {
     }
   };
 
+  const handleAddWorkplace = async () => {
+    if (!user?.id || !workplaceToAdd) return;
+    
+    try {
+      setIsSaving(true);
+      
+      // If this is the first workplace, make it primary
+      const isPrimary = userWorkplaces.length === 0;
+      
+      // Add the workplace
+      const success = await addDoctorWorkplace(user.id, workplaceToAdd, isPrimary);
+      
+      if (!success) {
+        throw new Error('Failed to add workplace');
+      }
+
+      // Refresh the workplace data
+      await fetchWorkplacesData();
+
+      toast({
+        title: "Success",
+        description: "Workplace added successfully."
+      });
+      
+      // Close the dialog
+      setAddDialogOpen(false);
+      setWorkplaceToAdd(null);
+    } catch (error) {
+      console.error('Error adding workplace:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add workplace."
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemoveWorkplace = async () => {
+    if (!user?.id || !workplaceToRemove) return;
+    
+    try {
+      setIsSaving(true);
+      
+      // Remove the workplace
+      const success = await removeDoctorWorkplace(user.id, workplaceToRemove.id);
+      
+      if (!success) {
+        throw new Error('Failed to remove workplace');
+      }
+
+      // Refresh the workplace data
+      await fetchWorkplacesData();
+
+      toast({
+        title: "Success",
+        description: "Workplace removed successfully."
+      });
+      
+      // Close the dialog
+      setRemoveDialogOpen(false);
+      setWorkplaceToRemove(null);
+    } catch (error: any) {
+      console.error('Error removing workplace:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to remove workplace."
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const toggleMultipleWorkplaces = (checked: boolean) => {
     setUseMultipleWorkplaces(checked);
-    // In the future, we'll save this preference to the database
-    // For now, we'll just update the UI state
   };
 
   const handleTabChange = (value: string) => {
@@ -165,15 +228,15 @@ const DoctorWorkplaceSelection = () => {
         <label className="block text-sm font-medium">Primary Workplace</label>
         <Select
           value={selectedWorkplaceId || ''}
-          onValueChange={handleWorkplaceChange}
+          onValueChange={handlePrimaryWorkplaceChange}
           disabled={isSaving}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a workplace" />
           </SelectTrigger>
           <SelectContent>
-            {workplaces.length > 0 ? (
-              workplaces.map((workplace) => (
+            {userWorkplaces.length > 0 ? (
+              userWorkplaces.map((workplace) => (
                 <SelectItem key={workplace.id} value={workplace.id}>
                   {workplace.name} {workplace.city ? `(${workplace.city})` : ''} 
                   {getWorkplaceTypeDisplay(workplace)}
@@ -190,7 +253,7 @@ const DoctorWorkplaceSelection = () => {
       
       {selectedWorkplaceId && (
         <div className="text-sm text-muted-foreground">
-          Your selected workplace will appear on your prescriptions and patient documents.
+          Your selected primary workplace will appear on your prescriptions and patient documents.
         </div>
       )}
     </div>
@@ -198,17 +261,164 @@ const DoctorWorkplaceSelection = () => {
 
   const renderAdditionalWorkplacesTab = () => (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground mb-4">
-          Select additional workplaces where you practice. You will be able to switch between them when writing prescriptions.
+      <div className="mt-2 mb-6">
+        <p className="text-sm text-muted-foreground">
+          Manage additional workplaces where you practice. You will be able to switch between them when writing prescriptions.
         </p>
+      </div>
 
-        {/* This would be replaced with a multi-select component in the future */}
-        <div className="text-sm">
-          This feature will be implemented in a future update. Currently, only the primary workplace is available.
+      {/* List of current workplaces */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-sm font-medium">Your Workplaces</h3>
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="flex items-center gap-1">
+                <Plus className="h-4 w-4" />
+                Add Workplace
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Workplace</DialogTitle>
+                <DialogDescription>
+                  Select a workplace to add to your practice locations.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="py-4">
+                <Select
+                  value={workplaceToAdd || ''}
+                  onValueChange={setWorkplaceToAdd}
+                  disabled={isSaving}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a workplace" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableWorkplaces.length > 0 ? (
+                      availableWorkplaces.map((workplace) => (
+                        <SelectItem key={workplace.id} value={workplace.id}>
+                          {workplace.name} {workplace.city ? `(${workplace.city})` : ''} 
+                          {getWorkplaceTypeDisplay(workplace)}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        No additional workplaces available
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setAddDialogOpen(false)}>Cancel</Button>
+                <Button 
+                  onClick={handleAddWorkplace} 
+                  disabled={!workplaceToAdd || isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : 'Add Workplace'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="grid gap-3">
+          {userWorkplaces.map(workplace => (
+            <div 
+              key={workplace.id} 
+              className="p-3 border rounded-lg flex justify-between items-center"
+            >
+              <div>
+                <div className="font-medium flex items-center">
+                  {workplace.name}
+                  {workplace.is_primary && (
+                    <Badge variant="secondary" className="ml-2">Primary</Badge>
+                  )}
+                  {getWorkplaceTypeDisplay(workplace)}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {workplace.address}, {workplace.city} {workplace.postal_code}
+                </div>
+              </div>
+
+              <div className="flex space-x-2">
+                {!workplace.is_primary && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      setWorkplaceToRemove(workplace);
+                      setRemoveDialogOpen(true);
+                    }}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {userWorkplaces.length === 0 && (
+            <div className="p-8 text-center border rounded-md border-dashed">
+              <p className="text-sm text-muted-foreground">
+                You haven't added any workplaces yet.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
+  );
+
+  // Confirmation dialog for removing a workplace
+  const RemoveWorkplaceDialog = () => (
+    <Dialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Remove Workplace</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to remove this workplace from your practice locations?
+            This won't delete the workplace itself.
+          </DialogDescription>
+        </DialogHeader>
+
+        {workplaceToRemove && (
+          <div className="py-4">
+            <div className="p-3 border rounded-lg">
+              <div className="font-medium">{workplaceToRemove.name}</div>
+              <div className="text-sm text-muted-foreground">
+                {workplaceToRemove.address}, {workplaceToRemove.city} {workplaceToRemove.postal_code}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setRemoveDialogOpen(false)}>Cancel</Button>
+          <Button 
+            variant="destructive"
+            onClick={handleRemoveWorkplace} 
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Removing...
+              </>
+            ) : 'Remove Workplace'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 
   return (
@@ -253,6 +463,9 @@ const DoctorWorkplaceSelection = () => {
             )}
           </div>
         )}
+
+        {/* Confirmation dialog for removing a workplace */}
+        <RemoveWorkplaceDialog />
       </CardContent>
     </Card>
   );

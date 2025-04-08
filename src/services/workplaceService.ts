@@ -46,6 +46,29 @@ export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> 
 };
 
 /**
+ * Fetches all workplaces for a doctor
+ */
+export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('doctor_workplaces')
+      .select('workplace_id, is_primary, workplaces:workplace_id(*)')
+      .eq('user_id', userId);
+      
+    if (error) throw error;
+    
+    // Extract workplaces with the is_primary flag
+    return data.map(item => ({
+      ...item.workplaces,
+      is_primary: item.is_primary
+    })) as Workplace[];
+  } catch (error) {
+    console.error(`Error fetching workplaces for doctor ${userId}:`, error);
+    return [];
+  }
+};
+
+/**
  * Fetches the primary workplace for a doctor
  */
 export const fetchPrimaryWorkplace = async (userId: string): Promise<string | null> => {
@@ -54,6 +77,7 @@ export const fetchPrimaryWorkplace = async (userId: string): Promise<string | nu
       .from('doctor_workplaces')
       .select('workplace_id')
       .eq('user_id', userId)
+      .eq('is_primary', true)
       .single();
       
     if (error) throw error;
@@ -70,27 +94,92 @@ export const fetchPrimaryWorkplace = async (userId: string): Promise<string | nu
  */
 export const updatePrimaryWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
-    // For now, we'll use the edge function 
-    const response = await fetch('https://hrrlefgnhkbzuwyklejj.functions.supabase.co/upsert-doctor-workplace', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-      },
-      body: JSON.stringify({ 
-        userId, 
-        workplaceId 
-      })
+    const { error } = await supabase.rpc('set_primary_workplace', { 
+      p_user_id: userId, 
+      p_workplace_id: workplaceId 
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Unknown error occurred');
-    }
+    if (error) throw error;
     
     return true;
   } catch (error) {
     console.error(`Error updating primary workplace for user ${userId}:`, error);
+    return false;
+  }
+};
+
+/**
+ * Adds a workplace for a doctor
+ */
+export const addDoctorWorkplace = async (userId: string, workplaceId: string, isPrimary: boolean = false): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('doctor_workplaces')
+      .insert([{ 
+        user_id: userId, 
+        workplace_id: workplaceId,
+        is_primary: isPrimary
+      }]);
+      
+    if (error) {
+      // If the workplace already exists, update it
+      if (error.code === '23505') { // Unique constraint violation
+        const { error: updateError } = await supabase
+          .from('doctor_workplaces')
+          .update({ is_primary: isPrimary })
+          .eq('user_id', userId)
+          .eq('workplace_id', workplaceId);
+          
+        if (updateError) throw updateError;
+      } else {
+        throw error;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Error adding workplace for doctor ${userId}:`, error);
+    return false;
+  }
+};
+
+/**
+ * Removes a workplace for a doctor
+ */
+export const removeDoctorWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
+  try {
+    // Check if this is the primary workplace
+    const { data: primaryCheck } = await supabase
+      .from('doctor_workplaces')
+      .select('is_primary')
+      .eq('user_id', userId)
+      .eq('workplace_id', workplaceId)
+      .single();
+      
+    // Prevent removing the primary workplace if it's the last one
+    if (primaryCheck?.is_primary) {
+      const { data: countCheck } = await supabase
+        .from('doctor_workplaces')
+        .select('id', { count: 'exact' })
+        .eq('user_id', userId);
+        
+      if ((countCheck?.length || 0) <= 1) {
+        throw new Error('Cannot remove the only workplace. Please add another workplace first.');
+      }
+    }
+    
+    // Delete the workplace association
+    const { error } = await supabase
+      .from('doctor_workplaces')
+      .delete()
+      .eq('user_id', userId)
+      .eq('workplace_id', workplaceId);
+      
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error(`Error removing workplace for doctor ${userId}:`, error);
     return false;
   }
 };
@@ -136,5 +225,53 @@ export const updateWorkplace = async (
   } catch (error) {
     console.error(`Error updating workplace ${id}:`, error);
     return false;
+  }
+};
+
+/**
+ * Gets the appropriate workplace for a doctor based on current time and availability
+ */
+export const getCurrentWorkplaceByAvailability = async (userId: string): Promise<Workplace | null> => {
+  try {
+    // Get current day of week (0 = Sunday, 1 = Monday, etc.)
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const currentHour = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
+    
+    // Query availabilities for the current day that include the current time
+    const { data: availabilities } = await supabase
+      .from('doctor_availability')
+      .select(`
+        id,
+        doctor_id,
+        day_of_week,
+        start_time,
+        end_time,
+        workplace_id,
+        workplaces:workplace_id(*)
+      `)
+      .eq('doctor_id', userId)
+      .eq('day_of_week', dayOfWeek)
+      .lte('start_time', timeString)
+      .gte('end_time', timeString);
+      
+    if (availabilities && availabilities.length > 0) {
+      // Return the workplace associated with the current availability
+      const currentAvailability = availabilities[0];
+      return currentAvailability.workplaces as unknown as Workplace;
+    }
+    
+    // If no current availability, fall back to primary workplace
+    const primaryWorkplaceId = await fetchPrimaryWorkplace(userId);
+    if (primaryWorkplaceId) {
+      return fetchWorkplaceById(primaryWorkplaceId);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error determining current workplace:', error);
+    return null;
   }
 };
