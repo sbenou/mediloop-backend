@@ -11,8 +11,8 @@ import { fetchDoctorWorkplaces } from '@/services/workplaceService';
 import { Workplace } from '@/types/workplace';
 import { Loader2, Clock, Plus, Save, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Json } from '@/types/supabase';
 
+// Define simpler interfaces to avoid deep type instantiations
 interface Availability {
   id?: string;
   day_of_week: number;
@@ -86,7 +86,7 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Query with proper type handling
+      // Type-safe query using basic types
       const { data, error } = await supabase
         .from('doctor_availability')
         .select('*')
@@ -97,7 +97,7 @@ const WorkplaceAvailability: React.FC = () => {
         
       if (error) throw error;
       
-      // Transform data to match our Availability interface
+      // Transform data without complex typing
       const formattedData: Availability[] = (data || []).map((item: any) => ({
         id: item.id,
         day_of_week: item.day_of_week,

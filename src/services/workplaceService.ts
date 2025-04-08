@@ -51,14 +51,14 @@ export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> 
  */
 export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]> => {
   try {
-    // Define the return type to avoid deep type instantiation
-    type JoinResult = {
+    // Define simple interface for join results to avoid deep type instantiation
+    interface DoctorWorkplaceJoin {
       workplace_id: string;
       is_primary: boolean;
       workplaces: Workplace;
-    };
+    }
     
-    // Use type assertion for the join query
+    // Query the data with minimal type information
     const { data, error } = await supabase
       .from('doctor_workplaces')
       .select(`
@@ -70,11 +70,11 @@ export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]
       
     if (error) throw error;
     
-    // Type assertion to avoid deep type instantiation
-    const typedData = data as unknown as JoinResult[];
+    // Process data with explicit casting to avoid deep type instantiation
+    const joinResults = data as unknown as DoctorWorkplaceJoin[];
     
     // Extract workplaces with the is_primary flag
-    return typedData.map(item => ({
+    return joinResults.map(item => ({
       ...item.workplaces,
       is_primary: item.is_primary
     }));
@@ -273,7 +273,7 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
-    // Define a type for the join result
+    // Define an interface for the join result to avoid type recursion issues
     interface AvailabilityWithWorkplace {
       id: string;
       doctor_id: string;
@@ -303,7 +303,7 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
       
     if (error) throw error;
     
-    // Type assertion to handle the complex join result
+    // Use a simple type assertion without generic nesting
     const availabilities = data as unknown as AvailabilityWithWorkplace[];
       
     if (availabilities && availabilities.length > 0) {
