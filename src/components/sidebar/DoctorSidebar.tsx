@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -5,7 +6,7 @@ import {
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
   MapPin, Video, Stethoscope, Calendar,
-  HeartPulse
+  HeartPulse, Building
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -49,6 +50,8 @@ const DoctorSidebar = ({
     setIsProfileOpen,
     isConsultationsOpen,
     setIsConsultationsOpen,
+    isWorkplacesOpen,
+    setIsWorkplacesOpen,
     navigateToLink
   } = useSidebarNavigation("doctor");
 
@@ -129,6 +132,28 @@ const DoctorSidebar = ({
               label="Appointments"
               isActive={section === "appointments"}
               onClick={() => navigateToDoctorView('appointments')}
+            />
+          </SidebarCollapsibleItem>
+          
+          {/* New Workplaces Section */}
+          <SidebarCollapsibleItem 
+            icon={<Building className="w-5 h-5 mr-3" />}
+            label="Workplaces"
+            isOpen={isWorkplacesOpen}
+            isActive={section === "workplaces"}
+            onOpenChange={(isOpen) => setIsWorkplacesOpen(isOpen)}
+          >
+            <SidebarSubItem
+              icon={<Building className="w-4 h-4 mr-3" />}
+              label="Workplace Selection"
+              isActive={section === "workplaces" && (!searchParams.get("workplacesTab") || searchParams.get("workplacesTab") === "selection")}
+              onClick={() => navigateToDoctorView('workplaces', 'selection', 'workplacesTab')}
+            />
+            <SidebarSubItem
+              icon={<Calendar className="w-4 h-4 mr-3" />}
+              label="Availability"
+              isActive={section === "workplaces" && searchParams.get("workplacesTab") === "availability"}
+              onClick={() => navigateToDoctorView('workplaces', 'availability', 'workplacesTab')}
             />
           </SidebarCollapsibleItem>
           

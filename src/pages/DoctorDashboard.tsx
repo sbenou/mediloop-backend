@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   ProfileView, 
   SettingsView,
-  HomeView
+  HomeView,
+  WorkplacesView
 } from "@/components/dashboard/views";
 import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatientView";
 import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorPrescriptionsView";
@@ -29,6 +29,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const currentView = searchParams.get("view") || initialParams?.get("view") || "doctor";
   const section = searchParams.get("section") || initialParams?.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || initialParams?.get("profileTab") || "personal";
+  const workplacesTab = searchParams.get("workplacesTab") || initialParams?.get("workplacesTab") || "selection";
   
   // Set URL params on initial load if initialParams was provided
   useEffect(() => {
@@ -84,6 +85,8 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
         return <DoctorTeleconsultationsView />;
       case "appointments":
         return <DoctorAppointmentsView />;
+      case "workplaces":
+        return <WorkplacesView />;
       case "dashboard":
       default:
         return <HomeView userRole="doctor" />;

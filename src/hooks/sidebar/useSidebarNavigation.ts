@@ -11,6 +11,7 @@ export const useSidebarNavigation = (userRole: string) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isConsultationsOpen, setIsConsultationsOpen] = useState(false);
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(false);
+  const [isWorkplacesOpen, setIsWorkplacesOpen] = useState(false);
   
   // Check if we're on the activities or notifications page
   const isActivitiesPage = location.pathname.includes('/activities') || 
@@ -34,6 +35,10 @@ export const useSidebarNavigation = (userRole: string) => {
 
       if (params.section === 'activities') {
         setIsActivitiesOpen(true);
+      }
+      
+      if (params.section === 'workplaces') {
+        setIsWorkplacesOpen(true);
       }
     } else {
       // For patients and other roles
@@ -168,6 +173,8 @@ export const useSidebarNavigation = (userRole: string) => {
     setIsConsultationsOpen,
     isActivitiesOpen,
     setIsActivitiesOpen,
+    isWorkplacesOpen,
+    setIsWorkplacesOpen,
     navigateToLink,
     isSectionActive,
     isTabActive,

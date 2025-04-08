@@ -15,6 +15,7 @@ import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatient
 import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorPrescriptionsView";
 import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/DoctorTeleconsultationsView";
 import DoctorAppointmentsView from "@/components/dashboard/views/doctor/DoctorAppointmentsView";
+import WorkplacesView from "@/components/dashboard/views/doctor/WorkplacesView";
 import NotificationsView from "@/components/dashboard/views/NotificationsView";
 
 interface DashboardRouterProps {
@@ -60,6 +61,8 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
         return <DoctorTeleconsultationsView />;
       case "appointments":
         return <DoctorAppointmentsView />;
+      case "workplaces":
+        return <WorkplacesView />;
       case "notifications":
         return <NotificationsView userRole="doctor" />;
       case "dashboard":
