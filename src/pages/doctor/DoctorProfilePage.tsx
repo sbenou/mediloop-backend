@@ -1,15 +1,13 @@
 
-import React, { useState } from "react";
+import React from "react";
 import ProfessionalProfile from "@/components/professional/ProfessionalProfile";
 import DoctorLayout from "@/components/layout/DoctorLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Building } from "lucide-react";
 
 const DoctorProfilePage = () => {
-  const [activeTab, setActiveTab] = useState<string>("profile");
   const navigate = useNavigate();
   
   const handleNavigateToWorkplaces = () => {
@@ -19,17 +17,7 @@ const DoctorProfilePage = () => {
   return (
     <DoctorLayout>
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl">
-        <h1 className="text-3xl font-bold mb-6">Doctor Profile</h1>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="profile">
-            <ProfessionalProfile role="doctor" />
-          </TabsContent>
-        </Tabs>
+        <ProfessionalProfile role="doctor" />
         
         <div className="mt-6">
           <Card className="p-6">
