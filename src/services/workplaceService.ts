@@ -68,7 +68,8 @@ export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]
     // First get the workplace IDs associated with this doctor
     const { data: doctorWorkplacesRaw, error: joinError } = await supabase
       .from('doctor_workplaces')
-      .select('workplace_id, is_primary, id');
+      .select('workplace_id, is_primary, id')
+      .eq('user_id', userId);
       
     if (joinError) throw joinError;
     
@@ -128,7 +129,7 @@ export const fetchPrimaryWorkplace = async (userId: string): Promise<string | nu
       .select('workplace_id')
       .eq('user_id', userId)
       .eq('is_primary', true)
-      .single();
+      .maybeSingle();
       
     if (error) throw error;
     
@@ -147,7 +148,7 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
     // First, reset all workplaces to non-primary
     const { error: resetError } = await supabase
       .from('doctor_workplaces')
-      .update({ is_primary: false } as Partial<DoctorWorkplaceRecord>)
+      .update({ is_primary: false })
       .eq('user_id', userId);
       
     if (resetError) throw resetError;
@@ -155,7 +156,7 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
     // Then, set the selected workplace as primary
     const { error } = await supabase
       .from('doctor_workplaces')
-      .update({ is_primary: true } as Partial<DoctorWorkplaceRecord>)
+      .update({ is_primary: true })
       .eq('user_id', userId)
       .eq('workplace_id', workplaceId);
 
@@ -177,14 +178,14 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
     if (isPrimary) {
       const { error: resetError } = await supabase
         .from('doctor_workplaces')
-        .update({ is_primary: false } as Partial<DoctorWorkplaceRecord>)
+        .update({ is_primary: false })
         .eq('user_id', userId);
         
       if (resetError) throw resetError;
     }
     
     // Create the record with explicit type annotation
-    const record: DoctorWorkplaceRecord = { 
+    const newRecord = { 
       id: crypto.randomUUID(), // Generate a UUID for the record
       user_id: userId, 
       workplace_id: workplaceId,
@@ -194,14 +195,14 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
     
     const { error } = await supabase
       .from('doctor_workplaces')
-      .insert([record]);
+      .insert([newRecord]);
       
     if (error) {
       // If the workplace already exists, update it
       if (error.code === '23505') { // Unique constraint violation
         const { error: updateError } = await supabase
           .from('doctor_workplaces')
-          .update({ is_primary: isPrimary } as Partial<DoctorWorkplaceRecord>)
+          .update({ is_primary: isPrimary })
           .eq('user_id', userId)
           .eq('workplace_id', workplaceId);
           
@@ -229,7 +230,7 @@ export const removeDoctorWorkplace = async (userId: string, workplaceId: string)
       .select('is_primary')
       .eq('user_id', userId)
       .eq('workplace_id', workplaceId)
-      .single();
+      .maybeSingle();
 
     if (checkError) throw checkError;
     
@@ -261,7 +262,7 @@ export const removeDoctorWorkplace = async (userId: string, workplaceId: string)
     return true;
   } catch (error) {
     console.error(`Error removing workplace for doctor ${userId}:`, error);
-    return false;
+    throw error;
   }
 };
 
@@ -320,26 +321,24 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
-    // Query for availability with workplace_id - use explicit typing to avoid deep instantiation
+    // First check if doctor availability table has workplace_id column
+    // Using maybeSingle to avoid errors if no results are found
     const { data: availabilityData, error: availabilityError } = await supabase
       .from('doctor_availability')
       .select('workplace_id')
       .eq('doctor_id', userId)
       .eq('day_of_week', dayOfWeek)
       .lte('start_time', timeString)
-      .gte('end_time', timeString);
+      .gte('end_time', timeString)
+      .maybeSingle();
     
-    if (availabilityError) throw availabilityError;
+    if (availabilityError && !availabilityError.message.includes("column 'workplace_id' does not exist")) {
+      throw availabilityError;
+    }
     
-    // Safely handle the results with proper type checking
-    if (availabilityData && availabilityData.length > 0) {
-      // Find the first record with a valid workplace_id
-      for (const record of availabilityData) {
-        if (record && record.workplace_id) {
-          // Get the workplace details
-          return await fetchWorkplaceById(record.workplace_id);
-        }
-      }
+    // If we found a workplace_id in availability, use that
+    if (availabilityData && availabilityData.workplace_id) {
+      return await fetchWorkplaceById(availabilityData.workplace_id);
     }
     
     // If no current availability, fall back to primary workplace

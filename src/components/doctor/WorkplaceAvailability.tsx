@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,8 +21,8 @@ interface Availability {
   doctor_id: string;
 }
 
-// Define explicit interface for availability records
-interface AvailabilityRecord {
+// Simple direct interface for availability records from DB
+interface AvailabilityDbRecord {
   id: string;
   doctor_id: string;
   day_of_week: number;
@@ -87,7 +86,7 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Use explicit typing for query results to avoid deep type instantiation
+      // Use explicit query with simple type casting to avoid deep instantiation
       const { data: rawData, error } = await supabase
         .from('doctor_availability')
         .select('id, doctor_id, day_of_week, start_time, end_time, workplace_id')
