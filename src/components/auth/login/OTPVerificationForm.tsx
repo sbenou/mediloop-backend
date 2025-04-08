@@ -83,6 +83,7 @@ export const OTPVerificationForm = ({ email, onSuccess }: OTPVerificationFormPro
           created_at: null,
           updated_at: null,
           license_number: null,
+          phone_number: null, // Added this field
           pharmacy_id: null
         };
         

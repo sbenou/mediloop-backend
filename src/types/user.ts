@@ -6,6 +6,19 @@ import type { Database } from '@/integrations/supabase/types';
 export type DbProfile = Database['public']['Tables']['profiles']['Row'];
 export type DbRolePermission = Database['public']['Tables']['role_permissions']['Row'];
 
+// Define doctor metadata type
+export interface DoctorMetadata {
+  id: string;
+  doctor_id: string | null;
+  logo_url: string | null;
+  hours: string | null;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 // Create a base profile type that properly extends the database profile type
 export interface UserProfile {
   id: string;

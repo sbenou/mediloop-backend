@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useRecoilState } from "recoil";
 import { pharmacyLogoUrlState, doctorLogoUrlState } from "@/store/images/atoms";
+import { DoctorMetadata } from "@/types/user";
 
 // Import our unified components
 import ProfessionalHeader from "./profile/ProfessionalHeader";
@@ -24,18 +24,6 @@ interface EntityData {
   hours: string | null;
   logo_url?: string | null;
   email?: string;
-}
-
-interface DoctorMetadata {
-  id: string;
-  doctor_id: string | null;
-  logo_url: string | null;
-  hours: string | null;
-  address?: string | null;
-  city?: string | null;
-  postal_code?: string | null;
-  created_at: string | null;
-  updated_at: string | null;
 }
 
 interface ProfessionalProfileProps {
@@ -178,14 +166,14 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
           
           if (metadata) {
             console.log("Found doctor metadata:", metadata);
-            doctorLogoUrl = metadata.logo_url;
+            const typedMetadata = metadata as DoctorMetadata;
+            doctorLogoUrl = typedMetadata.logo_url;
             
-            // Since doctor_metadata might not have address fields directly,
-            // use the address fields if they exist, otherwise default to empty strings
-            address = metadata.address || '';
-            city = metadata.city || '';
-            postal_code = metadata.postal_code || '';
-            hours = metadata.hours;
+            // Use the address fields from metadata
+            address = typedMetadata.address || '';
+            city = typedMetadata.city || '';
+            postal_code = typedMetadata.postal_code || '';
+            hours = typedMetadata.hours;
             
             if (doctorLogoUrl) {
               setLogoUrl(doctorLogoUrl);
@@ -218,7 +206,10 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
                   .from('doctor_metadata')
                   .insert({ 
                     doctor_id: entityId, 
-                    logo_url: doctorLogoUrl 
+                    logo_url: doctorLogoUrl,
+                    address: '',
+                    city: '',
+                    postal_code: ''
                   });
               } catch (metaError) {
                 console.error("Error creating doctor_metadata:", metaError);
