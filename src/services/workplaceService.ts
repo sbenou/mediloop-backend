@@ -52,7 +52,11 @@ export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]
   try {
     const { data, error } = await supabase
       .from('doctor_workplaces')
-      .select('workplace_id, is_primary, workplaces:workplace_id(*)')
+      .select(`
+        workplace_id,
+        is_primary,
+        workplaces:workplace_id(*)
+      `)
       .eq('user_id', userId);
       
     if (error) throw error;
@@ -94,10 +98,12 @@ export const fetchPrimaryWorkplace = async (userId: string): Promise<string | nu
  */
 export const updatePrimaryWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
-    const { error } = await supabase.rpc('set_primary_workplace', { 
-      p_user_id: userId, 
-      p_workplace_id: workplaceId 
-    });
+    // Using direct SQL function call
+    const { data, error } = await supabase
+      .rpc('set_primary_workplace', { 
+        p_user_id: userId, 
+        p_workplace_id: workplaceId 
+      });
 
     if (error) throw error;
     
@@ -149,20 +155,24 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
 export const removeDoctorWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
     // Check if this is the primary workplace
-    const { data: primaryCheck } = await supabase
+    const { data: primaryCheck, error: checkError } = await supabase
       .from('doctor_workplaces')
       .select('is_primary')
       .eq('user_id', userId)
       .eq('workplace_id', workplaceId)
       .single();
       
+    if (checkError) throw checkError;
+    
     // Prevent removing the primary workplace if it's the last one
     if (primaryCheck?.is_primary) {
-      const { data: countCheck } = await supabase
+      const { data: countCheck, error: countError } = await supabase
         .from('doctor_workplaces')
         .select('id', { count: 'exact' })
         .eq('user_id', userId);
         
+      if (countError) throw countError;
+      
       if ((countCheck?.length || 0) <= 1) {
         throw new Error('Cannot remove the only workplace. Please add another workplace first.');
       }
@@ -241,7 +251,7 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
     // Query availabilities for the current day that include the current time
-    const { data: availabilities } = await supabase
+    const { data: availabilities, error } = await supabase
       .from('doctor_availability')
       .select(`
         id,
@@ -256,6 +266,8 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
       .eq('day_of_week', dayOfWeek)
       .lte('start_time', timeString)
       .gte('end_time', timeString);
+      
+    if (error) throw error;
       
     if (availabilities && availabilities.length > 0) {
       // Return the workplace associated with the current availability

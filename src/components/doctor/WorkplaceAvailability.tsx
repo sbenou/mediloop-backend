@@ -86,7 +86,17 @@ const WorkplaceAvailability: React.FC = () => {
         
       if (error) throw error;
       
-      setAvailabilities(data || []);
+      // Transform data to match our Availability interface
+      const formattedData: Availability[] = (data || []).map(item => ({
+        id: item.id,
+        day_of_week: item.day_of_week,
+        start_time: item.start_time || '',
+        end_time: item.end_time || '',
+        workplace_id: workplaceId,
+        doctor_id: user.id,
+      }));
+      
+      setAvailabilities(formattedData);
     } catch (error) {
       console.error('Error loading availabilities:', error);
       toast({
