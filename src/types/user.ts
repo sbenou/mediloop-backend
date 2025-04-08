@@ -29,6 +29,7 @@ export interface UserProfile {
   created_at: string | null;
   updated_at: string | null;
   license_number: string | null;
+  phone_number: string | null;  // Added this property
   // Adding pharmacy-specific fields
   pharmacy_id?: string | null;  // Add the pharmacy_id field
   pharmacy_name?: string | null;

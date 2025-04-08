@@ -26,6 +26,18 @@ interface EntityData {
   email?: string;
 }
 
+interface DoctorMetadata {
+  id: string;
+  doctor_id: string | null;
+  logo_url: string | null;
+  hours: string | null;
+  address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 interface ProfessionalProfileProps {
   role: 'doctor' | 'pharmacy';
 }
@@ -167,6 +179,9 @@ const ProfessionalProfile: React.FC<ProfessionalProfileProps> = ({ role }) => {
           if (metadata) {
             console.log("Found doctor metadata:", metadata);
             doctorLogoUrl = metadata.logo_url;
+            
+            // Since doctor_metadata might not have address fields directly,
+            // use the address fields if they exist, otherwise default to empty strings
             address = metadata.address || '';
             city = metadata.city || '';
             postal_code = metadata.postal_code || '';
