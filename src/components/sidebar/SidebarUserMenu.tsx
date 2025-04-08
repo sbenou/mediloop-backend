@@ -1,4 +1,3 @@
-
 import { UserProfile } from "@/types/user";
 import { ChevronDown, CreditCard, LogOut, User, Store } from "lucide-react";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -193,6 +192,16 @@ const SidebarUserMenu = ({
     ? 'Pharmacy Account'
     : profile?.email || 'user@example.com';
 
+  // Handle upgrade navigation safely
+  const handleUpgradeNavigation = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Use setTimeout to avoid React state updates during render
+    setTimeout(() => {
+      navigateToUpgrade();
+    }, 0);
+  };
+
   return (
     <div className="border-t p-4">
       <div className="flex items-center space-x-3">
@@ -238,7 +247,7 @@ const SidebarUserMenu = ({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={navigateToUpgrade}>
+              <DropdownMenuItem onClick={handleUpgradeNavigation}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 <span>Upgrade to Pro</span>
               </DropdownMenuItem>
