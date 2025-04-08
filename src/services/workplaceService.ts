@@ -50,6 +50,13 @@ export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> 
  */
 export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]> => {
   try {
+    // Define an interface for the combined join data
+    interface DoctorWorkplaceJoin {
+      workplace_id: string;
+      is_primary: boolean;
+      workplaces: Workplace;
+    }
+
     const { data, error } = await supabase
       .from('doctor_workplaces')
       .select(`
@@ -57,7 +64,8 @@ export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]
         is_primary,
         workplaces:workplace_id(*)
       `)
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .returns<DoctorWorkplaceJoin[]>();
       
     if (error) throw error;
     
@@ -98,12 +106,13 @@ export const fetchPrimaryWorkplace = async (userId: string): Promise<string | nu
  */
 export const updatePrimaryWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
-    // Using direct SQL function call
-    const { data, error } = await supabase
+    // Since the rpc function is custom and not recognized by TypeScript, 
+    // we need to use a workaround with any type
+    const { data, error } = await (supabase
       .rpc('set_primary_workplace', { 
         p_user_id: userId, 
         p_workplace_id: workplaceId 
-      });
+      }) as any);
 
     if (error) throw error;
     
@@ -119,20 +128,23 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
  */
 export const addDoctorWorkplace = async (userId: string, workplaceId: string, isPrimary: boolean = false): Promise<boolean> => {
   try {
+    // Create the record with the proper structure
+    const record = { 
+      user_id: userId, 
+      workplace_id: workplaceId,
+      is_primary: isPrimary
+    };
+    
     const { error } = await supabase
       .from('doctor_workplaces')
-      .insert([{ 
-        user_id: userId, 
-        workplace_id: workplaceId,
-        is_primary: isPrimary
-      }]);
+      .insert([record] as any); // Type assertion to bypass TypeScript error
       
     if (error) {
       // If the workplace already exists, update it
       if (error.code === '23505') { // Unique constraint violation
         const { error: updateError } = await supabase
           .from('doctor_workplaces')
-          .update({ is_primary: isPrimary })
+          .update({ is_primary: isPrimary } as any) // Type assertion to bypass TypeScript error
           .eq('user_id', userId)
           .eq('workplace_id', workplaceId);
           
@@ -155,12 +167,17 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
 export const removeDoctorWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
     // Check if this is the primary workplace
+    interface WorkplaceCheck {
+      is_primary: boolean;
+    }
+    
     const { data: primaryCheck, error: checkError } = await supabase
       .from('doctor_workplaces')
       .select('is_primary')
       .eq('user_id', userId)
       .eq('workplace_id', workplaceId)
-      .single();
+      .single()
+      .returns<WorkplaceCheck>();
       
     if (checkError) throw checkError;
     
@@ -250,6 +267,16 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
+    interface AvailabilityWithWorkplace {
+      id: string;
+      doctor_id: string;
+      day_of_week: number;
+      start_time: string;
+      end_time: string;
+      workplace_id: string;
+      workplaces: Workplace;
+    }
+    
     // Query availabilities for the current day that include the current time
     const { data: availabilities, error } = await supabase
       .from('doctor_availability')
@@ -265,14 +292,15 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
       .eq('doctor_id', userId)
       .eq('day_of_week', dayOfWeek)
       .lte('start_time', timeString)
-      .gte('end_time', timeString);
+      .gte('end_time', timeString)
+      .returns<AvailabilityWithWorkplace[]>();
       
     if (error) throw error;
       
     if (availabilities && availabilities.length > 0) {
       // Return the workplace associated with the current availability
       const currentAvailability = availabilities[0];
-      return currentAvailability.workplaces as unknown as Workplace;
+      return currentAvailability.workplaces;
     }
     
     // If no current availability, fall back to primary workplace

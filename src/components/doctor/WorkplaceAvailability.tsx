@@ -76,13 +76,23 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
+      interface AvailabilityData {
+        id: string;
+        doctor_id: string;
+        day_of_week: number;
+        start_time: string | null;
+        end_time: string | null;
+        workplace_id: string;
+      }
+      
       const { data, error } = await supabase
         .from('doctor_availability')
         .select('*')
         .eq('doctor_id', user.id)
         .eq('workplace_id', workplaceId)
         .order('day_of_week')
-        .order('start_time');
+        .order('start_time')
+        .returns<AvailabilityData[]>();
         
       if (error) throw error;
       
