@@ -1,23 +1,18 @@
+
 import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Route,
   Routes,
-  useLocation,
-  useNavigate,
 } from "react-router-dom";
 import { RecoilRoot } from "recoil";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { initializeSupabase } from "./lib/supabase";
-import { AuthProvider, useAuth } from "./hooks/auth/useAuth";
+import { supabase } from "./lib/supabase";
 import {
   HomePage,
   LoginPage,
   RegisterPage,
   SettingsPage,
-  ForgotPasswordPage,
-  ResetPasswordPage,
-  VerifyPage,
   Dashboard,
   SuperAdminDashboard,
   PharmacyProfilePage,
@@ -31,26 +26,26 @@ import {
   ActivitiesPage,
   UpgradePage
 } from "./pages";
-import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
-import { siteConfig } from "./config/site";
-import { Shell } from "@/components/shell";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { RequireRole } from "@/components/auth/RequireRole";
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { Toaster } from "@/components/ui/toaster";
 
 const queryClient = new QueryClient();
 
 function App() {
   useEffect(() => {
-    initializeSupabase();
+    // Initialize Supabase if needed
+    // We'll just check if supabase client exists
+    if (supabase) {
+      console.log("Supabase client initialized");
+    }
   }, []);
 
   return (
     <ThemeProvider
-      attribute="class"
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
@@ -64,9 +59,6 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  <Route path="/reset-password" element={<ResetPasswordPage />} />
-                  <Route path="/verify" element={<VerifyPage />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/superadmin/dashboard" element={<RequireAuth><RequireRole roles={["superadmin"]}><SuperAdminDashboard /></RequireRole></RequireAuth>} />
                   <Route path="/superadmin/users" element={<RequireAuth><RequireRole roles={["superadmin"]}><SuperAdminDashboard /></RequireRole></RequireAuth>} />
@@ -87,6 +79,7 @@ function App() {
                   <Route path="/upgrade" element={<UpgradePage />} />
                 </Routes>
               </Router>
+              <Toaster />
             </CartProvider>
           </CurrencyProvider>
         </QueryClientProvider>

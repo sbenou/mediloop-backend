@@ -1,6 +1,5 @@
 
 import { ReactNode } from "react";
-import { UserMenu } from "@/components/ui";
 import UnifiedSidebar from "../sidebar/UnifiedSidebar";
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
