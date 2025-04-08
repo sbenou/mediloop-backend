@@ -12,8 +12,9 @@ import { useCallback, memo, useState, useEffect, useRef } from 'react';
 import { supabase } from "@/lib/supabase";
 import { getSessionFromStorage } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import { useRecoilState } from "recoil";
+// Import from the centralized location
 import { userAvatarState } from "@/store/user/atoms";
+import { useRecoilState } from "recoil";
 
 const UserMenu = memo(() => {
   const { isAuthenticated, isLoading, profile, userRole, isPharmacist } = useAuth();
