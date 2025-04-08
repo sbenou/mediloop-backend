@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { Workplace, WorkplaceType } from "@/types/workplace";
 import { safeSelectData } from "@/lib/typeUtils";
@@ -50,26 +51,43 @@ export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> 
  */
 export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]> => {
   try {
-    // Use raw query approach to avoid deep type instantiation
-    const result = await supabase
+    // Simplify by using a direct SQL approach that avoids complex type instantiations
+    const { data: doctorWorkplaces, error: joinError } = await supabase
       .from('doctor_workplaces')
-      .select(`
-        workplace_id,
-        is_primary,
-        workplaces:workplace_id(*)
-      `)
+      .select('workplace_id, is_primary')
       .eq('user_id', userId);
       
-    if (result.error) throw result.error;
+    if (joinError) throw joinError;
     
-    // Use explicit any type first to break the deep instantiation chain
-    const data = result.data as any[];
+    // If no workplaces are found, return empty array
+    if (!doctorWorkplaces || doctorWorkplaces.length === 0) {
+      return [];
+    }
     
-    // Now map the raw data to our expected format
-    return data.map(item => ({
-      ...(item.workplaces as Workplace),
-      is_primary: item.is_primary
-    }));
+    // Extract workplace IDs
+    const workplaceIds = doctorWorkplaces.map(item => item.workplace_id);
+    
+    // Fetch the actual workplace data
+    const { data: workplacesData, error: workplacesError } = await supabase
+      .from('workplaces')
+      .select('*')
+      .in('id', workplaceIds);
+      
+    if (workplacesError) throw workplacesError;
+    
+    // Create a map for quick lookup of primary status
+    const isPrimaryMap = new Map();
+    doctorWorkplaces.forEach(item => {
+      if (item.workplace_id) {
+        isPrimaryMap.set(item.workplace_id, item.is_primary || false);
+      }
+    });
+    
+    // Attach the is_primary flag to each workplace
+    return (workplacesData || []).map(workplace => ({
+      ...workplace,
+      is_primary: isPrimaryMap.get(workplace.id) || false
+    })) as Workplace[];
   } catch (error) {
     console.error(`Error fetching workplaces for doctor ${userId}:`, error);
     return [];
@@ -102,10 +120,18 @@ export const fetchPrimaryWorkplace = async (userId: string): Promise<string | nu
  */
 export const updatePrimaryWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
-    // Use direct SQL method instead of RPC for better TypeScript compatibility
+    // First, reset all workplaces to non-primary
+    const { error: resetError } = await supabase
+      .from('doctor_workplaces')
+      .update({ is_primary: false })
+      .eq('user_id', userId);
+      
+    if (resetError) throw resetError;
+    
+    // Then, set the selected workplace as primary
     const { error } = await supabase
       .from('doctor_workplaces')
-      .update({ is_primary: true } as any) // Type assertion needed here
+      .update({ is_primary: true })
       .eq('user_id', userId)
       .eq('workplace_id', workplaceId);
 
@@ -123,11 +149,22 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
  */
 export const addDoctorWorkplace = async (userId: string, workplaceId: string, isPrimary: boolean = false): Promise<boolean> => {
   try {
-    // Create the record with proper structure using type assertion
+    // If this will be a primary workplace, first reset all others
+    if (isPrimary) {
+      const { error: resetError } = await supabase
+        .from('doctor_workplaces')
+        .update({ is_primary: false })
+        .eq('user_id', userId);
+        
+      if (resetError) throw resetError;
+    }
+    
+    // Create the record
     const record = { 
       user_id: userId, 
       workplace_id: workplaceId,
-      is_primary: isPrimary
+      is_primary: isPrimary,
+      created_at: new Date().toISOString()
     };
     
     const { error } = await supabase
@@ -265,32 +302,21 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
-    // Use raw query approach to avoid deep type instantiation
-    const result = await supabase
+    // Simplify query to avoid deep type instantiation
+    const { data: availabilityData, error: availabilityError } = await supabase
       .from('doctor_availability')
-      .select(`
-        id,
-        doctor_id,
-        day_of_week,
-        start_time,
-        end_time,
-        workplace_id,
-        workplaces:workplace_id(*)
-      `)
+      .select('workplace_id')
       .eq('doctor_id', userId)
       .eq('day_of_week', dayOfWeek)
       .lte('start_time', timeString)
       .gte('end_time', timeString);
       
-    if (result.error) throw result.error;
+    if (availabilityError) throw availabilityError;
     
-    // Use explicit any type first to break the deep instantiation chain
-    const data = result.data as any[];
-      
-    if (data && data.length > 0) {
-      // Return the workplace associated with the current availability
-      const currentAvailability = data[0];
-      return currentAvailability.workplaces as Workplace;
+    if (availabilityData && availabilityData.length > 0) {
+      const workplaceId = availabilityData[0].workplace_id;
+      // Get the workplace details
+      return await fetchWorkplaceById(workplaceId);
     }
     
     // If no current availability, fall back to primary workplace

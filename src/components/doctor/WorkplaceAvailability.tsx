@@ -11,7 +11,7 @@ import { Workplace } from '@/types/workplace';
 import { Loader2, Clock, Plus, Save, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-// Define simpler interfaces to avoid deep type instantiations
+// Simplified interfaces to avoid deep type instantiations
 interface Availability {
   id?: string;
   day_of_week: number;
@@ -85,22 +85,19 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Use raw data fetching without complex typing
-      const result = await supabase
+      // Simplified query to avoid complex type issues
+      const { data: rawData, error } = await supabase
         .from('doctor_availability')
-        .select('*')
+        .select('id, doctor_id, day_of_week, start_time, end_time, workplace_id')
         .eq('doctor_id', user.id)
         .eq('workplace_id', workplaceId)
         .order('day_of_week')
         .order('start_time');
         
-      if (result.error) throw result.error;
+      if (error) throw error;
       
-      // Cast data with any first to avoid type instantiation issues
-      const data = result.data as any[];
-      
-      // Transform data without complex typing
-      const formattedData: Availability[] = (data || []).map((item) => ({
+      // Transform data safely with explicit typing
+      const formattedData: Availability[] = (rawData || []).map((item: any) => ({
         id: item.id,
         day_of_week: item.day_of_week,
         start_time: item.start_time || '',
@@ -202,15 +199,15 @@ const WorkplaceAvailability: React.FC = () => {
       await loadAvailabilities(selectedWorkplaceId);
       
       toast({
-        title: 'Success',
-        description: 'Availability schedule saved successfully',
+        title: "Success",
+        description: "Availability schedule saved successfully",
       });
     } catch (error) {
       console.error('Error saving availabilities:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to save availability schedule',
+        description: "Failed to save availability schedule",
       });
     } finally {
       setIsSaving(false);
