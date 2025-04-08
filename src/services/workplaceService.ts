@@ -7,10 +7,12 @@ import { Workplace } from "@/types/workplace";
  */
 export const fetchAllWorkplaces = async (): Promise<Workplace[]> => {
   try {
+    // Use a raw query to avoid TypeScript errors since 'workplaces' is a new table
     const { data, error } = await supabase
       .from('workplaces')
       .select('*')
-      .order('name');
+      .order('name')
+      .returns<Workplace[]>();
       
     if (error) throw error;
     
@@ -26,11 +28,13 @@ export const fetchAllWorkplaces = async (): Promise<Workplace[]> => {
  */
 export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> => {
   try {
+    // Use a raw query with explicit return type
     const { data, error } = await supabase
       .from('workplaces')
       .select('*')
       .eq('id', id)
-      .single();
+      .single()
+      .returns<Workplace>();
       
     if (error) throw error;
     
@@ -96,11 +100,13 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
  */
 export const createWorkplace = async (workplace: Omit<Workplace, 'id' | 'created_at' | 'updated_at'>): Promise<Workplace | null> => {
   try {
+    // Use a raw query with explicit return type
     const { data, error } = await supabase
       .from('workplaces')
       .insert([workplace])
       .select()
-      .single();
+      .single()
+      .returns<Workplace>();
       
     if (error) throw error;
     

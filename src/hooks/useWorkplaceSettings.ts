@@ -1,9 +1,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { supabase } from '@/lib/supabase';
 import { Workplace, WorkplaceSelectionOptions } from '@/types/workplace';
 import { toast } from '@/hooks/use-toast';
+import { fetchAllWorkplaces, updatePrimaryWorkplace } from '@/services/workplaceService';
+import { supabase } from '@/lib/supabase';
 
 export const useWorkplaceSettings = () => {
   const { user } = useAuth();
@@ -19,15 +20,9 @@ export const useWorkplaceSettings = () => {
 
     try {
       setIsLoading(true);
-      
-      const { data, error } = await supabase
-        .from('workplaces')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-
-      setWorkplaces(data || []);
+      // Use the service function instead of direct query
+      const data = await fetchAllWorkplaces();
+      setWorkplaces(data);
     } catch (error) {
       console.error('Error fetching workplaces:', error);
       toast({
@@ -38,7 +33,7 @@ export const useWorkplaceSettings = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, toast]);
+  }, [user?.id]);
 
   // Fetch current workplace settings
   const fetchCurrentWorkplaceSettings = useCallback(async () => {
@@ -65,30 +60,18 @@ export const useWorkplaceSettings = () => {
     }
   }, [user?.id]);
 
-  // Update primary workplace
-  const updatePrimaryWorkplace = async (workplaceId: string) => {
+  // Update primary workplace using the service function
+  const handleUpdatePrimaryWorkplace = async (workplaceId: string) => {
     if (!user?.id) return false;
     
     try {
-      const response = await fetch('https://hrrlefgnhkbzuwyklejj.functions.supabase.co/upsert-doctor-workplace', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({ 
-          userId: user.id, 
-          workplaceId: workplaceId 
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Unknown error occurred');
+      const success = await updatePrimaryWorkplace(user.id, workplaceId);
+      
+      if (success) {
+        setSelectedWorkplaceId(workplaceId);
+        return true;
       }
-
-      setSelectedWorkplaceId(workplaceId);
-      return true;
+      return false;
     } catch (error) {
       console.error('Error updating workplace:', error);
       return false;
@@ -113,7 +96,7 @@ export const useWorkplaceSettings = () => {
     selectedWorkplaceId,
     useMultipleWorkplaces,
     additionalWorkplaceIds,
-    updatePrimaryWorkplace,
+    updatePrimaryWorkplace: handleUpdatePrimaryWorkplace,
     toggleMultipleWorkplaces,
     refreshData: () => {
       fetchWorkplaces();

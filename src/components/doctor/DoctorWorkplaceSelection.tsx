@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,14 +10,8 @@ import { toast } from '@/components/ui/use-toast';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-
-interface Workplace {
-  id: string;
-  name: string;
-  address?: string;
-  city?: string;
-  postal_code?: string;
-}
+import { fetchAllWorkplaces, updatePrimaryWorkplace } from '@/services/workplaceService';
+import { Workplace } from '@/types/workplace';
 
 const DoctorWorkplaceSelection = () => {
   const { profile, user } = useAuth();
@@ -30,7 +24,7 @@ const DoctorWorkplaceSelection = () => {
   const [selectedWorkplaces, setSelectedWorkplaces] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchWorkplaces();
+    fetchWorkplacesData();
     fetchCurrentWorkplace();
     checkIfUsingMultipleWorkplaces();
   }, [user?.id]);
@@ -54,31 +48,15 @@ const DoctorWorkplaceSelection = () => {
     }
   };
 
-  const fetchWorkplaces = async () => {
+  const fetchWorkplacesData = async () => {
     if (!user?.id) return;
 
     try {
       setIsLoading(true);
       
-      // Fetch all clinics/medical offices
-      const { data, error } = await supabase
-        .from('workplaces')
-        .select('id, name, city, postal_code, address')
-        .order('name');
-
-      if (error) {
-        throw error;
-      }
-
-      const formattedWorkplaces = data.map(workplace => ({
-        id: workplace.id,
-        name: workplace.name,
-        city: workplace.city,
-        postal_code: workplace.postal_code,
-        address: workplace.address
-      }));
-
-      setWorkplaces(formattedWorkplaces);
+      // Use the service function to fetch workplaces
+      const workplacesData = await fetchAllWorkplaces();
+      setWorkplaces(workplacesData);
     } catch (error) {
       console.error('Error fetching workplaces:', error);
       toast({
@@ -124,23 +102,12 @@ const DoctorWorkplaceSelection = () => {
     try {
       setIsSaving(true);
       setSelectedWorkplaceId(workplaceId);
-
-      // Use the edge function instead of RPC
-      const response = await fetch('https://hrrlefgnhkbzuwyklejj.functions.supabase.co/upsert-doctor-workplace', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({ 
-          userId: user.id, 
-          workplaceId: workplaceId 
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Unknown error occurred');
+      
+      // Use the service function to update workplace
+      const success = await updatePrimaryWorkplace(user.id, workplaceId);
+      
+      if (!success) {
+        throw new Error('Failed to update workplace');
       }
 
       toast({
