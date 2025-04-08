@@ -11,6 +11,11 @@ export const useSidebarNavigation = (userRole: string) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isConsultationsOpen, setIsConsultationsOpen] = useState(false);
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(false);
+  const [isWorkplacesOpen, setIsWorkplacesOpen] = useState(false); // Added workplaces state
+  
+  // Check if we're on the activities or notifications page
+  const isActivitiesPage = location.pathname.includes('/activities') || 
+                          location.pathname.includes('/notifications');
   
   // Determine if a section is expanded based on URL
   useEffect(() => {
@@ -30,6 +35,11 @@ export const useSidebarNavigation = (userRole: string) => {
 
       if (params.section === 'activities') {
         setIsActivitiesOpen(true);
+      }
+      
+      // Add workplaces section check
+      if (params.section === 'workplaces') {
+        setIsWorkplacesOpen(true);
       }
     } else {
       // For patients and other roles
@@ -53,7 +63,7 @@ export const useSidebarNavigation = (userRole: string) => {
 
   // Navigate to a link with special handling for different roles
   const navigateToLink = (path: string) => {
-    console.log(`navigateToLink called with path: ${path}, userRole: ${userRole}`);
+    console.log(`navigateToLink called with path: ${path}, userRole: ${userRole}, isActivitiesPage: ${isActivitiesPage}`);
     
     // Always use /dashboard as the base path for in-app navigation
     const basePath = "/dashboard";
@@ -97,6 +107,13 @@ export const useSidebarNavigation = (userRole: string) => {
       if (!paramsObject.section) {
         paramsObject.section = 'dashboard';
       }
+    }
+    
+    // If on activities page, navigate to dashboard with the query parameters
+    if (isActivitiesPage) {
+      console.log('Navigating from activities page to dashboard with params:', paramsObject);
+      navigate(`${basePath}?${new URLSearchParams(paramsObject).toString()}`);
+      return;
     }
     
     // Update the URL parameters and stay on the dashboard
@@ -157,6 +174,8 @@ export const useSidebarNavigation = (userRole: string) => {
     setIsConsultationsOpen,
     isActivitiesOpen,
     setIsActivitiesOpen,
+    isWorkplacesOpen,
+    setIsWorkplacesOpen,
     navigateToLink,
     isSectionActive,
     isTabActive,

@@ -6,7 +6,7 @@ import SettingsView from './SettingsView';
 import OrdersView from './OrdersView';
 import PrescriptionsView from './PrescriptionsView';
 import NotificationsView from './NotificationsView';
-import PharmacyView from './pharmacy/PharmacyView';
+import PharmacyView from '../PharmacyView'; // Fix the import path
 import DoctorPatientView from './doctor/DoctorPatientView';
 import DoctorPrescriptionsView from './doctor/DoctorPrescriptionsView';
 import DoctorTeleconsultationsView from './doctor/DoctorTeleconsultationsView';

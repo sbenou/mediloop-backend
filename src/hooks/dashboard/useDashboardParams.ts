@@ -9,6 +9,7 @@ export const useDashboardParams = () => {
   const section = searchParams.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || "personal";
   const ordersTab = searchParams.get("ordersTab") || "orders";
+  const workplacesTab = searchParams.get("workplacesTab") || "selection"; // Added workplacesTab
   
   // Function to update dashboard parameters
   const updateParams = (newParams: Record<string, string>) => {
@@ -32,7 +33,8 @@ export const useDashboardParams = () => {
       view,
       section,
       profileTab,
-      ordersTab
+      ordersTab,
+      workplacesTab // Include workplacesTab in the returned params object
     },
     // Raw parameters
     searchParams,
