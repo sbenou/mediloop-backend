@@ -185,7 +185,7 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
     }
     
     // Create the record with explicit type annotation
-    const newRecord = { 
+    const newRecord: DoctorWorkplaceRecord = { 
       id: crypto.randomUUID(), // Generate a UUID for the record
       user_id: userId, 
       workplace_id: workplaceId,

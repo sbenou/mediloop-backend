@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { Workplace } from '@/types/workplace';
 import { Loader2, Clock, Plus, Save, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-// Simplified interfaces to avoid deep type instantiations
+// Define simplified interfaces to prevent deep type instantiation issues
 interface Availability {
   id?: string;
   day_of_week: number;
@@ -21,7 +22,7 @@ interface Availability {
   doctor_id: string;
 }
 
-// Simple direct interface for availability records from DB
+// Simple direct interface for DB records
 interface AvailabilityDbRecord {
   id: string;
   doctor_id: string;
@@ -86,7 +87,7 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Use explicit query with simple type casting to avoid deep instantiation
+      // Use explicit query with simple type casting
       const { data: rawData, error } = await supabase
         .from('doctor_availability')
         .select('id, doctor_id, day_of_week, start_time, end_time, workplace_id')
@@ -164,7 +165,7 @@ const WorkplaceAvailability: React.FC = () => {
     try {
       // Prepare data for upsert
       const toUpsert = availabilities.map(a => ({
-        id: a.id, // If existing, will update; if new, will be inserted
+        id: a.id || undefined, // If existing, will update; if new, will be inserted
         day_of_week: a.day_of_week,
         start_time: a.start_time,
         end_time: a.end_time,

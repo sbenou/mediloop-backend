@@ -159,6 +159,7 @@ export type Database = {
           is_available: boolean | null
           start_time: string | null
           updated_at: string
+          workplace_id: string | null
         }
         Insert: {
           additional_time_slots?: Json | null
@@ -171,6 +172,7 @@ export type Database = {
           is_available?: boolean | null
           start_time?: string | null
           updated_at?: string
+          workplace_id?: string | null
         }
         Update: {
           additional_time_slots?: Json | null
@@ -183,8 +185,17 @@ export type Database = {
           is_available?: boolean | null
           start_time?: string | null
           updated_at?: string
+          workplace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "doctor_availability_workplace_id_fkey"
+            columns: ["workplace_id"]
+            isOneToOne: false
+            referencedRelation: "workplaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctor_metadata: {
         Row: {
@@ -270,16 +281,22 @@ export type Database = {
       doctor_workplaces: {
         Row: {
           created_at: string
+          id: string | null
+          is_primary: boolean
           user_id: string
           workplace_id: string | null
         }
         Insert: {
           created_at?: string
+          id?: string | null
+          is_primary?: boolean
           user_id: string
           workplace_id?: string | null
         }
         Update: {
           created_at?: string
+          id?: string | null
+          is_primary?: boolean
           user_id?: string
           workplace_id?: string | null
         }
