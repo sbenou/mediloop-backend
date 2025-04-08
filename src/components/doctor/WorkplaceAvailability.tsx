@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,8 +85,8 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Type-safe query using basic types
-      const { data, error } = await supabase
+      // Use raw data fetching without complex typing
+      const result = await supabase
         .from('doctor_availability')
         .select('*')
         .eq('doctor_id', user.id)
@@ -95,10 +94,13 @@ const WorkplaceAvailability: React.FC = () => {
         .order('day_of_week')
         .order('start_time');
         
-      if (error) throw error;
+      if (result.error) throw result.error;
+      
+      // Cast data with any first to avoid type instantiation issues
+      const data = result.data as any[];
       
       // Transform data without complex typing
-      const formattedData: Availability[] = (data || []).map((item: any) => ({
+      const formattedData: Availability[] = (data || []).map((item) => ({
         id: item.id,
         day_of_week: item.day_of_week,
         start_time: item.start_time || '',

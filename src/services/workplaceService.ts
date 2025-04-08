@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { Workplace, WorkplaceType } from "@/types/workplace";
 import { safeSelectData } from "@/lib/typeUtils";
@@ -51,15 +50,8 @@ export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> 
  */
 export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]> => {
   try {
-    // Define simple interface for join results to avoid deep type instantiation
-    interface DoctorWorkplaceJoin {
-      workplace_id: string;
-      is_primary: boolean;
-      workplaces: Workplace;
-    }
-    
-    // Query the data with minimal type information
-    const { data, error } = await supabase
+    // Use raw query approach to avoid deep type instantiation
+    const result = await supabase
       .from('doctor_workplaces')
       .select(`
         workplace_id,
@@ -68,14 +60,14 @@ export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]
       `)
       .eq('user_id', userId);
       
-    if (error) throw error;
+    if (result.error) throw result.error;
     
-    // Process data with explicit casting to avoid deep type instantiation
-    const joinResults = data as unknown as DoctorWorkplaceJoin[];
+    // Use explicit any type first to break the deep instantiation chain
+    const data = result.data as any[];
     
-    // Extract workplaces with the is_primary flag
-    return joinResults.map(item => ({
-      ...item.workplaces,
+    // Now map the raw data to our expected format
+    return data.map(item => ({
+      ...(item.workplaces as Workplace),
       is_primary: item.is_primary
     }));
   } catch (error) {
@@ -136,7 +128,7 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
       user_id: userId, 
       workplace_id: workplaceId,
       is_primary: isPrimary
-    } as any; // Type assertion needed because the schema might not be up to date
+    };
     
     const { error } = await supabase
       .from('doctor_workplaces')
@@ -147,7 +139,7 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
       if (error.code === '23505') { // Unique constraint violation
         const { error: updateError } = await supabase
           .from('doctor_workplaces')
-          .update({ is_primary: isPrimary } as any) // Type assertion needed here
+          .update({ is_primary: isPrimary })
           .eq('user_id', userId)
           .eq('workplace_id', workplaceId);
           
@@ -273,19 +265,8 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
-    // Define an interface for the join result to avoid type recursion issues
-    interface AvailabilityWithWorkplace {
-      id: string;
-      doctor_id: string;
-      day_of_week: number;
-      start_time: string;
-      end_time: string;
-      workplace_id: string;
-      workplaces: Workplace;
-    }
-    
-    // Query availabilities for the current day that include the current time
-    const { data, error } = await supabase
+    // Use raw query approach to avoid deep type instantiation
+    const result = await supabase
       .from('doctor_availability')
       .select(`
         id,
@@ -301,15 +282,15 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
       .lte('start_time', timeString)
       .gte('end_time', timeString);
       
-    if (error) throw error;
+    if (result.error) throw result.error;
     
-    // Use a simple type assertion without generic nesting
-    const availabilities = data as unknown as AvailabilityWithWorkplace[];
+    // Use explicit any type first to break the deep instantiation chain
+    const data = result.data as any[];
       
-    if (availabilities && availabilities.length > 0) {
+    if (data && data.length > 0) {
       // Return the workplace associated with the current availability
-      const currentAvailability = availabilities[0];
-      return currentAvailability.workplaces;
+      const currentAvailability = data[0];
+      return currentAvailability.workplaces as Workplace;
     }
     
     // If no current availability, fall back to primary workplace
