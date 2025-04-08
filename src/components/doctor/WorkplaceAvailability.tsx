@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,7 +86,7 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Use explicit query with simple type casting
+      // Use typed query to avoid deep type instantiation issues
       const { data: rawData, error } = await supabase
         .from('doctor_availability')
         .select('id, doctor_id, day_of_week, start_time, end_time, workplace_id')

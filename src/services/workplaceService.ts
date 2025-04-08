@@ -321,19 +321,21 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
-    // First check if doctor availability table has workplace_id column
-    // Using maybeSingle to avoid errors if no results are found
+    // Query for doctor availability with workplace_id
     const { data: availabilityData, error: availabilityError } = await supabase
       .from('doctor_availability')
-      .select('workplace_id')
+      .select('*')
       .eq('doctor_id', userId)
       .eq('day_of_week', dayOfWeek)
       .lte('start_time', timeString)
       .gte('end_time', timeString)
       .maybeSingle();
     
-    if (availabilityError && !availabilityError.message.includes("column 'workplace_id' does not exist")) {
-      throw availabilityError;
+    if (availabilityError) {
+      // Only throw if it's not a column not found error
+      if (!availabilityError.message.includes("column 'workplace_id' does not exist")) {
+        throw availabilityError;
+      }
     }
     
     // If we found a workplace_id in availability, use that
