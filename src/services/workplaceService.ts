@@ -1,15 +1,24 @@
 
 import { supabase } from "@/lib/supabase";
 import { Workplace, WorkplaceType } from "@/types/workplace";
-import { safeSelectData } from "@/lib/typeUtils";
 
 // Define interfaces for doctor workplace database interactions
 interface DoctorWorkplaceRecord {
-  id?: string;
+  id: string;
   user_id: string;
   workplace_id: string;
   is_primary: boolean;
   created_at?: string;
+}
+
+// Interface for availability records
+interface AvailabilityRecord {
+  id: string;
+  doctor_id: string;
+  day_of_week: number;
+  start_time: string | null;
+  end_time: string | null;
+  workplace_id: string | null;
 }
 
 /**
@@ -17,7 +26,6 @@ interface DoctorWorkplaceRecord {
  */
 export const fetchAllWorkplaces = async (): Promise<Workplace[]> => {
   try {
-    // Use a raw query to avoid TypeScript errors since 'workplaces' is a new table
     const { data, error } = await supabase
       .from('workplaces')
       .select('*')
@@ -37,7 +45,6 @@ export const fetchAllWorkplaces = async (): Promise<Workplace[]> => {
  */
 export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> => {
   try {
-    // Use a raw query with explicit return type
     const { data, error } = await supabase
       .from('workplaces')
       .select('*')
@@ -61,7 +68,7 @@ export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]
     // First get the workplace IDs associated with this doctor
     const { data: doctorWorkplacesRaw, error: joinError } = await supabase
       .from('doctor_workplaces')
-      .select('workplace_id, id, is_primary');
+      .select('workplace_id, is_primary, id');
       
     if (joinError) throw joinError;
     
@@ -70,9 +77,9 @@ export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]
       return [];
     }
     
-    // Safely extract and validate workplace IDs
+    // Safely extract and validate workplace IDs with proper null checking
     const doctorWorkplaces = doctorWorkplacesRaw.filter(item => 
-      item && typeof item === 'object' && 'workplace_id' in item && item.workplace_id
+      item && typeof item === 'object' && item.workplace_id
     );
     
     // Extract workplace IDs
@@ -140,7 +147,7 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
     // First, reset all workplaces to non-primary
     const { error: resetError } = await supabase
       .from('doctor_workplaces')
-      .update({ is_primary: false } as DoctorWorkplaceRecord)
+      .update({ is_primary: false } as Partial<DoctorWorkplaceRecord>)
       .eq('user_id', userId);
       
     if (resetError) throw resetError;
@@ -148,7 +155,7 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
     // Then, set the selected workplace as primary
     const { error } = await supabase
       .from('doctor_workplaces')
-      .update({ is_primary: true } as DoctorWorkplaceRecord)
+      .update({ is_primary: true } as Partial<DoctorWorkplaceRecord>)
       .eq('user_id', userId)
       .eq('workplace_id', workplaceId);
 
@@ -170,7 +177,7 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
     if (isPrimary) {
       const { error: resetError } = await supabase
         .from('doctor_workplaces')
-        .update({ is_primary: false } as DoctorWorkplaceRecord)
+        .update({ is_primary: false } as Partial<DoctorWorkplaceRecord>)
         .eq('user_id', userId);
         
       if (resetError) throw resetError;
@@ -178,6 +185,7 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
     
     // Create the record with explicit type annotation
     const record: DoctorWorkplaceRecord = { 
+      id: crypto.randomUUID(), // Generate a UUID for the record
       user_id: userId, 
       workplace_id: workplaceId,
       is_primary: isPrimary,
@@ -193,7 +201,7 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
       if (error.code === '23505') { // Unique constraint violation
         const { error: updateError } = await supabase
           .from('doctor_workplaces')
-          .update({ is_primary: isPrimary } as DoctorWorkplaceRecord)
+          .update({ is_primary: isPrimary } as Partial<DoctorWorkplaceRecord>)
           .eq('user_id', userId)
           .eq('workplace_id', workplaceId);
           
@@ -312,11 +320,7 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
-    // Use explicit typing for availability query
-    interface AvailabilityRecord {
-      workplace_id: string;
-    }
-    
+    // Query for availability with workplace_id - use explicit typing to avoid deep instantiation
     const { data: availabilityData, error: availabilityError } = await supabase
       .from('doctor_availability')
       .select('workplace_id')
@@ -324,14 +328,17 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
       .eq('day_of_week', dayOfWeek)
       .lte('start_time', timeString)
       .gte('end_time', timeString);
-      
+    
     if (availabilityError) throw availabilityError;
     
+    // Safely handle the results with proper type checking
     if (availabilityData && availabilityData.length > 0) {
-      const workplaceResult = availabilityData[0] as AvailabilityRecord;
-      if (workplaceResult && workplaceResult.workplace_id) {
-        // Get the workplace details
-        return await fetchWorkplaceById(workplaceResult.workplace_id);
+      // Find the first record with a valid workplace_id
+      for (const record of availabilityData) {
+        if (record && record.workplace_id) {
+          // Get the workplace details
+          return await fetchWorkplaceById(record.workplace_id);
+        }
       }
     }
     

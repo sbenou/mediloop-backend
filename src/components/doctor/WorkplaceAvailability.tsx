@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,15 +22,14 @@ interface Availability {
   doctor_id: string;
 }
 
-// The error is in how AvailabilityRecord is typed
-// Define it explicitly separate from the generic response type
+// Define explicit interface for availability records
 interface AvailabilityRecord {
   id: string;
   doctor_id: string;
   day_of_week: number;
   start_time: string | null;
   end_time: string | null;
-  workplace_id: string;
+  workplace_id: string | null;
 }
 
 const daysOfWeek = [
@@ -87,10 +87,10 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Use any type initially for raw data to avoid deep type instantiation
+      // Use explicit typing for query results to avoid deep type instantiation
       const { data: rawData, error } = await supabase
         .from('doctor_availability')
-        .select('*')
+        .select('id, doctor_id, day_of_week, start_time, end_time, workplace_id')
         .eq('doctor_id', user.id)
         .eq('workplace_id', workplaceId)
         .order('day_of_week')
@@ -105,7 +105,7 @@ const WorkplaceAvailability: React.FC = () => {
         start_time: item.start_time || '',
         end_time: item.end_time || '',
         workplace_id: workplaceId,
-        doctor_id: user.id,
+        doctor_id: user.id || '',
       }));
       
       setAvailabilities(formattedData);
