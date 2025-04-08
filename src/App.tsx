@@ -47,8 +47,7 @@ function App() {
   return (
     <ThemeProvider
       defaultTheme="system"
-      attribute="class"
-      disableTransitionOnChange
+      storageKey="vite-ui-theme"
     >
       <RecoilRoot>
         <QueryClientProvider client={queryClient}>
