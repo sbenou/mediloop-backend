@@ -188,27 +188,36 @@ export type Database = {
       }
       doctor_metadata: {
         Row: {
+          address: string | null
+          city: string | null
           created_at: string | null
           doctor_id: string | null
           hours: string | null
           id: string
           logo_url: string | null
+          postal_code: string | null
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           created_at?: string | null
           doctor_id?: string | null
           hours?: string | null
           id?: string
           logo_url?: string | null
+          postal_code?: string | null
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
           created_at?: string | null
           doctor_id?: string | null
           hours?: string | null
           id?: string
           logo_url?: string | null
+          postal_code?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -279,7 +288,7 @@ export type Database = {
             foreignKeyName: "doctor_workplaces_workplace_id_fkey"
             columns: ["workplace_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "workplaces"
             referencedColumns: ["id"]
           },
         ]
@@ -913,6 +922,42 @@ export type Database = {
           created_at?: string
           pharmacy_id?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      workplaces: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          hours: string | null
+          id: string
+          name: string
+          phone: string | null
+          postal_code: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          hours?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          postal_code: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          hours?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          postal_code?: string
+          updated_at?: string
         }
         Relationships: []
       }
