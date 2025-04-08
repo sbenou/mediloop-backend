@@ -9,7 +9,11 @@ export interface Workplace {
   hours: string | null;
   created_at: string;
   updated_at: string;
+  workplace_type: WorkplaceType;
+  description: string | null;
 }
+
+export type WorkplaceType = 'cabinet' | 'clinic' | 'hospital' | 'pharmacy' | 'other';
 
 export interface DoctorWorkplace {
   user_id: string;

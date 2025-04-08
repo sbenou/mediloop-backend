@@ -930,34 +930,40 @@ export type Database = {
           address: string
           city: string
           created_at: string
+          description: string | null
           hours: string | null
           id: string
           name: string
           phone: string | null
           postal_code: string
           updated_at: string
+          workplace_type: Database["public"]["Enums"]["workplace_type"]
         }
         Insert: {
           address: string
           city: string
           created_at?: string
+          description?: string | null
           hours?: string | null
           id?: string
           name: string
           phone?: string | null
           postal_code: string
           updated_at?: string
+          workplace_type?: Database["public"]["Enums"]["workplace_type"]
         }
         Update: {
           address?: string
           city?: string
           created_at?: string
+          description?: string | null
           hours?: string | null
           id?: string
           name?: string
           phone?: string | null
           postal_code?: string
           updated_at?: string
+          workplace_type?: Database["public"]["Enums"]["workplace_type"]
         }
         Relationships: []
       }
@@ -1114,6 +1120,7 @@ export type Database = {
         | "confirmed"
         | "cancelled"
         | "completed"
+      workplace_type: "cabinet" | "clinic" | "hospital" | "pharmacy" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1245,6 +1252,7 @@ export const Constants = {
         "cancelled",
         "completed",
       ],
+      workplace_type: ["cabinet", "clinic", "hospital", "pharmacy", "other"],
     },
   },
 } as const

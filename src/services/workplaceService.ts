@@ -1,6 +1,6 @@
 
 import { supabase } from "@/lib/supabase";
-import { Workplace } from "@/types/workplace";
+import { Workplace, WorkplaceType } from "@/types/workplace";
 
 /**
  * Fetches all available workplaces

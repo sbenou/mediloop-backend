@@ -11,7 +11,16 @@ import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { fetchAllWorkplaces, updatePrimaryWorkplace } from '@/services/workplaceService';
-import { Workplace } from '@/types/workplace';
+import { Workplace, WorkplaceType } from '@/types/workplace';
+import { Badge } from '@/components/ui/badge';
+
+const workplaceTypeLabels: Record<WorkplaceType, string> = {
+  cabinet: 'Cabinet',
+  clinic: 'Clinic',
+  hospital: 'Hospital',
+  pharmacy: 'Pharmacy',
+  other: 'Other'
+};
 
 const DoctorWorkplaceSelection = () => {
   const { profile, user } = useAuth();
@@ -138,6 +147,18 @@ const DoctorWorkplaceSelection = () => {
     setActiveTab(value);
   };
 
+  const getWorkplaceTypeDisplay = (workplace: Workplace) => {
+    if (!workplace.workplace_type) return null;
+    
+    const typeLabel = workplaceTypeLabels[workplace.workplace_type as WorkplaceType] || workplace.workplace_type;
+    
+    return (
+      <Badge variant="outline" className="ml-2">
+        {typeLabel}
+      </Badge>
+    );
+  };
+
   const renderPrimaryWorkplaceTab = () => (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -154,7 +175,8 @@ const DoctorWorkplaceSelection = () => {
             {workplaces.length > 0 ? (
               workplaces.map((workplace) => (
                 <SelectItem key={workplace.id} value={workplace.id}>
-                  {workplace.name} {workplace.city ? `(${workplace.city})` : ''}
+                  {workplace.name} {workplace.city ? `(${workplace.city})` : ''} 
+                  {getWorkplaceTypeDisplay(workplace)}
                 </SelectItem>
               ))
             ) : (
