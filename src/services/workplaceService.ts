@@ -1,6 +1,16 @@
+
 import { supabase } from "@/lib/supabase";
 import { Workplace, WorkplaceType } from "@/types/workplace";
 import { safeSelectData } from "@/lib/typeUtils";
+
+// Define interfaces for doctor workplace database interactions
+interface DoctorWorkplaceRecord {
+  id?: string;
+  user_id: string;
+  workplace_id: string;
+  is_primary: boolean;
+  created_at?: string;
+}
 
 /**
  * Fetches all available workplaces
@@ -81,18 +91,20 @@ export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]
     if (workplacesError) throw workplacesError;
     
     // Create a map for quick lookup of primary status
-    const isPrimaryMap = new Map();
+    const isPrimaryMap = new Map<string, boolean>();
     doctorWorkplaces.forEach(item => {
-      if (item.workplace_id) {
-        isPrimaryMap.set(item.workplace_id, item.is_primary || false);
+      if (item && item.workplace_id) {
+        isPrimaryMap.set(item.workplace_id, Boolean(item.is_primary));
       }
     });
     
     // Attach the is_primary flag to each workplace
-    return (workplacesData || []).map(workplace => ({
+    const result = (workplacesData || []).map(workplace => ({
       ...workplace,
       is_primary: isPrimaryMap.get(workplace.id) || false
-    })) as Workplace[];
+    }));
+    
+    return result as Workplace[];
   } catch (error) {
     console.error(`Error fetching workplaces for doctor ${userId}:`, error);
     return [];
@@ -128,7 +140,7 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
     // First, reset all workplaces to non-primary
     const { error: resetError } = await supabase
       .from('doctor_workplaces')
-      .update({ is_primary: false })
+      .update({ is_primary: false } as DoctorWorkplaceRecord)
       .eq('user_id', userId);
       
     if (resetError) throw resetError;
@@ -136,7 +148,7 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
     // Then, set the selected workplace as primary
     const { error } = await supabase
       .from('doctor_workplaces')
-      .update({ is_primary: true })
+      .update({ is_primary: true } as DoctorWorkplaceRecord)
       .eq('user_id', userId)
       .eq('workplace_id', workplaceId);
 
@@ -158,14 +170,14 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
     if (isPrimary) {
       const { error: resetError } = await supabase
         .from('doctor_workplaces')
-        .update({ is_primary: false })
+        .update({ is_primary: false } as DoctorWorkplaceRecord)
         .eq('user_id', userId);
         
       if (resetError) throw resetError;
     }
     
     // Create the record with explicit type annotation
-    const record = { 
+    const record: DoctorWorkplaceRecord = { 
       user_id: userId, 
       workplace_id: workplaceId,
       is_primary: isPrimary,
@@ -181,7 +193,7 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
       if (error.code === '23505') { // Unique constraint violation
         const { error: updateError } = await supabase
           .from('doctor_workplaces')
-          .update({ is_primary: isPrimary })
+          .update({ is_primary: isPrimary } as DoctorWorkplaceRecord)
           .eq('user_id', userId)
           .eq('workplace_id', workplaceId);
           
@@ -204,10 +216,6 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
 export const removeDoctorWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
     // Check if this is the primary workplace
-    interface WorkplaceCheck {
-      is_primary: boolean;
-    }
-    
     const { data: primaryCheck, error: checkError } = await supabase
       .from('doctor_workplaces')
       .select('is_primary')
@@ -217,8 +225,7 @@ export const removeDoctorWorkplace = async (userId: string, workplaceId: string)
 
     if (checkError) throw checkError;
     
-    // Cast to the expected type
-    const isPrimary = primaryCheck ? (primaryCheck as unknown as WorkplaceCheck).is_primary : false;
+    const isPrimary = primaryCheck?.is_primary || false;
     
     // Prevent removing the primary workplace if it's the last one
     if (isPrimary) {
@@ -305,8 +312,10 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     const currentMinutes = now.getMinutes();
     const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
     
-    // Use type assertion for availability data
-    type AvailabilityResult = { workplace_id: string };
+    // Use explicit typing for availability query
+    interface AvailabilityRecord {
+      workplace_id: string;
+    }
     
     const { data: availabilityData, error: availabilityError } = await supabase
       .from('doctor_availability')
@@ -319,8 +328,7 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     if (availabilityError) throw availabilityError;
     
     if (availabilityData && availabilityData.length > 0) {
-      // Type safety check
-      const workplaceResult = availabilityData[0] as unknown as AvailabilityResult;
+      const workplaceResult = availabilityData[0] as AvailabilityRecord;
       if (workplaceResult && workplaceResult.workplace_id) {
         // Get the workplace details
         return await fetchWorkplaceById(workplaceResult.workplace_id);

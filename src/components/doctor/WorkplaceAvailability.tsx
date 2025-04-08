@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +21,8 @@ interface Availability {
   doctor_id: string;
 }
 
+// The error is in how AvailabilityRecord is typed
+// Define it explicitly separate from the generic response type
 interface AvailabilityRecord {
   id: string;
   doctor_id: string;
@@ -86,7 +87,7 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Use type assertion approach to avoid deep type instantiation
+      // Use any type initially for raw data to avoid deep type instantiation
       const { data: rawData, error } = await supabase
         .from('doctor_availability')
         .select('*')
