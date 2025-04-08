@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { fetchDoctorWorkplaces } from '@/services/workplaceService';
 import { Workplace } from '@/types/workplace';
 import { Loader2, Clock, Plus, Save, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Json } from '@/types/supabase';
 
 interface Availability {
   id?: string;
@@ -84,7 +86,7 @@ const WorkplaceAvailability: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // Use type assertion to avoid deep type instantiation error
+      // Query with proper type handling
       const { data, error } = await supabase
         .from('doctor_availability')
         .select('*')

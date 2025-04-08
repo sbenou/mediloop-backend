@@ -1,5 +1,7 @@
+
 import { supabase } from "@/lib/supabase";
 import { Workplace, WorkplaceType } from "@/types/workplace";
+import { safeSelectData } from "@/lib/typeUtils";
 
 /**
  * Fetches all available workplaces
@@ -49,26 +51,27 @@ export const fetchWorkplaceById = async (id: string): Promise<Workplace | null> 
  */
 export const fetchDoctorWorkplaces = async (userId: string): Promise<Workplace[]> => {
   try {
-    // Define an interface for the combined join data
-    interface DoctorWorkplaceJoin {
+    // Define the return type to avoid deep type instantiation
+    type JoinResult = {
       workplace_id: string;
       is_primary: boolean;
       workplaces: Workplace;
-    }
-
-    // Use a type assertion to avoid deep type instantiation error
+    };
+    
+    // Use type assertion for the join query
     const { data, error } = await supabase
       .from('doctor_workplaces')
       .select(`
         workplace_id,
         is_primary,
         workplaces:workplace_id(*)
-      `);
+      `)
+      .eq('user_id', userId);
       
     if (error) throw error;
     
-    // Type assertion instead of deep generic types
-    const typedData = data as unknown as DoctorWorkplaceJoin[];
+    // Type assertion to avoid deep type instantiation
+    const typedData = data as unknown as JoinResult[];
     
     // Extract workplaces with the is_primary flag
     return typedData.map(item => ({
@@ -110,7 +113,7 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
     // Use direct SQL method instead of RPC for better TypeScript compatibility
     const { error } = await supabase
       .from('doctor_workplaces')
-      .update({ is_primary: true })
+      .update({ is_primary: true } as any) // Type assertion needed here
       .eq('user_id', userId)
       .eq('workplace_id', workplaceId);
 
@@ -128,24 +131,23 @@ export const updatePrimaryWorkplace = async (userId: string, workplaceId: string
  */
 export const addDoctorWorkplace = async (userId: string, workplaceId: string, isPrimary: boolean = false): Promise<boolean> => {
   try {
-    // Create the record with the proper structure
+    // Create the record with proper structure using type assertion
     const record = { 
       user_id: userId, 
       workplace_id: workplaceId,
       is_primary: isPrimary
-    };
+    } as any; // Type assertion needed because the schema might not be up to date
     
-    // Use type assertion to bypass TypeScript error
     const { error } = await supabase
       .from('doctor_workplaces')
-      .insert([record as any]);
+      .insert([record]);
       
     if (error) {
       // If the workplace already exists, update it
       if (error.code === '23505') { // Unique constraint violation
         const { error: updateError } = await supabase
           .from('doctor_workplaces')
-          .update({ is_primary: isPrimary } as any)
+          .update({ is_primary: isPrimary } as any) // Type assertion needed here
           .eq('user_id', userId)
           .eq('workplace_id', workplaceId);
           
@@ -168,22 +170,25 @@ export const addDoctorWorkplace = async (userId: string, workplaceId: string, is
 export const removeDoctorWorkplace = async (userId: string, workplaceId: string): Promise<boolean> => {
   try {
     // Check if this is the primary workplace
-    interface WorkplaceCheck {
+    type WorkplaceCheck = {
       is_primary: boolean;
-    }
+    };
     
     const { data: primaryCheck, error: checkError } = await supabase
       .from('doctor_workplaces')
       .select('is_primary')
       .eq('user_id', userId)
       .eq('workplace_id', workplaceId)
-      .single()
-      .returns<WorkplaceCheck>();
-      
+      .single();
+
+    // Type safe way to check the result
     if (checkError) throw checkError;
     
+    // Cast to the expected type
+    const isPrimary = primaryCheck ? (primaryCheck as unknown as WorkplaceCheck).is_primary : false;
+    
     // Prevent removing the primary workplace if it's the last one
-    if (primaryCheck?.is_primary) {
+    if (isPrimary) {
       const { data: countCheck, error: countError } = await supabase
         .from('doctor_workplaces')
         .select('id', { count: 'exact' })
@@ -280,7 +285,7 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
     }
     
     // Query availabilities for the current day that include the current time
-    const { data: availabilities, error } = await supabase
+    const { data, error } = await supabase
       .from('doctor_availability')
       .select(`
         id,
@@ -298,12 +303,12 @@ export const getCurrentWorkplaceByAvailability = async (userId: string): Promise
       
     if (error) throw error;
     
-    // Type assertion to avoid deep type instantiation error
-    const typedAvailabilities = availabilities as unknown as AvailabilityWithWorkplace[];
+    // Type assertion to handle the complex join result
+    const availabilities = data as unknown as AvailabilityWithWorkplace[];
       
-    if (typedAvailabilities && typedAvailabilities.length > 0) {
+    if (availabilities && availabilities.length > 0) {
       // Return the workplace associated with the current availability
-      const currentAvailability = typedAvailabilities[0];
+      const currentAvailability = availabilities[0];
       return currentAvailability.workplaces;
     }
     
