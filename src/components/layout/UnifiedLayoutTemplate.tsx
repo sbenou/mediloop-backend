@@ -48,9 +48,6 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
               </div>
               
               <div className="flex items-center space-x-4">
-                <div className="text-xs text-muted-foreground">
-                  <span>Role: {userRole || "Not logged in"}</span>
-                </div>
                 <NotificationBell />
                 <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
                 <UserMenu />

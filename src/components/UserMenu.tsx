@@ -24,6 +24,11 @@ const UserMenu = memo(() => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useRecoilState(userAvatarState);
   
+  // Format role for display - capitalize first letter
+  const formattedRole = userRole ? 
+    userRole.charAt(0).toUpperCase() + userRole.slice(1) : 
+    'User';
+  
   // Set initial avatar URL from profile
   useEffect(() => {
     if (profile?.avatar_url && !avatarUrl) {
@@ -247,10 +252,11 @@ const UserMenu = memo(() => {
         <DropdownMenuTrigger asChild>
           <button 
             type="button"
-            className="flex items-center space-x-1 hover:opacity-80 transition-opacity cursor-pointer outline-none text-sm"
+            className="flex flex-col items-start hover:opacity-80 transition-opacity cursor-pointer outline-none text-sm"
             aria-label="User menu"
           >
             <span className="font-medium">{profile?.full_name || 'User'}</span>
+            <span className="text-xs text-muted-foreground">{formattedRole}</span>
           </button>
         </DropdownMenuTrigger>
       </div>
