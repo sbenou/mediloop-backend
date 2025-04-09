@@ -108,8 +108,16 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
+    // Special handling for dashboard navigation for pharmacists
+    if (path === '/dashboard' && isUserPharmacist) {
+      console.log('Pharmacist clicking on Dashboard - using direct URL navigation');
+      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      return;
+    }
+    
     // Prevent default and stop propagation if this is called from a click event
     try {
+      // For other navigation, use immediate timeout to ensure event handling is complete
       window.setTimeout(() => {
         navigate(path);
       }, 0);
@@ -212,7 +220,7 @@ export const UserMenuItems = () => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log(`Navigating to ${item.path} from UserMenuItems`);
+                console.log(`Clicking on ${item.label} menu item with path ${item.path}`);
                 handleNavigation(item.path);
               }}
             >

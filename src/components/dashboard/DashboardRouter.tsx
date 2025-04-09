@@ -17,6 +17,7 @@ import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/Doc
 import DoctorAppointmentsView from "@/components/dashboard/views/doctor/DoctorAppointmentsView";
 import WorkplacesView from "@/components/dashboard/views/doctor/WorkplacesView";
 import NotificationsView from "@/components/dashboard/views/NotificationsView";
+import { useSearchParams } from "react-router-dom";
 
 interface DashboardRouterProps {
   userRole: string;
@@ -26,6 +27,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   const { isPharmacist, profile } = useAuth();
   const { params } = useDashboardParams();
   const { view, section, profileTab, ordersTab } = params;
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Log when the component renders for debugging
   useEffect(() => {
@@ -38,7 +40,17 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       isPharmacist: isPharmacist || userRole === 'pharmacist',
       profileRole: profile?.role
     });
-  }, [userRole, view, section, profileTab, ordersTab, isPharmacist, profile]);
+
+    // Auto-correct URL parameters for pharmacists
+    if ((userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist') && 
+        (!searchParams.get('view') || searchParams.get('view') !== 'pharmacy')) {
+      console.log("Automatically setting correct parameters for pharmacist");
+      setSearchParams({ 
+        view: 'pharmacy', 
+        section: section || 'dashboard' 
+      });
+    }
+  }, [userRole, view, section, profileTab, ordersTab, isPharmacist, profile, searchParams, setSearchParams]);
   
   if (!userRole) {
     console.warn("[DashboardRouter] Warning: userRole is not defined. Rendering fallback view.");

@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 export const useLoginManager = () => {
-  const { isAuthenticated, profile, isLoading } = useAuth();
+  const { isAuthenticated, profile, isLoading, isPharmacist } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const redirected = useRef(false);
@@ -33,12 +33,20 @@ export const useLoginManager = () => {
     const route = getDashboardRouteByRole(role);
 
     console.log("[LoginManager] Redirecting user to:", route);
+    setRedirectAttempts(prevAttempts => prevAttempts + 1);
+    
+    // Special handling for pharmacists to ensure they have the correct URL parameters
+    if (role === 'pharmacist' || isPharmacist) {
+      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      redirected.current = true;
+      return;
+    }
     
     // Use a more aggressive approach with window.location for hard redirects
     // that bypass any React Router issues
     window.location.href = route;
     redirected.current = true;
-  }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts]);
+  }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts, isPharmacist]);
 
   return {
     redirected: redirected.current,

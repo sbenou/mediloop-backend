@@ -9,9 +9,9 @@ import DashboardRouter from "@/components/dashboard/DashboardRouter";
 import RequireRoleGuard from "@/components/auth/RequireRoleGuard";
 
 const Dashboard = () => {
-  const { isAuthenticated, isLoading, userRole, profile } = useAuth();
+  const { isAuthenticated, isLoading, userRole, profile, isPharmacist } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get('view');
   const section = searchParams.get('section');
 
@@ -22,6 +22,7 @@ const Dashboard = () => {
       userRole, 
       view, 
       section,
+      isPharmacist,
       profileData: profile ? {
         role: profile.role,
         isPharmacist: profile.role === 'pharmacist'
@@ -32,7 +33,16 @@ const Dashboard = () => {
       console.warn("🔒 Not authenticated — redirecting to login");
       navigate("/login", { replace: true });
     }
-  }, [isAuthenticated, navigate, isLoading, userRole, profile, view, section]);
+    
+    // Special handling for pharmacist users to ensure they have the correct view parameters
+    if (!isLoading && isAuthenticated && (userRole === 'pharmacist' || isPharmacist) && (!view || view !== 'pharmacy')) {
+      console.log("🔄 Pharmacist detected without proper view parameters, updating URL");
+      setSearchParams({ 
+        view: 'pharmacy', 
+        section: section || 'dashboard' 
+      }, { replace: true });
+    }
+  }, [isAuthenticated, navigate, isLoading, userRole, profile, view, section, isPharmacist, setSearchParams]);
 
   console.log("Dashboard rendering with params:", Object.fromEntries(searchParams.entries()));
   
