@@ -36,18 +36,8 @@ export const useLoginManager = () => {
     
     // Use a more aggressive approach with window.location for hard redirects
     // that bypass any React Router issues
-    if (redirectAttempts >= 1) {
-      console.log("[LoginManager] Using hard redirect");
-      window.location.href = route;
-      return;
-    }
-    
-    // Use a small timeout to ensure all state is updated before redirection
-    setTimeout(() => {
-      redirected.current = true;
-      setRedirectAttempts(prev => prev + 1);
-      navigate(route, { replace: true });
-    }, 200); // Increased timeout for better state synchronization
+    window.location.href = route;
+    redirected.current = true;
   }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts]);
 
   return {

@@ -20,19 +20,9 @@ const Login = () => {
       const route = getDashboardRouteByRole(role);
       console.log(`[Login] User already authenticated with role ${role}, redirecting to: ${route}`);
       
-      // Try React Router first
-      const redirectWithReactRouter = () => {
-        try {
-          navigate(route, { replace: true });
-        } catch (navError) {
-          console.error('React Router navigation failed:', navError);
-          // Fall back to window.location
-          window.location.href = route;
-        }
-      };
-      
-      // Use setTimeout to ensure state is ready
-      setTimeout(redirectWithReactRouter, 100);
+      // Use direct window.location instead of React Router to ensure a full page reload
+      // which helps avoid state synchronization issues
+      window.location.href = route;
     }
   }, [isAuthenticated, profile, navigate, redirected]);
 

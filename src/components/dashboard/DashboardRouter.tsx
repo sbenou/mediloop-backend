@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import useDashboardParams from "@/hooks/dashboard/useDashboardParams";
 import { 
@@ -23,11 +23,22 @@ interface DashboardRouterProps {
 }
 
 const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
-  const { isPharmacist } = useAuth();
+  const { isPharmacist, profile } = useAuth();
   const { params } = useDashboardParams();
   const { view, section, profileTab, ordersTab } = params;
   
-  console.log("🚦 DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
+  // Log when the component renders for debugging
+  useEffect(() => {
+    console.log("🚦 DashboardRouter rendering with:", { 
+      userRole, 
+      view, 
+      section, 
+      profileTab, 
+      ordersTab, 
+      isPharmacist: isPharmacist || userRole === 'pharmacist',
+      profileRole: profile?.role
+    });
+  }, [userRole, view, section, profileTab, ordersTab, isPharmacist, profile]);
   
   if (!userRole) {
     console.warn("[DashboardRouter] Warning: userRole is not defined. Rendering fallback view.");
@@ -40,7 +51,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   }
   
   // For pharmacists, always show pharmacy views regardless of URL parameter
-  if (userRole === "pharmacist" || isPharmacist) {
+  if (userRole === "pharmacist" || isPharmacist || profile?.role === 'pharmacist') {
     console.log("Rendering PharmacyView for pharmacist with section:", section);
     return <PharmacyView userRole={userRole} section={section} />;
   }

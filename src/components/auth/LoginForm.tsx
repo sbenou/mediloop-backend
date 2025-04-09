@@ -66,7 +66,7 @@ export const LoginForm = () => {
         
         if (profileError) {
           console.error('Error fetching profile:', profileError);
-          navigate('/dashboard');
+          window.location.href = '/dashboard';
           return;
         }
         
@@ -74,28 +74,11 @@ export const LoginForm = () => {
         const route = getDashboardRouteByRole(profile?.role);
         console.log(`Redirecting user with role ${profile?.role} to ${route}`);
         
-        // First try React Router navigation with a significant delay
-        setTimeout(() => {
-          try {
-            navigate(route, { replace: true });
-            
-            // Add a fallback with window.location after a short delay
-            // in case React Router navigation fails
-            setTimeout(() => {
-              if (window.location.pathname === '/login') {
-                console.log('Fallback: Using direct location change');
-                window.location.href = route;
-              }
-            }, 500);
-          } catch (navError) {
-            console.error('Navigation error:', navError);
-            window.location.href = route;
-          }
-        }, 300);
-        
+        // Use direct window.location for most reliable navigation
+        window.location.href = route;
       } catch (err) {
         console.error('Error during role check:', err);
-        navigate('/dashboard'); // Fallback redirect
+        window.location.href = '/dashboard'; // Fallback redirect
       }
     } else {
       console.error('No session found after successful login');
