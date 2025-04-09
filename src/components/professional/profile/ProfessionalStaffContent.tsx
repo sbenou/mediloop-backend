@@ -14,10 +14,6 @@ const ProfessionalStaffContent: React.FC<ProfessionalStaffContentProps> = ({
 }) => {
   return (
     <ScrollArea className="h-[calc(100vh-300px)] pr-4">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold">Staff Management</h3>
-      </div>
-      
       <PharmacyStaff pharmacyId={entityId} entityType={entityType} />
     </ScrollArea>
   );

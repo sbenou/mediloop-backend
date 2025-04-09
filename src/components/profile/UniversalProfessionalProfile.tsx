@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -134,7 +133,7 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
         </TabsContent>
         
         <TabsContent value="staff" className="mt-4">
-          <div className="bg-white shadow rounded-lg p-6">
+          <div>
             <h2 className="text-xl font-semibold mb-4">Staff Management</h2>
             {userRole === "doctor" ? (
               <ProfessionalStaffContent 

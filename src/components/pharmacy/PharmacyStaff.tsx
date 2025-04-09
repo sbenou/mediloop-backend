@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
@@ -311,21 +312,25 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
       ) : staff.length === 0 ? (
         <StaffEmptyState onAddStaff={() => setDialogOpen(true)} />
       ) : (
-        <TooltipProvider>
-          {viewMode === 'list' ? (
-            <StaffMemberList 
-              staff={staff}
-              currentUserId={profile?.id}
-              userAvatar={userAvatar}
-              onViewMember={handleViewMember}
-              onEditMember={handleEditMember}
-              onTerminateMember={handleTerminateMember}
-              onToggleActive={toggleStaffStatus}
-            />
-          ) : (
-            <StaffCardView />
-          )}
-        </TooltipProvider>
+        <Card className="mb-4">
+          <CardContent className="p-4">
+            <TooltipProvider>
+              {viewMode === 'list' ? (
+                <StaffMemberList 
+                  staff={staff}
+                  currentUserId={profile?.id}
+                  userAvatar={userAvatar}
+                  onViewMember={handleViewMember}
+                  onEditMember={handleEditMember}
+                  onTerminateMember={handleTerminateMember}
+                  onToggleActive={toggleStaffStatus}
+                />
+              ) : (
+                <StaffCardView />
+              )}
+            </TooltipProvider>
+          </CardContent>
+        </Card>
       )}
       
       <TeamMemberDialog
