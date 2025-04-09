@@ -62,18 +62,18 @@ export const HoursEditor: React.FC<HoursEditorProps> = ({
       {/* Column Headers */}
       <div className="grid grid-cols-4 gap-4 mb-2 px-4">
         <div className="font-medium">Day</div>
-        <div className="font-medium">Start Time</div>
-        <div className="font-medium">End Time</div>
+        <div className="font-medium text-right">Start Time</div>
+        <div className="font-medium text-right">End Time</div>
         <div className="font-medium text-center">Open/Closed</div>
       </div>
 
       {Object.entries(weekHours).map(([day, dayData]) => (
         <div key={day} className="grid grid-cols-4 items-center gap-4">
-          <div className="font-medium">
+          <div className="font-medium pl-4">
             {formatDay(day)}
           </div>
           
-          <div>
+          <div className="text-right">
             <Select
               value={dayData.openTime}
               onValueChange={(value) => handleTimeChange(day as keyof WeekHours, 'openTime', value)}
@@ -92,7 +92,7 @@ export const HoursEditor: React.FC<HoursEditorProps> = ({
             </Select>
           </div>
 
-          <div>
+          <div className="text-right">
             <Select
               value={dayData.closeTime}
               onValueChange={(value) => handleTimeChange(day as keyof WeekHours, 'closeTime', value)}
