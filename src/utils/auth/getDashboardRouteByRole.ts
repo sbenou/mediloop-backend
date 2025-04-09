@@ -4,7 +4,7 @@ import { UserRole } from "@/types/role";
 export const roleRouteMap = {
   [UserRole.Superadmin]: { route: "/superadmin/dashboard", label: "Superadmin Dashboard" },
   [UserRole.Doctor]: { route: "/dashboard", label: "Doctor Dashboard" },
-  [UserRole.Pharmacist]: { route: "/dashboard?view=pharmacy&section=dashboard", label: "Pharmacy Dashboard" },
+  [UserRole.Pharmacist]: { route: "/dashboard", label: "Pharmacy Dashboard" },
   [UserRole.Patient]: { route: "/dashboard", label: "Patient Dashboard" },
 };
 
