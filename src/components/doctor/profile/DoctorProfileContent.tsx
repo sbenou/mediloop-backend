@@ -36,11 +36,8 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Doctor Profile Image</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="flex items-center justify-center overflow-hidden">
+        <CardContent className="p-0 w-full h-full">
           <ProfessionalImageUpload 
             entityId={doctorData.id}
             entityType="doctor"

@@ -36,11 +36,8 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Pharmacy Image</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="flex items-center justify-center overflow-hidden">
+        <CardContent className="p-0 w-full h-full">
           <ProfessionalImageUpload 
             entityId={pharmacyData.id}
             entityType="pharmacy"
