@@ -1,28 +1,16 @@
 
 import React from 'react';
-import { useProfessionalTeam, TeamMember } from './useProfessionalTeam';
+import { useProfessionalTeam } from './useProfessionalTeam';
 import { TeamMemberCard } from '@/components/pharmacy/team/TeamMemberCard';
 import { EmptyTeamState } from '@/components/pharmacy/team/EmptyTeamState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useRecoilValue } from 'recoil';
 import { userAvatarState } from '@/store/user/atoms';
+import { TeamMember as PharmacyTeamMember } from '@/components/pharmacy/team/types';
 
 interface ProfessionalTeamProps {
   entityId: string;
   entityType: 'doctor' | 'pharmacy';
-}
-
-// Create an extended team member interface that matches what TeamMemberCard expects
-interface ExtendedTeamMember {
-  id: string;
-  full_name: string;
-  email: string;
-  phone_number?: string;
-  role: string;
-  pharmacy_id?: string;
-  doctor_id?: string;
-  status: 'active' | 'inactive';
-  profile_image?: string | null;
 }
 
 const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityType }) => {
@@ -31,7 +19,7 @@ const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityTyp
   const { teamMembers, loading } = useProfessionalTeam(entityId, entityType);
 
   // Function to transform TeamMember from the hook to the format expected by TeamMemberCard
-  const mapTeamMemberToCardMember = (member: TeamMember): ExtendedTeamMember => {
+  const mapTeamMemberToCardMember = (member: any): PharmacyTeamMember => {
     // Check if this member is the current user to use the correct avatar
     const avatarUrl = userAvatar && 
       profile?.id === member.id ? 
@@ -47,6 +35,7 @@ const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityTyp
       doctor_id: entityType === 'doctor' ? entityId : undefined,
       status: member.is_active ? 'active' : 'inactive',
       profile_image: avatarUrl,
+      isAvailable: member.is_active,
     };
   };
 
@@ -75,12 +64,11 @@ const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityTyp
                     email: profile.email || '',
                     phone_number: '',
                     role: 'doctor',
-                    // Use optional pharmacy_id here
                     pharmacy_id: undefined,
-                    // Add doctor_id property
                     doctor_id: entityId,
                     status: 'active',
                     profile_image: userAvatar || profile.avatar_url,
+                    isAvailable: true, // Main doctor is always available by default
                   }}
                   showMainDoctorBadge={true}
                   hideControls={true}

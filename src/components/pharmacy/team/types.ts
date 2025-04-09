@@ -8,6 +8,7 @@ export interface TeamMember {
   phone_number?: string;
   role: string;
   pharmacy_id?: string;
+  doctor_id?: string; // Add doctor_id property
   status: TeamMemberStatus;
   profile_image?: string;
   isAvailable?: boolean;

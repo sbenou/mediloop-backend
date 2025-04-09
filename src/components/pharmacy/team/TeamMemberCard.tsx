@@ -44,7 +44,24 @@ export const TeamMemberCard = ({
               full_name: member.full_name,
               email: member.email,
               avatar_url: member.profile_image,
-              role: member.role
+              role: member.role,
+              role_id: null,
+              date_of_birth: null,
+              city: null,
+              auth_method: null,
+              is_blocked: member.status === 'inactive',
+              doctor_stamp_url: null,
+              doctor_signature_url: null,
+              pharmacist_stamp_url: null,
+              pharmacist_signature_url: null,
+              cns_card_front: null,
+              cns_card_back: null,
+              cns_number: null,
+              deleted_at: null,
+              created_at: null,
+              updated_at: null,
+              license_number: null,
+              phone_number: member.phone_number
             }}
             size="lg"
             fallbackText={getInitials(member.full_name)}

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
-import { TeamMember } from './types';
+import { TeamMember, TeamMemberStatus } from './types';
 
 export const usePharmacyTeam = (pharmacyId: string) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -38,15 +38,18 @@ export const usePharmacyTeam = (pharmacyId: string) => {
       if (profilesError) throw profilesError;
       
       if (profiles) {
-        // Fixed type issue by explicitly mapping to TeamMember interface
+        // Map to TeamMember type with proper status handling
         const members: TeamMember[] = profiles.map(profile => ({
           id: profile.id,
-          user_id: profile.id,
           full_name: profile.full_name || 'Unknown',
           email: profile.email || 'No email',
-          avatar_url: profile.avatar_url,
+          phone_number: undefined,
           role: profile.role || 'pharmacy_user',
-          is_active: !profile.is_blocked,
+          pharmacy_id: pharmacyId,
+          doctor_id: undefined,
+          status: !profile.is_blocked ? 'active' : 'inactive' as TeamMemberStatus,
+          profile_image: profile.avatar_url,
+          isAvailable: !profile.is_blocked, // Set availability based on blocked status
         }));
         
         setTeamMembers(members);

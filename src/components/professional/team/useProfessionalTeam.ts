@@ -12,8 +12,8 @@ export interface TeamMember {
   role: string;
   is_active: boolean;
   phone_number?: string;
-  pharmacy_id?: string; // Make pharmacy_id optional
-  doctor_id?: string;   // Add doctor_id as optional
+  pharmacy_id?: string;
+  doctor_id?: string;
 }
 
 export const useProfessionalTeam = (entityId: string, entityType: 'doctor' | 'pharmacy') => {
@@ -52,7 +52,7 @@ export const useProfessionalTeam = (entityId: string, entityType: 'doctor' | 'ph
         if (profilesError) throw profilesError;
         
         if (profiles) {
-          // Fixed type issue by explicitly mapping to TeamMember interface
+          // Map to TeamMember interface
           const members: TeamMember[] = profiles.map(profile => ({
             id: profile.id,
             user_id: profile.id,

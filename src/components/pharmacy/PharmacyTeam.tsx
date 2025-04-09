@@ -6,6 +6,7 @@ import { EmptyTeamState } from './team/EmptyTeamState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useRecoilValue } from 'recoil';
 import { userAvatarState } from '@/store/user/atoms';
+import { TeamMember } from './team/types';
 
 interface PharmacyTeamProps {
   pharmacyId: string;
@@ -21,7 +22,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
   } = usePharmacyTeam(pharmacyId);
 
   // Function to transform TeamMember from the hook to the format expected by TeamMemberCard
-  const mapTeamMemberToCardMember = (member: any) => {
+  const mapTeamMemberToCardMember = (member: any): TeamMember => {
     // Check if this member is the current user to use the correct avatar
     const avatarUrl = userAvatar && 
       profile?.id === member.id ? 
@@ -34,9 +35,10 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
       phone_number: member.phone_number || '',
       role: member.role,
       pharmacy_id: pharmacyId,
-      status: member.is_active ? 'active' : 'inactive' as 'active' | 'inactive',
+      doctor_id: undefined,
+      status: member.status || (member.is_active ? 'active' : 'inactive'),
       profile_image: avatarUrl,
-      isAvailable: member.is_active && isAuthenticated, // Add availability status
+      isAvailable: member.isAvailable ?? (member.is_active && isAuthenticated), // Add availability status
     };
   };
 
@@ -64,6 +66,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                     phone_number: '',
                     role: 'doctor',
                     pharmacy_id: pharmacyId,
+                    doctor_id: undefined,
                     status: 'active',
                     profile_image: userAvatar || profile.avatar_url,
                     isAvailable: isAuthenticated, // Add availability status
