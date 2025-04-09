@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useRecoilValue } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
 import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
+import { CircleDot } from "lucide-react";
 
 export interface UserAvatarProps {
   userProfile?: UserProfile;
@@ -13,6 +14,8 @@ export interface UserAvatarProps {
   canUpload?: boolean;
   onAvatarClick?: (e: React.MouseEvent) => void;
   isSquare?: boolean;
+  showStatus?: boolean;
+  isAvailable?: boolean;
 }
 
 const UserAvatar = ({ 
@@ -21,7 +24,9 @@ const UserAvatar = ({
   size = "md", 
   canUpload = false,
   onAvatarClick,
-  isSquare = false
+  isSquare = false,
+  showStatus = true,
+  isAvailable = true
 }: UserAvatarProps) => {
   // Get image URLs from Recoil state
   const globalAvatarUrl = useRecoilValue(userAvatarState);
@@ -98,21 +103,43 @@ const UserAvatar = ({
     displayAvatarUrl = `${displayAvatarUrl}${hasQueryParams ? '&' : '?'}t=${Date.now()}`;
   }
 
+  // Determine status indicator size based on avatar size
+  const statusSize = {
+    sm: "h-2.5 w-2.5",
+    md: "h-3 w-3",
+    lg: "h-4 w-4",
+    xl: "h-5 w-5"
+  };
+
   return (
-    <Avatar 
-      className={avatarClass} 
-      onClick={handleClick}
-      data-testid="user-avatar"
-    >
-      <AvatarImage 
-        src={displayAvatarUrl || undefined} 
-        alt={userProfile?.role === 'pharmacist' ? userProfile?.pharmacy_name || "Pharmacy" : userProfile?.full_name || "User"} 
-        crossOrigin="anonymous"
-      />
-      <AvatarFallback className={isSquare ? "rounded-md" : "rounded-full"}>
-        {initials}
-      </AvatarFallback>
-    </Avatar>
+    <div className="relative" data-testid="avatar-container">
+      <Avatar 
+        className={avatarClass} 
+        onClick={handleClick}
+        data-testid="user-avatar"
+      >
+        <AvatarImage 
+          src={displayAvatarUrl || undefined} 
+          alt={userProfile?.role === 'pharmacist' ? userProfile?.pharmacy_name || "Pharmacy" : userProfile?.full_name || "User"} 
+          crossOrigin="anonymous"
+        />
+        <AvatarFallback className={isSquare ? "rounded-md" : "rounded-full"}>
+          {initials}
+        </AvatarFallback>
+      </Avatar>
+
+      {/* Status indicator */}
+      {showStatus && (
+        <span 
+          className={cn(
+            "absolute bottom-0 right-0 rounded-full border-2 border-white",
+            statusSize[size],
+            isAvailable ? "bg-green-500" : "bg-gray-400"
+          )}
+          data-testid="status-indicator"
+        />
+      )}
+    </div>
   );
 };
 

@@ -13,7 +13,7 @@ interface PharmacyTeamProps {
 }
 
 const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'pharmacy' }) => {
-  const { profile } = useAuth();
+  const { profile, isAuthenticated } = useAuth();
   const userAvatar = useRecoilValue(userAvatarState);
   const {
     teamMembers,
@@ -36,6 +36,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
       pharmacy_id: pharmacyId,
       status: member.is_active ? 'active' : 'inactive' as 'active' | 'inactive',
       profile_image: avatarUrl,
+      isAvailable: member.is_active && isAuthenticated, // Add availability status
     };
   };
 
@@ -65,6 +66,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
                     pharmacy_id: pharmacyId,
                     status: 'active',
                     profile_image: userAvatar || profile.avatar_url,
+                    isAvailable: isAuthenticated, // Add availability status
                   }}
                   showMainDoctorBadge={false}
                   hideControls={true}

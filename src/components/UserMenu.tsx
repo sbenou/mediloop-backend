@@ -249,6 +249,8 @@ const UserMenu = memo(() => {
           } : undefined} 
           canUpload={true} 
           onAvatarClick={handleAvatarClick}
+          isAvailable={isAuthenticated} // Simple availability based on authentication status
+          showStatus={true}
         />
         <input
           type="file"

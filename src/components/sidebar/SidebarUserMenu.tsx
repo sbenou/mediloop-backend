@@ -1,3 +1,4 @@
+
 import { UserProfile } from "@/types/user";
 import { ChevronDown, CreditCard, LogOut, User, Store } from "lucide-react";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -15,6 +16,7 @@ import { useRecoilValue } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
 import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
 import { supabase } from "@/lib/supabase";
+import { WeekHours } from "@/types/pharmacy/hours";
 
 interface SidebarUserMenuProps {
   profile: UserProfile | null;
@@ -50,6 +52,7 @@ const SidebarUserMenu = ({
   const doctorStampUrl = useRecoilValue(doctorStampUrlState);
   const pharmacyLogoUrl = useRecoilValue(pharmacyLogoUrlState);
   const [pharmacyName, setPharmacyName] = useState<string | null>(null);
+  const [isAvailable, setIsAvailable] = useState(true);
   
   // Fetch pharmacy name if user is a pharmacist
   useEffect(() => {
@@ -77,7 +80,7 @@ const SidebarUserMenu = ({
           // Then get the pharmacy name
           const { data: pharmacy, error: pharmacyError } = await supabase
             .from('pharmacies')
-            .select('name')
+            .select('name, hours')
             .eq('id', pharmacyRelation.pharmacy_id)
             .single();
 
@@ -87,6 +90,11 @@ const SidebarUserMenu = ({
           }
 
           setPharmacyName(pharmacy.name);
+          
+          // Check pharmacy hours to determine availability
+          if (pharmacy.hours) {
+            checkPharmacyAvailability(pharmacy.hours);
+          }
           
           // Update the user profile with the pharmacy name for future use
           await supabase
@@ -152,11 +160,115 @@ const SidebarUserMenu = ({
         } catch (error) {
           console.error('Error fetching pharmacy data:', error);
         }
+      } else if (userRole === 'doctor' && profile?.id) {
+        // For doctors, check their availability
+        checkDoctorAvailability(profile.id);
       }
     };
 
     fetchPharmacyData();
   }, [profile?.id, userRole, profile?.pharmacy_name]);
+  
+  // Function to check if current time is within pharmacy opening hours
+  const checkPharmacyAvailability = (hoursString: string) => {
+    try {
+      // Try to parse the hours string as JSON
+      let hours: Partial<WeekHours>;
+      try {
+        hours = JSON.parse(hoursString);
+      } catch (e) {
+        console.error("Error parsing pharmacy hours:", e);
+        setIsAvailable(false);
+        return;
+      }
+      
+      // Get current day and time
+      const now = new Date();
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const currentDay = dayNames[now.getDay()];
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+      
+      // Check if current day exists in hours object
+      if (hours && hours[currentDay as keyof WeekHours]) {
+        const dayHours = hours[currentDay as keyof WeekHours];
+        
+        // If the pharmacy is closed today or no hours specified
+        if (!dayHours || (dayHours as any).open === false) {
+          setIsAvailable(false);
+          return;
+        }
+        
+        // Check if current time is within open hours
+        const openTime = (dayHours as any).openTime;
+        const closeTime = (dayHours as any).closeTime;
+        
+        if (openTime && closeTime) {
+          setIsAvailable(currentTime >= openTime && currentTime <= closeTime);
+        } else {
+          setIsAvailable(false);
+        }
+      } else {
+        setIsAvailable(false);
+      }
+    } catch (error) {
+      console.error("Error checking pharmacy availability:", error);
+      setIsAvailable(false);
+    }
+  };
+  
+  // Function to check doctor's availability
+  const checkDoctorAvailability = async (doctorId: string) => {
+    try {
+      // Get current day (0 = Sunday, 1 = Monday, etc.)
+      const now = new Date();
+      const currentDay = now.getDay();
+      // Convert to 1-7 where 1 is Monday and 7 is Sunday to match our database format
+      const dayOfWeek = currentDay === 0 ? 7 : currentDay;
+      
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+      
+      // Check doctor_availability
+      const { data, error } = await supabase
+        .from('doctor_availability')
+        .select('is_available, start_time, end_time')
+        .eq('doctor_id', doctorId)
+        .eq('day_of_week', dayOfWeek)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error fetching doctor availability:', error);
+        setIsAvailable(false);
+        return;
+      }
+      
+      // If we found availability data for today
+      if (data) {
+        // If the doctor explicitly set they're not available today
+        if (!data.is_available) {
+          setIsAvailable(false);
+          return;
+        }
+        
+        // Check if current time is within available hours
+        if (data.start_time && data.end_time) {
+          setIsAvailable(currentTime >= data.start_time && currentTime <= data.end_time);
+        } else {
+          // Default to available if times aren't specified but is_available is true
+          setIsAvailable(true);
+        }
+      } else {
+        // No availability record for today, default to not available
+        setIsAvailable(false);
+      }
+    } catch (error) {
+      console.error('Error checking doctor availability:', error);
+      setIsAvailable(false);
+    }
+  };
   
   // Log the pharmacy logo URL to help debug
   useEffect(() => {
@@ -199,6 +311,7 @@ const SidebarUserMenu = ({
         <div 
           onClick={handleAvatarClick}
           className="cursor-pointer hover:opacity-80 transition-opacity"
+          data-testid="sidebar-avatar-container"
         >
           <UserAvatar 
             userProfile={profile ? {
@@ -213,6 +326,7 @@ const SidebarUserMenu = ({
             }}
             fallbackText={getUserInitials()} 
             isSquare={true} // Make all avatars square in the sidebar
+            isAvailable={isAvailable} // Use our availability check
           />
         </div>
         
