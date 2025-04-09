@@ -89,7 +89,7 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
           </CardContent>
         </Card>
         
-        {/* Opening Hours Card (renamed from Consultation Hours) */}
+        {/* Opening Hours Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center space-x-2">

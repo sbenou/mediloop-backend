@@ -3,12 +3,10 @@ import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { WeekHours, DayHours, defaultHours } from '@/types/pharmacy/hours';
+import { WeekHours, defaultHours } from '@/types/pharmacy/hours';
 import { parseStringHours, validateHoursData, formatHoursDisplay } from '@/utils/pharmacy/hoursFormatters';
+import { HoursEditor } from '@/components/pharmacy/hours/HoursEditor';
 
 interface PharmacyHoursProps {
   hours: string | null;
@@ -145,23 +143,7 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({
       setIsSaving(false);
     }
   };
-  
-  const handleDayChange = (day: keyof WeekHours, field: keyof DayHours, value: any) => {
-    if (!weekHours) return;
-    
-    setWeekHours(prev => {
-      if (!prev) return prev;
-      
-      const updatedHours = { ...prev };
-      updatedHours[day] = {
-        ...updatedHours[day],
-        [field]: value
-      };
-      
-      return updatedHours;
-    });
-  };
-  
+
   // Textarea editor for string format
   const StringEditor = () => (
     <div className="space-y-4">
@@ -192,82 +174,16 @@ const PharmacyHours: React.FC<PharmacyHoursProps> = ({
     </div>
   );
   
-  // Structured day-by-day editor
-  const StructuredEditor = () => {
-    if (!weekHours) return null;
-    
-    const days: Array<[keyof WeekHours, string]> = [
-      ['monday', 'Monday'],
-      ['tuesday', 'Tuesday'],
-      ['wednesday', 'Wednesday'],
-      ['thursday', 'Thursday'],
-      ['friday', 'Friday'],
-      ['saturday', 'Saturday'],
-      ['sunday', 'Sunday']
-    ];
-    
-    return (
-      <div className="space-y-6">
-        <div className="space-y-4">
-          {days.map(([dayKey, dayLabel]) => (
-            <div key={dayKey} className="grid grid-cols-[1fr_2fr_2fr_auto] gap-2 items-center">
-              <div className="font-medium">{dayLabel}</div>
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="time"
-                  value={weekHours[dayKey].openTime}
-                  onChange={(e) => handleDayChange(dayKey, 'openTime', e.target.value)}
-                  disabled={!weekHours[dayKey].open}
-                  className="w-full"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="time"
-                  value={weekHours[dayKey].closeTime}
-                  onChange={(e) => handleDayChange(dayKey, 'closeTime', e.target.value)}
-                  disabled={!weekHours[dayKey].open}
-                  className="w-full"
-                />
-              </div>
-              <div className="flex items-center justify-end space-x-2">
-                <Switch 
-                  id={`${dayKey}-open`} 
-                  checked={weekHours[dayKey].open}
-                  onCheckedChange={(checked) => handleDayChange(dayKey, 'open', checked)}
-                />
-                <Label htmlFor={`${dayKey}-open`} className="text-sm">
-                  {weekHours[dayKey].open ? "Open" : "Closed"}
-                </Label>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="flex justify-end space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setIsEditing && setIsEditing(false)}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-          <Button 
-            size="sm" 
-            onClick={handleSaveJsonHours}
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
-        </div>
-      </div>
-    );
-  };
-  
   if (isEditing) {
     if (weekHours) {
-      return <StructuredEditor />;
+      return (
+        <HoursEditor
+          weekHours={weekHours}
+          onHoursChange={setWeekHours}
+          onCancel={() => setIsEditing && setIsEditing(false)}
+          onSave={handleSaveJsonHours}
+        />
+      );
     } else if (!isJsonFormat && hoursString !== null) {
       return <StringEditor />;
     } else {

@@ -2,10 +2,16 @@
 import React from "react";
 import { WeekHours } from "@/types/pharmacy/hours";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Save } from "lucide-react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 interface HoursEditorProps {
   weekHours: WeekHours;
@@ -13,6 +19,13 @@ interface HoursEditorProps {
   onCancel: () => void;
   onSave: () => void;
 }
+
+// Generate 24-hour format time options in 15 min increments
+const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
+  const hour = Math.floor(i / 4);
+  const minute = (i % 4) * 15;
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+});
 
 export const HoursEditor: React.FC<HoursEditorProps> = ({
   weekHours,
@@ -61,19 +74,37 @@ export const HoursEditor: React.FC<HoursEditorProps> = ({
           
           {dayData.open ? (
             <div className="flex items-center space-x-2">
-              <Input
-                type="time"
+              <Select
                 value={dayData.openTime}
-                onChange={(e) => handleTimeChange(day as keyof WeekHours, 'openTime', e.target.value)}
-                className="w-24"
-              />
+                onValueChange={(value) => handleTimeChange(day as keyof WeekHours, 'openTime', value)}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue placeholder="Start" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_OPTIONS.map((time) => (
+                    <SelectItem key={`${day}-open-${time}`} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <span>-</span>
-              <Input
-                type="time"
+              <Select
                 value={dayData.closeTime}
-                onChange={(e) => handleTimeChange(day as keyof WeekHours, 'closeTime', e.target.value)}
-                className="w-24"
-              />
+                onValueChange={(value) => handleTimeChange(day as keyof WeekHours, 'closeTime', value)}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue placeholder="End" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_OPTIONS.map((time) => (
+                    <SelectItem key={`${day}-close-${time}`} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           ) : (
             <span className="text-sm text-muted-foreground">Closed</span>
