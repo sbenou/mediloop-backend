@@ -39,13 +39,16 @@ const SidebarMenuAvatar = ({
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    console.log("SidebarMenuAvatar clicked");
+    e.preventDefault();
+    e.stopPropagation();
+    handleAvatarClick(e);
+  };
+
   return (
     <div 
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        handleAvatarClick(e);
-      }}
+      onClick={handleClick}
       className="cursor-pointer hover:opacity-80 transition-opacity"
       data-testid="sidebar-avatar"
     >
@@ -56,11 +59,7 @@ const SidebarMenuAvatar = ({
           pharmacy_logo_url: getAvatarUrl() || undefined
         } : undefined} 
         canUpload={true}
-        onAvatarClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleAvatarClick(e);
-        }}
+        onAvatarClick={handleClick}
         fallbackText={fallbackText} 
         isSquare={true} // Make all avatars square in the sidebar
       />

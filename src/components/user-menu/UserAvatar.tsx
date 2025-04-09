@@ -46,6 +46,7 @@ const UserAvatar = memo(({
   
   // Handle click event
   const handleClick = (e: React.MouseEvent) => {
+    console.log("UserAvatar clicked");
     if (onAvatarClick) {
       e.preventDefault();
       e.stopPropagation();
@@ -56,7 +57,11 @@ const UserAvatar = memo(({
   const avatarSrc = getAvatarUrl();
   
   return (
-    <div className="relative" onClick={handleClick} data-testid="user-avatar">
+    <div 
+      className="relative" 
+      onClick={handleClick} 
+      data-testid="user-avatar"
+    >
       <Avatar className={`${getSizeClass()} ${isSquare ? 'rounded-md' : 'rounded-full'} ${canUpload ? 'cursor-pointer' : ''}`}>
         <AvatarImage 
           src={avatarSrc || undefined} 

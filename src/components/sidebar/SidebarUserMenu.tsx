@@ -50,10 +50,12 @@ const SidebarUserMenu = ({
     setIsMenuOpen(prev => !prev);
   };
 
+  console.log("SidebarUserMenu rendering, isMenuOpen:", isMenuOpen);
+
   return (
     <div className="border-t p-4">
       <div className="flex items-center space-x-3">
-        {/* Avatar container - completely separated from the dropdown */}
+        {/* Avatar container - explicitly handles the click to toggle dropdown */}
         <SidebarMenuAvatar
           profile={profile}
           userRole={userRole}
@@ -61,7 +63,7 @@ const SidebarUserMenu = ({
           fallbackText={getUserInitials()}
         />
         
-        {/* Text info container with dropdown trigger */}
+        {/* Text info container with dropdown */}
         <SidebarMenuDropdown
           triggerElement={
             <SidebarMenuTrigger 

@@ -38,6 +38,8 @@ const SidebarMenuDropdown = ({
   isOpen,
   onOpenChange,
 }: SidebarMenuDropdownProps) => {
+  console.log("SidebarMenuDropdown rendering, isOpen:", isOpen);
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
