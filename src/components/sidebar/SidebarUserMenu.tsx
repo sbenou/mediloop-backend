@@ -47,23 +47,24 @@ const SidebarUserMenu = ({
     console.log("Sidebar avatar clicked, toggling dropdown");
     e.preventDefault();
     e.stopPropagation();
-    setIsMenuOpen(prev => !prev);
+    // Force toggle menu
+    setIsMenuOpen(!isMenuOpen);
   };
 
-  console.log("SidebarUserMenu rendering, isMenuOpen:", isMenuOpen);
+  console.log("SidebarUserMenu rendering, isMenuOpen:", isMenuOpen, "userRole:", userRole);
 
   return (
     <div className="border-t p-4">
       <div className="flex items-center space-x-3">
-        {/* Avatar container - explicitly handles the click to toggle dropdown */}
-        <SidebarMenuAvatar
-          profile={profile}
-          userRole={userRole}
-          handleAvatarClick={handleSidebarAvatarClick}
-          fallbackText={getUserInitials()}
-        />
+        <div onClick={handleSidebarAvatarClick} className="cursor-pointer">
+          <SidebarMenuAvatar
+            profile={profile}
+            userRole={userRole}
+            handleAvatarClick={handleSidebarAvatarClick}
+            fallbackText={getUserInitials()}
+          />
+        </div>
         
-        {/* Text info container with dropdown */}
         <SidebarMenuDropdown
           triggerElement={
             <SidebarMenuTrigger 

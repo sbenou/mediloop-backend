@@ -40,10 +40,12 @@ const SidebarMenuAvatar = ({
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    console.log("SidebarMenuAvatar clicked");
-    e.preventDefault();
-    e.stopPropagation();
-    handleAvatarClick(e);
+    console.log("SidebarMenuAvatar clicked, role:", userRole);
+    if (handleAvatarClick) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleAvatarClick(e);
+    }
   };
 
   return (
@@ -56,12 +58,12 @@ const SidebarMenuAvatar = ({
         userProfile={profile ? {
           ...profile,
           pharmacy_name: profile.pharmacy_name,
-          pharmacy_logo_url: getAvatarUrl() || undefined
+          pharmacy_logo_url: getAvatarUrl() || undefined,
+          role: userRole
         } : undefined} 
         canUpload={true}
-        onAvatarClick={handleClick}
         fallbackText={fallbackText} 
-        isSquare={true} // Make all avatars square in the sidebar
+        isSquare={true} 
       />
     </div>
   );

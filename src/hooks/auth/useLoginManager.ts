@@ -14,8 +14,8 @@ export const useLoginManager = () => {
     // Only proceed if we're authenticated, have a profile, and haven't redirected yet
     if (isLoading || !isAuthenticated || !profile || redirected.current) return;
     
-    // If we're already on the dashboard page, don't redirect again
-    if (window.location.pathname === '/dashboard') {
+    // If we're already on the dashboard page for non-pharmacist users, don't redirect again
+    if (profile.role !== 'pharmacist' && window.location.pathname === '/dashboard') {
       redirected.current = true;
       return;
     }
@@ -23,7 +23,7 @@ export const useLoginManager = () => {
     const role = profile.role;
     const route = getDashboardRouteByRole(role);
 
-    console.log("[LoginManager] Redirecting user to:", route);
+    console.log("[LoginManager] Redirecting user with role", role, "to:", route);
     redirected.current = true;
     navigate(route, { replace: true });
   }, [isAuthenticated, profile, navigate, isLoading]);
