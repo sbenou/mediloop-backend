@@ -15,6 +15,8 @@ import {
   pharmacistStampUrlState,
   pharmacistSignatureUrlState 
 } from "@/store/images/atoms";
+import PharmacyTeamContent from "@/components/pharmacy/profile/PharmacyTeamContent";
+import ProfessionalTeamContent from "@/components/professional/profile/ProfessionalTeamContent";
 
 interface UniversalProfessionalProfileProps {
   userRole: "doctor" | "pharmacist";
@@ -117,7 +119,16 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
         <TabsContent value="team" className="mt-4">
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Team</h2>
-            <p>Your team management will be displayed here.</p>
+            {userRole === "doctor" ? (
+              <ProfessionalTeamContent 
+                entityId={profile?.id || ""} 
+                entityType="doctor" 
+              />
+            ) : (
+              <PharmacyTeamContent 
+                pharmacyId={profile?.pharmacy_id || ""} 
+              />
+            )}
           </div>
         </TabsContent>
         

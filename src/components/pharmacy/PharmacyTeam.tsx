@@ -40,7 +40,7 @@ const PharmacyTeam: React.FC<PharmacyTeamProps> = ({ pharmacyId, entityType = 'p
   };
 
   return (
-    <div className="space-y-6 container mx-auto px-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold">{entityType === 'doctor' ? 'Doctor Team' : 'Pharmacy Team'}</h3>
       </div>

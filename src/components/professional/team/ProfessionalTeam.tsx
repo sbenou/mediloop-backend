@@ -53,7 +53,7 @@ const ProfessionalTeam: React.FC<ProfessionalTeamProps> = ({ entityId, entityTyp
   const entityLabel = entityType === 'doctor' ? 'Doctor Team' : 'Pharmacy Team';
 
   return (
-    <div className="space-y-6 container mx-auto px-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold">{entityLabel}</h3>
       </div>
