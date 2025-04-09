@@ -1,15 +1,24 @@
 
 import React from "react";
-import UnifiedLayout from "@/components/layout/UnifiedLayout";
+import { useSearchParams } from "react-router-dom";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
+import OrdersView from "@/components/dashboard/views/OrdersView";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 const MyOrders = () => {
+  const [searchParams] = useSearchParams();
+  const { userRole } = useAuth();
+  const activeTab = searchParams.get('view') || 'orders';
+
   return (
-    <UnifiedLayout>
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">My Orders</h1>
-        <p>Your orders will appear here.</p>
+    <UnifiedLayoutTemplate>
+      <div className="p-6">
+        <OrdersView 
+          activeTab={activeTab} 
+          userRole={userRole} 
+        />
       </div>
-    </UnifiedLayout>
+    </UnifiedLayoutTemplate>
   );
 };
 

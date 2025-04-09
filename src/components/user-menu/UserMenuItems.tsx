@@ -8,8 +8,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useMemo } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
-// Update the import if it's using userAvatarState
-// import { userAvatarState } from "@/store/user/atoms";
 import { supabase, clearAllAuthStorage } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import { 
