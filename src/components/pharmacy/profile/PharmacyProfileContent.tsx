@@ -7,7 +7,6 @@ import PharmacyInfo from "@/components/pharmacy/PharmacyInfo";
 import PharmacyHours from "@/components/pharmacy/PharmacyHours";
 import PharmacyMap from "@/components/pharmacy/PharmacyMap";
 import ProfessionalImageUpload from "./ProfessionalImageUpload";
-import ProfessionalHeader from "@/components/professional/profile/ProfessionalHeader";
 
 interface ProfileData {
   id: string;
@@ -37,11 +36,10 @@ const PharmacyProfileContent: React.FC<PharmacyProfileContentProps> = ({
 
   return (
     <div className="space-y-6">
-      <ProfessionalHeader 
-        title="Pharmacy Profile"
-        description="Manage your pharmacy profile information and presence"
-        role="pharmacy"
-      />
+      {/* Secondary Header */}
+      <div className="flex items-center">
+        <h2 className="text-2xl font-semibold">Pharmacy Profile</h2>
+      </div>
       
       <Card className="flex items-center justify-center overflow-hidden">
         <CardContent className="p-0 w-full h-full">
