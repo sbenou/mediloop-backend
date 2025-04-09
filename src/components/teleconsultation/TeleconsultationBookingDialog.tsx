@@ -29,6 +29,11 @@ interface TeleconsultationBookingDialogProps {
 
 // Create a schema for form validation
 const bookingSchema = z.object({
+  title: z.string({
+    required_error: "A title is required",
+  }).min(3, {
+    message: "Title must be at least 3 characters long",
+  }),
   date: z.date({
     required_error: "A date is required",
   }),
@@ -48,7 +53,22 @@ const bookingSchema = z.object({
   }).max(120, {
     message: "Duration must not be more than 120 minutes",
   }),
+  reminder: z.string(),
 });
+
+// Define reminder options
+const REMINDER_OPTIONS = [
+  { value: "none", label: "Don't remind me" },
+  { value: "at_time", label: "At time of event" },
+  { value: "5min", label: "5 minutes before" },
+  { value: "15min", label: "15 minutes before" },
+  { value: "30min", label: "30 minutes before" },
+  { value: "1hour", label: "1 hour before" },
+  { value: "2hours", label: "2 hours before" },
+  { value: "12hours", label: "12 hours before" },
+  { value: "1day", label: "1 day before" },
+  { value: "1week", label: "1 week before" }
+];
 
 // Generate available time options in 15-minute intervals from 8 AM to 8 PM
 const generateTimeOptions = () => {
@@ -75,11 +95,13 @@ const TeleconsultationBookingDialog = ({
   onBookingCreated,
   appointmentType = 'teleconsultation'
 }: TeleconsultationBookingDialogProps) => {
+  const [title, setTitle] = useState<string>("");
   const [date, setDate] = useState<Date | undefined>(selectedDate);
   const [time, setTime] = useState<string | undefined>(selectedTime);
   const [patientId, setPatientId] = useState<string>("");
   const [reason, setReason] = useState<string>("");
   const [duration, setDuration] = useState<number>(30);
+  const [reminder, setReminder] = useState<string>("none");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   
@@ -103,7 +125,7 @@ const TeleconsultationBookingDialog = ({
     
     try {
       // Validate form data
-      if (!date || !time || !patientId || !reason) {
+      if (!title || !date || !time || !patientId || !reason) {
         toast({
           variant: "destructive",
           title: "Missing information",
@@ -128,13 +150,15 @@ const TeleconsultationBookingDialog = ({
             patient_id: patientId,
             start_time: startDateTime.toISOString(),
             end_time: endDateTime.toISOString(),
-            reason: reason,
+            reason: title,
             status: 'confirmed',
             meta: {
               appointment_type: appointmentType,
               is_teleconsultation: appointmentType === 'teleconsultation',
               is_in_person: appointmentType === 'in-person',
-              duration_minutes: duration
+              duration_minutes: duration,
+              details: reason,
+              reminder: reminder
             }
           }
         ])
@@ -204,6 +228,18 @@ const TeleconsultationBookingDialog = ({
             </TabsList>
             
             <TabsContent value="details" className="space-y-4 pt-4">
+              {/* Title/Subject Field - New addition */}
+              <div className="space-y-2">
+                <Label htmlFor="title">Title / Subject</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter appointment title"
+                  required
+                />
+              </div>
+              
               {/* Patient Selection */}
               <div className="space-y-2">
                 <Label htmlFor="patient">Patient</Label>
@@ -283,6 +319,26 @@ const TeleconsultationBookingDialog = ({
                     {TIME_OPTIONS.map(timeOption => (
                       <SelectItem key={timeOption} value={timeOption}>
                         {timeOption}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Reminder Selection - New addition */}
+              <div className="space-y-2">
+                <Label htmlFor="reminder">Set Reminder</Label>
+                <Select
+                  value={reminder}
+                  onValueChange={setReminder}
+                >
+                  <SelectTrigger id="reminder">
+                    <SelectValue placeholder="Select reminder time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REMINDER_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
