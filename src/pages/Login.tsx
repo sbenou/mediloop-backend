@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -13,19 +13,20 @@ const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const { redirected } = useLoginManager(); // Use the login manager to handle redirects
   const navigate = useNavigate();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   // Direct redirection for already authenticated users
   useEffect(() => {
-    if (isAuthenticated && profile && !redirected) {
+    if (isAuthenticated && profile && !redirected && !redirectAttempted) {
+      setRedirectAttempted(true);
       const role = profile.role;
       const route = getDashboardRouteByRole(role);
       console.log(`[Login] User already authenticated with role ${role}, redirecting to: ${route}`);
       
-      // Use direct window.location instead of React Router to ensure a full page reload
-      // which helps avoid state synchronization issues
+      // Use a direct navigation to ensure a clean state
       window.location.href = route;
     }
-  }, [isAuthenticated, profile, navigate, redirected]);
+  }, [isAuthenticated, profile, navigate, redirected, redirectAttempted]);
 
   // Show loading state
   if (isLoading) {

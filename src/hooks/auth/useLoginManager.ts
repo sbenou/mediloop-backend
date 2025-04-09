@@ -10,10 +10,11 @@ export const useLoginManager = () => {
   const location = useLocation();
   const redirected = useRef(false);
   const [redirectAttempts, setRedirectAttempts] = useState(0);
+  const [lastAttemptTime, setLastAttemptTime] = useState(0);
 
   // Handle role-based redirects
   useEffect(() => {
-    // Only proceed if we're authenticated, have a profile, and haven't redirected yet
+    // Only proceed if we're authenticated, have a profile, haven't redirected yet, and not currently loading
     if (isLoading || !isAuthenticated || !profile || redirected.current) return;
     
     // Maximum number of redirect attempts to prevent infinite loops
@@ -22,6 +23,14 @@ export const useLoginManager = () => {
       redirected.current = true;
       return;
     }
+    
+    // Add a time-based throttle to prevent rapid redirect attempts
+    const now = Date.now();
+    if (now - lastAttemptTime < 2000) { // 2 second cooldown
+      console.log("[LoginManager] Throttling redirect attempts");
+      return;
+    }
+    setLastAttemptTime(now);
     
     // Don't redirect if we're already on a dashboard page
     if (location.pathname.includes('/dashboard') || location.pathname.includes('/superadmin')) {
@@ -38,7 +47,7 @@ export const useLoginManager = () => {
     // Always use window.location for redirects - this ensures a full page reload and consistent behavior
     window.location.href = route;
     redirected.current = true;
-  }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts, isPharmacist]);
+  }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts, lastAttemptTime, isPharmacist]);
 
   return {
     redirected: redirected.current,

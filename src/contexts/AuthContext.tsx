@@ -23,45 +23,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   
   // On initial load, check for existing session
   useEffect(() => {
+    let isMounted = true;
+    
     const initializeAuth = async () => {
       try {
-        const session = await refreshSession();
+        console.log("Starting auth initialization");
+        
+        // Create a timeout promise to prevent hanging
+        const sessionPromise = refreshSession();
+        const timeoutPromise = new Promise<null>(resolve => {
+          setTimeout(() => {
+            console.warn('Auth initialization timed out after 3 seconds');
+            resolve(null);
+          }, 3000);
+        });
+        
+        // Race the session fetch against the timeout
+        const session = await Promise.race([sessionPromise, timeoutPromise]);
+        
+        if (!isMounted) return;
         
         if (session) {
           console.log("Found existing session, updating auth state");
-          await updateAuthState(session);
+          // Use a setTimeout to prevent blocking the UI
+          setTimeout(() => {
+            if (isMounted) {
+              updateAuthState(session);
+            }
+          }, 0);
         } else {
           console.log("No existing session found");
           // Still update auth state but with null session
-          await updateAuthState(null);
+          if (isMounted) {
+            updateAuthState(null);
+          }
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
         // Update auth state with null on error
-        await updateAuthState(null);
+        if (isMounted) {
+          updateAuthState(null);
+        }
       }
     };
     
     initializeAuth();
     
-    // Listen for auth changes from other tabs
+    // Listen for auth changes from other tabs with a more robust approach
     const handleStorageEvent = (event: StorageEvent) => {
       if (event.key?.includes('auth-token')) {
         console.log('Auth token changed in another tab, refreshing session');
-        refreshSession().then(session => {
-          if (session) {
+        setTimeout(async () => {
+          if (!isMounted) return;
+          const session = await refreshSession();
+          if (session && isMounted) {
             updateAuthState(session);
-          } else {
+          } else if (isMounted) {
             // If no session is found after a storage event, it might mean logout
             updateAuthState(null);
           }
-        });
+        }, 0);
       }
     };
     
     window.addEventListener('storage', handleStorageEvent);
     
     return () => {
+      isMounted = false;
       window.removeEventListener('storage', handleStorageEvent);
     };
   }, [updateAuthState, refreshSession]);
