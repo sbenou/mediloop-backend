@@ -1,6 +1,6 @@
 
 import { UserProfile } from "@/types/user";
-import { RefObject } from "react";
+import { RefObject, useState } from "react";
 import { useSidebarUserMenu } from "./hooks/useSidebarUserMenu";
 import SidebarMenuAvatar from "./user-menu/SidebarMenuAvatar";
 import SidebarMenuDropdown from "./user-menu/SidebarMenuDropdown";
@@ -36,6 +36,17 @@ const SidebarUserMenu = ({
   handleFileChange
 }: SidebarUserMenuProps) => {
   const { pharmacyName } = useSidebarUserMenu(profile, userRole);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleMenuOpenChange = (open: boolean) => {
+    setIsMenuOpen(open);
+  };
+
+  const handleSidebarAvatarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMenuOpen(prev => !prev);
+    handleAvatarClick(e);
+  };
 
   return (
     <div className="border-t p-4">
@@ -44,7 +55,7 @@ const SidebarUserMenu = ({
         <SidebarMenuAvatar
           profile={profile}
           userRole={userRole}
-          handleAvatarClick={handleAvatarClick}
+          handleAvatarClick={handleSidebarAvatarClick}
           fallbackText={getUserInitials()}
         />
         
@@ -65,6 +76,8 @@ const SidebarUserMenu = ({
           navigateToPharmacyProfile={navigateToPharmacyProfile}
           navigateToDoctorProfile={navigateToDoctorProfile}
           handleLogout={handleLogout}
+          isOpen={isMenuOpen}
+          onOpenChange={handleMenuOpenChange}
         />
       </div>
       <input

@@ -21,6 +21,8 @@ interface SidebarMenuDropdownProps {
   navigateToPharmacyProfile?: () => void;
   navigateToDoctorProfile?: () => void;
   handleLogout: () => Promise<void>;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const SidebarMenuDropdown = ({
@@ -33,9 +35,11 @@ const SidebarMenuDropdown = ({
   navigateToPharmacyProfile,
   navigateToDoctorProfile,
   handleLogout,
+  isOpen,
+  onOpenChange,
 }: SidebarMenuDropdownProps) => {
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
         {triggerElement}
       </DropdownMenuTrigger>

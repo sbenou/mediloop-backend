@@ -11,7 +11,13 @@ interface UserMenuAvatarProps {
 
 const UserMenuAvatar = ({ profile, avatarUrl, onAvatarClick }: UserMenuAvatarProps) => {
   return (
-    <div onClick={onAvatarClick} className="cursor-pointer">
+    <div 
+      onClick={(e) => {
+        e.stopPropagation();
+        onAvatarClick();
+      }}
+      className="cursor-pointer"
+    >
       <UserAvatar 
         userProfile={profile ? {
           ...profile,

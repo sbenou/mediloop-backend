@@ -34,6 +34,7 @@ const UserMenu = () => {
   };
 
   const handleAvatarClick = () => {
+    setMenuOpen(prev => !prev);
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
@@ -60,23 +61,23 @@ const UserMenu = () => {
 
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-      <div className="flex items-center space-x-2">
-        <UserMenuAvatar 
-          profile={profile} 
-          avatarUrl={avatarUrl} 
-          onAvatarClick={handleAvatarClick} 
-        />
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={handleFileInputChange}
-        />
-        <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild>
+        <div className="flex items-center space-x-2">
+          <UserMenuAvatar 
+            profile={profile} 
+            avatarUrl={avatarUrl} 
+            onAvatarClick={handleAvatarClick} 
+          />
           <UserMenuTrigger profile={profile} formattedRole={formattedRole} />
-        </DropdownMenuTrigger>
-      </div>
+        </div>
+      </DropdownMenuTrigger>
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileInputChange}
+      />
       <DropdownMenuContent 
         align="end" 
         sideOffset={5}

@@ -1,7 +1,6 @@
 
 import { UserProfile } from "@/types/user";
 import UserAvatar from "../../user-menu/UserAvatar";
-import { RefObject } from "react";
 import { useRecoilValue } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
 import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
@@ -42,7 +41,10 @@ const SidebarMenuAvatar = ({
 
   return (
     <div 
-      onClick={handleAvatarClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleAvatarClick(e);
+      }}
       className="cursor-pointer hover:opacity-80 transition-opacity"
     >
       <UserAvatar 
