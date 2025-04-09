@@ -32,17 +32,20 @@ const Dashboard = () => {
     if (!isLoading && !isAuthenticated) {
       console.warn("🔒 Not authenticated — redirecting to login");
       navigate("/login", { replace: true });
+      return;
     }
     
     // Special handling for pharmacist users to ensure they have the correct view parameters
-    if (!isLoading && isAuthenticated && 
-       (userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist') && 
+    if (!isLoading && isAuthenticated && profile &&
+       (userRole === 'pharmacist' || isPharmacist || profile.role === 'pharmacist') && 
        (!view || view !== 'pharmacy')) {
-      console.log("🔄 Pharmacist detected without proper view parameters, updating URL and doing hard redirect");
+      console.log("🔄 Pharmacist detected without proper view parameters, updating URL");
       
-      // Using window.location for a more reliable redirect
-      window.location.href = '/dashboard?view=pharmacy&section=' + (section || 'dashboard');
-      return;
+      // Use setSearchParams for React Router navigation
+      setSearchParams({ 
+        view: 'pharmacy', 
+        section: section || 'dashboard' 
+      });
     }
   }, [isAuthenticated, navigate, isLoading, userRole, profile, view, section, isPharmacist, setSearchParams]);
 

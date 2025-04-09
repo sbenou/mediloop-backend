@@ -14,8 +14,17 @@ export const useLoginManager = () => {
 
   // Handle role-based redirects
   useEffect(() => {
-    // Only proceed if we're authenticated, have a profile, haven't redirected yet, and not currently loading
-    if (isLoading || !isAuthenticated || !profile || redirected.current) return;
+    // Only proceed if authentication has been checked and we're not currently loading
+    if (isLoading) return;
+    
+    // If we've already redirected or aren't authenticated, don't do anything
+    if (!isAuthenticated || redirected.current) return;
+    
+    // Make sure we have a valid profile before redirecting
+    if (!profile) {
+      console.log("[LoginManager] No profile available, waiting for profile data");
+      return;
+    }
     
     // Maximum number of redirect attempts to prevent infinite loops
     if (redirectAttempts >= 3) {
@@ -44,8 +53,13 @@ export const useLoginManager = () => {
     console.log("[LoginManager] Redirecting user to:", route);
     setRedirectAttempts(prevAttempts => prevAttempts + 1);
     
-    // Always use window.location for redirects - this ensures a full page reload and consistent behavior
-    window.location.href = route;
+    // Handle the pharmacist route specially to ensure correct parameters
+    if (role === 'pharmacist' || isPharmacist) {
+      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+    } else {
+      window.location.href = route;
+    }
+    
     redirected.current = true;
   }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts, lastAttemptTime, isPharmacist]);
 

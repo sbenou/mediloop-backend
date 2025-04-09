@@ -14,6 +14,7 @@ export const useProfileFetch = () => {
 
       // Directly fetch profile with minimal validation to avoid unnecessary calls
       try {
+        // Simplify the query to avoid errors with non-existent columns
         const { data: profile, error } = await supabase
           .from('profiles')
           .select(`
@@ -33,11 +34,6 @@ export const useProfileFetch = () => {
             cns_number,
             doctor_stamp_url,
             doctor_signature_url,
-            pharmacist_stamp_url,
-            pharmacist_signature_url,
-            pharmacy_logo_url,
-            pharmacy_name,
-            pharmacy_id,
             deleted_at,
             created_at,
             updated_at
@@ -86,9 +82,9 @@ export const useProfileFetch = () => {
               return { profile: null, permissions: [] };
             }
             
-            // Basic profile with default values
+            // Create a complete profile with default values for missing fields
             const completeNewProfile: UserProfile = {
-              ...newProfile as any,
+              ...(newProfile as any),
               pharmacist_stamp_url: null,
               pharmacist_signature_url: null,
               pharmacy_id: null,
@@ -105,13 +101,14 @@ export const useProfileFetch = () => {
         }
 
         // Ensure the profile object has all required properties
+        // Add missing pharmacy-related fields that might not exist in the database yet
         const completeProfile: UserProfile = {
-          ...profile as any,
+          ...(profile as any),
           pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
           pharmacist_signature_url: profile?.pharmacist_signature_url || null,
-          pharmacy_name: profile?.pharmacy_name || null,
-          pharmacy_logo_url: profile?.pharmacy_logo_url || null,
-          pharmacy_id: profile?.pharmacy_id || null
+          pharmacy_name: null, // Set defaults for fields that might be missing in the DB
+          pharmacy_logo_url: null,
+          pharmacy_id: null
         };
 
         const safeProfile = safeQueryResult<UserProfile>(completeProfile);
