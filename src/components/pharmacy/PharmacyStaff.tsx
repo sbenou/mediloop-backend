@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
@@ -240,8 +239,8 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
   const StaffCardView = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {staff.map(member => (
-        <Card key={member.id} className="overflow-hidden">
-          <CardContent className="p-4">
+        <div key={member.id} className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
+          <div className="p-4">
             <div className="flex items-center space-x-4 mb-4">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 {member.avatar_url ? (
@@ -276,60 +275,58 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
                 View Profile
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ))}
     </div>
   );
 
   return (
-    <Card className="shadow-none border-0">
-      <CardContent className="p-0">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2">
-            <Button
-              variant={viewMode === 'list' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <LayoutList className="h-4 w-4 mr-1" /> List
-            </Button>
-            <Button
-              variant={viewMode === 'card' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode('card')}
-            >
-              <LayoutGrid className="h-4 w-4 mr-1" /> Cards
-            </Button>
-          </div>
-          <Button onClick={() => setDialogOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add Team Member
+    <div className="p-0">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={viewMode === 'list' ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode('list')}
+          >
+            <LayoutList className="h-4 w-4 mr-1" /> List
+          </Button>
+          <Button
+            variant={viewMode === 'card' ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode('card')}
+          >
+            <LayoutGrid className="h-4 w-4 mr-1" /> Cards
           </Button>
         </div>
-        
-        {loading ? (
-          <div className="text-center py-6">Loading staff...</div>
-        ) : staff.length === 0 ? (
-          <StaffEmptyState onAddStaff={() => setDialogOpen(true)} />
-        ) : (
-          <TooltipProvider>
-            {viewMode === 'list' ? (
-              <StaffMemberList 
-                staff={staff}
-                currentUserId={profile?.id}
-                userAvatar={userAvatar}
-                onViewMember={handleViewMember}
-                onEditMember={handleEditMember}
-                onTerminateMember={handleTerminateMember}
-                onToggleActive={toggleStaffStatus}
-              />
-            ) : (
-              <StaffCardView />
-            )}
-          </TooltipProvider>
-        )}
-      </CardContent>
+        <Button onClick={() => setDialogOpen(true)}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Add Team Member
+        </Button>
+      </div>
+      
+      {loading ? (
+        <div className="text-center py-6">Loading staff...</div>
+      ) : staff.length === 0 ? (
+        <StaffEmptyState onAddStaff={() => setDialogOpen(true)} />
+      ) : (
+        <TooltipProvider>
+          {viewMode === 'list' ? (
+            <StaffMemberList 
+              staff={staff}
+              currentUserId={profile?.id}
+              userAvatar={userAvatar}
+              onViewMember={handleViewMember}
+              onEditMember={handleEditMember}
+              onTerminateMember={handleTerminateMember}
+              onToggleActive={toggleStaffStatus}
+            />
+          ) : (
+            <StaffCardView />
+          )}
+        </TooltipProvider>
+      )}
       
       <TeamMemberDialog
         open={dialogOpen}
@@ -342,7 +339,7 @@ const PharmacyStaff: React.FC<PharmacyStaffProps> = ({ pharmacyId, entityType = 
         entityType={entityType}
         showAllTabs={false}
       />
-    </Card>
+    </div>
   );
 };
 

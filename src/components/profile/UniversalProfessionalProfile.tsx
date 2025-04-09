@@ -17,6 +17,7 @@ import {
 } from "@/store/images/atoms";
 import PharmacyTeamContent from "@/components/pharmacy/profile/PharmacyTeamContent";
 import ProfessionalTeamContent from "@/components/professional/profile/ProfessionalTeamContent";
+import ProfessionalStaffContent from "@/components/professional/profile/ProfessionalStaffContent";
 
 interface UniversalProfessionalProfileProps {
   userRole: "doctor" | "pharmacist";
@@ -135,7 +136,17 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
         <TabsContent value="staff" className="mt-4">
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Staff Management</h2>
-            <p>Your staff management will be displayed here.</p>
+            {userRole === "doctor" ? (
+              <ProfessionalStaffContent 
+                entityId={profile?.id || ""} 
+                entityType="doctor" 
+              />
+            ) : (
+              <ProfessionalStaffContent 
+                entityId={profile?.pharmacy_id || ""}
+                entityType="pharmacy" 
+              />
+            )}
           </div>
         </TabsContent>
         
