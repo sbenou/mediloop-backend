@@ -43,9 +43,12 @@ export const useAuth = () => {
       if (data?.session) {
         // Refresh user data here if needed
         console.log("Session refreshed successfully");
+        return data.session;
       }
+      return null;
     } catch (error) {
       console.error("Error refreshing session:", error);
+      return null;
     }
   }, []);
 

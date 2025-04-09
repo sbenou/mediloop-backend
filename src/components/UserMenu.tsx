@@ -1,4 +1,3 @@
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -265,11 +264,6 @@ const UserMenu = memo(() => {
             data-testid="user-menu-trigger"
             className="flex flex-col items-start hover:opacity-80 transition-opacity cursor-pointer outline-none text-sm"
             aria-label="User menu"
-            onClick={(e) => {
-              e.preventDefault();
-              console.log("Trigger button clicked");
-              setMenuOpen(!menuOpen);
-            }}
           >
             <span className="font-medium">{profile?.full_name || 'User'}</span>
             <span className="text-xs text-muted-foreground">{formattedRole}</span>

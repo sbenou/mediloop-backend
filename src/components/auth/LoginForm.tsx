@@ -10,6 +10,7 @@ import { AuthOptions } from "./login/AuthOptions";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import { storeSession } from "@/lib/auth/sessionUtils";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -51,6 +52,10 @@ export const LoginForm = () => {
 
     if (session?.user) {
       console.log('Valid session found, proceeding with success callback');
+      
+      // Explicitly store the session to ensure it persists
+      storeSession(session);
+      
       // Check user role and redirect accordingly
       try {
         const { data: profile, error: profileError } = await supabase
@@ -65,10 +70,15 @@ export const LoginForm = () => {
           return;
         }
         
-        // Use the new utility to get the appropriate dashboard route
+        // Use the utility to get the appropriate dashboard route
         const route = getDashboardRouteByRole(profile?.role);
         console.log(`Redirecting user with role ${profile?.role} to ${route}`);
-        navigate(route, { replace: true });
+        
+        // Use a slight delay before navigation to ensure state is updated
+        setTimeout(() => {
+          navigate(route, { replace: true });
+        }, 200);
+        
       } catch (err) {
         console.error('Error during role check:', err);
         navigate('/dashboard'); // Fallback redirect

@@ -36,7 +36,7 @@ export const useSessionManagement = () => {
       // Before trying to fetch the profile, verify that the token is still valid
       try {
         // Perform a lightweight check to verify token validity
-        const { data: userData, error: userError } = await supabase.auth.getUser(session.access_token);
+        const { data: userData, error: userError } = await supabase.auth.getUser();
         
         if (userError) {
           console.error('Token validation error:', userError);
@@ -117,7 +117,7 @@ export const useSessionManagement = () => {
         // Clear session as well to force a new login
         try {
           clearAllAuthStorage();
-          await supabase.auth.signOut({ scope: 'global' });
+          await supabase.auth.signOut({ scope: 'local' });
         } catch (signOutError) {
           console.error('Error signing out after profile fetch failure:', signOutError);
         }
@@ -136,12 +136,15 @@ export const useSessionManagement = () => {
         permissionsCount: permissions.length
       });
 
-      setAuth({
-        user: session.user,
-        profile,
-        permissions,
-        isLoading: false,
-      });
+      // Add a slight delay to ensure state updates properly before any navigation
+      setTimeout(() => {
+        setAuth({
+          user: session.user,
+          profile,
+          permissions,
+          isLoading: false,
+        });
+      }, 100);
 
     } catch (error) {
       console.error('Error in updateAuthState:', error);
@@ -174,6 +177,7 @@ export const useSessionManagement = () => {
         
         if (!refreshError && refreshData.session) {
           console.log('Session refreshed successfully via API');
+          storeSession(refreshData.session);
           return refreshData.session;
         }
       } catch (refreshErr) {
@@ -202,9 +206,11 @@ export const useSessionManagement = () => {
           }
           
           console.log('Session refreshed successfully on second attempt');
+          storeSession(refreshData.session);
           return refreshData.session;
         }
         
+        storeSession(data.session);
         return data.session;
       }
       
@@ -223,6 +229,7 @@ export const useSessionManagement = () => {
             return null;
           }
           
+          storeSession(refreshData.session);
           return refreshData.session;
         }
         

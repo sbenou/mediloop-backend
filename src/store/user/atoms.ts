@@ -1,8 +1,12 @@
 
 import { atom } from 'recoil';
 
-// Avatar URL Recoil state
-export const userAvatarState = atom<string | null>({
+export const userAvatarState = atom({
   key: 'userAvatarState',
-  default: null,
+  default: null as string | null,
+});
+
+export const pharmacyLogoState = atom({
+  key: 'pharmacyLogoState',
+  default: null as string | null,
 });
