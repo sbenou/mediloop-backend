@@ -18,9 +18,19 @@ interface CartButtonProps {
 }
 
 const CartButton = ({ isOpen, onOpenChange }: CartButtonProps) => {
-  const { state: cartState } = useCart();
+  // Wrap the useCart hook in a try/catch to prevent errors when used outside a CartProvider
+  let cartState = { items: [] };
+  let itemCount = 0;
+  
+  try {
+    const { state } = useCart();
+    cartState = state;
+    itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
+  } catch (error) {
+    console.error("CartButton: useCart hook must be used within a CartProvider");
+  }
+
   const { isAuthenticated } = useAuth();
-  const itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
   // Listen for custom closeCart event
   useEffect(() => {

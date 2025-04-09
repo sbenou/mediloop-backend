@@ -12,6 +12,9 @@ import DoctorProfilePage from '@/pages/doctor/DoctorProfilePage';
 import PharmacyProfilePage from '@/pages/pharmacy/PharmacyProfile';
 import Activities from '@/pages/Activities';
 import NotFound from '@/pages/NotFound';
+import UpgradePage from '@/pages/upgrade/UpgradePage';
+import MyOrders from '@/pages/MyOrders';
+import MyPrescriptions from '@/pages/MyPrescriptions';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 
@@ -80,6 +83,18 @@ const router = createBrowserRouter([
   {
     path: '/activities',
     element: <Activities initialView="activities" />,
+  },
+  {
+    path: '/upgrade',
+    element: <UpgradePage />,
+  },
+  {
+    path: '/my-orders',
+    element: <MyOrders />,
+  },
+  {
+    path: '/my-prescriptions',
+    element: <MyPrescriptions />,
   },
   {
     path: '*',

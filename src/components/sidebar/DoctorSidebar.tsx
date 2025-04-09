@@ -84,6 +84,12 @@ const DoctorSidebar = ({
     console.log('Navigating to doctor profile from DoctorSidebar');
     navigate('/doctor/profile');
   };
+  
+  // Add a function specifically for upgrade navigation
+  const navigateToUpgrade = () => {
+    console.log('Navigating to upgrade page from DoctorSidebar');
+    navigate('/upgrade');
+  };
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -208,7 +214,7 @@ const DoctorSidebar = ({
         handleLogout={handleLogout}
         navigateToProfile={() => navigateToDoctorView('profile', 'personal', 'profileTab')}
         navigateToBilling={() => navigateToDoctorView('orders', 'payments', 'ordersTab')}
-        navigateToUpgrade={() => navigateToLink('/upgrade')}
+        navigateToUpgrade={navigateToUpgrade}
         navigateToDoctorProfile={navigateToDoctorProfile}
         handleFileChange={handleFileChange}
       />
