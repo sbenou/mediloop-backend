@@ -59,56 +59,65 @@ export const HoursEditor: React.FC<HoursEditorProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Column Headers */}
+      <div className="grid grid-cols-4 gap-4 mb-2 px-4">
+        <div className="font-medium">Day</div>
+        <div className="font-medium">Start Time</div>
+        <div className="font-medium">End Time</div>
+        <div className="font-medium text-center">Open/Closed</div>
+      </div>
+
       {Object.entries(weekHours).map(([day, dayData]) => (
-        <div key={day} className="flex items-center space-x-4">
-          <div className="w-24">
-            <div className="flex items-center space-x-2">
-              <Switch 
-                checked={dayData.open} 
-                onCheckedChange={() => handleToggleDay(day as keyof WeekHours)} 
-                id={`switch-${day}`}
-              />
-              <Label htmlFor={`switch-${day}`}>{formatDay(day)}</Label>
-            </div>
+        <div key={day} className="grid grid-cols-4 items-center gap-4">
+          <div className="font-medium">
+            {formatDay(day)}
           </div>
           
-          {dayData.open ? (
-            <div className="flex items-center space-x-2">
-              <Select
-                value={dayData.openTime}
-                onValueChange={(value) => handleTimeChange(day as keyof WeekHours, 'openTime', value)}
-              >
-                <SelectTrigger className="w-24">
-                  <SelectValue placeholder="Start" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIME_OPTIONS.map((time) => (
-                    <SelectItem key={`${day}-open-${time}`} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span>-</span>
-              <Select
-                value={dayData.closeTime}
-                onValueChange={(value) => handleTimeChange(day as keyof WeekHours, 'closeTime', value)}
-              >
-                <SelectTrigger className="w-24">
-                  <SelectValue placeholder="End" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIME_OPTIONS.map((time) => (
-                    <SelectItem key={`${day}-close-${time}`} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : (
-            <span className="text-sm text-muted-foreground">Closed</span>
-          )}
+          <div>
+            <Select
+              value={dayData.openTime}
+              onValueChange={(value) => handleTimeChange(day as keyof WeekHours, 'openTime', value)}
+              disabled={!dayData.open}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Start" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIME_OPTIONS.map((time) => (
+                  <SelectItem key={`${day}-open-${time}`} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Select
+              value={dayData.closeTime}
+              onValueChange={(value) => handleTimeChange(day as keyof WeekHours, 'closeTime', value)}
+              disabled={!dayData.open}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="End" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIME_OPTIONS.map((time) => (
+                  <SelectItem key={`${day}-close-${time}`} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex justify-center items-center">
+            <Switch 
+              checked={dayData.open} 
+              onCheckedChange={() => handleToggleDay(day as keyof WeekHours)} 
+              id={`switch-${day}`}
+            />
+          </div>
         </div>
       ))}
       
