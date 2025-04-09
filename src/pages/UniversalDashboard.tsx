@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   ProfileView, 
@@ -19,7 +19,8 @@ import NotificationsView from "@/components/dashboard/views/NotificationsView";
 const UniversalDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const { userRole, isLoading, isPharmacist } = useAuth();
+  const navigate = useNavigate();
+  const { userRole, isLoading, isPharmacist, profile } = useAuth();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const currentView = searchParams.get("view") || "home";
@@ -32,24 +33,37 @@ const UniversalDashboard = () => {
     console.log("UniversalDashboard render:", { 
       userRole, 
       isPharmacist,
+      profile: profile?.role,
       currentView, 
       pharmacySection,
       searchParams: Object.fromEntries(searchParams.entries()),
       location: location.pathname + location.search
     });
-  }, [userRole, currentView, pharmacySection, searchParams, location, isPharmacist]);
+  }, [userRole, currentView, pharmacySection, searchParams, location, isPharmacist, profile]);
   
-  // Make sure we have a default section for pharmacists
+  // Make sure we have a default section for pharmacists - with more aggressive redirect
   useEffect(() => {
-    if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad) {
+    if (!isLoading && (userRole === "pharmacist" || isPharmacist || profile?.role === "pharmacist")) {
       console.log("Checking pharmacist params:", { currentView, pharmacySection, isPharmacist });
       
-      if (currentView !== 'pharmacy' || !pharmacySection) {
-        console.log("Setting default pharmacist params");
+      const isPharmacistWithWrongParams = currentView !== 'pharmacy' || !pharmacySection;
+      
+      if (isPharmacistWithWrongParams) {
+        console.log("Detected pharmacist with incorrect URL parameters. Fixing...");
+        
+        // Use a direct window.location update for complete reliability
+        if (location.pathname === '/dashboard') {
+          const correctUrl = '/dashboard?view=pharmacy&section=dashboard';
+          console.log(`Hard redirecting pharmacist to: ${correctUrl}`);
+          window.location.href = correctUrl;
+          return;
+        }
+        
+        // As a backup, try React Router navigation
         setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isPharmacist]);
+  }, [userRole, setSearchParams, currentView, pharmacySection, isLoading, isPharmacist, profile, location, navigate]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
@@ -60,7 +74,7 @@ const UniversalDashboard = () => {
   
   const getContent = () => {
     // For pharmacists, always show the pharmacy view regardless of the URL parameter
-    if (userRole === "pharmacist" || isPharmacist) {
+    if (userRole === "pharmacist" || isPharmacist || profile?.role === "pharmacist") {
       console.log("Rendering PharmacyView with section:", pharmacySection);
       return <PharmacyView userRole={userRole} section={pharmacySection} />;
     }

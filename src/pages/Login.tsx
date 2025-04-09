@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { useLoginManager } from "@/hooks/auth/useLoginManager";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import { toast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();

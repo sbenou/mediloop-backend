@@ -108,16 +108,24 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
-    // Special handling for dashboard navigation for pharmacists
-    if (path === '/dashboard' && isUserPharmacist) {
-      console.log('Pharmacist clicking on Dashboard - using direct URL navigation');
-      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+    // Use hard navigation (window.location.href) for ALL dashboard navigation for consistency
+    if (path.includes('/dashboard')) {
+      // Special case for pharmacists - always use pharmacy view
+      if (isUserPharmacist) {
+        const pharmacistPath = '/dashboard?view=pharmacy&section=dashboard';
+        console.log(`Pharmacist user detected, redirecting to: ${pharmacistPath}`);
+        window.location.href = pharmacistPath;
+        return;
+      }
+      
+      // Use window.location.href for all dashboard navigation to ensure full page reload
+      console.log(`Using window.location for dashboard navigation to: ${path}`);
+      window.location.href = path;
       return;
     }
     
-    // Prevent default and stop propagation if this is called from a click event
+    // For non-dashboard pages, use React Router
     try {
-      // For other navigation, use immediate timeout to ensure event handling is complete
       window.setTimeout(() => {
         navigate(path);
       }, 0);
@@ -149,7 +157,7 @@ export const UserMenuItems = () => {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
-        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Direct link to doctor profile page
+        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, 
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
         { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
@@ -158,12 +166,12 @@ export const UserMenuItems = () => {
       ];
     }
     
-    // Pharmacist specific items
+    // Pharmacist specific items - always use full pharmacy parameter set
     if (isUserPharmacist) {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
-        { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
-        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' }, // Direct link to pharmacy profile page
+        { icon: User, label: 'Profile', path: '/dashboard?view=pharmacy&section=profile&profileTab=personal' },
+        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
         { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },

@@ -35,15 +35,7 @@ export const useLoginManager = () => {
     console.log("[LoginManager] Redirecting user to:", route);
     setRedirectAttempts(prevAttempts => prevAttempts + 1);
     
-    // Special handling for pharmacists to ensure they have the correct URL parameters
-    if (role === 'pharmacist' || isPharmacist) {
-      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-      redirected.current = true;
-      return;
-    }
-    
-    // Use a more aggressive approach with window.location for hard redirects
-    // that bypass any React Router issues
+    // Always use window.location for redirects - this ensures a full page reload and consistent behavior
     window.location.href = route;
     redirected.current = true;
   }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts, isPharmacist]);

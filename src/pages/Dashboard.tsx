@@ -35,12 +35,14 @@ const Dashboard = () => {
     }
     
     // Special handling for pharmacist users to ensure they have the correct view parameters
-    if (!isLoading && isAuthenticated && (userRole === 'pharmacist' || isPharmacist) && (!view || view !== 'pharmacy')) {
-      console.log("🔄 Pharmacist detected without proper view parameters, updating URL");
-      setSearchParams({ 
-        view: 'pharmacy', 
-        section: section || 'dashboard' 
-      }, { replace: true });
+    if (!isLoading && isAuthenticated && 
+       (userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist') && 
+       (!view || view !== 'pharmacy')) {
+      console.log("🔄 Pharmacist detected without proper view parameters, updating URL and doing hard redirect");
+      
+      // Using window.location for a more reliable redirect
+      window.location.href = '/dashboard?view=pharmacy&section=' + (section || 'dashboard');
+      return;
     }
   }, [isAuthenticated, navigate, isLoading, userRole, profile, view, section, isPharmacist, setSearchParams]);
 
