@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useBookingForm, TIME_OPTIONS, REMINDER_OPTIONS } from "./hooks";
 
@@ -30,8 +31,13 @@ const TeleconsultationScheduler = ({
     onClose
   });
 
+  // Handle form submission with React Hook Form
+  const onSubmit = form.handleSubmit((data) => {
+    return handleSubmit(data);
+  });
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       {/* Title/Subject Field */}
       <div className="space-y-2">
         <label htmlFor="title" className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Title / Subject</label>

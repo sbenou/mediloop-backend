@@ -106,6 +106,3 @@ export const useBookingForm = ({
     roomId
   };
 };
-
-// Re-export types and constants from the types file
-export * from "./types/bookingTypes";
