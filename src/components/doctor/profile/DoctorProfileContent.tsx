@@ -7,6 +7,7 @@ import DoctorInfo from "@/components/doctor/DoctorInfo";
 import DoctorHours from "@/components/doctor/DoctorHours";
 import DoctorMap from "@/components/doctor/DoctorMap";
 import ProfessionalImageUpload from "@/components/pharmacy/profile/ProfessionalImageUpload";
+import ProfessionalHeader from "@/components/professional/profile/ProfessionalHeader";
 
 interface ProfileData {
   id: string;
@@ -36,6 +37,12 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
 
   return (
     <div className="space-y-6">
+      <ProfessionalHeader 
+        title="Doctor Profile"
+        description="Manage your doctor profile information and presence"
+        role="doctor"
+      />
+      
       <Card className="flex items-center justify-center overflow-hidden">
         <CardContent className="p-0 w-full h-full">
           <ProfessionalImageUpload 
