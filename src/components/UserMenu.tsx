@@ -1,3 +1,4 @@
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -125,11 +126,18 @@ const UserMenu = memo(() => {
     setMenuOpen(false);
   }, [navigate]);
 
-  const handleAvatarClick = () => {
+  const handleAvatarClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
-  };
+  }, []);
+
+  const handleMenuToggle = useCallback((open: boolean) => {
+    console.log("Menu toggle called, new state:", open);
+    setMenuOpen(open);
+  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -232,7 +240,7 @@ const UserMenu = memo(() => {
   }
 
   return (
-    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+    <DropdownMenu open={menuOpen} onOpenChange={handleMenuToggle}>
       <div className="flex items-center space-x-2">
         <UserAvatar 
           userProfile={profile ? {
@@ -252,8 +260,14 @@ const UserMenu = memo(() => {
         <DropdownMenuTrigger asChild>
           <button 
             type="button"
+            data-testid="user-menu-trigger"
             className="flex flex-col items-start hover:opacity-80 transition-opacity cursor-pointer outline-none text-sm"
             aria-label="User menu"
+            onClick={(e) => {
+              e.preventDefault();
+              console.log("Trigger button clicked");
+              setMenuOpen(!menuOpen);
+            }}
           >
             <span className="font-medium">{profile?.full_name || 'User'}</span>
             <span className="text-xs text-muted-foreground">{formattedRole}</span>

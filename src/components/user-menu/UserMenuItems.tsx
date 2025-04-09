@@ -1,3 +1,4 @@
+
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -107,12 +108,15 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
-    // If on activities page and trying to go to dashboard with params,
-    // ensure we navigate properly
-    if (isActivitiesPage && path.startsWith('/dashboard?')) {
-      navigate(path);
-    } else {
-      navigate(path);
+    // Prevent default and stop propagation if this is called from a click event
+    try {
+      window.setTimeout(() => {
+        navigate(path);
+      }, 0);
+    } catch (e) {
+      console.error("Navigation error:", e);
+      // Fallback to direct navigation if something goes wrong
+      window.location.href = path;
     }
   };
 
@@ -204,7 +208,10 @@ export const UserMenuItems = () => {
           {roleSpecificItems.map((item, index) => (
             <DropdownMenuItem 
               key={`${item.label}-${index}`} 
-              onClick={() => {
+              data-testid={`menu-item-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 console.log(`Navigating to ${item.path} from UserMenuItems`);
                 handleNavigation(item.path);
               }}
@@ -217,7 +224,12 @@ export const UserMenuItems = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-red-600 focus:text-red-600"
-          onClick={handleLogout}
+          data-testid="menu-item-logout"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleLogout();
+          }}
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>

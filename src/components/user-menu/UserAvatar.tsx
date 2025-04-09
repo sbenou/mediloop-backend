@@ -67,7 +67,10 @@ const UserAvatar = ({
 
   const handleClick = (e: React.MouseEvent) => {
     if (canUpload && onAvatarClick) {
+      e.preventDefault();
+      e.stopPropagation();
       onAvatarClick(e);
+      console.log("Avatar clicked, event stopped");
     }
   };
 
@@ -96,7 +99,11 @@ const UserAvatar = ({
   }
 
   return (
-    <Avatar className={avatarClass} onClick={handleClick}>
+    <Avatar 
+      className={avatarClass} 
+      onClick={handleClick}
+      data-testid="user-avatar"
+    >
       <AvatarImage 
         src={displayAvatarUrl || undefined} 
         alt={userProfile?.role === 'pharmacist' ? userProfile?.pharmacy_name || "Pharmacy" : userProfile?.full_name || "User"} 
