@@ -53,7 +53,10 @@ const SidebarMenuDropdown = ({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={navigateToUpgrade}>
+          <DropdownMenuItem onClick={() => {
+            navigateToUpgrade();
+            onOpenChange?.(false);
+          }}>
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Upgrade to Pro</span>
           </DropdownMenuItem>
@@ -67,6 +70,7 @@ const SidebarMenuDropdown = ({
                 console.log("Pharmacy Profile link clicked");
                 if (navigateToPharmacyProfile) {
                   navigateToPharmacyProfile();
+                  onOpenChange?.(false);
                 } else {
                   console.error("navigateToPharmacyProfile is not defined");
                 }
@@ -85,6 +89,7 @@ const SidebarMenuDropdown = ({
                 console.log("Doctor Profile link clicked");
                 if (navigateToDoctorProfile) {
                   navigateToDoctorProfile();
+                  onOpenChange?.(false);
                 } else {
                   console.error("navigateToDoctorProfile is not defined");
                 }
@@ -96,17 +101,26 @@ const SidebarMenuDropdown = ({
             </DropdownMenuItem>
           )}
           
-          <DropdownMenuItem onClick={navigateToProfile}>
+          <DropdownMenuItem onClick={() => {
+            navigateToProfile();
+            onOpenChange?.(false);
+          }}>
             <User className="mr-2 h-4 w-4" />
             <span>Account</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={navigateToBilling}>
+          <DropdownMenuItem onClick={() => {
+            navigateToBilling();
+            onOpenChange?.(false);
+          }}>
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Billing</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleLogout}>
+        <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => {
+          handleLogout();
+          onOpenChange?.(false);
+        }}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

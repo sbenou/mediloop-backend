@@ -47,6 +47,7 @@ const SidebarMenuAvatar = ({
         handleAvatarClick(e);
       }}
       className="cursor-pointer hover:opacity-80 transition-opacity"
+      data-testid="sidebar-avatar"
     >
       <UserAvatar 
         userProfile={profile ? {

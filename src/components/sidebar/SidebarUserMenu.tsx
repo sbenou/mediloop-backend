@@ -39,10 +39,12 @@ const SidebarUserMenu = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleMenuOpenChange = (open: boolean) => {
+    console.log("Menu open change:", open);
     setIsMenuOpen(open);
   };
 
   const handleSidebarAvatarClick = (e: React.MouseEvent) => {
+    console.log("Sidebar avatar clicked, toggling dropdown");
     e.preventDefault();
     e.stopPropagation();
     setIsMenuOpen(prev => !prev);
