@@ -10,6 +10,7 @@ export function useSidebarNavigation(userRole: string) {
   const [isConsultationsOpen, setIsConsultationsOpen] = useState(false);
   const [isWorkplacesOpen, setIsWorkplacesOpen] = useState(false);
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+  const [isActivitiesOpen, setIsActivitiesOpen] = useState(false);
   
   // Get current query params
   const searchParams = new URLSearchParams(location.search);
@@ -32,6 +33,51 @@ export function useSidebarNavigation(userRole: string) {
     }
   };
   
+  // Function to check if a specific path is active
+  const isLinkActive = (path: string) => {
+    if (path === '/dashboard') {
+      return location.pathname === '/dashboard' && !location.search;
+    }
+    return location.pathname.includes(path);
+  };
+
+  // Functions specifically for the pharmacist view
+  const isPharmacistSectionActive = (section: string) => {
+    return userRole === 'pharmacist' && 
+           searchParams.get('view') === 'pharmacy' && 
+           searchParams.get('section') === section;
+  };
+
+  const isPharmacistTabActive = (section: string, tabParam: string, tabValue: string) => {
+    if (!isPharmacistSectionActive(section)) return false;
+    
+    const tabParamValue = tabParam === 'profileTab' ? searchParams.get('profileTab') : 
+                          tabParam === 'ordersTab' ? searchParams.get('ordersTab') : 
+                          '';
+                          
+    return tabParamValue === tabValue || (!tabParamValue && tabValue === 'default');
+  };
+
+  // Function to check if a specific section is active
+  const isSectionActive = (sectionName: string) => {
+    if (userRole === 'pharmacist' || userRole === 'doctor') {
+      return searchParams.get('section') === sectionName;
+    } else {
+      return searchParams.get('view') === sectionName;
+    }
+  };
+
+  // Function to check if a tab is active
+  const isTabActive = (sectionName: string, tabParam: string, tabValue: string) => {
+    if (!isSectionActive(sectionName)) return false;
+    
+    const tabParamValue = tabParam === 'profileTab' ? searchParams.get('profileTab') : 
+                          tabParam === 'ordersTab' ? searchParams.get('ordersTab') : 
+                          '';
+                          
+    return tabParamValue === tabValue || (!tabParamValue && tabValue === 'default');
+  };
+  
   return {
     isProfileOpen,
     setIsProfileOpen,
@@ -41,6 +87,15 @@ export function useSidebarNavigation(userRole: string) {
     setIsWorkplacesOpen,
     isOrdersOpen,
     setIsOrdersOpen,
-    navigateToLink
+    isActivitiesOpen,
+    setIsActivitiesOpen,
+    navigateToLink,
+    isPharmacistSectionActive,
+    isPharmacistTabActive,
+    isSectionActive,
+    isTabActive,
+    isLinkActive
   };
 }
+
+export default useSidebarNavigation;
