@@ -37,8 +37,8 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
   return (
     <div className="space-y-6">
       {/* Secondary Header */}
-      <div className="flex items-center">
-        <h2 className="text-2xl font-semibold">Doctor Profile</h2>
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-semibold">Doctor Profile</h3>
       </div>
       
       <Card className="flex items-center justify-center overflow-hidden">
