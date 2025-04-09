@@ -1,4 +1,3 @@
-
 import React, { Dispatch, SetStateAction, useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -200,8 +199,8 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
       return (
         <div className="space-y-1">
           {formattedHours.map((line, index) => (
-            <div key={index} className="text-sm flex justify-between gap-4">
-              <span className="font-medium">{line.split(':')[0]}:</span>
+            <div key={index} className="text-sm flex">
+              <span className="font-medium w-24">{line.split(':')[0]}:</span>
               <span>{line.split(':').slice(1).join(':').trim()}</span>
             </div>
           ))}
