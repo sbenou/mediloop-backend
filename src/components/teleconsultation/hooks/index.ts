@@ -2,8 +2,9 @@
 // Re-export from useBookingForm.ts
 export { useBookingForm } from "./useBookingForm";
 
-// Re-export all from types/bookingTypes.ts
-export * from "./types/bookingTypes";
+// Re-export types from bookingTypes.ts
+export type { BookingFormValues, UseBookingFormProps } from "./types/bookingTypes";
+export { bookingFormSchema, REMINDER_OPTIONS, TIME_OPTIONS } from "./types/bookingTypes";
 
 // Re-export utilities
 export * from "./utils/bookingUtils";
