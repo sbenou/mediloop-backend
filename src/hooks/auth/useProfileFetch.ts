@@ -34,6 +34,8 @@ export const useProfileFetch = () => {
             cns_number,
             doctor_stamp_url,
             doctor_signature_url,
+            pharmacist_stamp_url,
+            pharmacist_signature_url,
             deleted_at,
             created_at,
             updated_at
@@ -106,9 +108,9 @@ export const useProfileFetch = () => {
           ...(profile as any),
           pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
           pharmacist_signature_url: profile?.pharmacist_signature_url || null,
-          pharmacy_name: null, // Set defaults for fields that might be missing in the DB
-          pharmacy_logo_url: null,
-          pharmacy_id: null
+          pharmacy_name: profile?.pharmacy_name || null,
+          pharmacy_logo_url: profile?.pharmacy_logo_url || null,
+          pharmacy_id: profile?.pharmacy_id || null
         };
 
         const safeProfile = safeQueryResult<UserProfile>(completeProfile);
