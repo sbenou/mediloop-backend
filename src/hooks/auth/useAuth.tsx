@@ -12,6 +12,7 @@ import {
 import { useRecoilValue } from "recoil";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
+import { UserProfile } from "@/types/user";
 
 /**
  * Hook for accessing and managing authentication state
@@ -48,7 +49,20 @@ export const useAuth = () => {
           
           if (profile) {
             console.log('[useAuth] Successfully fetched profile for user:', authData.user?.id);
-            setAuthData(prev => ({ ...prev, profile }));
+            
+            // Ensure profile has all required UserProfile properties
+            const completeProfile: UserProfile = {
+              ...profile,
+              // Add missing fields with default values if they don't exist
+              phone_number: profile.phone_number || null,
+              pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+              pharmacist_signature_url: profile.pharmacist_signature_url || null,
+              pharmacy_id: profile.pharmacy_id || null,
+              pharmacy_name: profile.pharmacy_name || null,
+              pharmacy_logo_url: profile.pharmacy_logo_url || null
+            };
+            
+            setAuthData(prev => ({ ...prev, profile: completeProfile }));
           }
         } catch (err) {
           console.error('[useAuth] Error in profile fetch:', err);
@@ -104,8 +118,20 @@ export const useAuth = () => {
       }
       
       if (profile) {
-        setAuthData(prev => ({ ...prev, profile }));
-        return profile;
+        // Ensure profile has all required UserProfile properties
+        const completeProfile: UserProfile = {
+          ...profile,
+          // Add missing fields with default values if they don't exist
+          phone_number: profile.phone_number || null,
+          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+          pharmacist_signature_url: profile.pharmacist_signature_url || null,
+          pharmacy_id: profile.pharmacy_id || null,
+          pharmacy_name: profile.pharmacy_name || null,
+          pharmacy_logo_url: profile.pharmacy_logo_url || null
+        };
+        
+        setAuthData(prev => ({ ...prev, profile: completeProfile }));
+        return completeProfile;
       }
       
       return null;
