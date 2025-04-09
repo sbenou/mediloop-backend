@@ -36,6 +36,9 @@ export const useProfileFetch = () => {
             doctor_signature_url,
             pharmacist_stamp_url,
             pharmacist_signature_url,
+            pharmacy_id,
+            pharmacy_name,
+            pharmacy_logo_url,
             deleted_at,
             created_at,
             updated_at
@@ -103,14 +106,14 @@ export const useProfileFetch = () => {
         }
 
         // Ensure the profile object has all required properties
-        // Add missing pharmacy-related fields that might not exist in the database yet
+        // Use type assertion to avoid TypeScript errors and provide default values
         const completeProfile: UserProfile = {
           ...(profile as any),
-          pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile?.pharmacist_signature_url || null,
-          pharmacy_name: profile?.pharmacy_name || null,
-          pharmacy_logo_url: profile?.pharmacy_logo_url || null,
-          pharmacy_id: profile?.pharmacy_id || null
+          pharmacist_stamp_url: (profile as any).pharmacist_stamp_url || null,
+          pharmacist_signature_url: (profile as any).pharmacist_signature_url || null,
+          pharmacy_name: (profile as any).pharmacy_name || null,
+          pharmacy_logo_url: (profile as any).pharmacy_logo_url || null,
+          pharmacy_id: (profile as any).pharmacy_id || null
         };
 
         const safeProfile = safeQueryResult<UserProfile>(completeProfile);
