@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, memo } from "react";
 import Sidebar from "../sidebar/Sidebar";
 import NotificationBell from "../NotificationBell";
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
@@ -20,8 +20,77 @@ interface UnifiedLayoutProps {
   children: ReactNode;
 }
 
-const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
+// Extracted header component to prevent re-rendering of UserMenu when tabs change
+const Header = memo(() => {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  
+  return (
+    <header className="h-16 border-b px-6 flex items-center justify-between font-sans">
+      <div className="flex items-center space-x-4">
+        <NavigationMenu>
+          <NavigationMenuList>
+            <MainNavigation />
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
+      
+      <div className="flex items-center space-x-4">
+        <NotificationBell />
+        <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
+        <UserMenu />
+      </div>
+    </header>
+  );
+});
+Header.displayName = 'Header';
+
+// Extract sidebar drawer component to prevent re-renders
+const SideDrawer = memo(({ 
+  isDrawerOpen, 
+  activeDrawerTab, 
+  setActiveDrawerTab 
+}: { 
+  isDrawerOpen: boolean, 
+  activeDrawerTab: string, 
+  setActiveDrawerTab: (tab: string) => void 
+}) => {
+  return (
+    <div 
+      className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+    >
+      <div className="p-4 h-full overflow-y-auto">
+        <Tabs 
+          defaultValue="home" 
+          className="w-full" 
+          value={activeDrawerTab}
+          onValueChange={setActiveDrawerTab}
+        >
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="home">Home</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="home" className="mt-0">
+            {typeof Advertisements === 'function' ? (
+              <Advertisements />
+            ) : (
+              <div className="p-4 border rounded text-amber-700 bg-amber-50">
+                Advertisements component failed to load
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="activity" className="mt-0">
+            <ActivityFeed />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+});
+SideDrawer.displayName = 'SideDrawer';
+
+const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
   const { userRole } = useAuth();
@@ -37,22 +106,8 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
           
           {/* Main content */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Apply a consistent font family to header */}
-            <header className="h-16 border-b px-6 flex items-center justify-between font-sans">
-              <div className="flex items-center space-x-4">
-                <NavigationMenu>
-                  <NavigationMenuList>
-                    <MainNavigation />
-                  </NavigationMenuList>
-                </NavigationMenu>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <NotificationBell />
-                <CartButton isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
-                <UserMenu />
-              </div>
-            </header>
+            {/* Memoized header to prevent unnecessary re-renders */}
+            <Header />
             
             {/* Main content with right drawer */}
             <div className="flex flex-1 overflow-hidden relative">
@@ -77,38 +132,12 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
                 {isDrawerOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
               </Button>
               
-              {/* Right drawer */}
-              <div 
-                className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
-              >
-                <div className="p-4 h-full overflow-y-auto">
-                  <Tabs 
-                    defaultValue="home" 
-                    className="w-full" 
-                    value={activeDrawerTab}
-                    onValueChange={setActiveDrawerTab}
-                  >
-                    <TabsList className="grid grid-cols-2 mb-4">
-                      <TabsTrigger value="home">Home</TabsTrigger>
-                      <TabsTrigger value="activity">Activity</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="home" className="mt-0">
-                      {typeof Advertisements === 'function' ? (
-                        <Advertisements />
-                      ) : (
-                        <div className="p-4 border rounded text-amber-700 bg-amber-50">
-                          Advertisements component failed to load
-                        </div>
-                      )}
-                    </TabsContent>
-                    
-                    <TabsContent value="activity" className="mt-0">
-                      <ActivityFeed />
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              </div>
+              {/* Memoized right drawer */}
+              <SideDrawer 
+                isDrawerOpen={isDrawerOpen}
+                activeDrawerTab={activeDrawerTab}
+                setActiveDrawerTab={setActiveDrawerTab}
+              />
             </div>
           </div>
         </div>

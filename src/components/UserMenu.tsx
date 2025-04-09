@@ -5,7 +5,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { useRef, useState } from 'react';
+import { useRef, useState, memo } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserMenuItems } from "./user-menu/UserMenuItems";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -88,6 +88,8 @@ const UserMenu = () => {
   );
 };
 
-UserMenu.displayName = 'UserMenu';
+// Memoize the component to prevent unnecessary re-renders
+const MemoizedUserMenu = memo(UserMenu);
+MemoizedUserMenu.displayName = 'UserMenu';
 
-export default UserMenu;
+export default MemoizedUserMenu;

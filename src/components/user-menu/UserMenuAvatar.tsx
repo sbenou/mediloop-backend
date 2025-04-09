@@ -1,5 +1,5 @@
 
-import { useRef } from 'react';
+import { memo } from 'react';
 import UserAvatar from "./UserAvatar";
 import { UserProfile } from "@/types/user";
 
@@ -27,4 +27,8 @@ const UserMenuAvatar = ({ profile, avatarUrl, onAvatarClick }: UserMenuAvatarPro
   );
 };
 
-export default UserMenuAvatar;
+// Memoize the component to prevent unnecessary re-renders
+const MemoizedUserMenuAvatar = memo(UserMenuAvatar);
+MemoizedUserMenuAvatar.displayName = 'UserMenuAvatar';
+
+export default MemoizedUserMenuAvatar;

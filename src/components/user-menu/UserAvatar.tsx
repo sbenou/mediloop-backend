@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfile } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { useRecoilValue } from "recoil";
+import { memo, useMemo } from "react";
 import { userAvatarState } from "@/store/user/atoms";
 import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
 
@@ -28,42 +29,37 @@ const UserAvatar = ({
   const doctorStampUrl = useRecoilValue(doctorStampUrlState);
   const pharmacyLogoUrl = useRecoilValue(pharmacyLogoUrlState);
   
-  // Log relevant state for debugging
-  if (userProfile?.role === 'pharmacist') {
-    console.log("UserAvatar: Pharmacy user detected");
-    console.log("UserAvatar: pharmacyLogoUrl from Recoil =", pharmacyLogoUrl);
-    console.log("UserAvatar: pharmacy_logo_url from profile =", userProfile?.pharmacy_logo_url);
-    console.log("UserAvatar: pharmacy_name =", userProfile?.pharmacy_name);
-  }
-  
-  const sizeClasses = {
+  // Use useMemo for all derived values to prevent recalculations
+  const sizeClasses = useMemo(() => ({
     sm: "h-8 w-8 text-xs",
     md: "h-10 w-10 text-sm",
     lg: "h-16 w-16 text-lg",
-    xl: "h-24 w-24 text-2xl" // Increased size for xl option (4x larger than md)
-  };
+    xl: "h-24 w-24 text-2xl"
+  }), []);
 
-  const avatarClass = cn(
+  const avatarClass = useMemo(() => cn(
     sizeClasses[size] || sizeClasses.md,
     isSquare ? "rounded-md" : "rounded-full",
     canUpload && "cursor-pointer hover:opacity-80 transition-opacity"
-  );
+  ), [size, isSquare, canUpload, sizeClasses]);
   
   // Generate initials - use pharmacy name for pharmacists if available
-  const initials = fallbackText || 
-    (userProfile?.role === 'pharmacist' && userProfile?.pharmacy_name ? 
-      userProfile.pharmacy_name.split(' ')
-        .map(name => name[0])
-        .join('')
-        .toUpperCase()
-        .substring(0, 2) :
-      userProfile?.full_name ? 
-        userProfile.full_name.split(' ')
+  const initials = useMemo(() => {
+    return fallbackText || 
+      (userProfile?.role === 'pharmacist' && userProfile?.pharmacy_name ? 
+        userProfile.pharmacy_name.split(' ')
           .map(name => name[0])
           .join('')
           .toUpperCase()
-          .substring(0, 2) : 
-        "U");
+          .substring(0, 2) :
+        userProfile?.full_name ? 
+          userProfile.full_name.split(' ')
+            .map(name => name[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2) : 
+          "U");
+  }, [fallbackText, userProfile]);
 
   const handleClick = (e: React.MouseEvent) => {
     if (canUpload && onAvatarClick) {
@@ -72,28 +68,30 @@ const UserAvatar = ({
   };
 
   // Determine which avatar URL to use based on user role and context
-  let displayAvatarUrl = null;
-  
-  // Special handling for pharmacists in sidebar (isSquare=true)
-  if (userProfile?.role === 'pharmacist' && isSquare) {
-    // For pharmacists in sidebar, ONLY use pharmacy logo or nothing
-    displayAvatarUrl = pharmacyLogoUrl || userProfile.pharmacy_logo_url;
-    console.log("UserAvatar: Using pharmacy logo for display:", displayAvatarUrl);
-  }
-  // For doctors in sidebar
-  else if (userProfile?.role === 'doctor' && isSquare) {
-    displayAvatarUrl = doctorStampUrl || userProfile.doctor_stamp_url;
-  }
-  // For regular users or non-sidebar contexts
-  else if (!isSquare || userProfile?.role === 'user') {
-    displayAvatarUrl = globalAvatarUrl || userProfile?.avatar_url;
-  }
+  const displayAvatarUrl = useMemo(() => {
+    let url = null;
+    
+    // Special handling for pharmacists in sidebar (isSquare=true)
+    if (userProfile?.role === 'pharmacist' && isSquare) {
+      // For pharmacists in sidebar, ONLY use pharmacy logo or nothing
+      url = pharmacyLogoUrl || userProfile.pharmacy_logo_url;
+    }
+    // For doctors in sidebar
+    else if (userProfile?.role === 'doctor' && isSquare) {
+      url = doctorStampUrl || userProfile.doctor_stamp_url;
+    }
+    // For regular users or non-sidebar contexts
+    else if (!isSquare || userProfile?.role === 'user') {
+      url = globalAvatarUrl || userProfile?.avatar_url;
+    }
 
-  // Add timestamp to prevent caching if URL exists
-  if (displayAvatarUrl) {
-    const hasQueryParams = displayAvatarUrl.includes('?');
-    displayAvatarUrl = `${displayAvatarUrl}${hasQueryParams ? '&' : '?'}t=${Date.now()}`;
-  }
+    if (!url) return null;
+    
+    // Use a stable timestamp for each component mount, not on every render
+    const staticTimestamp = Date.now();
+    const hasQueryParams = url.includes('?');
+    return `${url}${hasQueryParams ? '&' : '?'}t=${staticTimestamp}`;
+  }, [userProfile, isSquare, pharmacyLogoUrl, doctorStampUrl, globalAvatarUrl]);
 
   return (
     <Avatar className={avatarClass} onClick={handleClick}>
@@ -109,4 +107,8 @@ const UserAvatar = ({
   );
 };
 
-export default UserAvatar;
+// Memoize the component to prevent unnecessary re-renders
+const MemoizedUserAvatar = memo(UserAvatar);
+MemoizedUserAvatar.displayName = 'UserAvatar';
+
+export default MemoizedUserAvatar;
