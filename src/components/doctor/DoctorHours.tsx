@@ -200,7 +200,7 @@ const DoctorHours: React.FC<DoctorHoursProps> = ({
         <div className="space-y-1">
           {formattedHours.map((line, index) => (
             <div key={index} className="text-sm flex">
-              <span className="font-medium w-24">{line.split(':')[0]}:</span>
+              <span className="font-medium w-28">{line.split(':')[0]}:</span>
               <span>{line.split(':').slice(1).join(':').trim()}</span>
             </div>
           ))}
