@@ -74,10 +74,24 @@ export const LoginForm = () => {
         const route = getDashboardRouteByRole(profile?.role);
         console.log(`Redirecting user with role ${profile?.role} to ${route}`);
         
-        // Use a slight delay before navigation to ensure state is updated
+        // First try React Router navigation with a significant delay
         setTimeout(() => {
-          navigate(route, { replace: true });
-        }, 200);
+          try {
+            navigate(route, { replace: true });
+            
+            // Add a fallback with window.location after a short delay
+            // in case React Router navigation fails
+            setTimeout(() => {
+              if (window.location.pathname === '/login') {
+                console.log('Fallback: Using direct location change');
+                window.location.href = route;
+              }
+            }, 500);
+          } catch (navError) {
+            console.error('Navigation error:', navError);
+            window.location.href = route;
+          }
+        }, 300);
         
       } catch (err) {
         console.error('Error during role check:', err);

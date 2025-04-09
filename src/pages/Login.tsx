@@ -1,14 +1,40 @@
 
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { useLoginManager } from "@/hooks/auth/useLoginManager";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 const Login = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, profile } = useAuth();
   const { redirected } = useLoginManager(); // Use the login manager to handle redirects
+  const navigate = useNavigate();
+  
+  // Direct redirection for already authenticated users
+  useEffect(() => {
+    if (isAuthenticated && profile && !redirected) {
+      const role = profile.role;
+      const route = getDashboardRouteByRole(role);
+      console.log(`[Login] User already authenticated with role ${role}, redirecting to: ${route}`);
+      
+      // Try React Router first
+      const redirectWithReactRouter = () => {
+        try {
+          navigate(route, { replace: true });
+        } catch (navError) {
+          console.error('React Router navigation failed:', navError);
+          // Fall back to window.location
+          window.location.href = route;
+        }
+      };
+      
+      // Use setTimeout to ensure state is ready
+      setTimeout(redirectWithReactRouter, 100);
+    }
+  }, [isAuthenticated, profile, navigate, redirected]);
 
   // Show loading state
   if (isLoading) {
@@ -30,7 +56,7 @@ const Login = () => {
   }
 
   // If already authenticated and redirected, show a temporary loading state
-  if (isAuthenticated && redirected) {
+  if (isAuthenticated) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">

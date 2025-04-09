@@ -14,7 +14,7 @@ export const useLoginManager = () => {
   // Handle role-based redirects
   useEffect(() => {
     // Only proceed if we're authenticated, have a profile, and haven't redirected yet
-    if (isLoading || !isAuthenticated || !profile) return;
+    if (isLoading || !isAuthenticated || !profile || redirected.current) return;
     
     // Maximum number of redirect attempts to prevent infinite loops
     if (redirectAttempts >= 3) {
@@ -33,13 +33,21 @@ export const useLoginManager = () => {
     const route = getDashboardRouteByRole(role);
 
     console.log("[LoginManager] Redirecting user to:", route);
-    redirected.current = true;
+    
+    // Use a more aggressive approach with window.location for hard redirects
+    // that bypass any React Router issues
+    if (redirectAttempts >= 1) {
+      console.log("[LoginManager] Using hard redirect");
+      window.location.href = route;
+      return;
+    }
     
     // Use a small timeout to ensure all state is updated before redirection
     setTimeout(() => {
+      redirected.current = true;
       setRedirectAttempts(prev => prev + 1);
       navigate(route, { replace: true });
-    }, 100);
+    }, 200); // Increased timeout for better state synchronization
   }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts]);
 
   return {
