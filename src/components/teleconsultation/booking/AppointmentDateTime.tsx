@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { BookingFormValues, TIME_OPTIONS } from "../hooks/useBookingForm";
+import { BookingFormValues, TIME_OPTIONS } from "../hooks/types/bookingTypes";
 
 interface AppointmentDateTimeProps {
   form: UseFormReturn<BookingFormValues>;

@@ -1,6 +1,7 @@
 
 import React from "react";
-import { useBookingForm, TIME_OPTIONS, REMINDER_OPTIONS } from "./hooks";
+import { useBookingForm } from "./hooks";
+import { TIME_OPTIONS, REMINDER_OPTIONS } from "./hooks/types/bookingTypes";
 
 interface TeleconsultationSchedulerProps {
   selectedDate?: Date;
