@@ -2,11 +2,17 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Save, MapPin, Clock } from "lucide-react";
+import { MapPin, Clock, User, MoreVertical } from "lucide-react";
 import DoctorInfo from "@/components/doctor/DoctorInfo";
 import DoctorHours from "@/components/doctor/DoctorHours";
 import DoctorMap from "@/components/doctor/DoctorMap";
 import ProfessionalImageUpload from "@/components/pharmacy/profile/ProfessionalImageUpload";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface ProfileData {
   id: string;
@@ -57,18 +63,22 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
         {/* Doctor Information Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Doctor Information</CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setIsEditingInfo(!isEditingInfo)}
-            >
-              {isEditingInfo ? (
-                <Save className="h-4 w-4" />
-              ) : (
-                <Edit className="h-4 w-4" />
-              )}
-            </Button>
+            <div className="flex items-center space-x-2">
+              <User className="h-5 w-5 text-primary" />
+              <CardTitle>Doctor Information</CardTitle>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditingInfo(!isEditingInfo)}>
+                  {isEditingInfo ? "Cancel Edit" : "Edit Information"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardHeader>
           <CardContent>
             <DoctorInfo 
@@ -79,24 +89,25 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
           </CardContent>
         </Card>
         
-        {/* Consultation Hours Card */}
+        {/* Opening Hours Card (renamed from Consultation Hours) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center">
-              <Clock className="h-5 w-5 mr-2 text-primary" />
-              <CardTitle>Consultation Hours</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Clock className="h-5 w-5 text-primary" />
+              <CardTitle>Opening Hours</CardTitle>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setIsEditingHours(!isEditingHours)}
-            >
-              {isEditingHours ? (
-                <Save className="h-4 w-4" />
-              ) : (
-                <Edit className="h-4 w-4" />
-              )}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditingHours(!isEditingHours)}>
+                  {isEditingHours ? "Cancel Edit" : "Edit Hours"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardHeader>
           <CardContent>
             <DoctorHours 
