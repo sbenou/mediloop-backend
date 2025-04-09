@@ -43,9 +43,9 @@ const SidebarUserMenu = ({
   };
 
   const handleSidebarAvatarClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setIsMenuOpen(prev => !prev);
-    handleAvatarClick(e);
   };
 
   return (

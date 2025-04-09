@@ -44,7 +44,7 @@ const SidebarMenuDropdown = ({
         {triggerElement}
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" side="right" className="w-56 bg-white">
+      <DropdownMenuContent align="end" side="right" className="w-56 bg-white z-[9999]">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1 items-center">
             <p className="text-sm font-normal">{profile?.email || 'user@example.com'}</p>

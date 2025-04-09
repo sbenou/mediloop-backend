@@ -42,6 +42,7 @@ const SidebarMenuAvatar = ({
   return (
     <div 
       onClick={(e) => {
+        e.preventDefault();
         e.stopPropagation();
         handleAvatarClick(e);
       }}
@@ -55,6 +56,7 @@ const SidebarMenuAvatar = ({
         } : undefined} 
         canUpload={true}
         onAvatarClick={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           handleAvatarClick(e);
         }}
