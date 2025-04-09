@@ -13,9 +13,12 @@ const ProfessionalTeamContent: React.FC<ProfessionalTeamContentProps> = ({
   entityType 
 }) => {
   return (
-    <ScrollArea className="h-[calc(100vh-300px)] pr-4">
-      <ProfessionalTeam entityId={entityId} entityType={entityType} />
-    </ScrollArea>
+    <div className="bg-white shadow rounded-lg p-6">
+      <h2 className="text-xl font-semibold mb-4">Team</h2>
+      <ScrollArea className="h-[calc(100vh-300px)]">
+        <ProfessionalTeam entityId={entityId} entityType={entityType} />
+      </ScrollArea>
+    </div>
   );
 };
 

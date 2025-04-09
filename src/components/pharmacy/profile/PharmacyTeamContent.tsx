@@ -9,9 +9,12 @@ interface PharmacyTeamContentProps {
 
 const PharmacyTeamContent: React.FC<PharmacyTeamContentProps> = ({ pharmacyId }) => {
   return (
-    <ScrollArea className="h-[calc(100vh-300px)] pr-4">
-      <PharmacyTeam pharmacyId={pharmacyId} />
-    </ScrollArea>
+    <div className="bg-white shadow rounded-lg p-6">
+      <h2 className="text-xl font-semibold mb-4">Team</h2>
+      <ScrollArea className="h-[calc(100vh-300px)]">
+        <PharmacyTeam pharmacyId={pharmacyId} />
+      </ScrollArea>
+    </div>
   );
 };
 
