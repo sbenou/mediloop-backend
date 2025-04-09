@@ -52,14 +52,14 @@ export const useAuth = () => {
             
             // Ensure profile has all required UserProfile properties
             const completeProfile: UserProfile = {
-              ...profile,
+              ...profile as any,
               // Add missing fields with default values if they don't exist
-              phone_number: profile.phone_number || null,
-              pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-              pharmacist_signature_url: profile.pharmacist_signature_url || null,
-              pharmacy_id: profile.pharmacy_id || null,
-              pharmacy_name: profile.pharmacy_name || null,
-              pharmacy_logo_url: profile.pharmacy_logo_url || null
+              phone_number: (profile as any).phone_number || null,
+              pharmacist_stamp_url: (profile as any).pharmacist_stamp_url || null,
+              pharmacist_signature_url: (profile as any).pharmacist_signature_url || null,
+              pharmacy_id: (profile as any).pharmacy_id || null,
+              pharmacy_name: (profile as any).pharmacy_name || null,
+              pharmacy_logo_url: (profile as any).pharmacy_logo_url || null
             };
             
             setAuthData(prev => ({ ...prev, profile: completeProfile }));
@@ -120,14 +120,14 @@ export const useAuth = () => {
       if (profile) {
         // Ensure profile has all required UserProfile properties
         const completeProfile: UserProfile = {
-          ...profile,
+          ...profile as any,
           // Add missing fields with default values if they don't exist
-          phone_number: profile.phone_number || null,
-          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile.pharmacist_signature_url || null,
-          pharmacy_id: profile.pharmacy_id || null,
-          pharmacy_name: profile.pharmacy_name || null,
-          pharmacy_logo_url: profile.pharmacy_logo_url || null
+          phone_number: (profile as any).phone_number || null,
+          pharmacist_stamp_url: (profile as any).pharmacist_stamp_url || null,
+          pharmacist_signature_url: (profile as any).pharmacist_signature_url || null,
+          pharmacy_id: (profile as any).pharmacy_id || null,
+          pharmacy_name: (profile as any).pharmacy_name || null,
+          pharmacy_logo_url: (profile as any).pharmacy_logo_url || null
         };
         
         setAuthData(prev => ({ ...prev, profile: completeProfile }));
