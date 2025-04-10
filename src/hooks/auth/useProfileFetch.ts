@@ -59,32 +59,29 @@ export const useProfileFetch = (userId: string | undefined) => {
         const hasPhamacyName = await checkColumnExists('profiles', 'pharmacy_name');
         const hasPhamacyLogoUrl = await checkColumnExists('profiles', 'pharmacy_logo_url');
         
-        // Start with base query
-        let query = supabase
-          .from('profiles')
-          .select(`
-            id, role, role_id, full_name, email, 
-            avatar_url, auth_method, is_blocked, 
-            city, date_of_birth, license_number,
-            cns_card_front, cns_card_back, cns_number,
-            doctor_stamp_url, doctor_signature_url,
-            pharmacist_stamp_url, pharmacist_signature_url,
-            phone_number,
-            deleted_at, created_at, updated_at
-          `);
+        // Build the base query string
+        let queryString = `
+          id, role, role_id, full_name, email, 
+          avatar_url, auth_method, is_blocked, 
+          city, date_of_birth, license_number,
+          cns_card_front, cns_card_back, cns_number,
+          doctor_stamp_url, doctor_signature_url,
+          pharmacist_stamp_url, pharmacist_signature_url,
+          phone_number,
+          deleted_at, created_at, updated_at
+        `;
           
         // Add conditional columns to selection string
-        let selectString = '';
-        if (hasPhamacyId) selectString += ', pharmacy_id';
-        if (hasPhamacyName) selectString += ', pharmacy_name';
-        if (hasPhamacyLogoUrl) selectString += ', pharmacy_logo_url';
+        if (hasPhamacyId) queryString += ', pharmacy_id';
+        if (hasPhamacyName) queryString += ', pharmacy_name';
+        if (hasPhamacyLogoUrl) queryString += ', pharmacy_logo_url';
         
-        if (selectString) {
-          query = query.select(selectString);
-        }
-
-        // Complete the query
-        const { data, error } = await query.eq('id', userId).maybeSingle();
+        // Perform the query - fixed: use select() once with the complete query string
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(queryString)
+          .eq('id', userId)
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching profile:', error);
