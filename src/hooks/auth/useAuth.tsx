@@ -35,6 +35,7 @@ export const useAuth = () => {
       // If we have a user but no profile, try to fetch the profile
       const fetchProfile = async () => {
         try {
+          console.log('[useAuth] Attempting to fetch profile for user:', authData.user?.id);
           // Use a simplified query that only selects columns we know exist
           const { data: profile, error } = await supabase
             .from('profiles')
@@ -84,10 +85,14 @@ export const useAuth = () => {
               updated_at: profile.updated_at || new Date().toISOString()
             };
             
-            setAuthData(prev => ({ ...prev, profile: completeProfile }));
+            setAuthData(prev => ({ ...prev, profile: completeProfile, isLoading: false }));
+          } else {
+            console.log('[useAuth] No profile found for user:', authData.user?.id);
+            setAuthData(prev => ({ ...prev, isLoading: false }));
           }
         } catch (err) {
           console.error('[useAuth] Error in profile fetch:', err);
+          setAuthData(prev => ({ ...prev, isLoading: false }));
         }
       };
       
@@ -107,19 +112,20 @@ export const useAuth = () => {
   // Function to refresh the session (can be called after login/signup)
   const refreshSession = useCallback(async () => {
     try {
+      console.log('[useAuth] Attempting to refresh session');
       const { data } = await supabase.auth.getSession();
       if (data?.session) {
-        // Refresh user data here if needed
-        console.log("Session refreshed successfully");
+        console.log('[useAuth] Session refreshed successfully');
         return data.session;
       }
+      console.log('[useAuth] No session found during refresh');
       return null;
     } catch (error) {
-      console.error("Error refreshing session:", error);
+      console.error("[useAuth] Error refreshing session:", error);
       return null;
     }
   }, []);
-  
+
   // Function to force a profile refresh
   const refreshProfile = useCallback(async () => {
     if (!authData.user?.id) {
@@ -128,6 +134,7 @@ export const useAuth = () => {
     }
     
     try {
+      console.log('[useAuth] Refreshing profile for user:', authData.user.id);
       // Use a simplified query that only selects columns we know exist
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -146,6 +153,7 @@ export const useAuth = () => {
       }
       
       if (profile) {
+        console.log('[useAuth] Successfully refreshed profile for user:', authData.user.id);
         // Create a complete profile with default values
         const completeProfile: UserProfile = {
           id: profile.id,
@@ -175,11 +183,12 @@ export const useAuth = () => {
           updated_at: profile.updated_at || new Date().toISOString()
         };
         
-        setAuthData(prev => ({ ...prev, profile: completeProfile }));
+        setAuthData(prev => ({ ...prev, profile: completeProfile, isLoading: false }));
         return completeProfile;
+      } else {
+        console.log('[useAuth] No profile found during refresh for user:', authData.user.id);
+        return null;
       }
-      
-      return null;
     } catch (err) {
       console.error('[useAuth] Error in profile refresh:', err);
       return null;

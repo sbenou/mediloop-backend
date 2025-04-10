@@ -39,6 +39,9 @@ export const storeSession = (session) => {
     // Broadcast login event to other tabs
     broadcastAuthEvent('LOGIN');
     
+    // Set flag for successful login - this will be used for redirection
+    sessionStorage.setItem('login_successful', 'true');
+    
     return true;
   } catch (error) {
     console.error("Error storing session:", error);

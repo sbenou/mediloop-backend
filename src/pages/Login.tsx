@@ -50,7 +50,7 @@ const Login = () => {
     if (loginSuccessful) {
       const timer = setTimeout(() => {
         sessionStorage.removeItem('login_successful');
-      }, 500);
+      }, 1000); // Increased timeout to give more time for the redirection
       
       return () => clearTimeout(timer);
     }

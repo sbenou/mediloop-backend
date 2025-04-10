@@ -39,6 +39,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
     setError(null);
 
     try {
+      console.log(`Attempting login for email: ${email}`);
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
@@ -55,7 +56,8 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       }
 
       if (data?.session) {
-        // Store the session immediately after login
+        console.log("Login successful, storing session");
+        // Store the session immediately after login - this will also set the login_successful flag
         storeSession(data.session);
 
         const { data: profile, error: profileError } = await supabase
@@ -92,7 +94,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           description: "You have successfully logged in.",
         });
         
-        // Set flag to prevent redirect loops
+        // Set flags to ensure proper navigation
         sessionStorage.setItem('login_successful', 'true');
         sessionStorage.setItem('skip_dashboard_redirect', 'true');
 
@@ -100,13 +102,11 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         if (profile?.role === 'pharmacist') {
           console.log('Pharmacist login detected, using direct navigation');
           
-          if (onSuccess) {
-            // If onSuccess callback exists, call it first
-            onSuccess();
-          }
-          
-          // Use direct navigation for pharmacists
-          window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+          // Force a small delay to ensure the session is properly stored
+          setTimeout(() => {
+            // Use direct navigation for pharmacists
+            window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+          }, 100);
           return;
         }
 
@@ -117,10 +117,15 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           // If no success callback, redirect directly to the appropriate dashboard
           try {
             const route = getDashboardRouteByRole(profile?.role);
-            window.location.href = route;
+            // Force a small delay to ensure the session is properly stored
+            setTimeout(() => {
+              window.location.href = route;
+            }, 100);
           } catch (navErr) {
             console.error('Navigation error:', navErr);
-            navigate('/', { replace: true });
+            setTimeout(() => {
+              navigate('/', { replace: true });
+            }, 100);
           }
         }
       }

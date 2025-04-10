@@ -74,11 +74,18 @@ export const LoginForm = () => {
           return;
         }
         
-        // Set flag to ensure we don't get stuck in redirect loops
+        // Set navigation flags
         sessionStorage.setItem('login_successful', 'true');
         sessionStorage.setItem('skip_dashboard_redirect', 'true');
         
-        // Use the utility to get the appropriate dashboard route
+        // Special handling for pharmacists to ensure correct route loading
+        if (profile?.role === 'pharmacist') {
+          console.log('Pharmacist detected, using direct navigation');
+          window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+          return;
+        }
+        
+        // Use the utility to get the appropriate dashboard route for other roles
         const route = getDashboardRouteByRole(profile?.role);
         console.log(`Redirecting user with role ${profile?.role} to ${route}`);
         
