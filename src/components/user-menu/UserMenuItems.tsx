@@ -5,7 +5,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
@@ -31,6 +31,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 
 export const UserMenuItems = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [auth, setAuth] = useRecoilState(authState);
   const { isPharmacist } = useAuth();
   const userRole = auth.profile?.role || 'user';
@@ -244,7 +245,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage]);
+  }, [userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, navigate]);
 
   return menuItems;
 };
