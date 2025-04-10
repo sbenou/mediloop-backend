@@ -94,33 +94,36 @@ export const useProfileFetch = (userId: string | undefined) => {
         }
 
         if (data) {
+          // Make sure data is treated as a profile object, not an error
+          const profileData = data as any;
+          
           // Create a complete profile with default values for missing fields
           const fetchedProfile: UserProfile = {
-            id: data.id || userId,
-            role: data.role || 'patient',
-            role_id: data.role_id || null,
-            full_name: data.full_name || null,
-            email: data.email || null,
-            avatar_url: data.avatar_url || null,
-            auth_method: data.auth_method || null,
-            is_blocked: data.is_blocked || false,
-            date_of_birth: data.date_of_birth || null,
-            city: data.city || null,
-            license_number: data.license_number || null,
-            cns_card_front: data.cns_card_front || null,
-            cns_card_back: data.cns_card_back || null,
-            cns_number: data.cns_number || null,
-            doctor_stamp_url: data.doctor_stamp_url || null,
-            doctor_signature_url: data.doctor_signature_url || null,
-            pharmacist_stamp_url: data.pharmacist_stamp_url || null,
-            pharmacist_signature_url: data.pharmacist_signature_url || null,
-            pharmacy_id: (data as any).pharmacy_id || null,
-            pharmacy_name: (data as any).pharmacy_name || null,
-            pharmacy_logo_url: (data as any).pharmacy_logo_url || null,
-            phone_number: data.phone_number || null,
-            deleted_at: data.deleted_at || null,
-            created_at: data.created_at || new Date().toISOString(),
-            updated_at: data.updated_at || new Date().toISOString(),
+            id: profileData.id || userId,
+            role: profileData.role || 'patient',
+            role_id: profileData.role_id || null,
+            full_name: profileData.full_name || null,
+            email: profileData.email || null,
+            avatar_url: profileData.avatar_url || null,
+            auth_method: profileData.auth_method || null,
+            is_blocked: profileData.is_blocked || false,
+            date_of_birth: profileData.date_of_birth || null,
+            city: profileData.city || null,
+            license_number: profileData.license_number || null,
+            cns_card_front: profileData.cns_card_front || null,
+            cns_card_back: profileData.cns_card_back || null,
+            cns_number: profileData.cns_number || null,
+            doctor_stamp_url: profileData.doctor_stamp_url || null,
+            doctor_signature_url: profileData.doctor_signature_url || null,
+            pharmacist_stamp_url: profileData.pharmacist_stamp_url || null,
+            pharmacist_signature_url: profileData.pharmacist_signature_url || null,
+            pharmacy_id: profileData.pharmacy_id || null,
+            pharmacy_name: profileData.pharmacy_name || null,
+            pharmacy_logo_url: profileData.pharmacy_logo_url || null,
+            phone_number: profileData.phone_number || null,
+            deleted_at: profileData.deleted_at || null,
+            created_at: profileData.created_at || new Date().toISOString(),
+            updated_at: profileData.updated_at || new Date().toISOString(),
           };
           
           setProfile(fetchedProfile);
