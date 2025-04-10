@@ -993,6 +993,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      column_exists: {
+        Args: { p_table_name: string; p_column_name: string }
+        Returns: boolean
+      }
       create_activity: {
         Args: {
           p_user_id: string
@@ -1050,6 +1054,10 @@ export type Database = {
       get_doctor_workplace: {
         Args: { p_user_id: string }
         Returns: string
+      }
+      get_record_by_id: {
+        Args: { p_table_name: string; p_record_id: string }
+        Returns: Json
       }
       handle_connection_request: {
         Args: {
