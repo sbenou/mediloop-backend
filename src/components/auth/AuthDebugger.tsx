@@ -123,8 +123,26 @@ export const AuthDebugger = () => {
   
   const forcePharmacistNavigation = () => {
     // Force pharmacist navigation regardless of detected role
+    console.log("AuthDebugger: Force navigating to pharmacy dashboard");
+    
+    // Clear any existing flags that might interfere with navigation
+    sessionStorage.removeItem('dashboard_redirect_count');
+    sessionStorage.removeItem('dashboard_mount_count');
+    
+    // Set skip_dashboard_redirect to true to prevent automatic redirects
     sessionStorage.setItem('skip_dashboard_redirect', 'true');
-    window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+    
+    // Ensure we have a clean navigation by using a full page load
+    try {
+      // Use a slight delay to ensure storage is set before navigation
+      setTimeout(() => {
+        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      }, 100);
+    } catch (err) {
+      console.error("Navigation error:", err);
+      // Fallback direct navigation
+      window.location.replace('/dashboard?view=pharmacy&section=dashboard');
+    }
   };
 
   if (!isVisible) return null;
