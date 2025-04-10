@@ -20,6 +20,9 @@ export const storeSession = (session) => {
     // Also store a timestamp for when the session was last stored
     localStorage.setItem('last_session_store', Date.now().toString());
     
+    // Broadcast login event to other tabs
+    broadcastAuthEvent('LOGIN');
+    
     return true;
   } catch (error) {
     console.error("Error storing session:", error);
@@ -64,5 +67,46 @@ export const getSessionFromStorage = () => {
   } catch (error) {
     console.error("Error getting session from storage:", error);
     return null;
+  }
+};
+
+/**
+ * Broadcast authentication events to other tabs
+ * @param eventType The type of auth event (LOGIN, LOGOUT, TOKEN_REFRESHED)
+ */
+export const broadcastAuthEvent = (eventType: 'LOGIN' | 'LOGOUT' | 'TOKEN_REFRESHED') => {
+  try {
+    const event = {
+      type: eventType,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('last_auth_event', JSON.stringify(event));
+  } catch (error) {
+    console.error("Error broadcasting auth event:", error);
+  }
+};
+
+/**
+ * Clear all cookies from the document
+ * This helps ensure complete logout
+ */
+export const clearAllCookies = () => {
+  try {
+    // Get all cookies
+    const cookies = document.cookie.split(';');
+    
+    // Delete each cookie
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+    }
+    
+    console.log("All cookies cleared");
+    return true;
+  } catch (error) {
+    console.error("Error clearing cookies:", error);
+    return false;
   }
 };
