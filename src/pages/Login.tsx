@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { useLoginManager } from "@/hooks/auth/useLoginManager";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
-import { toast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
@@ -24,18 +23,11 @@ const Login = () => {
       // Set flag to indicate direct login navigation
       sessionStorage.setItem('skip_dashboard_redirect', 'true');
       
-      // Special case for pharmacist - always use direct URL navigation
-      if (role === 'pharmacist') {
-        console.log(`[Login] Pharmacist detected, using direct navigation`);
-        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-        return;
-      }
-      
-      // For other roles, get the standard route and navigate
+      // Get the correct route for the current user role
       const route = getDashboardRouteByRole(role);
       console.log(`[Login] User already authenticated with role ${role}, redirecting to: ${route}`);
       
-      // Use window.location for a full page refresh to avoid potential state issues
+      // Use window.location for a full page refresh to ensure clean state
       window.location.href = route;
     }
   }, [isAuthenticated, profile, navigate, redirected, redirectAttempted]);

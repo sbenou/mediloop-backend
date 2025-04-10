@@ -41,7 +41,7 @@ const Dashboard = () => {
     // If navigation came from menu, don't increment mount count
     const fromMenu = sessionStorage.getItem('dashboard_navigation_source') === 'menu';
     
-    // Clear the flags after we've read them so they don't affect future navigation
+    // Clear the flags after we've read them to avoid affecting future navigation
     if (fromMenu) {
       console.log("Navigation came from menu, removing flag");
       sessionStorage.removeItem('dashboard_navigation_source');
@@ -95,6 +95,16 @@ const Dashboard = () => {
         const redirectCount = parseInt(sessionStorage.getItem('dashboard_redirect_count') || '0');
         if (redirectCount < 2) {
           sessionStorage.setItem('dashboard_redirect_count', (redirectCount + 1).toString());
+          
+          // For pharmacists, use direct navigation
+          if (userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist') {
+            console.log("Using direct navigation for pharmacist");
+            sessionStorage.setItem('skip_dashboard_redirect', 'true');
+            window.location.href = expectedRoute;
+            return;
+          }
+          
+          // For other roles, use React Router navigation
           navigate(expectedRoute, { replace: true });
         } else {
           console.warn("Maximum redirect attempts reached, continuing with current parameters");

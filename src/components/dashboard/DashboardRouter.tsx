@@ -48,10 +48,10 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
     const skipRedirect = sessionStorage.getItem('skip_dashboard_redirect') === 'true';
     if (skipRedirect) {
       console.log("Skipping parameter correction due to skip_dashboard_redirect flag");
-      // Clear the flag after we've used it, but with a short delay to ensure other components have read it
+      // Clear the flag after we've used it, but with a longer delay to ensure all components have read it
       setTimeout(() => {
         sessionStorage.removeItem('skip_dashboard_redirect');
-      }, 500);
+      }, 2000);
       return;
     }
     
@@ -100,7 +100,14 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
         // Increment the counter and save it
         sessionStorage.setItem('dashboard_redirect_count', (redirectAttempts + 1).toString());
         
-        // Update the URL parameters using the utility function
+        // For pharmacists, use direct navigation to ensure proper parameters
+        if (userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist') {
+          sessionStorage.setItem('skip_dashboard_redirect', 'true');
+          window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+          return;
+        }
+        
+        // For other roles, update the URL parameters
         const urlParams = new URLSearchParams(expectedRoute.split('?')[1] || '');
         setSearchParams(urlParams, { replace: true });
         

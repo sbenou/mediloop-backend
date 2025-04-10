@@ -66,9 +66,16 @@ export const LoginForm = () => {
         
         if (profileError) {
           console.error('Error fetching profile:', profileError);
-          window.location.href = '/dashboard';
+          toast({
+            variant: "destructive",
+            title: "Profile Error",
+            description: "There was an error loading your profile. Please try again.",
+          });
           return;
         }
+        
+        // Set the skip_dashboard_redirect flag to prevent redirect loops
+        sessionStorage.setItem('skip_dashboard_redirect', 'true');
         
         // Use the utility to get the appropriate dashboard route
         const route = getDashboardRouteByRole(profile?.role);
@@ -78,7 +85,11 @@ export const LoginForm = () => {
         window.location.href = route;
       } catch (err) {
         console.error('Error during role check:', err);
-        window.location.href = '/dashboard'; // Fallback redirect
+        toast({
+          variant: "destructive",
+          title: "Navigation Error",
+          description: "There was an error redirecting you. Please try again.",
+        });
       }
     } else {
       console.error('No session found after successful login');
