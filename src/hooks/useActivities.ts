@@ -1,3 +1,6 @@
 
 // Re-export from the new location for backwards compatibility
-export { useActivities, type Activity } from './activity';
+import { useActivities } from './activity';
+import { Activity } from '@/components/activity/ActivityItem';
+
+export { useActivities, Activity };
