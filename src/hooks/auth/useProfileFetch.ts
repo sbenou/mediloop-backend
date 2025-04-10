@@ -12,7 +12,7 @@ type GenericStringError = {
 export const useProfileFetch = (userId: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [error, setError] = useState<Error | GenericStringError | null>(null);
+  const [error, setError] = useState<Error | GenericStringError | PostgrestError | null>(null);
 
   useEffect(() => {
     if (!userId) {
