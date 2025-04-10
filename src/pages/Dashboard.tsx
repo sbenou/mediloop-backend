@@ -19,20 +19,26 @@ const Dashboard = () => {
   
   // Add debug logging to help identify issues
   useEffect(() => {
-    console.log("Dashboard mounted", { 
+    console.log("[Dashboard][DEBUG] Dashboard mounted", { 
       isAuthenticated, 
       isLoading,
       userRole, 
+      profileRole: profile?.role,
       view, 
       section,
       isPharmacist,
       profileData: profile ? {
         role: profile.role,
         fullName: profile.full_name,
+        id: profile.id,
         isPharmacist: profile.role === 'pharmacist'
       } : 'No profile',
       navigationSource: sessionStorage.getItem('dashboard_navigation_source'),
-      skipRedirect: sessionStorage.getItem('skip_dashboard_redirect')
+      skipRedirect: sessionStorage.getItem('skip_dashboard_redirect'),
+      loginSuccessful: sessionStorage.getItem('login_successful'),
+      pathname: window.location.pathname,
+      search: window.location.search,
+      currentUrl: window.location.href
     });
     
     // Check if we should skip the dashboard redirect checks
@@ -43,14 +49,14 @@ const Dashboard = () => {
     
     // Clear the flags after we've read them to avoid affecting future navigation
     if (fromMenu) {
-      console.log("Navigation came from menu, removing flag");
+      console.log("[Dashboard][DEBUG] Navigation came from menu, removing flag");
       sessionStorage.removeItem('dashboard_navigation_source');
     }
     
     if (skipRedirect) {
       // If we're skipping redirects, just clear the flag after a short delay
       // to allow router components to read it first
-      console.log("Skipping redirect check due to skip_dashboard_redirect flag");
+      console.log("[Dashboard][DEBUG] Skipping redirect check due to skip_dashboard_redirect flag");
       setTimeout(() => {
         sessionStorage.removeItem('skip_dashboard_redirect');
       }, 1000);
@@ -61,10 +67,11 @@ const Dashboard = () => {
     if (!fromMenu && !skipRedirect) {
       const mountCount = parseInt(sessionStorage.getItem('dashboard_mount_count') || '0');
       sessionStorage.setItem('dashboard_mount_count', (mountCount + 1).toString());
+      console.log("[Dashboard][DEBUG] Incrementing mount count", { mountCount: mountCount + 1 });
       
       // If we've mounted too many times in quick succession, show a warning
       if (mountCount > 3) {
-        console.warn("Possible redirect loop detected - dashboard mounted multiple times");
+        console.warn("[Dashboard][DEBUG] Possible redirect loop detected - dashboard mounted multiple times");
         
         // Reset the counter after warning and set skip flag to break the loop
         sessionStorage.setItem('skip_dashboard_redirect', 'true');
@@ -87,27 +94,38 @@ const Dashboard = () => {
       const expectedParams = new URLSearchParams(expectedRoute.split('?')[1] || '');
       const currentPath = window.location.pathname + window.location.search;
       
+      console.log("[Dashboard][DEBUG] Checking if redirect is needed:", {
+        userRole,
+        expectedRoute,
+        currentPath,
+        matches: currentPath.includes(expectedRoute.split('?')[1] || '')
+      });
+      
       // If we're at /dashboard but missing expected parameters, redirect
       if (window.location.pathname === '/dashboard' && !currentPath.includes(expectedRoute.split('?')[1] || '')) {
-        console.log(`Detected missing parameters for ${userRole}. Expected: ${expectedRoute}, Current: ${currentPath}`);
+        console.log(`[Dashboard][DEBUG] Detected missing parameters for ${userRole}. Expected: ${expectedRoute}, Current: ${currentPath}`);
         
         // Add a check for redirect attempt count to prevent loops
         const redirectCount = parseInt(sessionStorage.getItem('dashboard_redirect_count') || '0');
+        console.log("[Dashboard][DEBUG] Redirect count:", redirectCount);
+        
         if (redirectCount < 2) {
           sessionStorage.setItem('dashboard_redirect_count', (redirectCount + 1).toString());
           
           // For pharmacists, use direct navigation
           if (userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist') {
-            console.log("Using direct navigation for pharmacist");
+            console.log("[Dashboard][DEBUG] Using direct navigation for pharmacist");
             sessionStorage.setItem('skip_dashboard_redirect', 'true');
+            console.log("[Dashboard][DEBUG] Navigating to:", expectedRoute);
             window.location.href = expectedRoute;
             return;
           }
           
           // For other roles, use React Router navigation
+          console.log("[Dashboard][DEBUG] Using React Router navigation for role:", userRole);
           navigate(expectedRoute, { replace: true });
         } else {
-          console.warn("Maximum redirect attempts reached, continuing with current parameters");
+          console.warn("[Dashboard][DEBUG] Maximum redirect attempts reached, continuing with current parameters");
           // Set the skip flag to break potential loops
           sessionStorage.setItem('skip_dashboard_redirect', 'true');
         }
@@ -136,13 +154,14 @@ const Dashboard = () => {
   // Handle unauthenticated users with more detailed logging
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      console.log("Not authenticated — redirecting to login", {
+      console.log("[Dashboard][DEBUG] Not authenticated — redirecting to login", {
         isLoading,
-        isAuthenticated
+        isAuthenticated,
+        userRole
       });
       navigate("/login", { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, userRole]);
   
   // Clear any pharmacy redirect flags on component unmount
   useEffect(() => {
@@ -153,6 +172,15 @@ const Dashboard = () => {
     };
   }, []);
 
+  // Log when rendering state changes
+  console.log("[Dashboard][DEBUG] Rendering state:", {
+    isLoading,
+    isAuthenticated,
+    userRole,
+    view,
+    section
+  });
+
   // Enhanced loading state with better feedback
   if (isLoading) {
     return (
@@ -161,6 +189,9 @@ const Dashboard = () => {
           <Loader className="h-8 w-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Loading your dashboard...</p>
           <p className="text-xs text-muted-foreground">Please wait while we prepare your experience</p>
+          <button onClick={() => window.location.reload()} className="text-xs text-blue-500 hover:underline mt-4">
+            Click to reload if loading takes too long
+          </button>
         </div>
       </div>
     );
@@ -179,7 +210,7 @@ const Dashboard = () => {
 
   // Only render dashboard content if we have authentication and role info
   if (isAuthenticated && userRole) {
-    console.log("Access granted to role:", userRole);
+    console.log("[Dashboard][DEBUG] Access granted to role:", userRole);
     
     return (
       <RequireRoleGuard allowedRoles={["patient", "doctor", "pharmacist", "superadmin"]}>
@@ -206,6 +237,7 @@ const Dashboard = () => {
         >
           Return to login
         </button>
+        <p className="text-xs text-muted-foreground mt-2">Role: {userRole || 'Unknown'}</p>
       </div>
     </div>
   );

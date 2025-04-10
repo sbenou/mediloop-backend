@@ -1,3 +1,4 @@
+
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -41,17 +42,17 @@ export const UserMenuItems = () => {
                           location.pathname.includes('/notifications');
   
   // Debugging logs
-  console.log('UserMenuItems rendering with userRole:', userRole);
-  console.log('UserMenuItems isPharmacist from hook:', isPharmacist);
-  console.log('UserMenuItems profile data:', auth.profile);
+  console.log('[UserMenuItems][DEBUG] UserMenuItems rendering with userRole:', userRole);
+  console.log('[UserMenuItems][DEBUG] isPharmacist from hook:', isPharmacist);
+  console.log('[UserMenuItems][DEBUG] profile data:', auth.profile);
   
   // Force check for pharmacist role for debugging
   const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist';
-  console.log('UserMenuItems FINAL isUserPharmacist check:', isUserPharmacist);
+  console.log('[UserMenuItems][DEBUG] FINAL isUserPharmacist check:', isUserPharmacist);
 
   const handleLogout = async () => {
     try {
-      console.log("Logout initiated from UserMenuItems");
+      console.log("[UserMenuItems][DEBUG] Logout initiated from UserMenuItems");
       
       // First, clear all local auth state before API call
       setAuth({
@@ -65,7 +66,7 @@ export const UserMenuItems = () => {
       try {
         localStorage.removeItem('selectedCountry');
       } catch (e) {
-        console.error("Error removing selectedCountry:", e);
+        console.error("[UserMenuItems][DEBUG] Error removing selectedCountry:", e);
       }
       
       // Force clear all auth storage
@@ -76,14 +77,14 @@ export const UserMenuItems = () => {
         const logoutEvent = { type: 'LOGOUT', timestamp: Date.now() };
         localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
       } catch (eventError) {
-        console.error('Error broadcasting logout event:', eventError);
+        console.error('[UserMenuItems][DEBUG] Error broadcasting logout event:', eventError);
       }
       
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
-        console.error("Supabase signOut error:", error);
+        console.error("[UserMenuItems][DEBUG] Supabase signOut error:", error);
         throw error;
       }
       
@@ -92,10 +93,17 @@ export const UserMenuItems = () => {
         description: "You have been successfully logged out",
       });
       
+      // Clear any navigation flags
+      sessionStorage.removeItem('login_successful');
+      sessionStorage.removeItem('skip_dashboard_redirect');
+      sessionStorage.removeItem('dashboard_redirect_count');
+      sessionStorage.removeItem('dashboard_mount_count');
+      sessionStorage.removeItem('pharmacy_redirect_count');
+      
       // Force a hard redirect to ensure complete logout
       window.location.href = "/login";
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("[UserMenuItems][DEBUG] Logout error:", error);
       toast({
         variant: "destructive",
         title: "Logout failed",
@@ -106,7 +114,7 @@ export const UserMenuItems = () => {
 
   // Function to handle navigation with proper path resolution
   const handleNavigation = (path: string) => {
-    console.log(`Navigating to ${path} from UserMenuItems`);
+    console.log(`[UserMenuItems][DEBUG] Navigating to ${path} from UserMenuItems`);
     
     // Always reset redirect counters when navigation is initiated intentionally
     sessionStorage.removeItem('pharmacy_redirect_count');
@@ -119,11 +127,14 @@ export const UserMenuItems = () => {
     if (path.includes('/dashboard')) {
       // Use the utility function to get the correct route based on user role
       const dashboardRoute = getDashboardRouteByRole(userRole);
-      console.log(`Using getDashboardRouteByRole utility: ${dashboardRoute}`);
+      console.log(`[UserMenuItems][DEBUG] Using getDashboardRouteByRole utility: ${dashboardRoute}`);
       
       // Flag to indicate this is an intentional menu navigation
       sessionStorage.setItem('dashboard_navigation_source', 'menu');
       sessionStorage.setItem('skip_dashboard_redirect', 'true');
+      
+      console.log(`[UserMenuItems][DEBUG] Current role: ${userRole}, is pharmacist check: ${isUserPharmacist}`);
+      console.log(`[UserMenuItems][DEBUG] Final URL for navigation: ${dashboardRoute}`);
       
       // Hard navigate to the correct dashboard route for any role to ensure complete refresh
       window.location.href = dashboardRoute;
@@ -165,10 +176,11 @@ export const UserMenuItems = () => {
     
     // Pharmacist specific items - always use full pharmacy parameter set
     if (isUserPharmacist) {
+      console.log('[UserMenuItems][DEBUG] Generating menu items for pharmacist');
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=pharmacy&section=profile&profileTab=personal' },
-        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
+        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile', className: 'pharmacy-profile-link' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
         { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
@@ -205,8 +217,8 @@ export const UserMenuItems = () => {
     const roleSpecificItems = getMenuItemsByRole();
     
     // Enhanced debugging
-    console.log('Current user role in UserMenuItems:', userRole);
-    console.log('Menu items generated for role:', roleSpecificItems);
+    console.log('[UserMenuItems][DEBUG] Current user role in UserMenuItems:', userRole);
+    console.log('[UserMenuItems][DEBUG] Menu items generated for role:', roleSpecificItems);
     
     return (
       <>
@@ -225,9 +237,10 @@ export const UserMenuItems = () => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log(`Clicking on ${item.label} menu item with path ${item.path}`);
+                console.log(`[UserMenuItems][DEBUG] Clicking on ${item.label} menu item with path ${item.path}`);
                 handleNavigation(item.path);
               }}
+              className={item.className}
             >
               <item.icon className="mr-2 h-4 w-4" />
               <span>{item.label}</span>

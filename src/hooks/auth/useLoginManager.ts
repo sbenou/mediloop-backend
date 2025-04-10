@@ -17,30 +17,34 @@ export const useLoginManager = () => {
   useEffect(() => {
     // Only proceed if authentication has been checked and we're not currently loading
     if (isLoading) {
-      console.log("[LoginManager] Still loading auth state, waiting...");
+      console.log("[LoginManager][DEBUG] Still loading auth state, waiting...", { 
+        isAuthenticated, 
+        role: profile?.role,
+        isPharmacist
+      });
       return;
     }
     
     // If we've already redirected or aren't authenticated, don't do anything
     if (!isAuthenticated) {
-      console.log("[LoginManager] User not authenticated, no redirect needed");
+      console.log("[LoginManager][DEBUG] User not authenticated, no redirect needed");
       return;
     }
     
     if (redirected.current) {
-      console.log("[LoginManager] Already redirected, skip");
+      console.log("[LoginManager][DEBUG] Already redirected, skip");
       return;
     }
     
     // Make sure we have a valid profile before redirecting
     if (!profile) {
-      console.log("[LoginManager] No profile available, waiting for profile data");
+      console.log("[LoginManager][DEBUG] No profile available, waiting for profile data");
       return;
     }
     
     // Maximum number of redirect attempts to prevent infinite loops
     if (redirectAttempts >= 3) {
-      console.log("[LoginManager] Maximum redirect attempts reached");
+      console.log("[LoginManager][DEBUG] Maximum redirect attempts reached", { redirectAttempts });
       redirected.current = true;
       return;
     }
@@ -48,23 +52,34 @@ export const useLoginManager = () => {
     // Add a time-based throttle to prevent rapid redirect attempts
     const now = Date.now();
     if (now - lastAttemptTime < 2000) { // 2 second cooldown
-      console.log("[LoginManager] Throttling redirect attempts");
+      console.log("[LoginManager][DEBUG] Throttling redirect attempts", { 
+        timeSinceLastAttempt: now - lastAttemptTime,
+        redirectAttempts
+      });
       return;
     }
     setLastAttemptTime(now);
     
     // Don't redirect if we're already on a dashboard page
     if (location.pathname.includes('/dashboard') || location.pathname.includes('/superadmin')) {
-      console.log("[LoginManager] Already on dashboard page, marking as redirected");
+      console.log("[LoginManager][DEBUG] Already on dashboard page, marking as redirected", { 
+        path: location.pathname,
+        query: location.search 
+      });
       redirected.current = true;
       return;
     }
 
-    console.log("[LoginManager] Profile available:", profile);
+    console.log("[LoginManager][DEBUG] Profile available:", profile);
     const role = profile.role;
     const route = getDashboardRouteByRole(role);
 
-    console.log(`[LoginManager] Redirecting user with role ${role} to ${route}`);
+    console.log(`[LoginManager][DEBUG] Redirecting user with role ${role} to ${route}`, {
+      redirectAttempts,
+      currentPath: location.pathname,
+      isPharmacist,
+      skipDashboardRedirect: sessionStorage.getItem('skip_dashboard_redirect')
+    });
     setRedirectAttempts(prevAttempts => prevAttempts + 1);
     
     // Set skip redirect flag to prevent redirect loops
@@ -73,7 +88,7 @@ export const useLoginManager = () => {
     // Handle the navigation differently based on role to ensure correct parameters
     try {
       // Use window.location.href for all roles to ensure a complete page refresh
-      console.log("[LoginManager] Using direct navigation to:", route);
+      console.log("[LoginManager][DEBUG] Using direct navigation to:", route);
       window.location.href = route;
       redirected.current = true;
       
@@ -83,7 +98,7 @@ export const useLoginManager = () => {
         description: `Welcome, ${profile.full_name || 'User'}!`,
       });
     } catch (error) {
-      console.error("[LoginManager] Navigation error:", error);
+      console.error("[LoginManager][DEBUG] Navigation error:", error);
     }
   }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts, lastAttemptTime, isPharmacist]);
 

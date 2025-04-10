@@ -18,7 +18,7 @@ export const RoleDebugger = () => {
     if (!hasLoggedRef.current && auth.profile) {
       hasLoggedRef.current = true;
       
-      console.log("============= ROLE DEBUGGER INFO =============");
+      console.log("============= ROLE DEBUGGER INFO [DEBUG] =============");
       console.log("Is authenticated:", isAuthenticated);
       console.log("User role from hook:", userRole);
       console.log("Is pharmacist from hook:", isPharmacist);
@@ -27,6 +27,15 @@ export const RoleDebugger = () => {
       console.log("Raw profile role:", auth.profile?.role);
       console.log("Direct pharmacist check:", auth.profile?.role === 'pharmacist');
       console.log("Is on pharmacy route:", window.location.pathname.includes('/pharmacy'));
+      
+      // Check sessionStorage state
+      console.log("SessionStorage state:", {
+        login_successful: sessionStorage.getItem('login_successful'),
+        skip_dashboard_redirect: sessionStorage.getItem('skip_dashboard_redirect'),
+        dashboard_redirect_count: sessionStorage.getItem('dashboard_redirect_count'),
+        dashboard_mount_count: sessionStorage.getItem('dashboard_mount_count'),
+        pharmacy_redirect_count: sessionStorage.getItem('pharmacy_redirect_count'),
+      });
       
       // Simulation of UserMenuItems logic
       const shouldShowPharmacyLink = auth.profile?.role === 'pharmacist' || isPharmacist;
@@ -46,6 +55,15 @@ export const RoleDebugger = () => {
             const pharmacyLinkEl = document.querySelector('.pharmacy-profile-link');
             console.log("Pharmacy link element found after delay:", !!pharmacyLinkEl);
             console.log("Full dropdown menu items:", document.querySelectorAll('[class*="dropdown-menu"]').length);
+            
+            // Check current URL parameters
+            const url = new URL(window.location.href);
+            console.log("Current URL parameters:", {
+              pathname: url.pathname,
+              view: url.searchParams.get('view'),
+              section: url.searchParams.get('section'),
+              fullURL: url.toString()
+            });
           }, 2000); // Check after a delay to allow rendering
         } catch (e) {
           console.error("Error checking for pharmacy link:", e);

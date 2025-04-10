@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -36,15 +37,16 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
   const handleLogin = useCallback(async (password: string, rememberMe: boolean = true) => {
     setIsLoading(true);
     setError(null);
+    console.log(`[usePasswordLogin][DEBUG] Attempting login for email: ${email}`, { rememberMe });
 
     try {
-      console.log(`Attempting login for email: ${email}`);
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
 
       if (authError) {
+        console.error('[usePasswordLogin][DEBUG] Auth error:', authError);
         setError(authError);
         toast({
           variant: "destructive",
@@ -55,10 +57,11 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       }
 
       if (data?.session) {
-        console.log("Login successful, storing session");
+        console.log("[usePasswordLogin][DEBUG] Login successful, storing session");
         // Store the session immediately after login - this will also set the login_successful flag
         storeSession(data.session);
 
+        console.log("[usePasswordLogin][DEBUG] Fetching user profile");
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -66,7 +69,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           .single();
 
         if (profileError) {
-          console.error("Profile fetch error:", profileError);
+          console.error("[usePasswordLogin][DEBUG] Profile fetch error:", profileError);
           toast({
             variant: "destructive",
             title: "Login failed",
@@ -75,12 +78,15 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           return;
         }
 
+        console.log(`[usePasswordLogin][DEBUG] Profile fetched successfully, role: ${profile?.role}`, profile);
+
         const completeProfile = {
           ...profile as any,
           pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
           pharmacist_signature_url: profile.pharmacist_signature_url || null
         };
 
+        // Set auth state
         setAuth({
           user: data.user,
           profile: completeProfile,
@@ -104,36 +110,43 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
 
         // Special handling for pharmacists to ensure correct dashboard loading
         if (profile?.role === 'pharmacist') {
-          console.log('Pharmacist login detected, using direct navigation');
+          console.log('[usePasswordLogin][DEBUG] Pharmacist login detected, using direct navigation');
+          console.log('[usePasswordLogin][DEBUG] Pharmacist target URL: /dashboard?view=pharmacy&section=dashboard');
           
           // Force a small delay to ensure the session is properly stored
           setTimeout(() => {
             // Use direct navigation for pharmacists
             window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-          }, 150);
+          }, 300);
           return;
         }
 
         // For other roles, proceed with normal flow
         if (onSuccess) {
+          console.log('[usePasswordLogin][DEBUG] Calling onSuccess callback');
           onSuccess();
         } else {
           // If no success callback, redirect directly to the appropriate dashboard
           try {
             const route = getDashboardRouteByRole(profile?.role);
+            console.log(`[usePasswordLogin][DEBUG] No success callback, redirecting to: ${route}`);
+            
             // Force a small delay to ensure the session is properly stored
             setTimeout(() => {
               window.location.href = route;
-            }, 150);
+            }, 300);
           } catch (navErr) {
-            console.error('Navigation error:', navErr);
+            console.error('[usePasswordLogin][DEBUG] Navigation error:', navErr);
             setTimeout(() => {
               window.location.href = '/';
-            }, 150);
+            }, 300);
           }
         }
+      } else {
+        console.error('[usePasswordLogin][DEBUG] No session data returned from login');
       }
     } catch (err: any) {
+      console.error('[usePasswordLogin][DEBUG] Unexpected error during login:', err);
       setError(err);
       toast({
         variant: "destructive",

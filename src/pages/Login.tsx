@@ -18,6 +18,29 @@ const Login = () => {
   // Check if we just attempted a login
   const loginSuccessful = sessionStorage.getItem('login_successful') === 'true';
   
+  // Debug logging on component mount
+  useEffect(() => {
+    console.log("[Login][DEBUG] Login page mounted", {
+      isAuthenticated,
+      isLoading,
+      profile: profile?.role,
+      redirected,
+      redirectAttempted,
+      manualRedirectInProgress,
+      loginSuccessful,
+      pathname: window.location.pathname,
+      search: window.location.search,
+    });
+    
+    // Log session storage state
+    console.log("[Login][DEBUG] Session storage state:", {
+      login_successful: sessionStorage.getItem('login_successful'),
+      skip_dashboard_redirect: sessionStorage.getItem('skip_dashboard_redirect'),
+      dashboard_redirect_count: sessionStorage.getItem('dashboard_redirect_count'),
+      dashboard_mount_count: sessionStorage.getItem('dashboard_mount_count')
+    });
+  }, [isAuthenticated, isLoading, profile, redirected, redirectAttempted, manualRedirectInProgress, loginSuccessful]);
+  
   // Direct redirection for already authenticated users
   useEffect(() => {
     if (isAuthenticated && profile && !redirected && !redirectAttempted && !manualRedirectInProgress && !loginSuccessful) {
@@ -25,27 +48,37 @@ const Login = () => {
       setManualRedirectInProgress(true);
       const role = profile.role;
       
+      console.log(`[Login][DEBUG] Authenticated user detected, attempting redirect for role: ${role}`, {
+        isAuthenticated,
+        profileRole: role,
+        redirected,
+        redirectAttempted,
+        loginSuccessful
+      });
+      
       // Set flag to indicate direct login navigation and ensure skip_dashboard_redirect is set
       sessionStorage.setItem('skip_dashboard_redirect', 'true');
       
       // For pharmacists, use a more direct approach to ensure correct redirect
       if (role === 'pharmacist') {
-        console.log(`[Login] Pharmacist user detected, using direct navigation to pharmacy dashboard`);
+        console.log(`[Login][DEBUG] Pharmacist user detected, using direct navigation to pharmacy dashboard`);
         // Force a small delay to ensure all state updates complete
         setTimeout(() => {
+          console.log(`[Login][DEBUG] Executing pharmacist redirect to: /dashboard?view=pharmacy&section=dashboard`);
           window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-        }, 50);
+        }, 150);
         return;
       }
       
       // Get the correct route for other user roles
       const route = getDashboardRouteByRole(role);
-      console.log(`[Login] User already authenticated with role ${role}, redirecting to: ${route}`);
+      console.log(`[Login][DEBUG] User already authenticated with role ${role}, redirecting to: ${route}`);
       
       // Use window.location for a full page refresh to ensure clean state
       setTimeout(() => {
+        console.log(`[Login][DEBUG] Executing redirect to: ${route}`);
         window.location.href = route;
-      }, 50);
+      }, 150);
     }
   }, [isAuthenticated, profile, navigate, redirected, redirectAttempted, manualRedirectInProgress, loginSuccessful]);
   
@@ -53,9 +86,11 @@ const Login = () => {
   useEffect(() => {
     // Small delay to ensure redirect has time to process
     if (loginSuccessful) {
+      console.log(`[Login][DEBUG] Login successful flag detected, will clean up after redirect`);
       const timer = setTimeout(() => {
+        console.log(`[Login][DEBUG] Removing login_successful flag`);
         sessionStorage.removeItem('login_successful');
-      }, 1500); // Increased timeout to give more time for the redirection
+      }, 2000); // Increased timeout to give more time for the redirection
       
       return () => clearTimeout(timer);
     }
@@ -75,6 +110,14 @@ const Login = () => {
               </CardDescription>
             </div>
           </CardHeader>
+          <CardFooter className="flex justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="text-xs text-blue-500 hover:underline"
+            >
+              Click here if loading takes too long
+            </button>
+          </CardFooter>
         </Card>
       </div>
     );
@@ -92,8 +135,22 @@ const Login = () => {
               <CardDescription>
                 Please wait while we redirect you to the appropriate dashboard
               </CardDescription>
+              <p className="text-xs text-muted-foreground">
+                Role: {profile?.role || 'Unknown'} | Path: {window.location.pathname}
+              </p>
             </div>
           </CardHeader>
+          <CardFooter className="flex justify-center">
+            <button 
+              onClick={() => {
+                const route = profile?.role ? getDashboardRouteByRole(profile.role) : '/dashboard';
+                window.location.href = route;
+              }}
+              className="text-xs text-blue-500 hover:underline"
+            >
+              Click here if redirection is taking too long
+            </button>
+          </CardFooter>
         </Card>
       </div>
     );
