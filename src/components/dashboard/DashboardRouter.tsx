@@ -18,6 +18,7 @@ import DoctorAppointmentsView from "@/components/dashboard/views/doctor/DoctorAp
 import WorkplacesView from "@/components/dashboard/views/doctor/WorkplacesView";
 import NotificationsView from "@/components/dashboard/views/NotificationsView";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
 
 interface DashboardRouterProps {
   userRole: string;
@@ -49,6 +50,12 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
         view: 'pharmacy', 
         section: section || 'dashboard' 
       });
+      
+      // Notify the user that they're being redirected to the correct view
+      toast({
+        title: "Pharmacy Dashboard",
+        description: "Loading your pharmacy dashboard view",
+      });
     }
   }, [userRole, view, section, profileTab, ordersTab, isPharmacist, profile, searchParams, setSearchParams]);
   
@@ -58,6 +65,12 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       <div className="p-6 border border-red-300 rounded bg-red-50">
         <h2 className="text-xl font-semibold text-red-700 mb-2">Dashboard Error</h2>
         <p className="text-red-600">User role is undefined. Please try logging in again.</p>
+        <button 
+          onClick={() => window.location.href = "/login"}
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+        >
+          Return to Login
+        </button>
       </div>
     );
   }

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import { toast } from "@/components/ui/use-toast";
 
 export const useLoginManager = () => {
   const { isAuthenticated, profile, isLoading, isPharmacist } = useAuth();
@@ -15,10 +16,21 @@ export const useLoginManager = () => {
   // Handle role-based redirects
   useEffect(() => {
     // Only proceed if authentication has been checked and we're not currently loading
-    if (isLoading) return;
+    if (isLoading) {
+      console.log("[LoginManager] Still loading auth state, waiting...");
+      return;
+    }
     
     // If we've already redirected or aren't authenticated, don't do anything
-    if (!isAuthenticated || redirected.current) return;
+    if (!isAuthenticated) {
+      console.log("[LoginManager] User not authenticated, no redirect needed");
+      return;
+    }
+    
+    if (redirected.current) {
+      console.log("[LoginManager] Already redirected, skip");
+      return;
+    }
     
     // Make sure we have a valid profile before redirecting
     if (!profile) {
@@ -43,24 +55,37 @@ export const useLoginManager = () => {
     
     // Don't redirect if we're already on a dashboard page
     if (location.pathname.includes('/dashboard') || location.pathname.includes('/superadmin')) {
+      console.log("[LoginManager] Already on dashboard page, marking as redirected");
       redirected.current = true;
       return;
     }
 
+    console.log("[LoginManager] Profile available:", profile);
     const role = profile.role;
     const route = getDashboardRouteByRole(role);
 
-    console.log("[LoginManager] Redirecting user to:", route);
+    console.log(`[LoginManager] Redirecting user with role ${role} to ${route}`);
     setRedirectAttempts(prevAttempts => prevAttempts + 1);
     
-    // Handle the pharmacist route specially to ensure correct parameters
-    if (role === 'pharmacist' || isPharmacist) {
-      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-    } else {
-      window.location.href = route;
+    // Handle the navigation differently based on role to ensure correct parameters
+    try {
+      if (role === 'pharmacist' || isPharmacist) {
+        console.log("[LoginManager] Using direct navigation for pharmacist");
+        navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
+      } else {
+        navigate(route, { replace: true });
+      }
+      
+      // Show a toast to indicate successful login
+      toast({
+        title: "Login successful",
+        description: `Welcome, ${profile.full_name || 'User'}!`,
+      });
+      
+      redirected.current = true;
+    } catch (error) {
+      console.error("[LoginManager] Navigation error:", error);
     }
-    
-    redirected.current = true;
   }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts, lastAttemptTime, isPharmacist]);
 
   return {

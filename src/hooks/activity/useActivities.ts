@@ -1,92 +1,113 @@
 
-import { useCallback, useRef, useEffect } from 'react';
-import { useActivitiesFetch } from './useActivitiesFetch';
-import { useActivityReadOperations } from './useActivityReadOperations';
-import { useActivitySubscription } from './useActivitySubscription';
-import { UseActivitiesReturn } from './types';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/auth/useAuth';
 
-export const useActivities = (): UseActivitiesReturn => {
-  const { 
-    activities, 
-    setActivities, 
-    isLoading, 
-    error, 
-    unreadCount, 
-    setUnreadCount, 
-    lastFetchTime, 
-    fetchActivities 
-  } = useActivitiesFetch();
+export interface Activity {
+  id: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  type: string;
+  read: boolean;
+  meta?: Record<string, any>;
+}
+
+export const useActivities = (limit: number = 10) => {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { profile } = useAuth();
   
-  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasInitiatedFetchRef = useRef<boolean>(false);
-
-  // Add a refresh function that can be called to force a reload
-  const refreshActivities = useCallback(() => {
-    // Only refresh if it's been more than 1 second since the last fetch
-    // to prevent too many refreshes happening at once
-    if (Date.now() - lastFetchTime > 1000) {
-      console.log("Refreshing activities...");
-      
-      // Clear any pending fetch timeout
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-      
-      // Set a small timeout to debounce multiple refresh calls
-      fetchTimeoutRef.current = setTimeout(() => {
-        fetchActivities();
-      }, 300);
-    } else {
-      console.log("Skipping refresh - too soon since last fetch");
-    }
-  }, [fetchActivities, lastFetchTime]);
-
-  const { 
-    markAsRead, 
-    markAllAsRead 
-  } = useActivityReadOperations({
-    activities,
-    setActivities,
-    setUnreadCount
-  });
-
-  const { 
-    setupRealtimeSubscription 
-  } = useActivitySubscription({
-    refreshActivities
-  });
-  
-  // Fetch activities once on mount
   useEffect(() => {
-    if (!hasInitiatedFetchRef.current) {
-      console.log("useActivities: Initial fetch");
-      hasInitiatedFetchRef.current = true;
-      fetchActivities();
-      
-      // Set up subscription
-      const cleanup = setupRealtimeSubscription();
-      return cleanup;
+    if (!profile?.id) {
+      return;
     }
-  }, [fetchActivities, setupRealtimeSubscription]);
-
-  // Clean up timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
+    
+    const fetchActivities = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('activities')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('timestamp', { ascending: false })
+          .limit(limit);
+          
+        if (error) throw error;
+        
+        setActivities(data || []);
+      } catch (err) {
+        console.error('Error fetching activities:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch activities'));
+      } finally {
+        setLoading(false);
       }
     };
-  }, []);
-
-  return {
-    activities,
-    isLoading,
-    error,
-    unreadCount,
-    fetchActivities,
-    refreshActivities,
+    
+    fetchActivities();
+    
+    // Set up subscription for real-time updates
+    const subscription = supabase
+      .channel('activities-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'activities',
+        filter: `user_id=eq.${profile.id}`
+      }, () => {
+        fetchActivities();
+      })
+      .subscribe();
+      
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [profile?.id, limit]);
+  
+  const markAsRead = async (activityId: string) => {
+    try {
+      const { error } = await supabase.rpc('mark_activity_read', { activity_id: activityId });
+      
+      if (error) throw error;
+      
+      // Update local state to reflect the change
+      setActivities(prev => 
+        prev.map(activity => 
+          activity.id === activityId ? { ...activity, read: true } : activity
+        )
+      );
+      
+    } catch (err) {
+      console.error('Error marking activity as read:', err);
+      throw err;
+    }
+  };
+  
+  const markAllAsRead = async () => {
+    try {
+      const { error } = await supabase.rpc('mark_all_activities_read');
+      
+      if (error) throw error;
+      
+      // Update local state to reflect all activities as read
+      setActivities(prev => 
+        prev.map(activity => ({ ...activity, read: true }))
+      );
+      
+    } catch (err) {
+      console.error('Error marking all activities as read:', err);
+      throw err;
+    }
+  };
+  
+  return { 
+    activities, 
+    loading, 
+    error, 
     markAsRead,
-    markAllAsRead,
-    setupRealtimeSubscription
+    markAllAsRead
   };
 };
+
+export default useActivities;
