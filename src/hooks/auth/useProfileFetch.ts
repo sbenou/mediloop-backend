@@ -21,38 +21,38 @@ export const useProfileFetch = (userId: string | undefined) => {
     }
 
     const fetchProfile = async () => {
+      // Define createBasicProfile within fetchProfile scope so it's available throughout the function
+      const createBasicProfile = (id: string): UserProfile => ({
+        id,
+        role: 'patient', // Default role
+        role_id: null,
+        full_name: null,
+        email: null,
+        avatar_url: null,
+        auth_method: null,
+        is_blocked: false,
+        date_of_birth: null,
+        city: null,
+        license_number: null,
+        cns_card_front: null,
+        cns_card_back: null,
+        cns_number: null,
+        doctor_stamp_url: null,
+        doctor_signature_url: null,
+        pharmacist_stamp_url: null,
+        pharmacist_signature_url: null,
+        pharmacy_id: null,
+        pharmacy_name: null,
+        pharmacy_logo_url: null,
+        phone_number: null,
+        deleted_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
       try {
         setLoading(true);
         setError(null);
-
-        // Function to create a basic profile with required fields - defined within fetchProfile scope
-        const createBasicProfile = (id: string): UserProfile => ({
-          id,
-          role: 'patient', // Default role
-          role_id: null,
-          full_name: null,
-          email: null,
-          avatar_url: null,
-          auth_method: null,
-          is_blocked: false,
-          date_of_birth: null,
-          city: null,
-          license_number: null,
-          cns_card_front: null,
-          cns_card_back: null,
-          cns_number: null,
-          doctor_stamp_url: null,
-          doctor_signature_url: null,
-          pharmacist_stamp_url: null,
-          pharmacist_signature_url: null,
-          pharmacy_id: null,
-          pharmacy_name: null,
-          pharmacy_logo_url: null,
-          phone_number: null,
-          deleted_at: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
 
         // Check if specific pharmacist fields exist in the profiles table
         const hasPhamacyId = await checkColumnExists('profiles', 'pharmacy_id');
@@ -76,7 +76,7 @@ export const useProfileFetch = (userId: string | undefined) => {
         if (hasPhamacyName) queryString += ', pharmacy_name';
         if (hasPhamacyLogoUrl) queryString += ', pharmacy_logo_url';
         
-        // Perform the query - fixed: use select() once with the complete query string
+        // Perform the query
         const { data, error } = await supabase
           .from('profiles')
           .select(queryString)
