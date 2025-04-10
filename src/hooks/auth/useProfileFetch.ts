@@ -86,6 +86,10 @@ export const useProfileFetch = (userId: string | undefined) => {
         if (error) {
           console.error('Error fetching profile:', error);
           setError(error);
+          
+          // Still create a basic profile even on error
+          const basicProfile = createBasicProfile(userId);
+          setProfile(basicProfile);
           return;
         }
 
