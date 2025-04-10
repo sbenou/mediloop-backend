@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -184,6 +183,21 @@ const Dashboard = () => {
     
     if (!isAuthenticated) {
       console.log("[Dashboard][DEBUG] Cannot redirect - not authenticated");
+      
+      // Check if we have a user ID but no profile (inconsistent state)
+      if (user?.id && !profile) {
+        // Try to force reload the page first
+        toast({
+          title: "Reloading your session",
+          description: "Attempting to refresh your profile data",
+        });
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+        return;
+      }
+      
       window.location.href = '/login';
       return;
     }
@@ -221,24 +235,24 @@ const Dashboard = () => {
         const route = effectiveRole === 'pharmacist' 
           ? '/dashboard?view=pharmacy&section=dashboard'
           : getDashboardRouteByRole(effectiveRole);
-          
-        console.log(`[Dashboard][DEBUG] Forcing redirect to ${route}`);
         
-        // Use window.location.replace for more reliable navigation
-        window.location.replace(route);
-      }, 300);
-    } catch (error) {
-      console.error("[Dashboard][DEBUG] Navigation error:", error);
-      setIsNavigating(false);
+      console.log(`[Dashboard][DEBUG] Forcing redirect to ${route}`);
       
-      // Fallback navigation as last resort
-      setTimeout(() => {
-        const fallbackRoute = '/dashboard?view=pharmacy&section=dashboard';
-        console.log(`[Dashboard][DEBUG] Using fallback navigation to: ${fallbackRoute}`);
-        window.location.href = fallbackRoute;
-      }, 500);
-    }
-  };
+      // Use window.location.replace for a full page refresh to ensure clean state
+      window.location.href = route;
+    }, 300);
+  } catch (error) {
+    console.error("[Dashboard][DEBUG] Navigation error:", error);
+    setIsNavigating(false);
+    
+    // Fallback navigation as last resort
+    setTimeout(() => {
+      const fallbackRoute = '/dashboard?view=pharmacy&section=dashboard';
+      console.log(`[Dashboard][DEBUG] Using fallback navigation to: ${fallbackRoute}`);
+      window.location.href = fallbackRoute;
+    }, 500);
+  }
+};
 
   // Enhanced loading state with better feedback and more prominent force navigation button
   if (isLoading || !userRole || manualProfileFetchInProgress) {
