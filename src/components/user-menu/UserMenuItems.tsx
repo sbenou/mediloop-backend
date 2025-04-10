@@ -108,19 +108,24 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
-    if (path === '/dashboard') {
-      // Special case for direct dashboard navigation for all roles
-      // This ensures we get a complete refresh and the dash loads properly
-      console.log(`Using direct window.location navigation to dashboard`);
-      if (isUserPharmacist) {
-        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+    // For dashboard navigation, always use a full page reload approach
+    // This avoids SPA navigation issues with complex dashboard state
+    if (path.includes('/dashboard')) {
+      console.log(`Using direct navigation to: ${path}`);
+      
+      // Special case for pharmacists - always ensure they have pharmacy parameters
+      if (isUserPharmacist && (!path.includes('view=pharmacy'))) {
+        const pharmacistPath = '/dashboard?view=pharmacy&section=dashboard';
+        console.log(`Pharmacist detected, redirecting to: ${pharmacistPath}`);
+        window.location.href = pharmacistPath;
       } else {
+        // Regular navigation for other roles or when pharmacy params already present
         window.location.href = path;
       }
       return;
     }
     
-    // For all other paths, use React Router
+    // For all other non-dashboard paths, use React Router
     navigate(path);
   };
 

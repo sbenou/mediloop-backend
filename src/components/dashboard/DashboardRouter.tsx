@@ -30,6 +30,9 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   const { view, section, profileTab, ordersTab } = params;
   const [searchParams, setSearchParams] = useSearchParams();
   
+  // Counter to track how many parameter updates we've attempted
+  const updateAttemptsRef = React.useRef(0);
+  
   // Log when the component renders for debugging
   useEffect(() => {
     console.log("🚦 DashboardRouter rendering with:", { 
@@ -39,26 +42,33 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       profileTab, 
       ordersTab, 
       isPharmacist: isPharmacist || userRole === 'pharmacist',
-      profileRole: profile?.role
+      profileRole: profile?.role,
+      updateAttempts: updateAttemptsRef.current
     });
-
-    // Auto-correct URL parameters for pharmacists but don't create a redirect loop
-    if ((userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist') && 
-        (!searchParams.get('view') || searchParams.get('view') !== 'pharmacy')) {
-      console.log("Automatically setting correct parameters for pharmacist");
+    
+    // Handle pharmacist URL parameter correction with loop prevention
+    const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist';
+    const needsParameterUpdate = isUserPharmacist && (!view || view !== 'pharmacy');
+    
+    if (needsParameterUpdate && updateAttemptsRef.current < 2) {
+      console.log("Correcting URL parameters for pharmacist, attempt:", updateAttemptsRef.current + 1);
       
-      // Use setSearchParams to update the URL without a full page refresh
-      // This avoids redirect loops while ensuring the right params
+      // Increment our update attempts counter
+      updateAttemptsRef.current += 1;
+      
+      // Update the URL parameters
       setSearchParams({ 
         view: 'pharmacy', 
         section: section || 'dashboard' 
       }, { replace: true });
       
-      // Notify the user that they're being redirected to the correct view
-      toast({
-        title: "Pharmacy Dashboard",
-        description: "Loading your pharmacy dashboard view",
-      });
+      // Only show toast on first attempt
+      if (updateAttemptsRef.current === 1) {
+        toast({
+          title: "Pharmacy Dashboard",
+          description: "Loading your pharmacy dashboard view",
+        });
+      }
     }
   }, [userRole, view, section, profileTab, ordersTab, isPharmacist, profile, searchParams, setSearchParams]);
   

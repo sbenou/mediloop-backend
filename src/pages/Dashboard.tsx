@@ -56,27 +56,41 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, isLoading, navigate]);
   
-  // Special handling for pharmacist users to ensure they have the correct view parameters
-  // This now only runs once when the component mounts, not on every render
+  // Special handling for pharmacist users - runs only once on mount to avoid loops
   useEffect(() => {
-    if (!isLoading && isAuthenticated && profile &&
+    if (!isLoading && isAuthenticated && profile && 
        (userRole === 'pharmacist' || isPharmacist || profile.role === 'pharmacist') && 
        (!view || view !== 'pharmacy')) {
-      console.log("Pharmacist detected without proper view parameters, updating URL");
       
-      // Use window.location.href for a complete page refresh only if needed
-      // But avoid doing it repeatedly (which would cause a loop)
-      if (document.referrer !== window.location.href) {
+      console.log("Pharmacist detected without proper view parameters:", {
+        currentView: view,
+        currentSection: section,
+        referrer: document.referrer,
+        currentUrl: window.location.href
+      });
+      
+      // Prevent redirect loops by checking if we're already in the process of redirecting
+      const isRedirectLoop = sessionStorage.getItem('pharmacist_redirect_attempt');
+      
+      if (!isRedirectLoop) {
+        // Set a flag to prevent multiple redirects
+        sessionStorage.setItem('pharmacist_redirect_attempt', 'true');
+        console.log("Setting pharmacy redirect flag and redirecting");
+        
+        // Do the redirect
         window.location.href = '/dashboard?view=pharmacy&section=dashboard';
       } else {
-        console.log("Skipping redirect as we seem to be in a loop");
+        console.log("Detected potential redirect loop, showing toast instead");
+        sessionStorage.removeItem('pharmacist_redirect_attempt');
+        
+        // Show a toast instead of redirecting again
         toast({
           title: "Dashboard Loading",
           description: "Please wait while we prepare your pharmacy dashboard.",
         });
       }
     }
-  }, []);  // Empty dependency array so it only runs once on mount
+  }, []); // Empty dependency array - only run once on mount
 
   // Enhanced loading state with better feedback
   if (isLoading) {
