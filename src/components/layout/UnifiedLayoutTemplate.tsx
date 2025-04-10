@@ -1,4 +1,3 @@
-
 import { ReactNode } from "react";
 import Sidebar from "../sidebar/Sidebar";
 import NotificationBell from "../NotificationBell";
@@ -15,6 +14,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import UserMenu from "@/components/UserMenu";
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import AuthDebugger from "@/components/auth/AuthDebugger";
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -111,6 +111,9 @@ const UnifiedLayoutTemplate = ({ children }: UnifiedLayoutProps) => {
               </div>
             </div>
           </div>
+          
+          {/* Add the auth debugger component */}
+          <AuthDebugger />
         </div>
       </CartProvider>
     </CurrencyProvider>

@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
@@ -31,7 +30,7 @@ export const useAuth = () => {
 
   // Add debug information directly to the hook
   useEffect(() => {
-    if (authData.user && !isLoading) {
+    if (authData.user) {
       console.log(`[useAuth][DEBUG] Current auth state:`, {
         isAuthenticated,
         userRole,
@@ -43,7 +42,7 @@ export const useAuth = () => {
         permissionsCount: permissions.length
       });
     }
-  }, [authData.user, isLoading, isAuthenticated, userRole, isPharmacist, permissions, authData.profile]);
+  }, [authData.user, isAuthenticated, userRole, isPharmacist, permissions, authData.profile]);
 
   // Add a state validation effect with improved profile fetching
   useEffect(() => {
@@ -53,14 +52,15 @@ export const useAuth = () => {
       const fetchProfile = async () => {
         try {
           console.log('[useAuth][DEBUG] Attempting to fetch profile for user:', authData.user?.id);
-          // Use a simplified query that only selects columns we know exist
           const { data: profile, error } = await supabase
             .from('profiles')
             .select(`
               id, role, role_id, full_name, email, 
               avatar_url, auth_method, is_blocked, 
               city, date_of_birth, license_number,
-              deleted_at, created_at, updated_at
+              deleted_at, created_at, updated_at,
+              pharmacist_stamp_url, pharmacist_signature_url,
+              pharmacy_id, pharmacy_name, pharmacy_logo_url
             `)
             .eq('id', authData.user?.id)
             .maybeSingle();
@@ -76,12 +76,13 @@ export const useAuth = () => {
               id: profile.id,
               role: profile.role,
               fullName: profile.full_name,
+              isPharmacist: profile.role === 'pharmacist'
             });
             
             // Ensure profile has all required UserProfile properties with default values
             const completeProfile: UserProfile = {
               id: profile.id,
-              role: profile.role,
+              role: profile.role || 'user',
               role_id: profile.role_id || null,
               full_name: profile.full_name || null,
               email: profile.email || null,
@@ -96,11 +97,11 @@ export const useAuth = () => {
               cns_number: null,
               doctor_stamp_url: null,
               doctor_signature_url: null,
-              pharmacist_stamp_url: null,
-              pharmacist_signature_url: null,
-              pharmacy_id: null,
-              pharmacy_name: null,
-              pharmacy_logo_url: null,
+              pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+              pharmacist_signature_url: profile.pharmacist_signature_url || null,
+              pharmacy_id: profile.pharmacy_id || null,
+              pharmacy_name: profile.pharmacy_name || null,
+              pharmacy_logo_url: profile.pharmacy_logo_url || null,
               phone_number: null,
               deleted_at: profile.deleted_at || null,
               created_at: profile.created_at || new Date().toISOString(),
@@ -109,6 +110,11 @@ export const useAuth = () => {
             
             // Update auth state with the fetched profile
             setAuthData(prev => ({ ...prev, profile: completeProfile, isLoading: false }));
+            
+            // Ensure we set the right flags for navigation
+            if (completeProfile.role === 'pharmacist') {
+              sessionStorage.setItem('skip_dashboard_redirect', 'true');
+            }
           } else {
             console.log('[useAuth][DEBUG] No profile found for user:', authData.user?.id);
             setAuthData(prev => ({ ...prev, isLoading: false }));
@@ -125,10 +131,7 @@ export const useAuth = () => {
 
   // Utility function to check if the user has a specific permission
   const hasPermission = useCallback((permission: string) => {
-    // During loading, don't make definitive permission decisions
     if (isLoading) return false;
-    
-    // Check if the permission exists in the user's permissions array
     return permissions.includes(permission);
   }, [permissions, isLoading]);
 
@@ -152,8 +155,11 @@ export const useAuth = () => {
     isLoading,
     userRole,
     profile,
-    user,  // Explicitly include user in the return value
-    hasPermission,
+    user,
+    hasPermission: useCallback((permission: string) => {
+      if (isLoading) return false;
+      return permissions.includes(permission);
+    }, [permissions, isLoading]),
     isPharmacist,
     isDoctorOrPharmacist,
     isPatient,

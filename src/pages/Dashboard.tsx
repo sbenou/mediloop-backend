@@ -10,6 +10,7 @@ import RequireRoleGuard from "@/components/auth/RequireRoleGuard";
 import { toast } from "@/components/ui/use-toast";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, profile, isPharmacist, user } = useAuth();
@@ -17,6 +18,7 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const [forceNavAttempted, setForceNavAttempted] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [manualProfileFetchInProgress, setManualProfileFetchInProgress] = useState(false);
   
   const view = searchParams.get('view');
   const section = searchParams.get('section');
@@ -131,8 +133,45 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, user, userRole, forceNavAttempted, retryCount]);
 
+  // Manual profile fetch function
+  const manualProfileFetch = async () => {
+    if (!user?.id) {
+      console.error("[Dashboard][DEBUG] Cannot fetch profile - no user ID");
+      return null;
+    }
+    
+    setManualProfileFetchInProgress(true);
+    
+    try {
+      console.log("[Dashboard][DEBUG] Performing manual profile fetch for user:", user.id);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("[Dashboard][DEBUG] Manual profile fetch error:", error);
+        return null;
+      }
+      
+      if (profile) {
+        console.log("[Dashboard][DEBUG] Manual profile fetch successful:", profile);
+        return profile;
+      } else {
+        console.log("[Dashboard][DEBUG] Manual profile fetch: No profile found");
+        return null;
+      }
+    } catch (err) {
+      console.error("[Dashboard][DEBUG] Error in manual profile fetch:", err);
+      return null;
+    } finally {
+      setManualProfileFetchInProgress(false);
+    }
+  };
+
   // Force redirect function with improved role detection
-  const forceRedirect = () => {
+  const forceRedirect = async () => {
     console.log("[Dashboard][DEBUG] Manual redirect requested");
     
     if (!isAuthenticated) {
@@ -141,12 +180,20 @@ const Dashboard = () => {
       return;
     }
     
-    // Use multiple sources to determine role, with profile.role as highest priority
-    const effectiveRole = profile?.role || userRole || (isPharmacist ? 'pharmacist' : 'user');
+    // Try to fetch the profile directly to ensure we have the most accurate role
+    const manuallyFetchedProfile = await manualProfileFetch();
+    
+    // Use multiple sources to determine role, with manually fetched profile as highest priority
+    const effectiveRole = 
+      manuallyFetchedProfile?.role || 
+      profile?.role || 
+      userRole || 
+      (isPharmacist ? 'pharmacist' : 'user');
     
     console.log(`[Dashboard][DEBUG] Force redirecting with detected role: ${effectiveRole}`, {
       userRole,
       profileRole: profile?.role,
+      manuallyFetchedRole: manuallyFetchedProfile?.role,
       isPharmacist
     });
     
@@ -154,7 +201,10 @@ const Dashboard = () => {
     sessionStorage.setItem('skip_dashboard_redirect', 'true');
     
     // Determine the correct route based on role
-    const route = getDashboardRouteByRole(effectiveRole);
+    const route = effectiveRole === 'pharmacist' 
+      ? '/dashboard?view=pharmacy&section=dashboard'
+      : getDashboardRouteByRole(effectiveRole);
+      
     console.log(`[Dashboard][DEBUG] Forcing redirect to ${route}`);
     
     // Use direct navigation for more reliable redirect
@@ -167,7 +217,7 @@ const Dashboard = () => {
   };
 
   // Enhanced loading state with better feedback and more prominent force navigation button
-  if (isLoading || !userRole) {
+  if (isLoading || !userRole || manualProfileFetchInProgress) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-6 w-full max-w-md p-8 rounded-lg border shadow-lg">
