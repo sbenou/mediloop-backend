@@ -30,10 +30,9 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   const { view, section, profileTab, ordersTab } = params;
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Counter to track how many parameter updates we've attempted
-  const updateAttemptsRef = React.useRef(0);
+  // Use sessionStorage to control redirect attempts instead of a ref
+  // This ensures state persists across component unmounts/remounts
   
-  // Log when the component renders for debugging
   useEffect(() => {
     console.log("🚦 DashboardRouter rendering with:", { 
       userRole, 
@@ -42,35 +41,52 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       profileTab, 
       ordersTab, 
       isPharmacist: isPharmacist || userRole === 'pharmacist',
-      profileRole: profile?.role,
-      updateAttempts: updateAttemptsRef.current
+      profileRole: profile?.role
     });
     
-    // Handle pharmacist URL parameter correction with loop prevention
+    // Handle pharmacist URL parameter correction
     const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist';
     const needsParameterUpdate = isUserPharmacist && (!view || view !== 'pharmacy');
     
-    if (needsParameterUpdate && updateAttemptsRef.current < 2) {
-      console.log("Correcting URL parameters for pharmacist, attempt:", updateAttemptsRef.current + 1);
+    if (needsParameterUpdate) {
+      console.log("Correcting URL parameters for pharmacist");
       
-      // Increment our update attempts counter
-      updateAttemptsRef.current += 1;
+      // Get current redirect count from sessionStorage
+      const redirectAttempts = parseInt(sessionStorage.getItem('pharmacy_redirect_count') || '0');
       
-      // Update the URL parameters
-      setSearchParams({ 
-        view: 'pharmacy', 
-        section: section || 'dashboard' 
-      }, { replace: true });
-      
-      // Only show toast on first attempt
-      if (updateAttemptsRef.current === 1) {
-        toast({
-          title: "Pharmacy Dashboard",
-          description: "Loading your pharmacy dashboard view",
-        });
+      // Only redirect if we haven't tried too many times
+      if (redirectAttempts < 2) {
+        // Increment the counter and save it
+        sessionStorage.setItem('pharmacy_redirect_count', (redirectAttempts + 1).toString());
+        
+        // Update the URL parameters
+        setSearchParams({ 
+          view: 'pharmacy', 
+          section: section || 'dashboard' 
+        }, { replace: true });
+        
+        // Only show toast on first attempt
+        if (redirectAttempts === 0) {
+          toast({
+            title: "Pharmacy Dashboard",
+            description: "Loading your pharmacy dashboard view",
+          });
+        }
+      } else {
+        console.log("Maximum redirect attempts reached, continuing with current parameters");
       }
+    } else {
+      // If parameters are correct, reset the counter
+      sessionStorage.removeItem('pharmacy_redirect_count');
     }
   }, [userRole, view, section, profileTab, ordersTab, isPharmacist, profile, searchParams, setSearchParams]);
+  
+  // Reset the redirect counter when component unmounts
+  useEffect(() => {
+    return () => {
+      sessionStorage.removeItem('pharmacy_redirect_count');
+    };
+  }, []);
   
   if (!userRole) {
     console.warn("[DashboardRouter] Warning: userRole is not defined. Rendering fallback view.");

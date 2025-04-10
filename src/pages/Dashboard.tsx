@@ -32,6 +32,25 @@ const Dashboard = () => {
       } : 'No profile'
     });
     
+    // Check for redirect loops
+    const mountCount = parseInt(sessionStorage.getItem('dashboard_mount_count') || '0');
+    sessionStorage.setItem('dashboard_mount_count', (mountCount + 1).toString());
+    
+    // If we've mounted too many times in quick succession, show a warning
+    if (mountCount > 3) {
+      console.warn("Possible redirect loop detected - dashboard mounted multiple times");
+      
+      // Reset the counter after warning
+      setTimeout(() => {
+        sessionStorage.removeItem('dashboard_mount_count');
+      }, 2000);
+    }
+    
+    // Reset the counter after 5 seconds of stability
+    const resetTimeout = setTimeout(() => {
+      sessionStorage.removeItem('dashboard_mount_count');
+    }, 5000);
+    
     // If loading takes too long, show a toast to inform the user
     const timeoutId = setTimeout(() => {
       if (isLoading) {
@@ -42,7 +61,10 @@ const Dashboard = () => {
       }
     }, 5000); // 5 second timeout
     
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(resetTimeout);
+    };
   }, [isAuthenticated, isLoading, userRole, profile, view, section, isPharmacist]);
 
   // Handle unauthenticated users with more detailed logging
@@ -56,41 +78,13 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, isLoading, navigate]);
   
-  // Special handling for pharmacist users - runs only once on mount to avoid loops
+  // Clear any pharmacy redirect flags on component unmount
   useEffect(() => {
-    if (!isLoading && isAuthenticated && profile && 
-       (userRole === 'pharmacist' || isPharmacist || profile.role === 'pharmacist') && 
-       (!view || view !== 'pharmacy')) {
-      
-      console.log("Pharmacist detected without proper view parameters:", {
-        currentView: view,
-        currentSection: section,
-        referrer: document.referrer,
-        currentUrl: window.location.href
-      });
-      
-      // Prevent redirect loops by checking if we're already in the process of redirecting
-      const isRedirectLoop = sessionStorage.getItem('pharmacist_redirect_attempt');
-      
-      if (!isRedirectLoop) {
-        // Set a flag to prevent multiple redirects
-        sessionStorage.setItem('pharmacist_redirect_attempt', 'true');
-        console.log("Setting pharmacy redirect flag and redirecting");
-        
-        // Do the redirect
-        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-      } else {
-        console.log("Detected potential redirect loop, showing toast instead");
-        sessionStorage.removeItem('pharmacist_redirect_attempt');
-        
-        // Show a toast instead of redirecting again
-        toast({
-          title: "Dashboard Loading",
-          description: "Please wait while we prepare your pharmacy dashboard.",
-        });
-      }
-    }
-  }, []); // Empty dependency array - only run once on mount
+    return () => {
+      sessionStorage.removeItem('pharmacy_redirect_attempt');
+      sessionStorage.removeItem('pharmacy_redirect_count');
+    };
+  }, []);
 
   // Enhanced loading state with better feedback
   if (isLoading) {

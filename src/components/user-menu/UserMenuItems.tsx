@@ -5,7 +5,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useMemo } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
@@ -30,7 +30,6 @@ import {
 import { useAuth } from "@/hooks/auth/useAuth";
 
 export const UserMenuItems = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const [auth, setAuth] = useRecoilState(authState);
   const { isPharmacist } = useAuth();
@@ -108,25 +107,25 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
-    // For dashboard navigation, always use a full page reload approach
-    // This avoids SPA navigation issues with complex dashboard state
+    // Always clear the counter that checks for redirects
+    sessionStorage.removeItem('pharmacy_redirect_count');
+    sessionStorage.removeItem('dashboard_mount_count');
+    
+    // For all dashboard navigation, use direct navigation to avoid SPA issues
     if (path.includes('/dashboard')) {
-      console.log(`Using direct navigation to: ${path}`);
-      
       // Special case for pharmacists - always ensure they have pharmacy parameters
-      if (isUserPharmacist && (!path.includes('view=pharmacy'))) {
-        const pharmacistPath = '/dashboard?view=pharmacy&section=dashboard';
-        console.log(`Pharmacist detected, redirecting to: ${pharmacistPath}`);
-        window.location.href = pharmacistPath;
+      if (isUserPharmacist) {
+        const finalPath = '/dashboard?view=pharmacy&section=dashboard'; 
+        console.log(`Pharmacist detected, navigating to: ${finalPath}`);
+        window.location.href = finalPath;
       } else {
-        // Regular navigation for other roles or when pharmacy params already present
+        // For other roles, use the provided path
         window.location.href = path;
       }
-      return;
+    } else {
+      // For non-dashboard paths, use full page navigation for consistency
+      window.location.href = path;
     }
-    
-    // For all other non-dashboard paths, use React Router
-    navigate(path);
   };
 
   // Generate menu items based on user role - this now exactly matches the sidebar navigation
