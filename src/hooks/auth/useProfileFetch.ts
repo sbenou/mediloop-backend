@@ -126,13 +126,13 @@ export const useProfileFetch = (userId: string | undefined) => {
           const basicProfile = createBasicProfile(userId);
           setProfile(basicProfile);
         }
-      } catch (err) {
-        console.error('Error in useProfileFetch:', err);
-        setError(err instanceof Error ? err : new Error(String(err)));
+      } catch (catchError) {
+        console.error('Error in useProfileFetch:', catchError);
+        const errorObj = catchError instanceof Error ? catchError : new Error(String(catchError));
+        setError(errorObj);
         
         // Create a basic profile in case of error
         if (userId) {
-          // Use the locally scoped createBasicProfile function
           const basicProfile = createBasicProfile(userId);
           setProfile(basicProfile);
         }
