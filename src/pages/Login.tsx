@@ -15,6 +15,19 @@ const Login = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [manualRedirectInProgress, setManualRedirectInProgress] = useState(false);
   
+  // Clear any stale flags immediately on mount to prevent false loading states
+  useEffect(() => {
+    const hasStoredToken = localStorage.getItem(`sb-${window.location.hostname.split('.')[0]}-auth-token`) !== null;
+    const hasLoginSuccessFlag = sessionStorage.getItem('login_successful') === 'true';
+    
+    // If login_successful flag is set but there's no auth token, clear the flag
+    if (hasLoginSuccessFlag && !hasStoredToken) {
+      console.log("[Login][DEBUG] Detected stale login_successful flag without auth token, clearing flags");
+      sessionStorage.removeItem('login_successful');
+      sessionStorage.removeItem('skip_dashboard_redirect');
+    }
+  }, []);
+  
   // Check if we just attempted a login
   const loginSuccessful = sessionStorage.getItem('login_successful') === 'true';
   
@@ -96,8 +109,11 @@ const Login = () => {
     }
   }, [loginSuccessful]);
 
-  // Show loading state
-  if (isLoading || manualRedirectInProgress || loginSuccessful) {
+  // Show loading state only when actually loading or redirecting after login
+  // Check for both isLoading AND authenticated state or loginSuccessful flag
+  const showLoadingState = (isLoading && isAuthenticated) || manualRedirectInProgress || (loginSuccessful && isAuthenticated);
+
+  if (showLoadingState) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
