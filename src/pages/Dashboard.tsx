@@ -54,8 +54,11 @@ const Dashboard = () => {
       setTimeout(() => {
         sessionStorage.removeItem('skip_dashboard_redirect');
       }, 1000);
-    } else if (!fromMenu) {
-      // Only track mount count if not from menu and not skipping redirects
+      return; // Exit early if skipping redirects
+    } 
+    
+    // Only track mount count if not from menu and not skipping redirects
+    if (!fromMenu && !skipRedirect) {
       const mountCount = parseInt(sessionStorage.getItem('dashboard_mount_count') || '0');
       sessionStorage.setItem('dashboard_mount_count', (mountCount + 1).toString());
       
@@ -63,10 +66,12 @@ const Dashboard = () => {
       if (mountCount > 3) {
         console.warn("Possible redirect loop detected - dashboard mounted multiple times");
         
-        // Reset the counter after warning
+        // Reset the counter after warning and set skip flag to break the loop
+        sessionStorage.setItem('skip_dashboard_redirect', 'true');
         setTimeout(() => {
           sessionStorage.removeItem('dashboard_mount_count');
         }, 2000);
+        return;
       }
     }
     
@@ -79,12 +84,26 @@ const Dashboard = () => {
     if (!skipRedirect && isAuthenticated && !isLoading && userRole) {
       // Check if the URL parameters match the expected ones for the current role
       const expectedRoute = getDashboardRouteByRole(userRole);
+      const expectedParams = new URLSearchParams(expectedRoute.split('?')[1] || '');
       const currentPath = window.location.pathname + window.location.search;
       
       // If we're at /dashboard but missing expected parameters, redirect
       if (window.location.pathname === '/dashboard' && !currentPath.includes(expectedRoute.split('?')[1] || '')) {
         console.log(`Detected missing parameters for ${userRole}. Expected: ${expectedRoute}, Current: ${currentPath}`);
-        navigate(expectedRoute, { replace: true });
+        
+        // Add a check for redirect attempt count to prevent loops
+        const redirectCount = parseInt(sessionStorage.getItem('dashboard_redirect_count') || '0');
+        if (redirectCount < 2) {
+          sessionStorage.setItem('dashboard_redirect_count', (redirectCount + 1).toString());
+          navigate(expectedRoute, { replace: true });
+        } else {
+          console.warn("Maximum redirect attempts reached, continuing with current parameters");
+          // Set the skip flag to break potential loops
+          sessionStorage.setItem('skip_dashboard_redirect', 'true');
+        }
+      } else {
+        // Reset the redirect counter if we're on the correct path
+        sessionStorage.removeItem('dashboard_redirect_count');
       }
     }
     

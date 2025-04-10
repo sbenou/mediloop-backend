@@ -48,7 +48,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
     const skipRedirect = sessionStorage.getItem('skip_dashboard_redirect') === 'true';
     if (skipRedirect) {
       console.log("Skipping parameter correction due to skip_dashboard_redirect flag");
-      // Clear the flag after we've used it
+      // Clear the flag after we've used it, but with a short delay to ensure other components have read it
       setTimeout(() => {
         sessionStorage.removeItem('skip_dashboard_redirect');
       }, 500);
@@ -113,6 +113,8 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
         }
       } else {
         console.log("Maximum redirect attempts reached, continuing with current parameters");
+        // Set skip flag to prevent further attempts
+        sessionStorage.setItem('skip_dashboard_redirect', 'true');
       }
     } else {
       // If parameters are correct, reset the counter

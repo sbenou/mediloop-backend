@@ -1,4 +1,3 @@
-
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -111,6 +110,7 @@ export const UserMenuItems = () => {
     
     // Always reset redirect counters when navigation is initiated intentionally
     sessionStorage.removeItem('pharmacy_redirect_count');
+    sessionStorage.removeItem('dashboard_redirect_count');
     sessionStorage.removeItem('dashboard_mount_count');
     
     // Set a navigation timestamp to track intentional navigations
@@ -125,7 +125,7 @@ export const UserMenuItems = () => {
       sessionStorage.setItem('dashboard_navigation_source', 'menu');
       sessionStorage.setItem('skip_dashboard_redirect', 'true');
       
-      // Hard navigate to the correct dashboard route for any role
+      // Hard navigate to the correct dashboard route for any role to ensure complete refresh
       window.location.href = dashboardRoute;
     } else {
       // For non-dashboard paths, use React Router navigation
@@ -138,7 +138,7 @@ export const UserMenuItems = () => {
     // Default items (patient/user role)
     if (userRole === 'user' || userRole === 'patient') {
       return [
-        { icon: Home, label: 'Dashboard', path: '/dashboard' },
+        { icon: Home, label: 'Dashboard', path: '/dashboard?view=home' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
         { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },

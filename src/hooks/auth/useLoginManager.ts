@@ -67,6 +67,9 @@ export const useLoginManager = () => {
     console.log(`[LoginManager] Redirecting user with role ${role} to ${route}`);
     setRedirectAttempts(prevAttempts => prevAttempts + 1);
     
+    // Set skip redirect flag to prevent redirect loops
+    sessionStorage.setItem('skip_dashboard_redirect', 'true');
+    
     // Handle the navigation differently based on role to ensure correct parameters
     try {
       // For pharmacists, use window.location.href for a complete page refresh to ensure proper loading
@@ -79,7 +82,8 @@ export const useLoginManager = () => {
         // We still mark as redirected even though we're doing a hard redirect
         redirected.current = true;
       } else {
-        navigate(route, { replace: true });
+        // For other roles, use the direct URL navigation to ensure consistent behavior
+        window.location.href = route;
         redirected.current = true;
       }
       

@@ -21,6 +21,9 @@ const Login = () => {
       setRedirectAttempted(true);
       const role = profile.role;
       
+      // Set flag to indicate direct login navigation
+      sessionStorage.setItem('skip_dashboard_redirect', 'true');
+      
       // Special case for pharmacist - always use direct URL navigation
       if (role === 'pharmacist') {
         console.log(`[Login] Pharmacist detected, using direct navigation`);
@@ -28,10 +31,11 @@ const Login = () => {
         return;
       }
       
-      // For other roles, use the standard route
+      // For other roles, get the standard route and navigate
       const route = getDashboardRouteByRole(role);
       console.log(`[Login] User already authenticated with role ${role}, redirecting to: ${route}`);
       
+      // Use window.location for a full page refresh to avoid potential state issues
       window.location.href = route;
     }
   }, [isAuthenticated, profile, navigate, redirected, redirectAttempted]);
