@@ -34,8 +34,10 @@ export const UserMenuItems = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [auth, setAuth] = useRecoilState(authState);
-  const { isPharmacist } = useAuth();
-  const userRole = auth.profile?.role || 'user';
+  const { isPharmacist, userRole: hookUserRole } = useAuth();
+  
+  // Ensure we have a userRole, with multiple fallbacks
+  const userRole = auth.profile?.role || hookUserRole || 'user';
   
   // Check if we're on the activities or notifications page
   const isActivitiesPage = location.pathname.includes('/activities') || 
@@ -116,41 +118,39 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`[UserMenuItems][DEBUG] Navigating to ${path} from UserMenuItems`);
     
-    // Always reset redirect counters when navigation is initiated intentionally
+    // Reset all navigation-related flags
     sessionStorage.removeItem('pharmacy_redirect_count');
     sessionStorage.removeItem('dashboard_redirect_count');
     sessionStorage.removeItem('dashboard_mount_count');
+    sessionStorage.removeItem('skip_dashboard_redirect');
     
     // Set a navigation timestamp to track intentional navigations
     sessionStorage.setItem('menu_navigation_timestamp', Date.now().toString());
-    
-    // Always set skip_dashboard_redirect to prevent excessive redirection
-    sessionStorage.setItem('skip_dashboard_redirect', 'true');
-    
+        
     if (path.includes('/dashboard')) {
-      // Use the utility function to get the correct route based on user role
-      const dashboardRoute = getDashboardRouteByRole(userRole);
-      console.log(`[UserMenuItems][DEBUG] Using getDashboardRouteByRole utility: ${dashboardRoute}`);
+      // Get correct dashboard route based on user role with fallbacks
+      const role = userRole || auth.profile?.role || 'user';
+      let dashboardRoute = getDashboardRouteByRole(role);
+      
+      console.log(`[UserMenuItems][DEBUG] Navigation details:`, {
+        role,
+        isPharmacist: isUserPharmacist,
+        originalPath: path,
+        calculatedRoute: dashboardRoute
+      });
       
       // Flag to indicate this is an intentional menu navigation
       sessionStorage.setItem('dashboard_navigation_source', 'menu');
       
-      console.log(`[UserMenuItems][DEBUG] Current role: ${userRole}, is pharmacist check: ${isUserPharmacist}`);
-      console.log(`[UserMenuItems][DEBUG] Final URL for navigation: ${dashboardRoute}`);
-      
-      // For pharmacists, ensure we have special view parameters
+      // For pharmacists, always ensure correct parameters
       if (isUserPharmacist) {
-        console.log("[UserMenuItems][DEBUG] Pharmacist detected, using special navigation");
+        console.log("[UserMenuItems][DEBUG] Pharmacist detected, forcing pharmacy dashboard");
         window.location.href = '/dashboard?view=pharmacy&section=dashboard';
         return;
       }
       
-      // Hard navigate to the correct dashboard route for any role to ensure complete refresh
+      // Force a full page reload for dashboard navigation
       window.location.href = dashboardRoute;
-    } else if (path === "/settings") {
-      // For settings, use direct navigation to avoid issues
-      console.log("[UserMenuItems][DEBUG] Using direct navigation for settings");
-      window.location.href = path;
     } else {
       // For non-dashboard paths, use React Router navigation
       navigate(path);
