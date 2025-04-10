@@ -1,3 +1,4 @@
+
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -107,36 +108,37 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
-    // Always clear the counter that checks for redirects
+    // Always reset redirect counters when navigation is initiated intentionally
     sessionStorage.removeItem('pharmacy_redirect_count');
     sessionStorage.removeItem('dashboard_mount_count');
     
-    // Before navigating, clear any previous navigation attempts
+    // Set a navigation timestamp to track intentional navigations
     sessionStorage.setItem('menu_navigation_timestamp', Date.now().toString());
     
-    // For all dashboard navigation, force a full page refresh to avoid SPA routing issues
     if (path.includes('/dashboard')) {
-      // Set a flag to indicate that navigation was initiated from menu
+      // Flag to indicate this is an intentional menu navigation
       sessionStorage.setItem('dashboard_navigation_source', 'menu');
+      sessionStorage.setItem('skip_dashboard_redirect', 'true');
       
-      // Special case for pharmacists - always ensure they have pharmacy parameters
+      // For pharmacists, ensure correct parameters
       if (isUserPharmacist) {
         const finalPath = '/dashboard?view=pharmacy&section=dashboard'; 
         console.log(`Pharmacist detected, navigating to: ${finalPath}`);
-        // Use direct href for complete page refresh - this helps resolve stale state issues
+        
+        // Hard navigation to ensure clean state
         window.location.href = finalPath;
       } else {
-        // For other roles, use direct href for consistent experience
-        console.log(`Using direct navigation to: ${path}`);
+        // For other roles, use the standard path
+        console.log(`Regular user, navigating to: ${path}`);
         window.location.href = path;
       }
     } else {
-      // For non-dashboard paths, use normal navigation
+      // For non-dashboard paths, use React Router navigation
       navigate(path);
     }
   };
 
-  // Generate menu items based on user role - this now exactly matches the sidebar navigation
+  // Generate menu items based on user role
   const getMenuItemsByRole = () => {
     // Default items (patient/user role)
     if (userRole === 'user' || userRole === 'patient') {

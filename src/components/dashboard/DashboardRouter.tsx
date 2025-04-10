@@ -39,8 +39,16 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       ordersTab, 
       isPharmacist: isPharmacist || userRole === 'pharmacist',
       profileRole: profile?.role,
-      navigationSource: sessionStorage.getItem('dashboard_navigation_source')
+      navigationSource: sessionStorage.getItem('dashboard_navigation_source'),
+      skipRedirect: sessionStorage.getItem('skip_dashboard_redirect')
     });
+    
+    // Check if we should skip the redirection
+    const skipRedirect = sessionStorage.getItem('skip_dashboard_redirect') === 'true';
+    if (skipRedirect) {
+      console.log("Skipping parameter correction due to skip_dashboard_redirect flag");
+      return;
+    }
     
     // If navigation came from menu, don't try to redirect
     const fromMenu = sessionStorage.getItem('dashboard_navigation_source') === 'menu';
@@ -90,6 +98,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   useEffect(() => {
     return () => {
       sessionStorage.removeItem('pharmacy_redirect_count');
+      sessionStorage.removeItem('skip_dashboard_redirect');
     };
   }, []);
   

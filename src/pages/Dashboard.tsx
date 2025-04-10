@@ -30,15 +30,27 @@ const Dashboard = () => {
         fullName: profile.full_name,
         isPharmacist: profile.role === 'pharmacist'
       } : 'No profile',
-      navigationSource: sessionStorage.getItem('dashboard_navigation_source')
+      navigationSource: sessionStorage.getItem('dashboard_navigation_source'),
+      skipRedirect: sessionStorage.getItem('skip_dashboard_redirect')
     });
+    
+    // Check if we should skip the dashboard redirect checks
+    const skipRedirect = sessionStorage.getItem('skip_dashboard_redirect') === 'true';
     
     // If navigation came from menu, don't increment mount count
     const fromMenu = sessionStorage.getItem('dashboard_navigation_source') === 'menu';
     
-    // Only track mount count if not from menu
-    if (!fromMenu) {
-      // Check for redirect loops
+    // Clear the flags after we've read them so they don't affect future navigation
+    if (fromMenu) {
+      sessionStorage.removeItem('dashboard_navigation_source');
+    }
+    
+    if (skipRedirect) {
+      // If we're skipping redirects, just clear the flag and don't track mount count
+      sessionStorage.removeItem('skip_dashboard_redirect');
+      console.log("Skipping redirect check due to skip_dashboard_redirect flag");
+    } else if (!fromMenu) {
+      // Only track mount count if not from menu and not skipping redirects
       const mountCount = parseInt(sessionStorage.getItem('dashboard_mount_count') || '0');
       sessionStorage.setItem('dashboard_mount_count', (mountCount + 1).toString());
       
@@ -51,9 +63,6 @@ const Dashboard = () => {
           sessionStorage.removeItem('dashboard_mount_count');
         }, 2000);
       }
-    } else {
-      // Clear the navigation source flag after using it once to prevent issues on refreshes
-      sessionStorage.removeItem('dashboard_navigation_source');
     }
     
     // Reset the counter after 5 seconds of stability
@@ -93,6 +102,7 @@ const Dashboard = () => {
     return () => {
       sessionStorage.removeItem('pharmacy_redirect_attempt');
       sessionStorage.removeItem('pharmacy_redirect_count');
+      sessionStorage.removeItem('skip_dashboard_redirect');
     };
   }, []);
 
