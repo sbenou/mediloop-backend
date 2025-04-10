@@ -52,7 +52,7 @@ const Dashboard = () => {
         }, 2000);
       }
     } else {
-      // Clear the navigation source flag
+      // Clear the navigation source flag after using it once to prevent issues on refreshes
       sessionStorage.removeItem('dashboard_navigation_source');
     }
     

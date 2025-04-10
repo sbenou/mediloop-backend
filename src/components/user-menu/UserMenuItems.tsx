@@ -1,4 +1,3 @@
-
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -115,25 +114,25 @@ export const UserMenuItems = () => {
     // Before navigating, clear any previous navigation attempts
     sessionStorage.setItem('menu_navigation_timestamp', Date.now().toString());
     
-    // For all dashboard navigation, use direct navigation to avoid SPA issues
+    // For all dashboard navigation, force a full page refresh to avoid SPA routing issues
     if (path.includes('/dashboard')) {
+      // Set a flag to indicate that navigation was initiated from menu
+      sessionStorage.setItem('dashboard_navigation_source', 'menu');
+      
       // Special case for pharmacists - always ensure they have pharmacy parameters
       if (isUserPharmacist) {
         const finalPath = '/dashboard?view=pharmacy&section=dashboard'; 
         console.log(`Pharmacist detected, navigating to: ${finalPath}`);
-        
-        // Set a flag to indicate that navigation was initiated from menu
-        sessionStorage.setItem('dashboard_navigation_source', 'menu');
-        
-        // Use navigate instead of direct location change for better history management
-        navigate(finalPath, { replace: true });
+        // Use direct href for complete page refresh - this helps resolve stale state issues
+        window.location.href = finalPath;
       } else {
-        // For other roles, use the provided path but still use navigate
-        navigate(path, { replace: true });
+        // For other roles, use direct href for consistent experience
+        console.log(`Using direct navigation to: ${path}`);
+        window.location.href = path;
       }
     } else {
-      // For non-dashboard paths, use navigation for consistency
-      navigate(path, { replace: true });
+      // For non-dashboard paths, use normal navigation
+      navigate(path);
     }
   };
 

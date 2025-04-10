@@ -30,9 +30,6 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   const { view, section, profileTab, ordersTab } = params;
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Use sessionStorage to control redirect attempts instead of a ref
-  // This ensures state persists across component unmounts/remounts
-  
   useEffect(() => {
     console.log("🚦 DashboardRouter rendering with:", { 
       userRole, 

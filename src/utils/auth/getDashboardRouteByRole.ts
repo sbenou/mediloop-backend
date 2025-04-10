@@ -1,17 +1,25 @@
 
-import { UserRole } from "@/types/role";
-
-export const roleRouteMap = {
-  [UserRole.Superadmin]: { route: "/superadmin/dashboard", label: "Superadmin Dashboard" },
-  [UserRole.Doctor]: { route: "/dashboard", label: "Doctor Dashboard" },
-  [UserRole.Pharmacist]: { route: "/dashboard?view=pharmacy&section=dashboard", label: "Pharmacy Dashboard" },
-  [UserRole.Patient]: { route: "/dashboard", label: "Patient Dashboard" },
-};
-
+/**
+ * Returns the correct dashboard route based on the user's role
+ */
 export const getDashboardRouteByRole = (role?: string): string => {
-  if (!role) return "/dashboard";
-  console.log(`Getting dashboard route for role: ${role}`);
-  const route = roleRouteMap[role as keyof typeof roleRouteMap]?.route || "/dashboard";
-  console.log(`Determined route: ${route}`);
-  return route;
+  // Default to patient dashboard
+  if (!role) {
+    return '/dashboard';
+  }
+  
+  switch (role.toLowerCase()) {
+    case 'doctor':
+      return '/dashboard?section=dashboard';
+    case 'pharmacist':
+      return '/dashboard?view=pharmacy&section=dashboard';
+    case 'superadmin':
+      return '/superadmin/dashboard';
+    case 'patient':
+    case 'user':
+    default:
+      return '/dashboard';
+  }
 };
+
+export default getDashboardRouteByRole;
