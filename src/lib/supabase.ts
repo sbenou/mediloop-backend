@@ -2,18 +2,20 @@
 import { createClient } from '@supabase/supabase-js';
 
 // For Vite, environment variables must be prefixed with VITE_
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_STORYBOOK_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_STORYBOOK_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl) {
-  console.error('Supabase URL is missing.');
-}
+// Default values for development if environment variables are not set
+const fallbackUrl = 'https://hrrlefgnhkbzuwyklejj.supabase.co';
+const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U';
 
-if (!supabaseAnonKey) {
-  console.error('Supabase Anon Key is missing.');
-}
+// Use fallback values if environment variables are not defined
+const url = supabaseUrl || fallbackUrl;
+const key = supabaseAnonKey || fallbackKey;
 
-export const supabase = createClient(supabaseUrl as string, supabaseAnonKey as string, {
+console.log('Supabase URL:', url);
+
+export const supabase = createClient(url, key, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,

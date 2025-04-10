@@ -1,39 +1,39 @@
-import { useState, useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-// Define a proper interface for patient data
-interface RecentPatientData {
+export interface RecentPatientData {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
-  last_visit?: string | null;
+  created_at: string; // Added this field to match the expected type
 }
 
 export const useDoctorRecentPatients = (doctorId: string | undefined) => {
+  const [recentPatients, setRecentPatients] = useState<RecentPatientData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [recentPatients, setRecentPatients] = useState<RecentPatientData[]>([]);
 
   useEffect(() => {
     if (!doctorId) {
       setLoading(false);
       return;
     }
-    
+
     const fetchRecentPatients = async () => {
       try {
         setLoading(true);
         
-        // Fetch recent patients - This would usually be based on appointments or teleconsultations
-        // For now, we'll just get patients with connections to this doctor
+        // Get connections to patients
         const { data: connections, error: connectionsError } = await supabase
           .from('doctor_patient_connections')
           .select(`
+            id,
             patient_id,
+            status,
             created_at
           `)
           .eq('doctor_id', doctorId)
-          .eq('status', 'accepted')
           .order('created_at', { ascending: false })
           .limit(5);
           
@@ -49,27 +49,30 @@ export const useDoctorRecentPatients = (doctorId: string | undefined) => {
         
         // Get the actual patient profiles
         const patientIds = connections.map(c => c.patient_id);
-        const { data: patients, error: patientsError } = await supabase
+        
+        const { data: patientProfiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, full_name, avatar_url')
+          .select('id, full_name, avatar_url, created_at')
           .in('id', patientIds);
           
-        if (patientsError) {
-          throw new Error(`Error fetching patient profiles: ${patientsError.message}`);
+        if (profilesError) {
+          throw new Error(`Error fetching patient profiles: ${profilesError.message}`);
         }
         
-        if (patients && Array.isArray(patients)) {
-          const formattedPatients = patients.map(patient => ({
-            id: patient.id,
-            full_name: patient.full_name || 'Unknown Patient',
-            avatar_url: patient.avatar_url || null,
-            // We could add last visit date from appointments/teleconsultations later
-          }));
-          
-          setRecentPatients(formattedPatients);
-        } else {
+        if (!patientProfiles || !Array.isArray(patientProfiles)) {
           setRecentPatients([]);
+          return;
         }
+        
+        // Ensure all patients have the required fields
+        const formattedPatients: RecentPatientData[] = patientProfiles.map(patient => ({
+          id: patient.id,
+          full_name: patient.full_name,
+          avatar_url: patient.avatar_url,
+          created_at: patient.created_at || new Date().toISOString() // Ensure created_at always has a value
+        }));
+        
+        setRecentPatients(formattedPatients);
       } catch (err) {
         console.error('Error in useDoctorRecentPatients:', err);
         setError(err instanceof Error ? err : new Error(String(err)));

@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { supabase, getSessionFromStorage, clearAllAuthStorage } from '@/lib/supabase';
-import { useProfileFetch } from './useProfileFetch';
+import useProfileFetch from './useProfileFetch';
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { storeSession } from '@/lib/auth/sessionUtils';
@@ -9,7 +9,31 @@ import { toast } from '@/components/ui/use-toast';
 
 export const useSessionManagement = () => {
   const setAuth = useSetRecoilState(authState);
-  const { fetchAndSetProfile } = useProfileFetch();
+  const { profile, loading, error } = useProfileFetch(undefined);
+  
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      // Use a simpler profile fetch approach
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return { profile: null, permissions: [] };
+      }
+      
+      return { 
+        profile: data || null, 
+        permissions: [] // Default empty permissions
+      };
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+      return { profile: null, permissions: [] };
+    }
+  };
   
   const updateAuthState = useCallback(async (session: any | null) => {
     if (!session?.user) {
@@ -73,7 +97,7 @@ export const useSessionManagement = () => {
       // Create a promise that resolves after the fetch completes or times out
       const profilePromise = new Promise<{profile: any, permissions: string[]}>(async (resolve) => {
         try {
-          const result = await fetchAndSetProfile(session.user.id);
+          const result = await fetchUserProfile(session.user.id);
           profileFetchCompleted = true;
           resolve(result);
         } catch (err) {
@@ -139,7 +163,7 @@ export const useSessionManagement = () => {
         description: "There was an error loading your profile. Please try logging in again.",
       });
     }
-  }, [fetchAndSetProfile, setAuth]);
+  }, [setAuth]);
 
   const refreshSession = useCallback(async () => {
     try {

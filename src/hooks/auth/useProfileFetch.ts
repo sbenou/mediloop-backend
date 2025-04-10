@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase, checkColumnExists } from '@/lib/supabase';
 import { UserProfile } from '@/types/user';
 import { toast } from '@/components/ui/use-toast';
+import { PostgrestError } from '@supabase/supabase-js';
 
 type GenericStringError = {
   message: string;
@@ -58,7 +59,7 @@ export const useProfileFetch = (userId: string | undefined) => {
         const hasPhamacyName = await checkColumnExists('profiles', 'pharmacy_name');
         const hasPhamacyLogoUrl = await checkColumnExists('profiles', 'pharmacy_logo_url');
         
-        // Use selective columns in the query based on what exists
+        // Start with base query
         let query = supabase
           .from('profiles')
           .select(`
@@ -72,15 +73,18 @@ export const useProfileFetch = (userId: string | undefined) => {
             deleted_at, created_at, updated_at
           `);
           
-        // Conditionally add columns if they exist
-        if (hasPhamacyId) query = query.select(`, pharmacy_id`);
-        if (hasPhamacyName) query = query.select(`, pharmacy_name`);
-        if (hasPhamacyLogoUrl) query = query.select(`, pharmacy_logo_url`);
+        // Add conditional columns to selection string
+        let selectString = '';
+        if (hasPhamacyId) selectString += ', pharmacy_id';
+        if (hasPhamacyName) selectString += ', pharmacy_name';
+        if (hasPhamacyLogoUrl) selectString += ', pharmacy_logo_url';
+        
+        if (selectString) {
+          query = query.select(selectString);
+        }
 
         // Complete the query
-        const { data, error } = await query
-          .eq('id', userId)
-          .maybeSingle();
+        const { data, error } = await query.eq('id', userId).maybeSingle();
 
         if (error) {
           console.error('Error fetching profile:', error);

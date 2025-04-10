@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 
 export interface DoctorPatient {
   id: string;
-  name?: string;      // Add name property to match expected interface
+  name: string;      // Changed from optional to required to match expected interface
   full_name: string | null;
   email: string | null;
   status?: string;
@@ -70,7 +70,7 @@ export const useDoctorPatients = (doctorId: string | undefined) => {
             const connection = connections.find(c => c.patient_id === patient.id);
             return {
               id: patient.id,
-              name: patient.full_name || 'Unknown Patient', // Add name property to match expected interface
+              name: patient.full_name || 'Unknown Patient', // Always provide a name
               full_name: patient.full_name || 'Unknown Patient',
               email: patient.email || null,
               status: connection?.status || 'unknown',
