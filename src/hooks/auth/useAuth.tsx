@@ -142,12 +142,16 @@ export const useAuth = () => {
 
   // User profile context
   const profile = authData.profile;
+  
+  // Include the user object from authData in the return value
+  const user = authData.user;
 
   return {
     isAuthenticated,
     isLoading,
     userRole,
     profile,
+    user,  // Explicitly include user in the return value
     hasPermission,
     isPharmacist,
     isDoctorOrPharmacist,
