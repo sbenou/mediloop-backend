@@ -132,6 +132,7 @@ export const useProfileFetch = (userId: string | undefined) => {
         
         // Create a basic profile in case of error
         if (userId) {
+          // Use the locally scoped createBasicProfile function
           const basicProfile = createBasicProfile(userId);
           setProfile(basicProfile);
         }
