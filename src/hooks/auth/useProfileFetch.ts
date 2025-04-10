@@ -87,7 +87,7 @@ export const useProfileFetch = (userId: string | undefined) => {
           console.error('Error fetching profile:', error);
           setError(error);
           
-          // Still create a basic profile even on error
+          // Create a basic profile even on error
           const basicProfile = createBasicProfile(userId);
           setProfile(basicProfile);
           return;
@@ -135,7 +135,7 @@ export const useProfileFetch = (userId: string | undefined) => {
         const errorObj = catchError instanceof Error ? catchError : new Error(String(catchError));
         setError(errorObj);
         
-        // Create a basic profile in case of error
+        // Always create a basic profile in catch block too
         if (userId) {
           const basicProfile = createBasicProfile(userId);
           setProfile(basicProfile);
