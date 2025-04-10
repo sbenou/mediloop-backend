@@ -25,10 +25,17 @@ const Login = () => {
       setManualRedirectInProgress(true);
       const role = profile.role;
       
-      // Set flag to indicate direct login navigation
+      // Set flag to indicate direct login navigation and ensure skip_dashboard_redirect is set
       sessionStorage.setItem('skip_dashboard_redirect', 'true');
       
-      // Get the correct route for the current user role
+      // For pharmacists, use a more direct approach to ensure correct redirect
+      if (role === 'pharmacist') {
+        console.log(`[Login] Pharmacist user detected, using direct navigation to pharmacy dashboard`);
+        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+        return;
+      }
+      
+      // Get the correct route for other user roles
       const route = getDashboardRouteByRole(role);
       console.log(`[Login] User already authenticated with role ${role}, redirecting to: ${route}`);
       

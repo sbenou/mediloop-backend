@@ -96,6 +96,21 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         sessionStorage.setItem('login_successful', 'true');
         sessionStorage.setItem('skip_dashboard_redirect', 'true');
 
+        // Special handling for pharmacists to ensure correct dashboard loading
+        if (profile?.role === 'pharmacist') {
+          console.log('Pharmacist login detected, using direct navigation');
+          
+          if (onSuccess) {
+            // If onSuccess callback exists, call it first
+            onSuccess();
+          }
+          
+          // Use direct navigation for pharmacists
+          window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+          return;
+        }
+
+        // For other roles, proceed with normal flow
         if (onSuccess) {
           onSuccess();
         } else {
