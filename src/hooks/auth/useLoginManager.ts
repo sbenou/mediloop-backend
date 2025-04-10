@@ -69,11 +69,18 @@ export const useLoginManager = () => {
     
     // Handle the navigation differently based on role to ensure correct parameters
     try {
+      // For pharmacists, use window.location.href for a complete page refresh to ensure proper loading
       if (role === 'pharmacist' || isPharmacist) {
         console.log("[LoginManager] Using direct navigation for pharmacist");
-        navigate('/dashboard?view=pharmacy&section=dashboard', { replace: true });
+        
+        // Use window.location.href instead of navigate for a complete page refresh
+        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+        
+        // We still mark as redirected even though we're doing a hard redirect
+        redirected.current = true;
       } else {
         navigate(route, { replace: true });
+        redirected.current = true;
       }
       
       // Show a toast to indicate successful login
@@ -81,8 +88,6 @@ export const useLoginManager = () => {
         title: "Login successful",
         description: `Welcome, ${profile.full_name || 'User'}!`,
       });
-      
-      redirected.current = true;
     } catch (error) {
       console.error("[LoginManager] Navigation error:", error);
     }

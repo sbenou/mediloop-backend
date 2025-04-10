@@ -63,11 +63,8 @@ const Dashboard = () => {
        (!view || view !== 'pharmacy')) {
       console.log("Pharmacist detected without proper view parameters, updating URL");
       
-      // Use setSearchParams for React Router navigation
-      setSearchParams({ 
-        view: 'pharmacy', 
-        section: section || 'dashboard' 
-      });
+      // Use window.location.href for a complete page refresh
+      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
     }
   }, [isAuthenticated, isLoading, userRole, profile, view, section, isPharmacist, setSearchParams]);
 
@@ -119,7 +116,7 @@ const Dashboard = () => {
         <Loader className="h-8 w-8 animate-spin text-primary" />
         <p className="text-muted-foreground">Preparing your dashboard...</p>
         <button 
-          onClick={() => navigate("/login", { replace: true })} 
+          onClick={() => window.location.href = "/login"} 
           className="mt-4 text-sm text-primary underline"
         >
           Return to login
