@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { X } from "lucide-react";
 
 export const AuthDebugger = () => {
-  const { user, profile, isAuthenticated, userRole, isLoading } = useAuth();
+  const { user, profile, isAuthenticated, userRole, isLoading, isPharmacist } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
 
@@ -23,9 +23,37 @@ export const AuthDebugger = () => {
     if (!user?.id) return;
     
     try {
+      // Try first with * select
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+          
+        if (!error) {
+          setDebugInfo({
+            userObject: user,
+            profileFromRecoil: profile,
+            profileFromDb: data,
+            error: null,
+            fetchTime: new Date().toISOString()
+          });
+          return;
+        }
+      } catch (e) {
+        console.error("Error in full profile fetch:", e);
+      }
+      
+      // Fallback to limited fields
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id, role, role_id, full_name, email, 
+          avatar_url, auth_method, is_blocked, 
+          city, date_of_birth, license_number,
+          deleted_at, created_at, updated_at
+        `)
         .eq('id', user.id)
         .maybeSingle();
         
@@ -38,6 +66,14 @@ export const AuthDebugger = () => {
       });
     } catch (e) {
       setDebugInfo({ error: e });
+    }
+  };
+  
+  const navigateToDashboard = () => {
+    if (profile?.role === 'pharmacist' || isPharmacist) {
+      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+    } else {
+      window.location.href = '/dashboard';
     }
   };
 
@@ -56,14 +92,15 @@ export const AuthDebugger = () => {
         <p><span className="font-semibold">Role:</span> {userRole || 'Unknown'}</p>
         <p><span className="font-semibold">User ID:</span> {user?.id || 'None'}</p>
         <p><span className="font-semibold">Profile Role:</span> {profile?.role || 'None'}</p>
+        <p><span className="font-semibold">Is Pharmacist:</span> {isPharmacist ? 'Yes' : 'No'}</p>
         <p><span className="font-semibold">Loading:</span> {isLoading ? 'Yes' : 'No'}</p>
       </div>
       <div className="flex space-x-2">
         <Button onClick={fetchDebugInfo} size="sm" variant="outline" className="text-xs">
           Fetch Details
         </Button>
-        <Button onClick={() => window.location.href = '/dashboard?view=pharmacy&section=dashboard'} size="sm" className="text-xs">
-          Go to Pharmacy
+        <Button onClick={navigateToDashboard} size="sm" className="text-xs">
+          Go to Dashboard
         </Button>
       </div>
       

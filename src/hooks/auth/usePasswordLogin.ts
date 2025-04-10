@@ -62,40 +62,53 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         storeSession(data.session);
 
         console.log("[usePasswordLogin][DEBUG] Fetching user profile");
-        // Use a let declaration instead of const so we can reassign later if needed
+        // Use a let declaration for userProfile so we can reassign it later if needed
         let userProfile;
-        const { data: initialProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user?.id)
-          .maybeSingle();
-
-        if (profileError) {
-          console.error("[usePasswordLogin][DEBUG] Profile fetch error:", profileError);
-          
-          // More resilient error handling - try again with a more limited query
-          console.log("[usePasswordLogin][DEBUG] Retrying profile fetch with limited fields");
-          const { data: limitedProfile, error: limitedProfileError } = await supabase
+        
+        // First attempt: try full profile fetch
+        try {
+          const { data: fullProfile, error: fullProfileError } = await supabase
             .from('profiles')
-            .select('id, role, full_name, email')
+            .select('*')
             .eq('id', data.user?.id)
             .maybeSingle();
             
-          if (limitedProfileError || !limitedProfile) {
-            console.error("[usePasswordLogin][DEBUG] Second profile fetch attempt failed:", limitedProfileError);
-            toast({
-              variant: "destructive",
-              title: "Login failed",
-              description: "Failed to fetch user profile. Please try again.",
-            });
-            return;
+          if (!fullProfileError && fullProfile) {
+            userProfile = fullProfile;
+            console.log("[usePasswordLogin][DEBUG] Full profile fetch successful");
+          } else {
+            console.error("[usePasswordLogin][DEBUG] Full profile fetch error:", fullProfileError);
           }
-          
-          // If we got a limited profile, use that
-          console.log(`[usePasswordLogin][DEBUG] Limited profile fetched successfully, role: ${limitedProfile?.role}`);
-          userProfile = limitedProfile;
-        } else {
-          userProfile = initialProfile;
+        } catch (e) {
+          console.error("[usePasswordLogin][DEBUG] Error during full profile fetch:", e);
+        }
+        
+        // Second attempt: if full profile fetch failed, try with limited fields
+        if (!userProfile) {
+          console.log("[usePasswordLogin][DEBUG] Retrying profile fetch with limited fields");
+          try {
+            const { data: limitedProfile, error: limitedProfileError } = await supabase
+              .from('profiles')
+              .select(`
+                id, role, role_id, full_name, email, 
+                avatar_url, auth_method, is_blocked, 
+                city, date_of_birth, license_number,
+                deleted_at, created_at, updated_at,
+                pharmacist_stamp_url, pharmacist_signature_url,
+                doctor_stamp_url, doctor_signature_url
+              `)
+              .eq('id', data.user?.id)
+              .maybeSingle();
+              
+            if (limitedProfileError) {
+              console.error("[usePasswordLogin][DEBUG] Limited profile fetch error:", limitedProfileError);
+            } else if (limitedProfile) {
+              userProfile = limitedProfile;
+              console.log("[usePasswordLogin][DEBUG] Limited profile fetch successful");
+            }
+          } catch (e) {
+            console.error("[usePasswordLogin][DEBUG] Error during limited profile fetch:", e);
+          }
         }
 
         if (!userProfile) {
@@ -111,9 +124,12 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         console.log(`[usePasswordLogin][DEBUG] Profile fetched successfully, role: ${userProfile?.role}`, userProfile);
 
         const completeProfile = {
-          ...userProfile as any,
+          ...userProfile,
           pharmacist_stamp_url: userProfile.pharmacist_stamp_url || null,
-          pharmacist_signature_url: userProfile.pharmacist_signature_url || null
+          pharmacist_signature_url: userProfile.pharmacist_signature_url || null,
+          pharmacy_id: userProfile.pharmacy_id || null,
+          pharmacy_name: userProfile.pharmacy_name || null,
+          pharmacy_logo_url: userProfile.pharmacy_logo_url || null
         };
 
         // Set auth state

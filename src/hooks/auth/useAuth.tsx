@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
@@ -52,7 +53,63 @@ export const useAuth = () => {
       const fetchProfile = async () => {
         try {
           console.log('[useAuth][DEBUG] Attempting to fetch profile for user:', authData.user?.id);
-          const { data: profile, error } = await supabase
+          
+          // First, try to get all fields
+          try {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', authData.user?.id)
+              .maybeSingle();
+              
+            if (!error) {
+              console.log('[useAuth][DEBUG] Successfully fetched profile for user:', authData.user?.id);
+              
+              // Ensure profile has all required UserProfile properties with default values
+              const completeProfile: UserProfile = {
+                id: profile.id,
+                role: profile.role || 'user',
+                role_id: profile.role_id || null,
+                full_name: profile.full_name || null,
+                email: profile.email || null,
+                avatar_url: profile.avatar_url || null,
+                auth_method: profile.auth_method || null,
+                is_blocked: profile.is_blocked || false,
+                date_of_birth: profile.date_of_birth || null,
+                city: profile.city || null,
+                license_number: profile.license_number || null,
+                cns_card_front: profile.cns_card_front || null,
+                cns_card_back: profile.cns_card_back || null,
+                cns_number: profile.cns_number || null,
+                doctor_stamp_url: profile.doctor_stamp_url || null,
+                doctor_signature_url: profile.doctor_signature_url || null,
+                pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+                pharmacist_signature_url: profile.pharmacist_signature_url || null,
+                pharmacy_id: profile.pharmacy_id || null,
+                pharmacy_name: profile.pharmacy_name || null,
+                pharmacy_logo_url: profile.pharmacy_logo_url || null,
+                phone_number: profile.phone_number || null,
+                deleted_at: profile.deleted_at || null,
+                created_at: profile.created_at || new Date().toISOString(),
+                updated_at: profile.updated_at || new Date().toISOString()
+              };
+              
+              // Update auth state with the fetched profile
+              setAuthData(prev => ({ ...prev, profile: completeProfile, isLoading: false }));
+              
+              // Ensure we set the right flags for navigation
+              if (completeProfile.role === 'pharmacist') {
+                sessionStorage.setItem('skip_dashboard_redirect', 'true');
+              }
+              
+              return;
+            }
+          } catch (e) {
+            console.log('[useAuth][DEBUG] Error during first profile fetch attempt:', e);
+          }
+          
+          // Fallback approach: explicitly select only columns we know exist
+          const { data: limitedProfile, error: limitedError } = await supabase
             .from('profiles')
             .select(`
               id, role, role_id, full_name, email, 
@@ -60,58 +117,54 @@ export const useAuth = () => {
               city, date_of_birth, license_number,
               deleted_at, created_at, updated_at,
               pharmacist_stamp_url, pharmacist_signature_url,
-              pharmacy_id, pharmacy_name, pharmacy_logo_url
+              doctor_stamp_url, doctor_signature_url,
+              cns_card_front, cns_card_back, cns_number
             `)
             .eq('id', authData.user?.id)
             .maybeSingle();
             
-          if (error) {
-            console.error('[useAuth][DEBUG] Error fetching profile:', error);
+          if (limitedError) {
+            console.error('[useAuth][DEBUG] Error in fallback profile fetch:', limitedError);
+            setAuthData(prev => ({ ...prev, isLoading: false }));
             return;
           }
           
-          if (profile) {
-            console.log('[useAuth][DEBUG] Successfully fetched profile for user:', authData.user?.id);
-            console.log('[useAuth][DEBUG] Profile details:', {
-              id: profile.id,
-              role: profile.role,
-              fullName: profile.full_name,
-              isPharmacist: profile.role === 'pharmacist'
-            });
+          if (limitedProfile) {
+            console.log('[useAuth][DEBUG] Successfully fetched profile with limited fields');
             
-            // Ensure profile has all required UserProfile properties with default values
+            // Create a complete profile with default values for pharmacy fields
             const completeProfile: UserProfile = {
-              id: profile.id,
-              role: profile.role || 'user',
-              role_id: profile.role_id || null,
-              full_name: profile.full_name || null,
-              email: profile.email || null,
-              avatar_url: profile.avatar_url || null,
-              auth_method: profile.auth_method || null,
-              is_blocked: profile.is_blocked || false,
-              date_of_birth: profile.date_of_birth || null,
-              city: profile.city || null,
-              license_number: profile.license_number || null,
-              cns_card_front: null,
-              cns_card_back: null,
-              cns_number: null,
-              doctor_stamp_url: null,
-              doctor_signature_url: null,
-              pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-              pharmacist_signature_url: profile.pharmacist_signature_url || null,
-              pharmacy_id: profile.pharmacy_id || null,
-              pharmacy_name: profile.pharmacy_name || null,
-              pharmacy_logo_url: profile.pharmacy_logo_url || null,
+              id: limitedProfile.id,
+              role: limitedProfile.role || 'user',
+              role_id: limitedProfile.role_id || null,
+              full_name: limitedProfile.full_name || null,
+              email: limitedProfile.email || null,
+              avatar_url: limitedProfile.avatar_url || null,
+              auth_method: limitedProfile.auth_method || null,
+              is_blocked: limitedProfile.is_blocked || false,
+              date_of_birth: limitedProfile.date_of_birth || null,
+              city: limitedProfile.city || null,
+              license_number: limitedProfile.license_number || null,
+              cns_card_front: limitedProfile.cns_card_front || null,
+              cns_card_back: limitedProfile.cns_card_back || null,
+              cns_number: limitedProfile.cns_number || null,
+              doctor_stamp_url: limitedProfile.doctor_stamp_url || null,
+              doctor_signature_url: limitedProfile.doctor_signature_url || null,
+              pharmacist_stamp_url: limitedProfile.pharmacist_stamp_url || null,
+              pharmacist_signature_url: limitedProfile.pharmacist_signature_url || null,
+              pharmacy_id: null, // Default these since they might not exist in DB yet
+              pharmacy_name: null,
+              pharmacy_logo_url: null,
               phone_number: null,
-              deleted_at: profile.deleted_at || null,
-              created_at: profile.created_at || new Date().toISOString(),
-              updated_at: profile.updated_at || new Date().toISOString()
+              deleted_at: limitedProfile.deleted_at || null,
+              created_at: limitedProfile.created_at || new Date().toISOString(),
+              updated_at: limitedProfile.updated_at || new Date().toISOString()
             };
             
             // Update auth state with the fetched profile
             setAuthData(prev => ({ ...prev, profile: completeProfile, isLoading: false }));
             
-            // Ensure we set the right flags for navigation
+            // Set navigation flags based on role
             if (completeProfile.role === 'pharmacist') {
               sessionStorage.setItem('skip_dashboard_redirect', 'true');
             }

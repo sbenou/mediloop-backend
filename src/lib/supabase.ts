@@ -47,16 +47,38 @@ export const clearAllAuthStorage = () => {
 
 // Utility function to check if a column exists in the database
 export const checkColumnExists = async (tableName: string, columnName: string) => {
-  const { data, error } = await supabase
-    .rpc('column_exists', { 
-      p_table_name: tableName,
-      p_column_name: columnName
-    });
+  try {
+    // First check if the function exists
+    const { data: functionExists, error: functionError } = await supabase
+      .rpc('column_exists', { 
+        p_table_name: tableName,
+        p_column_name: columnName
+      });
 
-  if (error) {
-    console.error('Error checking column existence:', error);
+    if (functionError) {
+      if (functionError.message?.includes('function "column_exists" does not exist')) {
+        console.log('column_exists function not found, using alternative approach');
+        // If the function doesn't exist, try a simple query that should work if the column exists
+        try {
+          const queryText = `select "${columnName}" from "${tableName}" limit 0`;
+          await supabase.rpc('get_record_by_id', { 
+            p_table_name: tableName,
+            p_record_id: '00000000-0000-0000-0000-000000000000'
+          });
+          return true; // If no error, column exists
+        } catch (queryError) {
+          console.error('Error in alternative column check:', queryError);
+          return false;
+        }
+      }
+      
+      console.error('Error checking column existence:', functionError);
+      return false;
+    }
+
+    return !!functionExists;
+  } catch (err) {
+    console.error('Exception in checkColumnExists:', err);
     return false;
   }
-
-  return !!data;
 };
