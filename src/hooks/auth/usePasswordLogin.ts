@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -6,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { storeSession } from '@/lib/auth/sessionUtils';
+import { getDashboardRouteByRole } from '@/utils/auth/getDashboardRouteByRole';
 
 interface LoginResult {
   loading: boolean;
@@ -89,11 +91,22 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           title: "Login successful",
           description: "You have successfully logged in.",
         });
+        
+        // Set flag to prevent redirect loops
+        sessionStorage.setItem('login_successful', 'true');
+        sessionStorage.setItem('skip_dashboard_redirect', 'true');
 
         if (onSuccess) {
           onSuccess();
         } else {
-          navigate('/', { replace: true });
+          // If no success callback, redirect directly to the appropriate dashboard
+          try {
+            const route = getDashboardRouteByRole(profile?.role);
+            window.location.href = route;
+          } catch (navErr) {
+            console.error('Navigation error:', navErr);
+            navigate('/', { replace: true });
+          }
         }
       }
     } catch (err: any) {

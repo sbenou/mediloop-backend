@@ -74,7 +74,8 @@ export const LoginForm = () => {
           return;
         }
         
-        // Set the skip_dashboard_redirect flag to prevent redirect loops
+        // Set flag to ensure we don't get stuck in redirect loops
+        sessionStorage.setItem('login_successful', 'true');
         sessionStorage.setItem('skip_dashboard_redirect', 'true');
         
         // Use the utility to get the appropriate dashboard route

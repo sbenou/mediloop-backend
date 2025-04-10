@@ -13,11 +13,16 @@ const Login = () => {
   const { redirected } = useLoginManager(); // Use the login manager to handle redirects
   const navigate = useNavigate();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [manualRedirectInProgress, setManualRedirectInProgress] = useState(false);
+  
+  // Check if we just attempted a login
+  const loginSuccessful = sessionStorage.getItem('login_successful') === 'true';
   
   // Direct redirection for already authenticated users
   useEffect(() => {
-    if (isAuthenticated && profile && !redirected && !redirectAttempted) {
+    if (isAuthenticated && profile && !redirected && !redirectAttempted && !manualRedirectInProgress && !loginSuccessful) {
       setRedirectAttempted(true);
+      setManualRedirectInProgress(true);
       const role = profile.role;
       
       // Set flag to indicate direct login navigation
@@ -30,10 +35,22 @@ const Login = () => {
       // Use window.location for a full page refresh to ensure clean state
       window.location.href = route;
     }
-  }, [isAuthenticated, profile, navigate, redirected, redirectAttempted]);
+  }, [isAuthenticated, profile, navigate, redirected, redirectAttempted, manualRedirectInProgress, loginSuccessful]);
+  
+  // Clean up the login flag once we've processed it
+  useEffect(() => {
+    // Small delay to ensure redirect has time to process
+    if (loginSuccessful) {
+      const timer = setTimeout(() => {
+        sessionStorage.removeItem('login_successful');
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loginSuccessful]);
 
   // Show loading state
-  if (isLoading) {
+  if (isLoading || manualRedirectInProgress || loginSuccessful) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
@@ -42,7 +59,7 @@ const Login = () => {
               <Loader className="h-8 w-8 animate-spin text-primary" />
               <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
-                Please wait while we load your profile
+                {loginSuccessful ? "Login successful! Redirecting you to your dashboard..." : "Please wait while we load your profile"}
               </CardDescription>
             </div>
           </CardHeader>
