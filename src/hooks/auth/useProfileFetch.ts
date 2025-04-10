@@ -131,8 +131,10 @@ export const useProfileFetch = (userId: string | undefined) => {
         setError(err instanceof Error ? err : new Error(String(err)));
         
         // Create a basic profile in case of error
-        const basicProfile = createBasicProfile(userId);
-        setProfile(basicProfile);
+        if (userId) {
+          const basicProfile = createBasicProfile(userId);
+          setProfile(basicProfile);
+        }
       } finally {
         setLoading(false);
       }
