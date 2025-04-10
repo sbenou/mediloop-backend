@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { X } from "lucide-react";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 export const AuthDebugger = () => {
   const { user, profile, isAuthenticated, userRole, isLoading, isPharmacist } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [columnsInfo, setColumnsInfo] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     // Only show in non-production environments
@@ -19,11 +21,49 @@ export const AuthDebugger = () => {
     }
   }, []);
 
+  useEffect(() => {
+    // Check if critical columns exist
+    const checkColumns = async () => {
+      if (!user?.id) return;
+      
+      try {
+        // Check pharmacy_id column
+        const pharmacyIdExists = await supabase.rpc('column_exists', { 
+          p_table_name: 'profiles',
+          p_column_name: 'pharmacy_id'
+        });
+        
+        // Check other important columns
+        const pharmacyNameExists = await supabase.rpc('column_exists', { 
+          p_table_name: 'profiles',
+          p_column_name: 'pharmacy_name'
+        });
+        
+        const pharmacyLogoExists = await supabase.rpc('column_exists', { 
+          p_table_name: 'profiles',
+          p_column_name: 'pharmacy_logo_url'
+        });
+        
+        setColumnsInfo({
+          pharmacy_id: !!pharmacyIdExists.data,
+          pharmacy_name: !!pharmacyNameExists.data,
+          pharmacy_logo_url: !!pharmacyLogoExists.data
+        });
+      } catch (error) {
+        console.error("Error checking column existence:", error);
+      }
+    };
+    
+    if (isAuthenticated && user?.id) {
+      checkColumns();
+    }
+  }, [isAuthenticated, user]);
+
   const fetchDebugInfo = async () => {
     if (!user?.id) return;
     
     try {
-      // Try first with * select
+      // Try to fetch profile data - avoid column name issues by using * select
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -37,7 +77,8 @@ export const AuthDebugger = () => {
             profileFromRecoil: profile,
             profileFromDb: data,
             error: null,
-            fetchTime: new Date().toISOString()
+            fetchTime: new Date().toISOString(),
+            columnsExist: columnsInfo
           });
           return;
         }
@@ -45,7 +86,7 @@ export const AuthDebugger = () => {
         console.error("Error in full profile fetch:", e);
       }
       
-      // Fallback to limited fields
+      // Fallback to limited fields if specific columns don't exist
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -62,7 +103,8 @@ export const AuthDebugger = () => {
         profileFromRecoil: profile,
         profileFromDb: data,
         error: error,
-        fetchTime: new Date().toISOString()
+        fetchTime: new Date().toISOString(),
+        columnsExist: columnsInfo
       });
     } catch (e) {
       setDebugInfo({ error: e });
@@ -70,11 +112,19 @@ export const AuthDebugger = () => {
   };
   
   const navigateToDashboard = () => {
+    // Force role-specific direct navigation
     if (profile?.role === 'pharmacist' || isPharmacist) {
       window.location.href = '/dashboard?view=pharmacy&section=dashboard';
     } else {
-      window.location.href = '/dashboard';
+      const route = profile?.role ? getDashboardRouteByRole(profile.role) : '/dashboard';
+      window.location.href = route;
     }
+  };
+  
+  const forcePharmacistNavigation = () => {
+    // Force pharmacist navigation regardless of detected role
+    sessionStorage.setItem('skip_dashboard_redirect', 'true');
+    window.location.href = '/dashboard?view=pharmacy&section=dashboard';
   };
 
   if (!isVisible) return null;
@@ -94,13 +144,17 @@ export const AuthDebugger = () => {
         <p><span className="font-semibold">Profile Role:</span> {profile?.role || 'None'}</p>
         <p><span className="font-semibold">Is Pharmacist:</span> {isPharmacist ? 'Yes' : 'No'}</p>
         <p><span className="font-semibold">Loading:</span> {isLoading ? 'Yes' : 'No'}</p>
+        <p><span className="font-semibold">Pharmacy Fields:</span> {columnsInfo.pharmacy_id ? 'Exist' : 'Missing'}</p>
       </div>
-      <div className="flex space-x-2">
+      <div className="flex space-x-2 flex-wrap gap-2">
         <Button onClick={fetchDebugInfo} size="sm" variant="outline" className="text-xs">
           Fetch Details
         </Button>
         <Button onClick={navigateToDashboard} size="sm" className="text-xs">
           Go to Dashboard
+        </Button>
+        <Button onClick={forcePharmacistNavigation} size="sm" variant="destructive" className="text-xs">
+          Force Pharmacy Dashboard
         </Button>
       </div>
       
