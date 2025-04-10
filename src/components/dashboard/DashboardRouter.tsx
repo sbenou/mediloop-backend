@@ -42,14 +42,17 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       profileRole: profile?.role
     });
 
-    // Auto-correct URL parameters for pharmacists
+    // Auto-correct URL parameters for pharmacists but don't create a redirect loop
     if ((userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist') && 
         (!searchParams.get('view') || searchParams.get('view') !== 'pharmacy')) {
       console.log("Automatically setting correct parameters for pharmacist");
+      
+      // Use setSearchParams to update the URL without a full page refresh
+      // This avoids redirect loops while ensuring the right params
       setSearchParams({ 
         view: 'pharmacy', 
         section: section || 'dashboard' 
-      });
+      }, { replace: true });
       
       // Notify the user that they're being redirected to the correct view
       toast({

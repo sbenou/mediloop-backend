@@ -12,7 +12,7 @@ import { toast } from "@/components/ui/use-toast";
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, profile, isPharmacist } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const view = searchParams.get('view');
   const section = searchParams.get('section');
   
@@ -57,16 +57,26 @@ const Dashboard = () => {
   }, [isAuthenticated, isLoading, navigate]);
   
   // Special handling for pharmacist users to ensure they have the correct view parameters
+  // This now only runs once when the component mounts, not on every render
   useEffect(() => {
     if (!isLoading && isAuthenticated && profile &&
        (userRole === 'pharmacist' || isPharmacist || profile.role === 'pharmacist') && 
        (!view || view !== 'pharmacy')) {
       console.log("Pharmacist detected without proper view parameters, updating URL");
       
-      // Use window.location.href for a complete page refresh
-      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      // Use window.location.href for a complete page refresh only if needed
+      // But avoid doing it repeatedly (which would cause a loop)
+      if (document.referrer !== window.location.href) {
+        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      } else {
+        console.log("Skipping redirect as we seem to be in a loop");
+        toast({
+          title: "Dashboard Loading",
+          description: "Please wait while we prepare your pharmacy dashboard.",
+        });
+      }
     }
-  }, [isAuthenticated, isLoading, userRole, profile, view, section, isPharmacist, setSearchParams]);
+  }, []);  // Empty dependency array so it only runs once on mount
 
   // Enhanced loading state with better feedback
   if (isLoading) {

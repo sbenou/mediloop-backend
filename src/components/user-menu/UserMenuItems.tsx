@@ -108,32 +108,20 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
-    // Use hard navigation (window.location.href) for ALL dashboard navigation for consistency
-    if (path.includes('/dashboard')) {
-      // Special case for pharmacists - always use pharmacy view
+    if (path === '/dashboard') {
+      // Special case for direct dashboard navigation for all roles
+      // This ensures we get a complete refresh and the dash loads properly
+      console.log(`Using direct window.location navigation to dashboard`);
       if (isUserPharmacist) {
-        const pharmacistPath = '/dashboard?view=pharmacy&section=dashboard';
-        console.log(`Pharmacist user detected, redirecting to: ${pharmacistPath}`);
-        window.location.href = pharmacistPath;
-        return;
+        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      } else {
+        window.location.href = path;
       }
-      
-      // Use window.location.href for all dashboard navigation to ensure full page reload
-      console.log(`Using window.location for dashboard navigation to: ${path}`);
-      window.location.href = path;
       return;
     }
     
-    // For non-dashboard pages, use React Router
-    try {
-      window.setTimeout(() => {
-        navigate(path);
-      }, 0);
-    } catch (e) {
-      console.error("Navigation error:", e);
-      // Fallback to direct navigation if something goes wrong
-      window.location.href = path;
-    }
+    // For all other paths, use React Router
+    navigate(path);
   };
 
   // Generate menu items based on user role - this now exactly matches the sidebar navigation
