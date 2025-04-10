@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -7,7 +6,7 @@ import WearableDataDisplay from "@/components/dashboard/WearableDataDisplay";
 import HealthStateIndicator from "@/components/dashboard/HealthStateIndicator";
 import DashboardStats from "@/components/dashboard/views/pharmacy/DashboardStats";
 import DoctorPatientsSection from "./DoctorPatientsSection";
-import useDoctorRecentPatients from "@/hooks/doctor/useDoctorRecentPatients";
+import { useDoctorRecentPatients } from "@/hooks/doctor/useDoctorRecentPatients";
 
 interface DoctorHomeViewProps {
   userRole: string | null;
@@ -18,7 +17,7 @@ const DoctorHomeView: React.FC<DoctorHomeViewProps> = ({ userRole }) => {
   const navigate = useNavigate();
   
   // Fetch recent patients
-  const { patients, isLoading: isPatientsLoading } = useDoctorRecentPatients(5);
+  const { recentPatients: patients, loading: isPatientsLoading } = useDoctorRecentPatients(profile?.id);
 
   const handleViewChange = (view: string, tab?: string) => {
     if (tab) {
@@ -50,7 +49,7 @@ const DoctorHomeView: React.FC<DoctorHomeViewProps> = ({ userRole }) => {
       {/* Dashboard Stats */}
       <DashboardStats 
         stats={{
-          total_patients: patients.length,
+          total_patients: patients?.length || 0,
           pending_orders: 0,
           total_prescriptions: 0,
           monthly_revenue: 0
@@ -62,7 +61,7 @@ const DoctorHomeView: React.FC<DoctorHomeViewProps> = ({ userRole }) => {
       
       {/* Recent Patients Section */}
       <DoctorPatientsSection
-        patients={patients}
+        patients={patients || []}
         isLoading={isPatientsLoading}
         onViewPatient={handleViewPatient}
         onViewAllPatients={handleViewAllPatients}

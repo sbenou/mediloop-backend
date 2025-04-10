@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
-interface DoctorPatient {
+export interface DoctorPatient {
   id: string;
+  name?: string;      // Add name property to match expected interface
   full_name: string | null;
   email: string | null;
   status?: string;
@@ -68,6 +70,7 @@ export const useDoctorPatients = (doctorId: string | undefined) => {
             const connection = connections.find(c => c.patient_id === patient.id);
             return {
               id: patient.id,
+              name: patient.full_name || 'Unknown Patient', // Add name property to match expected interface
               full_name: patient.full_name || 'Unknown Patient',
               email: patient.email || null,
               status: connection?.status || 'unknown',
@@ -92,3 +95,5 @@ export const useDoctorPatients = (doctorId: string | undefined) => {
   
   return { patients, loading, error };
 };
+
+export default useDoctorPatients;
