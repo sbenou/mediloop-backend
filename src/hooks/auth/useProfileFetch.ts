@@ -96,7 +96,7 @@ export const useProfileFetch = (userId: string | undefined) => {
         if (data) {
           // Create a complete profile with default values for missing fields
           const fetchedProfile: UserProfile = {
-            id: data.id,
+            id: data.id || userId,
             role: data.role || 'patient',
             role_id: data.role_id || null,
             full_name: data.full_name || null,
