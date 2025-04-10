@@ -29,21 +29,31 @@ const Dashboard = () => {
         role: profile.role,
         fullName: profile.full_name,
         isPharmacist: profile.role === 'pharmacist'
-      } : 'No profile'
+      } : 'No profile',
+      navigationSource: sessionStorage.getItem('dashboard_navigation_source')
     });
     
-    // Check for redirect loops
-    const mountCount = parseInt(sessionStorage.getItem('dashboard_mount_count') || '0');
-    sessionStorage.setItem('dashboard_mount_count', (mountCount + 1).toString());
+    // If navigation came from menu, don't increment mount count
+    const fromMenu = sessionStorage.getItem('dashboard_navigation_source') === 'menu';
     
-    // If we've mounted too many times in quick succession, show a warning
-    if (mountCount > 3) {
-      console.warn("Possible redirect loop detected - dashboard mounted multiple times");
+    // Only track mount count if not from menu
+    if (!fromMenu) {
+      // Check for redirect loops
+      const mountCount = parseInt(sessionStorage.getItem('dashboard_mount_count') || '0');
+      sessionStorage.setItem('dashboard_mount_count', (mountCount + 1).toString());
       
-      // Reset the counter after warning
-      setTimeout(() => {
-        sessionStorage.removeItem('dashboard_mount_count');
-      }, 2000);
+      // If we've mounted too many times in quick succession, show a warning
+      if (mountCount > 3) {
+        console.warn("Possible redirect loop detected - dashboard mounted multiple times");
+        
+        // Reset the counter after warning
+        setTimeout(() => {
+          sessionStorage.removeItem('dashboard_mount_count');
+        }, 2000);
+      }
+    } else {
+      // Clear the navigation source flag
+      sessionStorage.removeItem('dashboard_navigation_source');
     }
     
     // Reset the counter after 5 seconds of stability

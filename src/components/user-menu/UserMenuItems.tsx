@@ -112,20 +112,28 @@ export const UserMenuItems = () => {
     sessionStorage.removeItem('pharmacy_redirect_count');
     sessionStorage.removeItem('dashboard_mount_count');
     
+    // Before navigating, clear any previous navigation attempts
+    sessionStorage.setItem('menu_navigation_timestamp', Date.now().toString());
+    
     // For all dashboard navigation, use direct navigation to avoid SPA issues
     if (path.includes('/dashboard')) {
       // Special case for pharmacists - always ensure they have pharmacy parameters
       if (isUserPharmacist) {
         const finalPath = '/dashboard?view=pharmacy&section=dashboard'; 
         console.log(`Pharmacist detected, navigating to: ${finalPath}`);
-        window.location.href = finalPath;
+        
+        // Set a flag to indicate that navigation was initiated from menu
+        sessionStorage.setItem('dashboard_navigation_source', 'menu');
+        
+        // Use navigate instead of direct location change for better history management
+        navigate(finalPath, { replace: true });
       } else {
-        // For other roles, use the provided path
-        window.location.href = path;
+        // For other roles, use the provided path but still use navigate
+        navigate(path, { replace: true });
       }
     } else {
-      // For non-dashboard paths, use full page navigation for consistency
-      window.location.href = path;
+      // For non-dashboard paths, use navigation for consistency
+      navigate(path, { replace: true });
     }
   };
 

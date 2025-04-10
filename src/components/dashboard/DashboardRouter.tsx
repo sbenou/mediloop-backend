@@ -41,8 +41,16 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       profileTab, 
       ordersTab, 
       isPharmacist: isPharmacist || userRole === 'pharmacist',
-      profileRole: profile?.role
+      profileRole: profile?.role,
+      navigationSource: sessionStorage.getItem('dashboard_navigation_source')
     });
+    
+    // If navigation came from menu, don't try to redirect
+    const fromMenu = sessionStorage.getItem('dashboard_navigation_source') === 'menu';
+    if (fromMenu) {
+      console.log("Navigation came from menu, skipping parameter correction");
+      return;
+    }
     
     // Handle pharmacist URL parameter correction
     const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist';
