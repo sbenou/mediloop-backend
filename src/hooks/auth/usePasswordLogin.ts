@@ -66,14 +66,40 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           .from('profiles')
           .select('*')
           .eq('id', data.user?.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           console.error("[usePasswordLogin][DEBUG] Profile fetch error:", profileError);
+          
+          // More resilient error handling - try again with a more limited query
+          console.log("[usePasswordLogin][DEBUG] Retrying profile fetch with limited fields");
+          const { data: limitedProfile, error: limitedProfileError } = await supabase
+            .from('profiles')
+            .select('id, role, full_name, email')
+            .eq('id', data.user?.id)
+            .maybeSingle();
+            
+          if (limitedProfileError || !limitedProfile) {
+            console.error("[usePasswordLogin][DEBUG] Second profile fetch attempt failed:", limitedProfileError);
+            toast({
+              variant: "destructive",
+              title: "Login failed",
+              description: "Failed to fetch user profile. Please try again.",
+            });
+            return;
+          }
+          
+          // If we got a limited profile, use that
+          console.log(`[usePasswordLogin][DEBUG] Limited profile fetched successfully, role: ${limitedProfile?.role}`);
+          profile = limitedProfile;
+        }
+
+        if (!profile) {
+          console.error("[usePasswordLogin][DEBUG] No profile found for user:", data.user?.id);
           toast({
             variant: "destructive",
             title: "Login failed",
-            description: "Failed to fetch user profile.",
+            description: "User profile not found. Please contact support.",
           });
           return;
         }

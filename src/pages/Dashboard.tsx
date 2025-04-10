@@ -16,6 +16,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [forceNavAttempted, setForceNavAttempted] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   
   const view = searchParams.get('view');
   const section = searchParams.get('section');
@@ -108,20 +109,27 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, isLoading, navigate, userRole]);
   
-  // Add automatic force navigation if still loading after a delay
+  // Add automatic retry mechanism for profile detection
   useEffect(() => {
-    if (isLoading && isAuthenticated && !forceNavAttempted) {
+    // If we're authenticated but don't have a role yet, try to fetch it again
+    if (isAuthenticated && user && !userRole && !forceNavAttempted && retryCount < 3) {
       const timer = setTimeout(() => {
-        console.log("[Dashboard][DEBUG] Still loading after delay - attempting force navigation");
-        forceRedirect();
-        setForceNavAttempted(true);
-      }, 5000);
+        console.log("[Dashboard][DEBUG] Detected authenticated user without role, retrying profile fetch");
+        // Increment retry counter
+        setRetryCount(prev => prev + 1);
+        
+        // Directly trigger a force navigation after a few retries
+        if (retryCount >= 2) {
+          forceRedirect();
+          setForceNavAttempted(true);
+        }
+      }, 1500); // Increased delay between retries
       
       return () => {
         clearTimeout(timer);
       };
     }
-  }, [isLoading, isAuthenticated, forceNavAttempted]);
+  }, [isAuthenticated, user, userRole, forceNavAttempted, retryCount]);
 
   // Force redirect function with improved role detection
   const forceRedirect = () => {
@@ -133,10 +141,10 @@ const Dashboard = () => {
       return;
     }
     
-    // Use multiple sources to determine role
-    const role = userRole || profile?.role || (isPharmacist ? 'pharmacist' : 'user');
+    // Use multiple sources to determine role, with profile.role as highest priority
+    const effectiveRole = profile?.role || userRole || (isPharmacist ? 'pharmacist' : 'user');
     
-    console.log(`[Dashboard][DEBUG] Force redirecting with detected role: ${role}`, {
+    console.log(`[Dashboard][DEBUG] Force redirecting with detected role: ${effectiveRole}`, {
       userRole,
       profileRole: profile?.role,
       isPharmacist
@@ -146,7 +154,7 @@ const Dashboard = () => {
     sessionStorage.setItem('skip_dashboard_redirect', 'true');
     
     // Determine the correct route based on role
-    const route = getDashboardRouteByRole(role);
+    const route = getDashboardRouteByRole(effectiveRole);
     console.log(`[Dashboard][DEBUG] Forcing redirect to ${route}`);
     
     // Use direct navigation for more reliable redirect
@@ -154,7 +162,7 @@ const Dashboard = () => {
     
     toast({
       title: "Redirecting to dashboard",
-      description: `Navigating to your ${role || 'user'} dashboard`,
+      description: `Navigating to your ${effectiveRole || 'user'} dashboard`,
     });
   };
 
@@ -190,7 +198,7 @@ const Dashboard = () => {
           </div>
           
           <div className="text-xs text-gray-500 mt-4 text-center">
-            Debug info: Role: {userRole || profile?.role || 'Unknown'} | Auth: {isAuthenticated ? 'Yes' : 'No'} | User ID: {user?.id || 'None'}
+            Debug info: Role: {profile?.role || userRole || 'Unknown'} | Auth: {isAuthenticated ? 'Yes' : 'No'} | User ID: {user?.id || 'None'}
           </div>
         </div>
       </div>
@@ -229,7 +237,7 @@ const Dashboard = () => {
             Force dashboard navigation
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">Role: {userRole || profile?.role || 'Unknown'}</p>
+        <p className="text-xs text-muted-foreground mt-2">Role: {profile?.role || userRole || 'Unknown'}</p>
       </div>
     </div>
   );

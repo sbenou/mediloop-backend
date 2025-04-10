@@ -1,4 +1,3 @@
-
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -34,10 +33,11 @@ export const UserMenuItems = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [auth, setAuth] = useRecoilState(authState);
-  const { isPharmacist, userRole: hookUserRole } = useAuth();
+  const { isPharmacist, userRole: hookUserRole, profile } = useAuth();
   
   // Ensure we have a userRole, with multiple fallbacks
-  const userRole = auth.profile?.role || hookUserRole || 'user';
+  // Use profile.role as the highest priority source
+  const userRole = profile?.role || auth.profile?.role || hookUserRole || 'user';
   
   // Check if we're on the activities or notifications page
   const isActivitiesPage = location.pathname.includes('/activities') || 
@@ -49,7 +49,7 @@ export const UserMenuItems = () => {
   console.log('[UserMenuItems][DEBUG] profile data:', auth.profile);
   
   // Force check for pharmacist role for debugging
-  const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist';
+  const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist' || profile?.role === 'pharmacist';
   console.log('[UserMenuItems][DEBUG] FINAL isUserPharmacist check:', isUserPharmacist);
 
   const handleLogout = async () => {
@@ -129,7 +129,8 @@ export const UserMenuItems = () => {
         
     if (path.includes('/dashboard')) {
       // Get correct dashboard route based on user role with fallbacks
-      const role = userRole || auth.profile?.role || 'user';
+      // Use profile.role as the highest priority source of truth
+      const role = profile?.role || userRole || auth.profile?.role || 'user';
       let dashboardRoute = getDashboardRouteByRole(role);
       
       console.log(`[UserMenuItems][DEBUG] Navigation details:`, {
@@ -141,6 +142,8 @@ export const UserMenuItems = () => {
       
       // Flag to indicate this is an intentional menu navigation
       sessionStorage.setItem('dashboard_navigation_source', 'menu');
+      // Ensure skip_dashboard_redirect is also set to prevent loops
+      sessionStorage.setItem('skip_dashboard_redirect', 'true');
       
       // For pharmacists, always ensure correct parameters
       if (isUserPharmacist) {
@@ -275,7 +278,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, navigate]);
+  }, [userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, navigate, profile]);
 
   return menuItems;
 };

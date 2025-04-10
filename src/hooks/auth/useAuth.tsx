@@ -45,7 +45,7 @@ export const useAuth = () => {
     }
   }, [authData.user, isLoading, isAuthenticated, userRole, isPharmacist, permissions, authData.profile]);
 
-  // Add a state validation effect
+  // Add a state validation effect with improved profile fetching
   useEffect(() => {
     if (authData.user && !authData.profile) {
       console.warn('[useAuth][DEBUG] Inconsistent state: user exists but no profile');
@@ -107,6 +107,7 @@ export const useAuth = () => {
               updated_at: profile.updated_at || new Date().toISOString()
             };
             
+            // Update auth state with the fetched profile
             setAuthData(prev => ({ ...prev, profile: completeProfile, isLoading: false }));
           } else {
             console.log('[useAuth][DEBUG] No profile found for user:', authData.user?.id);
