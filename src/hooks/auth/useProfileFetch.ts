@@ -25,7 +25,7 @@ export const useProfileFetch = (userId: string | undefined) => {
         setLoading(true);
         setError(null);
 
-        // Function to create a basic profile with required fields
+        // Function to create a basic profile with required fields - defined within fetchProfile scope
         const createBasicProfile = (id: string): UserProfile => ({
           id,
           role: 'patient', // Default role
