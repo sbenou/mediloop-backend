@@ -28,6 +28,7 @@ import {
   BarChart
 } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 export const UserMenuItems = () => {
   const location = useLocation();
@@ -116,34 +117,16 @@ export const UserMenuItems = () => {
     sessionStorage.setItem('menu_navigation_timestamp', Date.now().toString());
     
     if (path.includes('/dashboard')) {
+      // Use the utility function to get the correct route based on user role
+      const dashboardRoute = getDashboardRouteByRole(userRole);
+      console.log(`Using getDashboardRouteByRole utility: ${dashboardRoute}`);
+      
       // Flag to indicate this is an intentional menu navigation
       sessionStorage.setItem('dashboard_navigation_source', 'menu');
       sessionStorage.setItem('skip_dashboard_redirect', 'true');
       
-      // For pharmacists, ensure correct parameters
-      if (isUserPharmacist) {
-        const finalPath = '/dashboard?view=pharmacy&section=dashboard'; 
-        console.log(`Pharmacist detected, navigating to: ${finalPath}`);
-        
-        // Hard navigation to ensure clean state
-        window.location.href = finalPath;
-        return;
-      }
-      
-      // For doctors, ensure correct parameters
-      if (userRole === 'doctor') {
-        const finalPath = '/dashboard?section=dashboard';
-        console.log(`Doctor detected, navigating to: ${finalPath}`);
-        
-        // Hard navigation to ensure clean state
-        window.location.href = finalPath;
-        return;
-      }
-      
-      // For other roles, use the standard path with query parameters
-      const finalPath = '/dashboard?view=home';
-      console.log(`Regular user, navigating to: ${finalPath}`);
-      window.location.href = finalPath;
+      // Hard navigate to the correct dashboard route for any role
+      window.location.href = dashboardRoute;
     } else {
       // For non-dashboard paths, use React Router navigation
       navigate(path);
@@ -155,7 +138,7 @@ export const UserMenuItems = () => {
     // Default items (patient/user role)
     if (userRole === 'user' || userRole === 'patient') {
       return [
-        { icon: Home, label: 'Dashboard', path: '/dashboard?view=home' },
+        { icon: Home, label: 'Dashboard', path: '/dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
         { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
@@ -210,7 +193,7 @@ export const UserMenuItems = () => {
     
     // Fallback for unknown roles
     return [
-      { icon: Home, label: 'Dashboard', path: '/dashboard?view=home' },
+      { icon: Home, label: 'Dashboard', path: '/dashboard' },
       { icon: User, label: 'Profile', path: '/settings?tab=profile' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
       { icon: Settings, label: 'Settings', path: '/settings' }

@@ -19,6 +19,7 @@ import WorkplacesView from "@/components/dashboard/views/doctor/WorkplacesView";
 import NotificationsView from "@/components/dashboard/views/NotificationsView";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 interface DashboardRouterProps {
   userRole: string;
@@ -47,6 +48,10 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
     const skipRedirect = sessionStorage.getItem('skip_dashboard_redirect') === 'true';
     if (skipRedirect) {
       console.log("Skipping parameter correction due to skip_dashboard_redirect flag");
+      // Clear the flag after we've used it
+      setTimeout(() => {
+        sessionStorage.removeItem('skip_dashboard_redirect');
+      }, 500);
       return;
     }
     
@@ -54,35 +59,56 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
     const fromMenu = sessionStorage.getItem('dashboard_navigation_source') === 'menu';
     if (fromMenu) {
       console.log("Navigation came from menu, skipping parameter correction");
+      sessionStorage.removeItem('dashboard_navigation_source');
       return;
     }
     
-    // Handle pharmacist URL parameter correction
-    const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist';
-    const needsParameterUpdate = isUserPharmacist && (!view || view !== 'pharmacy');
+    // Get the correct route for the current user role
+    const expectedRoute = getDashboardRouteByRole(userRole);
+    const expectedParams = new URLSearchParams(expectedRoute.split('?')[1] || '');
+    
+    // Check if current parameters match expected ones
+    let needsParameterUpdate = false;
+    
+    // For pharmacists
+    if (userRole === 'pharmacist' || isPharmacist || profile?.role === 'pharmacist') {
+      if (view !== 'pharmacy') {
+        needsParameterUpdate = true;
+      }
+    }
+    // For doctors
+    else if (userRole === 'doctor') {
+      if (!section) {
+        needsParameterUpdate = true;
+      }
+    }
+    // For patients/users
+    else if (userRole === 'user' || userRole === 'patient') {
+      if (!view) {
+        needsParameterUpdate = true;
+      }
+    }
     
     if (needsParameterUpdate) {
-      console.log("Correcting URL parameters for pharmacist");
+      console.log("Correcting URL parameters for", userRole);
       
       // Get current redirect count from sessionStorage
-      const redirectAttempts = parseInt(sessionStorage.getItem('pharmacy_redirect_count') || '0');
+      const redirectAttempts = parseInt(sessionStorage.getItem('dashboard_redirect_count') || '0');
       
       // Only redirect if we haven't tried too many times
       if (redirectAttempts < 2) {
         // Increment the counter and save it
-        sessionStorage.setItem('pharmacy_redirect_count', (redirectAttempts + 1).toString());
+        sessionStorage.setItem('dashboard_redirect_count', (redirectAttempts + 1).toString());
         
-        // Update the URL parameters
-        setSearchParams({ 
-          view: 'pharmacy', 
-          section: section || 'dashboard' 
-        }, { replace: true });
+        // Update the URL parameters using the utility function
+        const urlParams = new URLSearchParams(expectedRoute.split('?')[1] || '');
+        setSearchParams(urlParams, { replace: true });
         
         // Only show toast on first attempt
         if (redirectAttempts === 0) {
           toast({
-            title: "Pharmacy Dashboard",
-            description: "Loading your pharmacy dashboard view",
+            title: "Dashboard",
+            description: `Loading your ${userRole} dashboard view`,
           });
         }
       } else {
@@ -90,15 +116,14 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       }
     } else {
       // If parameters are correct, reset the counter
-      sessionStorage.removeItem('pharmacy_redirect_count');
+      sessionStorage.removeItem('dashboard_redirect_count');
     }
   }, [userRole, view, section, profileTab, ordersTab, isPharmacist, profile, searchParams, setSearchParams]);
   
   // Reset the redirect counter when component unmounts
   useEffect(() => {
     return () => {
-      sessionStorage.removeItem('pharmacy_redirect_count');
-      sessionStorage.removeItem('skip_dashboard_redirect');
+      sessionStorage.removeItem('dashboard_redirect_count');
     };
   }, []);
   

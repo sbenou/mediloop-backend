@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import DashboardRouter from "@/components/dashboard/DashboardRouter";
 import RequireRoleGuard from "@/components/auth/RequireRoleGuard";
 import { toast } from "@/components/ui/use-toast";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, profile, isPharmacist } = useAuth();
@@ -42,13 +43,17 @@ const Dashboard = () => {
     
     // Clear the flags after we've read them so they don't affect future navigation
     if (fromMenu) {
+      console.log("Navigation came from menu, removing flag");
       sessionStorage.removeItem('dashboard_navigation_source');
     }
     
     if (skipRedirect) {
-      // If we're skipping redirects, just clear the flag and don't track mount count
-      sessionStorage.removeItem('skip_dashboard_redirect');
+      // If we're skipping redirects, just clear the flag after a short delay
+      // to allow router components to read it first
       console.log("Skipping redirect check due to skip_dashboard_redirect flag");
+      setTimeout(() => {
+        sessionStorage.removeItem('skip_dashboard_redirect');
+      }, 1000);
     } else if (!fromMenu) {
       // Only track mount count if not from menu and not skipping redirects
       const mountCount = parseInt(sessionStorage.getItem('dashboard_mount_count') || '0');
@@ -70,6 +75,19 @@ const Dashboard = () => {
       sessionStorage.removeItem('dashboard_mount_count');
     }, 5000);
     
+    // Handle missing URL parameters for different roles
+    if (!skipRedirect && isAuthenticated && !isLoading && userRole) {
+      // Check if the URL parameters match the expected ones for the current role
+      const expectedRoute = getDashboardRouteByRole(userRole);
+      const currentPath = window.location.pathname + window.location.search;
+      
+      // If we're at /dashboard but missing expected parameters, redirect
+      if (window.location.pathname === '/dashboard' && !currentPath.includes(expectedRoute.split('?')[1] || '')) {
+        console.log(`Detected missing parameters for ${userRole}. Expected: ${expectedRoute}, Current: ${currentPath}`);
+        navigate(expectedRoute, { replace: true });
+      }
+    }
+    
     // If loading takes too long, show a toast to inform the user
     const timeoutId = setTimeout(() => {
       if (isLoading) {
@@ -84,7 +102,7 @@ const Dashboard = () => {
       clearTimeout(timeoutId);
       clearTimeout(resetTimeout);
     };
-  }, [isAuthenticated, isLoading, userRole, profile, view, section, isPharmacist]);
+  }, [isAuthenticated, isLoading, userRole, profile, view, section, isPharmacist, navigate]);
 
   // Handle unauthenticated users with more detailed logging
   useEffect(() => {
@@ -102,7 +120,7 @@ const Dashboard = () => {
     return () => {
       sessionStorage.removeItem('pharmacy_redirect_attempt');
       sessionStorage.removeItem('pharmacy_redirect_count');
-      sessionStorage.removeItem('skip_dashboard_redirect');
+      // Don't clear skip_dashboard_redirect here as it might be needed by child components
     };
   }, []);
 
