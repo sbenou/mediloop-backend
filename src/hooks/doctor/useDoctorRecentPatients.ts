@@ -1,76 +1,85 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { toast } from "@/components/ui/use-toast";
-import { useAuth } from "@/hooks/auth/useAuth";
+// Define a proper interface for patient data
+interface RecentPatientData {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  last_visit?: string | null;
+}
 
-export const useDoctorRecentPatients = (limit: number = 5) => {
-  const { profile } = useAuth();
-  const [patients, setPatients] = useState<Array<{
-    id: string;
-    full_name: string;
-    avatar_url: string | null;
-    created_at: string;
-  }>>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+export const useDoctorRecentPatients = (doctorId: string | undefined) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [recentPatients, setRecentPatients] = useState<RecentPatientData[]>([]);
 
   useEffect(() => {
+    if (!doctorId) {
+      setLoading(false);
+      return;
+    }
+    
     const fetchRecentPatients = async () => {
-      if (!profile?.id) return;
-
       try {
-        setIsLoading(true);
+        setLoading(true);
         
-        // Get recent connections with patients with 'accepted' status
-        const { data, error } = await supabase
+        // Fetch recent patients - This would usually be based on appointments or teleconsultations
+        // For now, we'll just get patients with connections to this doctor
+        const { data: connections, error: connectionsError } = await supabase
           .from('doctor_patient_connections')
           .select(`
-            id,
             patient_id,
-            created_at,
-            status,
-            patient:profiles!patient_id(
-              id,
-              full_name,
-              avatar_url
-            )
+            created_at
           `)
-          .eq('doctor_id', profile.id)
+          .eq('doctor_id', doctorId)
           .eq('status', 'accepted')
           .order('created_at', { ascending: false })
-          .limit(limit);
-
-        if (error) throw error;
-
-        // Transform and filter data to desired format
-        const formattedPatients = data
-          .filter(connection => connection.patient && typeof connection.patient === 'object' && !('error' in connection.patient))
-          .map(connection => ({
-            id: connection.patient_id,
-            full_name: connection.patient.full_name || 'Unknown Patient',
-            avatar_url: connection.patient.avatar_url,
-            created_at: connection.created_at
+          .limit(5);
+          
+        if (connectionsError) {
+          throw new Error(`Error fetching doctor connections: ${connectionsError.message}`);
+        }
+        
+        if (!connections || connections.length === 0) {
+          setRecentPatients([]);
+          setLoading(false);
+          return;
+        }
+        
+        // Get the actual patient profiles
+        const patientIds = connections.map(c => c.patient_id);
+        const { data: patients, error: patientsError } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', patientIds);
+          
+        if (patientsError) {
+          throw new Error(`Error fetching patient profiles: ${patientsError.message}`);
+        }
+        
+        if (patients && Array.isArray(patients)) {
+          const formattedPatients = patients.map(patient => ({
+            id: patient.id,
+            full_name: patient.full_name || 'Unknown Patient',
+            avatar_url: patient.avatar_url || null,
+            // We could add last visit date from appointments/teleconsultations later
           }));
-
-        setPatients(formattedPatients);
+          
+          setRecentPatients(formattedPatients);
+        } else {
+          setRecentPatients([]);
+        }
       } catch (err) {
-        console.error('Error fetching recent patients:', err);
-        setError('Failed to load recent patients');
-        toast({
-          variant: "destructive",
-          title: "Error loading patients",
-          description: "There was a problem loading your recent patients."
-        });
+        console.error('Error in useDoctorRecentPatients:', err);
+        setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-
+    
     fetchRecentPatients();
-  }, [profile?.id, limit]);
-
-  return { patients, isLoading, error };
+  }, [doctorId]);
+  
+  return { recentPatients, loading, error };
 };
-
-export default useDoctorRecentPatients;

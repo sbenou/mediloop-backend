@@ -52,6 +52,7 @@ export const useProfileFetch = () => {
         if (columnInfo?.includes('pharmacy_id')) selectColumns += ', pharmacy_id';
         if (columnInfo?.includes('pharmacy_name')) selectColumns += ', pharmacy_name';
         if (columnInfo?.includes('pharmacy_logo_url')) selectColumns += ', pharmacy_logo_url';
+        if (columnInfo?.includes('phone_number')) selectColumns += ', phone_number';
         
         // Simplified query using only columns that exist
         const { data: profile, error } = await supabase
@@ -123,6 +124,7 @@ export const useProfileFetch = () => {
               pharmacy_id: null,
               pharmacy_name: null,
               pharmacy_logo_url: null,
+              phone_number: null,
               deleted_at: null,
               created_at: newProfile.created_at || new Date().toISOString(),
               updated_at: newProfile.updated_at || new Date().toISOString()
@@ -159,6 +161,7 @@ export const useProfileFetch = () => {
           pharmacy_id: (profile as any).pharmacy_id || null,
           pharmacy_name: (profile as any).pharmacy_name || null,
           pharmacy_logo_url: (profile as any).pharmacy_logo_url || null,
+          phone_number: (profile as any).phone_number || null,
           deleted_at: profile.deleted_at || null,
           created_at: profile.created_at || new Date().toISOString(),
           updated_at: profile.updated_at || new Date().toISOString()

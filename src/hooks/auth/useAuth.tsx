@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
@@ -79,6 +78,7 @@ export const useAuth = () => {
               pharmacy_id: null,
               pharmacy_name: null,
               pharmacy_logo_url: null,
+              phone_number: null,
               deleted_at: profile.deleted_at || null,
               created_at: profile.created_at || new Date().toISOString(),
               updated_at: profile.updated_at || new Date().toISOString()
@@ -169,6 +169,7 @@ export const useAuth = () => {
           pharmacy_id: null,
           pharmacy_name: null,
           pharmacy_logo_url: null,
+          phone_number: null,
           deleted_at: profile.deleted_at || null,
           created_at: profile.created_at || new Date().toISOString(),
           updated_at: profile.updated_at || new Date().toISOString()

@@ -1,85 +1,94 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { toast } from "@/components/ui/use-toast";
-
-export interface DoctorPatientConnection {
+interface DoctorPatient {
   id: string;
-  patient_id: string;
-  doctor_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  patient: {
-    id: string;
-    full_name: string;
-    email?: string;
-  };
+  full_name: string | null;
+  email: string | null;
+  status?: string;
+  connection_id?: string;
 }
 
-export const useDoctorPatients = (doctorId?: string) => {
-  const [patients, setPatients] = useState<Array<{ id: string; name: string }>>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+export const useDoctorPatients = (doctorId: string | undefined) => {
+  const [patients, setPatients] = useState<DoctorPatient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!doctorId) {
+      setLoading(false);
+      return;
+    }
+    
     const fetchPatients = async () => {
-      if (!doctorId) {
-        setPatients([]);
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
       try {
-        // Fetch doctor's connected patients that have accepted status
-        const { data, error } = await supabase
+        setLoading(true);
+        
+        // Get connections to patients
+        const { data: connections, error: connectionsError } = await supabase
           .from('doctor_patient_connections')
           .select(`
             id,
             patient_id,
-            doctor_id,
-            status,
-            patient:profiles!patient_id(
-              id,
-              full_name,
-              email
-            )
+            status
           `)
-          .eq('doctor_id', doctorId)
-          .eq('status', 'accepted');
-
-        if (error) throw error;
-
-        // Filter out connections with invalid patient data
-        const validConnections = (data || []).filter(connection => {
-          return connection.patient && 
-                 typeof connection.patient === 'object' && 
-                 !('error' in connection.patient);
-        });
+          .eq('doctor_id', doctorId);
+          
+        if (connectionsError) {
+          throw new Error(`Error fetching doctor connections: ${connectionsError.message}`);
+        }
         
-        // Format patients data from valid connections
-        const formattedPatients = validConnections.map(connection => ({
-          id: connection.patient_id,
-          name: connection.patient.full_name || 'Unknown Patient'
-        }));
-
-        setPatients(formattedPatients);
+        if (!connections || connections.length === 0) {
+          setPatients([]);
+          setLoading(false);
+          return;
+        }
+        
+        // Get the actual patient profiles
+        const patientIds = connections.map(c => c.patient_id);
+        
+        const { data: patientProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', patientIds);
+          
+        if (profilesError) {
+          throw new Error(`Error fetching patient profiles: ${profilesError.message}`);
+        }
+        
+        if (!patientProfiles) {
+          setPatients([]);
+          setLoading(false);
+          return;
+        }
+        
+        // Map the data together
+        if (patientProfiles && Array.isArray(patientProfiles)) {
+          const patientsWithStatus = patientProfiles.map(patient => {
+            const connection = connections.find(c => c.patient_id === patient.id);
+            return {
+              id: patient.id,
+              full_name: patient.full_name || 'Unknown Patient',
+              email: patient.email || null,
+              status: connection?.status || 'unknown',
+              connection_id: connection?.id || undefined
+            };
+          });
+          
+          setPatients(patientsWithStatus);
+        } else {
+          setPatients([]);
+        }
       } catch (err) {
-        console.error('Error fetching doctor patients:', err);
-        setError('Failed to load patients');
-        toast({
-          variant: "destructive",
-          title: "Error loading patients",
-          description: "There was a problem loading your patients. Please try again."
-        });
+        console.error('Error in useDoctorPatients:', err);
+        setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-
+    
     fetchPatients();
   }, [doctorId]);
-
-  return { patients, isLoading, error };
+  
+  return { patients, loading, error };
 };
