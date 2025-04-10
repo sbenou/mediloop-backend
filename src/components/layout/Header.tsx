@@ -34,6 +34,11 @@ const Header = ({ showUserMenu = true, showBackLink = false, onBackClick }: Head
   const { isAuthenticated, isLoading, profile } = useAuth();
 
   const handleNavigateToLogin = () => {
+    // Clear any stale login flags before navigating to login page
+    sessionStorage.removeItem('login_successful');
+    sessionStorage.removeItem('skip_dashboard_redirect');
+    
+    // Navigate to login page
     navigate('/login', { replace: true });
   };
 
