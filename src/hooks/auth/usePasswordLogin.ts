@@ -62,7 +62,9 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         storeSession(data.session);
 
         console.log("[usePasswordLogin][DEBUG] Fetching user profile");
-        const { data: profile, error: profileError } = await supabase
+        // Use a let declaration instead of const so we can reassign later if needed
+        let userProfile;
+        const { data: initialProfile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user?.id)
@@ -91,10 +93,12 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           
           // If we got a limited profile, use that
           console.log(`[usePasswordLogin][DEBUG] Limited profile fetched successfully, role: ${limitedProfile?.role}`);
-          profile = limitedProfile;
+          userProfile = limitedProfile;
+        } else {
+          userProfile = initialProfile;
         }
 
-        if (!profile) {
+        if (!userProfile) {
           console.error("[usePasswordLogin][DEBUG] No profile found for user:", data.user?.id);
           toast({
             variant: "destructive",
@@ -104,12 +108,12 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           return;
         }
 
-        console.log(`[usePasswordLogin][DEBUG] Profile fetched successfully, role: ${profile?.role}`, profile);
+        console.log(`[usePasswordLogin][DEBUG] Profile fetched successfully, role: ${userProfile?.role}`, userProfile);
 
         const completeProfile = {
-          ...profile as any,
-          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile.pharmacist_signature_url || null
+          ...userProfile as any,
+          pharmacist_stamp_url: userProfile.pharmacist_stamp_url || null,
+          pharmacist_signature_url: userProfile.pharmacist_signature_url || null
         };
 
         // Set auth state
@@ -135,7 +139,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         sessionStorage.removeItem('pharmacy_redirect_count');
 
         // Special handling for pharmacists to ensure correct dashboard loading
-        if (profile?.role === 'pharmacist') {
+        if (userProfile?.role === 'pharmacist') {
           console.log('[usePasswordLogin][DEBUG] Pharmacist login detected, using direct navigation');
           console.log('[usePasswordLogin][DEBUG] Pharmacist target URL: /dashboard?view=pharmacy&section=dashboard');
           
@@ -154,7 +158,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         } else {
           // If no success callback, redirect directly to the appropriate dashboard
           try {
-            const route = getDashboardRouteByRole(profile?.role);
+            const route = getDashboardRouteByRole(userProfile?.role);
             console.log(`[usePasswordLogin][DEBUG] No success callback, redirecting to: ${route}`);
             
             // Force a small delay to ensure the session is properly stored
