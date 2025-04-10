@@ -1,5 +1,21 @@
 
 /**
+ * Broadcast authentication events to other tabs
+ * @param eventType The type of auth event (LOGIN, LOGOUT, TOKEN_REFRESHED)
+ */
+export const broadcastAuthEvent = (eventType: 'LOGIN' | 'LOGOUT' | 'TOKEN_REFRESHED') => {
+  try {
+    const event = {
+      type: eventType,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('last_auth_event', JSON.stringify(event));
+  } catch (error) {
+    console.error("Error broadcasting auth event:", error);
+  }
+};
+
+/**
  * Utility function to store session in both localStorage and sessionStorage
  * This ensures maximum persistence and compatibility
  */
@@ -67,22 +83,6 @@ export const getSessionFromStorage = () => {
   } catch (error) {
     console.error("Error getting session from storage:", error);
     return null;
-  }
-};
-
-/**
- * Broadcast authentication events to other tabs
- * @param eventType The type of auth event (LOGIN, LOGOUT, TOKEN_REFRESHED)
- */
-export const broadcastAuthEvent = (eventType: 'LOGIN' | 'LOGOUT' | 'TOKEN_REFRESHED') => {
-  try {
-    const event = {
-      type: eventType,
-      timestamp: Date.now()
-    };
-    localStorage.setItem('last_auth_event', JSON.stringify(event));
-  } catch (error) {
-    console.error("Error broadcasting auth event:", error);
   }
 };
 
