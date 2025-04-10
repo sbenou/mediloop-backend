@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -97,6 +96,11 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         // Set flags to ensure proper navigation
         sessionStorage.setItem('login_successful', 'true');
         sessionStorage.setItem('skip_dashboard_redirect', 'true');
+        
+        // Clear any previous redirect counters
+        sessionStorage.removeItem('dashboard_redirect_count');
+        sessionStorage.removeItem('dashboard_mount_count');
+        sessionStorage.removeItem('pharmacy_redirect_count');
 
         // Special handling for pharmacists to ensure correct dashboard loading
         if (profile?.role === 'pharmacist') {
@@ -106,7 +110,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           setTimeout(() => {
             // Use direct navigation for pharmacists
             window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-          }, 100);
+          }, 150);
           return;
         }
 
@@ -120,12 +124,12 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
             // Force a small delay to ensure the session is properly stored
             setTimeout(() => {
               window.location.href = route;
-            }, 100);
+            }, 150);
           } catch (navErr) {
             console.error('Navigation error:', navErr);
             setTimeout(() => {
-              navigate('/', { replace: true });
-            }, 100);
+              window.location.href = '/';
+            }, 150);
           }
         }
       }

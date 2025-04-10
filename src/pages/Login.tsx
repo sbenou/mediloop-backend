@@ -31,7 +31,10 @@ const Login = () => {
       // For pharmacists, use a more direct approach to ensure correct redirect
       if (role === 'pharmacist') {
         console.log(`[Login] Pharmacist user detected, using direct navigation to pharmacy dashboard`);
-        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+        // Force a small delay to ensure all state updates complete
+        setTimeout(() => {
+          window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+        }, 50);
         return;
       }
       
@@ -40,7 +43,9 @@ const Login = () => {
       console.log(`[Login] User already authenticated with role ${role}, redirecting to: ${route}`);
       
       // Use window.location for a full page refresh to ensure clean state
-      window.location.href = route;
+      setTimeout(() => {
+        window.location.href = route;
+      }, 50);
     }
   }, [isAuthenticated, profile, navigate, redirected, redirectAttempted, manualRedirectInProgress, loginSuccessful]);
   
@@ -50,7 +55,7 @@ const Login = () => {
     if (loginSuccessful) {
       const timer = setTimeout(() => {
         sessionStorage.removeItem('login_successful');
-      }, 1000); // Increased timeout to give more time for the redirection
+      }, 1500); // Increased timeout to give more time for the redirection
       
       return () => clearTimeout(timer);
     }

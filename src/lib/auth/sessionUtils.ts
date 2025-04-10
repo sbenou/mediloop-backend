@@ -42,6 +42,11 @@ export const storeSession = (session) => {
     // Set flag for successful login - this will be used for redirection
     sessionStorage.setItem('login_successful', 'true');
     
+    // Reset any redirection attempts or counters
+    sessionStorage.removeItem('dashboard_redirect_count');
+    sessionStorage.removeItem('dashboard_mount_count');
+    sessionStorage.removeItem('pharmacy_redirect_count');
+    
     return true;
   } catch (error) {
     console.error("Error storing session:", error);
