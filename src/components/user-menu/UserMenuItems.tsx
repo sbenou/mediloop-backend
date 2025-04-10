@@ -127,11 +127,23 @@ export const UserMenuItems = () => {
         
         // Hard navigation to ensure clean state
         window.location.href = finalPath;
-      } else {
-        // For other roles, use the standard path
-        console.log(`Regular user, navigating to: ${path}`);
-        window.location.href = path;
+        return;
       }
+      
+      // For doctors, ensure correct parameters
+      if (userRole === 'doctor') {
+        const finalPath = '/dashboard?section=dashboard';
+        console.log(`Doctor detected, navigating to: ${finalPath}`);
+        
+        // Hard navigation to ensure clean state
+        window.location.href = finalPath;
+        return;
+      }
+      
+      // For other roles, use the standard path with query parameters
+      const finalPath = '/dashboard?view=home';
+      console.log(`Regular user, navigating to: ${finalPath}`);
+      window.location.href = finalPath;
     } else {
       // For non-dashboard paths, use React Router navigation
       navigate(path);
@@ -143,7 +155,7 @@ export const UserMenuItems = () => {
     // Default items (patient/user role)
     if (userRole === 'user' || userRole === 'patient') {
       return [
-        { icon: Home, label: 'Dashboard', path: '/dashboard' },
+        { icon: Home, label: 'Dashboard', path: '/dashboard?view=home' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
         { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
@@ -198,7 +210,7 @@ export const UserMenuItems = () => {
     
     // Fallback for unknown roles
     return [
-      { icon: Home, label: 'Dashboard', path: '/dashboard' },
+      { icon: Home, label: 'Dashboard', path: '/dashboard?view=home' },
       { icon: User, label: 'Profile', path: '/settings?tab=profile' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
       { icon: Settings, label: 'Settings', path: '/settings' }
