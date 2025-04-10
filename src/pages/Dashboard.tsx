@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [forceNavAttempted, setForceNavAttempted] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [manualProfileFetchInProgress, setManualProfileFetchInProgress] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   
   const view = searchParams.get('view');
   const section = searchParams.get('section');
@@ -174,6 +175,13 @@ const Dashboard = () => {
   const forceRedirect = async () => {
     console.log("[Dashboard][DEBUG] Manual redirect requested");
     
+    if (isNavigating) {
+      console.log("[Dashboard][DEBUG] Navigation already in progress, skipping");
+      return;
+    }
+    
+    setIsNavigating(true);
+    
     if (!isAuthenticated) {
       console.log("[Dashboard][DEBUG] Cannot redirect - not authenticated");
       window.location.href = '/login';
@@ -200,20 +208,36 @@ const Dashboard = () => {
     // Set skip flag to prevent redirect loops
     sessionStorage.setItem('skip_dashboard_redirect', 'true');
     
-    // Determine the correct route based on role
-    const route = effectiveRole === 'pharmacist' 
-      ? '/dashboard?view=pharmacy&section=dashboard'
-      : getDashboardRouteByRole(effectiveRole);
+    try {
+      // Show toast before navigation
+      toast({
+        title: "Redirecting to dashboard",
+        description: `Navigating to your ${effectiveRole || 'user'} dashboard`,
+      });
       
-    console.log(`[Dashboard][DEBUG] Forcing redirect to ${route}`);
-    
-    // Use direct navigation for more reliable redirect
-    window.location.href = route;
-    
-    toast({
-      title: "Redirecting to dashboard",
-      description: `Navigating to your ${effectiveRole || 'user'} dashboard`,
-    });
+      // Short delay to allow the toast to display
+      setTimeout(() => {
+        // Determine the correct route based on role
+        const route = effectiveRole === 'pharmacist' 
+          ? '/dashboard?view=pharmacy&section=dashboard'
+          : getDashboardRouteByRole(effectiveRole);
+          
+        console.log(`[Dashboard][DEBUG] Forcing redirect to ${route}`);
+        
+        // Use window.location.replace for more reliable navigation
+        window.location.replace(route);
+      }, 300);
+    } catch (error) {
+      console.error("[Dashboard][DEBUG] Navigation error:", error);
+      setIsNavigating(false);
+      
+      // Fallback navigation as last resort
+      setTimeout(() => {
+        const fallbackRoute = '/dashboard?view=pharmacy&section=dashboard';
+        console.log(`[Dashboard][DEBUG] Using fallback navigation to: ${fallbackRoute}`);
+        window.location.href = fallbackRoute;
+      }, 500);
+    }
   };
 
   // Enhanced loading state with better feedback and more prominent force navigation button
@@ -233,8 +257,16 @@ const Dashboard = () => {
               className="w-full"
               size="lg"
               variant="default"
+              disabled={isNavigating}
             >
-              Force navigation to dashboard
+              {isNavigating ? (
+                <div className="flex items-center">
+                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                  Navigating...
+                </div>
+              ) : (
+                "Force navigation to dashboard"
+              )}
             </Button>
             
             <Button 
@@ -242,6 +274,7 @@ const Dashboard = () => {
               variant="outline"
               size="sm"
               className="w-full"
+              disabled={isNavigating}
             >
               Reload page
             </Button>
@@ -283,8 +316,16 @@ const Dashboard = () => {
             onClick={() => forceRedirect()} 
             className="mt-2"
             variant="default"
+            disabled={isNavigating}
           >
-            Force dashboard navigation
+            {isNavigating ? (
+              <div className="flex items-center">
+                <Loader className="h-4 w-4 mr-2 animate-spin" />
+                Navigating...
+              </div>
+            ) : (
+              "Force dashboard navigation"
+            )}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">Role: {profile?.role || userRole || 'Unknown'}</p>

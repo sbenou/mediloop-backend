@@ -11,6 +11,7 @@ export const AuthDebugger = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [columnsInfo, setColumnsInfo] = useState<{[key: string]: boolean}>({});
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     // Only show in non-production environments
@@ -112,16 +113,46 @@ export const AuthDebugger = () => {
   };
   
   const navigateToDashboard = () => {
+    setIsNavigating(true);
+    console.log("AuthDebugger: Navigating to role-specific dashboard");
+    
     // Force role-specific direct navigation
     if (profile?.role === 'pharmacist' || isPharmacist) {
-      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      try {
+        // Set skip flag to prevent further redirects
+        sessionStorage.setItem('skip_dashboard_redirect', 'true');
+        
+        // Short delay before navigation
+        setTimeout(() => {
+          window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+        }, 100);
+      } catch (err) {
+        console.error("Navigation error:", err);
+        window.location.replace('/dashboard?view=pharmacy&section=dashboard');
+        setIsNavigating(false);
+      }
     } else {
-      const route = profile?.role ? getDashboardRouteByRole(profile.role) : '/dashboard';
-      window.location.href = route;
+      try {
+        // Set skip flag to prevent further redirects
+        sessionStorage.setItem('skip_dashboard_redirect', 'true');
+        
+        const route = profile?.role ? getDashboardRouteByRole(profile.role) : '/dashboard';
+        
+        // Short delay before navigation
+        setTimeout(() => {
+          window.location.href = route;
+        }, 100);
+      } catch (err) {
+        console.error("Navigation error:", err);
+        const route = profile?.role ? getDashboardRouteByRole(profile.role) : '/dashboard';
+        window.location.replace(route);
+        setIsNavigating(false);
+      }
     }
   };
   
   const forcePharmacistNavigation = () => {
+    setIsNavigating(true);
     // Force pharmacist navigation regardless of detected role
     console.log("AuthDebugger: Force navigating to pharmacy dashboard");
     
@@ -136,12 +167,13 @@ export const AuthDebugger = () => {
     try {
       // Use a slight delay to ensure storage is set before navigation
       setTimeout(() => {
-        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-      }, 100);
+        window.location.replace('/dashboard?view=pharmacy&section=dashboard');
+      }, 150);
     } catch (err) {
       console.error("Navigation error:", err);
       // Fallback direct navigation
-      window.location.replace('/dashboard?view=pharmacy&section=dashboard');
+      window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      setIsNavigating(false);
     }
   };
 
@@ -168,10 +200,21 @@ export const AuthDebugger = () => {
         <Button onClick={fetchDebugInfo} size="sm" variant="outline" className="text-xs">
           Fetch Details
         </Button>
-        <Button onClick={navigateToDashboard} size="sm" className="text-xs">
+        <Button 
+          onClick={navigateToDashboard} 
+          size="sm" 
+          className="text-xs"
+          disabled={isNavigating}
+        >
           Go to Dashboard
         </Button>
-        <Button onClick={forcePharmacistNavigation} size="sm" variant="destructive" className="text-xs">
+        <Button 
+          onClick={forcePharmacistNavigation} 
+          size="sm" 
+          variant="destructive" 
+          className="text-xs"
+          disabled={isNavigating}
+        >
           Force Pharmacy Dashboard
         </Button>
       </div>

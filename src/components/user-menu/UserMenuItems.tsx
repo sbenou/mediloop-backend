@@ -1,3 +1,4 @@
+
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -5,7 +6,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { supabase, clearAllAuthStorage } from "@/lib/supabase";
@@ -24,7 +25,8 @@ import {
   Users,
   HeartPulse,
   Calendar,
-  BarChart
+  BarChart,
+  Loader
 } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
@@ -34,6 +36,7 @@ export const UserMenuItems = () => {
   const navigate = useNavigate();
   const [auth, setAuth] = useRecoilState(authState);
   const { isPharmacist, userRole: hookUserRole, profile } = useAuth();
+  const [isNavigating, setIsNavigating] = useState(false);
   
   // Ensure we have a userRole, with multiple fallbacks
   // Use profile.role as the highest priority source
@@ -54,6 +57,7 @@ export const UserMenuItems = () => {
 
   const handleLogout = async () => {
     try {
+      setIsNavigating(true);
       console.log("[UserMenuItems][DEBUG] Logout initiated from UserMenuItems");
       
       // First, clear all local auth state before API call
@@ -82,6 +86,11 @@ export const UserMenuItems = () => {
         console.error('[UserMenuItems][DEBUG] Error broadcasting logout event:', eventError);
       }
       
+      toast({
+        title: "Logging out...",
+        description: "Please wait while we log you out",
+      });
+      
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
@@ -103,9 +112,12 @@ export const UserMenuItems = () => {
       sessionStorage.removeItem('pharmacy_redirect_count');
       
       // Force a hard redirect to ensure complete logout
-      window.location.href = "/login";
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 300);
     } catch (error) {
       console.error("[UserMenuItems][DEBUG] Logout error:", error);
+      setIsNavigating(false);
       toast({
         variant: "destructive",
         title: "Logout failed",
@@ -117,12 +129,12 @@ export const UserMenuItems = () => {
   // Function to handle navigation with proper path resolution
   const handleNavigation = (path: string) => {
     console.log(`[UserMenuItems][DEBUG] Navigating to ${path} from UserMenuItems`);
+    setIsNavigating(true);
     
     // Reset all navigation-related flags
     sessionStorage.removeItem('pharmacy_redirect_count');
     sessionStorage.removeItem('dashboard_redirect_count');
     sessionStorage.removeItem('dashboard_mount_count');
-    sessionStorage.removeItem('skip_dashboard_redirect');
     
     // Set a navigation timestamp to track intentional navigations
     sessionStorage.setItem('menu_navigation_timestamp', Date.now().toString());
@@ -145,18 +157,37 @@ export const UserMenuItems = () => {
       // Ensure skip_dashboard_redirect is also set to prevent loops
       sessionStorage.setItem('skip_dashboard_redirect', 'true');
       
-      // For pharmacists, always ensure correct parameters
-      if (isUserPharmacist) {
-        console.log("[UserMenuItems][DEBUG] Pharmacist detected, forcing pharmacy dashboard");
-        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-        return;
+      try {
+        // For pharmacists, always ensure correct parameters
+        if (isUserPharmacist) {
+          console.log("[UserMenuItems][DEBUG] Pharmacist detected, forcing pharmacy dashboard");
+          
+          // Use setTimeout to ensure session storage is set before navigation
+          setTimeout(() => {
+            window.location.replace('/dashboard?view=pharmacy&section=dashboard');
+          }, 150);
+          return;
+        }
+        
+        // For other roles, use the calculated route
+        setTimeout(() => {
+          window.location.replace(dashboardRoute);
+        }, 150);
+      } catch (err) {
+        console.error("Navigation error:", err);
+        setIsNavigating(false);
+        
+        // Fallback to direct href navigation
+        const targetUrl = isUserPharmacist ? 
+          '/dashboard?view=pharmacy&section=dashboard' : 
+          dashboardRoute;
+          
+        window.location.href = targetUrl;
       }
-      
-      // Force a full page reload for dashboard navigation
-      window.location.href = dashboardRoute;
     } else {
       // For non-dashboard paths, use React Router navigation
       navigate(path);
+      setIsNavigating(false);
     }
   };
 
@@ -257,8 +288,13 @@ export const UserMenuItems = () => {
                 handleNavigation(item.path);
               }}
               className={item.className}
+              disabled={isNavigating}
             >
-              <item.icon className="mr-2 h-4 w-4" />
+              {isNavigating ? (
+                <Loader className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <item.icon className="mr-2 h-4 w-4" />
+              )}
               <span>{item.label}</span>
             </DropdownMenuItem>
           ))}
@@ -272,13 +308,18 @@ export const UserMenuItems = () => {
             e.stopPropagation();
             handleLogout();
           }}
+          disabled={isNavigating}
         >
-          <LogOut className="mr-2 h-4 w-4" />
+          {isNavigating ? (
+            <Loader className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <LogOut className="mr-2 h-4 w-4" />
+          )}
           <span>Log out</span>
         </DropdownMenuItem>
       </>
     );
-  }, [userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, navigate, profile]);
+  }, [userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, navigate, profile, isNavigating]);
 
   return menuItems;
 };
