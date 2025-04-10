@@ -124,6 +124,9 @@ export const UserMenuItems = () => {
     // Set a navigation timestamp to track intentional navigations
     sessionStorage.setItem('menu_navigation_timestamp', Date.now().toString());
     
+    // Always set skip_dashboard_redirect to prevent excessive redirection
+    sessionStorage.setItem('skip_dashboard_redirect', 'true');
+    
     if (path.includes('/dashboard')) {
       // Use the utility function to get the correct route based on user role
       const dashboardRoute = getDashboardRouteByRole(userRole);
@@ -131,13 +134,23 @@ export const UserMenuItems = () => {
       
       // Flag to indicate this is an intentional menu navigation
       sessionStorage.setItem('dashboard_navigation_source', 'menu');
-      sessionStorage.setItem('skip_dashboard_redirect', 'true');
       
       console.log(`[UserMenuItems][DEBUG] Current role: ${userRole}, is pharmacist check: ${isUserPharmacist}`);
       console.log(`[UserMenuItems][DEBUG] Final URL for navigation: ${dashboardRoute}`);
       
+      // For pharmacists, ensure we have special view parameters
+      if (isUserPharmacist) {
+        console.log("[UserMenuItems][DEBUG] Pharmacist detected, using special navigation");
+        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+        return;
+      }
+      
       // Hard navigate to the correct dashboard route for any role to ensure complete refresh
       window.location.href = dashboardRoute;
+    } else if (path === "/settings") {
+      // For settings, use direct navigation to avoid issues
+      console.log("[UserMenuItems][DEBUG] Using direct navigation for settings");
+      window.location.href = path;
     } else {
       // For non-dashboard paths, use React Router navigation
       navigate(path);

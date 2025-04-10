@@ -13,6 +13,48 @@ export const useLoginManager = () => {
   const [redirectAttempts, setRedirectAttempts] = useState(0);
   const [lastAttemptTime, setLastAttemptTime] = useState(0);
 
+  // Add a dedicated function for profile-based redirection
+  const performRoleBasedRedirection = (role: string) => {
+    // Get the dashboard route for this role
+    const route = getDashboardRouteByRole(role);
+    
+    console.log(`[LoginManager][DEBUG] Redirecting user with role ${role} to ${route}`, {
+      redirectAttempts,
+      currentPath: location.pathname,
+      isPharmacist,
+      skipDashboardRedirect: sessionStorage.getItem('skip_dashboard_redirect')
+    });
+    
+    // Always set skip_dashboard_redirect to prevent redirect loops
+    sessionStorage.setItem('skip_dashboard_redirect', 'true');
+    
+    try {
+      // Use window.location.href for all roles to ensure a complete page refresh
+      console.log("[LoginManager][DEBUG] Using direct navigation to:", route);
+      
+      // For pharmacists, use a very direct approach to avoid navigation issues
+      if (role === 'pharmacist' || isPharmacist) {
+        console.log("[LoginManager][DEBUG] Using special pharmacist redirection path");
+        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      } else {
+        window.location.href = route;
+      }
+      
+      redirected.current = true;
+      
+      // Show a toast to indicate successful login
+      toast({
+        title: "Login successful",
+        description: `Welcome, ${profile.full_name || 'User'}!`,
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("[LoginManager][DEBUG] Navigation error:", error);
+      return false;
+    }
+  };
+
   // Handle role-based redirects
   useEffect(() => {
     // Only proceed if authentication has been checked and we're not currently loading
@@ -72,33 +114,15 @@ export const useLoginManager = () => {
 
     console.log("[LoginManager][DEBUG] Profile available:", profile);
     const role = profile.role;
-    const route = getDashboardRouteByRole(role);
 
-    console.log(`[LoginManager][DEBUG] Redirecting user with role ${role} to ${route}`, {
-      redirectAttempts,
-      currentPath: location.pathname,
-      isPharmacist,
-      skipDashboardRedirect: sessionStorage.getItem('skip_dashboard_redirect')
-    });
+    // Increment the redirect attempts
     setRedirectAttempts(prevAttempts => prevAttempts + 1);
     
-    // Set skip redirect flag to prevent redirect loops
-    sessionStorage.setItem('skip_dashboard_redirect', 'true');
-    
-    // Handle the navigation differently based on role to ensure correct parameters
-    try {
-      // Use window.location.href for all roles to ensure a complete page refresh
-      console.log("[LoginManager][DEBUG] Using direct navigation to:", route);
-      window.location.href = route;
-      redirected.current = true;
-      
-      // Show a toast to indicate successful login
-      toast({
-        title: "Login successful",
-        description: `Welcome, ${profile.full_name || 'User'}!`,
-      });
-    } catch (error) {
-      console.error("[LoginManager][DEBUG] Navigation error:", error);
+    // Perform the actual redirection based on role
+    if (role) {
+      performRoleBasedRedirection(role);
+    } else {
+      console.error("[LoginManager][DEBUG] No role defined in profile, cannot redirect");
     }
   }, [isAuthenticated, profile, navigate, isLoading, location, redirectAttempts, lastAttemptTime, isPharmacist]);
 

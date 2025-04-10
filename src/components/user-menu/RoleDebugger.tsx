@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useRef } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 /**
  * A debugging component that logs user role information to help diagnose
@@ -47,6 +48,11 @@ export const RoleDebugger = () => {
       console.log("Role loose equality check:", auth.profile?.role == 'pharmacist');
       console.log("Role toLowerCase check:", typeof auth.profile?.role === 'string' ? auth.profile.role.toLowerCase() === 'pharmacist' : false);
       
+      // Check expected dashboard routes
+      console.log("Expected dashboard route for this user:", getDashboardRouteByRole(auth.profile?.role));
+      console.log("Current URL:", window.location.href);
+      console.log("URL matches expected route:", window.location.href.includes(getDashboardRouteByRole(auth.profile?.role)));
+      
       // Force navigation attempt if user is a pharmacist but link isn't showing
       if (shouldShowPharmacyLink) {
         console.log("Pharmacist detected - Pharmacy Profile link SHOULD be visible");
@@ -64,6 +70,13 @@ export const RoleDebugger = () => {
               section: url.searchParams.get('section'),
               fullURL: url.toString()
             });
+            
+            // Check if we should perform a corrective action
+            if (url.pathname === '/dashboard' && url.searchParams.get('view') !== 'pharmacy') {
+              console.log("Detected pharmacist on incorrect dashboard view - should be /dashboard?view=pharmacy&section=dashboard");
+              
+              // We don't auto-correct here to avoid redirect loops, but we log it for debugging
+            }
           }, 2000); // Check after a delay to allow rendering
         } catch (e) {
           console.error("Error checking for pharmacy link:", e);
