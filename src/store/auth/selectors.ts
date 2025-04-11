@@ -6,8 +6,9 @@ export const isAuthenticatedSelector = selector({
   key: 'isAuthenticated',
   get: ({ get }) => {
     const auth = get(authState);
-    // Consider authenticated if we have both user and profile
-    return !!auth.user && !!auth.profile;
+    // Consider authenticated if we have a user object
+    // This allows users to continue even if profile fetch fails
+    return !!auth.user;
   },
 });
 
