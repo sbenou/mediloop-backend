@@ -1,5 +1,5 @@
-
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { AuthError } from '@supabase/supabase-js';
 import { useToast } from "@/components/ui/use-toast";
