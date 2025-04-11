@@ -15,7 +15,7 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    // Return role even during loading if we have it
+    // Return role from profile, with fallbacks
     return auth.profile?.role || null;
   },
 });
@@ -24,7 +24,7 @@ export const userPermissionsSelector = selector({
   key: 'userPermissions',
   get: ({ get }) => {
     const auth = get(authState);
-    // Return permissions even during loading if we have them
+    // Return permissions
     return auth.permissions || [];
   },
 });
@@ -41,6 +41,7 @@ export const isPharmacistSelector = selector({
   key: 'isPharmacist',
   get: ({ get }) => {
     const auth = get(authState);
+    // Check explicitly for 'pharmacist' role
     return auth.profile?.role === 'pharmacist';
   },
 });

@@ -10,7 +10,6 @@ import {
 } from '@/store/auth/selectors';
 import { useCallback, useEffect, useMemo } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { UserProfile } from '@/types/user';
 
 /**
  * Hook for accessing and managing authentication state
