@@ -94,26 +94,24 @@ export const LoginForm = () => {
       
         console.log('User role determined:', profile?.role);
         
-        // Ensure we have a slight delay to allow the toast to be seen
-        setTimeout(() => {
-          // Special handling for pharmacists to ensure correct route loading
-          if (profile?.role === 'pharmacist') {
-            console.log('Pharmacist detected, using direct navigation');
-            console.log('Navigating to: /dashboard?view=pharmacy&section=dashboard');
-            
-            // Use a full page reload for clean state
+        // Force a direct URL change for pharmacists instead of using React Router navigation
+        if (profile?.role === 'pharmacist') {
+          // For pharmacist, use a full page reload to ensure all state is reset
+          setTimeout(() => {
             window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-            return;
-          }
-        
-          // Use the utility to get the appropriate dashboard route for other roles
-          const route = getDashboardRouteByRole(profile?.role);
-          console.log(`Redirecting user with role ${profile?.role} to ${route}`);
-        
-          // Use window.location for full page refresh
-          window.location.href = route;
-        }, 1500); // Increased delay to ensure toast is visible
+          }, 1000); // Short delay to allow the toast to be visible
+          return;
+        }
       
+        // Use the utility to get the appropriate dashboard route for other roles
+        const route = getDashboardRouteByRole(profile?.role);
+        console.log(`Redirecting user with role ${profile?.role} to ${route}`);
+        
+        // Use window.location for full page refresh
+        setTimeout(() => {
+          window.location.href = route;
+        }, 1000); // Short delay to allow the toast to be visible
+        
       } catch (err) {
         console.error('Error during role check:', err);
         toast({
