@@ -30,7 +30,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
   const handleLogin = useCallback(async (password: string, rememberMe: boolean = true) => {
     setIsLoading(true);
     setError(null);
-    console.log(`[usePasswordLogin] Attempting login for email: ${email}`, { rememberMe });
+    console.log(`[usePasswordLogin] Attempting login for email: ${email}`);
 
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -92,32 +92,24 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         
         // Set flags for redirecting
         sessionStorage.setItem('login_successful', 'true');
-        sessionStorage.setItem('skip_dashboard_redirect', 'true');
         
         // Log role detection for debugging
         console.log("[usePasswordLogin] Role detected:", completeProfile?.role || 'No role');
         
-        // Handle special case for pharmacist - use direct URL navigation
-        if (completeProfile?.role === 'pharmacist') {
-          console.log('[usePasswordLogin] Pharmacist role detected, redirecting to pharmacy dashboard');
-          
-          // Call onSuccess callback if provided - to update UI state
-          if (onSuccess) {
-            onSuccess();
-          }
-          
-          // Short delay to ensure state updates complete before navigation
-          setTimeout(() => {
-            window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-          }, 300);
-          
-          return;
-        }
+        // Determine the redirect route based on role
+        const role = completeProfile?.role || 'patient';
+        const redirectRoute = getDashboardRouteByRole(role);
+        console.log("[usePasswordLogin] Redirecting to:", redirectRoute);
         
-        // For other roles, use onSuccess callback which will handle redirection
+        // Call onSuccess callback if provided
         if (onSuccess) {
           onSuccess();
         }
+        
+        // Short delay to ensure state updates complete before navigation
+        setTimeout(() => {
+          window.location.href = redirectRoute;
+        }, 300);
       }
     } catch (err: any) {
       console.error('[usePasswordLogin] Unexpected error during login:', err);

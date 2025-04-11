@@ -1,15 +1,12 @@
 
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PasswordFields } from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
-import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";
-import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
-import { storeSession } from "@/lib/auth/sessionUtils";
 
 interface LoginFormProps {
   onRedirectStart?: () => void;
@@ -49,77 +46,14 @@ export const LoginForm = ({ onRedirectStart }: LoginFormProps) => {
       onRedirectStart();
     }
     
-    console.log('Login success, showing confirmation toast first');
+    console.log('Login success, preparing for redirection');
     
     // Show success toast immediately with longer duration
     toast({
       title: "Login successful",
-      description: "You have successfully logged in.",
+      description: "You have successfully logged in. Redirecting...",
       duration: 3000,
     });
-    
-    console.log('Login success, checking session...');
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('Session check error after login:', error);
-      return;
-    }
-
-    if (session?.user) {
-      console.log('Valid session found, proceeding with success callback');
-      
-      // Explicitly store the session to ensure it persists
-      storeSession(session);
-      
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-      
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          toast({
-            variant: "destructive",
-            title: "Profile Error",
-            description: "There was an error loading your profile. Please try again.",
-          });
-          return;
-        }
-        
-        // Set navigation flags
-        sessionStorage.setItem('login_successful', 'true');
-        
-        console.log('User role determined:', profile?.role);
-        
-        // For pharmacists, use direct URL navigation which is more reliable
-        if (profile?.role === 'pharmacist') {
-          const route = getDashboardRouteByRole(profile.role);
-          console.log(`Pharmacist login detected, redirecting to ${route}`);
-          
-          // Use a short delay to ensure session is stored and auth state is updated
-          setTimeout(() => {
-            window.location.href = route;
-          }, 500);
-        }
-      } catch (err) {
-        console.error('Error during role check:', err);
-        toast({
-          variant: "destructive",
-          title: "Navigation Error",
-          description: "There was an error redirecting you. Please try again.",
-        });
-      }
-    } else {
-      console.error('No session found after successful login');
-      toast({
-        variant: "destructive",
-        title: "Login Error",
-        description: "Failed to establish session. Please try again.",
-      });
-    }
   };
 
   const handleBackToEmail = () => {

@@ -1,23 +1,20 @@
 
 import { useState, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile, userRole } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
-  const navigate = useNavigate();
   
   // Effect to handle authentication state changes
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !redirecting) {
       console.log("[Login] User authenticated, preparing redirect with role:", profile?.role || userRole);
       setRedirecting(true);
       
@@ -27,14 +24,10 @@ const Login = () => {
       
       console.log("[Login] Redirecting to:", redirectUrl, "for role:", role);
       
-      // Set a redirect indicator in session storage
-      sessionStorage.setItem('login_successful', 'true');
-      sessionStorage.setItem('skip_dashboard_redirect', 'true');
-      
-      // Force direct URL navigation for all users to ensure clean redirect
+      // Force direct URL navigation for clean redirect
       window.location.href = redirectUrl;
     }
-  }, [isAuthenticated, profile, userRole, navigate]);
+  }, [isAuthenticated, profile, userRole, redirecting]);
   
   // Show loading state when initial auth check is happening
   if (isLoading && !isAuthenticated) {
@@ -69,27 +62,6 @@ const Login = () => {
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="flex flex-col items-center gap-2">
-            {isAuthenticated && (
-              <Button 
-                onClick={() => {
-                  const role = profile?.role || userRole || 'patient';
-                  window.location.href = getDashboardRouteByRole(role);
-                }}
-                variant="outline" 
-                className="w-full"
-              >
-                Force Navigation to Dashboard
-              </Button>
-            )}
-            <Button 
-              onClick={() => window.location.reload()}
-              variant="outline" 
-              className="w-full"
-            >
-              Reload Page
-            </Button>
-          </CardContent>
         </Card>
       </div>
     );
