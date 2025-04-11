@@ -1,18 +1,50 @@
 
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
-import { useLoginManager } from "@/hooks/auth/useLoginManager";
 import { Button } from "@/components/ui/button";
+import { useLoginManager } from "@/hooks/auth/useLoginManager";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, profile } = useAuth();
+  const { isAuthenticated, isLoading, profile, userRole } = useAuth();
   const { redirected } = useLoginManager(); // Use the login manager to handle redirects
+  const navigate = useNavigate();
+  const [loadingTime, setLoadingTime] = useState(0);
+
+  // Timer for tracking loading time
+  useEffect(() => {
+    let timer: number | null = null;
+    
+    if (isAuthenticated && !redirected && isLoading) {
+      timer = window.setInterval(() => {
+        setLoadingTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      setLoadingTime(0);
+    }
+    
+    return () => {
+      if (timer) window.clearInterval(timer);
+    };
+  }, [isAuthenticated, redirected, isLoading]);
+
+  // Handle manual navigation when auto-redirect fails
+  const handleManualNavigation = () => {
+    const role = profile?.role || userRole || 'user';
+    const dashboardRoute = role === 'pharmacist' 
+      ? '/dashboard?view=pharmacy&section=dashboard'
+      : getDashboardRouteByRole(role);
+      
+    // Use window.location for a clean redirect
+    window.location.href = dashboardRoute;
+  };
 
   // Show loading state
-  if (isLoading) {
+  if (isLoading && !isAuthenticated) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
@@ -37,19 +69,26 @@ const Login = () => {
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader className="h-8 w-8 animate-spin text-primary" />
+              <Loader className="h-12 w-12 animate-spin text-primary" />
               <CardTitle className="text-2xl">Redirecting...</CardTitle>
               <CardDescription>
                 Please wait while we redirect you to the appropriate dashboard
               </CardDescription>
-              <div className="text-xs text-muted-foreground">
-                <p>Role: {profile?.role || 'Unknown'} | Auth: {isAuthenticated ? 'Yes' : 'No'}</p>
-              </div>
+              {loadingTime > 2 && (
+                <div className="text-xs text-muted-foreground">
+                  <p>Role: {profile?.role || userRole || 'Unknown'} | Auth: {isAuthenticated ? 'Yes' : 'No'}</p>
+                </div>
+              )}
+              {loadingTime > 5 && (
+                <p className="text-amber-500 text-sm">
+                  Taking longer than expected... ({loadingTime}s)
+                </p>
+              )}
             </div>
           </CardHeader>
           <CardFooter className="flex flex-col gap-2 items-center justify-center">
             <Button 
-              onClick={() => window.location.href = "/dashboard"}
+              onClick={handleManualNavigation}
               variant="default" 
               className="text-sm"
             >

@@ -98,6 +98,12 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         if (onSuccess) {
           onSuccess();
         } else {
+          // For pharmacists, use direct URL navigation for reliable routing with parameters
+          if (profile?.role === 'pharmacist') {
+            window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+            return;
+          }
+          
           // Determine where to navigate based on role
           const role = completeProfile?.role || 'user';
           const route = getDashboardRouteByRole(role);

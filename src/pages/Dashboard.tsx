@@ -109,7 +109,21 @@ const Dashboard = () => {
       });
       navigate("/login", { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate, userRole]);
+    
+    // If we're a pharmacist, make sure we're on the correct view
+    if (isAuthenticated && !isLoading && (profile?.role === 'pharmacist' || userRole === 'pharmacist' || isPharmacist)) {
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('view');
+      const section = params.get('section');
+      
+      if (view !== 'pharmacy' || section !== 'dashboard') {
+        console.log("[Dashboard][DEBUG] Pharmacist detected, forcing correct view parameters");
+        // Set skip flag to prevent redirect loops
+        sessionStorage.setItem('skip_dashboard_redirect', 'true');
+        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+      }
+    }
+  }, [isAuthenticated, isLoading, navigate, userRole, profile, isPharmacist]);
   
   // Add automatic retry mechanism for profile detection
   useEffect(() => {
