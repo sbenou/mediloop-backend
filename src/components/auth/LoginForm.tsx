@@ -96,24 +96,13 @@ export const LoginForm = ({ onRedirectStart }: LoginFormProps) => {
         
         console.log('User role determined:', profile?.role);
         
-        // Force a direct URL change for pharmacists instead of using React Router navigation
-        if (profile?.role === 'pharmacist') {
-          // Short delay to ensure session is stored and flags are set
-          setTimeout(() => {
-            window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-          }, 500);
-          return;
-        }
-      
-        // Use the utility to get the appropriate dashboard route for other roles
-        const route = getDashboardRouteByRole(profile?.role);
-        console.log(`Redirecting user with role ${profile?.role} to ${route}`);
-        
-        // Use window.location for full page refresh with slight delay
+        // Use a short delay to ensure session is stored and auth state is updated
         setTimeout(() => {
+          // Force a direct URL change for all users to avoid React Router navigation issues
+          const route = getDashboardRouteByRole(profile?.role);
+          console.log(`Redirecting user with role ${profile?.role} to ${route}`);
           window.location.href = route;
         }, 500);
-        
       } catch (err) {
         console.error('Error during role check:', err);
         toast({

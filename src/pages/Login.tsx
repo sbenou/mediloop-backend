@@ -1,25 +1,28 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
   
+  // Effect to handle authentication state changes
+  useEffect(() => {
+    if (isAuthenticated && profile) {
+      setRedirecting(true);
+    }
+  }, [isAuthenticated, profile]);
+  
   // Helper to determine the correct redirect URL based on user role
   const getRedirectUrl = () => {
-    if (profile?.role === 'pharmacist') {
-      return '/dashboard?view=pharmacy&section=dashboard';
-    }
-    if (profile?.role === 'doctor') {
-      return '/dashboard?section=dashboard';
-    }
-    return '/dashboard';
+    // Use profile.role as the source of truth when available
+    return getDashboardRouteByRole(profile?.role);
   };
 
   // Show loading state when initial auth check is happening
@@ -32,7 +35,7 @@ const Login = () => {
               <Loader className="h-8 w-8 animate-spin text-primary" />
               <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
-                Please wait while we load your profile
+                Please wait while we verify your authentication status
               </CardDescription>
             </div>
           </CardHeader>
@@ -55,7 +58,8 @@ const Login = () => {
               </CardDescription>
             </div>
           </CardHeader>
-          {isAuthenticated && <Navigate to={getRedirectUrl()} replace />}
+          {/* Only redirect when we have a complete profile */}
+          {isAuthenticated && profile && <Navigate to={getRedirectUrl()} replace />}
         </Card>
       </div>
     );

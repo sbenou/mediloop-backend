@@ -76,8 +76,9 @@ export const useSessionManagement = () => {
         // Try to create profile
         try {
           const userData = session.user;
-          // Never default to 'user' role - use 'patient' instead
-          const role = userData.user_metadata?.role || 'patient';
+          // Never default to 'user' role - always use 'patient' instead
+          const role = userData.user_metadata?.role === 'user' ? 'patient' : 
+                      (userData.user_metadata?.role || 'patient');
           const fullName = userData.user_metadata?.full_name || userData.user_metadata?.name || 
                           userData.email?.split('@')[0] || 'User';
           const email = userData.email || '';
@@ -132,7 +133,7 @@ export const useSessionManagement = () => {
         }
         
         // If we still have the user but no profile, create a minimal profile in state
-        // Create a minimal profile with 'patient' role, not 'user'
+        // Create a minimal profile with 'patient' role, never 'user'
         const minimalProfile = {
           id: session.user.id,
           role: 'patient',

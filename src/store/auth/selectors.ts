@@ -15,7 +15,8 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    // Return role from profile, or default to 'patient' if authenticated but no role
+    // Return role from profile as highest priority source of truth
+    // Never default to 'user' as we've migrated to using 'patient' instead
     return auth.profile?.role || (auth.user ? 'patient' : null);
   },
 });
@@ -41,6 +42,7 @@ export const isPharmacistSelector = selector({
   key: 'isPharmacist',
   get: ({ get }) => {
     const auth = get(authState);
+    // Be explicit about checking for 'pharmacist' role
     return auth.profile?.role === 'pharmacist';
   },
 });
