@@ -77,7 +77,7 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm onRedirectStart={() => setRedirecting(true)} />
+          <LoginForm />
         </CardContent>
         <CardFooter className="flex flex-col items-start space-y-2">
           <div className="text-sm text-muted-foreground">
