@@ -7,7 +7,6 @@ export const isAuthenticatedSelector = selector({
   get: ({ get }) => {
     const auth = get(authState);
     // Consider authenticated if we have a user object
-    // This allows users to continue even if profile fetch fails
     return !!auth.user;
   },
 });
@@ -16,8 +15,8 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    // Return role even during loading if we have it
-    return auth.profile?.role || null;
+    // Return role from profile, or default to 'user' if authenticated but no role
+    return auth.profile?.role || (auth.user ? 'user' : null);
   },
 });
 

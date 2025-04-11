@@ -1,174 +1,18 @@
 
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { useLoginManager } from "@/hooks/auth/useLoginManager";
-import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 import { Button } from "@/components/ui/button";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, profile, user } = useAuth();
+  const { isAuthenticated, isLoading, profile } = useAuth();
   const { redirected } = useLoginManager(); // Use the login manager to handle redirects
-  const navigate = useNavigate();
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const [manualRedirectInProgress, setManualRedirectInProgress] = useState(false);
-  const [loadingTime, setLoadingTime] = useState(0); // Track loading time
-  
-  // Clear any stale flags immediately on mount to prevent false loading states
-  useEffect(() => {
-    // Clear any stale login flags if we don't have an auth token
-    const hasStoredToken = localStorage.getItem(`sb-${window.location.hostname.split('.')[0]}-auth-token`) !== null;
-    const hasLoginSuccessFlag = sessionStorage.getItem('login_successful') === 'true';
-    
-    console.log("[Login][DEBUG] Initial state check:", {
-      hasStoredToken,
-      hasLoginSuccessFlag,
-      isAuthenticated,
-      isLoading,
-      userId: user?.id,
-      profileId: profile?.id
-    });
-    
-    // If login_successful flag is set but there's no auth token, clear the flag
-    if (hasLoginSuccessFlag && !hasStoredToken) {
-      console.log("[Login][DEBUG] Detected stale login_successful flag without auth token, clearing flags");
-      sessionStorage.removeItem('login_successful');
-      sessionStorage.removeItem('skip_dashboard_redirect');
-    }
-  }, [isAuthenticated, user, profile]);
-  
-  // Increment loading time counter every second
-  useEffect(() => {
-    let timer: number;
-    if (isLoading && isAuthenticated) {
-      timer = window.setInterval(() => {
-        setLoadingTime(prev => prev + 1);
-      }, 1000);
-    }
-    return () => window.clearInterval(timer);
-  }, [isLoading, isAuthenticated]);
-  
-  // Force redirect after extended loading time
-  useEffect(() => {
-    if (loadingTime > 5 && isAuthenticated && user) {
-      console.log("[Login][DEBUG] Loading time exceeded threshold, forcing redirect");
-      const dashboardUrl = "/dashboard";
-      window.location.href = dashboardUrl;
-    }
-  }, [loadingTime, isAuthenticated, user]);
-  
-  // Check if we just attempted a login
-  const loginSuccessful = sessionStorage.getItem('login_successful') === 'true';
-  
-  // Debug logging on component mount
-  useEffect(() => {
-    console.log("[Login][DEBUG] Login page mounted", {
-      isAuthenticated,
-      isLoading,
-      profile: profile?.role,
-      userId: user?.id,
-      profileComplete: !!profile,
-      redirected,
-      redirectAttempted,
-      manualRedirectInProgress,
-      loginSuccessful,
-      pathname: window.location.pathname,
-      search: window.location.search,
-    });
-    
-    // Log session storage state
-    console.log("[Login][DEBUG] Session storage state:", {
-      login_successful: sessionStorage.getItem('login_successful'),
-      skip_dashboard_redirect: sessionStorage.getItem('skip_dashboard_redirect'),
-      dashboard_redirect_count: sessionStorage.getItem('dashboard_redirect_count'),
-      dashboard_mount_count: sessionStorage.getItem('dashboard_mount_count')
-    });
-  }, [isAuthenticated, isLoading, profile, user, redirected, redirectAttempted, manualRedirectInProgress, loginSuccessful]);
-  
-  // Direct redirection for already authenticated users
-  useEffect(() => {
-    // Only redirect if:
-    // 1. User is authenticated
-    // 2. We have a profile
-    // 3. We haven't already redirected or attempted to
-    // 4. No manual redirect is in progress
-    // 5. Not immediately after a successful login (which has its own redirect)
-    if (isAuthenticated && profile && !redirected && !redirectAttempted && !manualRedirectInProgress && !loginSuccessful) {
-      setRedirectAttempted(true);
-      setManualRedirectInProgress(true);
-      const role = profile.role;
-      
-      console.log(`[Login][DEBUG] Authenticated user detected, attempting redirect for role: ${role}`, {
-        isAuthenticated,
-        profileRole: role,
-        redirected,
-        redirectAttempted,
-        loginSuccessful
-      });
-      
-      // Set flag to indicate direct login navigation and ensure skip_dashboard_redirect is set
-      sessionStorage.setItem('skip_dashboard_redirect', 'true');
-      
-      // For pharmacists, use a more direct approach to ensure correct redirect
-      if (role === 'pharmacist') {
-        console.log(`[Login][DEBUG] Pharmacist user detected, using direct navigation to pharmacy dashboard`);
-        // Force a small delay to ensure all state updates complete
-        setTimeout(() => {
-          console.log(`[Login][DEBUG] Executing pharmacist redirect to: /dashboard?view=pharmacy&section=dashboard`);
-          window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-        }, 150);
-        return;
-      }
-      
-      // Get the correct route for other user roles
-      const route = getDashboardRouteByRole(role);
-      console.log(`[Login][DEBUG] User already authenticated with role ${role}, redirecting to: ${route}`);
-      
-      // Use window.location for a full page refresh to ensure clean state
-      setTimeout(() => {
-        console.log(`[Login][DEBUG] Executing redirect to: ${route}`);
-        window.location.href = route;
-      }, 150);
-    }
-  }, [isAuthenticated, profile, navigate, redirected, redirectAttempted, manualRedirectInProgress, loginSuccessful]);
-  
-  // Clean up the login flag once we've processed it
-  useEffect(() => {
-    // Small delay to ensure redirect has time to process
-    if (loginSuccessful) {
-      console.log(`[Login][DEBUG] Login successful flag detected, will clean up after redirect`);
-      const timer = setTimeout(() => {
-        console.log(`[Login][DEBUG] Removing login_successful flag`);
-        sessionStorage.removeItem('login_successful');
-      }, 2000); // Increased timeout to give more time for the redirection
-      
-      return () => clearTimeout(timer);
-    }
-  }, [loginSuccessful]);
-  
-  // Forced navigation function for manual redirection
-  const handleForceRedirect = () => {
-    // Emergency fallback for when profile fetch is stuck but we have a user
-    if (isAuthenticated && user) {
-      // Clear any flags that might be causing loops
-      sessionStorage.removeItem('login_successful');
-      sessionStorage.setItem('skip_dashboard_redirect', 'true');
-      
-      console.log("[Login][DEBUG] Manual redirect initiated by user");
-      
-      // Navigate directly to dashboard as fallback
-      window.location.href = "/dashboard";
-    }
-  };
 
-  // Show loading state only when actually loading or redirecting after login
-  // Check for both isLoading AND authenticated state or loginSuccessful flag
-  const showLoadingState = (isLoading && isAuthenticated) || manualRedirectInProgress || (loginSuccessful && isAuthenticated);
-
-  if (showLoadingState) {
+  // Show loading state
+  if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
@@ -177,28 +21,10 @@ const Login = () => {
               <Loader className="h-8 w-8 animate-spin text-primary" />
               <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
-                {loginSuccessful ? "Login successful! Redirecting you to your dashboard..." : "Please wait while we load your profile"}
+                Please wait while we load your profile
               </CardDescription>
-              {loadingTime > 3 && (
-                <p className="text-sm text-muted-foreground">Taking longer than expected... {loadingTime}s</p>
-              )}
             </div>
           </CardHeader>
-          <CardFooter className="flex flex-col gap-2 items-center justify-center">
-            <Button
-              onClick={handleForceRedirect}
-              variant="default"
-              className="text-sm"
-            >
-              Continue to dashboard
-            </Button>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-xs text-blue-500 hover:underline mt-2"
-            >
-              Reload page
-            </button>
-          </CardFooter>
         </Card>
       </div>
     );
@@ -218,13 +44,12 @@ const Login = () => {
               </CardDescription>
               <div className="text-xs text-muted-foreground">
                 <p>Role: {profile?.role || 'Unknown'} | Auth: {isAuthenticated ? 'Yes' : 'No'}</p>
-                <p>User ID: {user?.id || 'None'} | Profile ID: {profile?.id || 'None'}</p>
               </div>
             </div>
           </CardHeader>
           <CardFooter className="flex flex-col gap-2 items-center justify-center">
             <Button 
-              onClick={handleForceRedirect}
+              onClick={() => window.location.href = "/dashboard"}
               variant="default" 
               className="text-sm"
             >
