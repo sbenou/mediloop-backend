@@ -31,6 +31,10 @@ export const PasswordFields = ({
     await handleLogin(password, rememberMe);
   };
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -38,9 +42,8 @@ export const PasswordFields = ({
         <PasswordInput
           id="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={handlePasswordChange}
           disabled={isLoading}
-          required
         />
       </div>
       

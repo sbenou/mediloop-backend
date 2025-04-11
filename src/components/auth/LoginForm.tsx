@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
@@ -19,23 +19,9 @@ export const LoginForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Log when the component mounts for debugging
-  useEffect(() => {
-    console.log("[LoginForm][DEBUG] LoginForm component mounted");
-    
-    // Check for any existing session storage flags
-    console.log("[LoginForm][DEBUG] Session storage state:", {
-      login_successful: sessionStorage.getItem('login_successful'),
-      skip_dashboard_redirect: sessionStorage.getItem('skip_dashboard_redirect'),
-      dashboard_redirect_count: sessionStorage.getItem('dashboard_redirect_count'),
-      dashboard_mount_count: sessionStorage.getItem('dashboard_mount_count'),
-      pharmacy_redirect_count: sessionStorage.getItem('pharmacy_redirect_count'),
-    });
-  }, []);
-
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[LoginForm][DEBUG] Continue clicked with email:', email);
+    console.log('Continue clicked with email:', email);
 
     if (!email) {
       toast({
@@ -51,12 +37,12 @@ export const LoginForm = () => {
   };
 
   const handleForgotPassword = () => {
-    console.log('[LoginForm][DEBUG] Forgot password clicked');
+    console.log('Forgot password clicked');
     setShowResetOptions(true);
   };
 
   const handleLoginSuccess = async () => {
-    console.log('[LoginForm][DEBUG] Login success, showing confirmation toast first');
+    console.log('Login success, showing confirmation toast first');
     
     // Show success toast immediately with longer duration
     toast({
@@ -65,16 +51,16 @@ export const LoginForm = () => {
       duration: 8000, // Show for 8 seconds to ensure it's very visible
     });
     
-    console.log('[LoginForm][DEBUG] Login success, checking session...');
+    console.log('Login success, checking session...');
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error('[LoginForm][DEBUG] Session check error after login:', error);
+      console.error('Session check error after login:', error);
       return;
     }
 
     if (session?.user) {
-      console.log('[LoginForm][DEBUG] Valid session found, proceeding with success callback');
+      console.log('Valid session found, proceeding with success callback');
       
       // Explicitly store the session to ensure it persists
       storeSession(session);
@@ -88,7 +74,7 @@ export const LoginForm = () => {
           .single();
       
         if (profileError) {
-          console.error('[LoginForm][DEBUG] Error fetching profile:', profileError);
+          console.error('Error fetching profile:', profileError);
           toast({
             variant: "destructive",
             title: "Profile Error",
@@ -96,22 +82,6 @@ export const LoginForm = () => {
           });
           return;
         }
-      
-        if (!profile) {
-          console.error('[LoginForm][DEBUG] No profile found for user:', session.user.id);
-          toast({
-            variant: "destructive", 
-            title: "Profile Missing",
-            description: "Your user account doesn't have an associated profile. Please contact support.",
-          });
-          return;
-        }
-      
-        console.log('[LoginForm][DEBUG] Successfully loaded profile:', {
-          userId: session.user.id,
-          role: profile.role,
-          profileFields: Object.keys(profile)
-        });
       
         // Set navigation flags
         sessionStorage.setItem('login_successful', 'true');
@@ -122,14 +92,14 @@ export const LoginForm = () => {
         sessionStorage.removeItem('dashboard_mount_count');
         sessionStorage.removeItem('pharmacy_redirect_count');
       
-        console.log('[LoginForm][DEBUG] User role determined:', profile?.role);
+        console.log('User role determined:', profile?.role);
         
         // Ensure we have a slight delay to allow the toast to be seen
         setTimeout(() => {
           // Special handling for pharmacists to ensure correct route loading
           if (profile?.role === 'pharmacist') {
-            console.log('[LoginForm][DEBUG] Pharmacist detected, using direct navigation');
-            console.log('[LoginForm][DEBUG] Navigating to: /dashboard?view=pharmacy&section=dashboard');
+            console.log('Pharmacist detected, using direct navigation');
+            console.log('Navigating to: /dashboard?view=pharmacy&section=dashboard');
             
             // Use a full page reload for clean state
             window.location.href = '/dashboard?view=pharmacy&section=dashboard';
@@ -138,14 +108,14 @@ export const LoginForm = () => {
         
           // Use the utility to get the appropriate dashboard route for other roles
           const route = getDashboardRouteByRole(profile?.role);
-          console.log(`[LoginForm][DEBUG] Redirecting user with role ${profile?.role} to ${route}`);
+          console.log(`Redirecting user with role ${profile?.role} to ${route}`);
         
           // Use window.location for full page refresh
           window.location.href = route;
         }, 1500); // Increased delay to ensure toast is visible
       
       } catch (err) {
-        console.error('[LoginForm][DEBUG] Error during role check:', err);
+        console.error('Error during role check:', err);
         toast({
           variant: "destructive",
           title: "Navigation Error",
@@ -153,7 +123,7 @@ export const LoginForm = () => {
         });
       }
     } else {
-      console.error('[LoginForm][DEBUG] No session found after successful login');
+      console.error('No session found after successful login');
       toast({
         variant: "destructive",
         title: "Login Error",
