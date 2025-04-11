@@ -23,6 +23,12 @@ export const useAuth = () => {
   // For debugging - track inconsistent auth state
   const hasInconsistentState = !!user && !profile && !isLoading;
   
+  // Check if user has a specific permission
+  const hasPermission = useCallback((permission: string) => {
+    if (isLoading) return false;
+    return permissions.includes(permission);
+  }, [permissions, isLoading]);
+  
   // Manual profile fetch function for cases where profile is missing
   const fetchProfileManually = useCallback(async () => {
     if (!user?.id || profileLoadAttempted) return;
@@ -93,6 +99,7 @@ export const useAuth = () => {
     userRole,
     isPharmacist,
     permissions,
+    hasPermission,
     fetchProfileManually,
   };
 };
