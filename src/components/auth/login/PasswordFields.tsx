@@ -31,8 +31,9 @@ export const PasswordFields = ({
     await handleLogin(password, rememberMe);
   };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
+  // The correct way to handle password change since PasswordInput expects a string parameter
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
   };
 
   return (
