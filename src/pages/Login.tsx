@@ -1,28 +1,52 @@
 
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
+  const navigate = useNavigate();
   
   // Effect to handle authentication state changes
   useEffect(() => {
     if (isAuthenticated && profile) {
+      console.log("[Login] User authenticated with profile, preparing redirect for role:", profile.role);
       setRedirecting(true);
+      
+      const redirectUrl = getDashboardRouteByRole(profile.role);
+      
+      // Force direct URL navigation for pharmacists
+      if (profile.role === 'pharmacist') {
+        console.log("[Login] Pharmacist detected, using direct URL navigation to:", redirectUrl);
+        // Short delay to ensure state updates before navigation
+        const redirectTimeout = setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 100);
+        
+        return () => clearTimeout(redirectTimeout);
+      }
     }
-  }, [isAuthenticated, profile]);
+  }, [isAuthenticated, profile, navigate]);
   
-  // Helper to determine the correct redirect URL based on user role
-  const getRedirectUrl = () => {
-    // Use profile.role as the source of truth when available
-    return getDashboardRouteByRole(profile?.role);
+  // Handle manual redirect
+  const handleForceRedirect = () => {
+    const role = profile?.role || 'patient';
+    const redirectUrl = getDashboardRouteByRole(role);
+    console.log("[Login] Forcing redirect to:", redirectUrl);
+    window.location.href = redirectUrl;
+  };
+  
+  // Handle page reload
+  const handleReload = () => {
+    window.location.reload();
   };
 
   // Show loading state when initial auth check is happening
@@ -58,8 +82,22 @@ const Login = () => {
               </CardDescription>
             </div>
           </CardHeader>
-          {/* Only redirect when we have a complete profile */}
-          {isAuthenticated && profile && <Navigate to={getRedirectUrl()} replace />}
+          <CardContent className="flex flex-col items-center gap-2">
+            {isAuthenticated && profile && redirecting && (
+              <>
+                <Button onClick={handleForceRedirect} variant="outline" className="w-full">
+                  Force Navigation to Dashboard
+                </Button>
+                <Button onClick={handleReload} variant="outline" className="w-full">
+                  Reload Page
+                </Button>
+              </>
+            )}
+            {/* Only redirect through React Router when not a pharmacist */}
+            {isAuthenticated && profile && profile.role !== 'pharmacist' && (
+              <Navigate to={getDashboardRouteByRole(profile.role)} replace />
+            )}
+          </CardContent>
         </Card>
       </div>
     );

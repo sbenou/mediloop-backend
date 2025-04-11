@@ -16,8 +16,14 @@ export const userRoleSelector = selector({
   get: ({ get }) => {
     const auth = get(authState);
     // Return role from profile as highest priority source of truth
-    // Never default to 'user' as we've migrated to using 'patient' instead
-    return auth.profile?.role || (auth.user ? 'patient' : null);
+    // Always convert 'user' to 'patient' as we've migrated away from 'user' role
+    const profileRole = auth.profile?.role;
+    
+    if (!profileRole && auth.user) {
+      return 'patient';
+    }
+    
+    return profileRole === 'user' ? 'patient' : profileRole || null;
   },
 });
 

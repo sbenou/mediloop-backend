@@ -72,7 +72,6 @@ export const LoginForm = ({ onRedirectStart }: LoginFormProps) => {
       // Explicitly store the session to ensure it persists
       storeSession(session);
       
-      // Check user role and redirect accordingly
       try {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -89,20 +88,22 @@ export const LoginForm = ({ onRedirectStart }: LoginFormProps) => {
           });
           return;
         }
-      
+        
         // Set navigation flags
         sessionStorage.setItem('login_successful', 'true');
-        sessionStorage.setItem('skip_dashboard_redirect', 'true');
         
         console.log('User role determined:', profile?.role);
         
-        // Use a short delay to ensure session is stored and auth state is updated
-        setTimeout(() => {
-          // Force a direct URL change for all users to avoid React Router navigation issues
-          const route = getDashboardRouteByRole(profile?.role);
-          console.log(`Redirecting user with role ${profile?.role} to ${route}`);
-          window.location.href = route;
-        }, 500);
+        // For pharmacists, use direct URL navigation which is more reliable
+        if (profile?.role === 'pharmacist') {
+          const route = getDashboardRouteByRole(profile.role);
+          console.log(`Pharmacist login detected, redirecting to ${route}`);
+          
+          // Use a short delay to ensure session is stored and auth state is updated
+          setTimeout(() => {
+            window.location.href = route;
+          }, 500);
+        }
       } catch (err) {
         console.error('Error during role check:', err);
         toast({
@@ -185,4 +186,4 @@ export const LoginForm = ({ onRedirectStart }: LoginFormProps) => {
       )}
     </div>
   );
-}
+};

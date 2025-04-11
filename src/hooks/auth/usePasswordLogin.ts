@@ -3,10 +3,11 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { AuthError } from '@supabase/supabase-js';
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { storeSession } from '@/lib/auth/sessionUtils';
+import { getDashboardRouteByRole } from '@/utils/auth/getDashboardRouteByRole';
 
 interface UsePasswordLoginResult {
   isLoading: boolean;
@@ -88,6 +89,15 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         // Call onSuccess callback if provided - this will handle navigation
         if (onSuccess) {
           onSuccess();
+        }
+        
+        // Handle special case for pharmacist
+        if (completeProfile?.role === 'pharmacist') {
+          console.log('[usePasswordLogin] Pharmacist profile detected, preparing special redirect');
+          const redirectUrl = getDashboardRouteByRole('pharmacist');
+          
+          // We won't navigate here to avoid race conditions with onSuccess,
+          // which already handles redirection for pharmacists
         }
       }
     } catch (err: any) {

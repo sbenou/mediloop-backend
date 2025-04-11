@@ -8,7 +8,7 @@ export const getDashboardRouteByRole = (role?: string): string => {
     return '/dashboard';
   }
   
-  // Convert role to lowercase and ensure 'user' is migrated to 'patient'
+  // Normalize role - always convert 'user' to 'patient'
   const normalizedRole = role.toLowerCase() === 'user' ? 'patient' : role.toLowerCase();
   
   switch (normalizedRole) {
