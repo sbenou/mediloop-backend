@@ -2,7 +2,44 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, safeQueryResult } from '@/types/user';
-import { fetchUserPermissions } from '@/lib/auth/sessionUtils';
+
+// Define fetchUserPermissions function directly here if it's missing from sessionUtils
+const fetchUserPermissions = async (roleId: string): Promise<string[]> => {
+  try {
+    console.log("[fetchUserPermissions][DEBUG] Fetching permissions for role:", roleId);
+    
+    if (!roleId) {
+      console.log("[fetchUserPermissions][DEBUG] No role ID provided, returning empty permissions array");
+      return [];
+    }
+    
+    // Fetch permissions from role_permissions table
+    const { data, error } = await supabase
+      .from('role_permissions')
+      .select('permission_id')
+      .eq('role_id', roleId);
+      
+    if (error) {
+      console.error("[fetchUserPermissions][DEBUG] Error fetching permissions:", error);
+      return [];
+    }
+    
+    if (!data || data.length === 0) {
+      console.log("[fetchUserPermissions][DEBUG] No permissions found for role:", roleId);
+      return [];
+    }
+    
+    // Extract permission IDs from the result
+    const permissions = data.map(item => item.permission_id);
+    
+    console.log(`[fetchUserPermissions][DEBUG] Found ${permissions.length} permissions for role ${roleId}`);
+    
+    return permissions;
+  } catch (error) {
+    console.error("[fetchUserPermissions][DEBUG] Exception in fetchUserPermissions:", error);
+    return [];
+  }
+};
 
 export const useProfileFetch = () => {
   const [isLoading, setIsLoading] = useState(false);

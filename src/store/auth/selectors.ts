@@ -15,8 +15,15 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    // Return role from profile with better debugging
-    console.log("[userRoleSelector][DEBUG] Extracting role:", auth.profile?.role);
+    // Enhanced debugging for role extraction
+    console.log("[userRoleSelector][DEBUG] Auth state:", {
+      hasUser: !!auth.user,
+      hasProfile: !!auth.profile,
+      profileRole: auth.profile?.role,
+      profileType: auth.profile ? typeof auth.profile.role : 'undefined'
+    });
+    
+    // More robust role extraction with fallbacks
     return auth.profile?.role || null;
   },
 });
@@ -42,12 +49,19 @@ export const isPharmacistSelector = selector({
   key: 'isPharmacist',
   get: ({ get }) => {
     const auth = get(authState);
-    // Check explicitly for 'pharmacist' role with enhanced logging
-    const isPharmacist = auth.profile?.role === 'pharmacist';
-    console.log("[isPharmacistSelector][DEBUG] Role check:", {
-      role: auth.profile?.role,
-      isPharmacist
+    // More robust check for the pharmacist role with detailed logging
+    const profileRole = auth.profile?.role;
+    const isPharmacist = profileRole === 'pharmacist';
+    
+    console.log("[isPharmacistSelector][DEBUG] Pharmacist role check:", {
+      profileExists: !!auth.profile,
+      profileRole: profileRole,
+      roleType: typeof profileRole,
+      isPharmacist: isPharmacist,
+      directCheck: auth.profile?.role === 'pharmacist',
+      roleEquals: profileRole === 'pharmacist'
     });
+    
     return isPharmacist;
   },
 });
