@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { supabase, getSessionFromStorage, clearAllAuthStorage } from '@/lib/supabase';
 import { useProfileFetch } from './useProfileFetch';
@@ -77,9 +76,8 @@ export const useSessionManagement = () => {
         // Try to create profile
         try {
           const userData = session.user;
-          // Extract role from metadata or default to 'patient'
+          // Never default to 'user' role - use 'patient' instead
           const role = userData.user_metadata?.role || 'patient';
-          // Extract name from metadata or default to email prefix
           const fullName = userData.user_metadata?.full_name || userData.user_metadata?.name || 
                           userData.email?.split('@')[0] || 'User';
           const email = userData.email || '';
@@ -98,7 +96,7 @@ export const useSessionManagement = () => {
           if (createError) {
             console.error('[SessionManagement][DEBUG] Error creating profile:', createError);
             
-            // Try one more approach with direct insert if RPC fails
+            // Try direct insert approach
             const { error: directInsertError } = await supabase
               .from('profiles')
               .insert({
@@ -134,7 +132,7 @@ export const useSessionManagement = () => {
         }
         
         // If we still have the user but no profile, create a minimal profile in state
-        // This allows the user to continue using the app even if profile creation failed
+        // Create a minimal profile with 'patient' role, not 'user'
         const minimalProfile = {
           id: session.user.id,
           role: 'patient',
@@ -153,7 +151,7 @@ export const useSessionManagement = () => {
           pharmacist_stamp_url: null,
           pharmacist_signature_url: null,
           pharmacy_id: null,
-          phone_number: null, // Added the missing phone_number property
+          phone_number: null, 
           cns_card_front: null,
           cns_card_back: null,
           cns_number: null,
@@ -162,7 +160,7 @@ export const useSessionManagement = () => {
           updated_at: new Date().toISOString()
         };
         
-        console.log('[SessionManagement][DEBUG] Using minimal profile as fallback');
+        console.log('[SessionManagement][DEBUG] Using minimal profile as fallback with role: patient');
         
         setAuth({
           user: session.user,
@@ -172,7 +170,7 @@ export const useSessionManagement = () => {
         });
         
         toast({
-          variant: "default", // Changed from "warning" to "default" to match allowed values
+          variant: "default",
           title: "Profile Notice",
           description: "We're using a temporary profile. Some features may be limited.",
           duration: 5000,

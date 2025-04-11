@@ -3,7 +3,7 @@
  * Returns the correct dashboard route based on the user's role
  */
 export const getDashboardRouteByRole = (role?: string): string => {
-  // Default to patient dashboard
+  // Default to patient dashboard if no role is provided
   if (!role) {
     return '/dashboard';
   }
@@ -16,7 +16,6 @@ export const getDashboardRouteByRole = (role?: string): string => {
     case 'superadmin':
       return '/superadmin/dashboard';
     case 'patient':
-    case 'user':
     default:
       return '/dashboard';
   }

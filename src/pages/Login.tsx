@@ -8,15 +8,15 @@ import { Loader } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, userRole, profile } = useAuth();
+  const { isAuthenticated, isLoading, profile } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
   
   // Helper to determine the correct redirect URL based on user role
   const getRedirectUrl = () => {
-    if (profile?.role === 'pharmacist' || userRole === 'pharmacist') {
+    if (profile?.role === 'pharmacist') {
       return '/dashboard?view=pharmacy&section=dashboard';
     }
-    if (userRole === 'doctor') {
+    if (profile?.role === 'doctor') {
       return '/dashboard?section=dashboard';
     }
     return '/dashboard';

@@ -15,8 +15,8 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    // Return role from profile, or default to 'user' if authenticated but no role
-    return auth.profile?.role || (auth.user ? 'user' : null);
+    // Return role from profile, or default to 'patient' if authenticated but no role
+    return auth.profile?.role || (auth.user ? 'patient' : null);
   },
 });
 
