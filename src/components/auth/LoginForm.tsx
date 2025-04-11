@@ -48,7 +48,7 @@ export const LoginForm = () => {
     toast({
       title: "Login successful",
       description: "You have successfully logged in.",
-      duration: 8000, // Show for 8 seconds to ensure it's very visible
+      duration: 3000,
     });
     
     console.log('Login success, checking session...');
@@ -69,7 +69,7 @@ export const LoginForm = () => {
       try {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('*')  // Select all fields to ensure we get complete profile
+          .select('*')
           .eq('id', session.user.id)
           .single();
       
@@ -86,20 +86,12 @@ export const LoginForm = () => {
         // Set navigation flags
         sessionStorage.setItem('login_successful', 'true');
         sessionStorage.setItem('skip_dashboard_redirect', 'true');
-
-        // Clear any existing redirect counters
-        sessionStorage.removeItem('dashboard_redirect_count');
-        sessionStorage.removeItem('dashboard_mount_count');
-        sessionStorage.removeItem('pharmacy_redirect_count');
-      
+        
         console.log('User role determined:', profile?.role);
         
         // Force a direct URL change for pharmacists instead of using React Router navigation
         if (profile?.role === 'pharmacist') {
-          // For pharmacist, use a full page reload to ensure all state is reset
-          setTimeout(() => {
-            window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-          }, 1000); // Short delay to allow the toast to be visible
+          window.location.href = '/dashboard?view=pharmacy&section=dashboard';
           return;
         }
       
@@ -108,9 +100,7 @@ export const LoginForm = () => {
         console.log(`Redirecting user with role ${profile?.role} to ${route}`);
         
         // Use window.location for full page refresh
-        setTimeout(() => {
-          window.location.href = route;
-        }, 1000); // Short delay to allow the toast to be visible
+        window.location.href = route;
         
       } catch (err) {
         console.error('Error during role check:', err);
