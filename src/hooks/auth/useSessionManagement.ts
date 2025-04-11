@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { supabase, getSessionFromStorage, clearAllAuthStorage } from '@/lib/supabase';
 import { useProfileFetch } from './useProfileFetch';
@@ -12,7 +13,7 @@ export const useSessionManagement = () => {
   
   const updateAuthState = useCallback(async (session: any | null) => {
     if (!session?.user) {
-      console.log('[SessionManagement][DEBUG] No session or user, clearing auth state');
+      console.log('No session or user, clearing auth state');
       setAuth({
         user: null,
         profile: null,
@@ -38,18 +39,18 @@ export const useSessionManagement = () => {
         const { data: userData, error: userError } = await supabase.auth.getUser(session.access_token);
         
         if (userError) {
-          console.error('[SessionManagement][DEBUG] Token validation error:', userError);
+          console.error('Token validation error:', userError);
           throw userError;
         }
         
         if (!userData.user || userData.user.id !== session.user.id) {
-          console.error('[SessionManagement][DEBUG] User ID mismatch or missing user data');
+          console.error('User ID mismatch or missing user data');
           throw new Error('User identity validation failed');
         }
         
-        console.log('[SessionManagement][DEBUG] Token validation successful for user:', userData.user.id);
+        console.log('Token validation successful for user:', userData.user.id);
       } catch (tokenError) {
-        console.error('[SessionManagement][DEBUG] Token validation failed:', tokenError);
+        console.error('Token validation failed:', tokenError);
         // Clear all auth storage to remove invalid tokens
         clearAllAuthStorage();
         setAuth({
@@ -71,53 +72,26 @@ export const useSessionManagement = () => {
       const { profile, permissions } = await fetchAndSetProfile(session.user.id);
 
       if (!profile) {
-        console.log('[SessionManagement][DEBUG] No profile found after fetch, creating one');
-        
-        // Try to create profile
+        console.error('No profile found after fetch, trying to create one');
+        // Try to create profile one last time if it doesn't exist
         try {
           const userData = session.user;
-          // Never default to 'user' role - always use 'patient' instead
-          const role = userData.user_metadata?.role === 'user' ? 'patient' : 
-                      (userData.user_metadata?.role || 'patient');
-          const fullName = userData.user_metadata?.full_name || userData.user_metadata?.name || 
-                          userData.email?.split('@')[0] || 'User';
-          const email = userData.email || '';
+          const role = userData.user_metadata?.role || 'patient';
+          const fullName = userData.user_metadata?.full_name || userData.user_metadata?.name || 'User';
           
-          console.log('[SessionManagement][DEBUG] Creating profile with role:', role);
-          
-          // Create profile using secure RPC function
-          const { error: createError } = await supabase.rpc('create_profile_secure', {
+          await supabase.rpc('create_profile_secure', {
             user_id: userData.id,
             user_role: role,
             user_full_name: fullName,
-            user_email: email,
+            user_email: userData.email || '',
             user_license_number: userData.user_metadata?.license_number || null,
           });
           
-          if (createError) {
-            console.error('[SessionManagement][DEBUG] Error creating profile:', createError);
-            
-            // Try direct insert approach
-            const { error: directInsertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: userData.id,
-                role: role,
-                full_name: fullName,
-                email: email
-              });
-              
-            if (directInsertError) {
-              console.error('[SessionManagement][DEBUG] Direct insert also failed:', directInsertError);
-              throw directInsertError;
-            }
-          }
-          
-          // Try to fetch the newly created profile
+          // Try to fetch again after creation
           const retryFetch = await fetchAndSetProfile(session.user.id);
           
           if (retryFetch.profile) {
-            console.log('[SessionManagement][DEBUG] Successfully created and fetched profile');
+            console.log('Successfully created and fetched profile on retry');
             setAuth({
               user: session.user,
               profile: retryFetch.profile,
@@ -126,61 +100,37 @@ export const useSessionManagement = () => {
             });
             return;
           } else {
-            console.error('[SessionManagement][DEBUG] Still no profile after creation attempt');
+            console.error('Still no profile after retry creation');
           }
-        } catch (createError) {
-          console.error('[SessionManagement][DEBUG] Error creating profile:', createError);
+        } catch (retryError) {
+          console.error('Error in profile creation retry:', retryError);
         }
         
-        // If we still have the user but no profile, create a minimal profile in state
-        // Create a minimal profile with 'patient' role, never 'user'
-        const minimalProfile = {
-          id: session.user.id,
-          role: 'patient',
-          full_name: session.user.email?.split('@')[0] || 'User',
-          email: session.user.email,
-          role_id: null,
-          // Add other required fields with null values
-          avatar_url: null,
-          auth_method: 'password',
-          is_blocked: false,
-          city: null,
-          date_of_birth: null,
-          license_number: null,
-          doctor_stamp_url: null,
-          doctor_signature_url: null,
-          pharmacist_stamp_url: null,
-          pharmacist_signature_url: null,
-          pharmacy_id: null,
-          phone_number: null, 
-          cns_card_front: null,
-          cns_card_back: null,
-          cns_number: null,
-          deleted_at: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        console.log('[SessionManagement][DEBUG] Using minimal profile as fallback with role: patient');
-        
+        // If we still don't have a profile, clear auth state and force re-login
         setAuth({
-          user: session.user,
-          profile: minimalProfile,
+          user: null,
+          profile: null,
           permissions: [],
-          isLoading: false
+          isLoading: false,
         });
+        
+        // Clear session as well to force a new login
+        try {
+          clearAllAuthStorage();
+          await supabase.auth.signOut({ scope: 'global' });
+        } catch (signOutError) {
+          console.error('Error signing out after profile fetch failure:', signOutError);
+        }
         
         toast({
-          variant: "default",
-          title: "Profile Notice",
-          description: "We're using a temporary profile. Some features may be limited.",
-          duration: 5000,
+          variant: "destructive",
+          title: "Profile Error",
+          description: "Unable to load your profile. Please try logging in again.",
         });
-        
         return;
       }
 
-      console.log('[SessionManagement][DEBUG] Updating auth state with:', {
+      console.log('Updating auth state with:', {
         userId: session.user.id,
         role: profile.role,
         permissionsCount: permissions.length
@@ -194,7 +144,7 @@ export const useSessionManagement = () => {
       });
 
     } catch (error) {
-      console.error('[SessionManagement][DEBUG] Error in updateAuthState:', error);
+      console.error('Error in updateAuthState:', error);
       
       // Clear auth storage to prevent reusing bad tokens
       clearAllAuthStorage();
@@ -212,8 +162,8 @@ export const useSessionManagement = () => {
         description: "There was an error loading your profile. Please try logging in again.",
       });
     }
-  }, [setAuth, fetchAndSetProfile]);
-  
+  }, [fetchAndSetProfile, setAuth]);
+
   const refreshSession = useCallback(async () => {
     try {
       console.log('Attempting to refresh session...');
