@@ -70,34 +70,53 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           });
         }
         
-        // Even if we can't fetch the profile, continue with login
-        // The user object is sufficient for authentication
         const completeProfile = profile ? {
           ...profile as any,
           pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
           pharmacist_signature_url: profile.pharmacist_signature_url || null
         } : null;
 
-        // Set auth state
+        // Update auth state
         setAuth({
           user: data.user,
           profile: completeProfile,
           permissions: [],
           isLoading: false,
         });
-
-        // Call onSuccess callback if provided - this will handle navigation
-        if (onSuccess) {
-          onSuccess();
+        
+        // Show success toast
+        toast({
+          title: "Login successful",
+          description: "You've been logged in successfully",
+        });
+        
+        // Set flags for redirecting
+        sessionStorage.setItem('login_successful', 'true');
+        sessionStorage.setItem('skip_dashboard_redirect', 'true');
+        
+        // Log role detection for debugging
+        console.log("[usePasswordLogin] Role detected:", completeProfile?.role || 'No role');
+        
+        // Handle special case for pharmacist - use direct URL navigation
+        if (completeProfile?.role === 'pharmacist') {
+          console.log('[usePasswordLogin] Pharmacist role detected, redirecting to pharmacy dashboard');
+          
+          // Call onSuccess callback if provided - to update UI state
+          if (onSuccess) {
+            onSuccess();
+          }
+          
+          // Short delay to ensure state updates complete before navigation
+          setTimeout(() => {
+            window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+          }, 300);
+          
+          return;
         }
         
-        // Handle special case for pharmacist
-        if (completeProfile?.role === 'pharmacist') {
-          console.log('[usePasswordLogin] Pharmacist profile detected, preparing special redirect');
-          const redirectUrl = getDashboardRouteByRole('pharmacist');
-          
-          // We won't navigate here to avoid race conditions with onSuccess,
-          // which already handles redirection for pharmacists
+        // For other roles, use onSuccess callback which will handle redirection
+        if (onSuccess) {
+          onSuccess();
         }
       }
     } catch (err: any) {

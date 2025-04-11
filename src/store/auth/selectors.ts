@@ -15,15 +15,21 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    // Return role from profile as highest priority source of truth
-    // Always convert 'user' to 'patient' as we've migrated away from 'user' role
-    const profileRole = auth.profile?.role;
     
-    if (!profileRole && auth.user) {
-      return 'patient';
+    // First check the profile role as the highest priority source of truth
+    if (auth.profile?.role) {
+      // Always normalize 'user' role to 'patient'
+      return auth.profile.role === 'user' ? 'patient' : auth.profile.role;
     }
     
-    return profileRole === 'user' ? 'patient' : profileRole || null;
+    // Fallback to user metadata if available
+    if (auth.user?.user_metadata?.role) {
+      const metadataRole = auth.user.user_metadata.role;
+      return metadataRole === 'user' ? 'patient' : metadataRole;
+    }
+    
+    // Default to patient if authenticated but no role found
+    return auth.user ? 'patient' : null;
   },
 });
 
@@ -48,7 +54,16 @@ export const isPharmacistSelector = selector({
   key: 'isPharmacist',
   get: ({ get }) => {
     const auth = get(authState);
-    // Be explicit about checking for 'pharmacist' role
-    return auth.profile?.role === 'pharmacist';
+    // Check for 'pharmacist' role in multiple places
+    if (auth.profile?.role === 'pharmacist') {
+      return true;
+    }
+    
+    // Also check user metadata as fallback
+    if (auth.user?.user_metadata?.role === 'pharmacist') {
+      return true;
+    }
+    
+    return false;
   },
 });
