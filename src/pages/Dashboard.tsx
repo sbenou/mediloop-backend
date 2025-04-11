@@ -18,29 +18,6 @@ const Dashboard = () => {
   const view = searchParams.get('view');
   const section = searchParams.get('section');
   
-  // Debug logging
-  useEffect(() => {
-    console.log("[Dashboard][DEBUG] Dashboard mounted", { 
-      isAuthenticated, 
-      isLoading,
-      userRole, 
-      profileRole: profile?.role,
-      view, 
-      section,
-      isPharmacist: profile?.role === 'pharmacist',
-      skipRedirect: sessionStorage.getItem('skip_dashboard_redirect')
-    });
-    
-    // Clean up navigation flags after some time
-    const resetTimeout = setTimeout(() => {
-      sessionStorage.removeItem('dashboard_mount_count');
-      sessionStorage.removeItem('dashboard_redirect_count');
-      sessionStorage.removeItem('pharmacy_redirect_count');
-    }, 5000);
-    
-    return () => clearTimeout(resetTimeout);
-  }, [isAuthenticated, isLoading, userRole, profile, view, section]);
-
   // Handle unauthenticated users
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

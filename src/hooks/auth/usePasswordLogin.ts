@@ -1,6 +1,5 @@
 
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { AuthError } from '@supabase/supabase-js';
 import { useToast } from "@/components/ui/use-toast";
@@ -24,7 +23,6 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
   const setAuth = useSetRecoilState(authState);
 
   const handleLogin = useCallback(async (password: string, rememberMe: boolean = true) => {
@@ -106,10 +104,8 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           onSuccess();
         }
         
-        // Short delay to ensure state updates complete before navigation
-        setTimeout(() => {
-          window.location.href = redirectRoute;
-        }, 300);
+        // Use direct URL navigation for the most reliable redirection
+        window.location.href = redirectRoute;
       }
     } catch (err: any) {
       console.error('[usePasswordLogin] Unexpected error during login:', err);
@@ -122,7 +118,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
     } finally {
       setIsLoading(false);
     }
-  }, [email, navigate, setAuth, toast, onSuccess]);
+  }, [email, setAuth, toast, onSuccess]);
 
   return { isLoading, error, handleLogin };
 };
