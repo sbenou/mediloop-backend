@@ -49,61 +49,11 @@ export const useProfileFetch = () => {
     try {
       setIsLoading(true);
 
-      // First, check if the user exists in auth users
-      try {
-        // Directly use getUser without passing userId - it will use the current session
-        const { data: authUser, error: authError } = await supabase.auth.getUser();
-
-        if (authError) {
-          console.error('[ProfileFetch][DEBUG] Error fetching auth user:', authError);
-          return { profile: null, permissions: [] };
-        }
-
-        if (!authUser?.user) {
-          console.error('[ProfileFetch][DEBUG] No auth user found in current session');
-          return { profile: null, permissions: [] };
-        }
-
-        if (authUser.user.id !== userId) {
-          console.warn('[ProfileFetch][DEBUG] Session user ID does not match requested user ID', { 
-            sessionUserId: authUser.user.id, 
-            requestedUserId: userId 
-          });
-        }
-
-        console.log('[ProfileFetch][DEBUG] Auth user found, fetching profile:', authUser.user.id);
-      } catch (userFetchError) {
-        console.error('[ProfileFetch][DEBUG] Exception during auth user fetch:', userFetchError);
-        // Continue anyway to check if we have a profile
-      }
-
-      // Fetch user profile
+      // Fetch user profile with simplified approach
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select(`
-            id,
-            role,
-            role_id,
-            full_name,
-            email,
-            avatar_url,
-            auth_method,
-            is_blocked,
-            city,
-            date_of_birth,
-            license_number,
-            cns_card_front,
-            cns_card_back,
-            cns_number,
-            doctor_stamp_url,
-            doctor_signature_url,
-            pharmacist_stamp_url,
-            pharmacist_signature_url,
-            deleted_at,
-            created_at,
-            updated_at
-          `)
+          .select('*')  // Select all fields
           .eq('id', userId)
           .maybeSingle();
 
@@ -114,107 +64,30 @@ export const useProfileFetch = () => {
 
         if (!profile) {
           console.log('[ProfileFetch][DEBUG] No profile found for user:', userId);
-          // If there's no profile, create one automatically
-          try {
-            console.log('[ProfileFetch][DEBUG] Creating profile for user:', userId);
-            
-            // Get user data directly to ensure we have the latest
-            const { data: userData, error: userDataError } = await supabase.auth.getUser();
-            
-            if (userDataError || !userData.user) {
-              console.error('[ProfileFetch][DEBUG] Error getting user data for profile creation:', userDataError);
-              return { profile: null, permissions: [] };
-            }
-            
-            // Extract role from user metadata if available
-            const role = userData.user.user_metadata?.role || 'patient';
-            const fullName = userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || 'User';
-            
-            const { error: createError } = await supabase.rpc('create_profile_secure', {
-              user_id: userId,
-              user_role: role,
-              user_full_name: fullName,
-              user_email: userData.user.email || '',
-              user_license_number: userData.user.user_metadata?.license_number || null,
-            });
-            
-            if (createError) {
-              console.error('[ProfileFetch][DEBUG] Error creating profile:', createError);
-              return { profile: null, permissions: [] };
-            }
-            
-            // Try to fetch the newly created profile
-            const { data: newProfile, error: newProfileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', userId)
-              .maybeSingle();
-              
-            if (newProfileError || !newProfile) {
-              console.error('[ProfileFetch][DEBUG] Error fetching newly created profile:', newProfileError);
-              return { profile: null, permissions: [] };
-            }
-            
-            console.log('[ProfileFetch][DEBUG] Profile created and fetched successfully');
-            
-            // Create a complete profile object with default values for all fields
-            const completeNewProfile: UserProfile = {
-              ...newProfile as any,
-              pharmacist_stamp_url: null,
-              pharmacist_signature_url: null
-            };
-            
-            const safeNewProfile = safeQueryResult<UserProfile>(completeNewProfile);
-            
-            // Get permissions for the user if they have a role_id
-            const permissions = newProfile.role_id 
-              ? await fetchUserPermissions(newProfile.role_id)
-              : [];
-              
-            return { 
-              profile: safeNewProfile, 
-              permissions 
-            };
-          } catch (createProfileError) {
-            console.error('[ProfileFetch][DEBUG] Error in profile creation:', createProfileError);
-            return { profile: null, permissions: [] };
-          }
+          return { profile: null, permissions: [] };
         }
 
-        // Get the pharmacy_id separately to handle the case where the column might not exist yet
-        let pharmacyId = null;
-        try {
-          const { data: pharmacyData } = await supabase
-            .from('user_pharmacies')
-            .select('pharmacy_id')
-            .eq('user_id', userId)
-            .maybeSingle();
-          
-          pharmacyId = pharmacyData?.pharmacy_id || null;
-          console.log('[ProfileFetch][DEBUG] Fetched pharmacy_id from user_pharmacies:', pharmacyId);
-        } catch (pharmacyError) {
-          console.error('[ProfileFetch][DEBUG] Error fetching pharmacy_id:', pharmacyError);
-        }
+        console.log('[ProfileFetch][DEBUG] Profile fetched successfully:', { 
+          role: profile.role,
+          hasPharmacistFields: !!profile.pharmacist_stamp_url
+        });
 
         // Ensure the profile object has all required properties
         const completeProfile: UserProfile = {
           ...profile as any,
-          // Make sure pharmacist fields are set, even if they're not in the database
-          pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile?.pharmacist_signature_url || null
+          // Make sure these fields exist even if they're null
+          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+          pharmacist_signature_url: profile.pharmacist_signature_url || null,
+          pharmacy_id: profile.pharmacy_id || null
         };
 
         const safeProfile = safeQueryResult<UserProfile>(completeProfile);
         if (!safeProfile) {
-          console.error('[ProfileFetch][DEBUG] Failed to process profile data for user:', userId);
+          console.error('[ProfileFetch][DEBUG] Failed to process profile data');
           return { profile: null, permissions: [] };
         }
 
-        // Manually add the pharmacy_id to the profile
-        if (pharmacyId) {
-          safeProfile.pharmacy_id = pharmacyId;
-        }
-
+        // Get permissions if we have a role_id
         const permissions = safeProfile.role_id 
           ? await fetchUserPermissions(safeProfile.role_id)
           : [];
@@ -222,8 +95,7 @@ export const useProfileFetch = () => {
         console.log('[ProfileFetch][DEBUG] Profile and permissions fetched:', { 
           profileId: safeProfile.id, 
           role: safeProfile.role,
-          pharmacyId: safeProfile.pharmacy_id,
-          permissionsCount: permissions.length 
+          permissionsCount: permissions.length
         });
 
         return { profile: safeProfile, permissions };

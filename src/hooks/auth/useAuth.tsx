@@ -27,7 +27,7 @@ export const useAuth = () => {
   // Access the raw auth state for updates
   const authData = useRecoilValue(authState);
   
-  // IMPORTANT: All hooks must be called unconditionally
+  // All hooks must be called unconditionally
   const hasPermission = useCallback((permission: string) => {
     if (isLoading) return false;
     return permissions.includes(permission);

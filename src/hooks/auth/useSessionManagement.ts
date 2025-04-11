@@ -71,26 +71,53 @@ export const useSessionManagement = () => {
       const { profile, permissions } = await fetchAndSetProfile(session.user.id);
 
       if (!profile) {
-        console.error('[SessionManagement][DEBUG] No profile found after fetch, trying to create one');
-        // Try to create profile one last time if it doesn't exist
+        console.log('[SessionManagement][DEBUG] No profile found after fetch, creating one');
+        
+        // Try to create profile
         try {
           const userData = session.user;
+          // Extract role from metadata or default to 'patient'
           const role = userData.user_metadata?.role || 'patient';
-          const fullName = userData.user_metadata?.full_name || userData.user_metadata?.name || 'User';
+          // Extract name from metadata or default to email prefix
+          const fullName = userData.user_metadata?.full_name || userData.user_metadata?.name || 
+                          userData.email?.split('@')[0] || 'User';
+          const email = userData.email || '';
           
-          await supabase.rpc('create_profile_secure', {
+          console.log('[SessionManagement][DEBUG] Creating profile with role:', role);
+          
+          // Create profile using secure RPC function
+          const { error: createError } = await supabase.rpc('create_profile_secure', {
             user_id: userData.id,
             user_role: role,
             user_full_name: fullName,
-            user_email: userData.email || '',
+            user_email: email,
             user_license_number: userData.user_metadata?.license_number || null,
           });
           
-          // Try to fetch again after creation
+          if (createError) {
+            console.error('[SessionManagement][DEBUG] Error creating profile:', createError);
+            
+            // Try one more approach with direct insert if RPC fails
+            const { error: directInsertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userData.id,
+                role: role,
+                full_name: fullName,
+                email: email
+              });
+              
+            if (directInsertError) {
+              console.error('[SessionManagement][DEBUG] Direct insert also failed:', directInsertError);
+              throw directInsertError;
+            }
+          }
+          
+          // Try to fetch the newly created profile
           const retryFetch = await fetchAndSetProfile(session.user.id);
           
           if (retryFetch.profile) {
-            console.log('[SessionManagement][DEBUG] Successfully created and fetched profile on retry');
+            console.log('[SessionManagement][DEBUG] Successfully created and fetched profile');
             setAuth({
               user: session.user,
               profile: retryFetch.profile,
@@ -99,33 +126,55 @@ export const useSessionManagement = () => {
             });
             return;
           } else {
-            console.error('[SessionManagement][DEBUG] Still no profile after retry creation');
+            console.error('[SessionManagement][DEBUG] Still no profile after creation attempt');
           }
-        } catch (retryError) {
-          console.error('[SessionManagement][DEBUG] Error in profile creation retry:', retryError);
+        } catch (createError) {
+          console.error('[SessionManagement][DEBUG] Error creating profile:', createError);
         }
         
-        // If we still don't have a profile, clear auth state and force re-login
+        // If we still have the user but no profile, create a minimal profile in state
+        // This allows the user to continue using the app even if profile creation failed
+        const minimalProfile = {
+          id: session.user.id,
+          role: 'patient',
+          full_name: session.user.email?.split('@')[0] || 'User',
+          email: session.user.email,
+          role_id: null,
+          // Add other required fields with null values
+          avatar_url: null,
+          auth_method: 'password',
+          is_blocked: false,
+          city: null,
+          date_of_birth: null,
+          license_number: null,
+          doctor_stamp_url: null,
+          doctor_signature_url: null,
+          pharmacist_stamp_url: null,
+          pharmacist_signature_url: null,
+          cns_card_front: null,
+          cns_card_back: null,
+          cns_number: null,
+          deleted_at: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        console.log('[SessionManagement][DEBUG] Using minimal profile as fallback');
+        
         setAuth({
-          user: null,
-          profile: null,
+          user: session.user,
+          profile: minimalProfile,
           permissions: [],
-          isLoading: false,
+          isLoading: false
         });
-        
-        // Clear session as well to force a new login
-        try {
-          clearAllAuthStorage();
-          await supabase.auth.signOut({ scope: 'global' });
-        } catch (signOutError) {
-          console.error('[SessionManagement][DEBUG] Error signing out after profile fetch failure:', signOutError);
-        }
         
         toast({
-          variant: "destructive",
-          title: "Profile Error",
-          description: "Unable to load your profile. Please try logging in again.",
+          variant: "warning",
+          title: "Profile Notice",
+          description: "We're using a temporary profile. Some features may be limited.",
+          duration: 5000,
         });
+        
         return;
       }
 
