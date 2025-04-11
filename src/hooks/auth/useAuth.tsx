@@ -63,12 +63,27 @@ export const useAuth = () => {
     }
   }, [authData.user?.id]);
   
+  // Default role handling when profile is missing
+  const effectiveUserRole = useMemo(() => {
+    // If we have a profile with a role, use that
+    if (userRole) return userRole;
+    
+    // If authenticated but no profile/role, return a fallback role
+    // This ensures redirects work properly even when profile fetch fails
+    if (isAuthenticated && !userRole) {
+      return 'user'; // Default fallback role
+    }
+    
+    return null;
+  }, [userRole, isAuthenticated]);
+  
   // Add debug information
   useEffect(() => {
     if (authData.user) {
       console.log(`[useAuth][DEBUG] Current auth state:`, {
         isAuthenticated,
         userRole,
+        effectiveUserRole,
         isPharmacist,
         userId: authData.user?.id,
         profileId: authData.profile?.id,
@@ -77,14 +92,14 @@ export const useAuth = () => {
         permissionsCount: permissions.length
       });
     }
-  }, [authData.user, authData.profile, isAuthenticated, userRole, isPharmacist, permissions]);
+  }, [authData.user, authData.profile, isAuthenticated, userRole, effectiveUserRole, isPharmacist, permissions]);
   
   return {
     isAuthenticated,
     isLoading,
     user: authData.user,
     profile: authData.profile,
-    userRole,
+    userRole: effectiveUserRole, // Use effective role that handles missing profile
     isPharmacist,
     isDoctorOrPharmacist,
     isPatient,

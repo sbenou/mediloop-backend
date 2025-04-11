@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { useLoginManager } from "@/hooks/auth/useLoginManager";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import { Button } from "@/components/ui/button";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile, user } = useAuth();
@@ -14,6 +15,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [manualRedirectInProgress, setManualRedirectInProgress] = useState(false);
+  const [loadingTime, setLoadingTime] = useState(0); // Track loading time
   
   // Clear any stale flags immediately on mount to prevent false loading states
   useEffect(() => {
@@ -37,6 +39,26 @@ const Login = () => {
       sessionStorage.removeItem('skip_dashboard_redirect');
     }
   }, [isAuthenticated, user, profile]);
+  
+  // Increment loading time counter every second
+  useEffect(() => {
+    let timer: number;
+    if (isLoading && isAuthenticated) {
+      timer = window.setInterval(() => {
+        setLoadingTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => window.clearInterval(timer);
+  }, [isLoading, isAuthenticated]);
+  
+  // Force redirect after extended loading time
+  useEffect(() => {
+    if (loadingTime > 5 && isAuthenticated && user) {
+      console.log("[Login][DEBUG] Loading time exceeded threshold, forcing redirect");
+      const dashboardUrl = "/dashboard";
+      window.location.href = dashboardUrl;
+    }
+  }, [loadingTime, isAuthenticated, user]);
   
   // Check if we just attempted a login
   const loginSuccessful = sessionStorage.getItem('login_successful') === 'true';
@@ -126,6 +148,21 @@ const Login = () => {
       return () => clearTimeout(timer);
     }
   }, [loginSuccessful]);
+  
+  // Forced navigation function for manual redirection
+  const handleForceRedirect = () => {
+    // Emergency fallback for when profile fetch is stuck but we have a user
+    if (isAuthenticated && user) {
+      // Clear any flags that might be causing loops
+      sessionStorage.removeItem('login_successful');
+      sessionStorage.setItem('skip_dashboard_redirect', 'true');
+      
+      console.log("[Login][DEBUG] Manual redirect initiated by user");
+      
+      // Navigate directly to dashboard as fallback
+      window.location.href = "/dashboard";
+    }
+  };
 
   // Show loading state only when actually loading or redirecting after login
   // Check for both isLoading AND authenticated state or loginSuccessful flag
@@ -142,14 +179,24 @@ const Login = () => {
               <CardDescription>
                 {loginSuccessful ? "Login successful! Redirecting you to your dashboard..." : "Please wait while we load your profile"}
               </CardDescription>
+              {loadingTime > 3 && (
+                <p className="text-sm text-muted-foreground">Taking longer than expected... {loadingTime}s</p>
+              )}
             </div>
           </CardHeader>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="flex flex-col gap-2 items-center justify-center">
+            <Button
+              onClick={handleForceRedirect}
+              variant="default"
+              className="text-sm"
+            >
+              Continue to dashboard
+            </Button>
             <button
               onClick={() => window.location.reload()}
-              className="text-xs text-blue-500 hover:underline"
+              className="text-xs text-blue-500 hover:underline mt-2"
             >
-              Click here if loading takes too long
+              Reload page
             </button>
           </CardFooter>
         </Card>
@@ -175,15 +222,19 @@ const Login = () => {
               </div>
             </div>
           </CardHeader>
-          <CardFooter className="flex justify-center">
-            <button 
-              onClick={() => {
-                const route = profile?.role ? getDashboardRouteByRole(profile.role) : '/dashboard';
-                window.location.href = route;
-              }}
-              className="text-xs text-blue-500 hover:underline"
+          <CardFooter className="flex flex-col gap-2 items-center justify-center">
+            <Button 
+              onClick={handleForceRedirect}
+              variant="default" 
+              className="text-sm"
             >
-              Click here if redirection is taking too long
+              Continue to dashboard
+            </Button>
+            <button 
+              onClick={() => window.location.reload()}
+              className="text-xs text-blue-500 hover:underline mt-2"
+            >
+              Reload page
             </button>
           </CardFooter>
         </Card>
