@@ -1,4 +1,3 @@
-
 /**
  * Broadcast authentication events to other tabs
  * @param eventType The type of auth event (LOGIN, LOGOUT, TOKEN_REFRESHED)
@@ -130,7 +129,6 @@ export const getSessionFromStorage = () => {
 
 /**
  * Clear all cookies from the document
- * This helps ensure complete logout
  */
 export const clearAllCookies = () => {
   try {
@@ -150,5 +148,50 @@ export const clearAllCookies = () => {
   } catch (error) {
     console.error("[sessionUtils][DEBUG] Error clearing cookies:", error);
     return false;
+  }
+};
+
+/**
+ * Fetch user permissions from role_permissions table
+ * @param roleId The role ID to fetch permissions for
+ * @returns Array of permission strings
+ */
+export const fetchUserPermissions = async (roleId: string): Promise<string[]> => {
+  try {
+    console.log("[sessionUtils][DEBUG] Fetching permissions for role:", roleId);
+    
+    if (!roleId) {
+      console.log("[sessionUtils][DEBUG] No role ID provided, returning empty permissions array");
+      return [];
+    }
+    
+    // Import supabase here to avoid circular dependencies
+    const { supabase } = await import('@/lib/supabase');
+    
+    // Fetch permissions from role_permissions table
+    const { data, error } = await supabase
+      .from('role_permissions')
+      .select('permission_id')
+      .eq('role_id', roleId);
+      
+    if (error) {
+      console.error("[sessionUtils][DEBUG] Error fetching permissions:", error);
+      return [];
+    }
+    
+    if (!data || data.length === 0) {
+      console.log("[sessionUtils][DEBUG] No permissions found for role:", roleId);
+      return [];
+    }
+    
+    // Extract permission IDs from the result
+    const permissions = data.map(item => item.permission_id);
+    
+    console.log(`[sessionUtils][DEBUG] Found ${permissions.length} permissions for role ${roleId}`);
+    
+    return permissions;
+  } catch (error) {
+    console.error("[sessionUtils][DEBUG] Exception in fetchUserPermissions:", error);
+    return [];
   }
 };
