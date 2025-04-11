@@ -1,7 +1,6 @@
-
 import { useCallback } from 'react';
 import { supabase, getSessionFromStorage, clearAllAuthStorage } from '@/lib/supabase';
-import useProfileFetch from './useProfileFetch';
+import { useProfileFetch } from './useProfileFetch';
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { storeSession } from '@/lib/auth/sessionUtils';
@@ -9,45 +8,7 @@ import { toast } from '@/components/ui/use-toast';
 
 export const useSessionManagement = () => {
   const setAuth = useSetRecoilState(authState);
-  const { profile, loading, error } = useProfileFetch(undefined);
-  
-  // Add a method to fetch profile data that wasn't in the hook before
-  const fetchAndSetProfile = async (userId: string) => {
-    try {
-      console.log("[SessionManagement][DEBUG] Fetching profile for user:", userId);
-      
-      // Use a comprehensive profile fetch approach
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        console.error("[SessionManagement][DEBUG] Error fetching profile:", error);
-        return { profile: null, permissions: [] };
-      }
-      
-      if (!data) {
-        console.error("[SessionManagement][DEBUG] No profile found for user:", userId);
-        return { profile: null, permissions: [] };
-      }
-      
-      console.log("[SessionManagement][DEBUG] Successfully fetched profile:", {
-        userId,
-        role: data.role,
-        fields: Object.keys(data)
-      });
-      
-      return { 
-        profile: data, 
-        permissions: [] // Default empty permissions
-      };
-    } catch (err) {
-      console.error("[SessionManagement][DEBUG] Profile fetch error:", err);
-      return { profile: null, permissions: [] };
-    }
-  };
+  const { fetchAndSetProfile } = useProfileFetch();
   
   const updateAuthState = useCallback(async (session: any | null) => {
     if (!session?.user) {
@@ -200,8 +161,8 @@ export const useSessionManagement = () => {
         description: "There was an error loading your profile. Please try logging in again.",
       });
     }
-  }, [setAuth]);
-
+  }, [setAuth, fetchAndSetProfile]);
+  
   const refreshSession = useCallback(async () => {
     try {
       console.log('Attempting to refresh session...');

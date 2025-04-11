@@ -9,7 +9,6 @@ import {
   isPharmacistSelector
 } from '@/store/auth/selectors';
 import { useCallback, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { UserProfile } from '@/types/user';
 
@@ -19,7 +18,7 @@ import { UserProfile } from '@/types/user';
  * and utility functions for permission checks
  */
 export const useAuth = () => {
-  // Use selectors for derived state
+  // Use selectors for derived state - these must be called unconditionally
   const isAuthenticated = useRecoilValue(isAuthenticatedSelector);
   const userRole = useRecoilValue(userRoleSelector);
   const permissions = useRecoilValue(userPermissionsSelector);
@@ -30,7 +29,6 @@ export const useAuth = () => {
   const authData = useRecoilValue(authState);
   
   // IMPORTANT: All hooks must be called unconditionally
-  // Define this outside of any conditions to avoid the "rendered more hooks" error
   const hasPermission = useCallback((permission: string) => {
     if (isLoading) return false;
     return permissions.includes(permission);
@@ -45,7 +43,28 @@ export const useAuth = () => {
     return userRole === 'patient' || userRole === 'user';
   }, [userRole]);
   
-  // Add debug information (always run this effect regardless of auth state)
+  // Manual profile fetch function for cases where profile is missing
+  const fetchProfileManually = useCallback(async () => {
+    if (!authData.user?.id) return;
+    
+    try {
+      console.log("[useAuth][DEBUG] Attempting to manually fetch profile");
+      
+      // Implementation kept simple to avoid errors
+      toast({
+        title: "Refreshing profile",
+        description: "Attempting to load your profile data...",
+      });
+      
+      // Force a page reload to refresh the auth state properly
+      window.location.reload();
+      
+    } catch (err) {
+      console.error("[useAuth][DEBUG] Error during manual profile fetch:", err);
+    }
+  }, [authData.user?.id]);
+  
+  // Add debug information
   useEffect(() => {
     if (authData.user) {
       console.log(`[useAuth][DEBUG] Current auth state:`, {
@@ -72,6 +91,7 @@ export const useAuth = () => {
     isPatient,
     permissions,
     hasPermission,
+    fetchProfileManually,
   };
 };
 

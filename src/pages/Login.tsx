@@ -9,7 +9,7 @@ import { useLoginManager } from "@/hooks/auth/useLoginManager";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, profile } = useAuth();
+  const { isAuthenticated, isLoading, profile, user } = useAuth();
   const { redirected } = useLoginManager(); // Use the login manager to handle redirects
   const navigate = useNavigate();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
@@ -17,8 +17,18 @@ const Login = () => {
   
   // Clear any stale flags immediately on mount to prevent false loading states
   useEffect(() => {
+    // Clear any stale login flags if we don't have an auth token
     const hasStoredToken = localStorage.getItem(`sb-${window.location.hostname.split('.')[0]}-auth-token`) !== null;
     const hasLoginSuccessFlag = sessionStorage.getItem('login_successful') === 'true';
+    
+    console.log("[Login][DEBUG] Initial state check:", {
+      hasStoredToken,
+      hasLoginSuccessFlag,
+      isAuthenticated,
+      isLoading,
+      userId: user?.id,
+      profileId: profile?.id
+    });
     
     // If login_successful flag is set but there's no auth token, clear the flag
     if (hasLoginSuccessFlag && !hasStoredToken) {
@@ -26,7 +36,7 @@ const Login = () => {
       sessionStorage.removeItem('login_successful');
       sessionStorage.removeItem('skip_dashboard_redirect');
     }
-  }, []);
+  }, [isAuthenticated, user, profile]);
   
   // Check if we just attempted a login
   const loginSuccessful = sessionStorage.getItem('login_successful') === 'true';
@@ -37,6 +47,8 @@ const Login = () => {
       isAuthenticated,
       isLoading,
       profile: profile?.role,
+      userId: user?.id,
+      profileComplete: !!profile,
       redirected,
       redirectAttempted,
       manualRedirectInProgress,
@@ -52,10 +64,16 @@ const Login = () => {
       dashboard_redirect_count: sessionStorage.getItem('dashboard_redirect_count'),
       dashboard_mount_count: sessionStorage.getItem('dashboard_mount_count')
     });
-  }, [isAuthenticated, isLoading, profile, redirected, redirectAttempted, manualRedirectInProgress, loginSuccessful]);
+  }, [isAuthenticated, isLoading, profile, user, redirected, redirectAttempted, manualRedirectInProgress, loginSuccessful]);
   
   // Direct redirection for already authenticated users
   useEffect(() => {
+    // Only redirect if:
+    // 1. User is authenticated
+    // 2. We have a profile
+    // 3. We haven't already redirected or attempted to
+    // 4. No manual redirect is in progress
+    // 5. Not immediately after a successful login (which has its own redirect)
     if (isAuthenticated && profile && !redirected && !redirectAttempted && !manualRedirectInProgress && !loginSuccessful) {
       setRedirectAttempted(true);
       setManualRedirectInProgress(true);
@@ -151,9 +169,10 @@ const Login = () => {
               <CardDescription>
                 Please wait while we redirect you to the appropriate dashboard
               </CardDescription>
-              <p className="text-xs text-muted-foreground">
-                Role: {profile?.role || 'Unknown'} | Path: {window.location.pathname}
-              </p>
+              <div className="text-xs text-muted-foreground">
+                <p>Role: {profile?.role || 'Unknown'} | Auth: {isAuthenticated ? 'Yes' : 'No'}</p>
+                <p>User ID: {user?.id || 'None'} | Profile ID: {profile?.id || 'None'}</p>
+              </div>
             </div>
           </CardHeader>
           <CardFooter className="flex justify-center">
