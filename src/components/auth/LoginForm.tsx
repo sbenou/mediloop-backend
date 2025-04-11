@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -55,6 +56,15 @@ export const LoginForm = () => {
   };
 
   const handleLoginSuccess = async () => {
+    console.log('[LoginForm][DEBUG] Login success, showing confirmation toast first');
+    
+    // Show success toast immediately with longer duration
+    toast({
+      title: "Login successful",
+      description: "You have successfully logged in.",
+      duration: 8000, // Show for 8 seconds to ensure it's very visible
+    });
+    
     console.log('[LoginForm][DEBUG] Login success, checking session...');
     const { data: { session }, error } = await supabase.auth.getSession();
     
@@ -77,77 +87,80 @@ export const LoginForm = () => {
           .eq('id', session.user.id)
           .single();
       
-      if (profileError) {
-        console.error('[LoginForm][DEBUG] Error fetching profile:', profileError);
+        if (profileError) {
+          console.error('[LoginForm][DEBUG] Error fetching profile:', profileError);
+          toast({
+            variant: "destructive",
+            title: "Profile Error",
+            description: "There was an error loading your profile. Please try again.",
+          });
+          return;
+        }
+      
+        if (!profile) {
+          console.error('[LoginForm][DEBUG] No profile found for user:', session.user.id);
+          toast({
+            variant: "destructive", 
+            title: "Profile Missing",
+            description: "Your user account doesn't have an associated profile. Please contact support.",
+          });
+          return;
+        }
+      
+        console.log('[LoginForm][DEBUG] Successfully loaded profile:', {
+          userId: session.user.id,
+          role: profile.role,
+          profileFields: Object.keys(profile)
+        });
+      
+        // Set navigation flags
+        sessionStorage.setItem('login_successful', 'true');
+        sessionStorage.setItem('skip_dashboard_redirect', 'true');
+
+        // Clear any existing redirect counters
+        sessionStorage.removeItem('dashboard_redirect_count');
+        sessionStorage.removeItem('dashboard_mount_count');
+        sessionStorage.removeItem('pharmacy_redirect_count');
+      
+        console.log('[LoginForm][DEBUG] User role determined:', profile?.role);
+        
+        // Ensure we have a slight delay to allow the toast to be seen
+        setTimeout(() => {
+          // Special handling for pharmacists to ensure correct route loading
+          if (profile?.role === 'pharmacist') {
+            console.log('[LoginForm][DEBUG] Pharmacist detected, using direct navigation');
+            console.log('[LoginForm][DEBUG] Navigating to: /dashboard?view=pharmacy&section=dashboard');
+            
+            // Use a full page reload for clean state
+            window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+            return;
+          }
+        
+          // Use the utility to get the appropriate dashboard route for other roles
+          const route = getDashboardRouteByRole(profile?.role);
+          console.log(`[LoginForm][DEBUG] Redirecting user with role ${profile?.role} to ${route}`);
+        
+          // Use window.location for full page refresh
+          window.location.href = route;
+        }, 1500); // Increased delay to ensure toast is visible
+      
+      } catch (err) {
+        console.error('[LoginForm][DEBUG] Error during role check:', err);
         toast({
           variant: "destructive",
-          title: "Profile Error",
-          description: "There was an error loading your profile. Please try again.",
+          title: "Navigation Error",
+          description: "There was an error redirecting you. Please try again.",
         });
-        return;
       }
-      
-      if (!profile) {
-        console.error('[LoginForm][DEBUG] No profile found for user:', session.user.id);
-        toast({
-          variant: "destructive", 
-          title: "Profile Missing",
-          description: "Your user account doesn't have an associated profile. Please contact support.",
-        });
-        return;
-      }
-      
-      console.log('[LoginForm][DEBUG] Successfully loaded profile:', {
-        userId: session.user.id,
-        role: profile.role,
-        profileFields: Object.keys(profile)
-      });
-      
-      // Set navigation flags
-      sessionStorage.setItem('login_successful', 'true');
-      sessionStorage.setItem('skip_dashboard_redirect', 'true');
-
-      // Clear any existing redirect counters
-      sessionStorage.removeItem('dashboard_redirect_count');
-      sessionStorage.removeItem('dashboard_mount_count');
-      sessionStorage.removeItem('pharmacy_redirect_count');
-      
-      console.log('[LoginForm][DEBUG] User role determined:', profile?.role);
-      
-      // Special handling for pharmacists to ensure correct route loading
-      if (profile?.role === 'pharmacist') {
-        console.log('[LoginForm][DEBUG] Pharmacist detected, using direct navigation');
-        console.log('[LoginForm][DEBUG] Navigating to: /dashboard?view=pharmacy&section=dashboard');
-        
-        // Use a full page reload to ensure clean state
-        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-        return;
-      }
-      
-      // Use the utility to get the appropriate dashboard route for other roles
-      const route = getDashboardRouteByRole(profile?.role);
-      console.log(`[LoginForm][DEBUG] Redirecting user with role ${profile?.role} to ${route}`);
-      
-      // Use window.location for full page refresh
-      window.location.href = route;
-      
-    } catch (err) {
-      console.error('[LoginForm][DEBUG] Error during role check:', err);
+    } else {
+      console.error('[LoginForm][DEBUG] No session found after successful login');
       toast({
         variant: "destructive",
-        title: "Navigation Error",
-        description: "There was an error redirecting you. Please try again.",
+        title: "Login Error",
+        description: "Failed to establish session. Please try again.",
       });
     }
-  } else {
-    console.error('[LoginForm][DEBUG] No session found after successful login');
-    toast({
-      variant: "destructive",
-      title: "Login Error",
-      description: "Failed to establish session. Please try again.",
-    });
-  }
-};
+  };
 
   const handleBackToEmail = () => {
     setShowPassword(false);

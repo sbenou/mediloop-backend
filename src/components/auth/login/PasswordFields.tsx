@@ -1,9 +1,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader } from "lucide-react";
-import { PasswordInput } from "./PasswordInput";
+import { Label } from "@/components/ui/label";
 import { usePasswordLogin } from "@/hooks/auth/usePasswordLogin";
+import { PasswordInput } from "./PasswordInput";
 import { RememberMeOption } from "./RememberMeOption";
 
 interface PasswordFieldsProps {
@@ -14,79 +14,57 @@ interface PasswordFieldsProps {
 
 export const PasswordFields = ({ 
   email, 
-  onSuccess, 
+  onSuccess,
   onForgotPassword 
 }: PasswordFieldsProps) => {
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true); // Default to true for better UX
-  const { handleLogin, isLoading } = usePasswordLogin({ 
-    email, 
-    onSuccess 
+  const [rememberMe, setRememberMe] = useState(false);
+  const { isLoading, handleLogin } = usePasswordLogin({
+    email,
+    onSuccess, // Pass the onSuccess callback directly
   });
 
-  const onSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    handleLogin(password, rememberMe);
+    
+    console.log('[PasswordFields] Login form submitted');
+    await handleLogin(password, rememberMe);
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 text-start">
-      <PasswordInput 
-        value={password}
-        onChange={setPassword}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="password" className="text-start block">Password</Label>
+        <PasswordInput
+          id="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
+          required
+        />
+      </div>
+      
+      <div className="flex items-center justify-between">
+        <RememberMeOption 
+          checked={rememberMe} 
+          onChange={checked => setRememberMe(checked)}
+        />
+        <button
+          type="button"
+          className="text-primary text-sm hover:underline"
+          onClick={onForgotPassword}
+        >
+          Forgot password?
+        </button>
+      </div>
+      
+      <Button
+        type="submit"
+        className="w-full"
         disabled={isLoading}
-      />
-      
-      <RememberMeOption 
-        checked={rememberMe}
-        onChange={setRememberMe}
-        disabled={isLoading}
-      />
-      
-      <LoginButton isLoading={isLoading} />
-      
-      <ForgotPasswordButton 
-        onClick={onForgotPassword} 
-        disabled={isLoading} 
-      />
+      >
+        {isLoading ? "Logging in..." : "Login"}
+      </Button>
     </form>
   );
 };
-
-interface LoginButtonProps {
-  isLoading: boolean;
-}
-
-const LoginButton = ({ isLoading }: LoginButtonProps) => (
-  <Button
-    type="submit"
-    className="w-full"
-    disabled={isLoading}
-  >
-    {isLoading ? (
-      <>
-        <Loader className="mr-2 h-4 w-4 animate-spin" />
-        Signing in...
-      </>
-    ) : (
-      "Sign in"
-    )}
-  </Button>
-);
-
-interface ForgotPasswordButtonProps {
-  onClick: () => void;
-  disabled: boolean;
-}
-
-const ForgotPasswordButton = ({ onClick, disabled }: ForgotPasswordButtonProps) => (
-  <Button
-    type="button"
-    variant="link"
-    className="w-full"
-    onClick={onClick}
-    disabled={disabled}
-  >
-    Forgot your password?
-  </Button>
-);
