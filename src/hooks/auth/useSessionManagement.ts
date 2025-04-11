@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { supabase, getSessionFromStorage, clearAllAuthStorage } from '@/lib/supabase';
 import { useProfileFetch } from './useProfileFetch';
@@ -151,6 +152,8 @@ export const useSessionManagement = () => {
           doctor_signature_url: null,
           pharmacist_stamp_url: null,
           pharmacist_signature_url: null,
+          pharmacy_id: null,
+          phone_number: null, // Added the missing phone_number property
           cns_card_front: null,
           cns_card_back: null,
           cns_number: null,
@@ -169,7 +172,7 @@ export const useSessionManagement = () => {
         });
         
         toast({
-          variant: "warning",
+          variant: "default", // Changed from "warning" to "default" to match allowed values
           title: "Profile Notice",
           description: "We're using a temporary profile. Some features may be limited.",
           duration: 5000,
