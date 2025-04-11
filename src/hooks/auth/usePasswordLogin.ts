@@ -86,29 +86,34 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           isLoading: false,
         });
 
+        // Make sure the success toast is displayed with higher duration
         toast({
           title: "Login successful",
           description: "You have successfully logged in.",
+          duration: 5000, // Show for 5 seconds to ensure it's visible
         });
         
         // Set login_successful flag
         sessionStorage.setItem('login_successful', 'true');
 
-        // Call onSuccess callback if provided, otherwise navigate
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          // For pharmacists, use direct URL navigation for reliable routing with parameters
-          if (profile?.role === 'pharmacist') {
-            window.location.href = '/dashboard?view=pharmacy&section=dashboard';
-            return;
+        // Short delay before navigation to ensure toast is visible
+        setTimeout(() => {
+          // Call onSuccess callback if provided, otherwise navigate
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            // For pharmacists, use direct URL navigation for reliable routing with parameters
+            if (profile?.role === 'pharmacist') {
+              window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+              return;
+            }
+            
+            // Determine where to navigate based on role
+            const role = completeProfile?.role || 'user';
+            const route = getDashboardRouteByRole(role);
+            navigate(route, { replace: true });
           }
-          
-          // Determine where to navigate based on role
-          const role = completeProfile?.role || 'user';
-          const route = getDashboardRouteByRole(role);
-          navigate(route, { replace: true });
-        }
+        }, 500); // Short delay to ensure toast is visible
       }
     } catch (err: any) {
       console.error('[usePasswordLogin] Unexpected error during login:', err);
