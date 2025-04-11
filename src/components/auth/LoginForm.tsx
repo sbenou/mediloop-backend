@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,12 +11,15 @@ import { ArrowLeft } from "lucide-react";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 import { storeSession } from "@/lib/auth/sessionUtils";
 
-export const LoginForm = () => {
+interface LoginFormProps {
+  onRedirectStart?: () => void;
+}
+
+export const LoginForm = ({ onRedirectStart }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showResetOptions, setShowResetOptions] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +44,11 @@ export const LoginForm = () => {
   };
 
   const handleLoginSuccess = async () => {
+    // Signal that redirect is starting
+    if (onRedirectStart) {
+      onRedirectStart();
+    }
+    
     console.log('Login success, showing confirmation toast first');
     
     // Show success toast immediately with longer duration
@@ -91,7 +98,10 @@ export const LoginForm = () => {
         
         // Force a direct URL change for pharmacists instead of using React Router navigation
         if (profile?.role === 'pharmacist') {
-          window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+          // Short delay to ensure session is stored and flags are set
+          setTimeout(() => {
+            window.location.href = '/dashboard?view=pharmacy&section=dashboard';
+          }, 500);
           return;
         }
       
@@ -99,8 +109,10 @@ export const LoginForm = () => {
         const route = getDashboardRouteByRole(profile?.role);
         console.log(`Redirecting user with role ${profile?.role} to ${route}`);
         
-        // Use window.location for full page refresh
-        window.location.href = route;
+        // Use window.location for full page refresh with slight delay
+        setTimeout(() => {
+          window.location.href = route;
+        }, 500);
         
       } catch (err) {
         console.error('Error during role check:', err);
