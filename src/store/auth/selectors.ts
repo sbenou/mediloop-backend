@@ -15,7 +15,8 @@ export const userRoleSelector = selector({
   key: 'userRole',
   get: ({ get }) => {
     const auth = get(authState);
-    // Return role from profile, with fallbacks
+    // Return role from profile with better debugging
+    console.log("[userRoleSelector][DEBUG] Extracting role:", auth.profile?.role);
     return auth.profile?.role || null;
   },
 });
@@ -41,7 +42,12 @@ export const isPharmacistSelector = selector({
   key: 'isPharmacist',
   get: ({ get }) => {
     const auth = get(authState);
-    // Check explicitly for 'pharmacist' role
-    return auth.profile?.role === 'pharmacist';
+    // Check explicitly for 'pharmacist' role with enhanced logging
+    const isPharmacist = auth.profile?.role === 'pharmacist';
+    console.log("[isPharmacistSelector][DEBUG] Role check:", {
+      role: auth.profile?.role,
+      isPharmacist
+    });
+    return isPharmacist;
   },
 });
