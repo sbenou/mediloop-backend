@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -11,22 +11,26 @@ import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 const Login = () => {
   const { isAuthenticated, isLoading, profile, userRole } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
+  const navigate = useNavigate();
   
   // If user is authenticated but not redirecting yet, prepare redirect
-  if (isAuthenticated && !redirecting && profile) {
-    console.log("[Login] User authenticated, redirecting to dashboard with role:", profile.role || userRole);
-    setRedirecting(true);
-    
-    // Get the correct dashboard route for this user
-    const role = profile.role || userRole || 'patient';
-    const redirectUrl = getDashboardRouteByRole(role);
-    
-    console.log("[Login] Redirecting to:", redirectUrl);
-    
-    // Use direct navigation for a clean redirect
-    window.location.href = redirectUrl;
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated && !redirecting && profile) {
+      console.log("[Login] User authenticated, redirecting to dashboard with role:", profile.role || userRole);
+      
+      // Prevent multiple redirect attempts
+      setRedirecting(true);
+      
+      // Get the correct dashboard route for this user
+      const role = profile.role || userRole || 'patient';
+      const redirectUrl = getDashboardRouteByRole(role);
+      
+      console.log("[Login] Redirecting to:", redirectUrl);
+      
+      // Use navigator for a cleaner redirect
+      navigate(redirectUrl, { replace: true });
+    }
+  }, [isAuthenticated, redirecting, profile, userRole, navigate]);
   
   // Show loading state when initial auth check is happening
   if (isLoading && !isAuthenticated) {

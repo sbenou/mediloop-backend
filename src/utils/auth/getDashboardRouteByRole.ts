@@ -1,32 +1,33 @@
 
-import { UserRole } from "@/types/role";
-
-export const roleRouteMap = {
-  [UserRole.Superadmin]: { route: "/superadmin/dashboard", label: "Superadmin Dashboard" },
-  [UserRole.Doctor]: { route: "/dashboard", label: "Doctor Dashboard" },
-  [UserRole.Pharmacist]: { route: "/dashboard", label: "Pharmacy Dashboard" },
-  [UserRole.Patient]: { route: "/dashboard", label: "Patient Dashboard" },
-};
-
 /**
- * Returns the correct dashboard route based on the user's role
- * Always normalizes 'user' role to 'patient'
+ * Returns the appropriate dashboard route based on user role
+ * @param role The user's role
+ * @returns The dashboard route
  */
-export const getDashboardRouteByRole = (role?: string): string => {
+export const getDashboardRouteByRole = (role?: string | null): string => {
   // Default to patient dashboard if no role is provided
   if (!role) {
-    console.log("[getDashboardRouteByRole] No role provided, defaulting to patient dashboard");
-    return "/dashboard";
+    console.log("No role provided, defaulting to patient dashboard");
+    return '/dashboard';
   }
-  
-  // Normalize role - always convert 'user' to 'patient'
-  const normalizedRole = role.toLowerCase() === 'user' ? 'patient' : role.toLowerCase();
-  
-  console.log(`[getDashboardRouteByRole] Getting route for normalized role: ${normalizedRole}`);
-  
-  const route = roleRouteMap[normalizedRole as keyof typeof roleRouteMap]?.route || "/dashboard";
-  console.log(`[getDashboardRouteByRole] Determined route: ${route}`);
-  return route;
+
+  // Convert to lowercase to ensure consistent comparison
+  const normalizedRole = typeof role === 'string' ? role.toLowerCase() : '';
+  console.log(`Getting dashboard route for role: ${normalizedRole}`);
+
+  switch (normalizedRole) {
+    case 'doctor':
+      return '/doctor/dashboard';
+    case 'pharmacist':
+      // For pharmacists, use universal dashboard with pharmacy view
+      return '/universal-dashboard?view=pharmacy&section=dashboard';
+    case 'admin':
+    case 'superadmin':
+      return '/admin/dashboard';
+    case 'patient':
+    default:
+      return '/dashboard';
+  }
 };
 
 export default getDashboardRouteByRole;
