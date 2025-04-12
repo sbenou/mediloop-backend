@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { StatisticsCharts } from "@/components/dashboard/StatisticsCharts";
@@ -28,7 +28,8 @@ interface Patient {
   created_at: string;
 }
 
-const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashboard" }) => {
+// Use memo to prevent unnecessary re-renders
+const PharmacyView: React.FC<PharmacyViewProps> = memo(({ userRole, section = "dashboard" }) => {
   const { profile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: stats, isLoading, error } = usePharmacyDashboardStats();
@@ -39,36 +40,37 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
   const profileTab = searchParams.get("profileTab") || "personal";
   const ordersTab = searchParams.get("ordersTab") || "pending";
 
-  useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url, created_at')
-          .eq('role', 'patient')
-          .order('created_at', { ascending: false });
+  // Use useCallback to prevent unnecessary re-renders
+  const fetchPatients = useCallback(async () => {
+    try {
+      setIsLoadingPatients(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, created_at')
+        .eq('role', 'patient')
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        setPatients(data || []);
-      } catch (error) {
-        console.error('Error fetching patients:', error);
-      } finally {
-        setIsLoadingPatients(false);
-      }
-    };
-
-    fetchPatients();
+      if (error) throw error;
+      setPatients(data || []);
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+    } finally {
+      setIsLoadingPatients(false);
+    }
   }, []);
 
-  const navigateToPharmacyPage = (path: string) => {
-    // Navigate within the new dashboard structure
-    setSearchParams({ view: 'pharmacy', section: path });
-  };
+  useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
 
-  const viewPatient = (patientId: string) => {
-    // Navigate within the new dashboard structure
+  // Use useCallback for event handlers to prevent unnecessary re-renders
+  const navigateToPharmacyPage = useCallback((path: string) => {
+    setSearchParams({ view: 'pharmacy', section: path });
+  }, [setSearchParams]);
+
+  const viewPatient = useCallback((patientId: string) => {
     setSearchParams({ view: 'pharmacy', section: 'patients', id: patientId });
-  };
+  }, [setSearchParams]);
 
   // Render prescriptions section
   if (section === "prescriptions") {
@@ -151,6 +153,9 @@ const PharmacyView: React.FC<PharmacyViewProps> = ({ userRole, section = "dashbo
       <StatisticsCharts />
     </div>
   );
-};
+});
+
+// Add displayName for better debugging
+PharmacyView.displayName = 'PharmacyView';
 
 export default PharmacyView;

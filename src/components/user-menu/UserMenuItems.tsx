@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -41,14 +41,8 @@ export const UserMenuItems = () => {
   const isActivitiesPage = location.pathname.includes('/activities') || 
                           location.pathname.includes('/notifications');
   
-  // Debugging logs
-  console.log('UserMenuItems rendering with userRole:', userRole);
-  console.log('UserMenuItems isPharmacist from hook:', isPharmacist);
-  console.log('UserMenuItems profile data:', auth.profile);
-  
   // Force check for pharmacist role for debugging
   const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist';
-  console.log('UserMenuItems FINAL isUserPharmacist check:', isUserPharmacist);
 
   const handleLogout = async () => {
     try {
@@ -106,22 +100,28 @@ export const UserMenuItems = () => {
   };
 
   // Function to handle navigation with proper path resolution and prevent infinite loops
-  const handleNavigation = (path: string) => {
-    console.log(`Navigating to ${path} from UserMenuItems`, location.pathname + location.search);
-    
-    // If we're already on the target path, don't navigate again to prevent loops
-    if (location.pathname + location.search === path) {
-      console.log("Already on this path, skipping navigation");
+  const handleNavigation = useCallback((path: string) => {
+    // Check if we're already on this path to prevent unnecessary navigation
+    const currentPath = location.pathname + location.search;
+    if (currentPath === path) {
       return;
     }
     
-    // Use window.location for hard navigation to prevent React Router issues with pharmacist dashboard
+    // For pharmacist dashboard, use special handling
     if (isUserPharmacist && path.includes('view=pharmacy')) {
-      window.location.href = path;
+      // Check current path to prevent direct links back to pharmacy dashboard
+      if (location.pathname === '/dashboard' && location.search.includes('view=pharmacy')) {
+        console.log("Already in pharmacy section, using navigate to avoid reload");
+        navigate(path);
+      } else {
+        // Set a flag to indicate direct pharmacy navigation
+        sessionStorage.setItem('direct_pharmacy_navigation', 'true');
+        navigate(path);
+      }
     } else {
       navigate(path);
     }
-  };
+  }, [navigate, location.pathname, location.search, isUserPharmacist]);
 
   // Generate menu items based on user role
   const getMenuItemsByRole = () => {
@@ -159,11 +159,10 @@ export const UserMenuItems = () => {
         { icon: Home, label: 'Dashboard', path: '/dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
-        { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
-        { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
-        { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
+        { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
+        { icon: Users, label: 'Patients', path: '/dashboard' }, // Simplified navigation for patients
+        { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
         { icon: Bell, label: 'Notifications', path: '/activities' },
-        { icon: BarChart, label: 'Analytics', path: '/dashboard?view=pharmacy&section=analytics' },
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
@@ -193,10 +192,6 @@ export const UserMenuItems = () => {
   // Use useMemo to prevent unnecessary re-renders
   const menuItems = useMemo(() => {
     const roleSpecificItems = getMenuItemsByRole();
-    
-    // Enhanced debugging
-    console.log('Current user role in UserMenuItems:', userRole);
-    console.log('Menu items generated for role:', roleSpecificItems);
     
     return (
       <>
@@ -228,7 +223,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, location.pathname, location.search]);
+  }, [navigate, userRole, auth.profile, setAuth, isUserPharmacist, handleNavigation]);
 
   return menuItems;
 };

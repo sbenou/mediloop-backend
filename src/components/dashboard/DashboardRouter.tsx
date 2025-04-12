@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import useDashboardParams from "@/hooks/dashboard/useDashboardParams";
 import { 
@@ -8,9 +8,9 @@ import {
   OrdersView, 
   PrescriptionsView,
   HomeView,
-  PharmacyView,
   WorkplacesView
 } from "@/components/dashboard/views";
+import PharmacyView from "@/components/dashboard/PharmacyView";
 import TeleconsultationsView from "@/components/dashboard/views/TeleconsultationsView";
 import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatientView";
 import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorPrescriptionsView";
@@ -29,8 +29,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   
   console.log("🚦 DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
   
-  if (!userRole) {
-    console.warn("[DashboardRouter] Warning: userRole is not defined. Rendering fallback view.");
+  const renderErrorFallback = useCallback(() => {
     return (
       <div className="p-6 border border-red-300 rounded bg-red-50">
         <h2 className="text-xl font-semibold text-red-700 mb-2">Dashboard Error</h2>
@@ -43,6 +42,11 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
         </button>
       </div>
     );
+  }, []);
+  
+  if (!userRole) {
+    console.warn("[DashboardRouter] Warning: userRole is not defined. Rendering fallback view.");
+    return renderErrorFallback();
   }
   
   try {
@@ -51,6 +55,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       // If we're on the pharmacy view with a section or without any params, show the pharmacy view
       if (view === "pharmacy" || (!view && !section)) {
         console.log("Rendering PharmacyView for pharmacist with section:", section || "dashboard");
+        // Prevent passing unnecessary props that might cause re-renders
         return <PharmacyView userRole={userRole} section={section || "dashboard"} />;
       }
       
@@ -62,10 +67,14 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
           return <ProfileView activeTab={profileTab} userRole={userRole} />;
         case "settings":
           return <SettingsView userRole={userRole} />;
+        case "orders":
+          return <OrdersView activeTab={ordersTab} userRole={userRole} />;
+        case "prescriptions":
+          return <PrescriptionsView userRole={userRole} />;
         default:
           // Default to the pharmacy dashboard if no specific view is requested
           console.log("Defaulting to pharmacy dashboard");
-          return <PharmacyView userRole={userRole} section={section || "dashboard"} />;
+          return <PharmacyView userRole={userRole} section="dashboard" />;
       }
     }
     
