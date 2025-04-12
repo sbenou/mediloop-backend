@@ -41,29 +41,17 @@ const UniversalDashboard = () => {
     });
   }, [userRole, currentView, pharmacySection, searchParams, location, isPharmacist, profile]);
   
-  // Make sure we have a default section for pharmacists - with more aggressive redirect
+  // Make sure we have a default section for pharmacists
   useEffect(() => {
-    if (!isLoading && (userRole === "pharmacist" || isPharmacist || profile?.role === "pharmacist")) {
+    if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad) {
       console.log("Checking pharmacist params:", { currentView, pharmacySection, isPharmacist });
       
-      const isPharmacistWithWrongParams = currentView !== 'pharmacy' || !pharmacySection;
-      
-      if (isPharmacistWithWrongParams) {
-        console.log("Detected pharmacist with incorrect URL parameters. Fixing...");
-        
-        // Use a direct window.location update for complete reliability
-        if (location.pathname === '/dashboard') {
-          const correctUrl = '/dashboard?view=pharmacy&section=dashboard';
-          console.log(`Hard redirecting pharmacist to: ${correctUrl}`);
-          window.location.href = correctUrl;
-          return;
-        }
-        
-        // As a backup, try React Router navigation
+      if (currentView !== 'pharmacy' || !pharmacySection) {
+        console.log("Setting default pharmacist params");
         setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, setSearchParams, currentView, pharmacySection, isLoading, isPharmacist, profile, location, navigate]);
+  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isPharmacist]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
@@ -74,7 +62,7 @@ const UniversalDashboard = () => {
   
   const getContent = () => {
     // For pharmacists, always show the pharmacy view regardless of the URL parameter
-    if (userRole === "pharmacist" || isPharmacist || profile?.role === "pharmacist") {
+    if (userRole === "pharmacist" || isPharmacist) {
       console.log("Rendering PharmacyView with section:", pharmacySection);
       return <PharmacyView userRole={userRole} section={pharmacySection} />;
     }
