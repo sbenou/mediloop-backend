@@ -8,14 +8,14 @@ import {
   OrdersView, 
   PrescriptionsView,
   HomeView,
-  PharmacyView
+  PharmacyView,
+  WorkplacesView
 } from "@/components/dashboard/views";
 import TeleconsultationsView from "@/components/dashboard/views/TeleconsultationsView";
 import DoctorPatientView from "@/components/dashboard/views/doctor/DoctorPatientView";
 import DoctorPrescriptionsView from "@/components/dashboard/views/doctor/DoctorPrescriptionsView";
 import DoctorTeleconsultationsView from "@/components/dashboard/views/doctor/DoctorTeleconsultationsView";
 import DoctorAppointmentsView from "@/components/dashboard/views/doctor/DoctorAppointmentsView";
-import WorkplacesView from "@/components/dashboard/views/doctor/WorkplacesView";
 import NotificationsView from "@/components/dashboard/views/NotificationsView";
 
 interface DashboardRouterProps {
