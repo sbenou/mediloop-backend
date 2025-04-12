@@ -5,8 +5,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useMemo } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { supabase, clearAllAuthStorage } from "@/lib/supabase";
@@ -25,22 +25,16 @@ import {
   Users,
   HeartPulse,
   Calendar,
-  BarChart,
-  Loader
+  BarChart
 } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 export const UserMenuItems = () => {
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [auth, setAuth] = useRecoilState(authState);
-  const { isPharmacist, userRole: hookUserRole, profile } = useAuth();
-  const [isNavigating, setIsNavigating] = useState(false);
-  
-  // Ensure we have a userRole, with multiple fallbacks
-  // Use profile.role as the highest priority source
-  const userRole = profile?.role || auth.profile?.role || hookUserRole || 'user';
+  const { isPharmacist } = useAuth();
+  const userRole = auth.profile?.role || 'user';
   
   // Check if we're on the activities or notifications page
   const isActivitiesPage = location.pathname.includes('/activities') || 
@@ -52,12 +46,11 @@ export const UserMenuItems = () => {
   console.log('[UserMenuItems][DEBUG] profile data:', auth.profile);
   
   // Force check for pharmacist role for debugging
-  const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist' || profile?.role === 'pharmacist';
+  const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist';
   console.log('[UserMenuItems][DEBUG] FINAL isUserPharmacist check:', isUserPharmacist);
 
   const handleLogout = async () => {
     try {
-      setIsNavigating(true);
       console.log("[UserMenuItems][DEBUG] Logout initiated from UserMenuItems");
       
       // First, clear all local auth state before API call
@@ -104,20 +97,10 @@ export const UserMenuItems = () => {
         description: "You have been successfully logged out",
       });
       
-      // Clear any navigation flags
-      sessionStorage.removeItem('login_successful');
-      sessionStorage.removeItem('skip_dashboard_redirect');
-      sessionStorage.removeItem('dashboard_redirect_count');
-      sessionStorage.removeItem('dashboard_mount_count');
-      sessionStorage.removeItem('pharmacy_redirect_count');
-      
       // Force a hard redirect to ensure complete logout
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 300);
+      window.location.href = "/login";
     } catch (error) {
       console.error("[UserMenuItems][DEBUG] Logout error:", error);
-      setIsNavigating(false);
       toast({
         variant: "destructive",
         title: "Logout failed",
@@ -129,74 +112,22 @@ export const UserMenuItems = () => {
   // Function to handle navigation with proper path resolution
   const handleNavigation = (path: string) => {
     console.log(`[UserMenuItems][DEBUG] Navigating to ${path} from UserMenuItems`);
-    setIsNavigating(true);
     
-    // Reset all navigation-related flags
-    sessionStorage.removeItem('pharmacy_redirect_count');
-    sessionStorage.removeItem('dashboard_redirect_count');
-    sessionStorage.removeItem('dashboard_mount_count');
-    
-    // Set a navigation timestamp to track intentional navigations
-    sessionStorage.setItem('menu_navigation_timestamp', Date.now().toString());
-        
-    if (path.includes('/dashboard')) {
-      // Get correct dashboard route based on user role with fallbacks
-      // Use profile.role as the highest priority source of truth
-      const role = profile?.role || userRole || auth.profile?.role || 'user';
-      let dashboardRoute = getDashboardRouteByRole(role);
-      
-      console.log(`[UserMenuItems][DEBUG] Navigation details:`, {
-        role,
-        isPharmacist: isUserPharmacist,
-        originalPath: path,
-        calculatedRoute: dashboardRoute
-      });
-      
-      // Flag to indicate this is an intentional menu navigation
-      sessionStorage.setItem('dashboard_navigation_source', 'menu');
-      // Ensure skip_dashboard_redirect is also set to prevent loops
-      sessionStorage.setItem('skip_dashboard_redirect', 'true');
-      
-      try {
-        // For pharmacists, always ensure correct parameters
-        if (isUserPharmacist) {
-          console.log("[UserMenuItems][DEBUG] Pharmacist detected, forcing pharmacy dashboard");
-          
-          // Use setTimeout to ensure session storage is set before navigation
-          setTimeout(() => {
-            window.location.replace('/dashboard?view=pharmacy&section=dashboard');
-          }, 150);
-          return;
-        }
-        
-        // For other roles, use the calculated route
-        setTimeout(() => {
-          window.location.replace(dashboardRoute);
-        }, 150);
-      } catch (err) {
-        console.error("Navigation error:", err);
-        setIsNavigating(false);
-        
-        // Fallback to direct href navigation
-        const targetUrl = isUserPharmacist ? 
-          '/dashboard?view=pharmacy&section=dashboard' : 
-          dashboardRoute;
-          
-        window.location.href = targetUrl;
-      }
-    } else {
-      // For non-dashboard paths, use React Router navigation
+    // If on activities page and trying to go to dashboard with params,
+    // ensure we navigate properly
+    if (isActivitiesPage && path.startsWith('/dashboard?')) {
       navigate(path);
-      setIsNavigating(false);
+    } else {
+      navigate(path);
     }
   };
 
-  // Generate menu items based on user role
+  // Generate menu items based on user role - this now exactly matches the sidebar navigation
   const getMenuItemsByRole = () => {
     // Default items (patient/user role)
     if (userRole === 'user' || userRole === 'patient') {
       return [
-        { icon: Home, label: 'Dashboard', path: '/dashboard?view=home' },
+        { icon: Home, label: 'Dashboard', path: '/dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
         { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
@@ -212,7 +143,7 @@ export const UserMenuItems = () => {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
-        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, 
+        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Point directly to doctor profile
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
         { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
@@ -221,12 +152,12 @@ export const UserMenuItems = () => {
       ];
     }
     
-    // Pharmacist specific items - always use full pharmacy parameter set
+    // Pharmacist specific items
     if (isUserPharmacist) {
       console.log('[UserMenuItems][DEBUG] Generating menu items for pharmacist');
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
-        { icon: User, label: 'Profile', path: '/dashboard?view=pharmacy&section=profile&profileTab=personal' },
+        { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile', className: 'pharmacy-profile-link' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
         { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
@@ -288,13 +219,8 @@ export const UserMenuItems = () => {
                 handleNavigation(item.path);
               }}
               className={item.className}
-              disabled={isNavigating}
             >
-              {isNavigating ? (
-                <Loader className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <item.icon className="mr-2 h-4 w-4" />
-              )}
+              <item.icon className="mr-2 h-4 w-4" />
               <span>{item.label}</span>
             </DropdownMenuItem>
           ))}
@@ -308,18 +234,13 @@ export const UserMenuItems = () => {
             e.stopPropagation();
             handleLogout();
           }}
-          disabled={isNavigating}
         >
-          {isNavigating ? (
-            <Loader className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <LogOut className="mr-2 h-4 w-4" />
-          )}
+          <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>
       </>
     );
-  }, [userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, navigate, profile, isNavigating]);
+  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, location]);
 
   return menuItems;
 };
