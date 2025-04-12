@@ -1,4 +1,5 @@
 
+import React from 'react';
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -30,7 +31,7 @@ import {
 import { useAuth } from "@/hooks/auth/useAuth";
 
 export const UserMenuItems = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Use navigate here
   const location = useLocation();
   const [auth, setAuth] = useRecoilState(authState);
   const { isPharmacist } = useAuth();
@@ -97,8 +98,8 @@ export const UserMenuItems = () => {
         description: "You have been successfully logged out",
       });
       
-      // Force a hard redirect to ensure complete logout
-      window.location.href = "/login";
+      // Use navigate instead of window.location.href
+      navigate('/login');
     } catch (error) {
       console.error("[UserMenuItems][DEBUG] Logout error:", error);
       toast({
