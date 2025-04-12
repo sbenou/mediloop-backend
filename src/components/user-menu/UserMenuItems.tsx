@@ -31,7 +31,7 @@ import {
 import { useAuth } from "@/hooks/auth/useAuth";
 
 export const UserMenuItems = () => {
-  const navigate = useNavigate(); // Use navigate here
+  const navigate = useNavigate();
   const location = useLocation();
   const [auth, setAuth] = useRecoilState(authState);
   const { isPharmacist } = useAuth();
@@ -42,17 +42,17 @@ export const UserMenuItems = () => {
                           location.pathname.includes('/notifications');
   
   // Debugging logs
-  console.log('[UserMenuItems][DEBUG] UserMenuItems rendering with userRole:', userRole);
-  console.log('[UserMenuItems][DEBUG] isPharmacist from hook:', isPharmacist);
-  console.log('[UserMenuItems][DEBUG] profile data:', auth.profile);
+  console.log('UserMenuItems rendering with userRole:', userRole);
+  console.log('UserMenuItems isPharmacist from hook:', isPharmacist);
+  console.log('UserMenuItems profile data:', auth.profile);
   
   // Force check for pharmacist role for debugging
   const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist';
-  console.log('[UserMenuItems][DEBUG] FINAL isUserPharmacist check:', isUserPharmacist);
+  console.log('UserMenuItems FINAL isUserPharmacist check:', isUserPharmacist);
 
   const handleLogout = async () => {
     try {
-      console.log("[UserMenuItems][DEBUG] Logout initiated from UserMenuItems");
+      console.log("Logout initiated from UserMenuItems");
       
       // First, clear all local auth state before API call
       setAuth({
@@ -66,7 +66,7 @@ export const UserMenuItems = () => {
       try {
         localStorage.removeItem('selectedCountry');
       } catch (e) {
-        console.error("[UserMenuItems][DEBUG] Error removing selectedCountry:", e);
+        console.error("Error removing selectedCountry:", e);
       }
       
       // Force clear all auth storage
@@ -77,19 +77,14 @@ export const UserMenuItems = () => {
         const logoutEvent = { type: 'LOGOUT', timestamp: Date.now() };
         localStorage.setItem('last_auth_event', JSON.stringify(logoutEvent));
       } catch (eventError) {
-        console.error('[UserMenuItems][DEBUG] Error broadcasting logout event:', eventError);
+        console.error('Error broadcasting logout event:', eventError);
       }
-      
-      toast({
-        title: "Logging out...",
-        description: "Please wait while we log you out",
-      });
       
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
-        console.error("[UserMenuItems][DEBUG] Supabase signOut error:", error);
+        console.error("Supabase signOut error:", error);
         throw error;
       }
       
@@ -98,10 +93,10 @@ export const UserMenuItems = () => {
         description: "You have been successfully logged out",
       });
       
-      // Use navigate instead of window.location.href
-      navigate('/login');
+      // Force a hard redirect to ensure complete logout
+      window.location.href = "/login";
     } catch (error) {
-      console.error("[UserMenuItems][DEBUG] Logout error:", error);
+      console.error("Logout error:", error);
       toast({
         variant: "destructive",
         title: "Logout failed",
@@ -112,7 +107,7 @@ export const UserMenuItems = () => {
 
   // Function to handle navigation with proper path resolution
   const handleNavigation = (path: string) => {
-    console.log(`[UserMenuItems][DEBUG] Navigating to ${path} from UserMenuItems`);
+    console.log(`Navigating to ${path} from UserMenuItems`);
     
     // If on activities page and trying to go to dashboard with params,
     // ensure we navigate properly
@@ -155,11 +150,10 @@ export const UserMenuItems = () => {
     
     // Pharmacist specific items
     if (isUserPharmacist) {
-      console.log('[UserMenuItems][DEBUG] Generating menu items for pharmacist');
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
-        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile', className: 'pharmacy-profile-link' },
+        { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
         { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
@@ -196,8 +190,8 @@ export const UserMenuItems = () => {
     const roleSpecificItems = getMenuItemsByRole();
     
     // Enhanced debugging
-    console.log('[UserMenuItems][DEBUG] Current user role in UserMenuItems:', userRole);
-    console.log('[UserMenuItems][DEBUG] Menu items generated for role:', roleSpecificItems);
+    console.log('Current user role in UserMenuItems:', userRole);
+    console.log('Menu items generated for role:', roleSpecificItems);
     
     return (
       <>
@@ -212,14 +206,10 @@ export const UserMenuItems = () => {
           {roleSpecificItems.map((item, index) => (
             <DropdownMenuItem 
               key={`${item.label}-${index}`} 
-              data-testid={`menu-item-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log(`[UserMenuItems][DEBUG] Clicking on ${item.label} menu item with path ${item.path}`);
+              onClick={() => {
+                console.log(`Navigating to ${item.path} from UserMenuItems`);
                 handleNavigation(item.path);
               }}
-              className={item.className}
             >
               <item.icon className="mr-2 h-4 w-4" />
               <span>{item.label}</span>
@@ -229,19 +219,14 @@ export const UserMenuItems = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-red-600 focus:text-red-600"
-          data-testid="menu-item-logout"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleLogout();
-          }}
+          onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, location]);
+  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage]);
 
   return menuItems;
 };
