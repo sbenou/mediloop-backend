@@ -41,17 +41,27 @@ const UniversalDashboard = () => {
     });
   }, [userRole, currentView, pharmacySection, searchParams, location, isPharmacist, profile]);
   
-  // Make sure we have a default section for pharmacists
+  // Make sure we have default parameters set for role-specific views on initial load
   useEffect(() => {
-    if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad) {
-      console.log("Checking pharmacist params:", { currentView, pharmacySection, isPharmacist });
+    if (!isLoading && !isInitialLoad) {
+      console.log("Setting default parameters for role:", userRole, isPharmacist);
       
-      if (currentView !== 'pharmacy' || !pharmacySection) {
+      // For pharmacists, ensure we have view=pharmacy and section parameter
+      if ((userRole === "pharmacist" || isPharmacist) && 
+          (currentView !== 'pharmacy' || !searchParams.get("section"))) {
         console.log("Setting default pharmacist params");
         setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
+        return;
+      }
+      
+      // For doctors, ensure we have a section parameter if not already present
+      if (userRole === "doctor" && !searchParams.get("section") && searchParams.entries().length === 0) {
+        console.log("Setting default doctor params");
+        setSearchParams({ section: 'dashboard' }, { replace: true });
+        return;
       }
     }
-  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isPharmacist]);
+  }, [userRole, isPharmacist, isLoading, isInitialLoad, currentView, searchParams, setSearchParams]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
