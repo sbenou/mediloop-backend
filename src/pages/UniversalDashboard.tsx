@@ -55,7 +55,8 @@ const UniversalDashboard = () => {
       }
       
       // For doctors, ensure we have a section parameter if not already present
-      if (userRole === "doctor" && !searchParams.get("section") && searchParams.entries().length === 0) {
+      // Fixed: Check if searchParams is empty without using .length
+      if (userRole === "doctor" && !searchParams.get("section") && !searchParams.has("view")) {
         console.log("Setting default doctor params");
         setSearchParams({ section: 'dashboard' }, { replace: true });
         return;
