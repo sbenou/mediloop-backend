@@ -1,13 +1,12 @@
 
 import { useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 export const useLoginManager = () => {
   const { isAuthenticated, profile, isLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const redirected = useRef(false);
 
   // Handle role-based redirects
@@ -16,9 +15,7 @@ export const useLoginManager = () => {
     if (isLoading || !isAuthenticated || !profile || redirected.current) return;
     
     // If we're already on the dashboard page, don't redirect again
-    if (location.pathname === '/dashboard') {
-      // We're on the dashboard, but might need to set appropriate parameters
-      // This is now handled by UniversalDashboard component
+    if (window.location.pathname === '/dashboard') {
       redirected.current = true;
       return;
     }
@@ -29,7 +26,7 @@ export const useLoginManager = () => {
     console.log("[LoginManager] Redirecting user to:", route);
     redirected.current = true;
     navigate(route, { replace: true });
-  }, [isAuthenticated, profile, navigate, isLoading, location]);
+  }, [isAuthenticated, profile, navigate, isLoading]);
 
   return {
     redirected: redirected.current,

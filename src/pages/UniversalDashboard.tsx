@@ -41,27 +41,17 @@ const UniversalDashboard = () => {
     });
   }, [userRole, currentView, pharmacySection, searchParams, location, isPharmacist, profile]);
   
-  // Make sure we have default parameters set for role-specific views on initial load
+  // Make sure we have a default section for pharmacists
   useEffect(() => {
-    if (!isLoading && !isInitialLoad) {
-      console.log("Setting default parameters for role:", userRole, isPharmacist);
+    if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad) {
+      console.log("Checking pharmacist params:", { currentView, pharmacySection, isPharmacist });
       
-      // For pharmacists, ensure we have view=pharmacy and section parameter
-      if ((userRole === "pharmacist" || isPharmacist) && 
-          (currentView !== 'pharmacy' || !searchParams.get("section"))) {
+      if (currentView !== 'pharmacy' || !pharmacySection) {
         console.log("Setting default pharmacist params");
         setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
-        return;
-      }
-      
-      // For doctors, ensure we have a section parameter if not already present
-      if (userRole === "doctor" && !searchParams.get("section") && !searchParams.has("view")) {
-        console.log("Setting default doctor params");
-        setSearchParams({ section: 'dashboard' }, { replace: true });
-        return;
       }
     }
-  }, [userRole, isPharmacist, isLoading, isInitialLoad, currentView, searchParams, setSearchParams]);
+  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isPharmacist]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
@@ -71,45 +61,32 @@ const UniversalDashboard = () => {
   }, [isLoading]);
   
   const getContent = () => {
-    try {
-      // For pharmacists, always show the pharmacy view regardless of the URL parameter
-      if (userRole === "pharmacist" || isPharmacist) {
-        console.log("Rendering PharmacyView with section:", pharmacySection);
+    // For pharmacists, always show the pharmacy view regardless of the URL parameter
+    if (userRole === "pharmacist" || isPharmacist) {
+      console.log("Rendering PharmacyView with section:", pharmacySection);
+      return <PharmacyView userRole={userRole} section={pharmacySection} />;
+    }
+    
+    // For other roles, show the view based on the URL parameter
+    switch (currentView) {
+      case "profile":
+        return <ProfileView activeTab={profileTab} userRole={userRole} />;
+      case "settings":
+        return <SettingsView userRole={userRole} />;
+      case "orders":
+        return <OrdersView activeTab={ordersTab} userRole={userRole} />;
+      case "prescriptions":
+        return <PrescriptionsView userRole={userRole} />;
+      case "pharmacy":
+        // This case is for non-pharmacists who might access the pharmacy view
         return <PharmacyView userRole={userRole} section={pharmacySection} />;
-      }
-      
-      // For other roles, show the view based on the URL parameter
-      switch (currentView) {
-        case "profile":
-          return <ProfileView activeTab={profileTab} userRole={userRole} />;
-        case "settings":
-          return <SettingsView userRole={userRole} />;
-        case "orders":
-          return <OrdersView activeTab={ordersTab} userRole={userRole} />;
-        case "prescriptions":
-          return <PrescriptionsView userRole={userRole} />;
-        case "pharmacy":
-          // This case is for non-pharmacists who might access the pharmacy view
-          return <PharmacyView userRole={userRole} section={pharmacySection} />;
-        case "teleconsultations":
-          return <TeleconsultationsView userRole={userRole} />;
-        case "notifications":
-          return <NotificationsView userRole={userRole} />;
-        case "home":
-        default:
-          return <HomeView userRole={userRole} />;
-      }
-    } catch (error) {
-      console.error("Error rendering dashboard content:", error);
-      return (
-        <div className="p-6 border border-red-300 rounded bg-red-50">
-          <h2 className="text-xl font-semibold text-red-700 mb-2">Dashboard Error</h2>
-          <p className="text-red-600">There was an error loading the dashboard content. Please try refreshing the page.</p>
-          <pre className="mt-4 p-4 bg-red-100 text-red-800 overflow-auto text-xs">
-            {error instanceof Error ? error.message : String(error)}
-          </pre>
-        </div>
-      );
+      case "teleconsultations":
+        return <TeleconsultationsView userRole={userRole} />;
+      case "notifications":
+        return <NotificationsView userRole={userRole} />;
+      case "home":
+      default:
+        return <HomeView userRole={userRole} />;
     }
   };
   

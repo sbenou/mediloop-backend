@@ -6,7 +6,7 @@ import useDashboardParams from '@/hooks/dashboard/useDashboardParams';
 export const useSidebarNavigation = (userRole: string) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { params, searchParams, updateParams } = useDashboardParams();
+  const { params, updateParams } = useDashboardParams();
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isConsultationsOpen, setIsConsultationsOpen] = useState(false);

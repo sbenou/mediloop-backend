@@ -1,45 +1,47 @@
 
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from "react-router-dom";
 
-interface DashboardParams {
-  view: string | null;
-  section: string | null;
-  profileTab: string | null;
-  ordersTab: string | null;
-  workplacesTab: string | null; // Added workplacesTab
-  id: string | null;
-}
-
-const useDashboardParams = () => {
+export const useDashboardParams = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Get common dashboard parameters
+  const view = searchParams.get("view") || "home";
+  const section = searchParams.get("section") || "dashboard";
+  const profileTab = searchParams.get("profileTab") || "personal";
+  const ordersTab = searchParams.get("ordersTab") || "orders";
+  const workplacesTab = searchParams.get("workplacesTab") || "selection"; // Added workplacesTab
   
-  // Parse current parameters from URL
-  const params: DashboardParams = {
-    view: searchParams.get('view'),
-    section: searchParams.get('section'),
-    profileTab: searchParams.get('profileTab') || 'personal',
-    ordersTab: searchParams.get('ordersTab') || 'pending',
-    workplacesTab: searchParams.get('workplacesTab') || 'selection', // Set default to 'selection'
-    id: searchParams.get('id')
-  };
-  
-  // Add updateParams function to modify URL parameters
-  const updateParams = (newParams: Partial<DashboardParams>) => {
+  // Function to update dashboard parameters
+  const updateParams = (newParams: Record<string, string>) => {
     const updatedParams = new URLSearchParams(searchParams);
     
-    // Update or delete parameters based on provided values
+    // Update each parameter
     Object.entries(newParams).forEach(([key, value]) => {
-      if (value === null || value === undefined) {
-        updatedParams.delete(key);
-      } else {
+      if (value) {
         updatedParams.set(key, value);
+      } else {
+        updatedParams.delete(key);
       }
     });
     
     setSearchParams(updatedParams);
   };
-  
-  return { params, searchParams, updateParams };
+
+  return {
+    // Current parameter values
+    params: {
+      view,
+      section,
+      profileTab,
+      ordersTab,
+      workplacesTab // Include workplacesTab in the returned params object
+    },
+    // Raw parameters
+    searchParams,
+    // Update functions
+    setSearchParams,
+    updateParams
+  };
 };
 
 export default useDashboardParams;
