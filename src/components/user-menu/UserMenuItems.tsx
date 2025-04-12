@@ -105,23 +105,28 @@ export const UserMenuItems = () => {
     }
   };
 
-  // Function to handle navigation with proper path resolution
+  // Function to handle navigation with proper path resolution and prevent infinite loops
   const handleNavigation = (path: string) => {
-    console.log(`Navigating to ${path} from UserMenuItems`);
+    console.log(`Navigating to ${path} from UserMenuItems`, location.pathname + location.search);
     
-    // If on activities page and trying to go to dashboard with params,
-    // ensure we navigate properly
-    if (isActivitiesPage && path.startsWith('/dashboard?')) {
-      navigate(path);
+    // If we're already on the target path, don't navigate again to prevent loops
+    if (location.pathname + location.search === path) {
+      console.log("Already on this path, skipping navigation");
+      return;
+    }
+    
+    // Use window.location for hard navigation to prevent React Router issues with pharmacist dashboard
+    if (isUserPharmacist && path.includes('view=pharmacy')) {
+      window.location.href = path;
     } else {
       navigate(path);
     }
   };
 
-  // Generate menu items based on user role - this now exactly matches the sidebar navigation
+  // Generate menu items based on user role
   const getMenuItemsByRole = () => {
     // Default items (patient/user role)
-    if (userRole === 'user' || userRole === 'patient') {
+    if (userRole === 'user' || userRole === 'patient')  {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
@@ -139,7 +144,7 @@ export const UserMenuItems = () => {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
-        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Point directly to doctor profile
+        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, 
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
         { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
@@ -148,10 +153,10 @@ export const UserMenuItems = () => {
       ];
     }
     
-    // Pharmacist specific items
+    // Pharmacist specific items - simplified to minimize redirect issues
     if (isUserPharmacist) {
       return [
-        { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
+        { icon: Home, label: 'Dashboard', path: '/dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
@@ -206,10 +211,7 @@ export const UserMenuItems = () => {
           {roleSpecificItems.map((item, index) => (
             <DropdownMenuItem 
               key={`${item.label}-${index}`} 
-              onClick={() => {
-                console.log(`Navigating to ${item.path} from UserMenuItems`);
-                handleNavigation(item.path);
-              }}
+              onClick={() => handleNavigation(item.path)}
             >
               <item.icon className="mr-2 h-4 w-4" />
               <span>{item.label}</span>
@@ -226,7 +228,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage]);
+  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage, location.pathname, location.search]);
 
   return menuItems;
 };

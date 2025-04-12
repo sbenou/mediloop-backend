@@ -45,56 +45,86 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
     );
   }
   
-  // For pharmacists, always show pharmacy views regardless of URL parameter
-  if (userRole === "pharmacist" || isPharmacist) {
-    console.log("Rendering PharmacyView for pharmacist with section:", section);
-    return <PharmacyView userRole={userRole} section={section} />;
-  }
-  
-  // For doctors, handle special views
-  if (userRole === "doctor") {
-    console.log("Handling doctor view with section:", section);
-    switch (section) {
-      case "profile":
-        return <ProfileView activeTab={profileTab} userRole="doctor" />;
-      case "settings":
-        return <SettingsView userRole="doctor" />;
-      case "prescriptions":
-        return <DoctorPrescriptionsView />;
-      case "patients":
-        return <DoctorPatientView />;
-      case "teleconsultations":
-        return <DoctorTeleconsultationsView />;
-      case "appointments":
-        return <DoctorAppointmentsView />;
-      case "workplaces":
-        return <WorkplacesView />;
-      case "notifications":
-        return <NotificationsView userRole="doctor" />;
-      case "dashboard":
-      default:
-        return <HomeView userRole="doctor" />;
+  try {
+    // For pharmacists, handle the view based on section parameter
+    if (userRole === "pharmacist" || isPharmacist) {
+      // If we're on the pharmacy view with a section or without any params, show the pharmacy view
+      if (view === "pharmacy" || (!view && !section)) {
+        console.log("Rendering PharmacyView for pharmacist with section:", section || "dashboard");
+        return <PharmacyView userRole={userRole} section={section || "dashboard"} />;
+      }
+      
+      // For non-pharmacy views (profile, settings, etc.), show the appropriate view
+      console.log("Rendering alternative view for pharmacist:", view);
+      
+      switch (view) {
+        case "profile":
+          return <ProfileView activeTab={profileTab} userRole={userRole} />;
+        case "settings":
+          return <SettingsView userRole={userRole} />;
+        default:
+          // Default to the pharmacy dashboard if no specific view is requested
+          console.log("Defaulting to pharmacy dashboard");
+          return <PharmacyView userRole={userRole} section={section || "dashboard"} />;
+      }
     }
-  }
-  
-  // For patients (or any other role), handle based on view parameter
-  console.log("Handling patient view:", view);
-  switch (view) {
-    case "profile":
-      return <ProfileView activeTab={profileTab} userRole={userRole} />;
-    case "settings":
-      return <SettingsView userRole={userRole} />;
-    case "orders":
-      return <OrdersView activeTab={ordersTab} userRole={userRole} />;
-    case "prescriptions":
-      return <PrescriptionsView userRole={userRole} />;
-    case "teleconsultations":
-      return <TeleconsultationsView userRole={userRole} />;
-    case "notifications":
-      return <NotificationsView userRole={userRole} />;
-    case "home":
-    default:
-      return <HomeView userRole={userRole} />;
+    
+    // For doctors, handle special views
+    if (userRole === "doctor") {
+      console.log("Handling doctor view with section:", section);
+      switch (section) {
+        case "profile":
+          return <ProfileView activeTab={profileTab} userRole="doctor" />;
+        case "settings":
+          return <SettingsView userRole="doctor" />;
+        case "prescriptions":
+          return <DoctorPrescriptionsView />;
+        case "patients":
+          return <DoctorPatientView />;
+        case "teleconsultations":
+          return <DoctorTeleconsultationsView />;
+        case "appointments":
+          return <DoctorAppointmentsView />;
+        case "workplaces":
+          return <WorkplacesView />;
+        case "notifications":
+          return <NotificationsView userRole="doctor" />;
+        case "dashboard":
+        default:
+          return <HomeView userRole="doctor" />;
+      }
+    }
+    
+    // For patients (or any other role), handle based on view parameter
+    console.log("Handling patient view:", view);
+    switch (view) {
+      case "profile":
+        return <ProfileView activeTab={profileTab} userRole={userRole} />;
+      case "settings":
+        return <SettingsView userRole={userRole} />;
+      case "orders":
+        return <OrdersView activeTab={ordersTab} userRole={userRole} />;
+      case "prescriptions":
+        return <PrescriptionsView userRole={userRole} />;
+      case "teleconsultations":
+        return <TeleconsultationsView userRole={userRole} />;
+      case "notifications":
+        return <NotificationsView userRole={userRole} />;
+      case "home":
+      default:
+        return <HomeView userRole={userRole} />;
+    }
+  } catch (error) {
+    console.error("Error in DashboardRouter:", error);
+    return (
+      <div className="p-6 border border-red-300 rounded bg-red-50">
+        <h2 className="text-xl font-semibold text-red-700 mb-2">Dashboard Error</h2>
+        <p className="text-red-600">There was an error loading the dashboard. Please try refreshing the page.</p>
+        <pre className="mt-4 p-4 bg-red-100 text-red-800 overflow-auto text-xs">
+          {error instanceof Error ? error.message : String(error)}
+        </pre>
+      </div>
+    );
   }
 };
 
