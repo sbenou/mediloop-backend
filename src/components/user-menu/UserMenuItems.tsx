@@ -1,5 +1,4 @@
 
-import React, { useCallback } from 'react';
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -41,8 +40,14 @@ export const UserMenuItems = () => {
   const isActivitiesPage = location.pathname.includes('/activities') || 
                           location.pathname.includes('/notifications');
   
+  // Debugging logs
+  console.log('UserMenuItems rendering with userRole:', userRole);
+  console.log('UserMenuItems isPharmacist from hook:', isPharmacist);
+  console.log('UserMenuItems profile data:', auth.profile);
+  
   // Force check for pharmacist role for debugging
   const isUserPharmacist = userRole === 'pharmacist' || isPharmacist || auth.profile?.role === 'pharmacist';
+  console.log('UserMenuItems FINAL isUserPharmacist check:', isUserPharmacist);
 
   const handleLogout = async () => {
     try {
@@ -99,34 +104,23 @@ export const UserMenuItems = () => {
     }
   };
 
-  // Function to handle navigation with proper path resolution and prevent infinite loops
-  const handleNavigation = useCallback((path: string) => {
-    // Check if we're already on this path to prevent unnecessary navigation
-    const currentPath = location.pathname + location.search;
-    if (currentPath === path) {
-      return;
-    }
+  // Function to handle navigation with proper path resolution
+  const handleNavigation = (path: string) => {
+    console.log(`Navigating to ${path} from UserMenuItems`);
     
-    // For pharmacist dashboard, use special handling
-    if (isUserPharmacist && path.includes('view=pharmacy')) {
-      // Check current path to prevent direct links back to pharmacy dashboard
-      if (location.pathname === '/dashboard' && location.search.includes('view=pharmacy')) {
-        console.log("Already in pharmacy section, using navigate to avoid reload");
-        navigate(path);
-      } else {
-        // Set a flag to indicate direct pharmacy navigation
-        sessionStorage.setItem('direct_pharmacy_navigation', 'true');
-        navigate(path);
-      }
+    // If on activities page and trying to go to dashboard with params,
+    // ensure we navigate properly
+    if (isActivitiesPage && path.startsWith('/dashboard?')) {
+      navigate(path);
     } else {
       navigate(path);
     }
-  }, [navigate, location.pathname, location.search, isUserPharmacist]);
+  };
 
-  // Generate menu items based on user role
+  // Generate menu items based on user role - this now exactly matches the sidebar navigation
   const getMenuItemsByRole = () => {
     // Default items (patient/user role)
-    if (userRole === 'user' || userRole === 'patient')  {
+    if (userRole === 'user' || userRole === 'patient') {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
@@ -144,7 +138,7 @@ export const UserMenuItems = () => {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
-        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, 
+        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Point directly to doctor profile
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
         { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
@@ -153,16 +147,17 @@ export const UserMenuItems = () => {
       ];
     }
     
-    // Pharmacist specific items - simplified to minimize redirect issues
+    // Pharmacist specific items
     if (isUserPharmacist) {
       return [
-        { icon: Home, label: 'Dashboard', path: '/dashboard' },
+        { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
-        { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
-        { icon: Users, label: 'Patients', path: '/dashboard' }, // Simplified navigation for patients
-        { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
+        { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
+        { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
+        { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
         { icon: Bell, label: 'Notifications', path: '/activities' },
+        { icon: BarChart, label: 'Analytics', path: '/dashboard?view=pharmacy&section=analytics' },
         { icon: Settings, label: 'Settings', path: '/settings' }
       ];
     }
@@ -193,6 +188,10 @@ export const UserMenuItems = () => {
   const menuItems = useMemo(() => {
     const roleSpecificItems = getMenuItemsByRole();
     
+    // Enhanced debugging
+    console.log('Current user role in UserMenuItems:', userRole);
+    console.log('Menu items generated for role:', roleSpecificItems);
+    
     return (
       <>
         <DropdownMenuLabel className="font-normal">
@@ -206,7 +205,10 @@ export const UserMenuItems = () => {
           {roleSpecificItems.map((item, index) => (
             <DropdownMenuItem 
               key={`${item.label}-${index}`} 
-              onClick={() => handleNavigation(item.path)}
+              onClick={() => {
+                console.log(`Navigating to ${item.path} from UserMenuItems`);
+                handleNavigation(item.path);
+              }}
             >
               <item.icon className="mr-2 h-4 w-4" />
               <span>{item.label}</span>
@@ -223,7 +225,7 @@ export const UserMenuItems = () => {
         </DropdownMenuItem>
       </>
     );
-  }, [navigate, userRole, auth.profile, setAuth, isUserPharmacist, handleNavigation]);
+  }, [navigate, userRole, auth.profile, setAuth, isPharmacist, isUserPharmacist, isActivitiesPage]);
 
   return menuItems;
 };
