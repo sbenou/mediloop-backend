@@ -1,35 +1,17 @@
 
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
-import { Link } from "react-router-dom";
-import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import { useLoginManager } from "@/hooks/auth/useLoginManager";
 
 const Login = () => {
-  const { isAuthenticated, isLoading, profile, userRole } = useAuth();
-  const [redirecting, setRedirecting] = useState(false);
-  
-  // If user is authenticated but not redirecting yet, prepare redirect
-  if (isAuthenticated && !redirecting && profile) {
-    console.log("[Login] User authenticated, redirecting to dashboard with role:", profile.role || userRole);
-    setRedirecting(true);
-    
-    // Get the correct dashboard route for this user
-    const role = profile.role || userRole || 'patient';
-    const redirectUrl = getDashboardRouteByRole(role);
-    
-    console.log("[Login] Redirecting to:", redirectUrl);
-    
-    // Use direct navigation for a clean redirect
-    window.location.href = redirectUrl;
-    return null;
-  }
-  
-  // Show loading state when initial auth check is happening
-  if (isLoading && !isAuthenticated) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const { redirected } = useLoginManager(); // Use the login manager to handle redirects
+
+  // Show loading state
+  if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
@@ -38,26 +20,7 @@ const Login = () => {
               <Loader className="h-8 w-8 animate-spin text-primary" />
               <CardTitle className="text-2xl">Loading...</CardTitle>
               <CardDescription>
-                Please wait while we verify your authentication status
-              </CardDescription>
-            </div>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-  
-  // When user is authenticated, show redirecting state
-  if (isAuthenticated || redirecting) {
-    return (
-      <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-lg">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader className="h-12 w-12 animate-spin text-primary" />
-              <CardTitle className="text-2xl">Redirecting...</CardTitle>
-              <CardDescription>
-                Please wait while we redirect you to your dashboard
+                Please wait while we load your profile
               </CardDescription>
             </div>
           </CardHeader>
@@ -66,7 +29,26 @@ const Login = () => {
     );
   }
 
-  // Standard login form when not authenticated
+  // If already authenticated and redirected, show a temporary loading state
+  if (isAuthenticated && redirected) {
+    return (
+      <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-lg">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Loader className="h-8 w-8 animate-spin text-primary" />
+              <CardTitle className="text-2xl">Redirecting...</CardTitle>
+              <CardDescription>
+                Please wait while we redirect you to the appropriate dashboard
+              </CardDescription>
+            </div>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show login form
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-lg">
