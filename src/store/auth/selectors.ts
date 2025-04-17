@@ -41,6 +41,19 @@ export const isPharmacistSelector = selector({
   key: 'isPharmacist',
   get: ({ get }) => {
     const auth = get(authState);
-    return auth.profile?.role === 'pharmacist';
+    const profileRole = auth.profile?.role;
+    
+    // Enhanced check with detailed logging
+    const result = typeof profileRole === 'string' && 
+                  profileRole.toLowerCase() === 'pharmacist';
+    
+    console.log("[isPharmacistSelector] Check result:", { 
+      profileRole, 
+      result,
+      typeOfRole: typeof profileRole,
+      lowerCaseCheck: typeof profileRole === 'string' ? profileRole.toLowerCase() === 'pharmacist' : false 
+    });
+    
+    return result;
   },
 });

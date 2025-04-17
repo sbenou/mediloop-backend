@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -49,6 +50,9 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
 
       if (data?.session) {
         console.log("[usePasswordLogin] Login successful, storing session");
+        console.log("[usePasswordLogin] User ID:", data.user?.id);
+        console.log("[usePasswordLogin] User metadata:", data.user?.user_metadata);
+        
         // Store the session immediately after login
         storeSession(data.session);
 
@@ -67,6 +71,9 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
             description: "There was an error loading your profile. Please try again.",
           });
         }
+        
+        console.log("[usePasswordLogin] Fetched profile:", profile);
+        console.log("[usePasswordLogin] Raw profile role:", profile?.role);
         
         const completeProfile = profile ? {
           ...profile as any,

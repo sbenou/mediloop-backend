@@ -23,9 +23,17 @@ export const getDashboardRouteByRole = (role?: string): string => {
   const normalizedRole = role.toLowerCase() === 'user' ? 'patient' : role.toLowerCase();
   
   console.log(`[getDashboardRouteByRole] Getting route for normalized role: ${normalizedRole}`);
+  console.log(`[getDashboardRouteByRole] Available routes:`, roleRouteMap);
   
-  const route = roleRouteMap[normalizedRole as keyof typeof roleRouteMap]?.route || "/dashboard";
+  const routeConfig = roleRouteMap[normalizedRole as keyof typeof roleRouteMap];
+  const route = routeConfig?.route || "/dashboard";
+  
   console.log(`[getDashboardRouteByRole] Determined route: ${route}`);
+  
+  if (!routeConfig) {
+    console.warn(`[getDashboardRouteByRole] No route mapping for role: ${normalizedRole}`);
+  }
+  
   return route;
 };
 

@@ -23,11 +23,12 @@ interface DashboardRouterProps {
 }
 
 const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
-  const { isPharmacist } = useAuth();
+  const { isPharmacist, profile } = useAuth();
   const { params } = useDashboardParams();
   const { view, section, profileTab, ordersTab } = params;
   
   console.log("🚦 DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
+  console.log("🚦 DashboardRouter auth state:", { isPharmacist, profileRole: profile?.role });
   
   if (!userRole) {
     console.warn("[DashboardRouter] Warning: userRole is not defined. Rendering fallback view.");

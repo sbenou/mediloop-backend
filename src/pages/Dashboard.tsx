@@ -9,18 +9,41 @@ import DashboardRouter from "@/components/dashboard/DashboardRouter";
 import RequireRoleGuard from "@/components/auth/RequireRoleGuard";
 
 const Dashboard = () => {
-  const { isAuthenticated, isLoading, userRole } = useAuth();
+  const { isAuthenticated, isLoading, userRole, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Add more detailed logging to help debug
   useEffect(() => {
-    console.log("✅ Dashboard mounted", { isAuthenticated, userRole });
+    console.log("✅ Dashboard mounted", { 
+      isAuthenticated, 
+      userRole, 
+      profileRole: profile?.role,
+      isPharmacist: profile?.role === 'pharmacist',
+      pathname: window.location.pathname,
+      search: window.location.search,
+    });
+    
     if (!isLoading && !isAuthenticated) {
       console.warn("🔒 Not authenticated — redirecting to login");
       navigate("/login", { replace: true });
     }
-  }, [isAuthenticated, navigate, isLoading, userRole]);
+    
+    // Track mount count to detect repeated mounts
+    const mountCount = parseInt(sessionStorage.getItem('dashboard_mount_count') || '0') + 1;
+    sessionStorage.setItem('dashboard_mount_count', mountCount.toString());
+    console.log("✅ Dashboard mount count:", mountCount);
+    
+    // Log the navigator.userAgent to detect browser/environment
+    console.log("✅ User agent:", navigator.userAgent);
+    
+    // Capture full search params for debugging
+    console.log("✅ Dashboard search parameters:", Object.fromEntries(searchParams.entries()));
+    
+    return () => {
+      console.log("❌ Dashboard unmounted");
+    };
+  }, [isAuthenticated, navigate, isLoading, userRole, profile, searchParams]);
 
   console.log("Dashboard rendering with params:", Object.fromEntries(searchParams.entries()));
   
