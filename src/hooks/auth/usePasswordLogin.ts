@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -25,6 +24,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
   const [error, setError] = useState<AuthError | null>(null);
   const { toast } = useToast();
   const setAuth = useSetRecoilState(authState);
+  const navigate = useNavigate();
 
   const handleLogin = useCallback(async (password: string, rememberMe: boolean = true) => {
     setIsLoading(true);
@@ -113,12 +113,9 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         if (onSuccess) {
           onSuccess();
         }
-        
-        // Force navigation with a slight delay to ensure state updates are complete
-        setTimeout(() => {
-          setIsLoading(false);
-          window.location.href = redirectRoute;
-        }, 100);
+
+        setIsLoading(false);
+        navigate(redirectRoute, { replace: true });
       }
     } catch (err: any) {
       console.error('[usePasswordLogin] Unexpected error during login:', err);
@@ -130,7 +127,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       });
       setIsLoading(false);
     }
-  }, [email, setAuth, toast, onSuccess]);
+  }, [email, setAuth, toast, onSuccess, navigate]);
 
   return { isLoading, error, handleLogin };
 };
