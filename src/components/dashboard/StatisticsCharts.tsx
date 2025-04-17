@@ -61,7 +61,7 @@ export const StatisticsCharts = () => {
   console.log("Prescriptions data:", prescriptionsData);
   console.log("Teleconsultations data:", teleconsultationsData);
   
-  // Defined props explicitly to avoid deprecation warnings
+  // Define explicit props for XAxis and YAxis to prevent deprecation warnings
   const xAxisProps = {
     dataKey: "name",
     height: 30,
@@ -108,8 +108,19 @@ export const StatisticsCharts = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis {...xAxisProps} />
-                <YAxis {...yAxisProps} />
+                <XAxis 
+                  dataKey={xAxisProps.dataKey}
+                  height={xAxisProps.height}
+                  axisLine={xAxisProps.axisLine}
+                  tickLine={xAxisProps.tickLine}
+                  tick={xAxisProps.tick}
+                />
+                <YAxis 
+                  width={yAxisProps.width}
+                  axisLine={yAxisProps.axisLine}
+                  tickLine={yAxisProps.tickLine}
+                  tick={yAxisProps.tick}
+                />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="count" fill="#8884d8" name="Prescriptions" />
@@ -148,8 +159,19 @@ export const StatisticsCharts = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis {...xAxisProps} />
-                <YAxis {...yAxisProps} />
+                <XAxis 
+                  dataKey={xAxisProps.dataKey}
+                  height={xAxisProps.height}
+                  axisLine={xAxisProps.axisLine}
+                  tickLine={xAxisProps.tickLine}
+                  tick={xAxisProps.tick}
+                />
+                <YAxis 
+                  width={yAxisProps.width}
+                  axisLine={yAxisProps.axisLine}
+                  tickLine={yAxisProps.tickLine}
+                  tick={yAxisProps.tick}
+                />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="count" fill="#82ca9d" name="Teleconsultations" />

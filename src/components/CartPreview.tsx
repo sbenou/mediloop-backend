@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
@@ -9,8 +8,22 @@ import CartFooter from './cart/CartFooter';
 import { useNavigate } from 'react-router-dom';
 
 const CartPreview = ({ onClose }: { onClose?: () => void }) => {
-  const { state } = useCart();
   const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  
+  try {
+    // Try to use the cart context
+    const { state } = useCart();
+    
+    // Update local state when the cart context changes
+    useEffect(() => {
+      if (state?.items) {
+        setCartItems(state.items);
+      }
+    }, [state]);
+  } catch (error) {
+    // If outside of CartProvider, keep using the empty cartItems array
+  }
   
   const handleStartShopping = () => {
     if (onClose) {
@@ -24,15 +37,15 @@ const CartPreview = ({ onClose }: { onClose?: () => void }) => {
       <div className="px-4 py-3 border-b">
         <h2 className="text-lg font-semibold">Your Cart</h2>
         <p className="text-sm text-muted-foreground">
-          {state.items.length} {state.items.length === 1 ? 'item' : 'items'}
+          {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
         </p>
       </div>
       
-      {state.items.length > 0 ? (
+      {cartItems.length > 0 ? (
         <>
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
-              {state.items.map((item) => (
+              {cartItems.map((item) => (
                 <CartItem key={item.id} item={item} />
               ))}
             </div>

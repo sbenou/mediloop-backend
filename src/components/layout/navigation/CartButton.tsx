@@ -10,7 +10,7 @@ import {
 import CartPreview from "@/components/CartPreview";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface CartButtonProps {
   isOpen: boolean;
@@ -18,16 +18,21 @@ interface CartButtonProps {
 }
 
 const CartButton = ({ isOpen, onOpenChange }: CartButtonProps) => {
-  // Wrap the useCart hook in a try/catch to prevent errors when used outside a CartProvider
-  let cartState = { items: [] };
-  let itemCount = 0;
+  // Use a try/catch to prevent errors when used outside a CartProvider
+  const [itemCount, setItemCount] = useState(0);
   
   try {
     const { state } = useCart();
-    cartState = state;
-    itemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
+    // Calculate item count only if we successfully got the cart state
+    useEffect(() => {
+      if (state?.items) {
+        const count = state.items.reduce((acc, item) => acc + item.quantity, 0);
+        setItemCount(count);
+      }
+    }, [state]);
   } catch (error) {
-    console.error("CartButton: useCart hook must be used within a CartProvider");
+    // If using outside a CartProvider context, silently handle the error
+    // Already using itemCount initialized as 0
   }
 
   const { isAuthenticated } = useAuth();
