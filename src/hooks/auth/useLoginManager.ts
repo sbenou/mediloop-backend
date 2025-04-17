@@ -10,6 +10,7 @@ export const useLoginManager = () => {
   const location = useLocation();
   const redirected = useRef(false);
   const initialPathChecked = useRef(false);
+  const redirectAttempts = useRef(0);
 
   // Handle role-based redirects
   useEffect(() => {
@@ -24,6 +25,15 @@ export const useLoginManager = () => {
       });
       return;
     }
+
+    // Prevent excessive redirect attempts
+    if (redirectAttempts.current >= 2) {
+      console.log("[LoginManager] Too many redirect attempts, skipping further redirects");
+      redirected.current = true;
+      return;
+    }
+    
+    redirectAttempts.current += 1;
     
     // Prevent redirect loops by checking if we're already on a valid dashboard path
     const currentPath = location.pathname;
@@ -59,17 +69,23 @@ export const useLoginManager = () => {
     console.log("[LoginManager] Redirecting user to:", route, "with role:", role);
     console.log("[LoginManager] Full profile data:", profile);
     
+    // Store a flag to avoid multiple redirects in SessionStorage
+    sessionStorage.setItem('dashboard_redirect_performed', 'true');
     redirected.current = true;
     initialPathChecked.current = true;
-    navigate(route, { replace: true });
     
-    // Log after navigation attempt
-    console.log("[LoginManager] Navigation triggered, redirected state:", redirected.current);
-    
-    // Add a timer to detect if we're still on the page after redirect attempt
+    // Add a small delay before navigation to avoid race conditions
     setTimeout(() => {
-      console.log("[LoginManager] Post-redirect check - Current URL:", window.location.href);
-    }, 500);
+      navigate(route, { replace: true });
+      // Log after navigation attempt
+      console.log("[LoginManager] Navigation triggered, redirected state:", redirected.current);
+      
+      // Add a timer to detect if we're still on the page after redirect attempt
+      setTimeout(() => {
+        console.log("[LoginManager] Post-redirect check - Current URL:", window.location.href);
+      }, 500);
+    }, 50);
+    
   }, [isAuthenticated, profile, navigate, isLoading, location.pathname]);
 
   return {

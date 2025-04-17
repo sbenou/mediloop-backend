@@ -14,9 +14,12 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const hasInitializedRef = useRef(false);
   const redirectedRef = useRef(false);
+  const renderCountRef = useRef(0);
 
   // Add more detailed logging to help debug
   useEffect(() => {
+    renderCountRef.current += 1;
+    
     console.log("✅ Dashboard mounted", { 
       isAuthenticated, 
       userRole, 
@@ -24,6 +27,7 @@ const Dashboard = () => {
       isPharmacist: profile?.role === 'pharmacist',
       pathname: window.location.pathname,
       search: window.location.search,
+      renderCount: renderCountRef.current
     });
     
     // Only perform redirect once and only if needed
@@ -52,7 +56,9 @@ const Dashboard = () => {
     };
   }, [isAuthenticated, navigate, isLoading, userRole, profile, searchParams]);
 
-  console.log("Dashboard rendering with params:", Object.fromEntries(searchParams.entries()));
+  // Prevent unnecessary re-renderings by memoizing the search params
+  const paramsObj = Object.fromEntries(searchParams.entries());
+  console.log("Dashboard rendering with params:", paramsObj);
   
   if (isLoading) {
     return (

@@ -24,18 +24,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // On initial load, check for existing session
   useEffect(() => {
     let isMounted = true;
+    let initTimeoutId: NodeJS.Timeout;
     
     const initializeAuth = async () => {
       try {
         console.log("Starting auth initialization");
         
-        // Create a timeout promise with increased timeout (5 seconds instead of 3)
+        // Create a timeout promise with increased timeout (8 seconds instead of 5)
         const sessionPromise = refreshSession();
         const timeoutPromise = new Promise<null>(resolve => {
-          setTimeout(() => {
-            console.warn('Auth initialization is taking longer than expected (5 seconds)');
+          initTimeoutId = setTimeout(() => {
+            console.warn('Auth initialization is taking longer than expected (8 seconds)');
             resolve(null);
-          }, 5000);
+          }, 8000);
         });
         
         // Race the session fetch against the timeout
@@ -91,6 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => {
       isMounted = false;
       window.removeEventListener('storage', handleStorageEvent);
+      if (initTimeoutId) clearTimeout(initTimeoutId);
     };
   }, [updateAuthState, refreshSession]);
   

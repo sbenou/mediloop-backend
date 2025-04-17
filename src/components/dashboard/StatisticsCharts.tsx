@@ -61,6 +61,22 @@ export const StatisticsCharts = () => {
   console.log("Prescriptions data:", prescriptionsData);
   console.log("Teleconsultations data:", teleconsultationsData);
   
+  // Defined props explicitly to avoid deprecation warnings
+  const xAxisProps = {
+    dataKey: "name",
+    height: 30,
+    axisLine: { stroke: '#E5E7EB' },
+    tickLine: { stroke: '#E5E7EB' },
+    tick: { fontSize: 12 }
+  };
+  
+  const yAxisProps = {
+    width: 60,
+    axisLine: { stroke: '#E5E7EB' },
+    tickLine: { stroke: '#E5E7EB' },
+    tick: { fontSize: 12 }
+  };
+  
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
       <Card className="shadow-md">
@@ -92,21 +108,8 @@ export const StatisticsCharts = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                {/* Fix XAxis defaultProps warning by explicitly setting all possible props */}
-                <XAxis 
-                  dataKey="name"
-                  height={30}
-                  axisLine={{ stroke: '#E5E7EB' }}
-                  tickLine={{ stroke: '#E5E7EB' }}
-                  tick={{ fontSize: 12 }}
-                />
-                {/* Fix YAxis defaultProps warning by explicitly setting all possible props */}
-                <YAxis 
-                  width={60}
-                  axisLine={{ stroke: '#E5E7EB' }}
-                  tickLine={{ stroke: '#E5E7EB' }}
-                  tick={{ fontSize: 12 }}
-                />
+                <XAxis {...xAxisProps} />
+                <YAxis {...yAxisProps} />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="count" fill="#8884d8" name="Prescriptions" />
@@ -145,21 +148,8 @@ export const StatisticsCharts = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                {/* Fix XAxis defaultProps warning by explicitly setting all possible props */}
-                <XAxis 
-                  dataKey="name"
-                  height={30}
-                  axisLine={{ stroke: '#E5E7EB' }}
-                  tickLine={{ stroke: '#E5E7EB' }}
-                  tick={{ fontSize: 12 }}
-                />
-                {/* Fix YAxis defaultProps warning by explicitly setting all possible props */}
-                <YAxis 
-                  width={60}
-                  axisLine={{ stroke: '#E5E7EB' }}
-                  tickLine={{ stroke: '#E5E7EB' }}
-                  tick={{ fontSize: 12 }}
-                />
+                <XAxis {...xAxisProps} />
+                <YAxis {...yAxisProps} />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="count" fill="#82ca9d" name="Teleconsultations" />
