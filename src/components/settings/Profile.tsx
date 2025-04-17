@@ -1,9 +1,12 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddressManagement from "@/components/settings/AddressManagement";
 import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import PersonalDetails from "@/components/settings/PersonalDetails";
 import Header from "@/components/layout/Header";
+import { LoyaltyHeader } from "@/components/loyalty/LoyaltyHeader";
+import { ReferralTimeline } from "@/components/loyalty/ReferralTimeline";
 
 const Profile = () => {
   return (
@@ -12,6 +15,11 @@ const Profile = () => {
       <div className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-8">Profile</h1>
         
+        <div className="grid grid-cols-1 gap-6 mb-8">
+          <LoyaltyHeader />
+          <ReferralTimeline />
+        </div>
+
         <Tabs defaultValue="personal" className="space-y-4">
           <TabsList>
             <TabsTrigger value="personal">Personal Information</TabsTrigger>
