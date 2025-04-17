@@ -1,6 +1,7 @@
+
 import React from "react";
 import Sidebar from "@/components/sidebar/Sidebar";
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 import RoleDebugger from "@/components/user-menu/RoleDebugger";
 
 interface UnifiedLayoutTemplateProps {
