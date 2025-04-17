@@ -61,22 +61,6 @@ export const StatisticsCharts = () => {
   console.log("Prescriptions data:", prescriptionsData);
   console.log("Teleconsultations data:", teleconsultationsData);
   
-  // Define explicit props for XAxis and YAxis to prevent deprecation warnings
-  const xAxisProps = {
-    dataKey: "name",
-    height: 30,
-    axisLine: { stroke: '#E5E7EB' },
-    tickLine: { stroke: '#E5E7EB' },
-    tick: { fontSize: 12 }
-  };
-  
-  const yAxisProps = {
-    width: 60,
-    axisLine: { stroke: '#E5E7EB' },
-    tickLine: { stroke: '#E5E7EB' },
-    tick: { fontSize: 12 }
-  };
-  
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
       <Card className="shadow-md">
@@ -109,17 +93,17 @@ export const StatisticsCharts = () => {
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
-                  dataKey={xAxisProps.dataKey}
-                  height={xAxisProps.height}
-                  axisLine={xAxisProps.axisLine}
-                  tickLine={xAxisProps.tickLine}
-                  tick={xAxisProps.tick}
+                  dataKey="name"
+                  height={30}
+                  axisLine={{ stroke: '#E5E7EB' }}
+                  tickLine={{ stroke: '#E5E7EB' }}
+                  tick={{ fontSize: 12 }}
                 />
                 <YAxis 
-                  width={yAxisProps.width}
-                  axisLine={yAxisProps.axisLine}
-                  tickLine={yAxisProps.tickLine}
-                  tick={yAxisProps.tick}
+                  width={60}
+                  axisLine={{ stroke: '#E5E7EB' }}
+                  tickLine={{ stroke: '#E5E7EB' }}
+                  tick={{ fontSize: 12 }}
                 />
                 <Tooltip />
                 <Legend />
@@ -160,17 +144,17 @@ export const StatisticsCharts = () => {
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
-                  dataKey={xAxisProps.dataKey}
-                  height={xAxisProps.height}
-                  axisLine={xAxisProps.axisLine}
-                  tickLine={xAxisProps.tickLine}
-                  tick={xAxisProps.tick}
+                  dataKey="name"
+                  height={30}
+                  axisLine={{ stroke: '#E5E7EB' }}
+                  tickLine={{ stroke: '#E5E7EB' }}
+                  tick={{ fontSize: 12 }}
                 />
                 <YAxis 
-                  width={yAxisProps.width}
-                  axisLine={yAxisProps.axisLine}
-                  tickLine={yAxisProps.tickLine}
-                  tick={yAxisProps.tick}
+                  width={60}
+                  axisLine={{ stroke: '#E5E7EB' }}
+                  tickLine={{ stroke: '#E5E7EB' }}
+                  tick={{ fontSize: 12 }}
                 />
                 <Tooltip />
                 <Legend />
