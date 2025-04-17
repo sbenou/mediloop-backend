@@ -8,6 +8,7 @@ import {
 } from "recharts";
 
 // Default props that will be applied to our XAxis wrapper
+// Remove xAxisId from default props to avoid conflicts
 const defaultXAxisProps = {
   dataKey: "name",
   height: 30,
@@ -17,6 +18,7 @@ const defaultXAxisProps = {
 };
 
 // Default props that will be applied to our YAxis wrapper
+// Remove yAxisId from default props to avoid conflicts
 const defaultYAxisProps = {
   width: 60,
   axisLine: { stroke: '#E5E7EB' },
@@ -27,12 +29,14 @@ const defaultYAxisProps = {
 // Fix XAxis deprecation warning with a wrapper component using default parameters
 export function XAxis(props: XAxisProps) {
   // Merge provided props with defaults
+  // Ensure we don't use xAxisId unless explicitly provided
   return <OriginalXAxis {...defaultXAxisProps} {...props} />;
 }
 
 // Fix YAxis deprecation warning with a wrapper component using default parameters
 export function YAxis(props: YAxisProps) {
   // Merge provided props with defaults
+  // Ensure we don't use yAxisId unless explicitly provided
   return <OriginalYAxis {...defaultYAxisProps} {...props} />;
 }
 
