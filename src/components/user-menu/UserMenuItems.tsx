@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   DropdownMenuGroup,
@@ -25,7 +26,8 @@ import {
   Users,
   HeartPulse,
   Calendar,
-  BarChart
+  BarChart,
+  Award
 } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
 
@@ -123,6 +125,7 @@ export const UserMenuItems = () => {
     if (userRole === 'user' || userRole === 'patient') {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard' },
+        { icon: Award, label: 'Account', path: '/account' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
         { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
@@ -137,6 +140,7 @@ export const UserMenuItems = () => {
     if (userRole === 'doctor') {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
+        { icon: Award, label: 'Account', path: '/account' },
         { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
         { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Point directly to doctor profile
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
@@ -151,6 +155,7 @@ export const UserMenuItems = () => {
     if (isUserPharmacist) {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
+        { icon: Award, label: 'Account', path: '/account' },
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
@@ -166,6 +171,7 @@ export const UserMenuItems = () => {
     if (userRole === 'superadmin') {
       return [
         { icon: Home, label: 'Dashboard', path: '/superadmin/dashboard' },
+        { icon: Award, label: 'Account', path: '/account' },
         { icon: Users, label: 'Users', path: '/superadmin/users' },
         { icon: Store, label: 'Pharmacies', path: '/superadmin/pharmacies' },
         { icon: HeartPulse, label: 'Doctors', path: '/superadmin/doctors' },
@@ -178,6 +184,7 @@ export const UserMenuItems = () => {
     // Fallback for unknown roles
     return [
       { icon: Home, label: 'Dashboard', path: '/dashboard' },
+      { icon: Award, label: 'Account', path: '/account' },
       { icon: User, label: 'Profile', path: '/settings?tab=profile' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
       { icon: Settings, label: 'Settings', path: '/settings' }

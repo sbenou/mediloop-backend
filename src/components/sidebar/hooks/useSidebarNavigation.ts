@@ -11,6 +11,7 @@ export function useSidebarNavigation(userRole: string) {
   const [isWorkplacesOpen, setIsWorkplacesOpen] = useState(false);
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   
   // Get current query params
   const searchParams = new URLSearchParams(location.search);
@@ -89,6 +90,8 @@ export function useSidebarNavigation(userRole: string) {
     setIsOrdersOpen,
     isActivitiesOpen,
     setIsActivitiesOpen,
+    isAccountOpen,
+    setIsAccountOpen,
     navigateToLink,
     isPharmacistSectionActive,
     isPharmacistTabActive,

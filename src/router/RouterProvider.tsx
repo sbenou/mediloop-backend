@@ -15,6 +15,7 @@ import NotFound from '@/pages/NotFound';
 import UpgradePage from '@/pages/upgrade/UpgradePage';
 import MyOrders from '@/pages/MyOrders';
 import MyPrescriptions from '@/pages/MyPrescriptions';
+import Account from '@/pages/Account';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 
@@ -95,6 +96,10 @@ const router = createBrowserRouter([
   {
     path: '/my-prescriptions',
     element: <MyPrescriptions />,
+  },
+  {
+    path: '/account',
+    element: <Account />,
   },
   {
     path: '*',
