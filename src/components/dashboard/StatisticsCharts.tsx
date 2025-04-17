@@ -3,13 +3,13 @@ import { useState } from "react";
 import { 
   BarChart, 
   Bar, 
-  XAxis, 
-  YAxis, 
   CartesianGrid, 
+  XAxis,
+  YAxis,
   Tooltip, 
   Legend, 
   ResponsiveContainer 
-} from "recharts";
+} from "@/components/charts/RechartComponents";
 import { 
   Card, 
   CardContent, 
@@ -92,19 +92,8 @@ export const StatisticsCharts = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name"
-                  height={30}
-                  axisLine={{ stroke: '#E5E7EB' }}
-                  tickLine={{ stroke: '#E5E7EB' }}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis 
-                  width={60}
-                  axisLine={{ stroke: '#E5E7EB' }}
-                  tickLine={{ stroke: '#E5E7EB' }}
-                  tick={{ fontSize: 12 }}
-                />
+                <XAxis dataKey="name" />
+                <YAxis />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="count" fill="#8884d8" name="Prescriptions" />
@@ -143,19 +132,8 @@ export const StatisticsCharts = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name"
-                  height={30}
-                  axisLine={{ stroke: '#E5E7EB' }}
-                  tickLine={{ stroke: '#E5E7EB' }}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis 
-                  width={60}
-                  axisLine={{ stroke: '#E5E7EB' }}
-                  tickLine={{ stroke: '#E5E7EB' }}
-                  tick={{ fontSize: 12 }}
-                />
+                <XAxis dataKey="name" />
+                <YAxis />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="count" fill="#82ca9d" name="Teleconsultations" />

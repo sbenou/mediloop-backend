@@ -45,6 +45,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           title: "Login failed",
           description: authError.message,
         });
+        setIsLoading(false);
         return;
       }
 
@@ -70,6 +71,8 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
             title: "Profile Error",
             description: "There was an error loading your profile. Please try again.",
           });
+          setIsLoading(false);
+          return;
         }
         
         console.log("[usePasswordLogin] Fetched profile:", profile);
@@ -111,8 +114,11 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           onSuccess();
         }
         
-        // Use direct URL navigation for the most reliable redirection
-        window.location.href = redirectRoute;
+        // Force navigation with a slight delay to ensure state updates are complete
+        setTimeout(() => {
+          setIsLoading(false);
+          window.location.href = redirectRoute;
+        }, 100);
       }
     } catch (err: any) {
       console.error('[usePasswordLogin] Unexpected error during login:', err);
@@ -122,7 +128,6 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         title: "Login failed",
         description: err.message,
       });
-    } finally {
       setIsLoading(false);
     }
   }, [email, setAuth, toast, onSuccess]);
