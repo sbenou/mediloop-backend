@@ -29,13 +29,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         console.log("Starting auth initialization");
         
-        // Create a timeout promise to prevent hanging
+        // Create a timeout promise with increased timeout (5 seconds instead of 3)
         const sessionPromise = refreshSession();
         const timeoutPromise = new Promise<null>(resolve => {
           setTimeout(() => {
-            console.warn('Auth initialization timed out after 3 seconds');
+            console.warn('Auth initialization is taking longer than expected (5 seconds)');
             resolve(null);
-          }, 3000);
+          }, 5000);
         });
         
         // Race the session fetch against the timeout
@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           }, 0);
         } else {
-          console.log("No existing session found");
+          console.log("No existing session found or session fetch timed out");
           // Still update auth state but with null session
           if (isMounted) {
             updateAuthState(null);

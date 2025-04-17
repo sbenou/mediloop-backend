@@ -43,15 +43,20 @@ export const isPharmacistSelector = selector({
     const auth = get(authState);
     const profileRole = auth.profile?.role;
     
+    // Improved check that's more forgiving with string types and handles case insensitivity properly
+    if (!profileRole) {
+      return false;
+    }
+    
     // Enhanced check with detailed logging
-    const result = typeof profileRole === 'string' && 
-                  profileRole.toLowerCase() === 'pharmacist';
+    const normalizedRole = String(profileRole).toLowerCase();
+    const result = normalizedRole === 'pharmacist';
     
     console.log("[isPharmacistSelector] Check result:", { 
       profileRole, 
+      normalizedRole,
       result,
-      typeOfRole: typeof profileRole,
-      lowerCaseCheck: typeof profileRole === 'string' ? profileRole.toLowerCase() === 'pharmacist' : false 
+      typeOfRole: typeof profileRole
     });
     
     return result;

@@ -1,17 +1,20 @@
 
 import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 export const useLoginManager = () => {
   const { isAuthenticated, profile, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const redirected = useRef(false);
+  const initialPathChecked = useRef(false);
 
   // Handle role-based redirects
   useEffect(() => {
-    // Only proceed if we're authenticated, have a profile, and haven't redirected yet
+    // Skip redirects if we're not on the auth pages, we're already on a proper route,
+    // or if we've already performed a redirect, or if we're still loading
     if (isLoading || !isAuthenticated || !profile || redirected.current) {
       console.log("[LoginManager] Not ready for redirect yet:", { 
         isLoading, 
@@ -22,10 +25,31 @@ export const useLoginManager = () => {
       return;
     }
     
-    // If we're already on the dashboard page, don't redirect again
-    if (window.location.pathname === '/dashboard') {
-      console.log("[LoginManager] Already on dashboard, skipping redirect");
+    // Prevent redirect loops by checking if we're already on a valid dashboard path
+    const currentPath = location.pathname;
+    const isAlreadyOnValidRoute = 
+      currentPath === '/dashboard' || 
+      currentPath.includes('/dashboard') || 
+      currentPath.includes('/doctor') || 
+      currentPath.includes('/pharmacy') ||
+      currentPath.includes('/superadmin');
+    
+    // Only redirect from login/signup pages, not from dashboard pages
+    const isOnAuthPage = 
+      currentPath === '/login' || 
+      currentPath === '/signup' || 
+      currentPath === '/';
+    
+    if (isAlreadyOnValidRoute && !isOnAuthPage) {
+      console.log("[LoginManager] Already on valid route, skipping redirect:", currentPath);
       redirected.current = true;
+      initialPathChecked.current = true;
+      return;
+    }
+    
+    if (!isOnAuthPage && !initialPathChecked.current) {
+      console.log("[LoginManager] Not on auth page, skipping redirect:", currentPath);
+      initialPathChecked.current = true;
       return;
     }
 
@@ -36,6 +60,7 @@ export const useLoginManager = () => {
     console.log("[LoginManager] Full profile data:", profile);
     
     redirected.current = true;
+    initialPathChecked.current = true;
     navigate(route, { replace: true });
     
     // Log after navigation attempt
@@ -45,7 +70,7 @@ export const useLoginManager = () => {
     setTimeout(() => {
       console.log("[LoginManager] Post-redirect check - Current URL:", window.location.href);
     }, 500);
-  }, [isAuthenticated, profile, navigate, isLoading]);
+  }, [isAuthenticated, profile, navigate, isLoading, location.pathname]);
 
   return {
     redirected: redirected.current,

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRecoilState } from "recoil";
 import { authState } from "@/store/auth/atoms";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import { useLocation, useSearchParams } from "react-router-dom";
 
 /**
  * A debugging component that logs user role information to help diagnose
@@ -13,6 +14,8 @@ export const RoleDebugger = () => {
   const { userRole, isPharmacist, isAuthenticated, profile } = useAuth();
   const [auth] = useRecoilState(authState);
   const hasLoggedRef = useRef(false);
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   
   useEffect(() => {
     // Only log once after auth is loaded
@@ -26,6 +29,9 @@ export const RoleDebugger = () => {
       console.log("Profile data from hook:", profile);
       console.log("Auth state from recoil:", auth);
       console.log("Raw profile role:", auth.profile?.role);
+      console.log("Raw profile role type:", typeof auth.profile?.role);
+      console.log("Current location:", location.pathname + location.search);
+      console.log("Current search params:", Object.fromEntries(searchParams.entries()));
       console.log("Direct pharmacist check:", auth.profile?.role === 'pharmacist');
       console.log("Pharmacist check with toLowerCase:", auth.profile?.role?.toLowerCase() === 'pharmacist');
       console.log("Is on pharmacy route:", window.location.pathname.includes('/pharmacy'));
@@ -67,7 +73,7 @@ export const RoleDebugger = () => {
       
       console.log("=============================================");
     }
-  }, [isAuthenticated, userRole, isPharmacist, profile, auth]);
+  }, [isAuthenticated, userRole, isPharmacist, profile, auth, location, searchParams]);
   
   // This component doesn't render anything visible
   return null;

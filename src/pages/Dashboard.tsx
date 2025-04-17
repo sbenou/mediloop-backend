@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
@@ -12,6 +12,8 @@ const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const hasInitializedRef = useRef(false);
+  const redirectedRef = useRef(false);
 
   // Add more detailed logging to help debug
   useEffect(() => {
@@ -24,8 +26,10 @@ const Dashboard = () => {
       search: window.location.search,
     });
     
-    if (!isLoading && !isAuthenticated) {
+    // Only perform redirect once and only if needed
+    if (!isLoading && !isAuthenticated && !redirectedRef.current) {
       console.warn("🔒 Not authenticated — redirecting to login");
+      redirectedRef.current = true;
       navigate("/login", { replace: true });
     }
     
@@ -39,6 +43,9 @@ const Dashboard = () => {
     
     // Capture full search params for debugging
     console.log("✅ Dashboard search parameters:", Object.fromEntries(searchParams.entries()));
+    
+    // Mark as initialized to prevent multiple redirects
+    hasInitializedRef.current = true;
     
     return () => {
       console.log("❌ Dashboard unmounted");
