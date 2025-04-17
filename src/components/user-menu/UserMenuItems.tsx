@@ -142,7 +142,7 @@ export const UserMenuItems = () => {
         { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
         { icon: Award, label: 'Account', path: '/account' },
         { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
-        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Point directly to doctor profile
+        { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' },
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
         { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
         { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },

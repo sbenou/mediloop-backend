@@ -12,10 +12,14 @@ export const useSidebarNavigation = (userRole: string) => {
   const [isConsultationsOpen, setIsConsultationsOpen] = useState(false);
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(false);
   const [isWorkplacesOpen, setIsWorkplacesOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   
   // Check if we're on the activities or notifications page
   const isActivitiesPage = location.pathname.includes('/activities') || 
                           location.pathname.includes('/notifications');
+  
+  // Check if we're on the account page
+  const isAccountPage = location.pathname.includes('/account');
   
   // Determine if a section is expanded based on URL
   useEffect(() => {
@@ -40,6 +44,10 @@ export const useSidebarNavigation = (userRole: string) => {
       if (params.section === 'workplaces') {
         setIsWorkplacesOpen(true);
       }
+      
+      if (isAccountPage) {
+        setIsAccountOpen(true);
+      }
     } else {
       // For patients and other roles
       if (params.view === 'orders') {
@@ -57,12 +65,22 @@ export const useSidebarNavigation = (userRole: string) => {
       if (params.view === 'activities') {
         setIsActivitiesOpen(true);
       }
+      
+      if (isAccountPage) {
+        setIsAccountOpen(true);
+      }
     }
-  }, [location, params.section, params.view, userRole]);
+  }, [location, params.section, params.view, userRole, isAccountPage]);
 
   // Navigate to a link with special handling for different roles
   const navigateToLink = (path: string) => {
     console.log(`navigateToLink called with path: ${path}, userRole: ${userRole}, isActivitiesPage: ${isActivitiesPage}`);
+    
+    // For direct paths like /account, navigate directly
+    if (path.startsWith('/') && !path.includes('?')) {
+      navigate(path);
+      return;
+    }
     
     // Always use /dashboard as the base path for in-app navigation
     const basePath = "/dashboard";
@@ -144,6 +162,9 @@ export const useSidebarNavigation = (userRole: string) => {
     if (path === '/dashboard') {
       return location.pathname === '/dashboard' && !location.search;
     }
+    if (path === '/account') {
+      return location.pathname === '/account';
+    }
     return location.pathname.includes(path);
   };
 
@@ -175,6 +196,8 @@ export const useSidebarNavigation = (userRole: string) => {
     setIsActivitiesOpen,
     isWorkplacesOpen,
     setIsWorkplacesOpen,
+    isAccountOpen,
+    setIsAccountOpen,
     navigateToLink,
     isSectionActive,
     isTabActive,
