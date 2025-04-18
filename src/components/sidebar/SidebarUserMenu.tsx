@@ -1,16 +1,16 @@
-
-import { UserProfile } from "@/types/user";
-import { ChevronDown } from "lucide-react";
-import UserAvatar from "../user-menu/UserAvatar";
-import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { RefObject } from "react";
-import { useRecoilValue } from "recoil";
-import { userAvatarState } from "@/store/user/atoms";
-import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
-import { useNavigate } from "react-router-dom";
-import { UserMenuContent } from "./menu/UserMenuContent";
-import { usePharmacyData } from "@/hooks/pharmacy/usePharmacyData";
-import { useDoctorAvailability } from "@/hooks/doctor/useDoctorAvailability";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { UserProfile } from '@/types/user';
+import { ChevronDown } from 'lucide-react';
+import UserAvatar from '../user-menu/UserAvatar';
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { RefObject } from 'react';
+import { useRecoilValue } from 'recoil';
+import { userAvatarState } from '@/store/user/atoms';
+import { doctorStampUrlState, pharmacyLogoUrlState } from '@/store/images/atoms';
+import { UserMenuContent } from './menu/UserMenuContent';
+import { usePharmacyData } from '@/hooks/pharmacy/usePharmacyData';
+import { useDoctorAvailability } from '@/hooks/doctor/useDoctorAvailability';
 
 interface SidebarUserMenuProps {
   profile: UserProfile | null;
@@ -35,8 +35,7 @@ const SidebarUserMenu = ({
   handleAvatarClick,
   getUserInitials,
   handleLogout,
-  navigateToAccount,
-  navigateToProfile,
+  navigateToAccount, // Ensure this prop is used
   navigateToBilling,
   navigateToUpgrade,
   navigateToPharmacyProfile,
@@ -72,8 +71,11 @@ const SidebarUserMenu = ({
     ? 'Pharmacy Account'
     : profile?.email || 'user@example.com';
 
-  // Choose the appropriate navigation function - prefer navigateToAccount if provided, otherwise use navigateToProfile
-  const handleAccountNavigation = navigateToAccount || navigateToProfile;
+  // Modify navigateToAccount to use state for hiding header
+  const handleNavigateToAccount = () => {
+    console.log('Navigating to account page with no header from sidebar');
+    navigate('/account', { state: { showHeader: false } });
+  };
 
   return (
     <div className="border-t p-4">
@@ -114,7 +116,7 @@ const SidebarUserMenu = ({
           <UserMenuContent
             userRole={userRole}
             profile={profile}
-            navigateToAccount={handleAccountNavigation} // Use the unified navigation function
+            navigateToAccount={handleNavigateToAccount} // Use the new method
             navigateToBilling={navigateToBilling}
             navigateToUpgrade={navigateToUpgrade}
             navigateToPharmacyProfile={navigateToPharmacyProfile}
