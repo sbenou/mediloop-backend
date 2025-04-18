@@ -109,10 +109,10 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
-    // Special case for /account - ALWAYS navigate directly
+    // Special case for /account - Navigate with state to hide header
     if (path === '/account') {
-      console.log('Direct navigation to /account page');
-      navigate('/account');
+      console.log('Navigating to account page with no header');
+      navigate('/account', { state: { showHeader: false } });
       return;
     }
     
