@@ -6,7 +6,7 @@ import {
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
   MapPin, Video, Stethoscope, Calendar,
-  HeartPulse, Building
+  HeartPulse, Building, Share
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -109,6 +109,14 @@ const DoctorSidebar = ({
             label="Patients"
             isActive={section === "patients"}
             onClick={() => navigateToDoctorView('patients')}
+          />
+          
+          {/* Add Referral link for doctor sidebar */}
+          <SidebarItem
+            icon={<Share className="w-5 h-5 mr-3" />}
+            label="Referral"
+            isActive={location.pathname === "/referral"}
+            onClick={() => navigate('/referral')}
           />
           
           {canViewPrescriptions && (
