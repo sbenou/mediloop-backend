@@ -22,7 +22,7 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
 
         <TabsContent value="loyalty">
           <div className="space-y-6">
-            {showHeader && <LoyaltyHeader />}
+            <LoyaltyHeader />
             
             <Card>
               <CardHeader>

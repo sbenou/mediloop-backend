@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ArrowRightLeft, CreditCard, History, Minus, Plus } from "lucide-react";
 
 export function WalletSection() {
   const [pointsToConvert, setPointsToConvert] = useState<number>(0);
   const [isConverting, setIsConverting] = useState(false);
+  const [useForSubscription, setUseForSubscription] = useState(false);
   const loyalty = useLoyaltyStatus();
 
   const handlePointConversion = async () => {
@@ -53,6 +55,18 @@ export function WalletSection() {
     const value = parseInt(e.target.value) || 0;
     if (value >= 0 && value <= loyalty.availablePoints) {
       setPointsToConvert(value);
+    }
+  };
+
+  const toggleUseForSubscription = () => {
+    const newValue = !useForSubscription;
+    setUseForSubscription(newValue);
+    
+    // Show feedback to the user
+    if (newValue) {
+      toast.success("Wallet balance will be used for your next subscription payment");
+    } else {
+      toast.info("Wallet balance will not be used for subscription payments");
     }
   };
 
@@ -167,16 +181,19 @@ export function WalletSection() {
           <p className="text-sm text-muted-foreground mb-4">
             Use your wallet balance for your next subscription payment or other purchases.
           </p>
+          <div className="flex items-center justify-between py-2">
+            <div className="flex items-center space-x-2">
+              <CreditCard className="h-4 w-4" />
+              <span>Use for next subscription payment</span>
+            </div>
+            <Switch
+              checked={useForSubscription}
+              onCheckedChange={toggleUseForSubscription}
+              disabled={!hasConvertedFunds}
+            />
+          </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
-          <Button 
-            className="w-full" 
-            disabled={!hasConvertedFunds}
-            variant="outline"
-          >
-            <CreditCard className="mr-2 h-4 w-4" />
-            Use for next subscription payment
-          </Button>
           <Button 
             variant="secondary" 
             className="w-full"
