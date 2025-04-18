@@ -19,7 +19,8 @@ interface SidebarUserMenuProps {
   handleAvatarClick: (e: React.MouseEvent) => void;
   getUserInitials: () => string;
   handleLogout: () => Promise<void>;
-  navigateToAccount: () => void;
+  navigateToAccount?: () => void;
+  navigateToProfile?: () => void; // Added this optional prop
   navigateToBilling: () => void;
   navigateToUpgrade: () => void;
   navigateToPharmacyProfile?: () => void;
@@ -35,6 +36,7 @@ const SidebarUserMenu = ({
   getUserInitials,
   handleLogout,
   navigateToAccount,
+  navigateToProfile,
   navigateToBilling,
   navigateToUpgrade,
   navigateToPharmacyProfile,
@@ -69,6 +71,9 @@ const SidebarUserMenu = ({
   const secondaryText = userRole === 'pharmacist'
     ? 'Pharmacy Account'
     : profile?.email || 'user@example.com';
+
+  // Choose the appropriate navigation function - prefer navigateToAccount if provided, otherwise use navigateToProfile
+  const handleAccountNavigation = navigateToAccount || navigateToProfile;
 
   return (
     <div className="border-t p-4">
@@ -109,7 +114,7 @@ const SidebarUserMenu = ({
           <UserMenuContent
             userRole={userRole}
             profile={profile}
-            navigateToAccount={navigateToAccount}
+            navigateToAccount={handleAccountNavigation} // Use the unified navigation function
             navigateToBilling={navigateToBilling}
             navigateToUpgrade={navigateToUpgrade}
             navigateToPharmacyProfile={navigateToPharmacyProfile}

@@ -12,7 +12,7 @@ import { CreditCard, LogOut, Store, User } from "lucide-react";
 interface UserMenuContentProps {
   userRole: string;
   profile: UserProfile | null;
-  navigateToAccount: () => void;
+  navigateToAccount: (() => void) | undefined;
   navigateToBilling: () => void;
   navigateToUpgrade: () => void;
   navigateToPharmacyProfile?: () => void;
@@ -67,10 +67,12 @@ export const UserMenuContent = ({
           </DropdownMenuItem>
         )}
         
-        <DropdownMenuItem onClick={navigateToAccount}>
-          <User className="mr-2 h-4 w-4" />
-          <span>Account</span>
-        </DropdownMenuItem>
+        {navigateToAccount && (
+          <DropdownMenuItem onClick={navigateToAccount}>
+            <User className="mr-2 h-4 w-4" />
+            <span>Account</span>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={navigateToBilling}>
           <CreditCard className="mr-2 h-4 w-4" />
           <span>Billing</span>
