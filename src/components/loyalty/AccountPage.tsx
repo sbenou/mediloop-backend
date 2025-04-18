@@ -1,6 +1,5 @@
 
 import React from "react";
-import Header from "@/components/layout/Header";
 import { LoyaltyHeader } from "@/components/loyalty/LoyaltyHeader";
 import { ReferralTimeline } from "@/components/loyalty/ReferralTimeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,8 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const AccountPage = () => {
   return (
     <div>
-      <Header />
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">My Account</h1>
         
         <div className="grid grid-cols-1 gap-6 mb-8">
