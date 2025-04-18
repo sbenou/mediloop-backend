@@ -23,11 +23,6 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
       case 'doctor':
         return [
           {
-            name: "Priority support",
-            value: "24/7 access",
-            icon: <Stethoscope className="h-4 w-4 text-blue-500" />
-          },
-          {
             name: "Professional development",
             value: `${loyalty.professionalCredits || 0} credits`,
             icon: <Award className="h-4 w-4 text-blue-500" />
@@ -80,10 +75,24 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
             
             <Card>
               <CardHeader>
-                <CardTitle>Loyalty Program Benefits</CardTitle>
+                <CardTitle>Loyalty Program Details</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  <div className="flex justify-between items-center border-b pb-2">
+                    <span>Next level threshold:</span>
+                    <span className="font-medium">1000 points</span>
+                  </div>
+                  
+                  {loyalty.nextBadgeYears !== null && (
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span>Next seniority badge:</span>
+                      <span className="font-medium">
+                        In {loyalty.nextBadgeYears} {loyalty.nextBadgeYears === 1 ? 'year' : 'years'}
+                      </span>
+                    </div>
+                  )}
+
                   {benefits.map((benefit, index) => (
                     <div key={index} className="flex justify-between items-center border-b pb-2">
                       <span className="flex items-center gap-2">

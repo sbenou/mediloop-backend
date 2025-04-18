@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Award, Star, Clock } from "lucide-react";
+import { Award, Star } from "lucide-react";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
 import { Badge } from "@/components/ui/badge";
 
@@ -54,10 +54,7 @@ export function LoyaltyHeader() {
             </p>
           </div>
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-muted-foreground">Seniority Badge</p>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </div>
+            <p className="text-sm text-muted-foreground">Seniority Badge</p>
             <div className="flex items-center gap-2">
               <Badge variant={getBadgeVariant(loyalty.badgeColor)}>
                 {loyalty.badge}
@@ -66,11 +63,6 @@ export function LoyaltyHeader() {
                 {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
               </span>
             </div>
-            {loyalty.nextBadgeYears !== null && (
-              <p className="text-xs text-muted-foreground">
-                Next badge in {loyalty.nextBadgeYears} {loyalty.nextBadgeYears === 1 ? 'year' : 'years'}
-              </p>
-            )}
           </div>
         </div>
       </CardContent>
