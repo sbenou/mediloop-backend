@@ -1,7 +1,7 @@
 
 import { 
   Home, User, ShoppingBag, Settings, Calendar, 
-  Pill, Users, Store, Heart, CreditCard, Video, HeartPulse 
+  Pill, Users, Store, Heart, CreditCard, Video, HeartPulse, MapPin 
 } from "lucide-react";
 
 export const platformMenuItems = [
@@ -63,4 +63,3 @@ export const consultationsSubItems = [
     path: '/dashboard?view=appointments',
   }
 ];
-

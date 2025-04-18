@@ -19,7 +19,7 @@ interface SidebarUserMenuProps {
   handleAvatarClick: (e: React.MouseEvent) => void;
   getUserInitials: () => string;
   handleLogout: () => Promise<void>;
-  navigateToProfile: () => void;
+  navigateToAccount: () => void;
   navigateToBilling: () => void;
   navigateToUpgrade: () => void;
   navigateToPharmacyProfile?: () => void;
@@ -34,6 +34,7 @@ const SidebarUserMenu = ({
   handleAvatarClick,
   getUserInitials,
   handleLogout,
+  navigateToAccount,
   navigateToBilling,
   navigateToUpgrade,
   navigateToPharmacyProfile,
@@ -47,12 +48,6 @@ const SidebarUserMenu = ({
   
   const { pharmacyName, isAvailable: isPharmacyAvailable } = usePharmacyData(profile);
   const { isAvailable: isDoctorAvailable } = useDoctorAvailability(profile);
-  
-  // Direct navigation to account page
-  const navigateToAccount = () => {
-    console.log("Navigating to Account page from sidebar menu");
-    navigate('/account');
-  };
   
   // Determine which avatar URL to use based on user role and context
   const getAvatarUrl = () => {

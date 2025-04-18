@@ -1,5 +1,5 @@
 
-import { Pill } from "lucide-react";
+import { Pill, HeartPulse, User, ShoppingBag } from "lucide-react";
 import SidebarSection from "../SidebarSection";
 import SidebarItem from "../SidebarItem";
 import SidebarCollapsibleItem from "../SidebarCollapsibleItem";
@@ -7,8 +7,13 @@ import SidebarSubItem from "../SidebarSubItem";
 import { platformMenuItems, ordersSubItems, profileSubItems, consultationsSubItems } from "../config/sidebarNavItems";
 import { useSidebarNavigation } from "@/hooks/sidebar/useSidebarNavigation";
 import { useSidebarItems } from "../hooks/useSidebarItems";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useLocation } from "react-router-dom";
 
 export const PlatformSection = () => {
+  const { userRole } = useAuth();
+  const location = useLocation();
+  
   const {
     isOrdersOpen,
     setIsOrdersOpen,
@@ -18,7 +23,7 @@ export const PlatformSection = () => {
     setIsConsultationsOpen,
     navigateToLink,
     isPharmacistSectionActive
-  } = useSidebarNavigation();
+  } = useSidebarNavigation(userRole);
 
   const { 
     getFilteredProfileSubItems, 
@@ -107,4 +112,3 @@ export const PlatformSection = () => {
     </SidebarSection>
   );
 };
-

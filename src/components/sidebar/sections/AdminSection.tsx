@@ -4,9 +4,11 @@ import SidebarItem from "../SidebarItem";
 import { adminMenuItems } from "../config/sidebarNavItems";
 import { useSidebarNavigation } from "@/hooks/sidebar/useSidebarNavigation";
 import { useSidebarItems } from "../hooks/useSidebarItems";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 export const AdminSection = () => {
-  const { navigateToLink } = useSidebarNavigation();
+  const { userRole } = useAuth();
+  const { navigateToLink } = useSidebarNavigation(userRole);
   const { isLinkActive } = useSidebarItems();
 
   return (
@@ -23,4 +25,3 @@ export const AdminSection = () => {
     </SidebarSection>
   );
 };
-

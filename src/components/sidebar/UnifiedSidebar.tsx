@@ -29,6 +29,11 @@ const UnifiedSidebar = () => {
     console.log('Navigating to doctor profile from UnifiedSidebar');
     navigate('/doctor/profile');
   };
+  
+  const navigateToAccount = () => {
+    console.log('Navigating to Account page from sidebar menu');
+    navigate('/account');
+  };
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -44,7 +49,7 @@ const UnifiedSidebar = () => {
         handleAvatarClick={handleAvatarClick}
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
-        navigateToAccount={() => navigate('/account')}
+        navigateToAccount={navigateToAccount}
         navigateToBilling={() => navigate('/dashboard?view=orders&ordersTab=payments')}
         navigateToUpgrade={() => navigate('/upgrade')}
         navigateToPharmacyProfile={userRole === 'pharmacist' ? navigateToPharmacyProfile : undefined}
@@ -56,4 +61,3 @@ const UnifiedSidebar = () => {
 };
 
 export default UnifiedSidebar;
-

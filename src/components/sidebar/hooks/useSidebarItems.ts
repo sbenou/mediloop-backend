@@ -1,6 +1,7 @@
 
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { profileSubItems } from "../config/sidebarNavItems";
 
 export const useSidebarItems = () => {
   const { userRole } = useAuth();
@@ -33,4 +34,3 @@ export const useSidebarItems = () => {
     isLinkActive
   };
 };
-
