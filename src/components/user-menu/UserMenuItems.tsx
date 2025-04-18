@@ -112,7 +112,7 @@ export const UserMenuItems = () => {
     // Special case for /account - ALWAYS navigate directly
     if (path === '/account') {
       console.log('Direct navigation to /account page');
-      window.location.href = '/account';
+      navigate('/account');
       return;
     }
     

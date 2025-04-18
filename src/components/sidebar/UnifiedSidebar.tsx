@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/auth/useAuth";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { PlatformSection } from "./sections/PlatformSection";

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import AccountPage from "@/components/loyalty/AccountPage";
@@ -14,6 +14,12 @@ interface AccountProps {
 const Account = ({ showHeader = true }: AccountProps) => {
   const { profile, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get showHeader from location state if available, otherwise use prop
+  const shouldShowHeader = location.state?.showHeader !== undefined 
+    ? location.state.showHeader 
+    : showHeader;
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -22,7 +28,8 @@ const Account = ({ showHeader = true }: AccountProps) => {
     }
     
     console.log("Account page mounted");
-  }, [profile, isLoading, navigate]);
+    console.log("ShowHeader value:", shouldShowHeader);
+  }, [profile, isLoading, navigate, shouldShowHeader]);
 
   if (isLoading || !profile?.id) {
     return null;
@@ -32,7 +39,7 @@ const Account = ({ showHeader = true }: AccountProps) => {
     <UnifiedLayoutTemplate>
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
         <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-          <AccountPage showHeader={showHeader} />
+          <AccountPage showHeader={shouldShowHeader} />
         </ScrollArea>
       </div>
     </UnifiedLayoutTemplate>

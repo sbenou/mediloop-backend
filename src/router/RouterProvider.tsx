@@ -98,7 +98,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/account',
-    element: <Account showHeader={true} />,
+    element: <Account />,
   },
   {
     path: '*',
