@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/auth/useAuth";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { PlatformSection } from "./sections/PlatformSection";
@@ -31,8 +30,8 @@ const UnifiedSidebar = () => {
   };
   
   const navigateToAccount = () => {
-    console.log('Navigating to Account page from sidebar menu');
-    navigate('/account');
+    console.log('Navigating to Account page from sidebar menu with no header');
+    navigate('/account', { state: { showHeader: false } });
   };
 
   return (

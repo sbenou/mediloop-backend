@@ -7,7 +7,11 @@ import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import AccountPage from "@/components/loyalty/AccountPage";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const Account = () => {
+interface AccountProps {
+  showHeader?: boolean;
+}
+
+const Account = ({ showHeader = true }: AccountProps) => {
   const { profile, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -28,7 +32,7 @@ const Account = () => {
     <UnifiedLayoutTemplate>
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
         <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-          <AccountPage />
+          <AccountPage showHeader={showHeader} />
         </ScrollArea>
       </div>
     </UnifiedLayoutTemplate>

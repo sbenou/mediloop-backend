@@ -1,4 +1,3 @@
-
 import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Products from '@/pages/Products';
 import ProductDetail from '@/pages/ProductDetail';
@@ -99,7 +98,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/account',
-    element: <Account />,
+    element: <Account showHeader={true} />,
   },
   {
     path: '*',

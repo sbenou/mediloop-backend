@@ -5,10 +5,14 @@ import { LoyaltyHeader } from "@/components/loyalty/LoyaltyHeader";
 import { ReferralTimeline } from "@/components/loyalty/ReferralTimeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const AccountPage = () => {
+interface AccountPageProps {
+  showHeader?: boolean;
+}
+
+const AccountPage = ({ showHeader = true }: AccountPageProps) => {
   return (
     <div>
-      <Header />
+      {showHeader && <Header />}
       <div className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-8">My Account</h1>
         
