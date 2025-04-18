@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
@@ -67,7 +66,7 @@ const Referral = () => {
     if (isSending) return "Sending...";
     if (sendStatus === "success") return <><Check className="w-4 h-4" /> Sent Successfully</>;
     if (sendStatus === "error") return <><X className="w-4 h-4" /> Failed to Send</>;
-    return "Send";
+    return "Send Referral";
   };
 
   return (
