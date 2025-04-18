@@ -17,6 +17,7 @@ import MyPrescriptions from '@/pages/MyPrescriptions';
 import Account from '@/pages/Account';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import Referral from '@/pages/Referral';
 
 // Create a wrapper component for products routes that provides context
 const ProductsLayout = () => {
@@ -99,6 +100,10 @@ const router = createBrowserRouter([
   {
     path: '/account',
     element: <Account />,
+  },
+  {
+    path: '/referral',
+    element: <Referral />,
   },
   {
     path: '*',
