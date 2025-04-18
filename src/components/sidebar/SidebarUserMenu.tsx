@@ -1,3 +1,4 @@
+
 import { UserProfile } from "@/types/user";
 import { ChevronDown, CreditCard, LogOut, User, Store } from "lucide-react";
 import UserAvatar from "../user-menu/UserAvatar";
@@ -57,9 +58,9 @@ const SidebarUserMenu = ({
   const [pharmacyName, setPharmacyName] = useState<string | null>(null);
   const [isAvailable, setIsAvailable] = useState(true);
   
-  // Navigate to account page directly using React Router
+  // Direct navigation to account page function - this ensures we're using consistent navigation
   const navigateToAccount = () => {
-    console.log("Navigating to Account page from sidebar");
+    console.log("Navigating to Account page from sidebar menu");
     navigate('/account');
   };
   
@@ -403,7 +404,8 @@ const SidebarUserMenu = ({
                 </DropdownMenuItem>
               )}
               
-              <DropdownMenuItem onClick={navigateToProfile}>
+              {/* Use the new direct navigateToAccount function instead of navigateToProfile */}
+              <DropdownMenuItem onClick={navigateToAccount}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Account</span>
               </DropdownMenuItem>
