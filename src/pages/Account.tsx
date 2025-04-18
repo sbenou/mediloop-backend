@@ -16,6 +16,8 @@ const Account = () => {
     if (!isLoading && !profile?.id) {
       navigate('/login');
     }
+    
+    console.log("Account page mounted");
   }, [profile, isLoading, navigate]);
 
   if (isLoading || !profile?.id) {

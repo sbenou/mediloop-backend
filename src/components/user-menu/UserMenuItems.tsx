@@ -105,11 +105,18 @@ export const UserMenuItems = () => {
     }
   };
 
-  // Function to handle navigation with proper path resolution
+  // Function to handle navigation with proper path resolution - FIXED to handle direct paths properly
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
-    // For direct paths like /account, navigate directly
+    // Special case for /account - ALWAYS navigate directly
+    if (path === '/account') {
+      console.log('Direct navigation to /account page');
+      window.location.href = '/account';
+      return;
+    }
+    
+    // For other direct paths like /settings, navigate directly
     if (path.startsWith('/') && !path.includes('?')) {
       navigate(path);
       return;
@@ -130,7 +137,7 @@ export const UserMenuItems = () => {
     if (userRole === 'user' || userRole === 'patient') {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard' },
-        { icon: Award, label: 'Account', path: '/account' },
+        { icon: Award, label: 'Account', path: '/account' }, // Direct path to /account
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
         { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
@@ -145,7 +152,7 @@ export const UserMenuItems = () => {
     if (userRole === 'doctor') {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
-        { icon: Award, label: 'Account', path: '/account' }, // Explicitly set to /account
+        { icon: Award, label: 'Account', path: '/account' }, // Direct path to /account
         { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
         { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' },
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
@@ -160,7 +167,7 @@ export const UserMenuItems = () => {
     if (isPharmacist) {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
-        { icon: Award, label: 'Account', path: '/account' },
+        { icon: Award, label: 'Account', path: '/account' }, // Direct path to /account
         { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
         { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
         { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
@@ -176,7 +183,7 @@ export const UserMenuItems = () => {
     if (userRole === 'superadmin') {
       return [
         { icon: Home, label: 'Dashboard', path: '/superadmin/dashboard' },
-        { icon: Award, label: 'Account', path: '/account' },
+        { icon: Award, label: 'Account', path: '/account' }, // Direct path to /account
         { icon: Users, label: 'Users', path: '/superadmin/users' },
         { icon: Store, label: 'Pharmacies', path: '/superadmin/pharmacies' },
         { icon: HeartPulse, label: 'Doctors', path: '/superadmin/doctors' },
@@ -189,7 +196,7 @@ export const UserMenuItems = () => {
     // Fallback for unknown roles
     return [
       { icon: Home, label: 'Dashboard', path: '/dashboard' },
-      { icon: Award, label: 'Account', path: '/account' },
+      { icon: Award, label: 'Account', path: '/account' }, // Direct path to /account
       { icon: User, label: 'Profile', path: '/settings?tab=profile' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
       { icon: Settings, label: 'Settings', path: '/settings' }

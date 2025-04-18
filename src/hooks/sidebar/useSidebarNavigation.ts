@@ -76,7 +76,14 @@ export const useSidebarNavigation = (userRole: string) => {
   const navigateToLink = (path: string) => {
     console.log(`navigateToLink called with path: ${path}, userRole: ${userRole}, isActivitiesPage: ${isActivitiesPage}`);
     
-    // For direct paths like /account, navigate directly
+    // Special case for /account - ALWAYS navigate directly 
+    if (path === '/account') {
+      console.log('Direct navigation to /account page');
+      window.location.href = '/account';
+      return;
+    }
+    
+    // For direct paths like /settings, navigate directly
     if (path.startsWith('/') && !path.includes('?')) {
       navigate(path);
       return;

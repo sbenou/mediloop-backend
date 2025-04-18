@@ -20,6 +20,13 @@ export function useSidebarNavigation(userRole: string) {
   const navigateToLink = (link: string) => {
     console.log(`Navigating to ${link} for role ${userRole}`);
     
+    // Special case for /account - ALWAYS navigate directly
+    if (link === '/account') {
+      console.log('Direct navigation to /account page');
+      window.location.href = '/account';
+      return;
+    }
+    
     // For links that start with /, do direct navigation
     if (link.startsWith('/')) {
       navigate(link);
