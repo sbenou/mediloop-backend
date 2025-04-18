@@ -26,18 +26,19 @@ serve(async (req) => {
       throw new Error("No email addresses provided");
     }
     
+    // Create the referral link
+    const referralLink = `${new URL(req.url).origin}/signup?referral=${referral_code}`;
+    
     // Create a Supabase client using the supplied auth
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    // Create the referral link
-    const referralLink = `${new URL(req.url).origin}/signup?referral=${referral_code}`;
-    
     // Send emails to each recipient
     const results = await Promise.all(
       emails.map(async (email) => {
         try {
+          // Check if referral already exists
           const { data: existingReferral } = await supabase
             .from('referrals')
             .select('id')

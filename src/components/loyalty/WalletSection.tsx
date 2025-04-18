@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowRightLeft, CreditCard, History } from "lucide-react";
+import { ProductQuantitySelector } from "@/components/product/ProductQuantitySelector";
 
 export function WalletSection() {
   const [pointsToConvert, setPointsToConvert] = useState<number>(0);
@@ -39,6 +39,20 @@ export function WalletSection() {
       toast.error("Failed to convert points. Please try again.");
     } finally {
       setIsConverting(false);
+    }
+  };
+
+  const handleQuantityChange = (change: number) => {
+    const newValue = pointsToConvert + change;
+    if (newValue >= 0 && newValue <= loyalty.availablePoints) {
+      setPointsToConvert(newValue);
+    }
+  };
+
+  const handleDirectInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    if (value >= 0 && value <= loyalty.availablePoints) {
+      setPointsToConvert(value);
     }
   };
 

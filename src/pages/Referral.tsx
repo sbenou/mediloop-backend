@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
@@ -9,11 +8,13 @@ import { ReferralTimeline } from "@/components/loyalty/ReferralTimeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Check, X } from "lucide-react";
 
 const Referral = () => {
   const { profile, isLoading } = useAuth();
   const [emails, setEmails] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState<"idle" | "success" | "error">("idle");
 
   if (isLoading || !profile?.id) {
     return null;
@@ -28,8 +29,9 @@ const Referral = () => {
     }
 
     setIsSending(true);
+    setSendStatus("idle");
+    
     try {
-      // Send referral emails using the edge function
       const response = await fetch(`https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/send-referral-email`, {
         method: 'POST',
         headers: {
@@ -48,12 +50,23 @@ const Referral = () => {
       
       toast.success(`Referral invitations sent to ${emailList.length} email${emailList.length > 1 ? 's' : ''}!`);
       setEmails("");
+      setSendStatus("success");
     } catch (error) {
       console.error("Error sending referral emails:", error);
       toast.error("Failed to send referral emails. Please try again later.");
+      setSendStatus("error");
     } finally {
       setIsSending(false);
+      // Reset status after 3 seconds
+      setTimeout(() => setSendStatus("idle"), 3000);
     }
+  };
+
+  const buttonContent = () => {
+    if (isSending) return "Sending...";
+    if (sendStatus === "success") return <><Check className="w-4 h-4" /> Sent Successfully</>;
+    if (sendStatus === "error") return <><X className="w-4 h-4" /> Failed to Send</>;
+    return "Send Referral Invitations";
   };
 
   return (
@@ -96,7 +109,7 @@ const Referral = () => {
                       disabled={isSending || !emails.trim()}
                       className="w-full md:w-auto"
                     >
-                      {isSending ? "Sending..." : "Send Referral Invitations"}
+                      {buttonContent()}
                     </Button>
                   </div>
                 </CardContent>
