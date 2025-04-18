@@ -1,11 +1,11 @@
-
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
-  MapPin, Store, Pill, BellRing, CreditCard 
+  MapPin, Store, Pill, BellRing, CreditCard, 
+  Share // Add Share icon for referral
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -151,6 +151,14 @@ const PharmacistSidebar = ({
             label="Patients"
             isActive={isPharmacistSectionActive("patients")}
             onClick={() => navigateToPharmacySection('patients')}
+          />
+          
+          {/* Add Referral link with Share icon */}
+          <SidebarItem
+            icon={<Share className="w-5 h-5 mr-3" />}
+            label="Referral"
+            isActive={location.pathname === "/referral"}
+            onClick={() => navigate('/referral')}
           />
           
           <SidebarCollapsibleItem 
