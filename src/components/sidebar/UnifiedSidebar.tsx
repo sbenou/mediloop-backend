@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   Home, User, ShoppingBag, Settings, Calendar, 
@@ -263,6 +264,7 @@ const UnifiedSidebar = () => {
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         navigateToProfile={() => {
+          console.log('Navigating to Account page from sidebar');
           navigate('/account');
         }}
         navigateToBilling={() => {
