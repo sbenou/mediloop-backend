@@ -1,9 +1,8 @@
 
 import React from "react";
-import { LoyaltyHeader } from "@/components/loyalty/LoyaltyHeader";
-import { ReferralTimeline } from "@/components/loyalty/ReferralTimeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoyaltyHeader } from "@/components/loyalty/LoyaltyHeader";
 
 interface AccountPageProps {
   showHeader?: boolean;
@@ -17,7 +16,6 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
       <Tabs defaultValue="loyalty" className="space-y-4">
         <TabsList>
           <TabsTrigger value="loyalty">Loyalty Program</TabsTrigger>
-          <TabsTrigger value="referral">Referral History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="loyalty">
@@ -47,13 +45,10 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
             </Card>
           </div>
         </TabsContent>
-
-        <TabsContent value="referral">
-          <ReferralTimeline />
-        </TabsContent>
       </Tabs>
     </div>
   );
 };
 
 export default AccountPage;
+
