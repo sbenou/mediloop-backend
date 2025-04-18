@@ -3,6 +3,7 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoyaltyHeader } from "@/components/loyalty/LoyaltyHeader";
+import { WalletSection } from "@/components/loyalty/WalletSection";
 
 interface AccountPageProps {
   showHeader?: boolean;
@@ -16,11 +17,12 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
       <Tabs defaultValue="loyalty" className="space-y-4">
         <TabsList>
           <TabsTrigger value="loyalty">Loyalty Program</TabsTrigger>
+          <TabsTrigger value="wallet">Wallet</TabsTrigger>
         </TabsList>
 
         <TabsContent value="loyalty">
           <div className="space-y-6">
-            <LoyaltyHeader />
+            {showHeader && <LoyaltyHeader />}
             
             <Card>
               <CardHeader>
@@ -45,10 +47,13 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
             </Card>
           </div>
         </TabsContent>
+
+        <TabsContent value="wallet">
+          <WalletSection />
+        </TabsContent>
       </Tabs>
     </div>
   );
 };
 
 export default AccountPage;
-

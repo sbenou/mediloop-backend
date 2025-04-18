@@ -1,18 +1,60 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReferralTimeline } from "@/components/loyalty/ReferralTimeline";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 const Referral = () => {
   const { profile, isLoading } = useAuth();
+  const [emails, setEmails] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   if (isLoading || !profile?.id) {
     return null;
   }
+
+  const handleSendReferrals = async () => {
+    const emailList = emails.split(',').map(email => email.trim()).filter(Boolean);
+    
+    if (emailList.length === 0) {
+      toast.error("Please enter at least one valid email address");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      // Send referral emails using the edge function
+      const response = await fetch(`https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/send-referral-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+        },
+        body: JSON.stringify({
+          emails: emailList,
+          referrer_name: profile.full_name || "A friend",
+          referrer_id: profile.id,
+          referral_code: `USER${profile.id.substring(0, 6).toUpperCase()}`
+        })
+      });
+
+      if (!response.ok) throw new Error("Failed to send referral emails");
+      
+      toast.success(`Referral invitations sent to ${emailList.length} email${emailList.length > 1 ? 's' : ''}!`);
+      setEmails("");
+    } catch (error) {
+      console.error("Error sending referral emails:", error);
+      toast.error("Failed to send referral emails. Please try again later.");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <UnifiedLayoutTemplate>
@@ -33,19 +75,29 @@ const Referral = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Share your referral link with friends and family. When they join and make their first purchase, 
+                    Share your referral program with friends and family. When they join and make their first purchase, 
                     you'll both earn loyalty points!
                   </p>
-                  <div className="relative mb-6">
-                    <input
-                      type="text"
-                      value="https://mediloop.app/refer?code=USER123"
-                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm"
-                      readOnly
-                    />
-                    <button className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-primary px-2 py-1 text-xs text-white">
-                      Copy
-                    </button>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="emails" className="block text-sm font-medium mb-1">
+                        Enter email addresses (separated by commas)
+                      </label>
+                      <Input
+                        id="emails"
+                        placeholder="friend@example.com, colleague@example.com"
+                        value={emails}
+                        onChange={(e) => setEmails(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleSendReferrals} 
+                      disabled={isSending || !emails.trim()}
+                      className="w-full md:w-auto"
+                    >
+                      {isSending ? "Sending..." : "Send Referral Invitations"}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -62,4 +114,3 @@ const Referral = () => {
 };
 
 export default Referral;
-
