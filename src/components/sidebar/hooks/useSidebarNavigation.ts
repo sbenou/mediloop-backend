@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -20,14 +19,7 @@ export function useSidebarNavigation(userRole: string) {
   const navigateToLink = (link: string) => {
     console.log(`Navigating to ${link} for role ${userRole}`);
     
-    // Special case for /account - ALWAYS navigate directly
-    if (link === '/account') {
-      console.log('Direct navigation to /account page');
-      window.location.href = '/account';
-      return;
-    }
-    
-    // For links that start with /, do direct navigation
+    // For direct paths like /account or /settings, navigate using React Router
     if (link.startsWith('/')) {
       navigate(link);
       return;
@@ -40,7 +32,7 @@ export function useSidebarNavigation(userRole: string) {
       navigate(`/dashboard${link}`);
     }
   };
-  
+
   // Function to check if a specific path is active
   const isLinkActive = (path: string) => {
     if (path === '/dashboard') {
