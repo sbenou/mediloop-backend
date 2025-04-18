@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   DropdownMenuGroup,
@@ -110,6 +109,12 @@ export const UserMenuItems = () => {
   const handleNavigation = (path: string) => {
     console.log(`Navigating to ${path} from UserMenuItems`);
     
+    // For direct paths like /account, navigate directly
+    if (path.startsWith('/') && !path.includes('?')) {
+      navigate(path);
+      return;
+    }
+    
     // If on activities page and trying to go to dashboard with params,
     // ensure we navigate properly
     if (isActivitiesPage && path.startsWith('/dashboard?')) {
@@ -140,7 +145,7 @@ export const UserMenuItems = () => {
     if (userRole === 'doctor') {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
-        { icon: Award, label: 'Account', path: '/account' },
+        { icon: Award, label: 'Account', path: '/account' }, // Explicitly set to /account
         { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
         { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' },
         { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
@@ -152,7 +157,7 @@ export const UserMenuItems = () => {
     }
     
     // Pharmacist specific items
-    if (isUserPharmacist) {
+    if (isPharmacist) {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
         { icon: Award, label: 'Account', path: '/account' },
