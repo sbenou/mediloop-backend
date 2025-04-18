@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
@@ -66,7 +67,7 @@ const Referral = () => {
     if (isSending) return "Sending...";
     if (sendStatus === "success") return <><Check className="w-4 h-4" /> Sent Successfully</>;
     if (sendStatus === "error") return <><X className="w-4 h-4" /> Failed to Send</>;
-    return "Send Referral Invitations";
+    return "Send";
   };
 
   return (
@@ -91,23 +92,16 @@ const Referral = () => {
                     Share your referral program with friends and family. When they join and make their first purchase, 
                     you'll both earn loyalty points!
                   </p>
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="emails" className="block text-sm font-medium mb-1">
-                        Enter email addresses (separated by commas)
-                      </label>
-                      <Input
-                        id="emails"
-                        placeholder="friend@example.com, colleague@example.com"
-                        value={emails}
-                        onChange={(e) => setEmails(e.target.value)}
-                        className="w-full"
-                      />
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      placeholder="friend@example.com, colleague@example.com"
+                      value={emails}
+                      onChange={(e) => setEmails(e.target.value)}
+                      className="flex-grow"
+                    />
                     <Button 
                       onClick={handleSendReferrals} 
                       disabled={isSending || !emails.trim()}
-                      className="w-full md:w-auto"
                     >
                       {buttonContent()}
                     </Button>
