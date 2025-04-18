@@ -1,7 +1,8 @@
+
 import { 
   Home, User, ShoppingBag, Settings, Calendar, 
   Pill, Users, Store, Heart, CreditCard, Video, HeartPulse, MapPin,
-  Share // Add Share icon for referral
+  Share // Share icon for referral
 } from "lucide-react";
 
 export const platformMenuItems = [
