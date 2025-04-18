@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/auth/useAuth";
 import { 
   Home, User, ShoppingBag, Settings, Calendar, 
@@ -264,11 +263,7 @@ const UnifiedSidebar = () => {
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         navigateToProfile={() => {
-          if (userRole === 'pharmacist') {
-            navigateToLink('/dashboard?view=profile&profileTab=personal');
-          } else {
-            navigateToLink('/dashboard?view=profile&profileTab=personal');
-          }
+          navigate('/account');
         }}
         navigateToBilling={() => {
           if (userRole === 'pharmacist') {
