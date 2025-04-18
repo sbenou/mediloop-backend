@@ -118,7 +118,7 @@ export function WalletSection() {
                   max={loyalty.availablePoints}
                   value={pointsToConvert || ""}
                   onChange={handleDirectInput}
-                  className="h-full border-0 text-center"
+                  className="h-full border-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <Button
                   variant="ghost"
