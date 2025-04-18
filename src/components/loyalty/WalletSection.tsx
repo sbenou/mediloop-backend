@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -5,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowRightLeft, CreditCard, History } from "lucide-react";
-import { ProductQuantitySelector } from "@/components/product/ProductQuantitySelector";
+import { ArrowRightLeft, CreditCard, History, Minus, Plus } from "lucide-react";
 
 export function WalletSection() {
   const [pointsToConvert, setPointsToConvert] = useState<number>(0);
@@ -101,15 +101,35 @@ export function WalletSection() {
               <label htmlFor="points" className="block text-sm font-medium mb-1">
                 Points to Convert
               </label>
-              <Input
-                id="points"
-                type="number"
-                min="0"
-                max={loyalty.availablePoints}
-                value={pointsToConvert || ""}
-                onChange={(e) => setPointsToConvert(Number(e.target.value))}
-                className="w-full"
-              />
+              <div className="flex items-center w-full h-10 border rounded-md">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleQuantityChange(-100)}
+                  disabled={pointsToConvert <= 0}
+                  className="h-full"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  id="points"
+                  type="number"
+                  min="0"
+                  max={loyalty.availablePoints}
+                  value={pointsToConvert || ""}
+                  onChange={handleDirectInput}
+                  className="h-full border-0 text-center"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleQuantityChange(100)}
+                  disabled={pointsToConvert >= loyalty.availablePoints}
+                  className="h-full"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <div className="text-center md:text-left py-2 md:pb-0">
               <ArrowRightLeft className="mx-auto md:mx-0" />
