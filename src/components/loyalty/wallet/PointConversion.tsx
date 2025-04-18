@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowRightLeft, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
+import { supabase } from "@/lib/supabase";
 
 export function PointConversion() {
   const [pointsToConvert, setPointsToConvert] = useState<number>(0);
@@ -26,12 +27,18 @@ export function PointConversion() {
     setIsConverting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success(`Successfully converted ${pointsToConvert} points to €${(pointsToConvert / 100).toFixed(2)}`);
+      const { data, error } = await supabase.functions.invoke('convert-points', {
+        body: { points: pointsToConvert }
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
+
+      toast.success(data.message);
       setPointsToConvert(0);
     } catch (error) {
       console.error("Error converting points:", error);
-      toast.error("Failed to convert points. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to convert points. Please try again.");
     } finally {
       setIsConverting(false);
     }
