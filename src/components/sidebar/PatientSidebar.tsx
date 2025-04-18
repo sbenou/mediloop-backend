@@ -1,11 +1,12 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Home, ShoppingBag, Settings, 
   FileText, UserCircle, MapPin, 
-  Pill, Video, Heart, Users, CreditCard
+  Pill, Video, Heart, Users, CreditCard,
+  Share // Add Share icon for referral link
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -20,6 +21,7 @@ import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 const PatientSidebar = () => {
   const { profile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate(); // Add navigate for direct navigation
   const searchParams = new URLSearchParams(location.search);
   const view = searchParams.get("view") || "home";
   
@@ -99,6 +101,14 @@ const PatientSidebar = () => {
             label="Teleconsultations"
             isActive={view === "teleconsultations"}
             onClick={() => navigateToPatientView("teleconsultations")}
+          />
+          
+          {/* Add Referral link with Share icon */}
+          <SidebarItem
+            icon={<Share className="w-5 h-5 mr-3" />}
+            label="Referral"
+            isActive={location.pathname === "/referral"}
+            onClick={() => navigate('/referral')}
           />
           
           <SidebarCollapsibleItem 
