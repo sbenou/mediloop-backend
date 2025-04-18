@@ -16,6 +16,7 @@ import { userAvatarState } from "@/store/user/atoms";
 import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
 import { supabase } from "@/lib/supabase";
 import { WeekHours } from "@/types/pharmacy/hours";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarUserMenuProps {
   profile: UserProfile | null;
@@ -46,12 +47,21 @@ const SidebarUserMenu = ({
   navigateToDoctorProfile,
   handleFileChange
 }: SidebarUserMenuProps) => {
+  // Add React Router navigation
+  const navigate = useNavigate();
+  
   // Get relevant image URLs from Recoil state
   const userAvatar = useRecoilValue(userAvatarState);
   const doctorStampUrl = useRecoilValue(doctorStampUrlState);
   const pharmacyLogoUrl = useRecoilValue(pharmacyLogoUrlState);
   const [pharmacyName, setPharmacyName] = useState<string | null>(null);
   const [isAvailable, setIsAvailable] = useState(true);
+  
+  // Navigate to account page directly using React Router
+  const navigateToAccount = () => {
+    console.log("Navigating to Account page from sidebar");
+    navigate('/account');
+  };
   
   // Fetch pharmacy name if user is a pharmacist
   useEffect(() => {
@@ -393,7 +403,7 @@ const SidebarUserMenu = ({
                 </DropdownMenuItem>
               )}
               
-              <DropdownMenuItem onClick={navigateToProfile}>
+              <DropdownMenuItem onClick={navigateToAccount}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Account</span>
               </DropdownMenuItem>
