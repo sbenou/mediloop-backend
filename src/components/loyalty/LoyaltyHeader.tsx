@@ -36,26 +36,26 @@ export function LoyaltyHeader() {
 
   return (
     <Card>
-      <CardHeader className="px-8 pb-8">
+      <CardHeader className="px-8 pb-6">
         <CardTitle className="text-2xl font-bold">Health Journey Program</CardTitle>
       </CardHeader>
-      <CardContent className="px-8">
-        <div className="grid grid-cols-3 gap-8">
-          <div className="space-y-1">
+      <CardContent className="px-8 pb-8">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-1 space-y-2">
             <p className="text-sm text-muted-foreground">Total Points</p>
             <p className="text-2xl font-bold flex items-center gap-2">
               {loyalty.totalPoints} <Star className="h-5 w-5 text-yellow-500" />
             </p>
           </div>
           
-          <div className="space-y-1">
+          <div className="col-span-1 space-y-2">
             <p className="text-sm text-muted-foreground">Current Level</p>
             <p className={`text-2xl font-bold ${getLevelColor(loyalty.currentLevel)}`}>
               {loyalty.currentLevel.charAt(0).toUpperCase() + loyalty.currentLevel.slice(1)}
             </p>
           </div>
           
-          <div className="flex items-center justify-center">
+          <div className="col-span-1 flex items-center justify-center">
             {loyalty.yearsOfSeniority === 0 && (
               <Shield className="h-16 w-16 text-muted-foreground" />
             )}
