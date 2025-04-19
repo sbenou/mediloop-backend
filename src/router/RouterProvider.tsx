@@ -22,6 +22,7 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import Referral from '@/pages/Referral';
 import Settings from '@/pages/Settings';
 import RequireRoleGuard from '@/components/auth/RequireRoleGuard';
+import ManageBoostsPage from '@/pages/ManageBoostsPage';
 
 // Create a wrapper component for products routes that provides context
 const ProductsLayout = () => {
@@ -38,6 +39,13 @@ const ProductsLayout = () => {
 const ProtectedAccountPage = () => (
   <RequireRoleGuard allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
     <Account />
+  </RequireRoleGuard>
+);
+
+// Protected manage boosts page for professionals
+const ProtectedManageBoostsPage = () => (
+  <RequireRoleGuard allowedRoles={['doctor', 'pharmacist']}>
+    <ManageBoostsPage />
   </RequireRoleGuard>
 );
 
@@ -119,6 +127,10 @@ const router = createBrowserRouter([
   {
     path: '/settings',
     element: <Settings />,
+  },
+  {
+    path: '/manage-boosts',
+    element: <ProtectedManageBoostsPage />,
   },
   {
     path: '*',
