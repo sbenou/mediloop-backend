@@ -20,6 +20,8 @@ import Account from '@/pages/Account';
 import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import Referral from '@/pages/Referral';
+import Settings from '@/pages/Settings';
+import RequireRoleGuard from '@/components/auth/RequireRoleGuard';
 
 // Create a wrapper component for products routes that provides context
 const ProductsLayout = () => {
@@ -31,6 +33,13 @@ const ProductsLayout = () => {
     </CurrencyProvider>
   );
 };
+
+// Protected account page for specific roles
+const ProtectedAccountPage = () => (
+  <RequireRoleGuard allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+    <Account />
+  </RequireRoleGuard>
+);
 
 const router = createBrowserRouter([
   {
@@ -101,11 +110,15 @@ const router = createBrowserRouter([
   },
   {
     path: '/account',
-    element: <Account />,
+    element: <ProtectedAccountPage />,
   },
   {
     path: '/referral',
     element: <Referral />,
+  },
+  {
+    path: '/settings',
+    element: <Settings />,
   },
   {
     path: '*',

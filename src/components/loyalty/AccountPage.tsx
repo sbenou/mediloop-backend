@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,9 @@ import { SeniorityBadges } from "@/components/loyalty/SeniorityBadges";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Badge } from "@/components/ui/badge";
-import { Gift, Truck, Award, Stethoscope, FlaskConical } from "lucide-react";
+import { Gift, Truck, Award, Stethoscope, FlaskConical, CreditCard } from "lucide-react";
+import { SubscriptionTab } from "./subscription/SubscriptionTab";
+import SubscriptionTabGuard from "@/components/auth/SubscriptionTabGuard";
 
 interface AccountPageProps {
   showHeader?: boolean;
@@ -67,6 +70,13 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
         <TabsList>
           <TabsTrigger value="loyalty">Loyalty Program</TabsTrigger>
           <TabsTrigger value="wallet">Wallet</TabsTrigger>
+          <SubscriptionTabGuard>
+            <TabsTrigger value="subscription">
+              <span className="flex items-center">
+                <CreditCard className="mr-1 h-4 w-4" /> My Subscription
+              </span>
+            </TabsTrigger>
+          </SubscriptionTabGuard>
         </TabsList>
 
         <TabsContent value="loyalty">
@@ -117,6 +127,12 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
         <TabsContent value="wallet">
           <WalletSection />
         </TabsContent>
+        
+        <SubscriptionTabGuard>
+          <TabsContent value="subscription">
+            <SubscriptionTab />
+          </TabsContent>
+        </SubscriptionTabGuard>
       </Tabs>
     </div>
   );
