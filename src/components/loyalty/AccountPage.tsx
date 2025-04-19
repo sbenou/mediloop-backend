@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoyaltyHeader } from "@/components/loyalty/LoyaltyHeader";
 import { WalletSection } from "@/components/loyalty/WalletSection";
+import { SeniorityBadges } from "@/components/loyalty/SeniorityBadges";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +110,8 @@ const AccountPage = ({ showHeader = true }: AccountPageProps) => {
                 </div>
               </CardContent>
             </Card>
+            
+            <SeniorityBadges />
           </div>
         </TabsContent>
 
