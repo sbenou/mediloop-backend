@@ -11,6 +11,7 @@ import CartPreview from "@/components/CartPreview";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useEffect, useState } from "react";
+import { getCartCount } from "@/utils/cartUtils"; // Import the utility function
 
 interface CartButtonProps {
   isOpen: boolean;
@@ -23,10 +24,10 @@ const CartButton = ({ isOpen, onOpenChange }: CartButtonProps) => {
   
   try {
     const { state } = useCart();
-    // Calculate item count only if we successfully got the cart state
+    // Use the utility function to calculate item count
     useEffect(() => {
       if (state?.items) {
-        const count = state.items.reduce((acc, item) => acc + item.quantity, 0);
+        const count = getCartCount(state.items);
         setItemCount(count);
       }
     }, [state]);

@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -7,6 +6,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { CartItem } from "@/types/cart"; // Import CartItem type
 
 interface Product {
   id: string;
@@ -42,12 +42,14 @@ export const ProductCard = ({ product, userRole }: ProductCardProps) => {
       return;
     }
     
+    // Create a proper CartItem object with quantity
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
+      quantity: 1, // Add default quantity
       image_url: product.image_url || undefined,
-    });
+    } as CartItem);
 
     toast({
       title: "Added to Cart",
