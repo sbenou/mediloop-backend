@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
 import { Badge } from "@/components/ui/badge";
+import { Shield } from "lucide-react";
 
 export function LoyaltyHeader() {
   const loyalty = useLoyaltyStatus();
@@ -59,7 +61,11 @@ export function LoyaltyHeader() {
               variant={getBadgeVariant(loyalty.badgeColor) as any}
               className="w-16 h-16 flex items-center justify-center rounded-full mb-2 relative"
             >
-              <span className="text-xs absolute">{loyalty.badge}</span>
+              {loyalty.yearsOfSeniority === 0 ? (
+                <Shield className="h-8 w-8 text-muted-foreground" />
+              ) : (
+                <span className="text-xs absolute">{loyalty.badge}</span>
+              )}
             </Badge>
             <span className="text-sm text-muted-foreground">
               {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
