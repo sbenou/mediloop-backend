@@ -5,11 +5,25 @@ import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { PlanCartItem } from '@/types/cart';
+import { ProductQuantitySelector } from '@/components/product/ProductQuantitySelector';
 
 export function PlansTab() {
   const { addToCart } = useCart();
+  const [quantities, setQuantities] = React.useState<{ [key: string]: number }>({
+    pro: 1,
+    enterprise: 1
+  });
+  
+  const handleQuantityChange = (plan: string, change: number) => {
+    setQuantities(prev => ({
+      ...prev,
+      [plan]: Math.max(1, prev[plan] + change)
+    }));
+  };
   
   const handleAddToCart = (plan: { name: string, price: number, features: string[] }) => {
+    const quantity = quantities[plan.name.toLowerCase()];
+    
     addToCart({
       id: `plan-${plan.name.toLowerCase()}`,
       name: `${plan.name} Plan`,
@@ -17,11 +31,12 @@ export function PlansTab() {
       type: 'plan' as const,
       interval: 'monthly',
       features: plan.features,
+      quantity
     } as PlanCartItem);
 
     toast({
       title: "Added to Cart",
-      description: `${plan.name} Plan added to cart`
+      description: `${quantity} x ${plan.name} Plan added to cart`
     });
   };
 
@@ -75,22 +90,30 @@ export function PlansTab() {
             <span>Advanced analytics</span>
           </li>
         </ul>
-        <Button
-          onClick={() => handleAddToCart({
-            name: 'Pro',
-            price: 19.99,
-            features: [
-              'All basic features',
-              'Unlimited consultations',
-              'Premium support',
-              'Advanced analytics'
-            ]
-          })}
-          className="w-full flex items-center justify-center gap-2"
-        >
-          <ShoppingCart className="h-4 w-4" />
-          Add to Cart
-        </Button>
+        
+        <div className="space-y-4">
+          <ProductQuantitySelector
+            quantity={quantities.pro}
+            onQuantityChange={(change) => handleQuantityChange('pro', change)}
+          />
+          
+          <Button
+            onClick={() => handleAddToCart({
+              name: 'Pro',
+              price: 19.99,
+              features: [
+                'All basic features',
+                'Unlimited consultations',
+                'Premium support',
+                'Advanced analytics'
+              ]
+            })}
+            className="w-full flex items-center justify-center gap-2"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            Add to Cart
+          </Button>
+        </div>
       </div>
       
       {/* Enterprise Plan */}
@@ -115,23 +138,31 @@ export function PlansTab() {
             <span>White-label options</span>
           </li>
         </ul>
-        <Button
-          onClick={() => handleAddToCart({
-            name: 'Enterprise',
-            price: 99.99,
-            features: [
-              'All Pro features',
-              'Dedicated account manager',
-              'Custom integrations',
-              'White-label options'
-            ]
-          })}
-          variant="outline"
-          className="w-full flex items-center justify-center gap-2"
-        >
-          <ShoppingCart className="h-4 w-4" />
-          Add to Cart
-        </Button>
+        
+        <div className="space-y-4">
+          <ProductQuantitySelector
+            quantity={quantities.enterprise}
+            onQuantityChange={(change) => handleQuantityChange('enterprise', change)}
+          />
+          
+          <Button
+            onClick={() => handleAddToCart({
+              name: 'Enterprise',
+              price: 99.99,
+              features: [
+                'All Pro features',
+                'Dedicated account manager',
+                'Custom integrations',
+                'White-label options'
+              ]
+            })}
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            Add to Cart
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ export interface BoostCartItem extends Omit<CartItem, 'quantity'> {
   duration: string;
 }
 
-export interface PlanCartItem extends Omit<CartItem, 'quantity'> {
+export interface PlanCartItem extends CartItem {
   type: 'plan';
   interval: string;
   features: string[];
