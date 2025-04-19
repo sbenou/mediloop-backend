@@ -1,21 +1,16 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { toast } from "@/components/ui/use-toast";
+import { CartItem, BoostCartItem, PlanCartItem } from '@/types/cart';
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image_url?: string;
-}
+type CartTypes = CartItem | BoostCartItem | PlanCartItem;
 
 interface CartState {
-  items: CartItem[];
+  items: CartTypes[];
   lastUpdated: number;
 }
 
 type CartAction =
-  | { type: 'ADD_ITEM'; payload: CartItem }
+  | { type: 'ADD_ITEM'; payload: CartTypes }
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_CART' }
@@ -27,7 +22,7 @@ const CART_STORAGE_KEY = 'shopping_cart';
 const CartContext = createContext<{
   state: CartState;
   dispatch: React.Dispatch<CartAction>;
-  addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
+  addToCart: (item: CartTypes & { quantity?: number }) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -63,15 +58,27 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     case 'ADD_ITEM': {
       const existingItem = state.items.find(item => item.id === action.payload.id);
       if (existingItem) {
-        newState = {
-          ...state,
-          items: state.items.map(item =>
-            item.id === action.payload.id
-              ? { ...item, quantity: item.quantity + action.payload.quantity }
-              : item
-          ),
-          lastUpdated: Date.now(),
-        };
+        // For regular cart items that have quantity
+        if ('quantity' in existingItem && 'quantity' in action.payload) {
+          newState = {
+            ...state,
+            items: state.items.map(item =>
+              item.id === action.payload.id
+                ? { ...item, quantity: (item as CartItem).quantity + (action.payload as CartItem).quantity }
+                : item
+            ),
+            lastUpdated: Date.now(),
+          };
+        } else {
+          // For items without quantity (like boosts or plans), just replace
+          newState = {
+            ...state,
+            items: state.items.map(item =>
+              item.id === action.payload.id ? action.payload : item
+            ),
+            lastUpdated: Date.now(),
+          };
+        }
       } else {
         newState = {
           ...state,
@@ -91,11 +98,12 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     case 'UPDATE_QUANTITY':
       newState = {
         ...state,
-        items: state.items.map(item =>
-          item.id === action.payload.id
-            ? { ...item, quantity: action.payload.quantity }
-            : item
-        ),
+        items: state.items.map(item => {
+          if (item.id === action.payload.id && 'quantity' in item) {
+            return { ...item, quantity: action.payload.quantity } as CartItem;
+          }
+          return item;
+        }),
         lastUpdated: Date.now(),
       };
       break;
@@ -146,11 +154,17 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     return () => clearInterval(interval);
   }, [state.lastUpdated]);
 
-  const addToCart = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
-    dispatch({ 
-      type: 'ADD_ITEM', 
-      payload: { ...item, quantity: item.quantity || 1 } 
-    });
+  const addToCart = (item: CartTypes & { quantity?: number }) => {
+    // Add default quantity of 1 for regular cart items
+    if ('quantity' in item) {
+      dispatch({ 
+        type: 'ADD_ITEM', 
+        payload: { ...item, quantity: item.quantity || 1 } as CartItem 
+      });
+    } else {
+      // For boost and plan items that don't have quantity
+      dispatch({ type: 'ADD_ITEM', payload: item });
+    }
   };
 
   const removeFromCart = (id: string) => {

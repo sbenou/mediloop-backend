@@ -8,6 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { toast } from '@/components/ui/use-toast';
+import { CartItem, BoostCartItem, PlanCartItem } from '@/types/cart';
 
 const CartFooter = () => {
   const { state } = useCart();
@@ -40,9 +41,41 @@ const CartFooter = () => {
     }
     
     try {
+      // Transform items for API
+      const apiItems = state.items.map(item => {
+        // Handle different item types
+        if ('type' in item) {
+          if (item.type === 'boost') {
+            const boostItem = item as BoostCartItem;
+            return {
+              id: boostItem.id,
+              name: boostItem.name,
+              price: boostItem.price,
+              type: 'boost',
+              boost_type: boostItem.boost_type,
+              duration: boostItem.duration,
+              quantity: 1
+            };
+          } else if (item.type === 'plan') {
+            const planItem = item as PlanCartItem;
+            return {
+              id: planItem.id,
+              name: planItem.name,
+              price: planItem.price,
+              type: 'plan',
+              interval: planItem.interval,
+              features: planItem.features,
+              quantity: 1
+            };
+          }
+        }
+        // Regular cart item
+        return item;
+      });
+      
       const { data, error } = await supabase.functions.invoke('create-delivery-payment', {
         body: {
-          items: state.items,
+          items: apiItems,
           comment: ''
         }
       });

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { toast } from "@/components/ui/use-toast";
 import { format, formatDistance } from "date-fns";
 import { useCart } from "@/contexts/CartContext";
 import { ShoppingCart } from "lucide-react";
+import { BoostCartItem } from "@/types/cart";
 
 const ManageBoostsPage = () => {
   const navigate = useNavigate();
@@ -99,10 +101,10 @@ const ManageBoostsPage = () => {
       id: `${type}-${selectedDuration}`,
       name: `${boostName} (${durationText})`,
       price: selectedPrice.price,
-      type: 'boost',
+      type: 'boost' as const,
       boost_type: type,
       duration: selectedDuration,
-    });
+    } as BoostCartItem);
 
     toast({
       title: "Added to Cart",

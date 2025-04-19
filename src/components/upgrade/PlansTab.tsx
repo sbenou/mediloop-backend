@@ -4,6 +4,7 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
+import { PlanCartItem } from '@/types/cart';
 
 export function PlansTab() {
   const { addToCart } = useCart();
@@ -13,10 +14,10 @@ export function PlansTab() {
       id: `plan-${plan.name.toLowerCase()}`,
       name: `${plan.name} Plan`,
       price: plan.price,
-      type: 'plan',
+      type: 'plan' as const,
       interval: 'monthly',
       features: plan.features,
-    });
+    } as PlanCartItem);
 
     toast({
       title: "Added to Cart",

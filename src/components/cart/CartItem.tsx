@@ -2,16 +2,23 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { CartItem as CartItemType } from "@/types/cart";
+import { CartItem as CartItemType, BoostCartItem, PlanCartItem } from "@/types/cart";
 import { useCart } from "@/contexts/CartContext";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface CartItemProps {
-  item: CartItemType;
+  item: CartItemType | BoostCartItem | PlanCartItem;
 }
 
 export const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const { updateQuantity, removeFromCart } = useCart();
+  
+  // Determine if this is a regular product item (with quantity)
+  const isProductItem = 'quantity' in item;
+  
+  // Determine item type for special display
+  const isPlan = 'type' in item && item.type === 'plan';
+  const isBoost = 'type' in item && item.type === 'boost';
   
   return (
     <div className="flex gap-3 py-3 border-b last:border-b-0">
@@ -42,34 +49,54 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
         <div>
           <h4 className="font-medium text-sm line-clamp-1">{item.name}</h4>
           <p className="text-sm text-muted-foreground">${item.price}</p>
+          
+          {/* Show special item details */}
+          {isPlan && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {(item as PlanCartItem).interval} plan
+            </p>
+          )}
+          
+          {isBoost && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {(item as BoostCartItem).boost_type}, {(item as BoostCartItem).duration}
+            </p>
+          )}
         </div>
         
-        {/* Updated quantity controls to match the product detail page */}
         <div className="flex items-center justify-between mt-1">
-          <div className="flex items-center h-8 border rounded-md">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-full w-8"
-              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-              disabled={item.quantity <= 1}
-            >
-              <Minus className="h-3 w-3" />
-            </Button>
-            <div className="w-8 text-center text-sm font-medium">
-              {item.quantity}
+          {isProductItem ? (
+            // Quantity controls for regular products
+            <div className="flex items-center h-8 border rounded-md">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-full w-8"
+                onClick={() => updateQuantity(item.id, (item as CartItemType).quantity - 1)}
+                disabled={(item as CartItemType).quantity <= 1}
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+              <div className="w-8 text-center text-sm font-medium">
+                {(item as CartItemType).quantity}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-full w-8"
+                onClick={() => updateQuantity(item.id, (item as CartItemType).quantity + 1)}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-full w-8"
-              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-          </div>
+          ) : (
+            // For non-quantity items, just show a badge or similar
+            <div className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded">
+              {isPlan ? 'Subscription' : 'One-time'}
+            </div>
+          )}
           
-          {/* Made delete button more visible */}
+          {/* Delete button */}
           <Button
             variant="ghost"
             size="icon"
