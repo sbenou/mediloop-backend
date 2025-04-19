@@ -1,7 +1,29 @@
 
 import React from 'react';
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart } from "lucide-react";
 
 export function PlansTab() {
+  const { addToCart } = useCart();
+  
+  const handleAddToCart = (plan: { name: string, price: number, features: string[] }) => {
+    addToCart({
+      id: `plan-${plan.name.toLowerCase()}`,
+      name: `${plan.name} Plan`,
+      price: plan.price,
+      type: 'plan',
+      interval: 'monthly',
+      features: plan.features,
+    });
+
+    toast({
+      title: "Added to Cart",
+      description: `${plan.name} Plan added to cart`
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Free Plan */}
@@ -28,8 +50,8 @@ export function PlansTab() {
       </div>
       
       {/* Pro Plan */}
-      <div className="border rounded-lg p-6 bg-primary/5 shadow-md border-primary">
-        <div className="absolute -mt-8 px-3 py-1 bg-primary text-white rounded-md">
+      <div className="border rounded-lg p-6 bg-primary/5 shadow-md border-primary relative">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white rounded-md">
           Recommended
         </div>
         <h2 className="text-xl font-semibold mb-2">Pro Plan</h2>
@@ -52,9 +74,22 @@ export function PlansTab() {
             <span>Advanced analytics</span>
           </li>
         </ul>
-        <button className="w-full py-2 bg-primary text-white hover:bg-primary/90 rounded-md transition-colors">
-          Upgrade Now
-        </button>
+        <Button
+          onClick={() => handleAddToCart({
+            name: 'Pro',
+            price: 19.99,
+            features: [
+              'All basic features',
+              'Unlimited consultations',
+              'Premium support',
+              'Advanced analytics'
+            ]
+          })}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          <ShoppingCart className="h-4 w-4" />
+          Add to Cart
+        </Button>
       </div>
       
       {/* Enterprise Plan */}
@@ -79,9 +114,23 @@ export function PlansTab() {
             <span>White-label options</span>
           </li>
         </ul>
-        <button className="w-full py-2 border border-gray-300 hover:bg-gray-50 rounded-md transition-colors">
-          Contact Sales
-        </button>
+        <Button
+          onClick={() => handleAddToCart({
+            name: 'Enterprise',
+            price: 99.99,
+            features: [
+              'All Pro features',
+              'Dedicated account manager',
+              'Custom integrations',
+              'White-label options'
+            ]
+          })}
+          variant="outline"
+          className="w-full flex items-center justify-center gap-2"
+        >
+          <ShoppingCart className="h-4 w-4" />
+          Add to Cart
+        </Button>
       </div>
     </div>
   );

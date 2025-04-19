@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,8 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { format, formatDistance } from "date-fns";
+import { useCart } from "@/contexts/CartContext";
+import { ShoppingCart } from "lucide-react";
 
 const ManageBoostsPage = () => {
   const navigate = useNavigate();
@@ -59,6 +60,57 @@ const ManageBoostsPage = () => {
     fetchBoostPrices();
     fetchActiveBoost();
   }, [isProfessional, profile?.id, navigate]);
+
+  const { addToCart } = useCart();
+
+  const handleAddToCart = async (type: 'top-position' | 'first-position') => {
+    if (!selectedDuration) {
+      toast({
+        title: "Select Duration",
+        description: "Please select a boost duration",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Find the price for the selected duration and type
+    const selectedPrice = boostPrices.find(
+      price => price.boost_type === type && price.duration === selectedDuration
+    );
+
+    if (!selectedPrice) {
+      toast({
+        title: "Error",
+        description: "Could not find price for selected boost",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const boostName = type === 'top-position' ? 'Top Position Boost' : 'First Position Boost';
+    const durationText = selectedDuration === '1w' ? '1 Week' : 
+                        selectedDuration === '2w' ? '2 Weeks' : 
+                        selectedDuration === '1m' ? '1 Month' : 
+                        selectedDuration === '2m' ? '2 Months' : 
+                        selectedDuration === '3m' ? '3 Months' : 
+                        '6 Months';
+
+    addToCart({
+      id: `${type}-${selectedDuration}`,
+      name: `${boostName} (${durationText})`,
+      price: selectedPrice.price,
+      type: 'boost',
+      boost_type: type,
+      duration: selectedDuration,
+    });
+
+    toast({
+      title: "Added to Cart",
+      description: `${boostName} for ${durationText} added to cart`
+    });
+
+    setSelectedDuration(null);
+  };
 
   const handlePurchaseBoost = async (type: 'top-position' | 'first-position') => {
     if (!selectedDuration) {
@@ -232,7 +284,7 @@ const ManageBoostsPage = () => {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    {activeBoost ? 'Extend Duration' : 'Select Duration'}
+                    Select Duration
                   </label>
                   <Select 
                     value={selectedDuration || undefined} 
@@ -260,24 +312,15 @@ const ManageBoostsPage = () => {
                   </Select>
                 </div>
                 
-                <div className="flex space-x-4">
-                  {activeBoost?.type === boostType.type ? (
-                    <Button 
-                      onClick={handleExtendBoost} 
-                      className="flex-1"
-                      disabled={!selectedDuration}
-                    >
-                      Extend Boost
-                    </Button>
-                  ) : (
-                    <Button 
-                      onClick={() => handlePurchaseBoost(boostType.type as 'top-position' | 'first-position')} 
-                      className="flex-1"
-                      disabled={!selectedDuration}
-                    >
-                      Purchase {boostType.title}
-                    </Button>
-                  )}
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={() => handleAddToCart(boostType.type as 'top-position' | 'first-position')}
+                    className="flex items-center gap-2"
+                    disabled={!selectedDuration}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Add to Cart
+                  </Button>
                 </div>
               </div>
             </CardContent>
