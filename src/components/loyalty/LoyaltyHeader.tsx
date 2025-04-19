@@ -39,8 +39,8 @@ export function LoyaltyHeader() {
       <CardHeader className="px-8 pb-8">
         <CardTitle className="text-2xl font-bold">Health Journey Program</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-8">
+      <CardContent className="px-8">
+        <div className="grid grid-cols-3 gap-8">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Total Points</p>
             <p className="text-2xl font-bold flex items-center gap-2">
@@ -55,7 +55,7 @@ export function LoyaltyHeader() {
             </p>
           </div>
           
-          <div className="flex flex-col items-center justify-center">
+          <div className="flex items-center justify-center">
             {loyalty.yearsOfSeniority === 0 && (
               <Shield className="h-16 w-16 text-muted-foreground" />
             )}
