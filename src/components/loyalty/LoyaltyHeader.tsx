@@ -40,7 +40,7 @@ export function LoyaltyHeader() {
         <CardTitle className="text-2xl font-bold">Health Journey Program</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-2">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Total Points</p>
             <p className="text-2xl font-bold flex items-center gap-2">
@@ -69,9 +69,17 @@ export function LoyaltyHeader() {
           
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Seniority</p>
-            <p className="text-2xl font-bold">
-              {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-2xl font-bold">
+                {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
+              </p>
+              <Badge 
+                variant={getBadgeVariant(loyalty.badgeColor) as any} 
+                className="text-xs px-1.5 py-0.5"
+              >
+                {loyalty.badge}
+              </Badge>
+            </div>
           </div>
         </div>
       </CardContent>
