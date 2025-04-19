@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, Shield } from "lucide-react";
@@ -38,8 +39,8 @@ export function LoyaltyHeader() {
       <CardHeader className="px-8 pb-6">
         <CardTitle className="text-2xl font-bold">Health Journey Program</CardTitle>
       </CardHeader>
-      <CardContent className="px-8 pb-8">
-        <div className="max-w-3xl mx-auto w-full">
+      <CardContent className="px-8 pb-8 flex justify-center">
+        <div className="w-full max-w-3xl">
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-1 space-y-2">
               <p className="text-sm text-muted-foreground">Total Points</p>
