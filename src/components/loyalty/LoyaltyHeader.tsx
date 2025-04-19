@@ -41,15 +41,15 @@ export function LoyaltyHeader() {
       </CardHeader>
       <CardContent className="px-8 pb-8 flex justify-center">
         <div className="w-full max-w-3xl">
-          <div className="grid grid-cols-3 gap-4 px-0">
-            <div className="col-span-1 space-y-2">
+          <div className="grid grid-cols-3 gap-4 place-items-center">
+            <div className="col-span-1 space-y-2 text-center">
               <p className="text-sm text-muted-foreground">Total Points</p>
-              <p className="text-2xl font-bold flex items-center gap-2">
+              <p className="text-2xl font-bold flex items-center justify-center gap-2">
                 {loyalty.totalPoints} <Star className="h-5 w-5 text-yellow-500" />
               </p>
             </div>
             
-            <div className="col-span-1 space-y-2">
+            <div className="col-span-1 space-y-2 text-center">
               <p className="text-sm text-muted-foreground">Current Level</p>
               <p className={`text-2xl font-bold ${getLevelColor(loyalty.currentLevel)}`}>
                 {loyalty.currentLevel.charAt(0).toUpperCase() + loyalty.currentLevel.slice(1)}
