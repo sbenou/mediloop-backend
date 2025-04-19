@@ -8,6 +8,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import DashboardRouter from "@/components/dashboard/DashboardRouter";
 import RequireRoleGuard from "@/components/auth/RequireRoleGuard";
 import { CartProvider } from "@/contexts/CartContext";
+import DoctorLayout from "@/components/layout/DoctorLayout";
+import PatientLayout from "@/components/layout/PatientLayout";
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, profile } = useAuth();
@@ -75,19 +77,43 @@ const Dashboard = () => {
   if (isAuthenticated && userRole) {
     console.log("🔓 Access granted to role:", userRole);
     
-    return (
-      <RequireRoleGuard allowedRoles={["patient", "doctor", "pharmacist", "superadmin"]}>
-        <CartProvider>
-          <UnifiedLayoutTemplate>
-            <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-              <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-                <DashboardRouter userRole={userRole} />
-              </ScrollArea>
-            </div>
-          </UnifiedLayoutTemplate>
-        </CartProvider>
-      </RequireRoleGuard>
-    );
+    // Use specific layouts based on user role to ensure the activity drawer is visible
+    if (userRole === "doctor") {
+      return (
+        <RequireRoleGuard allowedRoles={["doctor", "superadmin"]}>
+          <CartProvider>
+            <DoctorLayout>
+              <DashboardRouter userRole={userRole} />
+            </DoctorLayout>
+          </CartProvider>
+        </RequireRoleGuard>
+      );
+    } else if (userRole === "patient") {
+      return (
+        <RequireRoleGuard allowedRoles={["patient", "superadmin"]}>
+          <CartProvider>
+            <PatientLayout>
+              <DashboardRouter userRole={userRole} />
+            </PatientLayout>
+          </CartProvider>
+        </RequireRoleGuard>
+      );
+    } else {
+      // For other roles (pharmacist, superadmin), use the UnifiedLayoutTemplate
+      return (
+        <RequireRoleGuard allowedRoles={["patient", "doctor", "pharmacist", "superadmin"]}>
+          <CartProvider>
+            <UnifiedLayoutTemplate>
+              <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+                <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+                  <DashboardRouter userRole={userRole} />
+                </ScrollArea>
+              </div>
+            </UnifiedLayoutTemplate>
+          </CartProvider>
+        </RequireRoleGuard>
+      );
+    }
   }
 
   // Fallback loading state (should rarely hit this)
