@@ -40,19 +40,21 @@ export function LoyaltyHeader() {
         <Award className="h-6 w-6 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Total Points</p>
             <p className="text-2xl font-bold flex items-center gap-2">
               {loyalty.totalPoints} <Star className="h-5 w-5 text-yellow-500" />
             </p>
           </div>
+          
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Current Level</p>
             <p className={`text-2xl font-bold ${getLevelColor(loyalty.currentLevel)}`}>
               {loyalty.currentLevel.charAt(0).toUpperCase() + loyalty.currentLevel.slice(1)}
             </p>
           </div>
+          
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Seniority Badge</p>
             <div className="flex items-center gap-2">
@@ -60,12 +62,13 @@ export function LoyaltyHeader() {
                 {loyalty.badge}
               </Badge>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Seniority</p>
-              <span className="text-sm">
-                {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
-              </span>
-            </div>
+          </div>
+          
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Seniority</p>
+            <span className="text-2xl font-bold">
+              {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
+            </span>
           </div>
         </div>
       </CardContent>
