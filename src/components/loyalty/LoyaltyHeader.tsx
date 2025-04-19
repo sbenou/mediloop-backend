@@ -36,11 +36,11 @@ export function LoyaltyHeader() {
 
   return (
     <Card>
-      <CardHeader className="pb-6">
+      <CardHeader className="pb-8">
         <CardTitle className="text-2xl font-bold">Health Journey Program</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 px-8">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Total Points</p>
             <p className="text-2xl font-bold flex items-center gap-2">
@@ -66,20 +66,24 @@ export function LoyaltyHeader() {
               </Badge>
             </div>
           </div>
-          
+
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Seniority</p>
-            <div className="flex items-center gap-2">
-              <p className="text-2xl font-bold">
-                {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
-              </p>
-              <Badge 
-                variant={getBadgeVariant(loyalty.badgeColor) as any} 
-                className="text-xs px-1.5 py-0.5"
-              >
-                {loyalty.badge}
-              </Badge>
-            </div>
+            <p className="text-2xl font-bold">
+              {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
+            </p>
+          </div>
+          
+          <div className="flex flex-col items-center justify-center">
+            <Badge 
+              variant={getBadgeVariant(loyalty.badgeColor) as any}
+              className="w-16 h-16 flex items-center justify-center text-lg rounded-full mb-2"
+            >
+              {loyalty.badge.split(' ')[0][0]}
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
+            </span>
           </div>
         </div>
       </CardContent>
