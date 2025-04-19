@@ -30,6 +30,10 @@ export function SubscriptionTab() {
   const handleUpgrade = () => {
     navigate('/upgrade');
   };
+
+  const handlePurchaseBoosts = () => {
+    navigate('/upgrade?tab=boosts');
+  };
   
   return (
     <div className="space-y-6">
@@ -102,7 +106,7 @@ export function SubscriptionTab() {
                 <Button variant="outline" className="mr-2">
                   Manage Boosts
                 </Button>
-                <Button onClick={handleUpgrade}>
+                <Button onClick={handlePurchaseBoosts}>
                   Purchase Boosts
                 </Button>
               </div>

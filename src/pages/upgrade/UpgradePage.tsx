@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
@@ -7,10 +7,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlansTab } from "@/components/upgrade/PlansTab";
 import { BoostsTab } from "@/components/upgrade/BoostsTab";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useSearchParams } from "react-router-dom";
 
 const UpgradePage = () => {
   const { profile } = useAuth();
+  const [searchParams] = useSearchParams();
   const isProfessional = profile?.role === 'doctor' || profile?.role === 'pharmacist';
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = React.useState('plans');
+
+  useEffect(() => {
+    if (tabFromUrl === 'boosts' && isProfessional) {
+      setActiveTab('boosts');
+    }
+  }, [tabFromUrl, isProfessional]);
 
   return (
     <CurrencyProvider>
@@ -22,7 +32,7 @@ const UpgradePage = () => {
               Choose the plan that best fits your needs
             </p>
             
-            <Tabs defaultValue="plans">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="mb-8">
                 <TabsTrigger value="plans">Plans</TabsTrigger>
                 {isProfessional && <TabsTrigger value="boosts">Boosts</TabsTrigger>}
