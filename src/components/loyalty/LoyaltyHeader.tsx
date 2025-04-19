@@ -57,8 +57,11 @@ export function LoyaltyHeader() {
           
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Seniority Badge</p>
-            <div className="flex items-center gap-2">
-              <Badge variant={getBadgeVariant(loyalty.badgeColor) as any}>
+            <div className="flex justify-start items-center h-full">
+              <Badge 
+                variant={getBadgeVariant(loyalty.badgeColor) as any} 
+                className="text-base px-4 py-2"
+              >
                 {loyalty.badge}
               </Badge>
             </div>
