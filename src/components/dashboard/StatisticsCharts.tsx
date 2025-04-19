@@ -4,12 +4,11 @@ import {
   BarChart, 
   Bar, 
   CartesianGrid, 
-  XAxis,
-  YAxis,
   Tooltip, 
   Legend, 
   ResponsiveContainer 
-} from "@/components/charts/RechartComponents";
+} from "recharts";
+import { XAxis, YAxis } from "@/components/charts/RechartComponents";
 import { 
   Card, 
   CardContent, 

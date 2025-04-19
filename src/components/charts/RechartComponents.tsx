@@ -26,17 +26,15 @@ const defaultYAxisProps = {
 
 // Fix XAxis deprecation warning with a wrapper component using default parameters
 export function XAxis(props: XAxisProps) {
-  // Remove any xAxisId from props to prevent conflicts
+  // Merge provided props with defaults, removing xAxisId to prevent conflicts
   const { xAxisId, ...restProps } = props;
-  // Merge provided props with defaults
   return <OriginalXAxis {...defaultXAxisProps} {...restProps} />;
 }
 
 // Fix YAxis deprecation warning with a wrapper component using default parameters
 export function YAxis(props: YAxisProps) {
-  // Remove any yAxisId from props to prevent conflicts
+  // Merge provided props with defaults, removing yAxisId to prevent conflicts
   const { yAxisId, ...restProps } = props;
-  // Merge provided props with defaults
   return <OriginalYAxis {...defaultYAxisProps} {...restProps} />;
 }
 
