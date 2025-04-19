@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Wallet } from "lucide-react";
+import { PointConversion } from "./wallet/PointConversion";
 
 export function WalletSection() {
   const loyalty = useLoyaltyStatus();
@@ -26,13 +27,11 @@ export function WalletSection() {
               <span>Available Points</span>
               <span className="font-medium">{loyalty.availablePoints}</span>
             </div>
-            
-            <Button className="w-full">
-              Convert Points to Wallet Credit <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
           </div>
         </CardContent>
       </Card>
+      
+      <PointConversion />
       
       <Card>
         <CardHeader>
