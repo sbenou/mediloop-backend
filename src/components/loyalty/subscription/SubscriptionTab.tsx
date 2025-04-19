@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,10 @@ export function SubscriptionTab() {
 
   const handlePurchaseBoosts = () => {
     navigate('/upgrade?tab=boosts');
+  };
+
+  const handleManageBoosts = () => {
+    navigate('/manage-boosts');
   };
   
   return (
@@ -103,7 +106,7 @@ export function SubscriptionTab() {
               </div>
               
               <div className="flex justify-end">
-                <Button variant="outline" className="mr-2">
+                <Button variant="outline" className="mr-2" onClick={handleManageBoosts}>
                   Manage Boosts
                 </Button>
                 <Button onClick={handlePurchaseBoosts}>
