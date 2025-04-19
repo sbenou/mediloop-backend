@@ -2,17 +2,18 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Star, Award, Medal, Crown, Gem, Shield, Trophy, GemIcon } from "lucide-react";
 
 export function SeniorityBadges() {
   const badges = [
-    { name: "New Member", years: "0-1", color: "default" },
-    { name: "Loyal Member", years: "2-3", color: "blue" },
-    { name: "Senior Member", years: "3-4", color: "green" },
-    { name: "Bronze Member", years: "4-5", color: "orange" },
-    { name: "Silver Member", years: "5-6", color: "gray" },
-    { name: "Gold Member", years: "6-7", color: "amber" },
-    { name: "Diamond Member", years: "7-8", color: "cyan" },
-    { name: "Platinum Member", years: "8+", color: "purple" },
+    { name: "New Member", years: "0-1", color: "default", icon: Star },
+    { name: "Loyal Member", years: "2-3", color: "blue", icon: Shield },
+    { name: "Senior Member", years: "3-4", color: "green", icon: Award },
+    { name: "Bronze Member", years: "4-5", color: "orange", icon: Medal },
+    { name: "Silver Member", years: "5-6", color: "gray", icon: Medal },
+    { name: "Gold Member", years: "6-7", color: "amber", icon: Trophy },
+    { name: "Diamond Member", years: "7-8", color: "cyan", icon: Gem },
+    { name: "Platinum Member", years: "8+", color: "purple", icon: Crown },
   ];
 
   const getBadgeVariant = (color: string) => {
@@ -35,14 +36,18 @@ export function SeniorityBadges() {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {badges.map((badge, index) => (
-            <div key={index} className="flex flex-col items-center space-y-2 p-3 border rounded-lg">
-              <Badge variant={getBadgeVariant(badge.color) as any} className="px-2 py-1">
-                {badge.name}
-              </Badge>
-              <span className="text-sm text-muted-foreground">{badge.years} years</span>
-            </div>
-          ))}
+          {badges.map((badge, index) => {
+            const IconComponent = badge.icon;
+            return (
+              <div key={index} className="flex flex-col items-center space-y-2 p-3 border rounded-lg">
+                <Badge variant={getBadgeVariant(badge.color) as any} className="px-3 py-1.5 flex items-center gap-1.5">
+                  <IconComponent className="h-4 w-4" />
+                  {badge.name}
+                </Badge>
+                <span className="text-sm text-muted-foreground">{badge.years} years</span>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
