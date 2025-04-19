@@ -1,9 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import { Star, Shield } from "lucide-react";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
 import { Badge } from "@/components/ui/badge";
-import { Shield } from "lucide-react";
 
 export function LoyaltyHeader() {
   const loyalty = useLoyaltyStatus();
@@ -56,14 +55,9 @@ export function LoyaltyHeader() {
           </div>
           
           <div className="flex flex-col items-center justify-center">
-            {loyalty.yearsOfSeniority === 0 ? (
-              <Shield className="h-12 w-12 text-muted-foreground" />
-            ) : (
-              <span className="text-xs">{loyalty.badge}</span>
+            {loyalty.yearsOfSeniority === 0 && (
+              <Shield className="h-16 w-16 text-muted-foreground" />
             )}
-            <span className="text-sm text-muted-foreground mt-2">
-              {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
-            </span>
           </div>
         </div>
       </CardContent>
