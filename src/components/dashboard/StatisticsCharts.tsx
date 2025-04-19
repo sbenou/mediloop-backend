@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   BarChart, 
@@ -90,11 +91,11 @@ export const StatisticsCharts = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="name" xAxisId="default" />
+                <YAxis yAxisId="default" />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#8884d8" name="Prescriptions" />
+                <Bar dataKey="count" fill="#8884d8" name="Prescriptions" xAxisId="default" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -130,11 +131,11 @@ export const StatisticsCharts = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="name" xAxisId="default" />
+                <YAxis yAxisId="default" />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#82ca9d" name="Teleconsultations" />
+                <Bar dataKey="count" fill="#82ca9d" name="Teleconsultations" xAxisId="default" />
               </BarChart>
             </ResponsiveContainer>
           </div>
