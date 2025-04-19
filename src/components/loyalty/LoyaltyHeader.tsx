@@ -77,9 +77,9 @@ export function LoyaltyHeader() {
           <div className="flex flex-col items-center justify-center">
             <Badge 
               variant={getBadgeVariant(loyalty.badgeColor) as any}
-              className="w-16 h-16 flex items-center justify-center text-lg rounded-full mb-2"
+              className="w-16 h-16 flex items-center justify-center rounded-full mb-2 relative"
             >
-              {loyalty.badge.split(' ')[0][0]}
+              <span className="text-xs absolute">{loyalty.badge}</span>
             </Badge>
             <span className="text-sm text-muted-foreground">
               {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
