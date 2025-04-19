@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star } from "lucide-react";
@@ -64,7 +63,7 @@ export function LoyaltyHeader() {
               {loyalty.yearsOfSeniority === 0 ? (
                 <Shield className="h-8 w-8 text-muted-foreground" />
               ) : (
-                <span className="text-xs absolute">{loyalty.badge}</span>
+                <span className="text-xs">{loyalty.badge}</span>
               )}
             </Badge>
             <span className="text-sm text-muted-foreground">
