@@ -47,13 +47,12 @@ export default function AppRoutes() {
 
       <Route path="*" element={<NotFound />} />
 
-      <Route element={<RequireAuthGuard />}>
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/edit-profile" element={<EditProfile />} />
-        <Route path="/appointments" element={<Appointments />} />
-        <Route path="/upgrade" element={<UpgradePage />} />
-        <Route path="/account" element={<Account />} />
-      </Route>
+      {/* Protected routes */}
+      <Route path="/profile" element={<RequireAuthGuard><Profile /></RequireAuthGuard>} />
+      <Route path="/edit-profile" element={<RequireAuthGuard><EditProfile /></RequireAuthGuard>} />
+      <Route path="/appointments" element={<RequireAuthGuard><Appointments /></RequireAuthGuard>} />
+      <Route path="/upgrade" element={<RequireAuthGuard><UpgradePage /></RequireAuthGuard>} />
+      <Route path="/account" element={<RequireAuthGuard><Account /></RequireAuthGuard>} />
       
       <Route 
         path="/manage-boosts" 
