@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star } from "lucide-react";
@@ -40,7 +39,7 @@ export function LoyaltyHeader() {
         <CardTitle className="text-2xl font-bold">Health Journey Program</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 px-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-8">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Total Points</p>
             <p className="text-2xl font-bold flex items-center gap-2">
@@ -56,22 +55,8 @@ export function LoyaltyHeader() {
           </div>
           
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Seniority Badge</p>
-            <div className="flex items-center h-8">
-              <Badge 
-                variant={getBadgeVariant(loyalty.badgeColor) as any} 
-                className="text-sm px-2 py-1"
-              >
-                {loyalty.badge}
-              </Badge>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Seniority</p>
-            <p className="text-2xl font-bold">
-              {loyalty.yearsOfSeniority} {loyalty.yearsOfSeniority === 1 ? 'year' : 'years'}
-            </p>
+            <p className="text-sm text-muted-foreground">Wallet Balance</p>
+            <p className="text-2xl font-bold">€{loyalty.walletBalance.toFixed(2)}</p>
           </div>
           
           <div className="flex flex-col items-center justify-center">
