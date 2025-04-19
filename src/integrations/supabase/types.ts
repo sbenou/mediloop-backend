@@ -126,6 +126,63 @@ export type Database = {
         }
         Relationships: []
       }
+      boost_prices: {
+        Row: {
+          boost_type: string
+          created_at: string | null
+          duration: string
+          id: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          boost_type: string
+          created_at?: string | null
+          duration: string
+          id?: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          boost_type?: string
+          created_at?: string | null
+          duration?: string
+          id?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      boosts: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          start_date: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          start_date?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          start_date?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -1041,6 +1098,14 @@ export type Database = {
           p_meta?: Json
         }
         Returns: string
+      }
+      extend_boost: {
+        Args: { p_boost_id: string; p_duration: string; p_price: number }
+        Returns: boolean
+      }
+      get_active_boost: {
+        Args: { p_user_id: string }
+        Returns: Json
       }
       get_admin_dashboard_stats: {
         Args: Record<PropertyKey, never>

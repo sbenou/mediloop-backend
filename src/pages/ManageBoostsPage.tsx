@@ -13,6 +13,8 @@ import { format, formatDistance } from "date-fns";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ShoppingCart } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { BoostCartItem } from "@/types/cart";
 
 const ManageBoostsInner = () => {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ const ManageBoostsInner = () => {
   const [boostPrices, setBoostPrices] = useState<any[]>([]);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
 
   const isProfessional = profile?.role === 'doctor' || profile?.role === 'pharmacist';
 
@@ -67,7 +70,7 @@ const ManageBoostsInner = () => {
     fetchActiveBoost();
   }, [isProfessional, profile?.id, navigate]);
 
-  const handleExtendBoost = async () => {
+  const handleExtendBoost = () => {
     if (!selectedDuration || !activeBoost) {
       toast({
         title: "Select Duration",
@@ -77,46 +80,43 @@ const ManageBoostsInner = () => {
       return;
     }
 
-    try {
-      // Find the price for the selected duration and type
-      const selectedPrice = boostPrices.find(
-        price => price.boost_type === activeBoost.type && price.duration === selectedDuration
-      );
+    // Find the price for the selected duration and type
+    const selectedPrice = boostPrices.find(
+      price => price.boost_type === activeBoost.type && price.duration === selectedDuration
+    );
 
-      if (!selectedPrice) {
-        throw new Error('No price found for selected boost');
-      }
-
-      const { data, error } = await supabase.rpc('extend_boost', {
-        p_boost_id: activeBoost.id,
-        p_duration: selectedDuration,
-        p_price: selectedPrice.price
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Boost Extended",
-        description: `Boost extended for ${selectedDuration}`
-      });
-
-      // Refresh active boost
-      const { data: activeBoostData, error: activeBoostError } = await supabase.rpc(
-        'get_active_boost', 
-        { p_user_id: profile?.id }
-      );
-      
-      if (activeBoostError) throw activeBoostError;
-      setActiveBoost(activeBoostData);
-      setSelectedDuration(null);
-    } catch (err) {
-      console.error('Error extending boost:', err);
+    if (!selectedPrice) {
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to extend boost",
+        description: "Could not find price for selected boost",
         variant: "destructive"
       });
+      return;
     }
+
+    const boostName = activeBoost.type === 'top-position' ? 'Top Position Boost' : 'First Position Boost';
+    const durationText = selectedDuration === '1w' ? '1 Week' : 
+                      selectedDuration === '2w' ? '2 Weeks' : 
+                      selectedDuration === '1m' ? '1 Month' : 
+                      selectedDuration === '2m' ? '2 Months' : 
+                      selectedDuration === '3m' ? '3 Months' : 
+                      '6 Months';
+
+    addToCart({
+      id: `${activeBoost.type}-${selectedDuration}-extension`,
+      name: `${boostName} Extension (${durationText})`,
+      price: selectedPrice.price,
+      type: 'boost' as const,
+      boost_type: activeBoost.type,
+      duration: selectedDuration,
+    } as BoostCartItem);
+
+    toast({
+      title: "Added to Cart",
+      description: `${boostName} extension for ${durationText} added to cart`
+    });
+
+    setSelectedDuration(null);
   };
 
   const handleBuyBoosts = () => {
@@ -136,7 +136,7 @@ const ManageBoostsInner = () => {
           <p>Loading your boosts...</p>
         </div>
       ) : !activeBoost ? (
-        <Card className="mb-6">
+        <Card>
           <CardContent className="pt-6">
             <div className="text-center py-10">
               <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-gray-400" />
@@ -151,7 +151,7 @@ const ManageBoostsInner = () => {
           </CardContent>
         </Card>
       ) : (
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Current {activeBoost.type === 'top-position' ? 'Top Position' : 'First Position'} Boost</CardTitle>
@@ -206,14 +206,14 @@ const ManageBoostsInner = () => {
                     </Select>
                   </div>
                   
-                  <div className="flex justify-end">
-                    <Button 
-                      onClick={handleExtendBoost}
-                      disabled={!selectedDuration}
-                    >
-                      Extend Boost
-                    </Button>
-                  </div>
+                  <Button 
+                    onClick={handleExtendBoost}
+                    className="w-full flex items-center justify-center gap-2"
+                    disabled={!selectedDuration}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Add Extension to Cart
+                  </Button>
                 </div>
               )}
               
