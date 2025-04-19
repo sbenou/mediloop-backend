@@ -13,8 +13,10 @@ import { format, formatDistance } from "date-fns";
 import { useCart } from "@/contexts/CartContext";
 import { ShoppingCart } from "lucide-react";
 import { BoostCartItem } from "@/types/cart";
+import { CartProvider } from "@/contexts/CartContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 
-const ManageBoostsPage = () => {
+const ManageBoostsInner = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [activeBoost, setActiveBoost] = useState<any>(null);
@@ -241,95 +243,105 @@ const ManageBoostsPage = () => {
   }
 
   return (
-    <UnifiedLayoutTemplate>
-      <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-6">Manage Your Boost</h1>
-        
-        {activeBoost && (
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Current {activeBoost.type === 'top-position' ? 'Top Position' : 'First Position'} Boost</CardTitle>
-                <Badge variant={activeBoost.is_active ? "success" : "destructive"}>
-                  {activeBoost.is_active ? 'Active' : 'Expired'}
-                </Badge>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Manage Your Boost</h1>
+      
+      {activeBoost && (
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Current {activeBoost.type === 'top-position' ? 'Top Position' : 'First Position'} Boost</CardTitle>
+              <Badge variant={activeBoost.is_active ? "success" : "destructive"}>
+                {activeBoost.is_active ? 'Active' : 'Expired'}
+              </Badge>
+            </div>
+            <CardDescription>
+              {activeBoost.type === 'top-position' ? 'Boost your visibility in the top carousel' : 'Secure the first position in listings'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Expires:</span>
+                <span>
+                  {format(new Date(activeBoost.expires_at), 'PPP')} 
+                  {' '}
+                  ({formatDistance(new Date(activeBoost.expires_at), new Date(), { addSuffix: true })})
+                </span>
               </div>
-              <CardDescription>
-                {activeBoost.type === 'top-position' ? 'Boost your visibility in the top carousel' : 'Secure the first position in listings'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Expires:</span>
-                  <span>
-                    {format(new Date(activeBoost.expires_at), 'PPP')} 
-                    {' '}
-                    ({formatDistance(new Date(activeBoost.expires_at), new Date(), { addSuffix: true })})
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {boostTypes.map((boostType) => (
-          <Card key={boostType.type} className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{boostType.title}</CardTitle>
-                <Badge variant="success">Available</Badge>
+      {boostTypes.map((boostType) => (
+        <Card key={boostType.type} className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>{boostType.title}</CardTitle>
+              <Badge variant="success">Available</Badge>
+            </div>
+            <CardDescription>{boostType.description}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Select Duration
+                </label>
+                <Select 
+                  value={selectedDuration || undefined} 
+                  onValueChange={setSelectedDuration}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {boostPrices
+                      .filter(price => price.boost_type === boostType.type)
+                      .map(price => (
+                        <SelectItem key={price.duration} value={price.duration}>
+                          {price.duration === '1w' ? '1 Week' : 
+                           price.duration === '2w' ? '2 Weeks' : 
+                           price.duration === '1m' ? '1 Month' : 
+                           price.duration === '2m' ? '2 Months' : 
+                           price.duration === '3m' ? '3 Months' : 
+                           '6 Months'} 
+                          {` ($${price.price})`}
+                        </SelectItem>
+                      ))
+                    }
+                  </SelectContent>
+                </Select>
               </div>
-              <CardDescription>{boostType.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Select Duration
-                  </label>
-                  <Select 
-                    value={selectedDuration || undefined} 
-                    onValueChange={setSelectedDuration}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose duration" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {boostPrices
-                        .filter(price => price.boost_type === boostType.type)
-                        .map(price => (
-                          <SelectItem key={price.duration} value={price.duration}>
-                            {price.duration === '1w' ? '1 Week' : 
-                             price.duration === '2w' ? '2 Weeks' : 
-                             price.duration === '1m' ? '1 Month' : 
-                             price.duration === '2m' ? '2 Months' : 
-                             price.duration === '3m' ? '3 Months' : 
-                             '6 Months'} 
-                            {` ($${price.price})`}
-                          </SelectItem>
-                        ))
-                      }
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button 
-                    onClick={() => handleAddToCart(boostType.type as 'top-position' | 'first-position')}
-                    className="flex items-center gap-2"
-                    disabled={!selectedDuration}
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                    Add to Cart
-                  </Button>
-                </div>
+              
+              <div className="flex justify-end">
+                <Button 
+                  onClick={() => handleAddToCart(boostType.type as 'top-position' | 'first-position')}
+                  className="flex items-center gap-2"
+                  disabled={!selectedDuration}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Add to Cart
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </UnifiedLayoutTemplate>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+const ManageBoostsPage = () => {
+  return (
+    <CurrencyProvider>
+      <CartProvider>
+        <UnifiedLayoutTemplate>
+          <ManageBoostsInner />
+        </UnifiedLayoutTemplate>
+      </CartProvider>
+    </CurrencyProvider>
   );
 };
 
