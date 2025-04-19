@@ -10,11 +10,9 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { format, formatDistance } from "date-fns";
-import { useCart } from "@/contexts/CartContext";
-import { ShoppingCart } from "lucide-react";
-import { BoostCartItem } from "@/types/cart";
-import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { CartProvider } from "@/contexts/CartContext";
+import { ShoppingCart } from "lucide-react";
 
 const ManageBoostsInner = () => {
   const navigate = useNavigate();
@@ -22,6 +20,7 @@ const ManageBoostsInner = () => {
   const [activeBoost, setActiveBoost] = useState<any>(null);
   const [boostPrices, setBoostPrices] = useState<any[]>([]);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const isProfessional = profile?.role === 'doctor' || profile?.role === 'pharmacist';
 
@@ -51,6 +50,7 @@ const ManageBoostsInner = () => {
     };
 
     const fetchActiveBoost = async () => {
+      setLoading(true);
       try {
         const { data, error } = await supabase.rpc('get_active_boost', { p_user_id: profile?.id });
         
@@ -58,116 +58,14 @@ const ManageBoostsInner = () => {
         setActiveBoost(data);
       } catch (err) {
         console.error('Error fetching active boost:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchBoostPrices();
     fetchActiveBoost();
   }, [isProfessional, profile?.id, navigate]);
-
-  const { addToCart } = useCart();
-
-  const handleAddToCart = async (type: 'top-position' | 'first-position') => {
-    if (!selectedDuration) {
-      toast({
-        title: "Select Duration",
-        description: "Please select a boost duration",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Find the price for the selected duration and type
-    const selectedPrice = boostPrices.find(
-      price => price.boost_type === type && price.duration === selectedDuration
-    );
-
-    if (!selectedPrice) {
-      toast({
-        title: "Error",
-        description: "Could not find price for selected boost",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const boostName = type === 'top-position' ? 'Top Position Boost' : 'First Position Boost';
-    const durationText = selectedDuration === '1w' ? '1 Week' : 
-                        selectedDuration === '2w' ? '2 Weeks' : 
-                        selectedDuration === '1m' ? '1 Month' : 
-                        selectedDuration === '2m' ? '2 Months' : 
-                        selectedDuration === '3m' ? '3 Months' : 
-                        '6 Months';
-
-    addToCart({
-      id: `${type}-${selectedDuration}`,
-      name: `${boostName} (${durationText})`,
-      price: selectedPrice.price,
-      type: 'boost' as const,
-      boost_type: type,
-      duration: selectedDuration,
-    } as BoostCartItem);
-
-    toast({
-      title: "Added to Cart",
-      description: `${boostName} for ${durationText} added to cart`
-    });
-
-    setSelectedDuration(null);
-  };
-
-  const handlePurchaseBoost = async (type: 'top-position' | 'first-position') => {
-    if (!selectedDuration) {
-      toast({
-        title: "Select Duration",
-        description: "Please select a boost duration",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // Find the price for the selected duration and type
-      const selectedPrice = boostPrices.find(
-        price => price.boost_type === type && price.duration === selectedDuration
-      );
-
-      if (!selectedPrice) {
-        throw new Error('No price found for selected boost');
-      }
-
-      const { data, error } = await supabase.rpc('purchase_boost', {
-        p_user_id: profile?.id,
-        p_type: type,
-        p_duration: selectedDuration,
-        p_price: selectedPrice.price
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Boost Purchased",
-        description: `${type === 'top-position' ? 'Top Position' : 'First Position'} boost purchased for ${selectedDuration}`
-      });
-
-      // Refresh active boost
-      const { data: activeBoostData, error: activeBoostError } = await supabase.rpc(
-        'get_active_boost', 
-        { p_user_id: profile?.id }
-      );
-      
-      if (activeBoostError) throw activeBoostError;
-      setActiveBoost(activeBoostData);
-      setSelectedDuration(null);
-    } catch (err) {
-      console.error('Error purchasing boost:', err);
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to purchase boost",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleExtendBoost = async () => {
     if (!selectedDuration || !activeBoost) {
@@ -221,22 +119,9 @@ const ManageBoostsInner = () => {
     }
   };
 
-  const boostTypes = [
-    { 
-      type: 'top-position', 
-      title: 'Top Position Boost', 
-      description: profile?.role === 'pharmacist' 
-        ? "Boost your pharmacy's visibility in the top carousel" 
-        : "Boost your profile in the top doctor carousel"
-    },
-    { 
-      type: 'first-position', 
-      title: 'First Position Boost', 
-      description: profile?.role === 'pharmacist' 
-        ? "Secure the first position in pharmacy listings" 
-        : "Secure the first position in doctor listings"
-    }
-  ];
+  const handleBuyBoosts = () => {
+    navigate('/upgrade?tab=boosts');
+  };
 
   if (!isProfessional) {
     return null;
@@ -244,9 +129,28 @@ const ManageBoostsInner = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Manage Your Boost</h1>
+      <h1 className="text-3xl font-bold mb-6">Manage Your Boosts</h1>
       
-      {activeBoost && (
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <p>Loading your boosts...</p>
+        </div>
+      ) : !activeBoost ? (
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="text-center py-10">
+              <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-semibold mb-2">No Active Boosts</h3>
+              <p className="text-muted-foreground mb-6">
+                You don't have any active boosts yet. Purchase boosts to increase your visibility.
+              </p>
+              <Button onClick={handleBuyBoosts}>
+                Purchase Boosts
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -269,66 +173,64 @@ const ManageBoostsInner = () => {
                   ({formatDistance(new Date(activeBoost.expires_at), new Date(), { addSuffix: true })})
                 </span>
               </div>
+              
+              {activeBoost.is_active && (
+                <div className="space-y-4 pt-4 border-t">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Extend Your Boost
+                    </label>
+                    <Select 
+                      value={selectedDuration || undefined} 
+                      onValueChange={setSelectedDuration}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose duration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {boostPrices
+                          .filter(price => price.boost_type === activeBoost.type)
+                          .map(price => (
+                            <SelectItem key={price.duration} value={price.duration}>
+                              {price.duration === '1w' ? '1 Week' : 
+                               price.duration === '2w' ? '2 Weeks' : 
+                               price.duration === '1m' ? '1 Month' : 
+                               price.duration === '2m' ? '2 Months' : 
+                               price.duration === '3m' ? '3 Months' : 
+                               '6 Months'} 
+                              {` ($${price.price})`}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={handleExtendBoost}
+                      disabled={!selectedDuration}
+                    >
+                      Extend Boost
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {!activeBoost.is_active && (
+                <div className="pt-4">
+                  <Button 
+                    onClick={handleBuyBoosts}
+                    className="w-full"
+                  >
+                    Purchase New Boosts
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
       )}
-
-      {boostTypes.map((boostType) => (
-        <Card key={boostType.type} className="mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>{boostType.title}</CardTitle>
-              <Badge variant="success">Available</Badge>
-            </div>
-            <CardDescription>{boostType.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Select Duration
-                </label>
-                <Select 
-                  value={selectedDuration || undefined} 
-                  onValueChange={setSelectedDuration}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {boostPrices
-                      .filter(price => price.boost_type === boostType.type)
-                      .map(price => (
-                        <SelectItem key={price.duration} value={price.duration}>
-                          {price.duration === '1w' ? '1 Week' : 
-                           price.duration === '2w' ? '2 Weeks' : 
-                           price.duration === '1m' ? '1 Month' : 
-                           price.duration === '2m' ? '2 Months' : 
-                           price.duration === '3m' ? '3 Months' : 
-                           '6 Months'} 
-                          {` ($${price.price})`}
-                        </SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex justify-end">
-                <Button 
-                  onClick={() => handleAddToCart(boostType.type as 'top-position' | 'first-position')}
-                  className="flex items-center gap-2"
-                  disabled={!selectedDuration}
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  Add to Cart
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 };
