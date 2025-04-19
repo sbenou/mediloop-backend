@@ -1,3 +1,5 @@
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Star, BadgeCheck, BadgeAlert, BadgePlus } from "lucide-react";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
