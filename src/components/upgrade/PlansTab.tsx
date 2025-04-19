@@ -41,62 +41,56 @@ export function PlansTab() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {/* Free Plan */}
-      <div className="border rounded-lg p-6 bg-white shadow-sm">
-        <h2 className="text-xl font-semibold mb-2">Free Plan</h2>
-        <div className="text-3xl font-bold mb-4">$0<span className="text-lg text-muted-foreground">/month</span></div>
-        <ul className="space-y-2 mb-6">
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>Basic features</span>
-          </li>
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>Limited consultations</span>
-          </li>
-          <li className="flex items-center text-muted-foreground">
-            <span className="text-red-500 mr-2">✗</span>
-            <span>Premium support</span>
-          </li>
-        </ul>
-        <button className="w-full py-2 border border-primary text-primary hover:bg-primary/5 rounded-md transition-colors">
-          Current Plan
-        </button>
-      </div>
-      
-      {/* Pro Plan */}
-      <div className="border rounded-lg p-6 bg-primary/5 shadow-md border-primary relative">
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white rounded-md">
-          Recommended
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Free Plan */}
+        <div className="border rounded-lg p-6 bg-white shadow-sm">
+          <h2 className="text-xl font-semibold mb-2">Free Plan</h2>
+          <div className="text-3xl font-bold mb-4">$0<span className="text-lg text-muted-foreground">/month</span></div>
+          <ul className="space-y-2 mb-6">
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>Basic features</span>
+            </li>
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>Limited consultations</span>
+            </li>
+            <li className="flex items-center text-muted-foreground">
+              <span className="text-red-500 mr-2">✗</span>
+              <span>Premium support</span>
+            </li>
+          </ul>
+          <button className="w-full py-2 border border-primary text-primary hover:bg-primary/5 rounded-md transition-colors">
+            Current Plan
+          </button>
         </div>
-        <h2 className="text-xl font-semibold mb-2">Pro Plan</h2>
-        <div className="text-3xl font-bold mb-4">$19.99<span className="text-lg text-muted-foreground">/month</span></div>
-        <ul className="space-y-2 mb-6">
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>All basic features</span>
-          </li>
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>Unlimited consultations</span>
-          </li>
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>Premium support</span>
-          </li>
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>Advanced analytics</span>
-          </li>
-        </ul>
         
-        <div className="space-y-4">
-          <ProductQuantitySelector
-            quantity={quantities.pro}
-            onQuantityChange={(change) => handleQuantityChange('pro', change)}
-          />
-          
+        {/* Pro Plan */}
+        <div className="border rounded-lg p-6 bg-primary/5 shadow-md border-primary relative">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white rounded-md">
+            Recommended
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Pro Plan</h2>
+          <div className="text-3xl font-bold mb-4">$19.99<span className="text-lg text-muted-foreground">/month</span></div>
+          <ul className="space-y-2 mb-6">
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>All basic features</span>
+            </li>
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>Unlimited consultations</span>
+            </li>
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>Premium support</span>
+            </li>
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>Advanced analytics</span>
+            </li>
+          </ul>
           <Button
             onClick={() => handleAddToCart({
               name: 'Pro',
@@ -114,37 +108,29 @@ export function PlansTab() {
             Add to Cart
           </Button>
         </div>
-      </div>
-      
-      {/* Enterprise Plan */}
-      <div className="border rounded-lg p-6 bg-white shadow-sm">
-        <h2 className="text-xl font-semibold mb-2">Enterprise</h2>
-        <div className="text-3xl font-bold mb-4">$99.99<span className="text-lg text-muted-foreground">/month</span></div>
-        <ul className="space-y-2 mb-6">
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>All Pro features</span>
-          </li>
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>Dedicated account manager</span>
-          </li>
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>Custom integrations</span>
-          </li>
-          <li className="flex items-center">
-            <span className="text-green-500 mr-2">✓</span>
-            <span>White-label options</span>
-          </li>
-        </ul>
         
-        <div className="space-y-4">
-          <ProductQuantitySelector
-            quantity={quantities.enterprise}
-            onQuantityChange={(change) => handleQuantityChange('enterprise', change)}
-          />
-          
+        {/* Enterprise Plan */}
+        <div className="border rounded-lg p-6 bg-white shadow-sm">
+          <h2 className="text-xl font-semibold mb-2">Enterprise</h2>
+          <div className="text-3xl font-bold mb-4">$99.99<span className="text-lg text-muted-foreground">/month</span></div>
+          <ul className="space-y-2 mb-6">
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>All Pro features</span>
+            </li>
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>Dedicated account manager</span>
+            </li>
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>Custom integrations</span>
+            </li>
+            <li className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span>White-label options</span>
+            </li>
+          </ul>
           <Button
             onClick={() => handleAddToCart({
               name: 'Enterprise',
@@ -164,6 +150,26 @@ export function PlansTab() {
           </Button>
         </div>
       </div>
+
+      {/* Quantity Selectors */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div></div> {/* Empty space for Free plan */}
+        <div className="border rounded-lg p-4 bg-white shadow-sm">
+          <h3 className="text-sm font-medium mb-2">Pro Plan Quantity</h3>
+          <ProductQuantitySelector
+            quantity={quantities.pro}
+            onQuantityChange={(change) => handleQuantityChange('pro', change)}
+          />
+        </div>
+        <div className="border rounded-lg p-4 bg-white shadow-sm">
+          <h3 className="text-sm font-medium mb-2">Enterprise Plan Quantity</h3>
+          <ProductQuantitySelector
+            quantity={quantities.enterprise}
+            onQuantityChange={(change) => handleQuantityChange('enterprise', change)}
+          />
+        </div>
+      </div>
     </div>
   );
 }
+
