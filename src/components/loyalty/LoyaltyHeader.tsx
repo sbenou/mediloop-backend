@@ -41,7 +41,7 @@ export function LoyaltyHeader() {
       </CardHeader>
       <CardContent className="px-8 pb-8 flex justify-center">
         <div className="w-full max-w-3xl">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4 px-0">
             <div className="col-span-1 space-y-2">
               <p className="text-sm text-muted-foreground">Total Points</p>
               <p className="text-2xl font-bold flex items-center gap-2">
