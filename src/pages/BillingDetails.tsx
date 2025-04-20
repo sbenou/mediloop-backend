@@ -83,7 +83,7 @@ export default function BillingDetails() {
                     </TableCell>
                     <TableCell>{log.attempts}</TableCell>
                   </TableRow>
-                )}
+                ))}
               </TableBody>
             </Table>
           </CardContent>
