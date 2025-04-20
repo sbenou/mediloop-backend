@@ -132,7 +132,7 @@ export default function BillingDetails() {
   );
 
   return (
-    <PatientLayout hideHeader>
+    <PatientLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         <h2 className="text-3xl font-bold my-6">Billing</h2>
 
@@ -159,7 +159,6 @@ export default function BillingDetails() {
 
           {/* Payment History Tab */}
           <TabsContent value="history" className="space-y-4">
-            {/* Filters */}
             <BillingHistoryFilters
               searchQuery={search}
               onSearchChange={setSearch}
@@ -172,81 +171,77 @@ export default function BillingDetails() {
               view={view}
               onViewChange={setView}
             />
-
-            <div>
-              {filteredPayments.length === 0 ? (
-                <div className="text-center py-10 border rounded-lg bg-gray-50">
-                  <p className="text-muted-foreground">
-                    No payment history available.
-                  </p>
-                </div>
-              ) : view === "table" ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Payment History</CardTitle>
-                    <CardDescription>Review all past payments on your account.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Product</TableHead>
-                          <TableHead>Purchased Date</TableHead>
-                          <TableHead>Paid By</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Attempts</TableHead>
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment History</CardTitle>
+                <CardDescription>Review all past payments on your account.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {filteredPayments.length === 0 ? (
+                  <div className="text-center py-10 border rounded-lg bg-gray-50">
+                    <p className="text-muted-foreground">
+                      No payment history available.
+                    </p>
+                  </div>
+                ) : view === "table" ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Purchased Date</TableHead>
+                        <TableHead>Paid By</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Attempts</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPayments.map((log) => (
+                        <TableRow key={log.id}>
+                          <TableCell>{log.product}</TableCell>
+                          <TableCell>{log.date}</TableCell>
+                          <TableCell>{log.paidBy}</TableCell>
+                          <TableCell>
+                            <Badge variant={log.status === "success" ? "default" : "destructive"}>
+                              {log.status === "success" ? "Successful" : "Failed"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{log.attempts}</TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredPayments.map((log) => (
-                          <TableRow key={log.id}>
-                            <TableCell>{log.product}</TableCell>
-                            <TableCell>{log.date}</TableCell>
-                            <TableCell>{log.paidBy}</TableCell>
-                            <TableCell>
-                              <Badge variant={log.status === "success" ? "default" : "destructive"}>
-                                {log.status === "success" ? "Successful" : "Failed"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{log.attempts}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              ) : (
-                // Card view for payment logs
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {filteredPayments.map(log => (
-                    <Card key={log.id}>
-                      <CardHeader>
-                        <CardTitle className="text-base font-semibold">{log.product}</CardTitle>
-                        <CardDescription>
-                          <span className="text-sm text-muted-foreground">{log.date}</span>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-2">
-                        <div><span className="font-medium">Paid By: </span>{log.paidBy}</div>
-                        <div>
-                          <span className="font-medium">Status: </span>
-                          <Badge variant={log.status === "success" ? "default" : "destructive"}>
-                            {log.status === "success" ? "Successful" : "Failed"}
-                          </Badge>
-                        </div>
-                        <div>
-                          <span className="font-medium">Attempts: </span>{log.attempts}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  // Card view for payment logs in CardContent
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {filteredPayments.map(log => (
+                      <Card key={log.id}>
+                        <CardHeader>
+                          <CardTitle className="text-base font-semibold">{log.product}</CardTitle>
+                          <CardDescription>
+                            <span className="text-sm text-muted-foreground">{log.date}</span>
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-2">
+                          <div><span className="font-medium">Paid By: </span>{log.paidBy}</div>
+                          <div>
+                            <span className="font-medium">Status: </span>
+                            <Badge variant={log.status === "success" ? "default" : "destructive"}>
+                              {log.status === "success" ? "Successful" : "Failed"}
+                            </Badge>
+                          </div>
+                          <div>
+                            <span className="font-medium">Attempts: </span>{log.attempts}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
     </PatientLayout>
   );
 }
-
