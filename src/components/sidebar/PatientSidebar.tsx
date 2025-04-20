@@ -154,7 +154,8 @@ const PatientSidebar = () => {
         <div className="mt-8" />
 
         <SidebarSection title="Admin">
-          {/* Admin items will go here (empty for now) */}
+          {/* This empty div fixes the children prop requirement */}
+          <div></div>
         </SidebarSection>
 
         <SidebarSection title="Settings">
