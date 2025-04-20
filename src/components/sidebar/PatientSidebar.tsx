@@ -154,11 +154,6 @@ const PatientSidebar = () => {
         <div className="mt-8" />
 
         <SidebarSection title="Admin">
-          {/* This empty div fixes the children prop requirement */}
-          <div></div>
-        </SidebarSection>
-
-        <SidebarSection title="Settings">
           <SidebarItem
             icon={<Settings className="w-5 h-5 mr-3" />}
             label="Settings"

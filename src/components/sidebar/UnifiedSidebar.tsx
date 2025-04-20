@@ -6,6 +6,7 @@ import { AdminSection } from "./sections/AdminSection";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 import { useNavigate } from "react-router-dom";
+import SidebarBrand from "./SidebarBrand";
 
 const UnifiedSidebar = () => {
   const { userRole, profile } = useAuth();
@@ -37,6 +38,7 @@ const UnifiedSidebar = () => {
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
+      <SidebarBrand />
       <div className="flex-1 overflow-auto py-4">
         <div className="px-3 mb-2 mt-6">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">
@@ -69,4 +71,3 @@ const UnifiedSidebar = () => {
 };
 
 export default UnifiedSidebar;
-

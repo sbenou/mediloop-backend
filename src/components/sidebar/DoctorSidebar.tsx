@@ -208,18 +208,16 @@ const DoctorSidebar = ({
               onClick={() => navigateToDoctorView('profile', 'stamp', 'profileTab')}
             />
           </SidebarCollapsibleItem>
-          
+        </SidebarSection>
+        
+        <div className="mt-8" />
+        <SidebarSection title="Admin">
           <SidebarItem
             icon={<Settings className="w-5 h-5 mr-3" />}
             label="Settings"
             isActive={section === "settings"}
             onClick={() => navigateToDoctorView('settings')}
           />
-        </SidebarSection>
-        {/* Consistency: Add Admin section header, even if empty */}
-        <div className="mt-8" />
-        <SidebarSection title="Admin">
-          <div></div>
         </SidebarSection>
       </div>
       
