@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/components/ui/use-toast";
@@ -107,6 +106,15 @@ export function PlansTab() {
             <ShoppingCart className="h-4 w-4" />
             Add to Cart
           </Button>
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span>Quantity</span>
+              <ProductQuantitySelector
+                quantity={quantities.pro}
+                onQuantityChange={(change) => handleQuantityChange('pro', change)}
+              />
+            </div>
+          </div>
         </div>
         
         {/* Enterprise Plan */}
@@ -148,28 +156,17 @@ export function PlansTab() {
             <ShoppingCart className="h-4 w-4" />
             Add to Cart
           </Button>
-        </div>
-      </div>
-
-      {/* Quantity Selectors */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div></div> {/* Empty space for Free plan */}
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h3 className="text-sm font-medium mb-2">Pro Plan Quantity</h3>
-          <ProductQuantitySelector
-            quantity={quantities.pro}
-            onQuantityChange={(change) => handleQuantityChange('pro', change)}
-          />
-        </div>
-        <div className="border rounded-lg p-4 bg-white shadow-sm">
-          <h3 className="text-sm font-medium mb-2">Enterprise Plan Quantity</h3>
-          <ProductQuantitySelector
-            quantity={quantities.enterprise}
-            onQuantityChange={(change) => handleQuantityChange('enterprise', change)}
-          />
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span>Quantity</span>
+              <ProductQuantitySelector
+                quantity={quantities.enterprise}
+                onQuantityChange={(change) => handleQuantityChange('enterprise', change)}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
