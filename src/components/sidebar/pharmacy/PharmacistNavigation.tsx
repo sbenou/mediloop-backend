@@ -11,38 +11,39 @@ import SidebarSection from "../SidebarSection";
 import SidebarItem from "../SidebarItem";
 import SidebarCollapsibleItem from "../SidebarCollapsibleItem";
 import SidebarSubItem from "../SidebarSubItem";
-import { useSidebarNavigation } from "../hooks/useSidebarNavigation";
+import { usePharmacyNavigation } from "./usePharmacyNavigation";
 
 interface PharmacistNavigationProps {
   canViewProducts?: boolean;
+  canEditProducts?: boolean;
+  canManagePrescriptions?: boolean;
   canViewPrescriptions?: boolean;
-  navigateToPharmacySection: (section: string, tab?: string, tabParam?: string) => void;
-  navigateToProducts: () => void;
 }
 
-export const PharmacistNavigation = ({
-  canViewProducts,
-  canViewPrescriptions,
-  navigateToPharmacySection,
-  navigateToProducts
-}: PharmacistNavigationProps) => {
+const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
+  canViewProducts = false,
+  canEditProducts = false,
+  canManagePrescriptions = false,
+  canViewPrescriptions = false
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    isOrdersOpen,
-    setIsOrdersOpen,
+  const { 
+    navigateToPharmacySection,
+    navigateToProducts,
+    isProfilePage,
     isProfileOpen,
     setIsProfileOpen,
-    isPharmacistSectionActive,
-    isPharmacistTabActive
-  } = useSidebarNavigation("pharmacist");
+    isOrdersOpen,
+    setIsOrdersOpen
+  } = usePharmacyNavigation();
 
   return (
     <SidebarSection title="Navigation">
       <SidebarItem
         icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
         label="Dashboard"
-        isActive={isPharmacistSectionActive("dashboard")}
+        isActive={location.pathname.includes('/dashboard') && !location.search.includes('section=')}
         onClick={() => navigateToPharmacySection('dashboard')}
       />
       
@@ -50,19 +51,19 @@ export const PharmacistNavigation = ({
         icon={<ShoppingBag className="w-5 h-5 mr-3" />}
         label="Orders"
         isOpen={isOrdersOpen}
-        isActive={isPharmacistSectionActive("orders")}
+        isActive={location.search.includes('section=orders')}
         onOpenChange={(isOpen) => setIsOrdersOpen(isOpen)}
       >
         <SidebarSubItem
           icon={<ShoppingBag className="w-4 h-4 mr-3" />}
           label="Orders"
-          isActive={isPharmacistTabActive("orders", "ordersTab", "all")}
+          isActive={location.search.includes('section=orders') && location.search.includes('ordersTab=all')}
           onClick={() => navigateToPharmacySection('orders', 'all', 'ordersTab')}
         />
         <SidebarSubItem
           icon={<CreditCard className="w-4 h-4 mr-3" />}
           label="Payments"
-          isActive={isPharmacistTabActive("orders", "ordersTab", "payments")}
+          isActive={location.search.includes('section=orders') && location.search.includes('ordersTab=payments')}
           onClick={() => navigateToPharmacySection('orders', 'payments', 'ordersTab')}
         />
       </SidebarCollapsibleItem>
@@ -71,7 +72,7 @@ export const PharmacistNavigation = ({
         <SidebarItem
           icon={<FileText className="w-5 h-5 mr-3" />}
           label="Prescriptions"
-          isActive={isPharmacistSectionActive("prescriptions")}
+          isActive={location.search.includes('section=prescriptions')}
           onClick={() => navigateToPharmacySection('prescriptions')}
         />
       )}
@@ -88,7 +89,7 @@ export const PharmacistNavigation = ({
       <SidebarItem
         icon={<Users className="w-5 h-5 mr-3" />}
         label="Patients"
-        isActive={isPharmacistSectionActive("patients")}
+        isActive={location.search.includes('section=patients')}
         onClick={() => navigateToPharmacySection('patients')}
       />
       
@@ -103,31 +104,31 @@ export const PharmacistNavigation = ({
         icon={<UserCircle className="w-5 h-5 mr-3" />}
         label="Profile"
         isOpen={isProfileOpen}
-        isActive={isPharmacistSectionActive("profile")}
+        isActive={location.search.includes('section=profile')}
         onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
       >
         <SidebarSubItem
           icon={<UserCircle className="w-4 h-4 mr-3" />}
           label="Personal Details"
-          isActive={isPharmacistTabActive("profile", "profileTab", "personal")}
+          isActive={location.search.includes('section=profile') && location.search.includes('profileTab=personal')}
           onClick={() => navigateToPharmacySection('profile', 'personal', 'profileTab')}
         />
         <SidebarSubItem
           icon={<MapPin className="w-4 h-4 mr-3" />}
           label="Addresses"
-          isActive={isPharmacistTabActive("profile", "profileTab", "addresses")}
+          isActive={location.search.includes('section=profile') && location.search.includes('profileTab=addresses')}
           onClick={() => navigateToPharmacySection('profile', 'addresses', 'profileTab')}
         />
         <SidebarSubItem
           icon={<Users className="w-4 h-4 mr-3" />}
           label="Next of Kin"
-          isActive={isPharmacistTabActive("profile", "profileTab", "nextofkin")}
+          isActive={location.search.includes('section=profile') && location.search.includes('profileTab=nextofkin')}
           onClick={() => navigateToPharmacySection('profile', 'nextofkin', 'profileTab')}
         />
         <SidebarSubItem
           icon={<Store className="w-4 h-4 mr-3" />}
           label="Stamp & Signature"
-          isActive={isPharmacistTabActive("profile", "profileTab", "stampSignature")}
+          isActive={location.search.includes('section=profile') && location.search.includes('profileTab=stampSignature')}
           onClick={() => navigateToPharmacySection('profile', 'stampSignature', 'profileTab')}
         />
       </SidebarCollapsibleItem>
@@ -135,9 +136,11 @@ export const PharmacistNavigation = ({
       <SidebarItem
         icon={<Settings className="w-5 h-5 mr-3" />}
         label="Settings"
-        isActive={isPharmacistSectionActive("settings")}
+        isActive={location.search.includes('section=settings')}
         onClick={() => navigateToPharmacySection('settings')}
       />
     </SidebarSection>
   );
 };
+
+export default PharmacistNavigation;

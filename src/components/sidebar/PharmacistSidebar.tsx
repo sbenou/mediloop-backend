@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -8,8 +9,8 @@ import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 import { Settings, Users, Share } from "lucide-react";
-import PharmacistNavigation from "./pharmacist/PharmacistNavigation";
-import { usePharmacyNavigation } from "./pharmacist/hooks/usePharmacyNavigation";
+import PharmacistNavigation from "./pharmacy/PharmacistNavigation";
+import { usePharmacyNavigation } from "./pharmacy/usePharmacyNavigation";
 
 interface PharmacistSidebarProps {
   canViewProducts?: boolean;
@@ -27,13 +28,13 @@ const PharmacistSidebar = ({
   canManagePrescriptions = false,
   canViewPrescriptions = false
 }: PharmacistSidebarProps) => {
-  const { profile, clinicName } = useAuth();
+  const { profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { 
     isProfileOpen, setIsProfileOpen, 
     isOrdersOpen, setIsOrdersOpen,
-    navigateToLink 
+    navigateToPharmacySection 
   } = usePharmacyNavigation();
   
   const { 
@@ -52,7 +53,7 @@ const PharmacistSidebar = ({
   };
   
   const navigateToProfile = () => {
-    navigateToLink("?view=pharmacy&section=profile&profileTab=personal");
+    navigateToPharmacySection('profile', 'personal', 'profileTab');
   };
   
   const navigateToUpgrade = () => {

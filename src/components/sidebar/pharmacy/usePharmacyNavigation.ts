@@ -1,9 +1,13 @@
 
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const usePharmacyNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
+  const [isOrdersOpen, setIsOrdersOpen] = useState<boolean>(false);
+  
   const isProfilePage = location.pathname.includes('/pharmacy/profile');
 
   const navigateToPharmacySection = (section: string, tab?: string, tabParam?: string) => {
@@ -39,6 +43,12 @@ export const usePharmacyNavigation = () => {
     navigateToPharmacySection,
     navigateToPharmacyProfile,
     navigateToProducts,
-    isProfilePage
+    isProfilePage,
+    isProfileOpen,
+    setIsProfileOpen,
+    isOrdersOpen,
+    setIsOrdersOpen
   };
 };
+
+export default usePharmacyNavigation;
