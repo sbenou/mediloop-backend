@@ -14,9 +14,10 @@ import UserMenu from "@/components/UserMenu";
 
 interface PatientLayoutProps {
   children: ReactNode;
+  hideHeader?: boolean; // Add hideHeader prop
 }
 
-const PatientLayout = ({ children }: PatientLayoutProps) => {
+const PatientLayout = ({ children, hideHeader = false }: PatientLayoutProps) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
@@ -32,14 +33,16 @@ const PatientLayout = ({ children }: PatientLayoutProps) => {
       {/* Right section - Contains header and content area with right panel */}
       <div className="flex flex-col flex-1">
         {/* Header spans the entire width of this section */}
-        <header className="h-16 border-b px-6 flex items-center justify-end space-x-4">
-          <NotificationBell />
-          <CartButton 
-            isOpen={isCartOpen} 
-            onOpenChange={setIsCartOpen} 
-          />
-          <UserMenu />
-        </header>
+        {!hideHeader && (
+          <header className="h-16 border-b px-6 flex items-center justify-end space-x-4">
+            <NotificationBell />
+            <CartButton 
+              isOpen={isCartOpen} 
+              onOpenChange={setIsCartOpen} 
+            />
+            <UserMenu />
+          </header>
+        )}
         
         {/* Main content wrapper */}
         <div className="flex flex-1 overflow-hidden relative">

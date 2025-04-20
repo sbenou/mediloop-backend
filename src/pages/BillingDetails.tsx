@@ -29,8 +29,8 @@ const paymentLogs = [
 export default function BillingDetails() {
   const { profile } = useAuth();
 
-  // Mock billing address (fetch from Supabase if available)
-  const billingAddress = profile?.address || "123 Main St, City, Country"; // Replace as needed
+  // Handle billing address safely
+  const billingAddress = profile?.address || (profile?.city ? `City: ${profile.city}` : "No address provided"); 
 
   return (
     <PatientLayout hideHeader>
@@ -83,7 +83,7 @@ export default function BillingDetails() {
                     </TableCell>
                     <TableCell>{log.attempts}</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>

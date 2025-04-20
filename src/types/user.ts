@@ -33,8 +33,8 @@ export interface UserProfile {
   is_blocked: boolean | null;
   doctor_stamp_url: string | null;
   doctor_signature_url: string | null;
-  pharmacist_stamp_url: string | null;  // Added this property
-  pharmacist_signature_url: string | null;  // Added this property
+  pharmacist_stamp_url: string | null;
+  pharmacist_signature_url: string | null;
   cns_card_front: string | null;
   cns_card_back: string | null;
   cns_number: string | null;
@@ -42,9 +42,10 @@ export interface UserProfile {
   created_at: string | null;
   updated_at: string | null;
   license_number: string | null;
-  phone_number: string | null;  // Added this property
+  phone_number: string | null;
+  address: string | null; // Added address field
   // Adding pharmacy-specific fields
-  pharmacy_id?: string | null;  // Add the pharmacy_id field
+  pharmacy_id?: string | null;
   pharmacy_name?: string | null;
   pharmacy_logo_url?: string | null;
 }
