@@ -1,6 +1,6 @@
+
 import { useState, useEffect } from "react";
 import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
-import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Search, Menu, X, AlertTriangle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
-import UserMenu from "@/components/UserMenu";
 import UnifiedHeader from "./UnifiedHeader";
 
 interface PharmacistLayoutProps {

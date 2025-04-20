@@ -1,3 +1,4 @@
+
 import React, { ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PatientSidebar from "../sidebar/PatientSidebar";
@@ -29,9 +30,7 @@ const PatientLayout = ({ children, hideHeader = false }: PatientLayoutProps) => 
       {/* Right section - Contains header and content area with right panel */}
       <div className="flex flex-col flex-1">
         {/* Header spans the entire width of this section */}
-        {!hideHeader && (
-          <UnifiedHeader />
-        )}
+        {!hideHeader && <UnifiedHeader />}
         
         {/* Main content wrapper */}
         <div className="flex flex-1 overflow-hidden relative">

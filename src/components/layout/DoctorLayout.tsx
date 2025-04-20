@@ -1,12 +1,10 @@
+
 import { useState, useEffect } from "react";
 import DoctorSidebar from "@/components/sidebar/DoctorSidebar";
-import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
-import { Search, Menu, X, SidebarClose, SidebarOpen } from "lucide-react";
+import { Menu, X, SidebarClose, SidebarOpen } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import UserMenu from "@/components/UserMenu";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { Advertisements } from "@/components/activity/Advertisements";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
