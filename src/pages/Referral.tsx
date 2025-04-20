@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
@@ -16,15 +15,20 @@ const Referral = () => {
   const { profile, isLoading } = useAuth();
   const [emails, setEmails] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [sendStatus, setSendStatus] = useState<"idle" | "success" | "error">("idle");
+  const [sendStatus, setSendStatus] = useState<"idle" | "success" | "error">(
+    "idle"
+  );
 
   if (isLoading || !profile?.id) {
     return null;
   }
 
   const handleSendReferrals = async () => {
-    const emailList = emails.split(',').map(email => email.trim()).filter(Boolean);
-    
+    const emailList = emails
+      .split(",")
+      .map((email) => email.trim())
+      .filter(Boolean);
+
     if (emailList.length === 0) {
       toast.error("Please enter at least one valid email address");
       return;
@@ -32,29 +36,36 @@ const Referral = () => {
 
     setIsSending(true);
     setSendStatus("idle");
-    
+
     try {
       // Get the current session
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
-      
-      const response = await fetch(`https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/send-referral-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Don't include Authorization header as we've disabled JWT verification
-        },
-        body: JSON.stringify({
-          emails: emailList,
-          referrer_name: profile.full_name || "A friend",
-          referrer_id: profile.id,
-          referral_code: `USER${profile.id.substring(0, 6).toUpperCase()}`
-        })
-      });
+
+      const response = await fetch(
+        `https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/send-referral-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // Don't include Authorization header as we've disabled JWT verification
+          },
+          body: JSON.stringify({
+            emails: emailList,
+            referrer_name: profile.full_name || "A friend",
+            referrer_id: profile.id,
+            referral_code: `USER${profile.id.substring(0, 6).toUpperCase()}`,
+          }),
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to send referral emails");
-      
-      toast.success(`Referral invitations sent to ${emailList.length} email${emailList.length > 1 ? 's' : ''}!`);
+
+      toast.success(
+        `Referral invitations sent to ${emailList.length} email${
+          emailList.length > 1 ? "s" : ""
+        }!`
+      );
       setEmails("");
       setSendStatus("success");
     } catch (error) {
@@ -70,8 +81,18 @@ const Referral = () => {
 
   const buttonContent = () => {
     if (isSending) return "Sending...";
-    if (sendStatus === "success") return <><Check className="w-4 h-4" /> Sent Successfully</>;
-    if (sendStatus === "error") return <><X className="w-4 h-4" /> Failed to Send</>;
+    if (sendStatus === "success")
+      return (
+        <>
+          <Check className="w-4 h-4" /> Sent Successfully
+        </>
+      );
+    if (sendStatus === "error")
+      return (
+        <>
+          <X className="w-4 h-4" /> Failed to Send
+        </>
+      );
     return "Send Referral";
   };
 
@@ -80,7 +101,7 @@ const Referral = () => {
       <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
         <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
           <h1 className="text-3xl font-bold mb-8">Referral Program</h1>
-          
+
           <Tabs defaultValue="refer" className="space-y-6">
             <TabsList>
               <TabsTrigger value="refer">Refer Friends</TabsTrigger>
@@ -94,8 +115,9 @@ const Referral = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Share your referral program with friends and family. When they join and make their first purchase, 
-                    you'll both earn loyalty points!
+                    Share your referral program with friends and family. When
+                    they join and make their first purchase, you'll both earn
+                    loyalty points!
                   </p>
                   <div className="flex items-center space-x-2">
                     <Input
@@ -104,10 +126,7 @@ const Referral = () => {
                       onChange={(e) => setEmails(e.target.value)}
                       className="flex-grow"
                     />
-                    <Button 
-                      onClick={handleSendReferrals} 
-                      disabled={isSending || !emails.trim()}
-                    >
+                    <Button onClick={handleSendReferrals} disabled={isSending || !emails.trim()}>
                       {buttonContent()}
                     </Button>
                   </div>
@@ -116,7 +135,10 @@ const Referral = () => {
             </TabsContent>
 
             <TabsContent value="history">
-              <ReferralTimeline />
+              <ReferralTimeline
+                hideLoyaltyProgramDetails={true}
+                hideSeniorityBadges={true}
+              />
             </TabsContent>
           </Tabs>
         </ScrollArea>
