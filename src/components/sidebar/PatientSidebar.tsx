@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -171,7 +170,7 @@ const PatientSidebar = () => {
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         navigateToProfile={() => navigateToPatientView("profile", "personal", "profileTab")}
-        navigateToBilling={() => navigateToPatientView("orders", "payments", "ordersTab")}
+        navigateToBilling={() => navigate("/billing-details")}
         navigateToUpgrade={() => navigateToLink("/upgrade")}
         handleFileChange={handleFileChange}
       />

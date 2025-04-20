@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Products from '@/pages/Products';
@@ -23,6 +22,7 @@ import Referral from '@/pages/Referral';
 import Settings from '@/pages/Settings';
 import RequireRoleGuard from '@/components/auth/RequireRoleGuard';
 import ManageBoostsPage from '@/pages/ManageBoostsPage';
+import BillingDetails from "@/pages/BillingDetails";
 
 // Create a wrapper component for products routes that provides context
 const ProductsLayout = () => {
@@ -131,6 +131,10 @@ const router = createBrowserRouter([
   {
     path: '/manage-boosts',
     element: <ProtectedManageBoostsPage />,
+  },
+  {
+    path: '/billing-details',
+    element: <BillingDetails />,
   },
   {
     path: '*',

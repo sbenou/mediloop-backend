@@ -76,7 +76,7 @@ const PharmacistSidebar = ({
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         navigateToProfile={() => navigateToPharmacySection('profile', 'personal', 'profileTab')}
-        navigateToBilling={() => navigateToPharmacySection('orders', 'payments', 'ordersTab')}
+        navigateToBilling={() => navigate("/billing-details")}
         navigateToUpgrade={() => navigateToPharmacySection('/upgrade')}
         navigateToPharmacyProfile={navigateToPharmacyProfile}
         handleFileChange={handleFileChange}

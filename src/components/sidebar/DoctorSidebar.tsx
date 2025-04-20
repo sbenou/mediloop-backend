@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -46,7 +45,7 @@ const DoctorSidebar = ({
   };
 
   const navigateToBilling = () => {
-    navigate(`/dashboard?view=doctor&section=orders&ordersTab=payments`);
+    navigate('/billing-details');
   };
 
   return (
