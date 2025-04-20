@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from "react";
-import PatientLayout from "@/components/layout/PatientLayout";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -10,38 +10,10 @@ import { Badge } from "@/components/ui/badge";
 
 // TEMP: Mock payment data
 const paymentLogs = [
-  {
-    id: "1",
-    product: "Monthly Subscription",
-    date: "2024-04-15",
-    paidBy: "john.doe@example.com",
-    status: "success",
-    attempts: 1
-  },
-  {
-    id: "2",
-    product: "Product A",
-    date: "2024-03-10",
-    paidBy: "john.doe@example.com",
-    status: "failed",
-    attempts: 2
-  },
-  {
-    id: "3",
-    product: "Monthly Subscription",
-    date: "2023-11-20",
-    paidBy: "john.doe@example.com",
-    status: "success",
-    attempts: 1
-  },
-  {
-    id: "4",
-    product: "Product B",
-    date: "2023-08-05",
-    paidBy: "john.doe@example.com",
-    status: "failed",
-    attempts: 2
-  }
+  { id: "1", product: "Monthly Subscription", date: "2024-04-15", paidBy: "john.doe@example.com", status: "success", attempts: 1 },
+  { id: "2", product: "Product A", date: "2024-03-10", paidBy: "john.doe@example.com", status: "failed", attempts: 2 },
+  { id: "3", product: "Monthly Subscription", date: "2023-11-20", paidBy: "john.doe@example.com", status: "success", attempts: 1 },
+  { id: "4", product: "Product B", date: "2023-08-05", paidBy: "john.doe@example.com", status: "failed", attempts: 2 }
 ];
 
 const statusOptions = [
@@ -51,13 +23,9 @@ const statusOptions = [
 
 function filterPayments(payments, { search, status, dateRange, sort }) {
   let filtered = payments;
-
-  // Status filter
   if (status && status !== "all") {
     filtered = filtered.filter(p => p.status === status);
   }
-
-  // Search filter
   if (search) {
     const query = search.toLowerCase();
     filtered = filtered.filter(
@@ -66,8 +34,6 @@ function filterPayments(payments, { search, status, dateRange, sort }) {
         p.paidBy.toLowerCase().includes(query)
     );
   }
-
-  // Date range filter (very basic, for demo - in real apps adapt logic)
   if (dateRange && dateRange !== "all") {
     const now = new Date();
     let startDate;
@@ -102,15 +68,12 @@ function filterPayments(payments, { search, status, dateRange, sort }) {
       filtered = filtered.filter(p => new Date(p.date) >= startDate);
     }
   }
-
-  // Sort
   filtered = [...filtered].sort((a, b) => {
     if (sort === "oldest") {
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     }
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
-
   return filtered;
 }
 
@@ -132,16 +95,14 @@ export default function BillingDetails() {
   );
 
   return (
-    <PatientLayout>
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h2 className="text-3xl font-bold my-6">Billing</h2>
-
+    <UnifiedLayoutTemplate>
+      <div className="container mx-auto py-8 max-w-4xl space-y-8">
+        <h2 className="text-3xl font-bold mb-6 mt-2">Billing</h2>
         <Tabs defaultValue="details" className="space-y-4">
           <TabsList>
             <TabsTrigger value="details">Billing Details</TabsTrigger>
             <TabsTrigger value="history">Payment History</TabsTrigger>
           </TabsList>
-
           {/* Billing Address Tab */}
           <TabsContent value="details" className="space-y-4">
             <Card>
@@ -156,7 +117,6 @@ export default function BillingDetails() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Payment History Tab */}
           <TabsContent value="history" className="space-y-4">
             <BillingHistoryFilters
@@ -211,7 +171,7 @@ export default function BillingDetails() {
                     </TableBody>
                   </Table>
                 ) : (
-                  // Card view for payment logs in CardContent
+                  // Card view for payment logs in CardContent, same card as table view
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {filteredPayments.map(log => (
                       <Card key={log.id}>
@@ -242,6 +202,6 @@ export default function BillingDetails() {
           </TabsContent>
         </Tabs>
       </div>
-    </PatientLayout>
+    </UnifiedLayoutTemplate>
   );
 }
