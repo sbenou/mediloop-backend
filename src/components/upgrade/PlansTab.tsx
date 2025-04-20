@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/components/ui/use-toast";
@@ -154,14 +155,14 @@ export function PlansTab() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
         <div></div> {/* Empty space for Free plan */}
         <div className="flex items-center space-x-2">
-          <span>Quantity:</span>
+          <span>Quantity</span>
           <ProductQuantitySelector
             quantity={quantities.pro}
             onQuantityChange={(change) => handleQuantityChange('pro', change)}
           />
         </div>
         <div className="flex items-center space-x-2">
-          <span>Quantity:</span>
+          <span>Quantity</span>
           <ProductQuantitySelector
             quantity={quantities.enterprise}
             onQuantityChange={(change) => handleQuantityChange('enterprise', change)}
