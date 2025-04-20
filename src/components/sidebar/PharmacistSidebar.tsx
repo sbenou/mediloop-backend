@@ -43,12 +43,20 @@ const PharmacistSidebar = ({
       <SidebarBrand />
       
       <div className="flex-1 overflow-auto py-4">
-        <PharmacistNavigation
-          canViewProducts={canViewProducts}
-          canViewPrescriptions={canViewPrescriptions}
-          navigateToPharmacySection={navigateToPharmacySection}
-          navigateToProducts={navigateToProducts}
-        />
+        {/* Consistent "Platform" header for top navigation */}
+        <SidebarSection title="Platform">
+          <PharmacistNavigation
+            canViewProducts={canViewProducts}
+            canViewPrescriptions={canViewPrescriptions}
+            navigateToPharmacySection={navigateToPharmacySection}
+            navigateToProducts={navigateToProducts}
+          />
+        </SidebarSection>
+        {/* Consistency: Add Admin section header, even if empty */}
+        <div className="mt-8" />
+        <SidebarSection title="Admin">
+          <div></div>
+        </SidebarSection>
       </div>
       
       <SidebarUserMenu
@@ -69,3 +77,4 @@ const PharmacistSidebar = ({
 };
 
 export default PharmacistSidebar;
+

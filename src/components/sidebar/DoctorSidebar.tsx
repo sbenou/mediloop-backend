@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -102,7 +101,8 @@ const DoctorSidebar = ({
       <SidebarBrand />
       
       <div className="flex-1 overflow-auto py-4">
-        <SidebarSection title="Navigation">
+        {/* Updated: "Platform" instead of "Navigation" */}
+        <SidebarSection title="Platform">
           <SidebarItem
             icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
             label="Dashboard"
@@ -116,15 +116,15 @@ const DoctorSidebar = ({
             isActive={section === "patients"}
             onClick={() => navigateToDoctorView('patients')}
           />
-          
-          {/* Add Referral link for doctor sidebar with proper visibility */}
+
+          {/* Referral link stays unchanged */}
           <SidebarItem
             icon={<Share className="w-5 h-5 mr-3" />}
             label="Referral"
             isActive={location.pathname === "/referral"}
             onClick={navigateToReferral}
           />
-          
+
           {canViewPrescriptions && (
             <SidebarItem
               icon={<FileText className="w-5 h-5 mr-3" />}
@@ -155,7 +155,6 @@ const DoctorSidebar = ({
             />
           </SidebarCollapsibleItem>
           
-          {/* Workplaces Section */}
           <SidebarCollapsibleItem 
             icon={<Building className="w-5 h-5 mr-3" />}
             label="Workplaces"
@@ -216,6 +215,11 @@ const DoctorSidebar = ({
             isActive={section === "settings"}
             onClick={() => navigateToDoctorView('settings')}
           />
+        </SidebarSection>
+        {/* Consistency: Add Admin section header, even if empty */}
+        <div className="mt-8" />
+        <SidebarSection title="Admin">
+          <div></div>
         </SidebarSection>
       </div>
       
