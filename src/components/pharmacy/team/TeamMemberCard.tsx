@@ -61,7 +61,8 @@ export const TeamMemberCard = ({
               created_at: null,
               updated_at: null,
               license_number: null,
-              phone_number: member.phone_number
+              phone_number: member.phone_number,
+              address: null // Add address field with null value
             }}
             size="lg"
             fallbackText={getInitials(member.full_name)}

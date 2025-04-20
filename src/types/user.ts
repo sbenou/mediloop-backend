@@ -43,7 +43,7 @@ export interface UserProfile {
   updated_at: string | null;
   license_number: string | null;
   phone_number: string | null;
-  address: string | null; // Added address field
+  address: string | null; // This is required now, but we need to make it optional
   // Adding pharmacy-specific fields
   pharmacy_id?: string | null;
   pharmacy_name?: string | null;
