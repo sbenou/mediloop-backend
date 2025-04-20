@@ -22,6 +22,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
       { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' },
       { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
+      { icon: ShoppingBag, label: 'Orders', path: '/dashboard?section=orders&ordersTab=orders' },
       { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
       { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
       { icon: Bell, label: 'Notifications', path: '/activities' },

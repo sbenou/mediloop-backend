@@ -65,8 +65,11 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
     </div>
   );
 
+  // Use a stable key for user components to prevent unnecessary re-renders
+  const userComponentKey = isAuthenticated ? (profile?.id || 'auth-user') : 'no-user';
+
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-white shadow-sm z-50">
       <div className="max-w-7xl mx-auto px-4 py-1.5 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4 sm:gap-16">
@@ -103,15 +106,21 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
           </div>
 
           <div className="flex items-center space-x-3">
-            <LanguageSelector />
+            <div key="language-selector">
+              <LanguageSelector />
+            </div>
             {showUserMenu && (
               <>
                 {isLoading ? (
                   <LoadingSkeleton />
                 ) : isAuthenticated ? (
                   <>
-                    <NotificationBell />
-                    <UserMenu />
+                    <div key={`notification-${userComponentKey}`}>
+                      <NotificationBell />
+                    </div>
+                    <div key={`user-menu-${userComponentKey}`}>
+                      <UserMenu />
+                    </div>
                   </>
                 ) : (
                   <button
@@ -121,10 +130,12 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
                     Connection
                   </button>
                 )}
-                <CartButton 
-                  isOpen={isCartOpen}
-                  onOpenChange={setIsCartOpen}
-                />
+                <div key="cart-button">
+                  <CartButton 
+                    isOpen={isCartOpen}
+                    onOpenChange={setIsCartOpen}
+                  />
+                </div>
               </>
             )}
           </div>

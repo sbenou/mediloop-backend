@@ -1,7 +1,7 @@
 
 import { Fragment } from "react";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Bell, UserCircle, CreditCard } from "lucide-react";
+import { Settings, LogOut, Bell, UserCircle, CreditCard, Store } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { getMenuItemsByRole } from "./userMenuItemsByRole";
 import { useUserMenuNavigation } from "./userMenuNavigation";
@@ -12,7 +12,28 @@ export function UserMenuItems() {
   const { handleNavigation } = useUserMenuNavigation();
   const { handleLogout } = useUserMenuLogout();
   
+  // Get the menu items first
   const menuItems = getMenuItemsByRole(userRole, isPharmacist);
+  
+  // For doctors, ensure the Doctor Profile link is always included
+  const ensureDoctorProfileLink = () => {
+    if (userRole === 'doctor') {
+      // Check if Doctor Profile is already in the items
+      const hasDoctorProfile = menuItems.some(item => item.path === '/doctor/profile');
+      
+      if (!hasDoctorProfile) {
+        // Add the Doctor Profile link if it doesn't exist
+        menuItems.splice(3, 0, {
+          icon: Store,
+          label: 'Doctor Profile',
+          path: '/doctor/profile'
+        });
+      }
+    }
+  };
+  
+  // Always ensure Doctor Profile for doctors
+  ensureDoctorProfileLink();
   
   return (
     <>
@@ -23,7 +44,7 @@ export function UserMenuItems() {
       <DropdownMenuSeparator />
 
       {menuItems.map((item, index) => (
-        <Fragment key={item.path}>
+        <Fragment key={`${item.path}-${index}`}>
           <DropdownMenuItem
             onClick={() => handleNavigation(item.path)}
             data-testid={`user-menu-item-${index}`}

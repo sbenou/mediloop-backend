@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Users, ShoppingBag, FileText, UserCircle,
   LayoutDashboard, MapPin, Video, Stethoscope,
-  Calendar, HeartPulse, Building, Share
+  Calendar, HeartPulse, Building, Share, CreditCard
 } from "lucide-react";
 import SidebarSection from "../SidebarSection";
 import SidebarItem from "../SidebarItem";
@@ -32,6 +32,8 @@ const DoctorPlatformSection: React.FC<DoctorPlatformSectionProps> = ({
     setIsConsultationsOpen,
     isWorkplacesOpen,
     setIsWorkplacesOpen,
+    isOrdersOpen,
+    setIsOrdersOpen,
     navigateToLink
   } = useSidebarNavigation("doctor");
 
@@ -74,6 +76,26 @@ const DoctorPlatformSection: React.FC<DoctorPlatformSectionProps> = ({
         isActive={location.pathname === "/referral"}
         onClick={() => navigate("/referral")}
       />
+      <SidebarCollapsibleItem 
+        icon={<ShoppingBag className="w-5 h-5 mr-3" />}
+        label="Orders"
+        isOpen={isOrdersOpen}
+        isActive={section === "orders"}
+        onOpenChange={setIsOrdersOpen}
+      >
+        <SidebarSubItem
+          icon={<ShoppingBag className="w-4 h-4 mr-3" />}
+          label="All Orders"
+          isActive={section === "orders" && (!searchParams.get("ordersTab") || searchParams.get("ordersTab") === "orders")}
+          onClick={() => navigateToDoctorView('orders', 'orders', 'ordersTab')}
+        />
+        <SidebarSubItem
+          icon={<CreditCard className="w-4 h-4 mr-3" />}
+          label="Payments"
+          isActive={section === "orders" && searchParams.get("ordersTab") === "payments"}
+          onClick={() => navigateToDoctorView('orders', 'payments', 'ordersTab')}
+        />
+      </SidebarCollapsibleItem>
       {canViewPrescriptions && (
         <SidebarItem
           icon={<FileText className="w-5 h-5 mr-3" />}
