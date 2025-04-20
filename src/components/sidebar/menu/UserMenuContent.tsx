@@ -42,7 +42,7 @@ export const UserMenuContent = ({
       <DropdownMenuGroup>
         <DropdownMenuItem onClick={navigateToUpgrade}>
           <CreditCard className="mr-2 h-4 w-4" />
-          <span>Upgrade to Pro</span>
+          <span>Upgrade</span>
         </DropdownMenuItem>
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
