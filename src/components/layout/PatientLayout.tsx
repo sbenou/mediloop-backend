@@ -1,16 +1,12 @@
-
-import { ReactNode, useState } from "react";
+import React, { ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PatientSidebar from "../sidebar/PatientSidebar";
-import EnhancedUserMenu from "../user-menu/EnhancedUserMenu";
-import NotificationBell from "../NotificationBell";
-import CartButton from "./navigation/CartButton";
 import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { Advertisements } from "@/components/activity/Advertisements";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import UserMenu from "@/components/UserMenu";
+import UnifiedHeader from "./UnifiedHeader";
 
 interface PatientLayoutProps {
   children: ReactNode;
@@ -34,14 +30,7 @@ const PatientLayout = ({ children, hideHeader = false }: PatientLayoutProps) => 
       <div className="flex flex-col flex-1">
         {/* Header spans the entire width of this section */}
         {!hideHeader && (
-          <header className="h-16 border-b px-6 flex items-center justify-end space-x-4">
-            <NotificationBell />
-            <CartButton 
-              isOpen={isCartOpen} 
-              onOpenChange={setIsCartOpen} 
-            />
-            <UserMenu />
-          </header>
+          <UnifiedHeader />
         )}
         
         {/* Main content wrapper */}

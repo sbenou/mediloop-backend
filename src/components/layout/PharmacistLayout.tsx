@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
 import NotificationBell from "@/components/NotificationBell";
@@ -10,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import UserMenu from "@/components/UserMenu";
+import UnifiedHeader from "./UnifiedHeader";
 
 interface PharmacistLayoutProps {
   children: React.ReactNode;
@@ -44,18 +44,14 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   }, []);
 
   useEffect(() => {
-    // Initialize mobile state and handle window resize
     setIsMobile(window.innerWidth < 768);
-    
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Handle session recovery
   const handleRetrySession = async () => {
     try {
       toast({
@@ -78,7 +74,6 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
     }
   };
 
-  // If session check failed, show recovery option
   if (sessionCheckFailed) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -118,26 +113,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
-          {/* Secondary content header */}
-          <header className={cn(
-            "bg-white shadow-sm h-16 flex items-center justify-end px-4 md:px-6",
-            isMobile && "pl-16" // Add padding when mobile sidebar button is shown
-          )}>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input 
-                  type="text" 
-                  placeholder="Search..." 
-                  className="pl-9 pr-4 py-2 text-sm rounded-md border border-input focus:outline-none focus:ring-2 focus:ring-primary/20 w-[200px] md:w-[300px]"
-                />
-              </div>
-              <NotificationBell />
-              <UserMenu />
-            </div>
-          </header>
-
-          {/* Main Content */}
+          <UnifiedHeader />
           <main className="flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll">
             <ScrollArea className="h-full w-full">
               {children}
