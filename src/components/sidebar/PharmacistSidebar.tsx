@@ -7,6 +7,7 @@ import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 import { PharmacistNavigation } from "./pharmacy/PharmacistNavigation";
 import { usePharmacyNavigation } from "./pharmacy/usePharmacyNavigation";
+import SidebarSection from "./SidebarSection"; // Added missing import
 
 interface PharmacistSidebarProps {
   canViewProducts?: boolean;
