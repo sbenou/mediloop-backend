@@ -11,14 +11,13 @@ import UnifiedHeader from "./UnifiedHeader";
 
 interface PatientLayoutProps {
   children: ReactNode;
-  hideHeader?: boolean; // Add hideHeader prop
+  hideHeader?: boolean;
 }
 
 const PatientLayout = ({ children, hideHeader = false }: PatientLayoutProps) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
-  const navigate = useNavigate();
   
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -30,7 +29,7 @@ const PatientLayout = ({ children, hideHeader = false }: PatientLayoutProps) => 
       {/* Right section - Contains header and content area with right panel */}
       <div className="flex flex-col flex-1">
         {/* Header spans the entire width of this section */}
-        {!hideHeader && <UnifiedHeader />}
+        {!hideHeader && <UnifiedHeader key="unified-header" />}
         
         {/* Main content wrapper */}
         <div className="flex flex-1 overflow-hidden relative">

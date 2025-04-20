@@ -7,6 +7,9 @@ export function useUserMenuNavigation() {
   const isActivitiesPage = location.pathname.includes('/activities') || location.pathname.includes('/notifications');
 
   const handleNavigation = (path: string) => {
+    // Prevent unnecessary navigation if we're already on the same path
+    if (location.pathname === path) return;
+    
     // Account page: special state for header
     if (path === '/account') {
       navigate('/account', { state: { showHeader: false } });

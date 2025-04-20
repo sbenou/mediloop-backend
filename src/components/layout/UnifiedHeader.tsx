@@ -65,9 +65,6 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
     </div>
   );
 
-  // Use a stable key for user components to prevent unnecessary re-renders
-  const userComponentKey = isAuthenticated ? (profile?.id || 'auth-user') : 'no-user';
-
   return (
     <header className="bg-white shadow-sm z-50">
       <div className="max-w-7xl mx-auto px-4 py-1.5 sm:px-6 lg:px-8">
@@ -106,21 +103,15 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
           </div>
 
           <div className="flex items-center space-x-3">
-            <div key="language-selector">
-              <LanguageSelector />
-            </div>
+            <LanguageSelector key="language-selector" />
             {showUserMenu && (
               <>
                 {isLoading ? (
                   <LoadingSkeleton />
                 ) : isAuthenticated ? (
                   <>
-                    <div key={`notification-${userComponentKey}`}>
-                      <NotificationBell />
-                    </div>
-                    <div key={`user-menu-${userComponentKey}`}>
-                      <UserMenu />
-                    </div>
+                    <NotificationBell key="notification-bell" />
+                    <UserMenu key="user-menu" />
                   </>
                 ) : (
                   <button
@@ -130,12 +121,11 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
                     Connection
                   </button>
                 )}
-                <div key="cart-button">
-                  <CartButton 
-                    isOpen={isCartOpen}
-                    onOpenChange={setIsCartOpen}
-                  />
-                </div>
+                <CartButton 
+                  key="cart-button"
+                  isOpen={isCartOpen}
+                  onOpenChange={setIsCartOpen}
+                />
               </>
             )}
           </div>
@@ -145,3 +135,4 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
   );
 };
 export default UnifiedHeader;
+

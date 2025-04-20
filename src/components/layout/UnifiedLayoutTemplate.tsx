@@ -7,16 +7,20 @@ import UnifiedHeader from "./UnifiedHeader";
 
 interface UnifiedLayoutTemplateProps {
   children: React.ReactNode;
+  hideHeader?: boolean;
 }
 
-const UnifiedLayoutTemplate: React.FC<UnifiedLayoutTemplateProps> = ({ children }) => {
+const UnifiedLayoutTemplate: React.FC<UnifiedLayoutTemplateProps> = ({ 
+  children,
+  hideHeader = false 
+}) => {
   return (
     <CartProvider>
       <div className="flex min-h-screen bg-background">
         <RoleDebugger />
         <Sidebar />
         <div className="flex flex-col flex-1">
-          <UnifiedHeader />
+          {!hideHeader && <UnifiedHeader key="unified-header" />}
           <main className="flex-1 p-4">
             {children}
           </main>

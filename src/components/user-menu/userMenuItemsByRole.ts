@@ -26,7 +26,8 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
       { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
-      { icon: Settings, label: 'Settings', path: '/settings' }
+      { icon: Settings, label: 'Settings', path: '/settings' },
+      { icon: CreditCard, label: 'Billing', path: '/billing-details' }
     ];
   }
   if (isPharmacist) {
@@ -40,7 +41,8 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
       { icon: BarChart, label: 'Analytics', path: '/dashboard?view=pharmacy&section=analytics' },
-      { icon: Settings, label: 'Settings', path: '/settings' }
+      { icon: Settings, label: 'Settings', path: '/settings' },
+      { icon: CreditCard, label: 'Billing', path: '/billing-details' }
     ];
   }
   if (role === 'superadmin') {

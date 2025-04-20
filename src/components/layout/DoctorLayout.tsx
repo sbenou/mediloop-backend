@@ -12,9 +12,10 @@ import UnifiedHeader from "./UnifiedHeader";
 
 interface DoctorLayoutProps {
   children: React.ReactNode;
+  hideHeader?: boolean;
 }
 
-const DoctorLayout = ({ children }: DoctorLayoutProps) => {
+const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
@@ -52,7 +53,7 @@ const DoctorLayout = ({ children }: DoctorLayoutProps) => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
           {/* Unified header */}
-          <UnifiedHeader />
+          {!hideHeader && <UnifiedHeader />}
           {/* Main Content with Right Drawer */}
           <div className="flex flex-1 overflow-hidden relative">
             {/* Main content area */}

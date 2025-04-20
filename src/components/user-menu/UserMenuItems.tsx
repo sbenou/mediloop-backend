@@ -12,28 +12,8 @@ export function UserMenuItems() {
   const { handleNavigation } = useUserMenuNavigation();
   const { handleLogout } = useUserMenuLogout();
   
-  // Get the menu items first
+  // Always get menu items for the current role/status
   const menuItems = getMenuItemsByRole(userRole, isPharmacist);
-  
-  // For doctors, ensure the Doctor Profile link is always included
-  const ensureDoctorProfileLink = () => {
-    if (userRole === 'doctor') {
-      // Check if Doctor Profile is already in the items
-      const hasDoctorProfile = menuItems.some(item => item.path === '/doctor/profile');
-      
-      if (!hasDoctorProfile) {
-        // Add the Doctor Profile link if it doesn't exist
-        menuItems.splice(3, 0, {
-          icon: Store,
-          label: 'Doctor Profile',
-          path: '/doctor/profile'
-        });
-      }
-    }
-  };
-  
-  // Always ensure Doctor Profile for doctors
-  ensureDoctorProfileLink();
   
   return (
     <>
