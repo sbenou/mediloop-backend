@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile } from '@/types/user';
 import { ChevronDown } from 'lucide-react';
@@ -20,7 +21,7 @@ interface SidebarUserMenuProps {
   getUserInitials: () => string;
   handleLogout: () => Promise<void>;
   navigateToAccount?: () => void;
-  navigateToProfile?: () => void; // Added this optional prop
+  navigateToProfile?: () => void; 
   navigateToBilling: () => void;
   navigateToUpgrade: () => void;
   navigateToPharmacyProfile?: () => void;
@@ -35,7 +36,7 @@ const SidebarUserMenu = ({
   handleAvatarClick,
   getUserInitials,
   handleLogout,
-  navigateToAccount, // Ensure this prop is used
+  navigateToAccount,
   navigateToBilling,
   navigateToUpgrade,
   navigateToPharmacyProfile,
@@ -50,8 +51,8 @@ const SidebarUserMenu = ({
   const { pharmacyName, isAvailable: isPharmacyAvailable } = usePharmacyData(profile);
   const { isAvailable: isDoctorAvailable } = useDoctorAvailability(profile);
   
-  // Determine which avatar URL to use based on user role and context
-  const getAvatarUrl = () => {
+  // Memoize avatar URL to prevent unnecessary re-renders
+  const avatarUrl = useMemo(() => {
     if (userRole === 'pharmacist') {
       return pharmacyLogoUrl || profile?.pharmacy_logo_url || null;
     } else if (userRole === 'doctor') {
@@ -59,7 +60,17 @@ const SidebarUserMenu = ({
     } else {
       return userAvatar || profile?.avatar_url || null;
     }
-  };
+  }, [userRole, pharmacyLogoUrl, profile?.pharmacy_logo_url, doctorStampUrl, profile?.doctor_stamp_url, userAvatar, profile?.avatar_url]);
+  
+  // Memoize profile data
+  const enhancedProfile = useMemo(() => {
+    if (!profile) return undefined;
+    return {
+      ...profile,
+      pharmacy_name: pharmacyName || profile.pharmacy_name,
+      pharmacy_logo_url: avatarUrl || undefined
+    };
+  }, [profile, pharmacyName, avatarUrl]);
   
   // Determine display name based on user role
   const displayName = userRole === 'pharmacist' 
@@ -86,11 +97,7 @@ const SidebarUserMenu = ({
           data-testid="sidebar-avatar-container"
         >
           <UserAvatar 
-            userProfile={profile ? {
-              ...profile,
-              pharmacy_name: pharmacyName || profile.pharmacy_name,
-              pharmacy_logo_url: getAvatarUrl() || undefined
-            } : undefined} 
+            userProfile={enhancedProfile} 
             canUpload={true}
             onAvatarClick={(e) => {
               e.stopPropagation();
@@ -116,7 +123,7 @@ const SidebarUserMenu = ({
           <UserMenuContent
             userRole={userRole}
             profile={profile}
-            navigateToAccount={handleNavigateToAccount} // Use the new method
+            navigateToAccount={handleNavigateToAccount}
             navigateToBilling={navigateToBilling}
             navigateToUpgrade={navigateToUpgrade}
             navigateToPharmacyProfile={navigateToPharmacyProfile}

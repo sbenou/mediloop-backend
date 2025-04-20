@@ -29,7 +29,7 @@ const UserMenu = memo(() => {
     userRole.charAt(0).toUpperCase() + userRole.slice(1) : 
     'User';
   
-  // Set initial avatar URL from profile
+  // Set initial avatar URL from profile only once
   useEffect(() => {
     if (profile?.avatar_url && !avatarUrl) {
       setAvatarUrl(profile.avatar_url);
@@ -134,11 +134,10 @@ const UserMenu = memo(() => {
   }, []);
 
   const handleMenuToggle = useCallback((open: boolean) => {
-    console.log("Menu toggle called, new state:", open);
     setMenuOpen(open);
   }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && profile?.id) {
       try {
@@ -199,7 +198,7 @@ const UserMenu = memo(() => {
           throw updateError;
         }
 
-        // Update Recoil state
+        // Update Recoil state without timestamp
         setAvatarUrl(publicUrl);
 
         toast({
@@ -215,9 +214,15 @@ const UserMenu = memo(() => {
         });
       }
     }
-  };
+  }, [profile?.id, setAvatarUrl]);
 
   const shouldShowSkeleton = isLoading && localLoading && !hasVisibleSession;
+
+  // Memoize the user profile prop to prevent unnecessary re-renders
+  const avatarProfile = profile && avatarUrl ? {
+    ...profile,
+    avatar_url: avatarUrl
+  } : profile;
 
   if (shouldShowSkeleton) {
     return (
@@ -242,13 +247,10 @@ const UserMenu = memo(() => {
     <DropdownMenu open={menuOpen} onOpenChange={handleMenuToggle}>
       <div className="flex items-center space-x-2">
         <UserAvatar 
-          userProfile={profile ? {
-            ...profile,
-            avatar_url: avatarUrl || profile.avatar_url
-          } : undefined} 
+          userProfile={avatarProfile} 
           canUpload={true} 
           onAvatarClick={handleAvatarClick}
-          isAvailable={isAuthenticated} // Simple availability based on authentication status
+          isAvailable={isAuthenticated}
           showStatus={true}
         />
         <input

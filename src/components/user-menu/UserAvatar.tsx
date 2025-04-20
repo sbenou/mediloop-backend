@@ -6,6 +6,7 @@ import { useRecoilValue } from "recoil";
 import { userAvatarState } from "@/store/user/atoms";
 import { doctorStampUrlState, pharmacyLogoUrlState } from "@/store/images/atoms";
 import { CircleDot } from "lucide-react";
+import { useMemo } from "react";
 
 export interface UserAvatarProps {
   userProfile?: UserProfile;
@@ -33,14 +34,6 @@ const UserAvatar = ({
   const doctorStampUrl = useRecoilValue(doctorStampUrlState);
   const pharmacyLogoUrl = useRecoilValue(pharmacyLogoUrlState);
   
-  // Log relevant state for debugging
-  if (userProfile?.role === 'pharmacist') {
-    console.log("UserAvatar: Pharmacy user detected");
-    console.log("UserAvatar: pharmacyLogoUrl from Recoil =", pharmacyLogoUrl);
-    console.log("UserAvatar: pharmacy_logo_url from profile =", userProfile?.pharmacy_logo_url);
-    console.log("UserAvatar: pharmacy_name =", userProfile?.pharmacy_name);
-  }
-  
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
     md: "h-10 w-10 text-sm",
@@ -55,53 +48,59 @@ const UserAvatar = ({
   );
   
   // Generate initials - use pharmacy name for pharmacists if available
-  const initials = fallbackText || 
-    (userProfile?.role === 'pharmacist' && userProfile?.pharmacy_name ? 
-      userProfile.pharmacy_name.split(' ')
-        .map(name => name[0])
-        .join('')
-        .toUpperCase()
-        .substring(0, 2) :
-      userProfile?.full_name ? 
-        userProfile.full_name.split(' ')
-          .map(name => name[0])
-          .join('')
-          .toUpperCase()
-          .substring(0, 2) : 
-        "U");
+  const initials = useMemo(() => {
+    if (fallbackText) return fallbackText;
+    
+    if (userProfile?.role === 'pharmacist' && userProfile?.pharmacy_name) {
+      const pharmacyNames = userProfile.pharmacy_name.split(' ');
+      if (pharmacyNames.length === 1) return pharmacyNames[0].charAt(0).toUpperCase();
+      return (pharmacyNames[0].charAt(0) + pharmacyNames[pharmacyNames.length - 1].charAt(0)).toUpperCase().substring(0, 2);
+    }
+    
+    if (!userProfile?.full_name) return 'U';
+    const names = userProfile.full_name.split(' ');
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase().substring(0, 2);
+  }, [fallbackText, userProfile?.full_name, userProfile?.pharmacy_name, userProfile?.role]);
 
   const handleClick = (e: React.MouseEvent) => {
     if (canUpload && onAvatarClick) {
       e.preventDefault();
       e.stopPropagation();
       onAvatarClick(e);
-      console.log("Avatar clicked, event stopped");
     }
   };
 
-  // Determine which avatar URL to use based on user role and context
-  let displayAvatarUrl = null;
-  
-  // Special handling for pharmacists in sidebar (isSquare=true)
-  if (userProfile?.role === 'pharmacist' && isSquare) {
-    // For pharmacists in sidebar, ONLY use pharmacy logo or nothing
-    displayAvatarUrl = pharmacyLogoUrl || userProfile.pharmacy_logo_url;
-    console.log("UserAvatar: Using pharmacy logo for display:", displayAvatarUrl);
-  }
-  // For doctors in sidebar
-  else if (userProfile?.role === 'doctor' && isSquare) {
-    displayAvatarUrl = doctorStampUrl || userProfile.doctor_stamp_url;
-  }
-  // For regular users or non-sidebar contexts
-  else if (!isSquare || userProfile?.role === 'user') {
-    displayAvatarUrl = globalAvatarUrl || userProfile?.avatar_url;
-  }
+  // Determine which avatar URL to use based on user role and context - memoize to prevent re-renders
+  const displayAvatarUrl = useMemo(() => {
+    let url = null;
+    
+    // Special handling for pharmacists in sidebar (isSquare=true)
+    if (userProfile?.role === 'pharmacist' && isSquare) {
+      // For pharmacists in sidebar, ONLY use pharmacy logo or nothing
+      url = pharmacyLogoUrl || userProfile.pharmacy_logo_url;
+    }
+    // For doctors in sidebar
+    else if (userProfile?.role === 'doctor' && isSquare) {
+      url = doctorStampUrl || userProfile.doctor_stamp_url;
+    }
+    // For regular users or non-sidebar contexts
+    else if (!isSquare || userProfile?.role === 'user') {
+      url = globalAvatarUrl || userProfile?.avatar_url;
+    }
 
-  // Add timestamp to prevent caching if URL exists
-  if (displayAvatarUrl) {
-    const hasQueryParams = displayAvatarUrl.includes('?');
-    displayAvatarUrl = `${displayAvatarUrl}${hasQueryParams ? '&' : '?'}t=${Date.now()}`;
-  }
+    // Don't add timestamp to prevent unnecessary re-rendering
+    return url;
+  }, [
+    userProfile?.role, 
+    userProfile?.avatar_url,
+    userProfile?.doctor_stamp_url,
+    userProfile?.pharmacy_logo_url,
+    globalAvatarUrl,
+    doctorStampUrl,
+    pharmacyLogoUrl,
+    isSquare
+  ]);
 
   // Determine status indicator size based on avatar size
   const statusSize = {
