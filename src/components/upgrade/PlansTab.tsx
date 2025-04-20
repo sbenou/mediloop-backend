@@ -106,15 +106,6 @@ export function PlansTab() {
             <ShoppingCart className="h-4 w-4" />
             Add to Cart
           </Button>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span>Quantity</span>
-              <ProductQuantitySelector
-                quantity={quantities.pro}
-                onQuantityChange={(change) => handleQuantityChange('pro', change)}
-              />
-            </div>
-          </div>
         </div>
         
         {/* Enterprise Plan */}
@@ -156,15 +147,25 @@ export function PlansTab() {
             <ShoppingCart className="h-4 w-4" />
             Add to Cart
           </Button>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span>Quantity</span>
-              <ProductQuantitySelector
-                quantity={quantities.enterprise}
-                onQuantityChange={(change) => handleQuantityChange('enterprise', change)}
-              />
-            </div>
-          </div>
+        </div>
+      </div>
+
+      {/* Quantity Selectors - Outside and Under the Plans */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+        <div></div> {/* Empty space for Free plan */}
+        <div className="flex items-center space-x-2">
+          <span>Quantity:</span>
+          <ProductQuantitySelector
+            quantity={quantities.pro}
+            onQuantityChange={(change) => handleQuantityChange('pro', change)}
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <span>Quantity:</span>
+          <ProductQuantitySelector
+            quantity={quantities.enterprise}
+            onQuantityChange={(change) => handleQuantityChange('enterprise', change)}
+          />
         </div>
       </div>
     </div>
