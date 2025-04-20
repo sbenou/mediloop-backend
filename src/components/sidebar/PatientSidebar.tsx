@@ -16,7 +16,7 @@ import SidebarSubItem from "./SidebarSubItem";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
-import { useSidebarNavigation } from "./hooks/sidebar/useSidebarNavigation";
+import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 
 const PatientSidebar = () => {
   const { profile } = useAuth();
@@ -153,7 +153,9 @@ const PatientSidebar = () => {
 
         <div className="mt-8" />
 
-        <SidebarSection title="Admin" />
+        <SidebarSection title="Admin">
+          {/* Admin items will go here (empty for now) */}
+        </SidebarSection>
 
         <SidebarSection title="Settings">
           <SidebarItem
@@ -182,4 +184,3 @@ const PatientSidebar = () => {
 };
 
 export default PatientSidebar;
-
