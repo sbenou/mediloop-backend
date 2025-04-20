@@ -16,7 +16,7 @@ import SidebarSubItem from "./SidebarSubItem";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
-import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
+import { useSidebarNavigation } from "./hooks/sidebar/useSidebarNavigation";
 
 const PatientSidebar = () => {
   const { profile } = useAuth();
@@ -60,7 +60,7 @@ const PatientSidebar = () => {
       <SidebarBrand />
       
       <div className="flex-1 overflow-auto py-4">
-        <SidebarSection title="Navigation">
+        <SidebarSection title="Platform">
           <SidebarItem
             icon={<Home className="w-5 h-5 mr-3" />}
             label="Dashboard"
@@ -149,7 +149,13 @@ const PatientSidebar = () => {
               onClick={() => navigateToPatientView("profile", "nextofkin", "profileTab")}
             />
           </SidebarCollapsibleItem>
-          
+        </SidebarSection>
+
+        <div className="mt-8" />
+
+        <SidebarSection title="Admin" />
+
+        <SidebarSection title="Settings">
           <SidebarItem
             icon={<Settings className="w-5 h-5 mr-3" />}
             label="Settings"
@@ -176,3 +182,4 @@ const PatientSidebar = () => {
 };
 
 export default PatientSidebar;
+

@@ -38,7 +38,15 @@ const UnifiedSidebar = () => {
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <div className="flex-1 overflow-auto py-4">
+        <div className="px-3 mb-2 mt-6">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">
+            Platform
+          </p>
+        </div>
         <PlatformSection />
+        
+        <div className="mt-8" />
+        
         <AdminSection />
       </div>
       
@@ -61,3 +69,4 @@ const UnifiedSidebar = () => {
 };
 
 export default UnifiedSidebar;
+
