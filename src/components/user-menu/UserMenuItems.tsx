@@ -24,7 +24,7 @@ export function UserMenuItems() {
       <DropdownMenuSeparator />
 
       {menuItems.map((item, index) => (
-        <Fragment key={`${item.path}-${index}`}>
+        <Fragment key={`${item.label}-${index}`}>
           <DropdownMenuItem
             onClick={() => handleNavigation(item.path)}
             data-testid={`user-menu-item-${index}`}

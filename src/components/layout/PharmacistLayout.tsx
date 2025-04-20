@@ -112,7 +112,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
-          <UnifiedHeader />
+          <UnifiedHeader key="unified-header-pharmacist" />
           <main className="flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll">
             <ScrollArea className="h-full w-full">
               {children}

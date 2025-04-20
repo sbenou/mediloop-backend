@@ -29,7 +29,7 @@ const PatientLayout = ({ children, hideHeader = false }: PatientLayoutProps) => 
       {/* Right section - Contains header and content area with right panel */}
       <div className="flex flex-col flex-1">
         {/* Header spans the entire width of this section */}
-        {!hideHeader && <UnifiedHeader key="unified-header" />}
+        {!hideHeader && <UnifiedHeader key="unified-header-patient" />}
         
         {/* Main content wrapper */}
         <div className="flex flex-1 overflow-hidden relative">

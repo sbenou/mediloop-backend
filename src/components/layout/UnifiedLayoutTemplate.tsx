@@ -20,7 +20,7 @@ const UnifiedLayoutTemplate: React.FC<UnifiedLayoutTemplateProps> = ({
         <RoleDebugger />
         <Sidebar />
         <div className="flex flex-col flex-1">
-          {!hideHeader && <UnifiedHeader key="unified-header" />}
+          {!hideHeader && <UnifiedHeader key="unified-header-template" />}
           <main className="flex-1 p-4">
             {children}
           </main>

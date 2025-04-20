@@ -16,11 +16,12 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
     ];
   }
   if (role === 'doctor') {
+    // For doctors, never filter out the Doctor Profile entry
     return [
       { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
       { icon: Award, label: 'Account', path: '/account' },
       { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
-      { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' },
+      { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Always include this item
       { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
       { icon: ShoppingBag, label: 'Orders', path: '/dashboard?section=orders&ordersTab=orders' },
       { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },

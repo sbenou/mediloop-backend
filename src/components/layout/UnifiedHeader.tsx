@@ -2,7 +2,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 import { ArrowLeft, User } from 'lucide-react';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -22,8 +22,33 @@ interface UnifiedHeaderProps {
   showBackLink?: boolean;
   onBackClick?: () => void;
 }
-const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick }: UnifiedHeaderProps) => {
+
+// Wrap userMenu in a memo component to prevent re-renders
+const MemoizedUserMenu = memo(() => <UserMenu key="user-menu-component" />);
+MemoizedUserMenu.displayName = 'MemoizedUserMenu';
+
+// Wrap NotificationBell in a memo component to prevent re-renders
+const MemoizedNotificationBell = memo(() => <NotificationBell key="notification-bell-component" />);
+MemoizedNotificationBell.displayName = 'MemoizedNotificationBell';
+
+// Wrap CartButton in a memo component to prevent re-renders
+const MemoizedCartButton = memo(() => {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  return (
+    <CartButton 
+      key="cart-button-component"
+      isOpen={isCartOpen}
+      onOpenChange={setIsCartOpen}
+    />
+  );
+});
+MemoizedCartButton.displayName = 'MemoizedCartButton';
+
+// Wrap LanguageSelector in a memo component to prevent re-renders
+const MemoizedLanguageSelector = memo(() => <LanguageSelector key="language-selector-component" />);
+MemoizedLanguageSelector.displayName = 'MemoizedLanguageSelector';
+
+const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick }: UnifiedHeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -103,15 +128,15 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
           </div>
 
           <div className="flex items-center space-x-3">
-            <LanguageSelector key="language-selector" />
+            <MemoizedLanguageSelector />
             {showUserMenu && (
               <>
                 {isLoading ? (
                   <LoadingSkeleton />
                 ) : isAuthenticated ? (
                   <>
-                    <NotificationBell key="notification-bell" />
-                    <UserMenu key="user-menu" />
+                    <MemoizedNotificationBell />
+                    <MemoizedUserMenu />
                   </>
                 ) : (
                   <button
@@ -121,11 +146,7 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
                     Connection
                   </button>
                 )}
-                <CartButton 
-                  key="cart-button"
-                  isOpen={isCartOpen}
-                  onOpenChange={setIsCartOpen}
-                />
+                <MemoizedCartButton />
               </>
             )}
           </div>
@@ -134,5 +155,6 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
     </header>
   );
 };
-export default UnifiedHeader;
 
+// Use memo to prevent the entire UnifiedHeader from re-rendering unnecessarily
+export default memo(UnifiedHeader);

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useLocation } from "react-router-dom";
-import { Home, Users, FileText, HeartPulse, ShoppingBag, CreditCard } from "lucide-react";
+import { Home, Users, FileText, HeartPulse, ShoppingBag, CreditCard, Video, Calendar } from "lucide-react";
 import SidebarItem from "../SidebarItem";
 import SidebarCollapsibleItem from "../SidebarCollapsibleItem";
 import SidebarSubItem from "../SidebarSubItem";
@@ -24,6 +24,10 @@ const DoctorPlatformSection = ({
   const {
     isOrdersOpen,
     setIsOrdersOpen,
+    isConsultationsOpen,
+    setIsConsultationsOpen,
+    isProfileOpen,
+    setIsProfileOpen,
     navigateToLink,
     isSectionActive
   } = useSidebarNavigation("doctor");
@@ -44,6 +48,29 @@ const DoctorPlatformSection = ({
         onClick={() => navigateToLink("?section=patients")}
       />
       
+      {/* Profile Section */}
+      <SidebarCollapsibleItem
+        icon={<Users className="w-5 h-5 mr-3" />}
+        label="Profile"
+        isOpen={isProfileOpen}
+        isActive={section === "profile"}
+        onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
+      >
+        <SidebarSubItem
+          icon={<Users className="w-4 h-4 mr-3" />}
+          label="Personal Details"
+          isActive={section === "profile" && searchParams.get("profileTab") === "personal"}
+          onClick={() => navigateToLink("?section=profile&profileTab=personal")}
+        />
+        <SidebarSubItem
+          icon={<Users className="w-4 h-4 mr-3" />}
+          label="Addresses"
+          isActive={section === "profile" && searchParams.get("profileTab") === "addresses"}
+          onClick={() => navigateToLink("?section=profile&profileTab=addresses")}
+        />
+      </SidebarCollapsibleItem>
+      
+      {/* Orders Section */}
       <SidebarCollapsibleItem
         icon={<ShoppingBag className="w-5 h-5 mr-3" />}
         label="Orders"
@@ -65,6 +92,28 @@ const DoctorPlatformSection = ({
         />
       </SidebarCollapsibleItem>
       
+      {/* Consultations Section */}
+      <SidebarCollapsibleItem
+        icon={<HeartPulse className="w-5 h-5 mr-3" />}
+        label="Consultations"
+        isOpen={isConsultationsOpen}
+        isActive={section === "teleconsultations" || section === "appointments"}
+        onOpenChange={(isOpen) => setIsConsultationsOpen(isOpen)}
+      >
+        <SidebarSubItem
+          icon={<Video className="w-4 h-4 mr-3" />}
+          label="Teleconsultations"
+          isActive={section === "teleconsultations"}
+          onClick={() => navigateToLink("?section=teleconsultations")}
+        />
+        <SidebarSubItem
+          icon={<Calendar className="w-4 h-4 mr-3" />}
+          label="Appointments"
+          isActive={section === "appointments"}
+          onClick={() => navigateToLink("?section=appointments")}
+        />
+      </SidebarCollapsibleItem>
+      
       {(canViewPrescriptions || canPrescribe) && (
         <SidebarItem
           icon={<FileText className="w-5 h-5 mr-3" />}
@@ -73,20 +122,6 @@ const DoctorPlatformSection = ({
           onClick={() => navigateToLink("?section=prescriptions")}
         />
       )}
-      
-      <SidebarItem
-        icon={<HeartPulse className="w-5 h-5 mr-3" />}
-        label="Teleconsultations"
-        isActive={section === "teleconsultations"}
-        onClick={() => navigateToLink("?section=teleconsultations")}
-      />
-      
-      <SidebarItem
-        icon={<HeartPulse className="w-5 h-5 mr-3" />}
-        label="Appointments"
-        isActive={section === "appointments"}
-        onClick={() => navigateToLink("?section=appointments")}
-      />
     </div>
   );
 };

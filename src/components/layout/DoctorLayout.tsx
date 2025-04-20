@@ -52,8 +52,8 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
-          {/* Unified header */}
-          {!hideHeader && <UnifiedHeader />}
+          {/* Unified header with stable key to prevent re-renders */}
+          {!hideHeader && <UnifiedHeader key="unified-header-doctor" />}
           {/* Main Content with Right Drawer */}
           <div className="flex flex-1 overflow-hidden relative">
             {/* Main content area */}
