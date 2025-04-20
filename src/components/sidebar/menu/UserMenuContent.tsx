@@ -47,7 +47,7 @@ export const UserMenuContent = ({
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownMenuGroup>
-        {userRole === 'pharmacist' && typeof navigateToPharmacyProfile === 'function' && (
+        {userRole === 'pharmacist' && navigateToPharmacyProfile && (
           <DropdownMenuItem 
             onClick={navigateToPharmacyProfile}
             className="pharmacy-profile-link bg-blue-50"
@@ -57,7 +57,7 @@ export const UserMenuContent = ({
           </DropdownMenuItem>
         )}
         
-        {userRole === 'doctor' && typeof navigateToDoctorProfile === 'function' && (
+        {userRole === 'doctor' && navigateToDoctorProfile && (
           <DropdownMenuItem 
             onClick={navigateToDoctorProfile}
             className="doctor-profile-link bg-blue-50"

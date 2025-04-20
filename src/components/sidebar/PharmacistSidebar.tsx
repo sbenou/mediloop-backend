@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom"; 
 import SidebarBrand from "./SidebarBrand";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
@@ -26,7 +26,7 @@ const PharmacistSidebar = ({
   canViewPrescriptions = false
 }: PharmacistSidebarProps) => {
   const { profile } = useAuth();
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate(); // Use the hook here
   const { handleLogout } = useSidebarLogout();
   const {
     navigateToPharmacySection,
@@ -79,7 +79,7 @@ const PharmacistSidebar = ({
         handleLogout={handleLogout}
         navigateToProfile={() => navigateToPharmacySection('profile', 'personal', 'profileTab')}
         navigateToBilling={() => navigate('/billing-details')} 
-        navigateToUpgrade={() => navigateToPharmacySection('/upgrade')}
+        navigateToUpgrade={() => navigate('/upgrade')}
         navigateToPharmacyProfile={navigateToPharmacyProfile}
         handleFileChange={handleFileChange}
       />

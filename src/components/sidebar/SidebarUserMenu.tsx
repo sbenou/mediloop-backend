@@ -37,6 +37,7 @@ const SidebarUserMenu = ({
   getUserInitials,
   handleLogout,
   navigateToAccount,
+  navigateToProfile,
   navigateToBilling,
   navigateToUpgrade,
   navigateToPharmacyProfile,
@@ -123,7 +124,7 @@ const SidebarUserMenu = ({
           <UserMenuContent
             userRole={userRole}
             profile={profile}
-            navigateToAccount={handleNavigateToAccount}
+            navigateToAccount={navigateToAccount || handleNavigateToAccount}
             navigateToBilling={navigateToBilling}
             navigateToUpgrade={navigateToUpgrade}
             navigateToPharmacyProfile={navigateToPharmacyProfile}
