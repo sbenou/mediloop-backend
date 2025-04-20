@@ -16,7 +16,7 @@ import SidebarSubItem from "./SidebarSubItem";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
-import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
+import { useSidebarNavigation } from "./hooks/useSidebarNavigation"; // Fixed import path
 
 interface DoctorSidebarProps {
   canPrescribe?: boolean;
@@ -91,6 +91,12 @@ const DoctorSidebar = ({
     navigate('/upgrade');
   };
 
+  // Function to navigate to the referral page
+  const navigateToReferral = () => {
+    console.log('Navigating to referral page from DoctorSidebar');
+    navigate('/referral');
+  };
+
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <SidebarBrand />
@@ -111,12 +117,12 @@ const DoctorSidebar = ({
             onClick={() => navigateToDoctorView('patients')}
           />
           
-          {/* Add Referral link for doctor sidebar */}
+          {/* Add Referral link for doctor sidebar with proper visibility */}
           <SidebarItem
             icon={<Share className="w-5 h-5 mr-3" />}
             label="Referral"
             isActive={location.pathname === "/referral"}
-            onClick={() => navigate('/referral')}
+            onClick={navigateToReferral}
           />
           
           {canViewPrescriptions && (
@@ -149,7 +155,7 @@ const DoctorSidebar = ({
             />
           </SidebarCollapsibleItem>
           
-          {/* New Workplaces Section */}
+          {/* Workplaces Section */}
           <SidebarCollapsibleItem 
             icon={<Building className="w-5 h-5 mr-3" />}
             label="Workplaces"
