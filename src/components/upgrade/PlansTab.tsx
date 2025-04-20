@@ -1,11 +1,9 @@
-
 import React from 'react';
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { PlanCartItem } from '@/types/cart';
-import { ProductQuantitySelector } from '@/components/product/ProductQuantitySelector';
 
 export function PlansTab() {
   const { addToCart } = useCart();
@@ -44,7 +42,7 @@ export function PlansTab() {
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Free Plan */}
-        <div className="border rounded-lg p-6 bg-white shadow-sm">
+        <div className="border rounded-lg p-6 bg-white shadow-sm flex flex-col">
           <h2 className="text-xl font-semibold mb-2">Free Plan</h2>
           <div className="text-3xl font-bold mb-4">$0<span className="text-lg text-muted-foreground">/month</span></div>
           <ul className="space-y-2 mb-6">
@@ -61,13 +59,15 @@ export function PlansTab() {
               <span>Premium support</span>
             </li>
           </ul>
-          <button className="w-full py-2 border border-primary text-primary hover:bg-primary/5 rounded-md transition-colors">
-            Current Plan
-          </button>
+          <div className="mt-auto">
+            <button className="w-full py-2 border border-primary text-primary hover:bg-primary/5 rounded-md transition-colors">
+              Current Plan
+            </button>
+          </div>
         </div>
         
         {/* Pro Plan */}
-        <div className="border rounded-lg p-6 bg-primary/5 shadow-md border-primary relative">
+        <div className="border rounded-lg p-6 bg-primary/5 shadow-md border-primary relative flex flex-col">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white rounded-md">
             Recommended
           </div>
@@ -91,26 +91,28 @@ export function PlansTab() {
               <span>Advanced analytics</span>
             </li>
           </ul>
-          <Button
-            onClick={() => handleAddToCart({
-              name: 'Pro',
-              price: 19.99,
-              features: [
-                'All basic features',
-                'Unlimited consultations',
-                'Premium support',
-                'Advanced analytics'
-              ]
-            })}
-            className="w-full flex items-center justify-center gap-2"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            Add to Cart
-          </Button>
+          <div className="mt-auto">
+            <Button
+              onClick={() => handleAddToCart({
+                name: 'Pro',
+                price: 19.99,
+                features: [
+                  'All basic features',
+                  'Unlimited consultations',
+                  'Premium support',
+                  'Advanced analytics'
+                ]
+              })}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Add to Cart
+            </Button>
+          </div>
         </div>
         
         {/* Enterprise Plan */}
-        <div className="border rounded-lg p-6 bg-white shadow-sm">
+        <div className="border rounded-lg p-6 bg-white shadow-sm flex flex-col">
           <h2 className="text-xl font-semibold mb-2">Enterprise</h2>
           <div className="text-3xl font-bold mb-4">$99.99<span className="text-lg text-muted-foreground">/month</span></div>
           <ul className="space-y-2 mb-6">
@@ -131,23 +133,25 @@ export function PlansTab() {
               <span>White-label options</span>
             </li>
           </ul>
-          <Button
-            onClick={() => handleAddToCart({
-              name: 'Enterprise',
-              price: 99.99,
-              features: [
-                'All Pro features',
-                'Dedicated account manager',
-                'Custom integrations',
-                'White-label options'
-              ]
-            })}
-            variant="outline"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            Add to Cart
-          </Button>
+          <div className="mt-auto">
+            <Button
+              onClick={() => handleAddToCart({
+                name: 'Enterprise',
+                price: 99.99,
+                features: [
+                  'All Pro features',
+                  'Dedicated account manager',
+                  'Custom integrations',
+                  'White-label options'
+                ]
+              })}
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Add to Cart
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -156,17 +160,53 @@ export function PlansTab() {
         <div></div> {/* Empty space for Free plan */}
         <div className="flex items-center space-x-2">
           <span>Quantity</span>
-          <ProductQuantitySelector
-            quantity={quantities.pro}
-            onQuantityChange={(change) => handleQuantityChange('pro', change)}
-          />
+          <div className="flex items-center w-32 h-12 border rounded-md">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleQuantityChange('pro', -1)}
+              disabled={quantities.pro <= 1}
+              className="h-full"
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <div className="flex-1 text-center font-medium">
+              {quantities.pro}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleQuantityChange('pro', 1)}
+              className="h-full"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <span>Quantity</span>
-          <ProductQuantitySelector
-            quantity={quantities.enterprise}
-            onQuantityChange={(change) => handleQuantityChange('enterprise', change)}
-          />
+          <div className="flex items-center w-32 h-12 border rounded-md">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleQuantityChange('enterprise', -1)}
+              disabled={quantities.enterprise <= 1}
+              className="h-full"
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <div className="flex-1 text-center font-medium">
+              {quantities.enterprise}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleQuantityChange('enterprise', 1)}
+              className="h-full"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
