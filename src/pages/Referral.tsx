@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
@@ -98,50 +99,48 @@ const Referral = () => {
 
   return (
     <UnifiedLayoutTemplate>
-      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-        <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-          <h1 className="text-3xl font-bold mb-8">Referral Program</h1>
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">Referral Program</h1>
 
-          <Tabs defaultValue="refer" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="refer">Refer Friends</TabsTrigger>
-              <TabsTrigger value="history">Referral History</TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="refer" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="refer">Refer Friends</TabsTrigger>
+            <TabsTrigger value="history">Referral History</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="refer">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Refer Friends & Earn Points</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Share your referral program with friends and family. When
-                    they join and make their first purchase, you'll both earn
-                    loyalty points!
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      placeholder="friend@example.com, colleague@example.com"
-                      value={emails}
-                      onChange={(e) => setEmails(e.target.value)}
-                      className="flex-grow"
-                    />
-                    <Button onClick={handleSendReferrals} disabled={isSending || !emails.trim()}>
-                      {buttonContent()}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+          <TabsContent value="refer">
+            <Card>
+              <CardHeader>
+                <CardTitle>Refer Friends & Earn Points</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  Share your referral program with friends and family. When
+                  they join and make their first purchase, you'll both earn
+                  loyalty points!
+                </p>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="friend@example.com, colleague@example.com"
+                    value={emails}
+                    onChange={(e) => setEmails(e.target.value)}
+                    className="flex-grow"
+                  />
+                  <Button onClick={handleSendReferrals} disabled={isSending || !emails.trim()}>
+                    {buttonContent()}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            <TabsContent value="history">
-              <ReferralTimeline
-                hideLoyaltyProgramDetails={true}
-                hideSeniorityBadges={true}
-              />
-            </TabsContent>
-          </Tabs>
-        </ScrollArea>
+          <TabsContent value="history">
+            <ReferralTimeline
+              hideLoyaltyProgramDetails={true}
+              hideSeniorityBadges={true}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </UnifiedLayoutTemplate>
   );

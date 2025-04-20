@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useLocation } from "react-router-dom";
-import { Home, Users, FileText, HeartPulse, ShoppingBag, CreditCard, Video, Calendar } from "lucide-react";
+import { Home, Users, FileText, HeartPulse, ShoppingBag, CreditCard, Video, Calendar, Share } from "lucide-react";
 import SidebarItem from "../SidebarItem";
 import SidebarCollapsibleItem from "../SidebarCollapsibleItem";
 import SidebarSubItem from "../SidebarSubItem";
@@ -113,6 +113,14 @@ const DoctorPlatformSection = ({
           onClick={() => navigateToLink("?section=appointments")}
         />
       </SidebarCollapsibleItem>
+      
+      {/* Referral Link */}
+      <SidebarItem
+        icon={<Share className="w-5 h-5 mr-3" />}
+        label="Referral"
+        isActive={location.pathname === "/referral"}
+        onClick={() => navigateToLink("/referral")}
+      />
       
       {(canViewPrescriptions || canPrescribe) && (
         <SidebarItem

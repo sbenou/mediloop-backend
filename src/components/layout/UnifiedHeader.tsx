@@ -2,7 +2,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 import { ArrowLeft, User } from 'lucide-react';
-import { useState, memo } from 'react';
+import { useState, memo, useCallback } from 'react';
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -23,20 +23,17 @@ interface UnifiedHeaderProps {
   onBackClick?: () => void;
 }
 
-// Wrap userMenu in a memo component to prevent re-renders
-const MemoizedUserMenu = memo(() => <UserMenu key="user-menu-component" />);
+// Wrap components in memo to prevent unnecessary re-renders
+const MemoizedUserMenu = memo(() => <UserMenu />);
 MemoizedUserMenu.displayName = 'MemoizedUserMenu';
 
-// Wrap NotificationBell in a memo component to prevent re-renders
-const MemoizedNotificationBell = memo(() => <NotificationBell key="notification-bell-component" />);
+const MemoizedNotificationBell = memo(() => <NotificationBell />);
 MemoizedNotificationBell.displayName = 'MemoizedNotificationBell';
 
-// Wrap CartButton in a memo component to prevent re-renders
 const MemoizedCartButton = memo(() => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   return (
     <CartButton 
-      key="cart-button-component"
       isOpen={isCartOpen}
       onOpenChange={setIsCartOpen}
     />
@@ -44,8 +41,7 @@ const MemoizedCartButton = memo(() => {
 });
 MemoizedCartButton.displayName = 'MemoizedCartButton';
 
-// Wrap LanguageSelector in a memo component to prevent re-renders
-const MemoizedLanguageSelector = memo(() => <LanguageSelector key="language-selector-component" />);
+const MemoizedLanguageSelector = memo(() => <LanguageSelector />);
 MemoizedLanguageSelector.displayName = 'MemoizedLanguageSelector';
 
 const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick }: UnifiedHeaderProps) => {
@@ -57,13 +53,13 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
   const { t } = useTranslation();
   const { isAuthenticated, isLoading, profile } = useAuth();
 
-  const handleNavigateToLogin = () => {
+  const handleNavigateToLogin = useCallback(() => {
     sessionStorage.removeItem('login_successful');
     sessionStorage.removeItem('skip_dashboard_redirect');
     navigate('/login', { replace: true });
-  };
+  }, [navigate]);
 
-  const handleBackClick = () => {
+  const handleBackClick = useCallback(() => {
     if (onBackClick) {
       onBackClick();
       return;
@@ -75,12 +71,12 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
     } else {
       navigate('/');
     }
-  };
+  }, [onBackClick, profile?.role, navigate]);
 
   const publicRoutes = ['/', '/products', '/services', '/search-pharmacy', '/become-transporter', '/become-partner', '/login', '/signup', '/reset-password'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
 
-  const LoadingSkeleton = () => (
+  const LoadingSkeleton = memo(() => (
     <div className="flex items-center space-x-2">
       <Skeleton className="h-10 w-10 rounded-full">
         <div className="h-full w-full flex items-center justify-center">
@@ -88,10 +84,11 @@ const UnifiedHeader = ({ showUserMenu = true, showBackLink = false, onBackClick 
         </div>
       </Skeleton>
     </div>
-  );
+  ));
+  LoadingSkeleton.displayName = 'LoadingSkeleton';
 
   return (
-    <header className="bg-white shadow-sm z-50">
+    <header className="bg-white shadow-sm z-50 w-full">
       <div className="max-w-7xl mx-auto px-4 py-1.5 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4 sm:gap-16">

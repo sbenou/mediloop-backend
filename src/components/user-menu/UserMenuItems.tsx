@@ -1,7 +1,7 @@
 
-import { Fragment } from "react";
+import { Fragment, useCallback } from "react";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Bell, UserCircle, CreditCard, Store } from "lucide-react";
+import { Settings, LogOut, Bell, UserCircle, CreditCard, Store, Share } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { getMenuItemsByRole } from "./userMenuItemsByRole";
 import { useUserMenuNavigation } from "./userMenuNavigation";
@@ -12,8 +12,22 @@ export function UserMenuItems() {
   const { handleNavigation } = useUserMenuNavigation();
   const { handleLogout } = useUserMenuLogout();
   
-  // Always get menu items for the current role/status
+  // Always get menu items for the current role/status and ensure Doctor Profile is always included
   const menuItems = getMenuItemsByRole(userRole, isPharmacist);
+  
+  const renderMenuItem = useCallback((item, index) => {
+    return (
+      <Fragment key={`${item.label}-${index}`}>
+        <DropdownMenuItem
+          onClick={() => handleNavigation(item.path)}
+          data-testid={`user-menu-item-${index}`}
+        >
+          <item.icon className="mr-2 h-4 w-4" />
+          <span>{item.label}</span>
+        </DropdownMenuItem>
+      </Fragment>
+    );
+  }, [handleNavigation]);
   
   return (
     <>
@@ -23,17 +37,7 @@ export function UserMenuItems() {
       </div>
       <DropdownMenuSeparator />
 
-      {menuItems.map((item, index) => (
-        <Fragment key={`${item.label}-${index}`}>
-          <DropdownMenuItem
-            onClick={() => handleNavigation(item.path)}
-            data-testid={`user-menu-item-${index}`}
-          >
-            <item.icon className="mr-2 h-4 w-4" />
-            <span>{item.label}</span>
-          </DropdownMenuItem>
-        </Fragment>
-      ))}
+      {menuItems.map(renderMenuItem)}
 
       <DropdownMenuSeparator />
       <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleLogout}>

@@ -1,5 +1,5 @@
 
-import { Home, Award, User, Store, Users, FileText, ShoppingBag, CreditCard, HeartPulse, Bell, Settings, BarChart, Heart } from "lucide-react";
+import { Home, Award, User, Store, Users, FileText, ShoppingBag, CreditCard, HeartPulse, Bell, Settings, BarChart, Heart, Share } from "lucide-react";
 
 export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
   if (role === 'user' || role === 'patient') {
@@ -12,6 +12,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
       { icon: HeartPulse, label: 'Consultations', path: '/dashboard?view=teleconsultations' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
+      { icon: Share, label: 'Referral', path: '/referral' },
       { icon: Settings, label: 'Settings', path: '/settings' }
     ];
   }
@@ -27,6 +28,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
       { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
+      { icon: Share, label: 'Referral', path: '/referral' },
       { icon: Settings, label: 'Settings', path: '/settings' },
       { icon: CreditCard, label: 'Billing', path: '/billing-details' }
     ];
@@ -41,6 +43,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
       { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
+      { icon: Share, label: 'Referral', path: '/referral' },
       { icon: BarChart, label: 'Analytics', path: '/dashboard?view=pharmacy&section=analytics' },
       { icon: Settings, label: 'Settings', path: '/settings' },
       { icon: CreditCard, label: 'Billing', path: '/billing-details' }
@@ -55,6 +58,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: HeartPulse, label: 'Doctors', path: '/superadmin/doctors' },
       { icon: ShoppingBag, label: 'Products', path: '/superadmin/products' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
+      { icon: Share, label: 'Referral', path: '/referral' },
       { icon: Settings, label: 'Settings', path: '/superadmin/settings' }
     ];
   }
@@ -64,6 +68,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
     { icon: Award, label: 'Account', path: '/account' },
     { icon: User, label: 'Profile', path: '/settings?tab=profile' },
     { icon: Bell, label: 'Notifications', path: '/activities' },
+    { icon: Share, label: 'Referral', path: '/referral' },
     { icon: Settings, label: 'Settings', path: '/settings' }
   ];
 }

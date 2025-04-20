@@ -1,6 +1,5 @@
 
 import React, { ReactNode, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import PatientSidebar from "../sidebar/PatientSidebar";
 import { Button } from "@/components/ui/button";
 import { SidebarClose, SidebarOpen } from "lucide-react";
@@ -15,7 +14,6 @@ interface PatientLayoutProps {
 }
 
 const PatientLayout = ({ children, hideHeader = false }: PatientLayoutProps) => {
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
   
@@ -29,7 +27,7 @@ const PatientLayout = ({ children, hideHeader = false }: PatientLayoutProps) => 
       {/* Right section - Contains header and content area with right panel */}
       <div className="flex flex-col flex-1">
         {/* Header spans the entire width of this section */}
-        {!hideHeader && <UnifiedHeader key="unified-header-patient" />}
+        {!hideHeader && <UnifiedHeader />}
         
         {/* Main content wrapper */}
         <div className="flex flex-1 overflow-hidden relative">

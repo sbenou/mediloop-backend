@@ -26,7 +26,7 @@ const UpgradePage = () => {
     <CurrencyProvider>
       <CartProvider>
         <UnifiedLayoutTemplate>
-          <div className="container mx-auto py-8">
+          <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold mb-6">Upgrade</h1>
             <p className="text-muted-foreground mb-8">
               Choose the plan that best fits your needs
