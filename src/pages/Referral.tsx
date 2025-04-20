@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const Referral = () => {
   const { profile, isLoading } = useAuth();
@@ -32,11 +34,15 @@ const Referral = () => {
     setSendStatus("idle");
     
     try {
+      // Get the current session
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      
       const response = await fetch(`https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/send-referral-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+          // Don't include Authorization header as we've disabled JWT verification
         },
         body: JSON.stringify({
           emails: emailList,

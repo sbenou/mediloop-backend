@@ -1,10 +1,9 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useLoyaltyStatus } from "@/hooks/loyalty/useLoyaltyStatus";
-import { Shield, Clock, Award, Crown, Medal } from "lucide-react";
 import { SeniorityBadges } from "./SeniorityBadges";
+import { ReferralHistory } from "./ReferralHistory";
 
 export function ReferralTimeline() {
   const loyalty = useLoyaltyStatus();
@@ -33,6 +32,8 @@ export function ReferralTimeline() {
           </div>
         </CardContent>
       </Card>
+      
+      <ReferralHistory />
       
       <SeniorityBadges />
     </div>

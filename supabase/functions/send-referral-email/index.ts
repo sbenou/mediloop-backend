@@ -26,12 +26,14 @@ serve(async (req) => {
       throw new Error("No email addresses provided");
     }
     
-    // Create the referral link
-    const referralLink = `${new URL(req.url).origin}/signup?referral=${referral_code}`;
+    // Create the referral link - use a more flexible approach for the URL
+    const requestUrl = new URL(req.url);
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    const referralLink = `${baseUrl}/signup?referral=${referral_code}`;
     
     // Create a Supabase client using the supplied auth
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "https://hrrlefgnhkbzuwyklejj.supabase.co";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U";
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     // Send emails to each recipient
