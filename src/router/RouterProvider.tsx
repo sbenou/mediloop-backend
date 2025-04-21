@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Products from '@/pages/Products';
@@ -20,11 +21,6 @@ import { CartProvider } from '@/contexts/CartContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import Referral from '@/pages/Referral';
 import Settings from '@/pages/Settings';
-import RequireRoleGuard from '@/components/auth/RequireRoleGuard';
-import ManageBoostsPage from '@/pages/ManageBoostsPage';
-import BillingDetails from "@/pages/BillingDetails";
-import ProtectedRoute from "@/components/routing/ProtectedRoute";
-
 import ProtectedAccountPage from './roles/ProtectedAccountPage';
 import ProtectedManageBoostsPage from './roles/ProtectedManageBoostsPage';
 import ProtectedDashboard from './roles/ProtectedDashboard';
@@ -40,16 +36,17 @@ import ProtectedReferral from './roles/ProtectedReferral';
 import ProtectedSettings from './roles/ProtectedSettings';
 import ProtectedBillingDetails from './roles/ProtectedBillingDetails';
 
-// Create a wrapper component for products routes that provides context
-const ProductsLayout = () => {
-  return (
-    <CurrencyProvider>
-      <CartProvider>
-        <Outlet />
-      </CartProvider>
-    </CurrencyProvider>
-  );
-};
+// Wrapper component that injects Currency and Cart context to products routes
+const ProductsLayout = () => (
+  <CurrencyProvider>
+    <CartProvider>
+      <Outlet />
+    </CartProvider>
+  </CurrencyProvider>
+);
+
+// Type for initialView props accepted by ProtectedActivities
+type ActivitiesView = 'notifications' | 'activities';
 
 const router = createBrowserRouter([
   {
@@ -60,44 +57,17 @@ const router = createBrowserRouter([
     path: '/products',
     element: <ProductsLayout />,
     children: [
-      {
-        index: true,
-        element: <Products />,
-      },
-      {
-        path: ':id',
-        element: <ProductDetail />,
-      }
-    ]
+      { index: true, element: <Products /> },
+      { path: ':id', element: <ProductDetail /> },
+    ],
   },
-  {
-    path: '/login',
-    element: <Login />,
-  },
-  {
-    path: '/dashboard',
-    element: <ProtectedDashboard />,
-  },
-  {
-    path: '/doctor/dashboard',
-    element: <ProtectedDoctorDashboard />,
-  },
-  {
-    path: '/universal-dashboard',
-    element: <ProtectedUniversalDashboard />,
-  },
-  {
-    path: '/unauthorized',
-    element: <UnauthorizedPage />,
-  },
-  {
-    path: '/doctor/profile',
-    element: <ProtectedDoctorProfilePage />,
-  },
-  {
-    path: '/pharmacy/profile',
-    element: <ProtectedPharmacyProfilePage />,
-  },
+  { path: '/login', element: <Login /> },
+  { path: '/dashboard', element: <ProtectedDashboard /> },
+  { path: '/doctor/dashboard', element: <ProtectedDoctorDashboard /> },
+  { path: '/universal-dashboard', element: <ProtectedUniversalDashboard /> },
+  { path: '/unauthorized', element: <UnauthorizedPage /> },
+  { path: '/doctor/profile', element: <ProtectedDoctorProfilePage /> },
+  { path: '/pharmacy/profile', element: <ProtectedPharmacyProfilePage /> },
   {
     path: '/notifications',
     element: <ProtectedActivities initialView="notifications" />,
@@ -106,44 +76,18 @@ const router = createBrowserRouter([
     path: '/activities',
     element: <ProtectedActivities initialView="activities" />,
   },
-  {
-    path: '/upgrade',
-    element: <ProtectedUpgradePage />,
-  },
-  {
-    path: '/my-orders',
-    element: <ProtectedMyOrders />,
-  },
-  {
-    path: '/my-prescriptions',
-    element: <ProtectedMyPrescriptions />,
-  },
-  {
-    path: '/account',
-    element: <ProtectedAccountPage />,
-  },
-  {
-    path: '/referral',
-    element: <ProtectedReferral />,
-  },
-  {
-    path: '/settings',
-    element: <ProtectedSettings />,
-  },
-  {
-    path: '/manage-boosts',
-    element: <ProtectedManageBoostsPage />,
-  },
-  {
-    path: '/billing-details',
-    element: <ProtectedBillingDetails />,
-  },
-  {
-    path: '*',
-    element: <NotFound />,
-  }
+  { path: '/upgrade', element: <ProtectedUpgradePage /> },
+  { path: '/my-orders', element: <ProtectedMyOrders /> },
+  { path: '/my-prescriptions', element: <ProtectedMyPrescriptions /> },
+  { path: '/account', element: <ProtectedAccountPage /> },
+  { path: '/referral', element: <ProtectedReferral /> },
+  { path: '/settings', element: <ProtectedSettings /> },
+  { path: '/manage-boosts', element: <ProtectedManageBoostsPage /> },
+  { path: '/billing-details', element: <ProtectedBillingDetails /> },
+  { path: '*', element: <NotFound /> },
 ]);
 
 export function RouterProvider() {
   return <ReactRouterProvider router={router} />;
 }
+
