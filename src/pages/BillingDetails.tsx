@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -135,6 +134,10 @@ export default function BillingDetails() {
               onStatusFilterChange={setStatus}
               dateRange={dateRange}
               onDateRangeChange={setDateRange}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              view={view}
+              onViewChange={setView}
             />
             <Card>
               <CardHeader>
@@ -178,7 +181,7 @@ export default function BillingDetails() {
                         </TableBody>
                       </Table>
                     ) : (
-                      // Card view for payment logs in CardContent, same card as table view
+                      // Card view
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {filteredPayments.map(log => (
                           <Card key={log.id}>
@@ -204,44 +207,7 @@ export default function BillingDetails() {
                         ))}
                       </div>
                     )}
-                    
-                    {/* Sort and view controls at the bottom */}
-                    {filteredPayments.length > 0 && (
-                      <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mt-6">
-                        {/* Sort Dropdown */}
-                        <Select value={sortBy} onValueChange={v => setSortBy(v as "newest" | "oldest")}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue placeholder="Sort by" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="newest">Newest</SelectItem>
-                            <SelectItem value="oldest">Oldest</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        
-                        {/* List/Card Toggle */}
-                        <div className="flex border rounded-md p-1 h-10">
-                          <Button
-                            variant={view === "table" ? "default" : "ghost"}
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setView("table")}
-                          >
-                            <List className="h-4 w-4" />
-                            <span className="sr-only">Table view</span>
-                          </Button>
-                          <Button
-                            variant={view === "card" ? "default" : "ghost"}
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setView("card")}
-                          >
-                            <Grid2x2 className="h-4 w-4" />
-                            <span className="sr-only">Card view</span>
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                    {/* REMOVED: Sort and View controls from the bottom! */}
                   </>
                 )}
               </CardContent>

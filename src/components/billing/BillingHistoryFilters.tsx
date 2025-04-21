@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Calendar } from "lucide-react";
+import { Search, Filter, Calendar, List, Grid2x2 } from "lucide-react";
 
 type PaymentStatus = "all" | "success" | "failed";
 
@@ -21,6 +21,10 @@ interface BillingHistoryFiltersProps {
   onStatusFilterChange: (status: PaymentStatus) => void;
   dateRange: string;
   onDateRangeChange: (range: string) => void;
+  sortBy: "newest" | "oldest";
+  onSortChange: (sort: "newest" | "oldest") => void;
+  view: "table" | "card";
+  onViewChange: (view: "table" | "card") => void;
 }
 
 const statusLabels: Record<PaymentStatus, string> = {
@@ -36,13 +40,17 @@ export const BillingHistoryFilters: React.FC<BillingHistoryFiltersProps> = ({
   onStatusFilterChange,
   dateRange,
   onDateRangeChange,
+  sortBy,
+  onSortChange,
+  view,
+  onViewChange
 }) => {
   // Example years for demonstration (current & last 3 years)
   const years = Array.from({ length: 4 }).map((_, i) => `${new Date().getFullYear() - i}`);
 
   return (
     <div className="flex flex-col md:flex-row md:items-center gap-4 my-4 w-full">
-      {/* Search */}
+      {/* Filters row: search/start */}
       <div className="flex items-center relative md:w-64 w-full">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
@@ -52,7 +60,7 @@ export const BillingHistoryFilters: React.FC<BillingHistoryFiltersProps> = ({
           onChange={e => onSearchChange(e.target.value)}
         />
       </div>
-
+      {/* Middle filters */}
       <div className="flex flex-1 flex-wrap md:flex-nowrap gap-3 md:gap-4">
         {/* Status Filter */}
         <Select value={statusFilter} onValueChange={v => onStatusFilterChange(v as PaymentStatus)}>
@@ -66,7 +74,6 @@ export const BillingHistoryFilters: React.FC<BillingHistoryFiltersProps> = ({
             <SelectItem value="failed">Failed Payments</SelectItem>
           </SelectContent>
         </Select>
-
         {/* Date Range Filter */}
         <Select value={dateRange} onValueChange={onDateRangeChange}>
           <SelectTrigger className="w-36">
@@ -84,6 +91,42 @@ export const BillingHistoryFilters: React.FC<BillingHistoryFiltersProps> = ({
             ))}
           </SelectContent>
         </Select>
+      </div>
+      {/* Right-aligned Sort/View controls */}
+      <div className="flex flex-row gap-2 ml-auto items-center">
+        {/* Sort Dropdown */}
+        <Select value={sortBy} onValueChange={v => onSortChange(v as "newest" | "oldest")}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+          </SelectContent>
+        </Select>
+        {/* View Toggle */}
+        <div className="flex border rounded-md p-1 h-10">
+          <Button
+            variant={view === "table" ? "default" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onViewChange("table")}
+            type="button"
+          >
+            <List className="h-4 w-4" />
+            <span className="sr-only">Table view</span>
+          </Button>
+          <Button
+            variant={view === "card" ? "default" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onViewChange("card")}
+            type="button"
+          >
+            <Grid2x2 className="h-4 w-4" />
+            <span className="sr-only">Card view</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
