@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import DoctorSidebar from "@/components/sidebar/DoctorSidebar";
+import Sidebar from "@/components/sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, X, SidebarClose, SidebarOpen } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -35,7 +35,7 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
-          <DoctorSidebar />
+          <Sidebar />
         </div>
 
         {/* Mobile Sidebar */}
@@ -46,24 +46,19 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-[280px] mt-16">
-            <DoctorSidebar />
+            <Sidebar />
           </SheetContent>
         </Sheet>
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
-          {/* Unified header with stable key to prevent re-renders */}
           {!hideHeader && <UnifiedHeader />}
-          {/* Main Content with Right Drawer */}
           <div className="flex flex-1 overflow-hidden relative">
-            {/* Main content area */}
             <main className={`flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll transition-all duration-300 ${isDrawerOpen ? 'mr-[300px]' : 'mr-0'}`}>
               <ScrollArea className="h-full w-full">
                 {children}
               </ScrollArea>
             </main>
-            
-            {/* Drawer toggle button */}
             <Button
               variant="outline"
               size="icon"
@@ -72,8 +67,6 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
             >
               {isDrawerOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
             </Button>
-            
-            {/* Right drawer */}
             <div 
               className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
             >
@@ -88,11 +81,9 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
                     <TabsTrigger value="home">Home</TabsTrigger>
                     <TabsTrigger value="activity">Activity</TabsTrigger>
                   </TabsList>
-                  
                   <TabsContent value="home" className="mt-0">
                     <Advertisements />
                   </TabsContent>
-                  
                   <TabsContent value="activity" className="mt-0">
                     <ActivityFeed />
                   </TabsContent>
@@ -107,3 +98,4 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
 };
 
 export default DoctorLayout;
+
