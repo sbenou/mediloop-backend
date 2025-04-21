@@ -21,6 +21,7 @@ const ProfessionalTabs: React.FC<ProfessionalTabsProps> = ({
           value="profile" 
           className="flex items-center justify-center"
           onClick={() => onTabChange('profile')}
+          data-state={activeTab === 'profile' ? 'active' : 'inactive'}
         >
           <User className="mr-2 h-4 w-4" />
           Profile
@@ -29,6 +30,7 @@ const ProfessionalTabs: React.FC<ProfessionalTabsProps> = ({
           value="team" 
           className="flex items-center justify-center"
           onClick={() => onTabChange('team')}
+          data-state={activeTab === 'team' ? 'active' : 'inactive'}
         >
           <Users className="mr-2 h-4 w-4" />
           Team
@@ -37,6 +39,7 @@ const ProfessionalTabs: React.FC<ProfessionalTabsProps> = ({
           value="staff" 
           className="flex items-center justify-center"
           onClick={() => onTabChange('staff')}
+          data-state={activeTab === 'staff' ? 'active' : 'inactive'}
         >
           <UserCog className="mr-2 h-4 w-4" />
           Staff Management

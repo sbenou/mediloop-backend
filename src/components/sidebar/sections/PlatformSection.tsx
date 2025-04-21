@@ -4,7 +4,7 @@ import SidebarSection from "../SidebarSection";
 import SidebarItem from "../SidebarItem";
 import SidebarCollapsibleItem from "../SidebarCollapsibleItem";
 import SidebarSubItem from "../SidebarSubItem";
-import { platformMenuItems, ordersSubItems, profileSubItems, consultationsSubItems } from "../config/sidebarNavItems";
+import { platformMenuItems, ordersSubItems, consultationsSubItems } from "../config/sidebarNavItems";
 import { useSidebarNavigation } from "@/hooks/sidebar/useSidebarNavigation";
 import { useSidebarItems } from "../hooks/useSidebarItems";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -32,8 +32,8 @@ export const PlatformSection = () => {
     isLinkActive 
   } = useSidebarItems();
 
-  const filteredItems = getFilteredProfileSubItems();
-  console.log("Filtered Profile SubItems:", filteredItems);
+  const filteredProfileSubItems = getFilteredProfileSubItems();
+  console.log("Filtered Profile SubItems:", filteredProfileSubItems);
 
   return (
     <SidebarSection title="Platform">
@@ -54,7 +54,7 @@ export const PlatformSection = () => {
         isActive={location.search.includes('view=profile')}
         onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
       >
-        {filteredItems.map((subItem, index) => (
+        {filteredProfileSubItems.map((subItem, index) => (
           <SidebarSubItem
             key={index}
             icon={subItem.icon}
