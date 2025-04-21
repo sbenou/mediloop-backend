@@ -107,7 +107,12 @@ export function SubscriptionTab() {
               </div>
               
               <div className="flex justify-end">
-                <Button variant="outline" className="mr-2" onClick={handleManageBoosts}>
+                <Button 
+                  variant="outline" 
+                  className="mr-2" 
+                  onClick={handleManageBoosts}
+                  disabled={boosts.available === 0} 
+                >
                   Manage Boosts
                 </Button>
                 <Button onClick={handlePurchaseBoosts}>
