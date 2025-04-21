@@ -2,7 +2,7 @@
 import { 
   Home, User, ShoppingBag, Settings, Calendar, 
   Pill, Users, Store, Heart, CreditCard, Video, HeartPulse, MapPin,
-  Share // Share icon for referral
+  Share, FileSignature, Briefcase // Added FileSignature for stamps and Briefcase for workplace
 } from "lucide-react";
 
 export const platformMenuItems = [
@@ -54,6 +54,16 @@ export const profileSubItems = [
     label: 'Next of Kin',
     icon: <Users className="w-4 h-4 mr-3" />,
     path: '/dashboard?view=profile&profileTab=nextofkin',
+  },
+  {
+    label: 'Stamp & Signature',
+    icon: <FileSignature className="w-4 h-4 mr-3" />,
+    path: '/dashboard?view=profile&profileTab=stamp',
+  },
+  {
+    label: 'Workplace',
+    icon: <Briefcase className="w-4 h-4 mr-3" />,
+    path: '/dashboard?view=profile&profileTab=workplace',
   }
 ];
 

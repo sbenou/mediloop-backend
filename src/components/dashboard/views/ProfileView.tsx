@@ -76,9 +76,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
         return [
           ...commonTabs,
           { id: 'stamp', label: 'Stamp & Signature' },
-          { id: 'qualifications', label: 'Qualifications' },
-          { id: 'workplace', label: 'Workplace' },
-          { id: 'clinic', label: 'Clinic Details' }
+          { id: 'workplace', label: 'Workplace' }
+          // Removed "qualifications" and "clinic" tabs as requested
         ];
       case 'pharmacist':
         return [
@@ -198,24 +197,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
               />
             </div>
           </TabsContent>
-        )}
-        
-        {/* Additional role-specific tabs */}
-        {userRole === 'doctor' && (
-          <>
-            <TabsContent value="qualifications" className="mt-4">
-              <div className="bg-white shadow rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Qualifications</h2>
-                <p>Your medical qualifications and certifications will be displayed here.</p>
-              </div>
-            </TabsContent>
-            <TabsContent value="clinic" className="mt-4">
-              <div className="bg-white shadow rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Clinic Details</h2>
-                <p>Your clinic information will be displayed here.</p>
-              </div>
-            </TabsContent>
-          </>
         )}
         
         {userRole === 'superadmin' && (

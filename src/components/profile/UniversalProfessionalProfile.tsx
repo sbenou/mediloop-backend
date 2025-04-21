@@ -56,10 +56,7 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
       { id: 'staff', label: 'Staff Management' }
     ];
     
-    if (userRole === "doctor") {
-      tabs.push({ id: 'qualifications', label: 'Qualifications' });
-      tabs.push({ id: 'clinic', label: 'Clinic Details' });
-    }
+    // Removed Qualifications and Clinic Details tabs as requested
     
     return tabs;
   };
@@ -148,23 +145,6 @@ const UniversalProfessionalProfile: React.FC<UniversalProfessionalProfileProps> 
             )}
           </div>
         </TabsContent>
-        
-        {userRole === "doctor" && (
-          <>
-            <TabsContent value="qualifications" className="mt-4">
-              <div className="bg-white shadow rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Qualifications</h2>
-                <p>Your medical qualifications and certifications will be displayed here.</p>
-              </div>
-            </TabsContent>
-            <TabsContent value="clinic" className="mt-4">
-              <div className="bg-white shadow rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Clinic Details</h2>
-                <p>Your clinic information will be displayed here.</p>
-              </div>
-            </TabsContent>
-          </>
-        )}
       </Tabs>
     </div>
   );

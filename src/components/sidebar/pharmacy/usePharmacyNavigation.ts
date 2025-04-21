@@ -44,11 +44,22 @@ export const usePharmacyNavigation = () => {
     navigate('/products');
   };
 
+  // Add these helper methods for navigating to specific profile tabs
+  const navigateToStampSignature = () => {
+    navigateToPharmacySection('profile', 'stampSignature', 'profileTab');
+  };
+
+  const navigateToNextOfKin = () => {
+    navigateToPharmacySection('profile', 'nextofkin', 'profileTab');
+  };
+
   return {
     navigateToPharmacySection,
     navigateToPharmacyProfile,
     navigateToProducts,
     navigateToLink,
+    navigateToStampSignature,
+    navigateToNextOfKin,
     isProfilePage,
     isProfileOpen,
     setIsProfileOpen,

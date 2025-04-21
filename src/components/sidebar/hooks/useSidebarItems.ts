@@ -8,10 +8,27 @@ export const useSidebarItems = () => {
   const location = useLocation();
 
   const getFilteredProfileSubItems = () => {
-    if (userRole === 'pharmacist') {
-      return profileSubItems.filter(item => !['Pharmacy', 'My Doctor'].includes(item.label));
+    // For doctors, show all profile items except pharmacy-specific ones
+    if (userRole === 'doctor') {
+      return profileSubItems.filter(item => 
+        !['Default Pharmacy', 'My Doctor'].includes(item.label)
+      );
     }
-    return profileSubItems;
+    
+    // For pharmacists, show all profile items except doctor-specific ones and patient-specific ones
+    if (userRole === 'pharmacist') {
+      return profileSubItems.filter(item => 
+        !['Default Pharmacy', 'My Doctor', 'Workplace'].includes(item.label) &&
+        // Rename "Stamp & Signature" to use the right path for pharmacists
+        (item.label !== 'Stamp & Signature' || (item.label === 'Stamp & Signature' && 
+          { ...item, path: '/dashboard?view=profile&profileTab=stampSignature' }))
+      );
+    }
+    
+    // For patients, include personal details, addresses, next of kin, default pharmacy, and my doctor
+    return profileSubItems.filter(item => 
+      !['Stamp & Signature', 'Workplace'].includes(item.label)
+    );
   };
 
   const showConsultationsMenu = userRole !== 'pharmacist';
