@@ -8,10 +8,10 @@ export const useSidebarItems = () => {
   const location = useLocation();
 
   const getFilteredProfileSubItems = () => {
-    // For doctors, show all profile items except pharmacy-specific ones
+    // For doctors, show all profile items except pharmacy-specific ones and patient-specific ones
     if (userRole === 'doctor') {
       return profileSubItems.filter(item => 
-        !['Default Pharmacy'].includes(item.label)
+        !['Default Pharmacy', 'My Doctor'].includes(item.label)
       );
     }
     

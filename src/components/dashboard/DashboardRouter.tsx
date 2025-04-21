@@ -52,30 +52,55 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
     return <PharmacyView userRole={userRole} section={section} />;
   }
   
-  // For doctors, handle special views
+  // For doctors, handle special views based on section parameter
   if (userRole === "doctor") {
     console.log("Handling doctor view with section:", section);
-    switch (section) {
-      case "profile":
-        return <ProfileView activeTab={profileTab} userRole="doctor" />;
-      case "settings":
-        return <SettingsView userRole="doctor" />;
-      case "prescriptions":
-        return <DoctorPrescriptionsView />;
-      case "patients":
-        return <DoctorPatientView />;
-      case "teleconsultations":
-        return <DoctorTeleconsultationsView />;
-      case "appointments":
-        return <DoctorAppointmentsView />;
-      case "workplaces":
-        return <WorkplacesView />;
-      case "notifications":
-        return <NotificationsView userRole="doctor" />;
-      case "dashboard":
-      default:
-        return <HomeView userRole="doctor" />;
+    
+    // Check for section parameter first (doctor specific routing)
+    if (section) {
+      switch (section) {
+        case "profile":
+          return <ProfileView activeTab={profileTab} userRole="doctor" />;
+        case "settings":
+          return <SettingsView userRole="doctor" />;
+        case "prescriptions":
+          return <DoctorPrescriptionsView />;
+        case "patients":
+          return <DoctorPatientView />;
+        case "teleconsultations":
+          return <DoctorTeleconsultationsView />;
+        case "appointments":
+          return <DoctorAppointmentsView />;
+        case "workplaces":
+          return <WorkplacesView />;
+        case "notifications":
+          return <NotificationsView userRole="doctor" />;
+        case "dashboard":
+        default:
+          return <HomeView userRole="doctor" />;
+      }
     }
+    
+    // Fallback to view parameter for backward compatibility
+    if (view) {
+      switch (view) {
+        case "profile":
+          return <ProfileView activeTab={profileTab} userRole="doctor" />;
+        case "settings":
+          return <SettingsView userRole="doctor" />;
+        case "prescriptions":
+          return <DoctorPrescriptionsView />;
+        case "teleconsultations":
+          return <DoctorTeleconsultationsView />;
+        case "notifications":
+          return <NotificationsView userRole="doctor" />;
+        default:
+          return <HomeView userRole="doctor" />;
+      }
+    }
+    
+    // Default view if no parameters are provided
+    return <HomeView userRole="doctor" />;
   }
   
   // For patients (or any other role), handle based on view parameter

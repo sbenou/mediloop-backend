@@ -1,21 +1,21 @@
 
-import { ReactNode } from "react";
+import React from "react";
 
 interface SidebarSectionProps {
   title: string;
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 const SidebarSection = ({ title, children }: SidebarSectionProps) => {
   return (
-    <>
-      <div className="px-3 mb-2 mt-6">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-left">{title}</p>
-      </div>
-      <nav className="space-y-1 px-2">
+    <div className="mb-6">
+      <h2 className="mb-2 px-6 text-xs font-semibold tracking-wider uppercase text-gray-500">
+        {title}
+      </h2>
+      <div className="space-y-1">
         {children}
-      </nav>
-    </>
+      </div>
+    </div>
   );
 };
 

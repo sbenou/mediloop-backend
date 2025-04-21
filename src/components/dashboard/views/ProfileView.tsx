@@ -42,13 +42,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
   const handleTabChange = (value: string) => {
     console.log("ProfileView: Tab changed to:", value);
     
-    // Handle different URL patterns based on the location
-    if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
+    // Handle different URL patterns based on the location and role
+    if (userRole === 'doctor') {
+      // For doctors, use section parameter
+      navigate(`/dashboard?section=profile&profileTab=${value}`);
+    } else if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
       // For pharmacist view within dashboard
       navigate(`/dashboard?view=pharmacy&section=profile&profileTab=${value}`);
-    } else if (location.pathname === '/dashboard' && searchParams.get('view') === 'doctor') {
-      // For doctor view within dashboard
-      navigate(`/dashboard?view=doctor&section=profile&profileTab=${value}`);
     } else {
       // For regular dashboard profile view
       navigate(`/dashboard?view=profile&profileTab=${value}`);

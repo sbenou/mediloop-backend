@@ -51,18 +51,28 @@ export const PlatformSection = () => {
         icon={<User className="w-5 h-5 mr-3" />}
         label="Profile"
         isOpen={isProfileOpen}
-        isActive={location.search.includes('view=profile')}
+        isActive={location.search.includes('view=profile') || location.search.includes('section=profile')}
         onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
       >
-        {filteredProfileSubItems.map((subItem, index) => (
-          <SidebarSubItem
-            key={index}
-            icon={subItem.icon}
-            label={subItem.label}
-            isActive={location.search.includes('profileTab=' + subItem.path.split('profileTab=')[1])}
-            onClick={() => navigateToLink(subItem.path)}
-          />
-        ))}
+        {filteredProfileSubItems.map((subItem, index) => {
+          // For doctor role, adjust paths to use section instead of view
+          const path = userRole === 'doctor' 
+            ? subItem.path.replace('view=profile', 'section=profile') 
+            : subItem.path;
+            
+          return (
+            <SidebarSubItem
+              key={index}
+              icon={subItem.icon}
+              label={subItem.label}
+              isActive={
+                (location.search.includes('profileTab=' + path.split('profileTab=')[1])) &&
+                (location.search.includes('view=profile') || location.search.includes('section=profile'))
+              }
+              onClick={() => navigateToLink(path)}
+            />
+          );
+        })}
       </SidebarCollapsibleItem>
 
       <SidebarCollapsibleItem
@@ -87,8 +97,13 @@ export const PlatformSection = () => {
         <SidebarItem
           icon={<Pill className="w-5 h-5 mr-3" />}
           label="Prescriptions"
-          isActive={location.search.includes('view=prescriptions')}
-          onClick={() => navigateToLink('/dashboard?view=prescriptions')}
+          isActive={location.search.includes('view=prescriptions') || location.search.includes('section=prescriptions')}
+          onClick={() => {
+            const path = userRole === 'doctor' 
+              ? '/dashboard?section=prescriptions' 
+              : '/dashboard?view=prescriptions';
+            navigateToLink(path);
+          }}
         />
       )}
 
@@ -98,18 +113,30 @@ export const PlatformSection = () => {
           label="Consultations"
           isOpen={isConsultationsOpen}
           isActive={location.search.includes('view=teleconsultations') || 
-                   location.search.includes('view=appointments')}
+                   location.search.includes('view=appointments') ||
+                   location.search.includes('section=teleconsultations') ||
+                   location.search.includes('section=appointments')}
           onOpenChange={(isOpen) => setIsConsultationsOpen(isOpen)}
         >
-          {consultationsSubItems.map((subItem, index) => (
-            <SidebarSubItem
-              key={index}
-              icon={subItem.icon}
-              label={subItem.label}
-              isActive={location.search.includes('view=' + subItem.path.split('view=')[1])}
-              onClick={() => navigateToLink(subItem.path)}
-            />
-          ))}
+          {consultationsSubItems.map((subItem, index) => {
+            // For doctor role, adjust paths to use section instead of view
+            const path = userRole === 'doctor'
+              ? subItem.path.replace('view=', 'section=')
+              : subItem.path;
+              
+            return (
+              <SidebarSubItem
+                key={index}
+                icon={subItem.icon}
+                label={subItem.label}
+                isActive={
+                  location.search.includes('view=' + subItem.path.split('view=')[1]) ||
+                  location.search.includes('section=' + path.split('section=')[1])
+                }
+                onClick={() => navigateToLink(path)}
+              />
+            );
+          })}
         </SidebarCollapsibleItem>
       )}
     </SidebarSection>
