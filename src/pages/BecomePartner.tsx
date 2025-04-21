@@ -9,6 +9,30 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 
+// Define the benefits array that was missing
+const benefits = [
+  {
+    icon: Building2,
+    title: "Expanded Reach",
+    description: "Connect with patients across the region through our digital platform."
+  },
+  {
+    icon: Users,
+    title: "Customer Growth",
+    description: "Gain access to a growing network of patients seeking pharmacy services."
+  },
+  {
+    icon: TrendingUp,
+    title: "Digital Solutions",
+    description: "Access our online prescription management and delivery coordination tools."
+  },
+  {
+    icon: BadgeCheck,
+    title: "Brand Visibility",
+    description: "Featured placement in pharmacy searches and marketing campaigns."
+  }
+];
+
 const BecomePartner = () => {
   const { ref: sectionRef, inView: sectionInView } = useInView({
     triggerOnce: true,

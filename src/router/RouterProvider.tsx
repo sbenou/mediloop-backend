@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Products from '@/pages/Products';
@@ -82,7 +81,8 @@ const ProtectedPharmacyProfilePage = () => (
   </ProtectedRoute>
 );
 
-const ProtectedActivities = ({ initialView }: { initialView: string }) => (
+// Fix the type error by using a valid type for initialView
+const ProtectedActivities = ({ initialView }: { initialView: "notifications" | "activities" }) => (
   <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
     <Activities initialView={initialView} />
   </ProtectedRoute>
