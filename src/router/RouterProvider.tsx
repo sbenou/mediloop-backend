@@ -25,6 +25,21 @@ import ManageBoostsPage from '@/pages/ManageBoostsPage';
 import BillingDetails from "@/pages/BillingDetails";
 import ProtectedRoute from "@/components/routing/ProtectedRoute";
 
+import ProtectedAccountPage from './roles/ProtectedAccountPage';
+import ProtectedManageBoostsPage from './roles/ProtectedManageBoostsPage';
+import ProtectedDashboard from './roles/ProtectedDashboard';
+import ProtectedDoctorDashboard from './roles/ProtectedDoctorDashboard';
+import ProtectedUniversalDashboard from './roles/ProtectedUniversalDashboard';
+import ProtectedDoctorProfilePage from './roles/ProtectedDoctorProfilePage';
+import ProtectedPharmacyProfilePage from './roles/ProtectedPharmacyProfilePage';
+import ProtectedActivities from './roles/ProtectedActivities';
+import ProtectedUpgradePage from './roles/ProtectedUpgradePage';
+import ProtectedMyOrders from './roles/ProtectedMyOrders';
+import ProtectedMyPrescriptions from './roles/ProtectedMyPrescriptions';
+import ProtectedReferral from './roles/ProtectedReferral';
+import ProtectedSettings from './roles/ProtectedSettings';
+import ProtectedBillingDetails from './roles/ProtectedBillingDetails';
+
 // Create a wrapper component for products routes that provides context
 const ProductsLayout = () => {
   return (
@@ -35,94 +50,6 @@ const ProductsLayout = () => {
     </CurrencyProvider>
   );
 };
-
-// Protected account page for specific roles
-const ProtectedAccountPage = () => (
-  <RequireRoleGuard allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-    <Account />
-  </RequireRoleGuard>
-);
-
-// Protected manage boosts page for professionals
-const ProtectedManageBoostsPage = () => (
-  <RequireRoleGuard allowedRoles={['doctor', 'pharmacist']}>
-    <ManageBoostsPage />
-  </RequireRoleGuard>
-);
-
-// Wrap with protected route for auth check
-const ProtectedDashboard = () => (
-  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-    <Dashboard />
-  </ProtectedRoute>
-);
-
-const ProtectedDoctorDashboard = () => (
-  <ProtectedRoute allowedRoles={['doctor', 'superadmin']}>
-    <DoctorDashboard />
-  </ProtectedRoute>
-);
-
-const ProtectedUniversalDashboard = () => (
-  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-    <UniversalDashboard />
-  </ProtectedRoute>
-);
-
-const ProtectedDoctorProfilePage = () => (
-  <ProtectedRoute allowedRoles={['doctor', 'superadmin']}>
-    <DoctorProfilePage />
-  </ProtectedRoute>
-);
-
-const ProtectedPharmacyProfilePage = () => (
-  <ProtectedRoute allowedRoles={['pharmacist', 'superadmin']}>
-    <PharmacyProfilePage />
-  </ProtectedRoute>
-);
-
-// Fix the type error by using a valid type for initialView
-const ProtectedActivities = ({ initialView }: { initialView: "notifications" | "activities" }) => (
-  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-    <Activities initialView={initialView} />
-  </ProtectedRoute>
-);
-
-const ProtectedUpgradePage = () => (
-  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
-    <UpgradePage />
-  </ProtectedRoute>
-);
-
-const ProtectedMyOrders = () => (
-  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
-    <MyOrders />
-  </ProtectedRoute>
-);
-
-const ProtectedMyPrescriptions = () => (
-  <ProtectedRoute allowedRoles={['patient', 'doctor']}>
-    <MyPrescriptions />
-  </ProtectedRoute>
-);
-
-const ProtectedReferral = () => (
-  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
-    <Referral />
-  </ProtectedRoute>
-);
-
-const ProtectedSettings = () => (
-  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-    <Settings />
-  </ProtectedRoute>
-);
-
-const ProtectedBillingDetails = () => (
-  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
-    <BillingDetails />
-  </ProtectedRoute>
-);
 
 const router = createBrowserRouter([
   {
