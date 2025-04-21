@@ -98,4 +98,3 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
 };
 
 export default DoctorLayout;
-
