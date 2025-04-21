@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
+import DoctorLayout from "@/components/layout/DoctorLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -98,7 +98,7 @@ const Referral = () => {
   };
 
   return (
-    <UnifiedLayoutTemplate>
+    <DoctorLayout>
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">Referral Program</h1>
 
@@ -142,7 +142,7 @@ const Referral = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </UnifiedLayoutTemplate>
+    </DoctorLayout>
   );
 };
 
