@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,12 +69,12 @@ export function SubscriptionTab() {
                 <Star className="h-12 w-12 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">No active subscription</h3>
+                <h3 className="font-semibold text-lg">You are currently on the Free plan</h3>
                 <p className="text-muted-foreground mb-4">
-                  Upgrade now to access premium features
+                  Upgrade now to access premium features with the Pro plan.
                 </p>
                 <Button onClick={handleUpgrade}>
-                  Explore Plans
+                  Upgrade to Pro
                 </Button>
               </div>
             </div>
@@ -143,3 +144,4 @@ export function SubscriptionTab() {
     </div>
   );
 }
+
