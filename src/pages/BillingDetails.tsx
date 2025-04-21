@@ -6,6 +6,15 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/auth/useAuth";
 import BillingHistoryFilters from "@/components/billing/BillingHistoryFilters";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { List, Grid2x2 } from "lucide-react";
 
 // TEMP: Mock payment data
 const paymentLogs = [
@@ -93,6 +102,7 @@ export default function BillingDetails() {
     [search, status, dateRange, sortBy]
   );
 
+  // Move "Sort by" selector and view toggle out of filters bar and into table/card footer
   return (
     <UnifiedLayoutTemplate>
       <div className="max-w-7xl mx-auto py-8 space-y-8">
@@ -125,10 +135,6 @@ export default function BillingDetails() {
               onStatusFilterChange={setStatus}
               dateRange={dateRange}
               onDateRangeChange={setDateRange}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              view={view}
-              onViewChange={setView}
             />
             <Card>
               <CardHeader>
@@ -142,59 +148,97 @@ export default function BillingDetails() {
                       No payment history available.
                     </p>
                   </div>
-                ) : view === "table" ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Purchased Date</TableHead>
-                        <TableHead>Paid By</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Attempts</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPayments.map((log) => (
-                        <TableRow key={log.id}>
-                          <TableCell>{log.product}</TableCell>
-                          <TableCell>{log.date}</TableCell>
-                          <TableCell>{log.paidBy}</TableCell>
-                          <TableCell>
-                            <Badge variant={log.status === "success" ? "default" : "destructive"}>
-                              {log.status === "success" ? "Successful" : "Failed"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{log.attempts}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
                 ) : (
-                  // Card view for payment logs in CardContent, same card as table view
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {filteredPayments.map(log => (
-                      <Card key={log.id}>
-                        <CardHeader>
-                          <CardTitle className="text-base font-semibold">{log.product}</CardTitle>
-                          <CardDescription>
-                            <span className="text-sm text-muted-foreground">{log.date}</span>
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-col gap-2">
-                          <div><span className="font-medium">Paid By: </span>{log.paidBy}</div>
-                          <div>
-                            <span className="font-medium">Status: </span>
-                            <Badge variant={log.status === "success" ? "default" : "destructive"}>
-                              {log.status === "success" ? "Successful" : "Failed"}
-                            </Badge>
-                          </div>
-                          <div>
-                            <span className="font-medium">Attempts: </span>{log.attempts}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                  <>
+                    {view === "table" ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Product</TableHead>
+                            <TableHead>Purchased Date</TableHead>
+                            <TableHead>Paid By</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Attempts</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredPayments.map((log) => (
+                            <TableRow key={log.id}>
+                              <TableCell>{log.product}</TableCell>
+                              <TableCell>{log.date}</TableCell>
+                              <TableCell>{log.paidBy}</TableCell>
+                              <TableCell>
+                                <Badge variant={log.status === "success" ? "default" : "destructive"}>
+                                  {log.status === "success" ? "Successful" : "Failed"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{log.attempts}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      // Card view for payment logs in CardContent, same card as table view
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {filteredPayments.map(log => (
+                          <Card key={log.id}>
+                            <CardHeader>
+                              <CardTitle className="text-base font-semibold">{log.product}</CardTitle>
+                              <CardDescription>
+                                <span className="text-sm text-muted-foreground">{log.date}</span>
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex flex-col gap-2">
+                              <div><span className="font-medium">Paid By: </span>{log.paidBy}</div>
+                              <div>
+                                <span className="font-medium">Status: </span>
+                                <Badge variant={log.status === "success" ? "default" : "destructive"}>
+                                  {log.status === "success" ? "Successful" : "Failed"}
+                                </Badge>
+                              </div>
+                              <div>
+                                <span className="font-medium">Attempts: </span>{log.attempts}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                    {/* Moved controls: Sort dropdown and view toggle below the table/grid */}
+                    <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mt-6">
+                      {/* Sort Dropdown */}
+                      <Select value={sortBy} onValueChange={v => setSortBy(v as "newest" | "oldest")}>
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="newest">Newest</SelectItem>
+                          <SelectItem value="oldest">Oldest</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {/* List/Card Toggle */}
+                      <div className="flex border rounded-md p-1 h-10">
+                        <Button
+                          variant={view === "table" ? "default" : "ghost"}
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setView("table")}
+                        >
+                          <List className="h-4 w-4" />
+                          <span className="sr-only">Table view</span>
+                        </Button>
+                        <Button
+                          variant={view === "card" ? "default" : "ghost"}
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setView("card")}
+                        >
+                          <Grid2x2 className="h-4 w-4" />
+                          <span className="sr-only">Card view</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
