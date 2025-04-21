@@ -64,6 +64,16 @@ export const profileSubItems = [
     label: 'Workplace',
     icon: <Briefcase className="w-4 h-4 mr-3" />,
     path: '/dashboard?view=profile&profileTab=workplace',
+  },
+  {
+    label: 'Default Pharmacy',
+    icon: <Store className="w-4 h-4 mr-3" />,
+    path: '/dashboard?view=profile&profileTab=pharmacy',
+  },
+  {
+    label: 'My Doctor',
+    icon: <Heart className="w-4 h-4 mr-3" />,
+    path: '/dashboard?view=profile&profileTab=doctor',
   }
 ];
 

@@ -11,7 +11,7 @@ export const useSidebarItems = () => {
     // For doctors, show all profile items except pharmacy-specific ones
     if (userRole === 'doctor') {
       return profileSubItems.filter(item => 
-        !['Default Pharmacy', 'My Doctor'].includes(item.label)
+        !['Default Pharmacy'].includes(item.label)
       );
     }
     
