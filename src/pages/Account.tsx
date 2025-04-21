@@ -1,16 +1,16 @@
 
 import React from "react";
 import AccountPage from "@/components/loyalty/AccountPage";
-import PatientLayout from "@/components/layout/PatientLayout";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import RequireRoleGuard from "@/components/auth/RequireRoleGuard";
 
 const Account = () => {
   return (
-    <PatientLayout>
+    <UnifiedLayoutTemplate>
       <RequireRoleGuard allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
         <AccountPage />
       </RequireRoleGuard>
-    </PatientLayout>
+    </UnifiedLayoutTemplate>
   );
 };
 

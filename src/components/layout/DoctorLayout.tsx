@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import Sidebar from "@/components/sidebar/Sidebar";
+import UnifiedSidebar from "@/components/sidebar/UnifiedSidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, X, SidebarClose, SidebarOpen } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -33,9 +33,9 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <div className="flex flex-1">
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar - Using UnifiedSidebar instead of Sidebar */}
         <div className="hidden md:block">
-          <Sidebar />
+          <UnifiedSidebar />
         </div>
 
         {/* Mobile Sidebar */}
@@ -46,7 +46,7 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-[280px] mt-16">
-            <Sidebar />
+            <UnifiedSidebar />
           </SheetContent>
         </Sheet>
 
