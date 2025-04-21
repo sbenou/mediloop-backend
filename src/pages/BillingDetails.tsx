@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo } from "react";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -102,7 +103,6 @@ export default function BillingDetails() {
     [search, status, dateRange, sortBy]
   );
 
-  // Move "Sort by" selector and view toggle out of filters bar and into table/card footer
   return (
     <UnifiedLayoutTemplate>
       <div className="max-w-7xl mx-auto py-8 space-y-8">
@@ -204,40 +204,44 @@ export default function BillingDetails() {
                         ))}
                       </div>
                     )}
-                    {/* Moved controls: Sort dropdown and view toggle below the table/grid */}
-                    <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mt-6">
-                      {/* Sort Dropdown */}
-                      <Select value={sortBy} onValueChange={v => setSortBy(v as "newest" | "oldest")}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="newest">Newest</SelectItem>
-                          <SelectItem value="oldest">Oldest</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {/* List/Card Toggle */}
-                      <div className="flex border rounded-md p-1 h-10">
-                        <Button
-                          variant={view === "table" ? "default" : "ghost"}
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setView("table")}
-                        >
-                          <List className="h-4 w-4" />
-                          <span className="sr-only">Table view</span>
-                        </Button>
-                        <Button
-                          variant={view === "card" ? "default" : "ghost"}
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setView("card")}
-                        >
-                          <Grid2x2 className="h-4 w-4" />
-                          <span className="sr-only">Card view</span>
-                        </Button>
+                    
+                    {/* Sort and view controls at the bottom */}
+                    {filteredPayments.length > 0 && (
+                      <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mt-6">
+                        {/* Sort Dropdown */}
+                        <Select value={sortBy} onValueChange={v => setSortBy(v as "newest" | "oldest")}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Sort by" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="newest">Newest</SelectItem>
+                            <SelectItem value="oldest">Oldest</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        {/* List/Card Toggle */}
+                        <div className="flex border rounded-md p-1 h-10">
+                          <Button
+                            variant={view === "table" ? "default" : "ghost"}
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setView("table")}
+                          >
+                            <List className="h-4 w-4" />
+                            <span className="sr-only">Table view</span>
+                          </Button>
+                          <Button
+                            variant={view === "card" ? "default" : "ghost"}
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setView("card")}
+                          >
+                            <Grid2x2 className="h-4 w-4" />
+                            <span className="sr-only">Card view</span>
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </>
                 )}
               </CardContent>

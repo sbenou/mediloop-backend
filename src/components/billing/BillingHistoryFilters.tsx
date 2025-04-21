@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Calendar, List, Grid2x2 } from "lucide-react";
+import { Search, Filter, Calendar } from "lucide-react";
 
 type PaymentStatus = "all" | "success" | "failed";
 
@@ -21,10 +21,6 @@ interface BillingHistoryFiltersProps {
   onStatusFilterChange: (status: PaymentStatus) => void;
   dateRange: string;
   onDateRangeChange: (range: string) => void;
-  sortBy: "newest" | "oldest";
-  onSortChange: (sort: "newest" | "oldest") => void;
-  view: "table" | "card";
-  onViewChange: (view: "table" | "card") => void;
 }
 
 const statusLabels: Record<PaymentStatus, string> = {
@@ -40,10 +36,6 @@ export const BillingHistoryFilters: React.FC<BillingHistoryFiltersProps> = ({
   onStatusFilterChange,
   dateRange,
   onDateRangeChange,
-  sortBy,
-  onSortChange,
-  view,
-  onViewChange,
 }) => {
   // Example years for demonstration (current & last 3 years)
   const years = Array.from({ length: 4 }).map((_, i) => `${new Date().getFullYear() - i}`);
@@ -92,43 +84,9 @@ export const BillingHistoryFilters: React.FC<BillingHistoryFiltersProps> = ({
             ))}
           </SelectContent>
         </Select>
-
-        {/* Sort */}
-        <Select value={sortBy} onValueChange={v => onSortChange(v as "newest" | "oldest")}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Newest</SelectItem>
-            <SelectItem value="oldest">Oldest</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* List/Card Toggle */}
-        <div className="flex border rounded-md p-1 h-10">
-          <Button
-            variant={view === "table" ? "default" : "ghost"}
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onViewChange("table")}
-          >
-            <List className="h-4 w-4" />
-            <span className="sr-only">Table view</span>
-          </Button>
-          <Button
-            variant={view === "card" ? "default" : "ghost"}
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onViewChange("card")}
-          >
-            <Grid2x2 className="h-4 w-4" />
-            <span className="sr-only">Card view</span>
-          </Button>
-        </div>
       </div>
     </div>
   );
 };
 
 export default BillingHistoryFilters;
-
