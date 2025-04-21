@@ -17,12 +17,27 @@ export const useSidebarItems = () => {
     
     // For pharmacists, show all profile items except doctor-specific ones and patient-specific ones
     if (userRole === 'pharmacist') {
-      return profileSubItems.filter(item => 
-        !['Default Pharmacy', 'My Doctor', 'Workplace'].includes(item.label) &&
-        // Rename "Stamp & Signature" to use the right path for pharmacists
-        (item.label !== 'Stamp & Signature' || (item.label === 'Stamp & Signature' && 
-          { ...item, path: '/dashboard?view=profile&profileTab=stampSignature' }))
-      );
+      return profileSubItems.filter(item => {
+        if (item.label === 'Workplace' || item.label === 'Default Pharmacy' || item.label === 'My Doctor') {
+          return false;
+        }
+        
+        // Special case for Stamp & Signature to use pharmacist path
+        if (item.label === 'Stamp & Signature') {
+          return true; // Keep it and we'll modify the path
+        }
+        
+        return true;
+      }).map(item => {
+        // Make a copy of the item to avoid modifying the original
+        if (item.label === 'Stamp & Signature') {
+          return {
+            ...item,
+            path: '/dashboard?view=profile&profileTab=stampSignature'
+          };
+        }
+        return item;
+      });
     }
     
     // For patients, include personal details, addresses, next of kin, default pharmacy, and my doctor

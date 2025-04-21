@@ -77,7 +77,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
           ...commonTabs,
           { id: 'stamp', label: 'Stamp & Signature' },
           { id: 'workplace', label: 'Workplace' }
-          // Removed "qualifications" and "clinic" tabs as requested
         ];
       case 'pharmacist':
         return [
@@ -98,6 +97,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ activeTab, userRole }) => {
 
   // Determine which tab should be active or use the first tab as default
   const currentActiveTab = activeTab || tabs[0].id;
+  
+  console.log("ProfileView: Current active tab:", currentActiveTab, "for role:", userRole);
 
   return (
     <div className="space-y-6">

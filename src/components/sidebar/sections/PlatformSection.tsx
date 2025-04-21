@@ -32,6 +32,9 @@ export const PlatformSection = () => {
     isLinkActive 
   } = useSidebarItems();
 
+  const filteredItems = getFilteredProfileSubItems();
+  console.log("Filtered Profile SubItems:", filteredItems);
+
   return (
     <SidebarSection title="Platform">
       {platformMenuItems.map((item, index) => (
@@ -51,7 +54,7 @@ export const PlatformSection = () => {
         isActive={location.search.includes('view=profile')}
         onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
       >
-        {getFilteredProfileSubItems().map((subItem, index) => (
+        {filteredItems.map((subItem, index) => (
           <SidebarSubItem
             key={index}
             icon={subItem.icon}
