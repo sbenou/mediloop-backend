@@ -29,6 +29,11 @@ export const usePharmacyNavigation = () => {
     }
   };
 
+  const navigateToLink = (path: string) => {
+    console.log(`Navigating to: ${path}`);
+    navigate(path);
+  };
+
   const navigateToPharmacyProfile = () => {
     console.log('Navigating to pharmacy profile from PharmacistSidebar');
     navigate('/pharmacy/profile');
@@ -43,6 +48,7 @@ export const usePharmacyNavigation = () => {
     navigateToPharmacySection,
     navigateToPharmacyProfile,
     navigateToProducts,
+    navigateToLink,
     isProfilePage,
     isProfileOpen,
     setIsProfileOpen,
