@@ -17,16 +17,16 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
     ];
   }
   if (role === 'doctor') {
-    // For doctors, never filter out the Doctor Profile entry
+    // For doctors, ALWAYS include Doctor Profile entry
     return [
-      { icon: Home, label: 'Dashboard', path: '/dashboard?section=dashboard' },
+      { icon: Home, label: 'Dashboard', path: '/dashboard' },
       { icon: Award, label: 'Account', path: '/account' },
-      { icon: User, label: 'Profile', path: '/dashboard?section=profile&profileTab=personal' },
+      { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
       { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Always include this item
-      { icon: Users, label: 'Patients', path: '/dashboard?section=patients' },
-      { icon: ShoppingBag, label: 'Orders', path: '/dashboard?section=orders&ordersTab=orders' },
-      { icon: FileText, label: 'Prescriptions', path: '/dashboard?section=prescriptions' },
-      { icon: HeartPulse, label: 'Consultations', path: '/dashboard?section=teleconsultations' },
+      { icon: Users, label: 'Patients', path: '/dashboard?view=patients' },
+      { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
+      { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
+      { icon: HeartPulse, label: 'Consultations', path: '/dashboard?view=teleconsultations' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
       { icon: Share, label: 'Referral', path: '/referral' },
       { icon: Settings, label: 'Settings', path: '/settings' },

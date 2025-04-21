@@ -6,14 +6,27 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { getMenuItemsByRole } from "./userMenuItemsByRole";
 import { useUserMenuNavigation } from "./userMenuNavigation";
 import { useUserMenuLogout } from "./useUserMenuLogout";
+import { useLocation } from "react-router-dom";
 
 export function UserMenuItems() {
   const { profile, userRole, isPharmacist } = useAuth();
   const { handleNavigation } = useUserMenuNavigation();
   const { handleLogout } = useUserMenuLogout();
+  const location = useLocation();
   
-  // Always get menu items for the current role/status and ensure Doctor Profile is always included
+  // Always get menu items for the current role/status
   const menuItems = getMenuItemsByRole(userRole, isPharmacist);
+  
+  // Filter out the current page from menu items to avoid duplicate navigation
+  const filteredMenuItems = menuItems.filter(item => {
+    // Special case for Doctor Profile - never filter it out regardless of current page
+    if (item.label === 'Doctor Profile') {
+      return true;
+    }
+    
+    // For other items, check if we're already on that page
+    return !location.pathname.startsWith(item.path.split('?')[0]);
+  });
   
   const renderMenuItem = useCallback((item, index) => {
     return (
@@ -37,7 +50,7 @@ export function UserMenuItems() {
       </div>
       <DropdownMenuSeparator />
 
-      {menuItems.map(renderMenuItem)}
+      {filteredMenuItems.map(renderMenuItem)}
 
       <DropdownMenuSeparator />
       <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleLogout}>
