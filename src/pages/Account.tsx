@@ -14,9 +14,9 @@ const Account = () => {
   const RenderLayout = () => {
     if (userRole === 'doctor') {
       return (
-        <DoctorLayout>
+        <UnifiedLayout>
           <AccountPage />
-        </DoctorLayout>
+        </UnifiedLayout>
       );
     } else if (userRole === 'pharmacist') {
       return (
