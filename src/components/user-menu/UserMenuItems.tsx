@@ -18,6 +18,7 @@ export function UserMenuItems() {
   const menuItems = getMenuItemsByRole(userRole, isPharmacist);
   
   // Filter out the current page from menu items to avoid duplicate navigation
+  // But NEVER filter out the Doctor Profile regardless of current page
   const filteredMenuItems = menuItems.filter(item => {
     // Special case for Doctor Profile - never filter it out regardless of current page
     if (item.label === 'Doctor Profile') {
