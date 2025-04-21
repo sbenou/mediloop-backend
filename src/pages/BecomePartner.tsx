@@ -1,10 +1,13 @@
+
 import { Building2, Users, TrendingUp, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInView } from "react-intersection-observer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { Loader } from "lucide-react";
 
 const BecomePartner = () => {
   const { ref: sectionRef, inView: sectionInView } = useInView({
@@ -14,6 +17,18 @@ const BecomePartner = () => {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Check authentication
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access this page.",
+      });
+      navigate('/login', { state: { returnUrl: '/become-partner' } });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleSubscribe = async () => {
     try {
@@ -68,28 +83,19 @@ const BecomePartner = () => {
     }
   };
 
-  const benefits = [
-    {
-      icon: Building2,
-      title: "Digital Presence",
-      description: "Get a dedicated digital storefront to showcase your pharmacy and products to our growing user base."
-    },
-    {
-      icon: Users,
-      title: "Customer Retention",
-      description: "Our platform helps you build lasting relationships with customers through convenient medication delivery and refill reminders."
-    },
-    {
-      icon: TrendingUp,
-      title: "Business Growth",
-      description: "Access detailed analytics and insights to optimize your inventory and increase sales through our platform."
-    },
-    {
-      icon: BadgeCheck,
-      title: "Quality Assurance",
-      description: "Join our network of verified pharmacies and build trust with customers through our quality guarantee program."
-    }
-  ];
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Don't render page content if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">

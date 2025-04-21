@@ -1,14 +1,29 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import ProgramOverview from "@/components/transporter/ProgramOverview";
 import BenefitsSection from "@/components/transporter/BenefitsSection";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { Loader } from "lucide-react";
 
 const BecomeTransporter = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Check authentication
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access this page.",
+      });
+      navigate('/login', { state: { returnUrl: '/become-transporter' } });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleApply = async () => {
     try {
@@ -63,6 +78,20 @@ const BecomeTransporter = () => {
       setIsProcessing(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Don't render page content if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">

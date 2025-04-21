@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -38,6 +37,7 @@ const Dashboard = () => {
       console.warn("🔒 Not authenticated — redirecting to login");
       redirectedRef.current = true;
       navigate("/login", { replace: true });
+      return; // Early return to prevent further rendering
     }
     
     // Track mount count to detect repeated mounts
@@ -72,6 +72,13 @@ const Dashboard = () => {
         </div>
       </div>
     );
+  }
+
+  // Check authentication again for safety
+  if (!isAuthenticated && !isLoading) {
+    console.log("🔒 Dashboard - User not authenticated, redirecting");
+    navigate("/login", { replace: true });
+    return null;
   }
 
   if (isAuthenticated && userRole) {

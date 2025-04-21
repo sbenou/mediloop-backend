@@ -11,7 +11,7 @@ import DoctorDetails from "@/pages/doctor/DoctorProfilePage"; // Using existing 
 import UpgradePage from "./pages/upgrade/UpgradePage";
 import Account from "./pages/Account";
 import ManageBoostsPage from "./pages/ManageBoostsPage";
-import RequireRoleGuard from "@/components/auth/RequireRoleGuard";
+import ProtectedRoute from "@/components/routing/ProtectedRoute";
 
 // Create a simple placeholder component for missing pages
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -27,14 +27,10 @@ const EditProfile = () => <PlaceholderPage title="Edit Profile" />;
 const Appointments = () => <PlaceholderPage title="Appointments" />;
 const Doctors = () => <PlaceholderPage title="Doctors" />;
 
-// Create a simplified RequireAuthGuard component
-const RequireAuthGuard = ({ children }: { children: React.ReactNode }) => {
-  return <>{children}</>;
-};
-
 export default function AppRoutes() {
   return (
     <Routes>
+      {/* Public routes that don't require authentication */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -47,21 +43,42 @@ export default function AppRoutes() {
 
       <Route path="*" element={<NotFound />} />
 
-      {/* Protected routes */}
-      <Route path="/profile" element={<RequireAuthGuard><Profile /></RequireAuthGuard>} />
-      <Route path="/edit-profile" element={<RequireAuthGuard><EditProfile /></RequireAuthGuard>} />
-      <Route path="/appointments" element={<RequireAuthGuard><Appointments /></RequireAuthGuard>} />
-      <Route path="/upgrade" element={<RequireAuthGuard><UpgradePage /></RequireAuthGuard>} />
-      <Route path="/account" element={<RequireAuthGuard><Account /></RequireAuthGuard>} />
+      {/* Protected routes - these require authentication */}
+      <Route path="/profile" element={
+        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+          <Profile />
+        </ProtectedRoute>
+      } />
       
-      <Route 
-        path="/manage-boosts" 
-        element={
-          <RequireRoleGuard allowedRoles={['doctor', 'pharmacist']}>
-            <ManageBoostsPage />
-          </RequireRoleGuard>
-        } 
-      />
+      <Route path="/edit-profile" element={
+        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+          <EditProfile />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/appointments" element={
+        <ProtectedRoute allowedRoles={['patient', 'doctor']}>
+          <Appointments />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/upgrade" element={
+        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
+          <UpgradePage />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/account" element={
+        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+          <Account />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/manage-boosts" element={
+        <ProtectedRoute allowedRoles={['doctor', 'pharmacist']}>
+          <ManageBoostsPage />
+        </ProtectedRoute>
+      } />
     </Routes>
   );
 }

@@ -24,6 +24,7 @@ import Settings from '@/pages/Settings';
 import RequireRoleGuard from '@/components/auth/RequireRoleGuard';
 import ManageBoostsPage from '@/pages/ManageBoostsPage';
 import BillingDetails from "@/pages/BillingDetails";
+import ProtectedRoute from "@/components/routing/ProtectedRoute";
 
 // Create a wrapper component for products routes that provides context
 const ProductsLayout = () => {
@@ -48,6 +49,79 @@ const ProtectedManageBoostsPage = () => (
   <RequireRoleGuard allowedRoles={['doctor', 'pharmacist']}>
     <ManageBoostsPage />
   </RequireRoleGuard>
+);
+
+// Wrap with protected route for auth check
+const ProtectedDashboard = () => (
+  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+    <Dashboard />
+  </ProtectedRoute>
+);
+
+const ProtectedDoctorDashboard = () => (
+  <ProtectedRoute allowedRoles={['doctor', 'superadmin']}>
+    <DoctorDashboard />
+  </ProtectedRoute>
+);
+
+const ProtectedUniversalDashboard = () => (
+  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+    <UniversalDashboard />
+  </ProtectedRoute>
+);
+
+const ProtectedDoctorProfilePage = () => (
+  <ProtectedRoute allowedRoles={['doctor', 'superadmin']}>
+    <DoctorProfilePage />
+  </ProtectedRoute>
+);
+
+const ProtectedPharmacyProfilePage = () => (
+  <ProtectedRoute allowedRoles={['pharmacist', 'superadmin']}>
+    <PharmacyProfilePage />
+  </ProtectedRoute>
+);
+
+const ProtectedActivities = ({ initialView }: { initialView: string }) => (
+  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+    <Activities initialView={initialView} />
+  </ProtectedRoute>
+);
+
+const ProtectedUpgradePage = () => (
+  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
+    <UpgradePage />
+  </ProtectedRoute>
+);
+
+const ProtectedMyOrders = () => (
+  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
+    <MyOrders />
+  </ProtectedRoute>
+);
+
+const ProtectedMyPrescriptions = () => (
+  <ProtectedRoute allowedRoles={['patient', 'doctor']}>
+    <MyPrescriptions />
+  </ProtectedRoute>
+);
+
+const ProtectedReferral = () => (
+  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
+    <Referral />
+  </ProtectedRoute>
+);
+
+const ProtectedSettings = () => (
+  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+    <Settings />
+  </ProtectedRoute>
+);
+
+const ProtectedBillingDetails = () => (
+  <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
+    <BillingDetails />
+  </ProtectedRoute>
 );
 
 const router = createBrowserRouter([
@@ -75,15 +149,15 @@ const router = createBrowserRouter([
   },
   {
     path: '/dashboard',
-    element: <Dashboard />,
+    element: <ProtectedDashboard />,
   },
   {
     path: '/doctor/dashboard',
-    element: <DoctorDashboard />,
+    element: <ProtectedDoctorDashboard />,
   },
   {
     path: '/universal-dashboard',
-    element: <UniversalDashboard />,
+    element: <ProtectedUniversalDashboard />,
   },
   {
     path: '/unauthorized',
@@ -91,31 +165,31 @@ const router = createBrowserRouter([
   },
   {
     path: '/doctor/profile',
-    element: <DoctorProfilePage />,
+    element: <ProtectedDoctorProfilePage />,
   },
   {
     path: '/pharmacy/profile',
-    element: <PharmacyProfilePage />,
+    element: <ProtectedPharmacyProfilePage />,
   },
   {
     path: '/notifications',
-    element: <Activities initialView="notifications" />,
+    element: <ProtectedActivities initialView="notifications" />,
   },
   {
     path: '/activities',
-    element: <Activities initialView="activities" />,
+    element: <ProtectedActivities initialView="activities" />,
   },
   {
     path: '/upgrade',
-    element: <UpgradePage />,
+    element: <ProtectedUpgradePage />,
   },
   {
     path: '/my-orders',
-    element: <MyOrders />,
+    element: <ProtectedMyOrders />,
   },
   {
     path: '/my-prescriptions',
-    element: <MyPrescriptions />,
+    element: <ProtectedMyPrescriptions />,
   },
   {
     path: '/account',
@@ -123,11 +197,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/referral',
-    element: <Referral />,
+    element: <ProtectedReferral />,
   },
   {
     path: '/settings',
-    element: <Settings />,
+    element: <ProtectedSettings />,
   },
   {
     path: '/manage-boosts',
@@ -135,7 +209,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/billing-details',
-    element: <BillingDetails />,
+    element: <ProtectedBillingDetails />,
   },
   {
     path: '*',
