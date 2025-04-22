@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { Home, Users, FileText, HeartPulse, ShoppingBag, CreditCard, Video, Calendar, Share } from "lucide-react";
@@ -34,6 +35,7 @@ const DoctorPlatformSection = ({
   
   return (
     <div className="flex flex-col space-y-1">
+      <div className="mb-4" /> {/* Reduced margin to mb-4 before PLATFORM header */}
       <SidebarSection title="PLATFORM">
         <div className="mb-2" /> {/* Restored margin between PLATFORM header and Dashboard */}
         
@@ -139,3 +141,4 @@ const DoctorPlatformSection = ({
 };
 
 export default DoctorPlatformSection;
+
