@@ -36,7 +36,7 @@ const DoctorPlatformSection = ({
   return (
     <div className="flex flex-col space-y-1">
       <SidebarSection title="PLATFORM">
-        <div className="mb-4" /> {/* Increased space between PLATFORM header and Dashboard */}
+        <div className="mb-8" /> {/* Further increased space between PLATFORM header and Dashboard */}
         
         <SidebarItem
           icon={<Home className="w-5 h-5 mr-3" />}
