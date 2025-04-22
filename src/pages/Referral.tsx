@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import DoctorLayout from "@/components/layout/DoctorLayout";
@@ -15,9 +14,7 @@ const Referral = () => {
   const { profile, isLoading } = useAuth();
   const [emails, setEmails] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [sendStatus, setSendStatus] = useState<"idle" | "success" | "error">(
-    "idle"
-  );
+  const [sendStatus, setSendStatus] = useState<"idle" | "success" | "error">("idle");
 
   if (isLoading || !profile?.id) {
     return null;
@@ -104,47 +101,45 @@ const Referral = () => {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">Referral Program</h1>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Referral Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="refer" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="refer">Refer Friends</TabsTrigger>
-                <TabsTrigger value="history">Referral History</TabsTrigger>
-              </TabsList>
+        <Tabs defaultValue="refer" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="refer">Refer Friends</TabsTrigger>
+            <TabsTrigger value="history">Referral History</TabsTrigger>
+          </TabsList>
 
-              <TabsContent value="refer">
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Share your referral program with friends and family. When
-                    they join and make their first purchase, you'll both earn
-                    loyalty points!
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      placeholder="friend@example.com, colleague@example.com"
-                      value={emails}
-                      onChange={(e) => setEmails(e.target.value)}
-                      className="flex-grow"
-                    />
-                    <Button onClick={handleSendReferrals} disabled={isSending || !emails.trim()}>
-                      {buttonContent()}
-                    </Button>
-                  </div>
+          <TabsContent value="refer">
+            <Card>
+              <CardHeader>
+                <CardTitle>Refer Friends & Earn Points</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  Share your referral program with friends and family. When
+                  they join and make their first purchase, you'll both earn
+                  loyalty points!
+                </p>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="friend@example.com, colleague@example.com"
+                    value={emails}
+                    onChange={(e) => setEmails(e.target.value)}
+                    className="flex-grow"
+                  />
+                  <Button onClick={handleSendReferrals} disabled={isSending || !emails.trim()}>
+                    {buttonContent()}
+                  </Button>
                 </div>
-              </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <TabsContent value="history">
-                <ReferralTimeline
-                  hideLoyaltyProgramDetails={true}
-                  hideSeniorityBadges={true}
-                />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+          <TabsContent value="history">
+            <ReferralTimeline
+              hideLoyaltyProgramDetails={true}
+              hideSeniorityBadges={true}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </DoctorLayout>
   );
