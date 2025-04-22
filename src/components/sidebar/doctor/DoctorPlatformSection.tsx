@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { Home, Users, FileText, HeartPulse, ShoppingBag, CreditCard, Video, Calendar, Share } from "lucide-react";
@@ -35,9 +34,8 @@ const DoctorPlatformSection = ({
   
   return (
     <div className="flex flex-col space-y-1">
-      <div className="mb-8" /> {/* Added margin top before PLATFORM header */}
       <SidebarSection title="PLATFORM">
-        <div className="mb-8" /> {/* Further increased space between PLATFORM header and Dashboard */}
+        <div className="mb-2" /> {/* Restored margin between PLATFORM header and Dashboard */}
         
         <SidebarItem
           icon={<Home className="w-5 h-5 mr-3" />}
