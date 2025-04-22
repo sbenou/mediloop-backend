@@ -16,7 +16,11 @@ const Sidebar = () => {
   switch (userRole) {
     case "doctor":
       return (
-        <UnifiedSidebar />
+        <DoctorSidebar 
+          canPrescribe={hasPermission(PERMISSIONS.PRESCRIPTIONS.MANAGE)}
+          canManageStaff={hasPermission(PERMISSIONS.ADMIN.MANAGE_USERS)}
+          canViewPrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.VIEW)}
+        />
       );
     case "pharmacist":
       return (

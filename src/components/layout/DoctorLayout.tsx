@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
-import UnifiedSidebar from "@/components/sidebar/UnifiedSidebar";
+import DoctorSidebar from "@/components/sidebar/DoctorSidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import UnifiedHeader from "./UnifiedHeader";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { PERMISSIONS } from "@/config/permissions";
 
 interface DoctorLayoutProps {
   children: React.ReactNode;
@@ -15,6 +17,7 @@ interface DoctorLayoutProps {
 const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { hasPermission } = useAuth();
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
@@ -30,7 +33,11 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
-          <UnifiedSidebar />
+          <DoctorSidebar 
+            canPrescribe={hasPermission(PERMISSIONS.PRESCRIPTIONS.MANAGE)}
+            canManageStaff={hasPermission(PERMISSIONS.ADMIN.MANAGE_USERS)}
+            canViewPrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.VIEW)}
+          />
         </div>
 
         {/* Mobile Sidebar */}
@@ -41,7 +48,11 @@ const DoctorLayout = ({ children, hideHeader = false }: DoctorLayoutProps) => {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-[280px] mt-16">
-            <UnifiedSidebar />
+            <DoctorSidebar 
+              canPrescribe={hasPermission(PERMISSIONS.PRESCRIPTIONS.MANAGE)}
+              canManageStaff={hasPermission(PERMISSIONS.ADMIN.MANAGE_USERS)}
+              canViewPrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.VIEW)}
+            />
           </SheetContent>
         </Sheet>
 
