@@ -12,6 +12,20 @@ export interface LoyaltyStatus {
   registeredDays: number;
   registeredYears: number;
   nextBadgeYears: number | null;
+  
+  // Add missing properties used in components
+  walletBalance: number;
+  availablePoints: number;
+  totalPoints: number;
+  currentLevel: string;
+  yearsOfSeniority: number;
+  
+  // Role-specific benefits
+  professionalCredits?: number;
+  discountRate?: number;
+  marketingCredits?: number;
+  freeDeliveries?: number;
+  healthRewards?: number;
 }
 
 const DEFAULT_STATUS: LoyaltyStatus = {
@@ -23,6 +37,16 @@ const DEFAULT_STATUS: LoyaltyStatus = {
   registeredDays: 0,
   registeredYears: 0,
   nextBadgeYears: 1,
+  walletBalance: 0,
+  availablePoints: 0,
+  totalPoints: 0,
+  currentLevel: 'seedling',
+  yearsOfSeniority: 0,
+  professionalCredits: 0,
+  discountRate: 0,
+  marketingCredits: 0,
+  freeDeliveries: 0,
+  healthRewards: 0,
 };
 
 export const useLoyaltyStatus = (): LoyaltyStatus => {
@@ -80,6 +104,20 @@ export const useLoyaltyStatus = (): LoyaltyStatus => {
           registeredDays,
           registeredYears: Math.floor(registeredYears),
           nextBadgeYears: yearsToNextBadge > 0 ? Math.ceil(yearsToNextBadge) : null,
+          
+          // Add mock values for the additional properties
+          walletBalance: 25.50,
+          availablePoints: 450,
+          totalPoints: 1200,
+          currentLevel: 'seedling',
+          yearsOfSeniority: 2,
+          
+          // Role-specific benefits with mock data
+          professionalCredits: 150,
+          discountRate: 5,
+          marketingCredits: 200,
+          freeDeliveries: 3,
+          healthRewards: 75,
         });
       } catch (err) {
         console.error('Error in useLoyaltyStatus:', err);

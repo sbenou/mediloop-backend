@@ -42,8 +42,11 @@ const Referral = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
 
+      // Use proper method to get the URL without accessing protected property
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://hrrlefgnhkbzuwyklejj.supabase.co';
+      
       const response = await fetch(
-        `${supabase.supabaseUrl}/functions/v1/send-referral-email`,
+        `${supabaseUrl}/functions/v1/send-referral-email`,
         {
           method: "POST",
           headers: {
