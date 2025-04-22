@@ -5,6 +5,7 @@ import DoctorSidebar from "./DoctorSidebar";
 import PharmacistSidebar from "./PharmacistSidebar";
 import SuperAdminSidebar from "./SuperAdminSidebar";
 import { PERMISSIONS } from "@/config/permissions";
+import UnifiedSidebar from "./UnifiedSidebar";
 
 const Sidebar = () => {
   const { userRole, hasPermission, isLoading } = useAuth();
@@ -15,21 +16,11 @@ const Sidebar = () => {
   switch (userRole) {
     case "doctor":
       return (
-        <DoctorSidebar 
-          canPrescribe={hasPermission(PERMISSIONS.PRESCRIPTIONS.MANAGE)}
-          canManageStaff={hasPermission(PERMISSIONS.ADMIN.MANAGE_USERS)}
-          canViewPrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.VIEW)}
-        />
+        <UnifiedSidebar />
       );
     case "pharmacist":
       return (
-        <PharmacistSidebar 
-          canViewProducts={hasPermission(PERMISSIONS.PRODUCTS.VIEW)}
-          canEditProducts={hasPermission(PERMISSIONS.PRODUCTS.EDIT)}
-          canManageStaff={hasPermission(PERMISSIONS.ADMIN.MANAGE_USERS)}
-          canManagePrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.MANAGE)}
-          canViewPrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.VIEW)}
-        />
+        <UnifiedSidebar />
       );
     case "superadmin":
       return <SuperAdminSidebar />;
