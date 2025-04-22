@@ -78,6 +78,12 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     const isOnMyOrdersPage = location.pathname === '/my-orders';
     
     if (isOnDoctorOrdersPage || isOnPatientOrdersPage || isOnMyOrdersPage) {
+      console.log("OrdersView: Current page type:", 
+        isOnDoctorOrdersPage ? "Doctor Orders Page" : 
+        isOnPatientOrdersPage ? "Patient Orders Page" : 
+        "My Orders Page"
+      );
+      
       const currentTab = isOnMyOrdersPage 
         ? searchParams.get('view') || 'orders'
         : isOnDoctorOrdersPage

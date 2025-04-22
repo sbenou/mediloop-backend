@@ -92,6 +92,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       case "workplaces":
         return <WorkplacesView />;
       case "orders":
+        console.log("Rendering OrdersView with tab:", ordersTab);
         return <OrdersView activeTab={ordersTab} userRole="doctor" />;
       case "dashboard":
       default:
