@@ -22,7 +22,8 @@ const DoctorAdminSection: React.FC = () => {
 
   const activeSection = searchParams.get("section");
   return (
-    <SidebarSection title="Admin">
+    <SidebarSection title="ADMIN">
+      <div className="mb-2" /> {/* Added consistent space between ADMIN header and Settings */}
       <SidebarItem
         icon={<Settings className="w-5 h-5 mr-3" />}
         label="Settings"
