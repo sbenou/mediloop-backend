@@ -6,6 +6,7 @@ import SidebarItem from "../SidebarItem";
 import SidebarCollapsibleItem from "../SidebarCollapsibleItem";
 import SidebarSubItem from "../SidebarSubItem";
 import { useSidebarNavigation } from "@/hooks/sidebar/useSidebarNavigation";
+import SidebarSection from "../SidebarSection"; // Import the SidebarSection component
 
 interface DoctorPlatformSectionProps {
   canPrescribe?: boolean;
@@ -34,12 +35,15 @@ const DoctorPlatformSection = ({
   
   return (
     <div className="flex flex-col space-y-1">
-      <SidebarItem
-        icon={<Home className="w-5 h-5 mr-3" />}
-        label="Dashboard"
-        isActive={section === "dashboard"}
-        onClick={() => navigateToLink("?section=dashboard")}
-      />
+      {/* Add SidebarSection with "PLATFORM" title */}
+      <SidebarSection title="PLATFORM">
+        <SidebarItem
+          icon={<Home className="w-5 h-5 mr-3" />}
+          label="Dashboard"
+          isActive={section === "dashboard"}
+          onClick={() => navigateToLink("?section=dashboard")}
+        />
+      </SidebarSection>
       
       <SidebarItem
         icon={<Users className="w-5 h-5 mr-3" />}
