@@ -77,7 +77,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
   const patientsCount = stats?.total_patients || 0;
   const patientsPercentChange = 4.8; // Replace with real change calc if available.
 
-  // COLORS for sparklines
+  // COLORS for sparklines with more saturated and prominent gradient shadows
   const lineColors = {
     patients: "#37B079", // green
     orders: "#F97316", // orange
@@ -85,16 +85,16 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
     revenue: "#2563eb" // blue
   };
 
-  // Make sparklines more prominent: stronger & bigger gradient
+  // More prominent and taller area colors for shadows
   const areaColors = {
-    patients: "rgba(55, 176, 121, 0.38)",          // more saturation, higher opacity
-    orders: "rgba(249, 115, 22, 0.26)",
-    prescriptions: "rgba(124, 58, 237, 0.28)",
-    revenue: "rgba(37, 99, 235, 0.30)"
+    patients: "rgba(55, 176, 121, 0.50)",          // increased opacity and saturation
+    orders: "rgba(249, 115, 22, 0.40)",
+    prescriptions: "rgba(124, 58, 237, 0.45)",
+    revenue: "rgba(37, 99, 235, 0.48)"
   };
 
-  // Use a larger height for the sparkline area
-  const sparklineHeight = 38;
+  // Increased height for sparkline shadows
+  const sparklineHeight = 48; // Increased from 38 to make shadows more prominent
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -107,7 +107,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         />
       )}
 
-      {/* Only show "Active Patients/Teleconsultations" card if NOT doctor/pharmacist */}
+      {/* Patients Card */}
       {firstCardConfig && (
         <Card 
           className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
@@ -198,7 +198,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                   <LineChart data={ordersTrend}>
                     <defs>
                       <linearGradient id="ordersShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.orders} stopOpacity={0.75}/>
+                        <stop offset="0%" stopColor={areaColors.orders} stopOpacity={0.85}/>
                         <stop offset="98%" stopColor={areaColors.orders} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
@@ -258,7 +258,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                   <LineChart data={prescriptionsTrend}>
                     <defs>
                       <linearGradient id="prescriptionsShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.prescriptions} stopOpacity={0.80}/>
+                        <stop offset="0%" stopColor={areaColors.prescriptions} stopOpacity={0.85}/>
                         <stop offset="98%" stopColor={areaColors.prescriptions} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
