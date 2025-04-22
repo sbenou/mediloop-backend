@@ -59,7 +59,7 @@ const DoctorSidebar = ({
           canPrescribe={canPrescribe}
           canViewPrescriptions={canViewPrescriptions}
         />
-        <div className="mt-8" />
+        <div className="mt-4" /> {/* Reduced margin to make spacing consistent */}
         <DoctorAdminSection />
       </div>
       <SidebarUserMenu
@@ -80,3 +80,4 @@ const DoctorSidebar = ({
 };
 
 export default DoctorSidebar;
+
