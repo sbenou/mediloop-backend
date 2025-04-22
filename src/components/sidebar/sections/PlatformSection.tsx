@@ -1,144 +1,150 @@
 
-import { Pill, HeartPulse, User, ShoppingBag } from "lucide-react";
-import SidebarSection from "../SidebarSection";
-import SidebarItem from "../SidebarItem";
-import SidebarCollapsibleItem from "../SidebarCollapsibleItem";
-import SidebarSubItem from "../SidebarSubItem";
-import { platformMenuItems, ordersSubItems, consultationsSubItems } from "../config/sidebarNavItems";
-import { useSidebarNavigation } from "@/hooks/sidebar/useSidebarNavigation";
-import { useSidebarItems } from "../hooks/useSidebarItems";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
+import { Heart, MessageSquare, Calendar, Activity, Gift, UserRound, ShoppingCart } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export const PlatformSection = () => {
+export function PlatformSection() {
   const { userRole } = useAuth();
   const location = useLocation();
-  
-  const {
-    isOrdersOpen,
-    setIsOrdersOpen,
-    isProfileOpen,
-    setIsProfileOpen,
-    isConsultationsOpen,
-    setIsConsultationsOpen,
-    navigateToLink,
-    isPharmacistSectionActive
-  } = useSidebarNavigation(userRole);
 
-  const { 
-    getFilteredProfileSubItems, 
-    showConsultationsMenu, 
-    showPrescriptionsMenu,
-    isLinkActive 
-  } = useSidebarItems();
+  // Define platform section links based on user role
+  const getNavItems = () => {
+    const commonItems = [
+      {
+        title: "Account",
+        href: "/account",
+        icon: UserRound,
+      }
+    ];
 
-  const filteredProfileSubItems = getFilteredProfileSubItems();
-  console.log("Filtered Profile SubItems:", filteredProfileSubItems);
+    const patientItems = [
+      {
+        title: "Prescriptions",
+        href: "/prescriptions",
+        icon: Heart,
+      },
+      {
+        title: "Orders",
+        href: "/orders",
+        icon: ShoppingCart,
+      },
+      {
+        title: "Teleconsultations",
+        href: "/teleconsultations",
+        icon: MessageSquare,
+      },
+      {
+        title: "Appointments",
+        href: "/appointments",
+        icon: Calendar,
+      },
+      {
+        title: "Activity",
+        href: "/activity",
+        icon: Activity,
+      },
+      {
+        title: "Referral",
+        href: "/referral",
+        icon: Gift,
+      }
+    ];
+
+    const doctorItems = [
+      {
+        title: "Patients",
+        href: "/patients",
+        icon: UserRound,
+      },
+      {
+        title: "Teleconsultations",
+        href: "/teleconsultations",
+        icon: MessageSquare,
+      },
+      {
+        title: "Appointments",
+        href: "/appointments",
+        icon: Calendar,
+      },
+      {
+        title: "Prescriptions",
+        href: "/prescriptions",
+        icon: Heart,
+      },
+      {
+        title: "Activity",
+        href: "/activity",
+        icon: Activity,
+      },
+      {
+        title: "Referral",
+        href: "/referral",
+        icon: Gift,
+      }
+    ];
+
+    const pharmacistItems = [
+      {
+        title: "Orders",
+        href: "/pharmacy/orders",
+        icon: ShoppingCart,
+      },
+      {
+        title: "Patients",
+        href: "/pharmacy/patients",
+        icon: UserRound,
+      },
+      {
+        title: "Prescriptions",
+        href: "/pharmacy/prescriptions",
+        icon: Heart,
+      },
+      {
+        title: "Activity",
+        href: "/activity",
+        icon: Activity,
+      },
+      {
+        title: "Referral",
+        href: "/referral",
+        icon: Gift,
+      }
+    ];
+
+    // Return appropriate items based on user role
+    switch (userRole) {
+      case "doctor":
+        return [...doctorItems, ...commonItems];
+      case "pharmacist":
+        return [...pharmacistItems, ...commonItems];
+      case "patient":
+      default:
+        return [...patientItems, ...commonItems];
+    }
+  };
+
+  const navItems = getNavItems();
 
   return (
-    <SidebarSection title="Platform">
-      {platformMenuItems.map((item, index) => (
-        <SidebarItem
-          key={index}
-          icon={item.icon}
-          label={item.label}
-          isActive={isLinkActive(item.path)}
-          onClick={() => navigateToLink(item.path)}
-        />
-      ))}
-
-      <SidebarCollapsibleItem
-        icon={<User className="w-5 h-5 mr-3" />}
-        label="Profile"
-        isOpen={isProfileOpen}
-        isActive={location.search.includes('view=profile') || location.search.includes('section=profile')}
-        onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
-      >
-        {filteredProfileSubItems.map((subItem, index) => {
-          // For doctor role, adjust paths to use section instead of view
-          const path = userRole === 'doctor' 
-            ? subItem.path.replace('view=profile', 'section=profile') 
-            : subItem.path;
-            
-          return (
-            <SidebarSubItem
-              key={index}
-              icon={subItem.icon}
-              label={subItem.label}
-              isActive={
-                (location.search.includes('profileTab=' + path.split('profileTab=')[1])) &&
-                (location.search.includes('view=profile') || location.search.includes('section=profile'))
-              }
-              onClick={() => navigateToLink(path)}
-            />
-          );
-        })}
-      </SidebarCollapsibleItem>
-
-      <SidebarCollapsibleItem
-        icon={<ShoppingBag className="w-5 h-5 mr-3" />}
-        label="Orders"
-        isOpen={isOrdersOpen}
-        isActive={location.search.includes('view=orders')}
-        onOpenChange={(isOpen) => setIsOrdersOpen(isOpen)}
-      >
-        {ordersSubItems.map((subItem, index) => (
-          <SidebarSubItem
-            key={index}
-            icon={subItem.icon}
-            label={subItem.label}
-            isActive={location.search.includes('ordersTab=' + subItem.path.split('ordersTab=')[1])}
-            onClick={() => navigateToLink(subItem.path)}
-          />
-        ))}
-      </SidebarCollapsibleItem>
-
-      {showPrescriptionsMenu && (
-        <SidebarItem
-          icon={<Pill className="w-5 h-5 mr-3" />}
-          label="Prescriptions"
-          isActive={location.search.includes('view=prescriptions') || location.search.includes('section=prescriptions')}
-          onClick={() => {
-            const path = userRole === 'doctor' 
-              ? '/dashboard?section=prescriptions' 
-              : '/dashboard?view=prescriptions';
-            navigateToLink(path);
-          }}
-        />
-      )}
-
-      {showConsultationsMenu && (
-        <SidebarCollapsibleItem
-          icon={<HeartPulse className="w-5 h-5 mr-3" />}
-          label="Consultations"
-          isOpen={isConsultationsOpen}
-          isActive={location.search.includes('view=teleconsultations') || 
-                   location.search.includes('view=appointments') ||
-                   location.search.includes('section=teleconsultations') ||
-                   location.search.includes('section=appointments')}
-          onOpenChange={(isOpen) => setIsConsultationsOpen(isOpen)}
+    <nav className="space-y-1 px-2">
+      {navItems.map((item) => (
+        <NavLink
+          key={item.href}
+          to={item.href}
+          className={({ isActive }) =>
+            cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+              isActive
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
+            )
+          }
         >
-          {consultationsSubItems.map((subItem, index) => {
-            // For doctor role, adjust paths to use section instead of view
-            const path = userRole === 'doctor'
-              ? subItem.path.replace('view=', 'section=')
-              : subItem.path;
-              
-            return (
-              <SidebarSubItem
-                key={index}
-                icon={subItem.icon}
-                label={subItem.label}
-                isActive={
-                  location.search.includes('view=' + subItem.path.split('view=')[1]) ||
-                  location.search.includes('section=' + path.split('section=')[1])
-                }
-                onClick={() => navigateToLink(path)}
-              />
-            );
-          })}
-        </SidebarCollapsibleItem>
-      )}
-    </SidebarSection>
+          {item.icon && <item.icon className="h-4 w-4" />}
+          <span>{item.title}</span>
+        </NavLink>
+      ))}
+    </nav>
   );
-};
+}

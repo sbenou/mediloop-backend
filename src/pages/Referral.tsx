@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import DoctorLayout from "@/components/layout/DoctorLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReferralTimeline } from "@/components/loyalty/ReferralTimeline";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,7 @@ const Referral = () => {
       const accessToken = sessionData?.session?.access_token;
 
       const response = await fetch(
-        `https://hrrlefgnhkbzuwyklejj.supabase.co/functions/v1/send-referral-email`,
+        `${supabase.supabaseUrl}/functions/v1/send-referral-email`,
         {
           method: "POST",
           headers: {
@@ -85,13 +84,13 @@ const Referral = () => {
     if (sendStatus === "success")
       return (
         <>
-          <Check className="w-4 h-4" /> Sent Successfully
+          <Check className="w-4 h-4 mr-2" /> Sent Successfully
         </>
       );
     if (sendStatus === "error")
       return (
         <>
-          <X className="w-4 h-4" /> Failed to Send
+          <X className="w-4 h-4 mr-2" /> Failed to Send
         </>
       );
     return "Send Referral";

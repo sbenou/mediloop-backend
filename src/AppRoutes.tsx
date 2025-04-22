@@ -12,6 +12,8 @@ import UpgradePage from "./pages/upgrade/UpgradePage";
 import Account from "./pages/Account";
 import ManageBoostsPage from "./pages/ManageBoostsPage";
 import ProtectedRoute from "@/components/routing/ProtectedRoute";
+import ProtectedReferral from "@/router/roles/ProtectedReferral";
+import Referral from "@/pages/Referral";
 
 // Create a simple placeholder component for missing pages
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -77,6 +79,12 @@ export default function AppRoutes() {
       <Route path="/manage-boosts" element={
         <ProtectedRoute allowedRoles={['doctor', 'pharmacist']}>
           <ManageBoostsPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/referral" element={
+        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
+          <Referral />
         </ProtectedRoute>
       } />
     </Routes>
