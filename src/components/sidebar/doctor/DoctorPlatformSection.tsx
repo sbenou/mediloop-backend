@@ -35,6 +35,7 @@ const DoctorPlatformSection = ({
   
   return (
     <div className="flex flex-col space-y-1">
+      <div className="mb-8" /> {/* Added margin top before PLATFORM header */}
       <SidebarSection title="PLATFORM">
         <div className="mb-8" /> {/* Further increased space between PLATFORM header and Dashboard */}
         
