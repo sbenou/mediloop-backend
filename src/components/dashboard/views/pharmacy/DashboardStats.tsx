@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +7,7 @@ import {
   LineChart, 
   Line
 } from "recharts";
+import PatientsGoalCard from "./PatientsGoalCard";
 
 interface DashboardStatsProps {
   stats: {
@@ -74,9 +74,28 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         icon: <span className="text-muted-foreground">€</span>,
         path: ''
       };
-  
+
+  // Add extra: Show the PatientsGoalCard if userRole is doctor or pharmacist
+  const showPatientsGoal = userRole === "doctor" || userRole === "pharmacist";
+  const patientsGoal = 30000; // Example goal
+  const patientsCount = stats?.total_patients || 0;
+
+  // Calculate percent change (random for demo)
+  const patientsPercentChange = 4.8; // Replace with real change calc if available.
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Patients Goal Card */}
+      {showPatientsGoal && (
+        <PatientsGoalCard
+          total={patientsCount}
+          goal={patientsGoal}
+          percentChange={patientsPercentChange}
+          isPositive={patientsPercentChange >= 0}
+        />
+      )}
+
+      {/* Responsive stats cards. Update only sparklines */}
       <Card 
         className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => onNavigate(firstCardConfig.path)}
@@ -90,9 +109,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             <Skeleton className="h-8 w-24" />
           ) : (
             <div>
-              <div className="text-2xl font-bold">+{stats?.total_patients || 0}</div>
-              <div className="h-8 mt-1">
-                <div className="flex items-center">
+              <div className="text-2xl font-bold mb-3">+{stats?.total_patients || 0}</div>
+              <div className="h-8 mt-2 mb-1">
+                <div className="flex items-center mb-2">
                   {isPatientTrendPositive ? 
                     <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
                     <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
@@ -101,16 +120,18 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     YTD
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={20}>
+                <ResponsiveContainer width="100%" height={28}>
                   <LineChart data={patientTrend}>
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#2196F3" 
+                      stroke="#37B079"
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={true}
                       connectNulls={true}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -119,7 +140,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
           )}
         </div>
       </Card>
-      
+
       <Card 
         className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => onNavigate('orders')}
@@ -133,9 +154,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             <Skeleton className="h-8 w-24" />
           ) : (
             <div>
-              <div className="text-2xl font-bold">+{stats?.pending_orders || 0}</div>
-              <div className="h-8 mt-1">
-                <div className="flex items-center">
+              <div className="text-2xl font-bold mb-3">+{stats?.pending_orders || 0}</div>
+              <div className="h-8 mt-2 mb-1">
+                <div className="flex items-center mb-2">
                   {isOrdersTrendPositive ? 
                     <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
                     <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
@@ -144,16 +165,18 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     YTD
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={20}>
+                <ResponsiveContainer width="100%" height={28}>
                   <LineChart data={ordersTrend}>
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#2196F3" 
+                      stroke="#37B079"
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={true}
                       connectNulls={true}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -176,9 +199,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             <Skeleton className="h-8 w-24" />
           ) : (
             <div>
-              <div className="text-2xl font-bold">+{stats?.total_prescriptions || 0}</div>
-              <div className="h-8 mt-1">
-                <div className="flex items-center">
+              <div className="text-2xl font-bold mb-3">+{stats?.total_prescriptions || 0}</div>
+              <div className="h-8 mt-2 mb-1">
+                <div className="flex items-center mb-2">
                   {isPrescriptionsTrendPositive ? 
                     <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
                     <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
@@ -187,16 +210,18 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     YTD
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={20}>
+                <ResponsiveContainer width="100%" height={28}>
                   <LineChart data={prescriptionsTrend}>
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#2196F3" 
+                      stroke="#37B079"
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={true}
                       connectNulls={true}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -219,13 +244,13 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             <Skeleton className="h-8 w-24" />
           ) : (
             <div>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold mb-3">
                 {userRole === 'patient' ? 
                   `+${stats?.monthly_revenue || 0}` : 
                   `€${stats?.monthly_revenue?.toLocaleString() || 0}`}
               </div>
-              <div className="h-8 mt-1">
-                <div className="flex items-center">
+              <div className="h-8 mt-2 mb-1">
+                <div className="flex items-center mb-2">
                   {isRevenueTrendPositive ? 
                     <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
                     <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
@@ -234,16 +259,18 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     YTD
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={20}>
+                <ResponsiveContainer width="100%" height={28}>
                   <LineChart data={revenueTrend}>
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#2196F3" 
+                      stroke="#37B079"
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={true}
                       connectNulls={true}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
                     />
                   </LineChart>
                 </ResponsiveContainer>
