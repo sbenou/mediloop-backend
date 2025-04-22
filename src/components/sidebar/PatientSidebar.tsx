@@ -21,7 +21,7 @@ import { useSidebarNavigation } from "./hooks/useSidebarNavigation";
 const PatientSidebar = () => {
   const { profile } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate(); // Add navigate for direct navigation
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
   const view = searchParams.get("view") || "home";
   
