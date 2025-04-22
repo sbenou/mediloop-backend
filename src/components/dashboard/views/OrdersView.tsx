@@ -19,6 +19,11 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     if (location.pathname === '/my-orders') {
       return searchParams.get('view') || 'orders';
     }
+    
+    if (userRole === 'doctor' && searchParams.get('section') === 'orders') {
+      return searchParams.get('ordersTab') || 'orders';
+    }
+    
     return searchParams.get('ordersTab') || getDefaultTab();
   };
   
@@ -27,6 +32,9 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     if (userRole === 'pharmacist') {
       return 'all';
     }
+    if (userRole === 'doctor') {
+      return 'orders';
+    }
     return 'orders';
   };
   
@@ -34,7 +42,13 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   // Handle tab change
   const handleTabChange = (value: string) => {
-    console.log("OrdersView: Tab changed to:", value);
+    console.log("OrdersView: Tab changed to:", value, "Current role:", userRole);
+    
+    // For doctor view
+    if (userRole === 'doctor' && location.pathname === '/dashboard' && searchParams.get('section') === 'orders') {
+      navigate(`/dashboard?section=orders&ordersTab=${value}`);
+      return;
+    }
     
     // For pharmacist view, we need to preserve the current subsection (all or payments)
     if (userRole === 'pharmacist' && location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
@@ -59,20 +73,30 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   
   // Set correct view when navigating from sidebar
   useEffect(() => {
-    if (location.pathname === '/my-orders' || 
-        (location.pathname === '/dashboard' && searchParams.get('view') === 'orders')) {
-      const currentTab = location.pathname === '/my-orders' 
+    const isOnDoctorOrdersPage = location.pathname === '/dashboard' && searchParams.get('section') === 'orders';
+    const isOnPatientOrdersPage = location.pathname === '/dashboard' && searchParams.get('view') === 'orders';
+    const isOnMyOrdersPage = location.pathname === '/my-orders';
+    
+    if (isOnDoctorOrdersPage || isOnPatientOrdersPage || isOnMyOrdersPage) {
+      const currentTab = isOnMyOrdersPage 
         ? searchParams.get('view') || 'orders'
-        : searchParams.get('ordersTab') || getDefaultTab();
+        : isOnDoctorOrdersPage
+          ? searchParams.get('ordersTab') || getDefaultTab()
+          : searchParams.get('ordersTab') || getDefaultTab();
       
-      console.log("OrdersView: Current tab from URL:", currentTab, "Active tab prop:", activeTab, "Current view:", view);
+      console.log("OrdersView: Current tab from URL:", currentTab, "Active tab prop:", activeTab, "Current view:", view, "Role:", userRole);
     }
-  }, [location.pathname, searchParams, activeTab, view]);
+  }, [location.pathname, searchParams, activeTab, view, userRole]);
 
   // Get role-specific tabs configuration
   const getTabs = () => {
     switch (userRole) {
       case 'patient':
+        return [
+          { id: 'orders', label: 'Orders' },
+          { id: 'payments', label: 'Payments' }
+        ];
+      case 'doctor':
         return [
           { id: 'orders', label: 'Orders' },
           { id: 'payments', label: 'Payments' }
@@ -116,6 +140,11 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   const getActiveTab = () => {
     if (location.pathname === '/my-orders') {
       return searchParams.get('view') || 'orders';
+    }
+
+    // For doctor orders section
+    if (userRole === 'doctor' && location.pathname === '/dashboard' && searchParams.get('section') === 'orders') {
+      return searchParams.get('ordersTab') || 'orders';
     }
 
     // For pharmacy section in dashboard
@@ -181,11 +210,11 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   // Render the component with the correct active tab
   const currentActiveTab = getActiveTab();
   const currentSubsection = searchParams.get('ordersTab') || 'all';
-  console.log("OrdersView: Current active tab:", currentActiveTab, "Current subsection:", currentSubsection);
+  console.log("OrdersView: Current active tab:", currentActiveTab, "Current subsection:", currentSubsection, "Role:", userRole);
 
   // Get view-specific header text
   const getHeaderText = () => {
-    if (currentSubsection === 'payments') {
+    if (currentSubsection === 'payments' || currentActiveTab === 'payments') {
       return "Payment Records";
     }
     return "Orders Management";
@@ -193,12 +222,12 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
 
   // Get view-specific description text
   const getDescriptionText = () => {
-    if (currentSubsection === 'payments') {
-      return userRole === 'patient' 
+    if (currentSubsection === 'payments' || currentActiveTab === 'payments') {
+      return userRole === 'patient' || userRole === 'doctor'
         ? "View your payment history and transaction details." 
         : "Manage payment records and transaction history for your patients.";
     }
-    return userRole === 'patient' 
+    return userRole === 'patient' || userRole === 'doctor'
       ? "View and track your orders and delivery status." 
       : "Manage customer orders and process them efficiently.";
   };

@@ -27,11 +27,7 @@ export function useSidebarNavigation(userRole: string) {
     }
     
     // For query param based navigation
-    if (userRole === 'doctor') {
-      navigate(`/dashboard${link}`);
-    } else {
-      navigate(`/dashboard${link}`);
-    }
+    navigate(`/dashboard${link}`);
   };
 
   // Function to check if a specific path is active

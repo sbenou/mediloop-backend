@@ -60,7 +60,7 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
     if (!isInitialLoad) {
       console.log("Checking doctor params:", { currentView, section });
       
-      if (currentView !== 'doctor' || !section) {
+      if (currentView !== 'doctor' && !section) {
         console.log("Setting default doctor params");
         setSearchParams({ view: 'doctor', section: 'dashboard' }, { replace: true });
       }

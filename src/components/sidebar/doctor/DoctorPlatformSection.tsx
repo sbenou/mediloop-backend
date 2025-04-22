@@ -141,4 +141,3 @@ const DoctorPlatformSection = ({
 };
 
 export default DoctorPlatformSection;
-
