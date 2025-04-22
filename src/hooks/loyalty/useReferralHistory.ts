@@ -10,6 +10,8 @@ interface Referral {
   points_awarded: number;
   created_at: string;
   converted_at: string | null;
+  subscription_purchased_at: string | null;
+  referral_points_received: number;
 }
 
 export function useReferralHistory() {
@@ -23,12 +25,6 @@ export function useReferralHistory() {
     try {
       setIsLoading(true);
       
-      // In a real app, this would be a query to your referrals table
-      // Since we're getting errors about the table not existing,
-      // we're returning mock data for now
-      
-      // Uncomment this when the table exists
-      /*
       const { data, error } = await supabase
         .from('referrals')
         .select('*')
@@ -41,38 +37,6 @@ export function useReferralHistory() {
       }
 
       setReferrals(data || []);
-      */
-      
-      // Mock data for UI development
-      const mockReferrals: Referral[] = [
-        {
-          id: '1',
-          referral_email: 'friend1@example.com',
-          status: 'pending',
-          points_awarded: 0,
-          created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          converted_at: null
-        },
-        {
-          id: '2',
-          referral_email: 'colleague@example.com',
-          status: 'converted',
-          points_awarded: 100,
-          created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          converted_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: '3',
-          referral_email: 'friend2@example.com',
-          status: 'converted',
-          points_awarded: 100,
-          created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-          converted_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
-      
-      setReferrals(mockReferrals);
-      
     } catch (err) {
       console.error('Error in useReferralHistory:', err);
     } finally {

@@ -607,6 +607,47 @@ export type Database = {
           },
         ]
       }
+      point_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          reference_type: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "point_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescriptions: {
         Row: {
           created_at: string
@@ -821,6 +862,56 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          points_awarded: number | null
+          referral_code: string
+          referral_email: string
+          referral_points_received: number | null
+          referrer_id: string
+          status: string
+          subscription_purchased_at: string | null
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          points_awarded?: number | null
+          referral_code: string
+          referral_email: string
+          referral_points_received?: number | null
+          referrer_id: string
+          status?: string
+          subscription_purchased_at?: string | null
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          points_awarded?: number | null
+          referral_code?: string
+          referral_email?: string
+          referral_points_received?: number | null
+          referrer_id?: string
+          status?: string
+          subscription_purchased_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           created_at: string
@@ -999,6 +1090,53 @@ export type Database = {
         }
         Relationships: []
       }
+      user_points: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          points: number
+          registered_at: string
+          total_points_earned: number
+          total_points_spent: number
+          updated_at: string
+          user_id: string
+          wallet_balance: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: string
+          points?: number
+          registered_at?: string
+          total_points_earned?: number
+          total_points_spent?: number
+          updated_at?: string
+          user_id: string
+          wallet_balance?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          points?: number
+          registered_at?: string
+          total_points_earned?: number
+          total_points_spent?: number
+          updated_at?: string
+          user_id?: string
+          wallet_balance?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_points_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workplaces: {
         Row: {
           address: string
@@ -1046,6 +1184,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_user_points: {
+        Args: {
+          p_user_id: string
+          p_points: number
+          p_transaction_type: string
+          p_description?: string
+          p_reference_id?: string
+          p_reference_type?: string
+        }
+        Returns: boolean
+      }
       can_truncate_products: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1124,6 +1273,10 @@ export type Database = {
         Args: { p_table_name: string; p_record_id: string }
         Returns: Json
       }
+      get_user_loyalty_status: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       handle_connection_request: {
         Args: {
           doctor_id: string
@@ -1154,6 +1307,14 @@ export type Database = {
       mark_notification_read: {
         Args: { notification_id: string }
         Returns: undefined
+      }
+      process_referral_conversion: {
+        Args: {
+          p_referral_email: string
+          p_referred_user_id: string
+          p_subscription_purchased?: boolean
+        }
+        Returns: boolean
       }
       soft_delete_team_member: {
         Args: { member_id: string }

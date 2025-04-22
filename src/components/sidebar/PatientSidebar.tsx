@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+
+import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Home, ShoppingBag, Settings, 
   FileText, UserCircle, MapPin, 
   Pill, Video, Heart, Users, CreditCard,
-  Share // Add Share icon for referral link
+  Share
 } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarSection from "./SidebarSection";
@@ -102,7 +103,6 @@ const PatientSidebar = () => {
             onClick={() => navigateToPatientView("teleconsultations")}
           />
           
-          {/* Add Referral link with Share icon */}
           <SidebarItem
             icon={<Share className="w-5 h-5 mr-3" />}
             label="Referral"

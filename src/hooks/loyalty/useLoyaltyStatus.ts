@@ -12,15 +12,11 @@ export interface LoyaltyStatus {
   registeredDays: number;
   registeredYears: number;
   nextBadgeYears: number | null;
-  
-  // Add missing properties used in components
   walletBalance: number;
   availablePoints: number;
   totalPoints: number;
   currentLevel: string;
   yearsOfSeniority: number;
-  
-  // Role-specific benefits
   professionalCredits?: number;
   discountRate?: number;
   marketingCredits?: number;
@@ -40,13 +36,13 @@ const DEFAULT_STATUS: LoyaltyStatus = {
   walletBalance: 0,
   availablePoints: 0,
   totalPoints: 0,
-  currentLevel: 'seedling',
+  currentLevel: 'bronze',
   yearsOfSeniority: 0,
   professionalCredits: 0,
   discountRate: 0,
   marketingCredits: 0,
   freeDeliveries: 0,
-  healthRewards: 0,
+  healthRewards: 0
 };
 
 export const useLoyaltyStatus = (): LoyaltyStatus => {
@@ -58,67 +54,17 @@ export const useLoyaltyStatus = (): LoyaltyStatus => {
       if (!user?.id) return;
 
       try {
-        // In a real app, this would be a query to your user_points table
-        // Since we're getting errors about the table not existing,
-        // we're returning mock data for now
-        
-        // Uncomment this when the table exists
-        /*
         const { data, error } = await supabase
-          .from('user_points')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+          .rpc('get_user_loyalty_status', {
+            p_user_id: user.id
+          });
 
         if (error) {
           console.error('Error fetching loyalty status:', error);
           return;
         }
-        */
-        
-        // Mock data for UI development
-        const mockData = {
-          points: 750,
-          level: 'Silver',
-          next_level: 'Gold',
-          next_level_threshold: 2000,
-          registered_at: new Date(Date.now() - 365 * 2 * 24 * 60 * 60 * 1000).toISOString(),
-        };
-        
-        // Calculate days registered
-        const registeredDate = new Date(mockData.registered_at);
-        const currentDate = new Date();
-        const diffTime = Math.abs(currentDate.getTime() - registeredDate.getTime());
-        const registeredDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const registeredYears = registeredDays / 365;
-        
-        // Calculate next badge years (every 2 years)
-        const yearsToNextBadge = Math.ceil(registeredYears / 2) * 2 - registeredYears;
-        
-        setLoyaltyStatus({
-          points: mockData.points,
-          level: mockData.level,
-          nextLevel: mockData.next_level,
-          nextLevelThreshold: mockData.next_level_threshold,
-          percentToNextLevel: (mockData.points / mockData.next_level_threshold) * 100,
-          registeredDays,
-          registeredYears: Math.floor(registeredYears),
-          nextBadgeYears: yearsToNextBadge > 0 ? Math.ceil(yearsToNextBadge) : null,
-          
-          // Add mock values for the additional properties
-          walletBalance: 25.50,
-          availablePoints: 450,
-          totalPoints: 1200,
-          currentLevel: 'seedling',
-          yearsOfSeniority: 2,
-          
-          // Role-specific benefits with mock data
-          professionalCredits: 150,
-          discountRate: 5,
-          marketingCredits: 200,
-          freeDeliveries: 3,
-          healthRewards: 75,
-        });
+
+        setLoyaltyStatus(data || DEFAULT_STATUS);
       } catch (err) {
         console.error('Error in useLoyaltyStatus:', err);
       }
