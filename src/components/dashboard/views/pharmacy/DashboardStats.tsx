@@ -5,7 +5,8 @@ import { Users, ShoppingBag, FileText, TrendingUp, TrendingDown, Video, CreditCa
 import { 
   ResponsiveContainer, 
   LineChart, 
-  Line
+  Line, 
+  Area 
 } from "recharts";
 import PatientsGoalCard from "./PatientsGoalCard";
 
@@ -83,9 +84,23 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
   // Calculate percent change (random for demo)
   const patientsPercentChange = 4.8; // Replace with real change calc if available.
 
+  // COLORS for sparklines
+  const lineColors = {
+    patients: "#37B079",
+    orders: "#F97316", // orange
+    prescriptions: "#7c3aed", // vivid purple
+    revenue: "#2563eb" // blue
+  };
+
+  const areaColors = {
+    patients: "rgba(55, 176, 121, 0.12)",
+    orders: "rgba(249, 115, 22, 0.12)",
+    prescriptions: "rgba(124, 58, 237, 0.12)",
+    revenue: "rgba(37, 99, 235, 0.12)"
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {/* Patients Goal Card */}
       {showPatientsGoal && (
         <PatientsGoalCard
           total={patientsCount}
@@ -95,7 +110,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         />
       )}
 
-      {/* Responsive stats cards. Update only sparklines */}
+      {/* Patients / Teleconsultations Card */}
       <Card 
         className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => onNavigate(firstCardConfig.path)}
@@ -122,10 +137,25 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
                 <ResponsiveContainer width="100%" height={28}>
                   <LineChart data={patientTrend}>
+                    {/* Gradient fill for shadow */}
+                    <defs>
+                      <linearGradient id="patientsShadow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={areaColors.patients} stopOpacity={0.34}/>
+                        <stop offset="100%" stopColor={areaColors.patients} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="none"
+                      fill="url(#patientsShadow)"
+                      fillOpacity={1}
+                      isAnimationActive={true}
+                    />
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#37B079"
+                      stroke={lineColors.patients}
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={true}
@@ -141,6 +171,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         </div>
       </Card>
 
+      {/* Orders Card */}
       <Card 
         className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => onNavigate('orders')}
@@ -167,10 +198,24 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
                 <ResponsiveContainer width="100%" height={28}>
                   <LineChart data={ordersTrend}>
+                    <defs>
+                      <linearGradient id="ordersShadow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={areaColors.orders} stopOpacity={0.34}/>
+                        <stop offset="100%" stopColor={areaColors.orders} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="none"
+                      fill="url(#ordersShadow)"
+                      fillOpacity={1}
+                      isAnimationActive={true}
+                    />
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#37B079"
+                      stroke={lineColors.orders}
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={true}
@@ -186,6 +231,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         </div>
       </Card>
       
+      {/* Prescriptions Card */}
       <Card 
         className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => onNavigate('prescriptions')}
@@ -212,10 +258,24 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
                 <ResponsiveContainer width="100%" height={28}>
                   <LineChart data={prescriptionsTrend}>
+                    <defs>
+                      <linearGradient id="prescriptionsShadow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={areaColors.prescriptions} stopOpacity={0.32}/>
+                        <stop offset="100%" stopColor={areaColors.prescriptions} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="none"
+                      fill="url(#prescriptionsShadow)"
+                      fillOpacity={1}
+                      isAnimationActive={true}
+                    />
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#37B079"
+                      stroke={lineColors.prescriptions}
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={true}
@@ -231,6 +291,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         </div>
       </Card>
       
+      {/* Revenue/Payments Card */}
       <Card 
         className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => fourthCardConfig.path ? onNavigate(fourthCardConfig.path) : null}
@@ -261,10 +322,24 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
                 <ResponsiveContainer width="100%" height={28}>
                   <LineChart data={revenueTrend}>
+                    <defs>
+                      <linearGradient id="revenueShadow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={areaColors.revenue} stopOpacity={0.32}/>
+                        <stop offset="100%" stopColor={areaColors.revenue} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="none"
+                      fill="url(#revenueShadow)"
+                      fillOpacity={1}
+                      isAnimationActive={true}
+                    />
                     <Line 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#37B079"
+                      stroke={lineColors.revenue}
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={true}
