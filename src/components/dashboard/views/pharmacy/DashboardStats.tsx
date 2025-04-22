@@ -44,13 +44,12 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
   const ordersTrend = stats?.orders_trend || generateMockTrendData(-0.5);
   const prescriptionsTrend = stats?.prescriptions_trend || generateMockTrendData(0.8);
   const revenueTrend = stats?.revenue_trend || generateMockTrendData(1.2);
-  
-  // Determine if trends are positive
+
   const isPatientTrendPositive = patientTrend[0].value < patientTrend[patientTrend.length - 1].value;
   const isOrdersTrendPositive = ordersTrend[0].value < ordersTrend[ordersTrend.length - 1].value;
   const isPrescriptionsTrendPositive = prescriptionsTrend[0].value < prescriptionsTrend[prescriptionsTrend.length - 1].value;
   const isRevenueTrendPositive = revenueTrend[0].value < revenueTrend[revenueTrend.length - 1].value;
-  
+
   // Adjust labels and icons based on user role
   const firstCardConfig = userRole === 'patient' 
     ? { 
@@ -58,12 +57,8 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         icon: <Video className="h-5 w-5 text-muted-foreground" />,
         path: 'teleconsultations'
       }
-    : { 
-        label: 'Active Patients', 
-        icon: <Users className="h-5 w-5 text-muted-foreground" />,
-        path: 'patients'
-      };
-    
+    : null; // REMOVE the "Active Patients" card for doctor/pharmacist, PatientsGoalCard used instead
+
   const fourthCardConfig = userRole === 'patient'
     ? {
         label: 'Completed Payments',
@@ -76,28 +71,30 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         path: ''
       };
 
-  // Add extra: Show the PatientsGoalCard if userRole is doctor or pharmacist
+  // Show the PatientsGoalCard if doctor or pharmacist
   const showPatientsGoal = userRole === "doctor" || userRole === "pharmacist";
-  const patientsGoal = 30000; // Example goal
+  const patientsGoal = 30000;
   const patientsCount = stats?.total_patients || 0;
-
-  // Calculate percent change (random for demo)
   const patientsPercentChange = 4.8; // Replace with real change calc if available.
 
   // COLORS for sparklines
   const lineColors = {
-    patients: "#37B079",
+    patients: "#37B079", // green
     orders: "#F97316", // orange
     prescriptions: "#7c3aed", // vivid purple
     revenue: "#2563eb" // blue
   };
 
+  // Make sparklines more prominent: stronger & bigger gradient
   const areaColors = {
-    patients: "rgba(55, 176, 121, 0.12)",
-    orders: "rgba(249, 115, 22, 0.12)",
-    prescriptions: "rgba(124, 58, 237, 0.12)",
-    revenue: "rgba(37, 99, 235, 0.12)"
+    patients: "rgba(55, 176, 121, 0.38)",          // more saturation, higher opacity
+    orders: "rgba(249, 115, 22, 0.26)",
+    prescriptions: "rgba(124, 58, 237, 0.28)",
+    revenue: "rgba(37, 99, 235, 0.30)"
   };
+
+  // Use a larger height for the sparkline area
+  const sparklineHeight = 38;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -110,66 +107,67 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         />
       )}
 
-      {/* Patients / Teleconsultations Card */}
-      <Card 
-        className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
-        onClick={() => onNavigate(firstCardConfig.path)}
-      >
-        <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium">{firstCardConfig.label}</h3>
-          {firstCardConfig.icon}
-        </div>
-        <div className="pt-2">
-          {isLoading ? (
-            <Skeleton className="h-8 w-24" />
-          ) : (
-            <div>
-              <div className="text-2xl font-bold mb-3">+{stats?.total_patients || 0}</div>
-              <div className="h-8 mt-2 mb-1">
-                <div className="flex items-center mb-2">
-                  {isPatientTrendPositive ? 
-                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
-                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                  }
-                  <span className={`text-xs ${isPatientTrendPositive ? 'text-green-500' : 'text-red-500'}`}>
-                    YTD
-                  </span>
+      {/* Only show "Active Patients/Teleconsultations" card if NOT doctor/pharmacist */}
+      {firstCardConfig && (
+        <Card 
+          className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => onNavigate(firstCardConfig.path)}
+        >
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium">{firstCardConfig.label}</h3>
+            {firstCardConfig.icon}
+          </div>
+          <div className="pt-2">
+            {isLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <div>
+                <div className="text-2xl font-bold mb-3">+{stats?.total_patients || 0}</div>
+                <div className="h-8 mt-2 mb-1">
+                  <div className="flex items-center mb-2">
+                    {isPatientTrendPositive ? 
+                      <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
+                      <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                    }
+                    <span className={`text-xs ${isPatientTrendPositive ? 'text-green-500' : 'text-red-500'}`}>
+                      YTD
+                    </span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={sparklineHeight}>
+                    <LineChart data={patientTrend}>
+                      <defs>
+                        <linearGradient id="patientsShadow" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={areaColors.patients} stopOpacity={0.85}/>
+                          <stop offset="98%" stopColor={areaColors.patients} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="none"
+                        fill="url(#patientsShadow)"
+                        fillOpacity={1}
+                        isAnimationActive={true}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke={lineColors.patients}
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={true}
+                        connectNulls={true}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-                <ResponsiveContainer width="100%" height={28}>
-                  <LineChart data={patientTrend}>
-                    {/* Gradient fill for shadow */}
-                    <defs>
-                      <linearGradient id="patientsShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.patients} stopOpacity={0.34}/>
-                        <stop offset="100%" stopColor={areaColors.patients} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="none"
-                      fill="url(#patientsShadow)"
-                      fillOpacity={1}
-                      isAnimationActive={true}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke={lineColors.patients}
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={true}
-                      connectNulls={true}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
               </div>
-            </div>
-          )}
-        </div>
-      </Card>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Orders Card */}
       <Card 
@@ -196,12 +194,12 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     YTD
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={28}>
+                <ResponsiveContainer width="100%" height={sparklineHeight}>
                   <LineChart data={ordersTrend}>
                     <defs>
                       <linearGradient id="ordersShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.orders} stopOpacity={0.34}/>
-                        <stop offset="100%" stopColor={areaColors.orders} stopOpacity={0}/>
+                        <stop offset="0%" stopColor={areaColors.orders} stopOpacity={0.75}/>
+                        <stop offset="98%" stopColor={areaColors.orders} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <Area
@@ -256,12 +254,12 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     YTD
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={28}>
+                <ResponsiveContainer width="100%" height={sparklineHeight}>
                   <LineChart data={prescriptionsTrend}>
                     <defs>
                       <linearGradient id="prescriptionsShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.prescriptions} stopOpacity={0.32}/>
-                        <stop offset="100%" stopColor={areaColors.prescriptions} stopOpacity={0}/>
+                        <stop offset="0%" stopColor={areaColors.prescriptions} stopOpacity={0.80}/>
+                        <stop offset="98%" stopColor={areaColors.prescriptions} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <Area
@@ -320,12 +318,12 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     YTD
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={28}>
+                <ResponsiveContainer width="100%" height={sparklineHeight}>
                   <LineChart data={revenueTrend}>
                     <defs>
                       <linearGradient id="revenueShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.revenue} stopOpacity={0.32}/>
-                        <stop offset="100%" stopColor={areaColors.revenue} stopOpacity={0}/>
+                        <stop offset="0%" stopColor={areaColors.revenue} stopOpacity={0.85}/>
+                        <stop offset="98%" stopColor={areaColors.revenue} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <Area
