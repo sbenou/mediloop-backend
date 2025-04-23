@@ -96,7 +96,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         return {
           title: "Upgrade to Doctor Pro",
           description: "Access advanced telemedicine features and patient analytics",
-          image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80", // Smiling doctor in professional setting
+          image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=500&q=80", // Professional healthcare setting
           buttonText: "Enhance Your Practice"
         };
       case 'pharmacist':
