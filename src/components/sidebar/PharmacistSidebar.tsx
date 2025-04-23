@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -53,9 +52,9 @@ const PharmacistSidebar = ({
     navigate('/upgrade');
   };
   
-  // Add handler for navigating to pharmacy profile
+  // Correct handler for navigating to pharmacy profile
   const navigateToPharmacyProfile = () => {
-    navigate('/pharmacy-profile');
+    navigate('/pharmacy/profile');
   };
   
   return (

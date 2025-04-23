@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -41,6 +40,11 @@ const DoctorSidebar = ({
     navigate('/upgrade');
   };
 
+  // Add Doctor Profile navigation handler
+  const navigateToDoctorProfile = () => {
+    navigate('/doctor/profile');
+  };
+
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <SidebarBrand />
@@ -62,6 +66,7 @@ const DoctorSidebar = ({
         handleFileChange={handleFileChange}
         navigateToBilling={navigateToBilling}
         navigateToUpgrade={navigateToUpgrade}
+        navigateToDoctorProfile={navigateToDoctorProfile}
       />
     </aside>
   );
