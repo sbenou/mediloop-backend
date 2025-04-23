@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, ShoppingBag, FileText, TrendingUp, TrendingDown, Video, CreditCard } from "lucide-react";
+import { Users, ShoppingBag, FileText, CreditCard } from "lucide-react";
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -10,6 +9,7 @@ import {
   Area 
 } from "recharts";
 import PatientsGoalCard from "./PatientsGoalCard";
+import { Button } from "@/components/ui/button";
 
 interface DashboardStatsProps {
   stats: {
@@ -51,7 +51,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
   const firstCardConfig = userRole === 'patient' 
     ? { 
         label: 'Active Teleconsultations', 
-        icon: <Video className="h-5 w-5 text-muted-foreground" />,
+        icon: <Users className="h-5 w-5 text-muted-foreground" />,
         path: 'teleconsultations'
       }
     : null;
@@ -64,7 +64,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
       }
     : {
         label: 'Monthly Revenue',
-        icon: <span className="text-muted-foreground">€</span>,
+        icon: <CreditCard className="h-5 w-5 text-muted-foreground" />,
         path: ''
       };
 
@@ -91,7 +91,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
   const sparklineHeight = 48;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       {showPatientsGoal && (
         <PatientsGoalCard
           total={patientsCount}
@@ -103,12 +103,14 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
       {firstCardConfig && (
         <Card 
-          className="relative overflow-hidden bg-white p-6 hover:shadow-md transition-shadow duration-200"
+          className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200"
           onClick={() => onNavigate(firstCardConfig.path)}
         >
           <div className="flex flex-row items-center justify-between space-y-0 pb-2">
             <h3 className="text-sm font-medium text-muted-foreground">{firstCardConfig.label}</h3>
-            {firstCardConfig.icon}
+            <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+              {firstCardConfig.icon}
+            </div>
           </div>
           {isLoading ? (
             <Skeleton className="h-8 w-24" />
@@ -155,12 +157,14 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
       )}
 
       <Card 
-        className="relative overflow-hidden bg-white p-6 hover:shadow-md transition-shadow duration-200"
+        className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200"
         onClick={() => onNavigate('orders')}
       >
         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
           <h3 className="text-sm font-medium text-muted-foreground">Pending Orders</h3>
-          <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+          <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+            <ShoppingBag className="h-4 w-4 text-orange-600" />
+          </div>
         </div>
         {isLoading ? (
           <Skeleton className="h-8 w-24" />
@@ -206,12 +210,14 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
       </Card>
 
       <Card 
-        className="relative overflow-hidden bg-white p-6 hover:shadow-md transition-shadow duration-200"
+        className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200"
         onClick={() => onNavigate('prescriptions')}
       >
         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
           <h3 className="text-sm font-medium text-muted-foreground">Prescriptions</h3>
-          <FileText className="h-5 w-5 text-muted-foreground" />
+          <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
+            <FileText className="h-4 w-4 text-violet-600" />
+          </div>
         </div>
         {isLoading ? (
           <Skeleton className="h-8 w-24" />
@@ -257,12 +263,14 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
       </Card>
 
       <Card 
-        className="relative overflow-hidden bg-white p-6 hover:shadow-md transition-shadow duration-200"
+        className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200 md:col-span-2 lg:col-span-1"
         onClick={() => fourthCardConfig.path ? onNavigate(fourthCardConfig.path) : null}
       >
         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
           <h3 className="text-sm font-medium text-muted-foreground">{fourthCardConfig.label}</h3>
-          {fourthCardConfig.icon}
+          <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+            <CreditCard className="h-4 w-4 text-green-600" />
+          </div>
         </div>
         {isLoading ? (
           <Skeleton className="h-8 w-24" />
@@ -309,6 +317,27 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             </div>
           </div>
         )}
+      </Card>
+
+      {/* Advertisement Card */}
+      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-2 lg:row-span-2">
+        <div className="flex flex-col h-full justify-between">
+          <div>
+            <h3 className="text-2xl font-semibold mb-2">Switch to Premium</h3>
+            <p className="text-blue-100 mb-6">Get access to advanced features and priority support</p>
+            <Button 
+              className="bg-white text-blue-600 hover:bg-blue-50"
+              onClick={() => onNavigate('upgrade')}
+            >
+              Upgrade Now
+            </Button>
+          </div>
+          <img 
+            src="/public/lovable-uploads/97bfceac-72da-4238-a36e-de4df16fff0c.png" 
+            alt="Healthcare professionals"
+            className="max-w-[200px] self-end mt-4"
+          />
+        </div>
       </Card>
     </div>
   );
