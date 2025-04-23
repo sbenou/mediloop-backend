@@ -347,11 +347,10 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         )}
       </Card>
 
-      {/* Advertisement Card - Now spanning 2 columns */}
-      <Card className={`relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white 
-        ${userRole === 'doctor' ? 'md:col-span-2 lg:col-span-2' : 'md:col-span-2 lg:col-span-1'} h-auto max-h-[300px]`}>
-        <div className="flex flex-col h-full justify-between">
-          <div>
+      {/* Advertisement Card - Now spanning 2 columns for all roles */}
+      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-2 lg:col-span-2 h-auto">
+        <div className="flex justify-between items-start h-full">
+          <div className="flex-1 pr-4">
             <h3 className="text-2xl font-semibold mb-2">{premiumContent.title}</h3>
             <p className="text-blue-100 mb-4">{premiumContent.description}</p>
             <Button 
@@ -363,8 +362,8 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
           </div>
           <img 
             src={premiumContent.image}
-            alt="Healthcare professionals"
-            className="max-w-[200px] self-end mt-2 object-contain"
+            alt="Healthcare illustration"
+            className="w-48 h-48 object-contain"
           />
         </div>
       </Card>
