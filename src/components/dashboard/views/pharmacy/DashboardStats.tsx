@@ -2,7 +2,10 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, ShoppingBag, FileText, CreditCard, TrendingUp, TrendingDown } from "lucide-react";
+import { 
+  Users, ShoppingBag, FileText, CreditCard, TrendingUp, TrendingDown,
+  Activity, MessageCircle, Video, Bell, Share
+} from "lucide-react";
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -119,14 +122,47 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
   const premiumContent = getPremiumContent(userRole);
 
+  // Mock data for Healthcare Stats
+  const healthcareStats = {
+    teleconsultations: {
+      active: 5,
+      trend: isPatientTrendPositive,
+      color: "bg-blue-100 text-blue-600"
+    },
+    consultations: {
+      active: 3,
+      trend: isPrescriptionsTrendPositive,
+      color: "bg-violet-100 text-violet-600"
+    },
+    prescriptions: {
+      active: stats?.total_prescriptions || 8,
+      trend: isPrescriptionsTrendPositive,
+      color: "bg-green-100 text-green-600"
+    }
+  };
+
+  // Mock data for Recent Activities
+  const recentActivities = [
+    { type: "Consultation", status: "Scheduled", date: "Today, 2:00 PM" },
+    { type: "Prescription", status: "Renewed", date: "Yesterday" },
+    { type: "Order", status: "Delivered", date: "Apr 21, 2025" }
+  ];
+
+  // Mock data for Referrals
+  const referrals = {
+    count: 12,
+    points: 1200,
+    redeemed: 500
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      {/* Advertisement Card - Now moved to the top */}
-      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-2 lg:col-span-2 h-auto">
+      {/* Top Row - Premium Ad + Healthcare Stats */}
+      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-1 lg:col-span-2">
         <div className="flex justify-between items-start h-full">
-          <div className="flex-1 pr-4">
+          <div className="flex-1 pr-4 max-w-xs">
             <h3 className="text-2xl font-semibold mb-2">{premiumContent.title}</h3>
-            <p className="text-blue-100 mb-4">{premiumContent.description}</p>
+            <p className="text-blue-100 mb-4 text-sm">{premiumContent.description}</p>
             <Button 
               className="bg-white text-blue-600 hover:bg-blue-50"
               onClick={() => onNavigate('upgrade')}
@@ -140,6 +176,208 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             className="w-48 h-48 object-contain"
           />
         </div>
+      </Card>
+      
+      {/* Healthcare Stats Card */}
+      <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-2">
+        <h3 className="text-lg font-medium mb-4">Healthcare Overview</h3>
+        <div className="grid grid-cols-3 gap-4">
+          {/* Teleconsultations */}
+          <div className="flex flex-col items-center">
+            <div className={`h-12 w-12 rounded-full ${healthcareStats.teleconsultations.color} flex items-center justify-center mb-2`}>
+              <Video className="h-6 w-6" />
+            </div>
+            <div className="text-sm text-center">
+              <p className="text-xl font-semibold">{healthcareStats.teleconsultations.active}</p>
+              <p className="text-xs text-muted-foreground">Active Teleconsultations</p>
+            </div>
+            <div className="flex items-center text-xs mt-1">
+              {healthcareStats.teleconsultations.trend ? 
+                <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
+                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+              }
+            </div>
+          </div>
+          
+          {/* Consultations */}
+          <div className="flex flex-col items-center">
+            <div className={`h-12 w-12 rounded-full ${healthcareStats.consultations.color} flex items-center justify-center mb-2`}>
+              <MessageCircle className="h-6 w-6" />
+            </div>
+            <div className="text-sm text-center">
+              <p className="text-xl font-semibold">{healthcareStats.consultations.active}</p>
+              <p className="text-xs text-muted-foreground">Active Consultations</p>
+            </div>
+            <div className="flex items-center text-xs mt-1">
+              {healthcareStats.consultations.trend ? 
+                <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
+                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+              }
+            </div>
+          </div>
+          
+          {/* Prescriptions */}
+          <div className="flex flex-col items-center">
+            <div className={`h-12 w-12 rounded-full ${healthcareStats.prescriptions.color} flex items-center justify-center mb-2`}>
+              <FileText className="h-6 w-6" />
+            </div>
+            <div className="text-sm text-center">
+              <p className="text-xl font-semibold">{healthcareStats.prescriptions.active}</p>
+              <p className="text-xs text-muted-foreground">Active Prescriptions</p>
+            </div>
+            <div className="flex items-center text-xs mt-1">
+              {healthcareStats.prescriptions.trend ? 
+                <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
+                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+              }
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Transactions Card */}
+      <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-2">
+        <h3 className="text-lg font-medium mb-4">Transactions</h3>
+        
+        {/* Pending Orders */}
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+                <ShoppingBag className="h-4 w-4 text-orange-600" />
+              </div>
+              <span className="text-sm font-medium">Pending Orders</span>
+            </div>
+            <span className="text-xl font-semibold">+{stats?.pending_orders || 0}</span>
+          </div>
+          <div className="h-12">
+            <ResponsiveContainer width="100%" height={sparklineHeight}>
+              <LineChart data={ordersTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                <defs>
+                  <linearGradient id="ordersShadow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={areaColors.orders} stopOpacity={1}/>
+                    <stop offset="100%" stopColor={areaColors.orders} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="none"
+                  fill="url(#ordersShadow)"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke={lineColors.orders}
+                  strokeWidth={1.5}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        
+        {/* Completed Payments */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                <CreditCard className="h-4 w-4 text-green-600" />
+              </div>
+              <span className="text-sm font-medium">
+                {userRole === 'patient' ? 'Completed Payments' : 'Monthly Revenue'}
+              </span>
+            </div>
+            <span className="text-xl font-semibold">
+              {userRole === 'patient' ? 
+                `+${stats?.monthly_revenue || 0}` : 
+                `€${stats?.monthly_revenue?.toLocaleString() || 0}`}
+            </span>
+          </div>
+          <div className="h-12">
+            <ResponsiveContainer width="100%" height={sparklineHeight}>
+              <LineChart data={revenueTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                <defs>
+                  <linearGradient id="revenueShadow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={areaColors.revenue} stopOpacity={1}/>
+                    <stop offset="100%" stopColor={areaColors.revenue} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="none"
+                  fill="url(#revenueShadow)"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke={lineColors.revenue}
+                  strokeWidth={1.5}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </Card>
+      
+      {/* Recent Activities Card */}
+      <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
+        <h3 className="text-lg font-medium mb-3">Recent Activities</h3>
+        <div className="space-y-3">
+          {recentActivities.map((activity, index) => (
+            <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+              <div>
+                <p className="text-sm font-medium">{activity.type}</p>
+                <p className="text-xs text-muted-foreground">{activity.status}</p>
+              </div>
+              <div className="text-xs text-muted-foreground">{activity.date}</div>
+            </div>
+          ))}
+        </div>
+        <Button 
+          variant="ghost" 
+          className="w-full mt-3 text-sm"
+          onClick={() => onNavigate('notifications')}
+        >
+          View All
+          <Activity className="ml-2 h-4 w-4" />
+        </Button>
+      </Card>
+      
+      {/* Referrals Card */}
+      <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
+        <h3 className="text-lg font-medium mb-3">Referrals</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Total Referrals</p>
+              <p className="text-xl font-semibold">{referrals.count}</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <Share className="h-5 w-5 text-blue-600" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Total Points</p>
+              <p className="text-xl font-semibold">{referrals.points}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Redeemed</p>
+              <p className="text-sm font-medium">{referrals.redeemed}</p>
+            </div>
+          </div>
+        </div>
+        <Button 
+          variant="ghost" 
+          className="w-full mt-4 text-sm"
+          onClick={() => navigate('/referral')}
+        >
+          View Referrals
+          <Share className="ml-2 h-4 w-4" />
+        </Button>
       </Card>
 
       {showPatientsGoal && (
@@ -150,245 +388,6 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
           isPositive={patientsPercentChange >= 0}
         />
       )}
-
-      {firstCardConfig && (
-        <Card 
-          className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200"
-          onClick={() => onNavigate(firstCardConfig.path)}
-        >
-          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium text-muted-foreground">{firstCardConfig.label}</h3>
-            <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
-              {firstCardConfig.icon}
-            </div>
-          </div>
-          {isLoading ? (
-            <Skeleton className="h-8 w-24" />
-          ) : (
-            <div>
-              <div className="text-2xl font-semibold mb-3">+{stats?.total_patients || 0}</div>
-              <div className="h-8 mt-4">
-                <div className="flex items-center text-xs">
-                  {isPatientTrendPositive ? 
-                    <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
-                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                  }
-                  <span className={`${isPatientTrendPositive ? 'text-emerald-500' : 'text-red-500'}`}>
-                    YTD
-                  </span>
-                </div>
-                <ResponsiveContainer width="100%" height={sparklineHeight}>
-                  <LineChart data={patientTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                    <defs>
-                      <linearGradient id="patientsShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.patients} stopOpacity={1}/>
-                        <stop offset="100%" stopColor={areaColors.patients} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="none"
-                      fill="url(#patientsShadow)"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke={lineColors.patients}
-                      strokeWidth={1.5}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-        </Card>
-      )}
-
-      <Card 
-        className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200"
-        onClick={() => onNavigate('orders')}
-      >
-        <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Pending Orders</h3>
-          <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
-            <ShoppingBag className="h-4 w-4 text-orange-600" />
-          </div>
-        </div>
-        {isLoading ? (
-          <Skeleton className="h-8 w-24" />
-        ) : (
-          <div>
-            <div className="text-2xl font-semibold mb-3">+{stats?.pending_orders || 0}</div>
-            <div className="h-8 mt-4">
-              <div className="flex items-center text-xs">
-                {isOrdersTrendPositive ? 
-                  <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
-                  <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                }
-                <span className={`${isOrdersTrendPositive ? 'text-emerald-500' : 'text-red-500'}`}>
-                  YTD
-                </span>
-              </div>
-              <ResponsiveContainer width="100%" height={sparklineHeight}>
-                <LineChart data={ordersTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                  <defs>
-                    <linearGradient id="ordersShadow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={areaColors.orders} stopOpacity={1}/>
-                      <stop offset="100%" stopColor={areaColors.orders} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="none"
-                    fill="url(#ordersShadow)"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke={lineColors.orders}
-                    strokeWidth={1.5}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      <Card 
-        className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200"
-        onClick={() => onNavigate('prescriptions')}
-      >
-        <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Prescriptions</h3>
-          <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
-            <FileText className="h-4 w-4 text-violet-600" />
-          </div>
-        </div>
-        {isLoading ? (
-          <Skeleton className="h-8 w-24" />
-        ) : (
-          <div>
-            <div className="text-2xl font-semibold mb-3">+{stats?.total_prescriptions || 0}</div>
-            <div className="h-8 mt-4">
-              <div className="flex items-center text-xs">
-                {isPrescriptionsTrendPositive ? 
-                  <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
-                  <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                }
-                <span className={`${isPrescriptionsTrendPositive ? 'text-emerald-500' : 'text-red-500'}`}>
-                  YTD
-                </span>
-              </div>
-              <ResponsiveContainer width="100%" height={sparklineHeight}>
-                <LineChart data={prescriptionsTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                  <defs>
-                    <linearGradient id="prescriptionsShadow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={areaColors.prescriptions} stopOpacity={1}/>
-                      <stop offset="100%" stopColor={areaColors.prescriptions} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="none"
-                    fill="url(#prescriptionsShadow)"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke={lineColors.prescriptions}
-                    strokeWidth={1.5}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      <Card 
-        className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200 md:col-span-2 lg:col-span-1"
-        onClick={() => fourthCardConfig.path ? onNavigate(fourthCardConfig.path) : null}
-      >
-        <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium text-muted-foreground">{fourthCardConfig.label}</h3>
-          <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-            <CreditCard className="h-4 w-4 text-green-600" />
-          </div>
-        </div>
-        {isLoading ? (
-          <Skeleton className="h-8 w-24" />
-        ) : (
-          <div>
-            <div className="text-2xl font-semibold mb-3">
-              {userRole === 'patient' ? 
-                `+${stats?.monthly_revenue || 0}` : 
-                `€${stats?.monthly_revenue?.toLocaleString() || 0}`}
-            </div>
-            <div className="h-8 mt-4">
-              <div className="flex items-center text-xs">
-                {isRevenueTrendPositive ? 
-                  <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
-                  <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                }
-                <span className={`${isRevenueTrendPositive ? 'text-emerald-500' : 'text-red-500'}`}>
-                  YTD
-                </span>
-              </div>
-              <ResponsiveContainer width="100%" height={sparklineHeight}>
-                <LineChart data={revenueTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                  <defs>
-                    <linearGradient id="revenueShadow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={areaColors.revenue} stopOpacity={1}/>
-                      <stop offset="100%" stopColor={areaColors.revenue} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="none"
-                    fill="url(#revenueShadow)"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke={lineColors.revenue}
-                    strokeWidth={1.5}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Advertisement Card - Now spanning 2 columns for all roles */}
-      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-2 lg:col-span-2 h-auto">
-        <div className="flex justify-between items-start h-full">
-          <div className="flex-1 pr-4">
-            <h3 className="text-2xl font-semibold mb-2">{premiumContent.title}</h3>
-            <p className="text-blue-100 mb-4">{premiumContent.description}</p>
-            <Button 
-              className="bg-white text-blue-600 hover:bg-blue-50"
-              onClick={() => onNavigate('upgrade')}
-            >
-              {premiumContent.buttonText}
-            </Button>
-          </div>
-          <img 
-            src={premiumContent.image}
-            alt="Healthcare illustration"
-            className="w-48 h-48 object-contain"
-          />
-        </div>
-      </Card>
     </div>
   );
 };

@@ -30,12 +30,16 @@ export const UserMenuContent = ({
   navigateToDoctorProfile,
   handleLogout,
 }: UserMenuContentProps) => {
+  // Display the correct role text
+  const roleText = userRole === 'user' || userRole === 'patient' ? 'Patient' : 
+                   userRole.charAt(0).toUpperCase() + userRole.slice(1);
+
   return (
     <DropdownMenuContent align="end" side="right" className="w-56 bg-white">
       <DropdownMenuLabel className="font-normal">
         <div className="flex flex-col space-y-1 items-center">
           <p className="text-sm font-normal">{profile?.email || 'user@example.com'}</p>
-          <p className="text-xs font-medium">{userRole === 'user' ? 'Patient' : userRole}</p>
+          <p className="text-xs font-medium">{roleText}</p>
         </div>
       </DropdownMenuLabel>
       <DropdownMenuSeparator />

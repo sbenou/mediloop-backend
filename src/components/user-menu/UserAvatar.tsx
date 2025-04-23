@@ -75,8 +75,12 @@ const UserAvatar = ({
   const displayAvatarUrl = useMemo(() => {
     let url = null;
     
+    // For patients, always use the user avatar
+    if (userProfile?.role === 'patient' || userProfile?.role === 'user') {
+      url = globalAvatarUrl || userProfile?.avatar_url;
+    }
     // Special handling for pharmacists in sidebar (isSquare=true)
-    if (userProfile?.role === 'pharmacist' && isSquare) {
+    else if (userProfile?.role === 'pharmacist' && isSquare) {
       // For pharmacists in sidebar, ONLY use pharmacy logo or nothing
       url = pharmacyLogoUrl || userProfile.pharmacy_logo_url;
     }
@@ -85,7 +89,7 @@ const UserAvatar = ({
       url = doctorStampUrl || userProfile.doctor_stamp_url;
     }
     // For regular users or non-sidebar contexts
-    else if (!isSquare || userProfile?.role === 'user') {
+    else if (!isSquare) {
       url = globalAvatarUrl || userProfile?.avatar_url;
     }
 

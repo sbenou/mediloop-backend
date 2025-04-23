@@ -1,7 +1,7 @@
 
 import { Fragment, useCallback } from "react";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Bell, UserCircle, CreditCard, Store, Share } from "lucide-react";
+import { Settings, LogOut, Bell, UserCircle, CreditCard, Share } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { getMenuItemsByRole } from "./userMenuItemsByRole";
 import { useUserMenuNavigation } from "./userMenuNavigation";
@@ -19,8 +19,20 @@ export function UserMenuItems() {
   
   // Filter out the current page from menu items to avoid duplicate navigation
   const filteredMenuItems = menuItems.filter(item => {
-    // Special case for Doctor Profile - never filter it out regardless of current page
-    if (item.label === 'Doctor Profile') {
+    // For patient role, never show doctor or pharmacy profile links
+    if (userRole === 'patient' || userRole === 'user') {
+      if (item.label === 'Doctor Profile' || item.label === 'Pharmacy Profile') {
+        return false;
+      }
+    }
+    
+    // Special case for Doctor Profile - never filter it out for doctor role
+    if (userRole === 'doctor' && item.label === 'Doctor Profile') {
+      return true;
+    }
+    
+    // Special case for Pharmacy Profile - never filter it out for pharmacist role
+    if (isPharmacist && item.label === 'Pharmacy Profile') {
       return true;
     }
     
@@ -42,11 +54,16 @@ export function UserMenuItems() {
     );
   }, [handleNavigation]);
   
+  // Format role for display - capitalize first letter
+  const formattedRole = userRole === 'user' || userRole === 'patient' ? 'Patient' : 
+                        userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User';
+  
   return (
     <>
       <div className="px-2 py-1.5">
         <p className="text-sm font-medium">{profile?.full_name || 'User'}</p>
         <p className="text-xs text-muted-foreground truncate">{profile?.email || ''}</p>
+        <p className="text-xs font-medium text-muted-foreground">{formattedRole}</p>
       </div>
       <DropdownMenuSeparator />
 

@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -84,18 +85,8 @@ const Dashboard = () => {
   if (isAuthenticated && userRole) {
     console.log("🔓 Access granted to role:", userRole);
     
-    // Use specific layouts based on user role to ensure the activity drawer is visible
-    if (userRole === "doctor") {
-      return (
-        <RequireRoleGuard allowedRoles={["doctor", "superadmin"]}>
-          <CartProvider>
-            <DoctorLayout>
-              <DashboardRouter userRole={userRole} />
-            </DoctorLayout>
-          </CartProvider>
-        </RequireRoleGuard>
-      );
-    } else if (userRole === "patient") {
+    // Always use PatientLayout for patient role
+    if (userRole === "patient") {
       return (
         <RequireRoleGuard allowedRoles={["patient", "superadmin"]}>
           <CartProvider>
@@ -105,8 +96,21 @@ const Dashboard = () => {
           </CartProvider>
         </RequireRoleGuard>
       );
-    } else {
-      // For other roles (pharmacist, superadmin), use the UnifiedLayoutTemplate
+    } 
+    // Use DoctorLayout for doctor role
+    else if (userRole === "doctor") {
+      return (
+        <RequireRoleGuard allowedRoles={["doctor", "superadmin"]}>
+          <CartProvider>
+            <DoctorLayout>
+              <DashboardRouter userRole={userRole} />
+            </DoctorLayout>
+          </CartProvider>
+        </RequireRoleGuard>
+      );
+    } 
+    // For other roles (pharmacist, superadmin), use the UnifiedLayoutTemplate
+    else {
       return (
         <RequireRoleGuard allowedRoles={["patient", "doctor", "pharmacist", "superadmin"]}>
           <CartProvider>
