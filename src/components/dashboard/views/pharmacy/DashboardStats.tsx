@@ -373,7 +373,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         <Button 
           variant="ghost" 
           className="w-full mt-4 text-sm"
-          onClick={() => navigate('/referral')}
+          onClick={() => onNavigate('referral')}
         >
           View Referrals
           <Share className="ml-2 h-4 w-4" />
