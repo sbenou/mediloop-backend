@@ -1,7 +1,9 @@
+
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import OrdersHeader from "./OrdersHeader";
 import OrdersTabs from "./OrdersTabs";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface OrdersViewProps {
   activeTab: string;
@@ -12,6 +14,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { isLoading, hasPermission } = useAuth();
 
   // Determine the current view based on location path and search params
   const getCurrentView = () => {

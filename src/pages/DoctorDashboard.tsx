@@ -24,7 +24,7 @@ interface DoctorDashboardProps {
 const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const { isLoading } = useAuth();
+  const { isLoading, userRole } = useAuth();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Get parameters from URL or use initialParams if provided
@@ -94,8 +94,8 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       case "workplaces":
         return <WorkplacesView />;
       case "orders":
-        console.log("Rendering OrdersView with tab:", ordersTab);
-        return <OrdersView activeTab={ordersTab} userRole="doctor" />;
+        console.log("Rendering OrdersView with tab:", ordersTab, "and userRole:", userRole || "doctor");
+        return <OrdersView activeTab={ordersTab} userRole={userRole || "doctor"} />;
       case "dashboard":
       default:
         return <HomeView userRole="doctor" />;

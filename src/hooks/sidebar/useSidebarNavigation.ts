@@ -27,7 +27,18 @@ export function useSidebarNavigation(userRole: string) {
     }
     
     // For query param based navigation
-    navigate(`/dashboard${link}`);
+    if (userRole === 'doctor') {
+      // Check if this is a doctor section navigation (orders, profile, etc.)
+      if (link.includes('section=')) {
+        navigate(`/dashboard${link}`);
+        return;
+      }
+      
+      // For other doctor routes, ensure we maintain the section parameter
+      navigate(`/dashboard${link}`);
+    } else {
+      navigate(`/dashboard${link}`);
+    }
   };
 
   // Function to check if a specific path is active
