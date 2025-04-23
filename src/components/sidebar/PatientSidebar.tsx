@@ -55,6 +55,20 @@ const PatientSidebar = () => {
     }
   };
 
+  // Only make the parent collapsible active if no child is active
+  const isOrdersParentActive = view === "orders" && 
+    (!searchParams.get("ordersTab") || 
+    (searchParams.get("ordersTab") !== "orders" && searchParams.get("ordersTab") !== "payments"));
+  
+  // Only make the profile parent active if no child is active
+  const isProfileParentActive = view === "profile" && 
+    (!searchParams.get("profileTab") || 
+    (searchParams.get("profileTab") !== "personal" && 
+     searchParams.get("profileTab") !== "addresses" && 
+     searchParams.get("profileTab") !== "pharmacy" && 
+     searchParams.get("profileTab") !== "doctor" && 
+     searchParams.get("profileTab") !== "nextofkin"));
+
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <SidebarBrand />
@@ -62,34 +76,33 @@ const PatientSidebar = () => {
       <div className="flex-1 overflow-auto py-4">
         <SidebarSection title="Platform">
           <SidebarItem
-            icon={<Home className="w-5 h-5 mr-4" />}  // Updated margin to mr-4
+            icon={<Home className="w-5 h-5 mr-4" />}
             label="Dashboard"
             isActive={view === "home" || !view}
             onClick={() => navigateToPatientView("home")}
           />
           
           <SidebarCollapsibleItem 
-            icon={<ShoppingBag className="w-5 h-5 mr-4" />}  // Updated margin to mr-4
+            icon={<ShoppingBag className="w-5 h-5 mr-4" />}
             label="Orders"
             isOpen={isOrdersOpen}
-            isActive={view === "orders"}
+            isActive={isOrdersParentActive}
             onOpenChange={(isOpen) => setIsOrdersOpen(isOpen)}
           >
             <SidebarSubItem
-              icon={<ShoppingBag className="w-4 h-4 mr-4" />}  // Updated margin to mr-4
+              icon={<ShoppingBag className="w-4 h-4 mr-4" />}
               label="My Orders"
               isActive={view === "orders" && (!searchParams.get("ordersTab") || searchParams.get("ordersTab") === "orders")}
               onClick={() => navigateToPatientView("orders", "orders", "ordersTab")}
             />
             <SidebarSubItem
-              icon={<CreditCard className="w-4 h-4 mr-4" />}  // Updated margin to mr-4
+              icon={<CreditCard className="w-4 h-4 mr-4" />}
               label="Payments"
               isActive={view === "orders" && searchParams.get("ordersTab") === "payments"}
               onClick={() => navigateToPatientView("orders", "payments", "ordersTab")}
             />
           </SidebarCollapsibleItem>
           
-          {/* Update margins for other icons */}
           <SidebarItem
             icon={<Pill className="w-5 h-5 mr-4" />}
             label="Prescriptions"
@@ -115,7 +128,7 @@ const PatientSidebar = () => {
             icon={<UserCircle className="w-5 h-5 mr-4" />}
             label="Profile"
             isOpen={isProfileOpen}
-            isActive={view === "profile"}
+            isActive={isProfileParentActive}
             onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
           >
             <SidebarSubItem

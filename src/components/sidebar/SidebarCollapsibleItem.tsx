@@ -52,4 +52,3 @@ const SidebarCollapsibleItem = ({
 };
 
 export default SidebarCollapsibleItem;
-
