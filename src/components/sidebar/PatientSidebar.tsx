@@ -57,15 +57,17 @@ const PatientSidebar = () => {
 
   // Check if we are in orders view and if we have an orders tab parameter
   const ordersTab = searchParams.get("ordersTab");
-  const hasOrdersTab = ordersTab !== null;
   
   // Check if we are in profile view and if we have a profile tab parameter
   const profileTab = searchParams.get("profileTab");
-  const hasProfileTab = profileTab !== null;
   
-  // Only make the parent active if we're in the main section view without a specific tab
-  const isOrdersParentActive = view === "orders" && !hasOrdersTab;
-  const isProfileParentActive = view === "profile" && !hasProfileTab;
+  // Only make the parent Orders active if we're in the orders view without any specific tab
+  // and the dropdown is not open
+  const isOrdersActive = view === "orders" && !ordersTab && !isOrdersOpen;
+  
+  // Only make the parent Profile active if we're in the profile view without any specific tab
+  // and the dropdown is not open
+  const isProfileActive = view === "profile" && !profileTab && !isProfileOpen;
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -84,7 +86,7 @@ const PatientSidebar = () => {
             icon={<ShoppingBag className="w-5 h-5 mr-4" />}
             label="Orders"
             isOpen={isOrdersOpen}
-            isActive={isOrdersParentActive}
+            isActive={isOrdersActive}
             onOpenChange={(isOpen) => setIsOrdersOpen(isOpen)}
           >
             <SidebarSubItem
@@ -126,7 +128,7 @@ const PatientSidebar = () => {
             icon={<UserCircle className="w-5 h-5 mr-4" />}
             label="Profile"
             isOpen={isProfileOpen}
-            isActive={isProfileParentActive}
+            isActive={isProfileActive}
             onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
           >
             <SidebarSubItem
