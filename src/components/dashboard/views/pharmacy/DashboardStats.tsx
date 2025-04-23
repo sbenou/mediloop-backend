@@ -90,28 +90,27 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
   const sparklineHeight = 48;
 
-  // Helper function to get role-specific premium content
   const getPremiumContent = (role: string) => {
     switch(role) {
       case 'doctor':
         return {
           title: "Upgrade to Doctor Pro",
           description: "Access advanced telemedicine features and patient analytics",
-          image: "/lovable-uploads/8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png",
+          image: "/lovable-uploads/1d4b50b5-2725-470b-a070-5227c3aa24b6.png", // Changed image
           buttonText: "Enhance Your Practice"
         };
       case 'pharmacist':
         return {
           title: "Upgrade to Pharmacy Plus",
           description: "Streamline operations with advanced inventory and prescription management",
-          image: "/lovable-uploads/97bfceac-72da-4238-a36e-de4df16fff0c.png",
+          image: "/lovable-uploads/c13d24b0-a830-4efe-ae19-fbd705f33eaa.png", // Changed image
           buttonText: "Boost Your Pharmacy"
         };
       default: // patient
         return {
           title: "Upgrade to Health Plus",
           description: "Get priority access to doctors and exclusive health services",
-          image: "/lovable-uploads/a58aacba-6abd-441d-9672-d13a1af4ecad.png",
+          image: "/lovable-uploads/5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png", // Changed image
           buttonText: "Upgrade Now"
         };
     }
@@ -348,12 +347,12 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         )}
       </Card>
 
-      {/* Advertisement Card - Now role-specific */}
-      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-2 lg:row-span-2">
+      {/* Advertisement Card - Now role-specific and with adjusted height */}
+      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-2 lg:col-span-1 h-auto max-h-[300px]">
         <div className="flex flex-col h-full justify-between">
           <div>
             <h3 className="text-2xl font-semibold mb-2">{premiumContent.title}</h3>
-            <p className="text-blue-100 mb-6">{premiumContent.description}</p>
+            <p className="text-blue-100 mb-4">{premiumContent.description}</p>
             <Button 
               className="bg-white text-blue-600 hover:bg-blue-50"
               onClick={() => onNavigate('upgrade')}
@@ -364,7 +363,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
           <img 
             src={premiumContent.image}
             alt="Healthcare professionals"
-            className="max-w-[200px] self-end mt-4"
+            className="max-w-[200px] self-end mt-2 object-contain"
           />
         </div>
       </Card>
