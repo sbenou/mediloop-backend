@@ -46,6 +46,12 @@ export function useSidebarNavigation(userRole: string) {
     if (path === '/dashboard') {
       return location.pathname === '/dashboard' && !location.search;
     }
+    
+    // Specifically handle the /referral path to avoid conflicts with dashboard
+    if (path === '/referral') {
+      return location.pathname === '/referral';
+    }
+    
     return location.pathname.includes(path);
   };
 
