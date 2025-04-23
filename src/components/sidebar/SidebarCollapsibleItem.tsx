@@ -26,11 +26,15 @@ const SidebarCollapsibleItem = ({
       onOpenChange={onOpenChange}
       className="w-full"
     >
-      <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 pl-10 rounded-md text-sm cursor-pointer ${
+      <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 pl-10 rounded-md text-sm cursor-pointer relative ${
         isActive
           ? 'bg-primary/10 text-primary font-medium' 
           : 'text-muted-foreground hover:bg-gray-100'
       }`}>
+        {/* Add vertical line for active state */}
+        {isActive && (
+          <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#9b87f5] rounded-l-md"></div>
+        )}
         <div className="flex items-center flex-1 min-w-0">
           {/* Fixed width icon for alignment */}
           <div className="flex items-center" style={{ width: 28, minWidth: 28, justifyContent: "center" }}>
@@ -48,3 +52,4 @@ const SidebarCollapsibleItem = ({
 };
 
 export default SidebarCollapsibleItem;
+
