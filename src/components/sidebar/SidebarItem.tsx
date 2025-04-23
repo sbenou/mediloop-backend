@@ -18,11 +18,11 @@ const SidebarItem = ({ icon, label, isActive, onClick }: SidebarItemProps) => {
           : 'text-muted-foreground hover:bg-gray-100'
       }`}
     >
-      <div className="flex items-center w-full space-x-4">  {/* Added space-x-4 for consistent spacing */}
-        <div className="flex items-center">  {/* Removed mr-4 */}
+      <div className="flex items-center w-full space-x-4">
+        <div className="flex items-center">
           {icon}
         </div>
-        <span className="flex-1">{label}</span>  {/* Added flex-1 to ensure left alignment */}
+        <span className="flex-1">{label}</span>
       </div>
     </div>
   );
