@@ -26,18 +26,18 @@ export function useSidebarNavigation(userRole: string) {
       return;
     }
     
-    // For query param based navigation
+    // For query param based navigation - use replace: true to prevent history stacking
     if (userRole === 'doctor') {
       // Check if this is a doctor section navigation (orders, profile, etc.)
       if (link.includes('section=')) {
-        navigate(`/dashboard${link}`);
+        navigate(`/dashboard${link}`, { replace: true });
         return;
       }
       
       // For other doctor routes, ensure we maintain the section parameter
-      navigate(`/dashboard${link}`);
+      navigate(`/dashboard${link}`, { replace: true });
     } else {
-      navigate(`/dashboard${link}`);
+      navigate(`/dashboard${link}`, { replace: true });
     }
   };
 

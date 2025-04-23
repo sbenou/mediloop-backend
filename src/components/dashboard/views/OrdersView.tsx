@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import OrdersHeader from "./OrdersHeader";
@@ -48,7 +47,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     
     // For doctor view
     if (userRole === 'doctor' && location.pathname === '/dashboard' && searchParams.get('section') === 'orders') {
-      navigate(`/dashboard?section=orders&ordersTab=${value}`);
+      navigate(`/dashboard?section=orders&ordersTab=${value}`, { replace: true });
       return;
     }
     
@@ -61,20 +60,22 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
       
       if (isStatusTab) {
         // If it's a status tab, we maintain the current subsection (all/payments) and add a status parameter
-        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${currentSubsection}&status=${value}`);
+        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${currentSubsection}&status=${value}`, { replace: true });
       } else {
         // If switching between 'all' and 'payments', reset the status
-        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${value}`);
+        navigate(`/dashboard?view=pharmacy&section=orders&ordersTab=${value}`, { replace: true });
       }
     } else if (location.pathname === '/my-orders') {
-      navigate(`/my-orders?view=${value}`);
+      navigate(`/my-orders?view=${value}`, { replace: true });
     } else {
-      navigate(`/dashboard?view=orders&ordersTab=${value}`);
+      navigate(`/dashboard?view=orders&ordersTab=${value}`, { replace: true });
     }
   };
   
   // Set correct view when navigating from sidebar
   useEffect(() => {
+    // Logging for debugging but not doing any navigation in useEffect
+    // to prevent navigation loops
     const isOnDoctorOrdersPage = location.pathname === '/dashboard' && searchParams.get('section') === 'orders';
     const isOnPatientOrdersPage = location.pathname === '/dashboard' && searchParams.get('view') === 'orders';
     const isOnMyOrdersPage = location.pathname === '/my-orders';
@@ -96,6 +97,33 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
     }
   }, [location.pathname, searchParams, activeTab, view, userRole]);
 
+  const getActiveTab = () => {
+    if (location.pathname === '/my-orders') {
+      return searchParams.get('view') || 'orders';
+    }
+
+    // For doctor orders section
+    if (userRole === 'doctor' && location.pathname === '/dashboard' && searchParams.get('section') === 'orders') {
+      return searchParams.get('ordersTab') || 'orders';
+    }
+
+    // For pharmacy section in dashboard
+    if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
+      // For pharmacist, check if we're in a status view
+      if (userRole === 'pharmacist') {
+        // Get status from URL if present
+        return searchParams.get('status') || 'pending';
+      }
+      
+      return searchParams.get('ordersTab') || 'all';
+    }
+    
+    // Use the provided activeTab prop as fallback
+    return activeTab || getTabs()[0].id;
+  };
+
+  const currentActiveTab = getActiveTab();
+  
   const getTabs = () => {
     switch (userRole) {
       case 'patient':
@@ -135,7 +163,6 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
         ];
     }
   };
-  const tabs = getTabs();
 
   const renderEmptyState = (tabId: string) => {
     const currentSubsection = searchParams.get('ordersTab') || 'all';
@@ -221,33 +248,6 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
       : "Manage customer orders and process them efficiently.";
   };
 
-  const getActiveTab = () => {
-    if (location.pathname === '/my-orders') {
-      return searchParams.get('view') || 'orders';
-    }
-
-    // For doctor orders section
-    if (userRole === 'doctor' && location.pathname === '/dashboard' && searchParams.get('section') === 'orders') {
-      return searchParams.get('ordersTab') || 'orders';
-    }
-
-    // For pharmacy section in dashboard
-    if (location.pathname === '/dashboard' && searchParams.get('view') === 'pharmacy') {
-      // For pharmacist, check if we're in a status view
-      if (userRole === 'pharmacist') {
-        // Get status from URL if present
-        return searchParams.get('status') || 'pending';
-      }
-      
-      return searchParams.get('ordersTab') || 'all';
-    }
-    
-    // Use the provided activeTab prop as fallback
-    return activeTab || tabs[0].id;
-  };
-
-  const currentActiveTab = getActiveTab();
-
   return (
     <div className="space-y-6">
       <OrdersHeader
@@ -255,7 +255,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
         descriptionText={getDescriptionText()}
       />
       <OrdersTabs
-        tabs={tabs}
+        tabs={getTabs()}
         activeTab={currentActiveTab}
         onTabChange={handleTabChange}
         renderEmptyState={renderEmptyState}

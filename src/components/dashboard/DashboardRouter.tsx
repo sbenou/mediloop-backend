@@ -75,6 +75,9 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
           return <WorkplacesView />;
         case "notifications":
           return <NotificationsView userRole="doctor" />;
+        case "orders":
+          console.log("Rendering OrdersView for doctor with tab:", ordersTab);
+          return <OrdersView activeTab={ordersTab || "orders"} userRole="doctor" />;
         case "dashboard":
         default:
           return <HomeView userRole="doctor" />;
@@ -94,6 +97,9 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
           return <DoctorTeleconsultationsView />;
         case "notifications":
           return <NotificationsView userRole="doctor" />;
+        case "orders":
+          console.log("Fallback: Rendering OrdersView for doctor with tab:", ordersTab);
+          return <OrdersView activeTab={ordersTab || "orders"} userRole="doctor" />;
         default:
           return <HomeView userRole="doctor" />;
       }
