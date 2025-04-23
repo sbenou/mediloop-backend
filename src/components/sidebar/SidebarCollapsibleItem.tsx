@@ -26,7 +26,7 @@ const SidebarCollapsibleItem = ({
       onOpenChange={onOpenChange}
       className="w-full"
     >
-      <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 pl-8 rounded-md text-sm cursor-pointer ${
+      <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 pl-9 rounded-md text-sm cursor-pointer ${
         isActive
           ? 'bg-primary/10 text-primary font-medium' 
           : 'text-muted-foreground hover:bg-gray-100'
