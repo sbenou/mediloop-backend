@@ -33,7 +33,7 @@ const SidebarCollapsibleItem = ({
       }`}>
         {/* Add vertical line for active state */}
         {isActive && (
-          <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#9b87f5] rounded-l-md"></div>
+          <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#9b87f5]"></div>
         )}
         <div className="flex items-center flex-1 min-w-0">
           {/* Fixed width icon for alignment */}
@@ -44,7 +44,7 @@ const SidebarCollapsibleItem = ({
         </div>
         <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
       </CollapsibleTrigger>
-      <CollapsibleContent className="pl-5 space-y-1 mt-1">
+      <CollapsibleContent className="pl-5 mt-0 mb-0 space-y-0">
         {children}
       </CollapsibleContent>
     </Collapsible>

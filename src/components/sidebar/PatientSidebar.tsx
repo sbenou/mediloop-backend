@@ -55,19 +55,15 @@ const PatientSidebar = () => {
     }
   };
 
-  // Only make the parent collapsible active if no child is active
-  const isOrdersParentActive = view === "orders" && 
-    (!searchParams.get("ordersTab") || 
-    (searchParams.get("ordersTab") !== "orders" && searchParams.get("ordersTab") !== "payments"));
+  // Check if we are in orders view and if we have an orders tab parameter
+  const hasOrdersTab = searchParams.get("ordersTab") !== null;
   
-  // Only make the profile parent active if no child is active
-  const isProfileParentActive = view === "profile" && 
-    (!searchParams.get("profileTab") || 
-    (searchParams.get("profileTab") !== "personal" && 
-     searchParams.get("profileTab") !== "addresses" && 
-     searchParams.get("profileTab") !== "pharmacy" && 
-     searchParams.get("profileTab") !== "doctor" && 
-     searchParams.get("profileTab") !== "nextofkin"));
+  // Check if we are in profile view and if we have a profile tab parameter
+  const hasProfileTab = searchParams.get("profileTab") !== null;
+  
+  // Only make the parent active if no child is active
+  const isOrdersParentActive = view === "orders" && !hasOrdersTab;
+  const isProfileParentActive = view === "profile" && !hasProfileTab;
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -92,7 +88,7 @@ const PatientSidebar = () => {
             <SidebarSubItem
               icon={<ShoppingBag className="w-4 h-4 mr-4" />}
               label="My Orders"
-              isActive={view === "orders" && (!searchParams.get("ordersTab") || searchParams.get("ordersTab") === "orders")}
+              isActive={view === "orders" && searchParams.get("ordersTab") === "orders"}
               onClick={() => navigateToPatientView("orders", "orders", "ordersTab")}
             />
             <SidebarSubItem
@@ -134,7 +130,7 @@ const PatientSidebar = () => {
             <SidebarSubItem
               icon={<UserCircle className="w-4 h-4 mr-4" />}
               label="Personal Info"
-              isActive={view === "profile" && (!searchParams.get("profileTab") || searchParams.get("profileTab") === "personal")}
+              isActive={view === "profile" && searchParams.get("profileTab") === "personal"}
               onClick={() => navigateToPatientView("profile", "personal", "profileTab")}
             />
             <SidebarSubItem
