@@ -96,21 +96,21 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         return {
           title: "Upgrade to Doctor Pro",
           description: "Access advanced telemedicine features and patient analytics",
-          image: "/placeholder-images/photo-1618160702438-9b02ab6515c9.jpg", // Medical/scientific context
+          image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=500&q=80", // Medical/scientific context
           buttonText: "Enhance Your Practice"
         };
       case 'pharmacist':
         return {
           title: "Upgrade to Pharmacy Plus",
           description: "Streamline operations with advanced inventory and prescription management",
-          image: "/placeholder-images/photo-1466721591366-2d5fba72006d.jpg", // Professional collaboration
+          image: "https://images.unsplash.com/photo-1466721591366-2d5fba72006d?auto=format&fit=crop&w=500&q=80", // Professional collaboration
           buttonText: "Boost Your Pharmacy"
         };
       default: // patient
         return {
           title: "Upgrade to Health Plus",
           description: "Get priority access to doctors and exclusive health services",
-          image: "/placeholder-images/photo-1535268647677-300dbf3d78d1.jpg", // Care-oriented image
+          image: "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?auto=format&fit=crop&w=500&q=80", // Care-oriented image
           buttonText: "Upgrade Now"
         };
     }
@@ -347,7 +347,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         )}
       </Card>
 
-      {/* Advertisement Card - Now role-specific and with adjusted height */}
+      {/* Advertisement Card - Now with direct Unsplash URLs */}
       <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-2 lg:col-span-1 h-auto max-h-[300px]">
         <div className="flex flex-col h-full justify-between">
           <div>
