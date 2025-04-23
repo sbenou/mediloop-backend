@@ -75,6 +75,8 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
   }, [isLoading]);
   
   const getContent = () => {
+    console.log("Getting content for section:", section, "with ordersTab:", ordersTab);
+    
     // For the doctor dashboard, show content based on the section
     switch (section) {
       case "profile":

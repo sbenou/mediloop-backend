@@ -164,6 +164,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ activeTab, userRole }) => {
       return searchParams.get('ordersTab') || 'all';
     }
     
+    // Use the provided activeTab prop as fallback
     return activeTab || tabs[0].id;
   };
 
