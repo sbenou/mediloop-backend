@@ -18,7 +18,7 @@ const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps)
           : 'text-muted-foreground hover:bg-gray-100'
       }`}
     >
-      {/* Add vertical line for active state */}
+      {/* Add vertical line for active state that spans full height */}
       {isActive && (
         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#9b87f5]"></div>
       )}

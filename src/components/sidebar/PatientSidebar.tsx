@@ -56,12 +56,14 @@ const PatientSidebar = () => {
   };
 
   // Check if we are in orders view and if we have an orders tab parameter
-  const hasOrdersTab = searchParams.get("ordersTab") !== null;
+  const ordersTab = searchParams.get("ordersTab");
+  const hasOrdersTab = ordersTab !== null;
   
   // Check if we are in profile view and if we have a profile tab parameter
-  const hasProfileTab = searchParams.get("profileTab") !== null;
+  const profileTab = searchParams.get("profileTab");
+  const hasProfileTab = profileTab !== null;
   
-  // Only make the parent active if no child is active
+  // Only make the parent active if we're in the main section view without a specific tab
   const isOrdersParentActive = view === "orders" && !hasOrdersTab;
   const isProfileParentActive = view === "profile" && !hasProfileTab;
 
@@ -88,13 +90,13 @@ const PatientSidebar = () => {
             <SidebarSubItem
               icon={<ShoppingBag className="w-4 h-4 mr-4" />}
               label="My Orders"
-              isActive={view === "orders" && searchParams.get("ordersTab") === "orders"}
+              isActive={view === "orders" && ordersTab === "orders"}
               onClick={() => navigateToPatientView("orders", "orders", "ordersTab")}
             />
             <SidebarSubItem
               icon={<CreditCard className="w-4 h-4 mr-4" />}
               label="Payments"
-              isActive={view === "orders" && searchParams.get("ordersTab") === "payments"}
+              isActive={view === "orders" && ordersTab === "payments"}
               onClick={() => navigateToPatientView("orders", "payments", "ordersTab")}
             />
           </SidebarCollapsibleItem>
@@ -130,31 +132,31 @@ const PatientSidebar = () => {
             <SidebarSubItem
               icon={<UserCircle className="w-4 h-4 mr-4" />}
               label="Personal Info"
-              isActive={view === "profile" && searchParams.get("profileTab") === "personal"}
+              isActive={view === "profile" && profileTab === "personal"}
               onClick={() => navigateToPatientView("profile", "personal", "profileTab")}
             />
             <SidebarSubItem
               icon={<MapPin className="w-4 h-4 mr-4" />}
               label="Addresses"
-              isActive={view === "profile" && searchParams.get("profileTab") === "addresses"}
+              isActive={view === "profile" && profileTab === "addresses"}
               onClick={() => navigateToPatientView("profile", "addresses", "profileTab")}
             />
             <SidebarSubItem
               icon={<Heart className="w-4 h-4 mr-4" />}
               label="Default Pharmacy"
-              isActive={view === "profile" && searchParams.get("profileTab") === "pharmacy"}
+              isActive={view === "profile" && profileTab === "pharmacy"}
               onClick={() => navigateToPatientView("profile", "pharmacy", "profileTab")}
             />
             <SidebarSubItem
               icon={<Users className="w-4 h-4 mr-4" />}
               label="My Doctor"
-              isActive={view === "profile" && searchParams.get("profileTab") === "doctor"}
+              isActive={view === "profile" && profileTab === "doctor"}
               onClick={() => navigateToPatientView("profile", "doctor", "profileTab")}
             />
             <SidebarSubItem
               icon={<Users className="w-4 h-4 mr-4" />}
               label="Next of Kin"
-              isActive={view === "profile" && searchParams.get("profileTab") === "nextofkin"}
+              isActive={view === "profile" && profileTab === "nextofkin"}
               onClick={() => navigateToPatientView("profile", "nextofkin", "profileTab")}
             />
           </SidebarCollapsibleItem>
