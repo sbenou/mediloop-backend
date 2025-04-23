@@ -1,13 +1,6 @@
 
 import { ReactNode } from "react";
 
-interface SidebarSubItemProps {
-  icon: ReactNode;
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
-}
-
 const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps) => {
   return (
     <div
@@ -18,11 +11,11 @@ const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps)
           : 'text-muted-foreground hover:bg-gray-100'
       }`}
     >
-      <div className="flex items-center">
-        <div className="flex items-center mr-4">  {/* Increased margin from mr-3 to mr-4 */}
+      <div className="flex items-center w-full space-x-4">  {/* Added space-x-4 for consistent spacing */}
+        <div className="flex items-center">  {/* Removed mr-4 */}
           {icon}
         </div>
-        <span>{label}</span>
+        <span className="flex-1">{label}</span>  {/* Added flex-1 to ensure left alignment */}
       </div>
     </div>
   );
