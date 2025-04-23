@@ -96,21 +96,21 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         return {
           title: "Upgrade to Doctor Pro",
           description: "Access advanced telemedicine features and patient analytics",
-          image: "/lovable-uploads/1d4b50b5-2725-470b-a070-5227c3aa24b6.png", // Changed image
+          image: "/placeholder-images/photo-1618160702438-9b02ab6515c9.jpg", // Medical/scientific context
           buttonText: "Enhance Your Practice"
         };
       case 'pharmacist':
         return {
           title: "Upgrade to Pharmacy Plus",
           description: "Streamline operations with advanced inventory and prescription management",
-          image: "/lovable-uploads/c13d24b0-a830-4efe-ae19-fbd705f33eaa.png", // Changed image
+          image: "/placeholder-images/photo-1466721591366-2d5fba72006d.jpg", // Professional collaboration
           buttonText: "Boost Your Pharmacy"
         };
       default: // patient
         return {
           title: "Upgrade to Health Plus",
           description: "Get priority access to doctors and exclusive health services",
-          image: "/lovable-uploads/5a25d363-d8b5-44bd-a39d-d9bfcc4d50c5.png", // Changed image
+          image: "/placeholder-images/photo-1535268647677-300dbf3d78d1.jpg", // Care-oriented image
           buttonText: "Upgrade Now"
         };
     }
