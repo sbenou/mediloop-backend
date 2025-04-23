@@ -96,7 +96,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         return {
           title: "Upgrade to Doctor Pro",
           description: "Access advanced telemedicine features and patient analytics",
-          image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=500&q=80", // Professional workspace
+          image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80", // Smiling doctor in professional setting
           buttonText: "Enhance Your Practice"
         };
       case 'pharmacist':
@@ -347,8 +347,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         )}
       </Card>
 
-      {/* Advertisement Card - Now with direct Unsplash URLs */}
-      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-2 lg:col-span-1 h-auto max-h-[300px]">
+      {/* Advertisement Card - Now spanning 2 columns */}
+      <Card className={`relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white 
+        ${userRole === 'doctor' ? 'md:col-span-2 lg:col-span-2' : 'md:col-span-2 lg:col-span-1'} h-auto max-h-[300px]`}>
         <div className="flex flex-col h-full justify-between">
           <div>
             <h3 className="text-2xl font-semibold mb-2">{premiumContent.title}</h3>
