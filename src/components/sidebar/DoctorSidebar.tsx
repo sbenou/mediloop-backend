@@ -32,25 +32,6 @@ const DoctorSidebar = ({
     handleFileChange
   } = useSidebarUserProfile(profile);
 
-  // For profile dropdown at bottom
-  const navigateToDoctorProfile = () => {
-    console.log('Navigating to doctor profile');
-    navigate('/doctor/profile');
-  };
-  
-  const navigateToUpgrade = () => {
-    navigate('/upgrade');
-  };
-
-  // Mimic previous sidebar dropdown - billing, profile, etc. 
-  const navigateToProfile = () => {
-    navigate(`/dashboard?view=doctor&section=profile&profileTab=personal`);
-  };
-
-  const navigateToBilling = () => {
-    navigate('/billing-details');
-  };
-
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <SidebarBrand />
@@ -59,7 +40,7 @@ const DoctorSidebar = ({
           canPrescribe={canPrescribe}
           canViewPrescriptions={canViewPrescriptions}
         />
-        <div className="mt-4" /> {/* Reduced margin to make spacing consistent */}
+        <div className="mt-4" />
         <DoctorAdminSection />
       </div>
       <SidebarUserMenu
@@ -69,10 +50,6 @@ const DoctorSidebar = ({
         handleAvatarClick={handleAvatarClick}
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
-        navigateToProfile={navigateToProfile}
-        navigateToBilling={navigateToBilling}
-        navigateToUpgrade={navigateToUpgrade}
-        navigateToDoctorProfile={navigateToDoctorProfile}
         handleFileChange={handleFileChange}
       />
     </aside>
@@ -80,4 +57,3 @@ const DoctorSidebar = ({
 };
 
 export default DoctorSidebar;
-

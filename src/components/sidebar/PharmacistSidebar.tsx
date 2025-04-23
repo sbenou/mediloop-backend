@@ -2,13 +2,12 @@
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Settings, Users, Share } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
-import SidebarSection from "./SidebarSection";
 import SidebarItem from "./SidebarItem";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
 import { useSidebarUserProfile } from "./hooks/useSidebarUserProfile";
-import { Settings, Users, Share } from "lucide-react";
 import PharmacistNavigation from "./pharmacy/PharmacistNavigation";
 import { usePharmacyNavigation } from "./pharmacy/usePharmacyNavigation";
 
@@ -20,7 +19,6 @@ interface PharmacistSidebarProps {
   canViewPrescriptions?: boolean;
 }
 
-// Update the component to include Referral link in the navigation
 const PharmacistSidebar = ({
   canViewProducts = false,
   canEditProducts = false,
@@ -46,24 +44,6 @@ const PharmacistSidebar = ({
   
   const { handleLogout } = useSidebarLogout();
   
-  // For profile dropdown at bottom
-  const navigateToPharmacyProfile = () => {
-    console.log('Navigating to pharmacy profile');
-    navigate('/pharmacy/profile');
-  };
-  
-  const navigateToProfile = () => {
-    navigateToPharmacySection('profile', 'personal', 'profileTab');
-  };
-  
-  const navigateToUpgrade = () => {
-    navigate('/upgrade');
-  };
-  
-  const navigateToBilling = () => {
-    navigate('/billing-details');
-  };
-  
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <SidebarBrand />
@@ -78,7 +58,7 @@ const PharmacistSidebar = ({
         <div className="px-3 mt-4">
           {/* Add Referral Link */}
           <SidebarItem
-            icon={<Share className="w-5 h-5 mr-3" />}
+            icon={<Share className="w-5 h-5 mr-4" />}
             label="Referral"
             isActive={location.pathname === "/referral"}
             onClick={() => navigate('/referral')}
@@ -87,22 +67,21 @@ const PharmacistSidebar = ({
         
         <div className="mt-8" />
         
-        <SidebarSection title="Admin">
-          {canManageStaff && (
-            <SidebarItem
-              icon={<Users className="w-5 h-5 mr-3" />}
-              label="Staff Management"
-              isActive={location.pathname.includes('/staff-management')}
-              onClick={() => navigate('/staff-management')}
-            />
-          )}
+        {/* Admin Section */}
+        {canManageStaff && (
           <SidebarItem
-            icon={<Settings className="w-5 h-5 mr-3" />}
-            label="Settings"
-            isActive={location.pathname === '/settings'}
-            onClick={() => navigate('/settings')}
+            icon={<Users className="w-5 h-5 mr-4" />}
+            label="Staff Management"
+            isActive={location.pathname.includes('/staff-management')}
+            onClick={() => navigate('/staff-management')}
           />
-        </SidebarSection>
+        )}
+        <SidebarItem
+          icon={<Settings className="w-5 h-5 mr-4" />}
+          label="Settings"
+          isActive={location.pathname === '/settings'}
+          onClick={() => navigate('/settings')}
+        />
       </div>
       
       <SidebarUserMenu
@@ -112,11 +91,7 @@ const PharmacistSidebar = ({
         handleAvatarClick={handleAvatarClick}
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
-        navigateToProfile={navigateToProfile}
-        navigateToUpgrade={navigateToUpgrade}
-        navigateToPharmacyProfile={navigateToPharmacyProfile}
         handleFileChange={handleFileChange}
-        navigateToBilling={navigateToBilling}
       />
     </aside>
   );

@@ -62,87 +62,88 @@ const PatientSidebar = () => {
       <div className="flex-1 overflow-auto py-4">
         <SidebarSection title="Platform">
           <SidebarItem
-            icon={<Home className="w-5 h-5 mr-3" />}
+            icon={<Home className="w-5 h-5 mr-4" />}  // Updated margin to mr-4
             label="Dashboard"
             isActive={view === "home" || !view}
             onClick={() => navigateToPatientView("home")}
           />
           
           <SidebarCollapsibleItem 
-            icon={<ShoppingBag className="w-5 h-5 mr-3" />}
+            icon={<ShoppingBag className="w-5 h-5 mr-4" />}  // Updated margin to mr-4
             label="Orders"
             isOpen={isOrdersOpen}
             isActive={view === "orders"}
             onOpenChange={(isOpen) => setIsOrdersOpen(isOpen)}
           >
             <SidebarSubItem
-              icon={<ShoppingBag className="w-4 h-4 mr-3" />}
+              icon={<ShoppingBag className="w-4 h-4 mr-4" />}  // Updated margin to mr-4
               label="My Orders"
               isActive={view === "orders" && (!searchParams.get("ordersTab") || searchParams.get("ordersTab") === "orders")}
               onClick={() => navigateToPatientView("orders", "orders", "ordersTab")}
             />
             <SidebarSubItem
-              icon={<CreditCard className="w-4 h-4 mr-3" />}
+              icon={<CreditCard className="w-4 h-4 mr-4" />}  // Updated margin to mr-4
               label="Payments"
               isActive={view === "orders" && searchParams.get("ordersTab") === "payments"}
               onClick={() => navigateToPatientView("orders", "payments", "ordersTab")}
             />
           </SidebarCollapsibleItem>
           
+          {/* Update margins for other icons */}
           <SidebarItem
-            icon={<Pill className="w-5 h-5 mr-3" />}
+            icon={<Pill className="w-5 h-5 mr-4" />}
             label="Prescriptions"
             isActive={view === "prescriptions"}
             onClick={() => navigateToPatientView("prescriptions")}
           />
           
           <SidebarItem
-            icon={<Video className="w-5 h-5 mr-3" />}
+            icon={<Video className="w-5 h-5 mr-4" />}
             label="Teleconsultations"
             isActive={view === "teleconsultations"}
             onClick={() => navigateToPatientView("teleconsultations")}
           />
           
           <SidebarItem
-            icon={<Share className="w-5 h-5 mr-3" />}
+            icon={<Share className="w-5 h-5 mr-4" />}
             label="Referral"
             isActive={location.pathname === "/referral"}
             onClick={() => navigate('/referral')}
           />
           
           <SidebarCollapsibleItem 
-            icon={<UserCircle className="w-5 h-5 mr-3" />}
+            icon={<UserCircle className="w-5 h-5 mr-4" />}
             label="Profile"
             isOpen={isProfileOpen}
             isActive={view === "profile"}
             onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
           >
             <SidebarSubItem
-              icon={<UserCircle className="w-4 h-4 mr-3" />}
+              icon={<UserCircle className="w-4 h-4 mr-4" />}
               label="Personal Info"
               isActive={view === "profile" && (!searchParams.get("profileTab") || searchParams.get("profileTab") === "personal")}
               onClick={() => navigateToPatientView("profile", "personal", "profileTab")}
             />
             <SidebarSubItem
-              icon={<MapPin className="w-4 h-4 mr-3" />}
+              icon={<MapPin className="w-4 h-4 mr-4" />}
               label="Addresses"
               isActive={view === "profile" && searchParams.get("profileTab") === "addresses"}
               onClick={() => navigateToPatientView("profile", "addresses", "profileTab")}
             />
             <SidebarSubItem
-              icon={<Heart className="w-4 h-4 mr-3" />}
+              icon={<Heart className="w-4 h-4 mr-4" />}
               label="Default Pharmacy"
               isActive={view === "profile" && searchParams.get("profileTab") === "pharmacy"}
               onClick={() => navigateToPatientView("profile", "pharmacy", "profileTab")}
             />
             <SidebarSubItem
-              icon={<Users className="w-4 h-4 mr-3" />}
+              icon={<Users className="w-4 h-4 mr-4" />}
               label="My Doctor"
               isActive={view === "profile" && searchParams.get("profileTab") === "doctor"}
               onClick={() => navigateToPatientView("profile", "doctor", "profileTab")}
             />
             <SidebarSubItem
-              icon={<Users className="w-4 h-4 mr-3" />}
+              icon={<Users className="w-4 h-4 mr-4" />}
               label="Next of Kin"
               isActive={view === "profile" && searchParams.get("profileTab") === "nextofkin"}
               onClick={() => navigateToPatientView("profile", "nextofkin", "profileTab")}
@@ -154,7 +155,7 @@ const PatientSidebar = () => {
 
         <SidebarSection title="Admin">
           <SidebarItem
-            icon={<Settings className="w-5 h-5 mr-3" />}
+            icon={<Settings className="w-5 h-5 mr-4" />}
             label="Settings"
             isActive={view === "settings"}
             onClick={() => navigateToPatientView("settings")}
