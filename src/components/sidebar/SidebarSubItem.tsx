@@ -12,7 +12,7 @@ const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps)
   return (
     <div
       onClick={onClick}
-      className={`flex items-center px-3 py-2 pl-4 rounded-md text-sm cursor-pointer ${
+      className={`flex items-center px-3 py-2 pl-8 rounded-md text-sm cursor-pointer ${
         isActive
           ? 'bg-primary/10 text-primary font-medium' 
           : 'text-muted-foreground hover:bg-gray-100'
@@ -28,3 +28,4 @@ const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps)
 };
 
 export default SidebarSubItem;
+
