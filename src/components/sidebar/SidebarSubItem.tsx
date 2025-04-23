@@ -18,12 +18,11 @@ const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps)
           : 'text-muted-foreground hover:bg-gray-100'
       }`}
     >
-      <div className="flex items-center w-full">
-        <div className="flex items-center mr-4">
-          {icon}
-        </div>
-        <span className="flex-1">{label}</span>
+      {/* Use fixed width for icon and align center */}
+      <div className="flex items-center" style={{ width: 28, minWidth: 28, justifyContent: "center" }}>
+        {icon}
       </div>
+      <span className="ml-3 flex-1 text-left">{label}</span>
     </div>
   );
 };

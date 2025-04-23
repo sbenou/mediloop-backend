@@ -1,5 +1,5 @@
 
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -31,13 +31,14 @@ const SidebarCollapsibleItem = ({
           ? 'bg-primary/10 text-primary font-medium' 
           : 'text-muted-foreground hover:bg-gray-100'
       }`}>
-        <div className="flex items-center">
-          <div className="flex items-center mr-3">
+        <div className="flex items-center flex-1 min-w-0">
+          {/* Fixed width icon for alignment */}
+          <div className="flex items-center" style={{ width: 28, minWidth: 28, justifyContent: "center" }}>
             {icon}
           </div>
-          <span>{label}</span>
+          <span className="ml-3 truncate">{label}</span>
         </div>
-        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
       </CollapsibleTrigger>
       <CollapsibleContent className="pl-5 space-y-1 mt-1">
         {children}
