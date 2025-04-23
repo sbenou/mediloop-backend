@@ -19,7 +19,7 @@ const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps)
       }`}
     >
       <div className="flex items-center">
-        <div className="flex items-center mr-3">
+        <div className="flex items-center mr-4">  {/* Increased margin from mr-3 to mr-4 */}
           {icon}
         </div>
         <span>{label}</span>
