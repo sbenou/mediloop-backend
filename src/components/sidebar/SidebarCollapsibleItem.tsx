@@ -26,17 +26,15 @@ const SidebarCollapsibleItem = ({
       onOpenChange={onOpenChange}
       className="w-full"
     >
-      <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-2 pl-10 text-sm cursor-pointer relative ${
-        isActive
+      <CollapsibleTrigger className={`flex items-center justify-between w-full px-3 py-3.5 pl-10 text-sm cursor-pointer relative ${
+        isActive && !isOpen
           ? 'bg-primary/10 text-primary font-medium' 
           : 'text-muted-foreground hover:bg-gray-100'
       }`}>
-        {/* Add vertical line for active state */}
-        {isActive && (
+        {isActive && !isOpen && (
           <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#9b87f5]"></div>
         )}
         <div className="flex items-center flex-1 min-w-0">
-          {/* Fixed width icon for alignment */}
           <div className="flex items-center" style={{ width: 28, minWidth: 28, justifyContent: "center" }}>
             {icon}
           </div>
@@ -44,7 +42,7 @@ const SidebarCollapsibleItem = ({
         </div>
         <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
       </CollapsibleTrigger>
-      <CollapsibleContent className="mt-0 mb-0 space-y-0">
+      <CollapsibleContent className="mt-0 mb-0">
         {children}
       </CollapsibleContent>
     </Collapsible>
