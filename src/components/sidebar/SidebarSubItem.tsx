@@ -18,8 +18,8 @@ const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps)
           : 'text-muted-foreground hover:bg-gray-100'
       }`}
     >
-      <div className="flex items-center w-full space-x-4">
-        <div className="flex items-center">
+      <div className="flex items-center w-full">
+        <div className="mr-4">
           {icon}
         </div>
         <span className="flex-1">{label}</span>
