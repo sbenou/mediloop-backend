@@ -1,7 +1,8 @@
+
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, ShoppingBag, FileText, CreditCard } from "lucide-react";
+import { Users, ShoppingBag, FileText, CreditCard, TrendingUp, TrendingDown } from "lucide-react";
 import { 
   ResponsiveContainer, 
   LineChart, 
