@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,6 +89,35 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
   };
 
   const sparklineHeight = 48;
+
+  // Helper function to get role-specific premium content
+  const getPremiumContent = (role: string) => {
+    switch(role) {
+      case 'doctor':
+        return {
+          title: "Upgrade to Doctor Pro",
+          description: "Access advanced telemedicine features and patient analytics",
+          image: "/lovable-uploads/8e0651b0-5b95-4f7d-bdf8-9d8995d6c915.png",
+          buttonText: "Enhance Your Practice"
+        };
+      case 'pharmacist':
+        return {
+          title: "Upgrade to Pharmacy Plus",
+          description: "Streamline operations with advanced inventory and prescription management",
+          image: "/lovable-uploads/97bfceac-72da-4238-a36e-de4df16fff0c.png",
+          buttonText: "Boost Your Pharmacy"
+        };
+      default: // patient
+        return {
+          title: "Upgrade to Health Plus",
+          description: "Get priority access to doctors and exclusive health services",
+          image: "/lovable-uploads/a58aacba-6abd-441d-9672-d13a1af4ecad.png",
+          buttonText: "Upgrade Now"
+        };
+    }
+  };
+
+  const premiumContent = getPremiumContent(userRole);
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -320,21 +348,21 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         )}
       </Card>
 
-      {/* Advertisement Card */}
+      {/* Advertisement Card - Now role-specific */}
       <Card className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-sm border-0 text-white md:col-span-2 lg:row-span-2">
         <div className="flex flex-col h-full justify-between">
           <div>
-            <h3 className="text-2xl font-semibold mb-2">Switch to Premium</h3>
-            <p className="text-blue-100 mb-6">Get access to advanced features and priority support</p>
+            <h3 className="text-2xl font-semibold mb-2">{premiumContent.title}</h3>
+            <p className="text-blue-100 mb-6">{premiumContent.description}</p>
             <Button 
               className="bg-white text-blue-600 hover:bg-blue-50"
               onClick={() => onNavigate('upgrade')}
             >
-              Upgrade Now
+              {premiumContent.buttonText}
             </Button>
           </div>
           <img 
-            src="/public/lovable-uploads/97bfceac-72da-4238-a36e-de4df16fff0c.png" 
+            src={premiumContent.image}
             alt="Healthcare professionals"
             className="max-w-[200px] self-end mt-4"
           />
