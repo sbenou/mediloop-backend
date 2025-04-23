@@ -31,6 +31,15 @@ const DoctorSidebar = ({
     handleAvatarClick,
     handleFileChange
   } = useSidebarUserProfile(profile);
+  
+  // Add navigation handlers for billing and upgrade
+  const navigateToBilling = () => {
+    navigate('/billing-details');
+  };
+  
+  const navigateToUpgrade = () => {
+    navigate('/upgrade');
+  };
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -51,6 +60,8 @@ const DoctorSidebar = ({
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         handleFileChange={handleFileChange}
+        navigateToBilling={navigateToBilling}
+        navigateToUpgrade={navigateToUpgrade}
       />
     </aside>
   );

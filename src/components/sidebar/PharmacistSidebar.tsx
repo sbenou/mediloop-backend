@@ -44,6 +44,20 @@ const PharmacistSidebar = ({
   
   const { handleLogout } = useSidebarLogout();
   
+  // Add navigation handlers for billing and upgrade
+  const navigateToBilling = () => {
+    navigate('/billing-details');
+  };
+  
+  const navigateToUpgrade = () => {
+    navigate('/upgrade');
+  };
+  
+  // Add handler for navigating to pharmacy profile
+  const navigateToPharmacyProfile = () => {
+    navigate('/pharmacy-profile');
+  };
+  
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
       <SidebarBrand />
@@ -92,6 +106,9 @@ const PharmacistSidebar = ({
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         handleFileChange={handleFileChange}
+        navigateToBilling={navigateToBilling}
+        navigateToUpgrade={navigateToUpgrade}
+        navigateToPharmacyProfile={navigateToPharmacyProfile}
       />
     </aside>
   );
