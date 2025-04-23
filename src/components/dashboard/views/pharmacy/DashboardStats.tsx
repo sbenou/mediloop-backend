@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +17,6 @@ interface DashboardStatsProps {
     pending_orders?: number;
     total_prescriptions?: number;
     monthly_revenue?: number;
-    // Add trend data for sparklines
     patient_trend?: Array<{ value: number }>;
     orders_trend?: Array<{ value: number }>;
     prescriptions_trend?: Array<{ value: number }>;
@@ -27,19 +27,17 @@ interface DashboardStatsProps {
   userRole?: string;
 }
 
-// Mock data generator with more dramatic variations
+// Generate mock data with more dramatic variations
 const generateMockTrendData = (trend: number = 1) => {
-  // Create an array of 6 points with more dramatic variations
   return Array(6).fill(0).map(() => ({
     value: Math.floor(
-      (Math.random() < 0.5 ? -1 : 1) * // Randomly make values positive or negative
-      (5 + Math.random() * 20) * trend // Larger range for more dramatic changes
+      (Math.random() < 0.5 ? -1 : 1) * 
+      (5 + Math.random() * 20) * trend
     )
   }));
 };
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNavigate, userRole = 'pharmacist' }) => {
-  // Generate mock data for trends if not provided
   const patientTrend = stats?.patient_trend || generateMockTrendData(1);
   const ordersTrend = stats?.orders_trend || generateMockTrendData(-0.5);
   const prescriptionsTrend = stats?.prescriptions_trend || generateMockTrendData(0.8);
@@ -50,14 +48,13 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
   const isPrescriptionsTrendPositive = prescriptionsTrend[0].value < prescriptionsTrend[prescriptionsTrend.length - 1].value;
   const isRevenueTrendPositive = revenueTrend[0].value < revenueTrend[revenueTrend.length - 1].value;
 
-  // Adjust labels and icons based on user role
   const firstCardConfig = userRole === 'patient' 
     ? { 
         label: 'Active Teleconsultations', 
         icon: <Video className="h-5 w-5 text-muted-foreground" />,
         path: 'teleconsultations'
       }
-    : null; // REMOVE the "Active Patients" card for doctor/pharmacist, PatientsGoalCard used instead
+    : null;
 
   const fourthCardConfig = userRole === 'patient'
     ? {
@@ -71,30 +68,27 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         path: ''
       };
 
-  // Show the PatientsGoalCard if doctor or pharmacist
   const showPatientsGoal = userRole === "doctor" || userRole === "pharmacist";
   const patientsGoal = 30000;
   const patientsCount = stats?.total_patients || 0;
-  const patientsPercentChange = 4.8; // Replace with real change calc if available.
+  const patientsPercentChange = 4.8;
 
-  // COLORS for sparklines with more saturated and prominent gradient shadows
+  // Updated colors for a more modern look
   const lineColors = {
-    patients: "#37B079", // green
-    orders: "#F97316", // orange
-    prescriptions: "#7c3aed", // vivid purple
-    revenue: "#2563eb" // blue
+    patients: "#2563eb", // blue-600
+    orders: "#f97316", // orange-500
+    prescriptions: "#8b5cf6", // violet-500
+    revenue: "#10b981" // emerald-500
   };
 
-  // More prominent and taller area colors for shadows
   const areaColors = {
-    patients: "rgba(55, 176, 121, 0.50)",          // increased opacity and saturation
-    orders: "rgba(249, 115, 22, 0.40)",
-    prescriptions: "rgba(124, 58, 237, 0.45)",
-    revenue: "rgba(37, 99, 235, 0.48)"
+    patients: "rgba(37, 99, 235, 0.1)",
+    orders: "rgba(249, 115, 22, 0.1)",
+    prescriptions: "rgba(139, 92, 246, 0.1)",
+    revenue: "rgba(16, 185, 129, 0.1)"
   };
 
-  // Increased height for sparkline shadows
-  const sparklineHeight = 48; // Increased from 38 to make shadows more prominent
+  const sparklineHeight = 48;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -107,250 +101,214 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         />
       )}
 
-      {/* Patients Card */}
       {firstCardConfig && (
         <Card 
-          className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+          className="relative overflow-hidden bg-white p-6 hover:shadow-md transition-shadow duration-200"
           onClick={() => onNavigate(firstCardConfig.path)}
         >
           <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium">{firstCardConfig.label}</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{firstCardConfig.label}</h3>
             {firstCardConfig.icon}
           </div>
-          <div className="pt-2">
-            {isLoading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <div>
-                <div className="text-2xl font-bold mb-3">+{stats?.total_patients || 0}</div>
-                <div className="h-8 mt-2 mb-1">
-                  <div className="flex items-center mb-2">
-                    {isPatientTrendPositive ? 
-                      <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
-                      <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                    }
-                    <span className={`text-xs ${isPatientTrendPositive ? 'text-green-500' : 'text-red-500'}`}>
-                      YTD
-                    </span>
-                  </div>
-                  <ResponsiveContainer width="100%" height={sparklineHeight}>
-                    <LineChart data={patientTrend}>
-                      <defs>
-                        <linearGradient id="patientsShadow" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={areaColors.patients} stopOpacity={0.85}/>
-                          <stop offset="98%" stopColor={areaColors.patients} stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="none"
-                        fill="url(#patientsShadow)"
-                        fillOpacity={1}
-                        isAnimationActive={true}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="value" 
-                        stroke={lineColors.patients}
-                        strokeWidth={2}
-                        dot={false}
-                        isAnimationActive={true}
-                        connectNulls={true}
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+          {isLoading ? (
+            <Skeleton className="h-8 w-24" />
+          ) : (
+            <div>
+              <div className="text-2xl font-semibold mb-3">+{stats?.total_patients || 0}</div>
+              <div className="h-8 mt-4">
+                <div className="flex items-center text-xs">
+                  {isPatientTrendPositive ? 
+                    <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
+                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                  }
+                  <span className={`${isPatientTrendPositive ? 'text-emerald-500' : 'text-red-500'}`}>
+                    YTD
+                  </span>
                 </div>
+                <ResponsiveContainer width="100%" height={sparklineHeight}>
+                  <LineChart data={patientTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                    <defs>
+                      <linearGradient id="patientsShadow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={areaColors.patients} stopOpacity={1}/>
+                        <stop offset="100%" stopColor={areaColors.patients} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="none"
+                      fill="url(#patientsShadow)"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke={lineColors.patients}
+                      strokeWidth={1.5}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </Card>
       )}
 
-      {/* Orders Card */}
       <Card 
-        className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+        className="relative overflow-hidden bg-white p-6 hover:shadow-md transition-shadow duration-200"
         onClick={() => onNavigate('orders')}
       >
         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium">Pending Orders</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Pending Orders</h3>
           <ShoppingBag className="h-5 w-5 text-muted-foreground" />
         </div>
-        <div className="pt-2">
-          {isLoading ? (
-            <Skeleton className="h-8 w-24" />
-          ) : (
-            <div>
-              <div className="text-2xl font-bold mb-3">+{stats?.pending_orders || 0}</div>
-              <div className="h-8 mt-2 mb-1">
-                <div className="flex items-center mb-2">
-                  {isOrdersTrendPositive ? 
-                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
-                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                  }
-                  <span className={`text-xs ${isOrdersTrendPositive ? 'text-green-500' : 'text-red-500'}`}>
-                    YTD
-                  </span>
-                </div>
-                <ResponsiveContainer width="100%" height={sparklineHeight}>
-                  <LineChart data={ordersTrend}>
-                    <defs>
-                      <linearGradient id="ordersShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.orders} stopOpacity={0.85}/>
-                        <stop offset="98%" stopColor={areaColors.orders} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="none"
-                      fill="url(#ordersShadow)"
-                      fillOpacity={1}
-                      isAnimationActive={true}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke={lineColors.orders}
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={true}
-                      connectNulls={true}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+        {isLoading ? (
+          <Skeleton className="h-8 w-24" />
+        ) : (
+          <div>
+            <div className="text-2xl font-semibold mb-3">+{stats?.pending_orders || 0}</div>
+            <div className="h-8 mt-4">
+              <div className="flex items-center text-xs">
+                {isOrdersTrendPositive ? 
+                  <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
+                  <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                }
+                <span className={`${isOrdersTrendPositive ? 'text-emerald-500' : 'text-red-500'}`}>
+                  YTD
+                </span>
               </div>
+              <ResponsiveContainer width="100%" height={sparklineHeight}>
+                <LineChart data={ordersTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                  <defs>
+                    <linearGradient id="ordersShadow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={areaColors.orders} stopOpacity={1}/>
+                      <stop offset="100%" stopColor={areaColors.orders} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="none"
+                    fill="url(#ordersShadow)"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke={lineColors.orders}
+                    strokeWidth={1.5}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </Card>
-      
-      {/* Prescriptions Card */}
+
       <Card 
-        className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+        className="relative overflow-hidden bg-white p-6 hover:shadow-md transition-shadow duration-200"
         onClick={() => onNavigate('prescriptions')}
       >
         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium">Prescriptions</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Prescriptions</h3>
           <FileText className="h-5 w-5 text-muted-foreground" />
         </div>
-        <div className="pt-2">
-          {isLoading ? (
-            <Skeleton className="h-8 w-24" />
-          ) : (
-            <div>
-              <div className="text-2xl font-bold mb-3">+{stats?.total_prescriptions || 0}</div>
-              <div className="h-8 mt-2 mb-1">
-                <div className="flex items-center mb-2">
-                  {isPrescriptionsTrendPositive ? 
-                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
-                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                  }
-                  <span className={`text-xs ${isPrescriptionsTrendPositive ? 'text-green-500' : 'text-red-500'}`}>
-                    YTD
-                  </span>
-                </div>
-                <ResponsiveContainer width="100%" height={sparklineHeight}>
-                  <LineChart data={prescriptionsTrend}>
-                    <defs>
-                      <linearGradient id="prescriptionsShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.prescriptions} stopOpacity={0.85}/>
-                        <stop offset="98%" stopColor={areaColors.prescriptions} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="none"
-                      fill="url(#prescriptionsShadow)"
-                      fillOpacity={1}
-                      isAnimationActive={true}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke={lineColors.prescriptions}
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={true}
-                      connectNulls={true}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+        {isLoading ? (
+          <Skeleton className="h-8 w-24" />
+        ) : (
+          <div>
+            <div className="text-2xl font-semibold mb-3">+{stats?.total_prescriptions || 0}</div>
+            <div className="h-8 mt-4">
+              <div className="flex items-center text-xs">
+                {isPrescriptionsTrendPositive ? 
+                  <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
+                  <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                }
+                <span className={`${isPrescriptionsTrendPositive ? 'text-emerald-500' : 'text-red-500'}`}>
+                  YTD
+                </span>
               </div>
+              <ResponsiveContainer width="100%" height={sparklineHeight}>
+                <LineChart data={prescriptionsTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                  <defs>
+                    <linearGradient id="prescriptionsShadow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={areaColors.prescriptions} stopOpacity={1}/>
+                      <stop offset="100%" stopColor={areaColors.prescriptions} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="none"
+                    fill="url(#prescriptionsShadow)"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke={lineColors.prescriptions}
+                    strokeWidth={1.5}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </Card>
-      
-      {/* Revenue/Payments Card */}
+
       <Card 
-        className="bg-white border rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+        className="relative overflow-hidden bg-white p-6 hover:shadow-md transition-shadow duration-200"
         onClick={() => fourthCardConfig.path ? onNavigate(fourthCardConfig.path) : null}
       >
         <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium">{fourthCardConfig.label}</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{fourthCardConfig.label}</h3>
           {fourthCardConfig.icon}
         </div>
-        <div className="pt-2">
-          {isLoading ? (
-            <Skeleton className="h-8 w-24" />
-          ) : (
-            <div>
-              <div className="text-2xl font-bold mb-3">
-                {userRole === 'patient' ? 
-                  `+${stats?.monthly_revenue || 0}` : 
-                  `€${stats?.monthly_revenue?.toLocaleString() || 0}`}
-              </div>
-              <div className="h-8 mt-2 mb-1">
-                <div className="flex items-center mb-2">
-                  {isRevenueTrendPositive ? 
-                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" /> : 
-                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                  }
-                  <span className={`text-xs ${isRevenueTrendPositive ? 'text-green-500' : 'text-red-500'}`}>
-                    YTD
-                  </span>
-                </div>
-                <ResponsiveContainer width="100%" height={sparklineHeight}>
-                  <LineChart data={revenueTrend}>
-                    <defs>
-                      <linearGradient id="revenueShadow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={areaColors.revenue} stopOpacity={0.85}/>
-                        <stop offset="98%" stopColor={areaColors.revenue} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="none"
-                      fill="url(#revenueShadow)"
-                      fillOpacity={1}
-                      isAnimationActive={true}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke={lineColors.revenue}
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={true}
-                      connectNulls={true}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+        {isLoading ? (
+          <Skeleton className="h-8 w-24" />
+        ) : (
+          <div>
+            <div className="text-2xl font-semibold mb-3">
+              {userRole === 'patient' ? 
+                `+${stats?.monthly_revenue || 0}` : 
+                `€${stats?.monthly_revenue?.toLocaleString() || 0}`}
             </div>
-          )}
-        </div>
+            <div className="h-8 mt-4">
+              <div className="flex items-center text-xs">
+                {isRevenueTrendPositive ? 
+                  <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
+                  <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                }
+                <span className={`${isRevenueTrendPositive ? 'text-emerald-500' : 'text-red-500'}`}>
+                  YTD
+                </span>
+              </div>
+              <ResponsiveContainer width="100%" height={sparklineHeight}>
+                <LineChart data={revenueTrend} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                  <defs>
+                    <linearGradient id="revenueShadow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={areaColors.revenue} stopOpacity={1}/>
+                      <stop offset="100%" stopColor={areaColors.revenue} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="none"
+                    fill="url(#revenueShadow)"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke={lineColors.revenue}
+                    strokeWidth={1.5}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
