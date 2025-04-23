@@ -1,6 +1,13 @@
 
 import { ReactNode } from "react";
 
+interface SidebarSubItemProps {
+  icon: ReactNode;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}
+
 const SidebarSubItem = ({ icon, label, isActive, onClick }: SidebarSubItemProps) => {
   return (
     <div
