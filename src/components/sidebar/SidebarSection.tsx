@@ -12,7 +12,7 @@ const SidebarSection = ({ title, children }: SidebarSectionProps) => {
       <h2 className="mb-2 px-6 text-xs font-semibold tracking-wider uppercase text-gray-500">
         {title}
       </h2>
-      <div className="space-y-1">
+      <div className="space-y-0">
         {children}
       </div>
     </div>
