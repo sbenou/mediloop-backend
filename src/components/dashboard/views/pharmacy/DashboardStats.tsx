@@ -11,7 +11,6 @@ import {
   Line, 
   Area 
 } from "recharts";
-import PatientsGoalCard from "./PatientsGoalCard";
 import { Button } from "@/components/ui/button";
 
 interface DashboardStatsProps {
@@ -153,6 +152,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
     points: 1200,
     redeemed: 500
   };
+
+  // Calculate progress for the patients goal chart
+  const progress = (patientsCount / patientsGoal) * 100;
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -323,7 +325,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
       
       {userRole === 'doctor' ? (
         <>
-          {/* Single Active Patients Card */}
+          {/* Active Patients Card - Direct implementation without nested PatientsGoalCard */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
             <h3 className="text-lg font-medium mb-3">Active Patients</h3>
             <div className="flex-1 space-y-4">
@@ -332,19 +334,41 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                   <p className="text-xs text-muted-foreground">Total Patients</p>
                   <p className="text-xl font-semibold">{stats?.total_patients || 0}</p>
                 </div>
-                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Users className="h-4 w-4 text-blue-600" />
+                <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Users className="h-3.5 w-3.5 text-blue-600" />
                 </div>
               </div>
               
-              <PatientsGoalCard
-                total={patientsCount}
-                goal={patientsGoal}
-                percentChange={patientsPercentChange}
-                isPositive={patientsPercentChange >= 0}
-              />
+              {/* Patient Goal Chart - directly integrated */}
+              <div>
+                <div className="flex items-center text-xs mb-2">
+                  {patientsPercentChange >= 0 ? (
+                    <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                  )}
+                  <span className={patientsPercentChange >= 0 ? "text-emerald-500" : "text-red-500"}>
+                    {patientsPercentChange}% YTD
+                  </span>
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                    <span>Progress</span>
+                    <span>{Math.round(progress)}%</span>
+                  </div>
+                  <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-500 ease-in-out"
+                      style={{ width: `${Math.min(progress, 100)}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Goal: {patientsGoal.toLocaleString()} patients
+                  </div>
+                </div>
+              </div>
               
-              <div className="mt-auto pt-2">
+              <div className="mt-auto">
                 <Button 
                   variant="ghost" 
                   className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
@@ -447,12 +471,43 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
       )}
 
       {showPatientsGoal && userRole !== 'doctor' && (
-        <PatientsGoalCard
-          total={patientsCount}
-          goal={patientsGoal}
-          percentChange={patientsPercentChange}
-          isPositive={patientsPercentChange >= 0}
-        />
+        // Use the integrated approach for pharmacist role as well
+        <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200">
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Active Patients</h3>
+            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <Users className="h-4 w-4 text-blue-600" />
+            </div>
+          </div>
+          <div className="pt-2">
+            <div className="text-2xl font-semibold mb-3">+{patientsCount.toLocaleString()}</div>
+            <div className="flex items-center text-xs mb-2">
+              {patientsPercentChange >= 0 ? (
+                <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
+              ) : (
+                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+              )}
+              <span className={patientsPercentChange >= 0 ? "text-emerald-500" : "text-red-500"}>
+                {patientsPercentChange}% YTD
+              </span>
+            </div>
+            <div className="mt-4">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>Progress</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+              <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 transition-all duration-500 ease-in-out"
+                  style={{ width: `${Math.min(progress, 100)}%` }}
+                />
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                Goal: {patientsGoal.toLocaleString()} patients
+              </div>
+            </div>
+          </div>
+        </Card>
       )}
     </div>
   );
