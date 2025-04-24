@@ -311,9 +311,9 @@ const PatientDashboard = () => {
     );
   }
 
-  // Updated EmptyState component with improved styling
+  // EmptyState component
   const EmptyState = ({ icon: Icon, message }: { icon: any, message: string }) => (
-    <div className="flex flex-col items-center justify-center h-full w-full p-6">
+    <div className="flex flex-col items-center justify-center py-8">
       <Icon className="h-16 w-16 text-muted-foreground mb-4" />
       <p className="text-sm text-muted-foreground text-center">{message}</p>
     </div>
@@ -354,16 +354,16 @@ const PatientDashboard = () => {
               message="No recent activities to display" 
             />
           ) : (
-            <div className="space-y-3 flex flex-col h-[calc(100%-80px)]">
-              {activities.map((activity) => {
+            <div className="space-y-3">
+              {activities.slice(0, 3).map((activity) => {
                 const ActivityTypeIcon = getActivityIcon(activity.type);
                 return (
-                  <div key={activity.id} className="flex flex-col items-center">
-                    <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-2">
+                  <div key={activity.id} className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
                       <ActivityTypeIcon className="h-6 w-6" />
                     </div>
-                    <div className="text-sm text-center">
-                      <p className="text-xl font-semibold">{activity.title}</p>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{activity.title}</p>
                       <p className="text-xs text-muted-foreground">{activity.description}</p>
                     </div>
                   </div>
