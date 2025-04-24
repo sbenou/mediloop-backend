@@ -336,14 +336,26 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                   <Users className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
-              <Button 
-                variant="ghost" 
-                className="w-full mt-3 text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
-                onClick={() => onNavigate('patients')}
-              >
-                View All
-                <Activity className="ml-2 h-4 w-4" />
-              </Button>
+              
+              {/* Restore the PatientsGoalCard */}
+              <PatientsGoalCard
+                total={patientsCount}
+                goal={patientsGoal}
+                percentChange={patientsPercentChange}
+                isPositive={patientsPercentChange >= 0}
+              />
+              
+              {/* Add margin-top to create space for the button */}
+              <div className="pt-2">
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
+                  onClick={() => onNavigate('patients')}
+                >
+                  View All
+                  <Activity className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </Card>
 
@@ -360,15 +372,19 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                   <div className="text-xs text-muted-foreground">{activity.date}</div>
                 </div>
               ))}
+              
+              {/* Add margin-top to align with the other button */}
+              <div className="pt-2">
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
+                  onClick={() => onNavigate('notifications')}
+                >
+                  View All
+                  <Activity className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <Button 
-              variant="ghost" 
-              className="w-full mt-3 text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
-              onClick={() => onNavigate('notifications')}
-            >
-              View All
-              <Activity className="ml-2 h-4 w-4" />
-            </Button>
           </Card>
         </>
       ) : (
