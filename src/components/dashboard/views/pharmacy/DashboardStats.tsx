@@ -55,7 +55,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
   const isPatientTrendPositive = patientTrend[0].value < patientTrend[patientTrend.length - 1].value;
   const isOrdersTrendPositive = ordersTrend[0].value < ordersTrend[ordersTrend.length - 1].value;
-  const isPrescriptionsTrendPositive = prescriptionsTrend[0].value < prescriptionsTrend.length - 1].value;
+  const isPrescriptionsTrendPositive = prescriptionsTrend[0].value < prescriptionsTrend[prescriptionsTrend.length - 1].value;
   const isRevenueTrendPositive = revenueTrend[0].value < revenueTrend[revenueTrend.length - 1].value;
 
   const firstCardConfig = userRole === 'patient' 
