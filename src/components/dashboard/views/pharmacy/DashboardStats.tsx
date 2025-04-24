@@ -367,9 +367,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             </div>
           </Card>
 
-          {/* Recent Activities Card with updated empty state */}
+          {/* Recent Activities Card with updated empty state and consistent margin */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
-            <h3 className="text-lg font-medium mb-4">Recent Activities</h3>
+            <h3 className="text-lg font-medium mb-8">Recent Activities</h3>
             {isDoctorStatsLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-12 w-full" />
