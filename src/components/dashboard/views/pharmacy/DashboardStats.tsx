@@ -329,21 +329,21 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Total Active</p>
+                  <p className="text-xs text-muted-foreground">Total Patients</p>
                   <p className="text-xl font-semibold">{stats?.total_patients || 0}</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                   <Users className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
-              {showPatientsGoal && (
-                <PatientsGoalCard
-                  total={patientsCount}
-                  goal={patientsGoal}
-                  percentChange={patientsPercentChange}
-                  isPositive={patientsPercentChange >= 0}
-                />
-              )}
+              <Button 
+                variant="ghost" 
+                className="w-full mt-3 text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
+                onClick={() => onNavigate('patients')}
+              >
+                View All
+                <Activity className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </Card>
 
@@ -363,7 +363,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             </div>
             <Button 
               variant="ghost" 
-              className="w-full mt-3 text-sm"
+              className="w-full mt-3 text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
               onClick={() => onNavigate('notifications')}
             >
               View All
