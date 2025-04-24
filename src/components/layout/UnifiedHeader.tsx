@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import NotificationBell from "../NotificationBell";
 import UserMenu from "../UserMenu";
@@ -18,6 +18,9 @@ export const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   onBackClick,
   showUserMenu = true,
 }) => {
+  // Add state to control cart open/close
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
   const handleBackClick = () => {
     if (onBackClick) {
       onBackClick();
@@ -47,7 +50,10 @@ export const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           )}
         </div>
         <div className="flex items-center space-x-4">
-          <CartButton />
+          <CartButton 
+            isOpen={isCartOpen}
+            onOpenChange={setIsCartOpen}
+          />
           <NotificationBell />
           {showUserMenu && <UserMenu />}
         </div>
