@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -312,6 +311,7 @@ const PatientDashboard = () => {
     );
   }
 
+  // Updated EmptyState component with improved styling to match doctor dashboard
   const EmptyState = ({ icon: Icon, message }: { icon: any, message: string }) => (
     <div className="flex flex-col items-center justify-center h-[calc(100%-80px)] mb-4">
       <Icon className="h-16 w-16 text-muted-foreground mb-4" />
