@@ -55,7 +55,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
   const isPatientTrendPositive = patientTrend[0].value < patientTrend[patientTrend.length - 1].value;
   const isOrdersTrendPositive = ordersTrend[0].value < ordersTrend[ordersTrend.length - 1].value;
-  const isPrescriptionsTrendPositive = prescriptionsTrend[0].value < prescriptionsTrend[prescriptionsTrend.length - 1].value;
+  const isPrescriptionsTrendPositive = prescriptionsTrend[0].value < prescriptionsTrend.length - 1].value;
   const isRevenueTrendPositive = revenueTrend[0].value < revenueTrend[revenueTrend.length - 1].value;
 
   const firstCardConfig = userRole === 'patient' 
@@ -147,11 +147,11 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
     }
   };
 
-  // Empty state component
+  // Updated EmptyState component with centered layout and consistent height
   const EmptyState = ({ icon: Icon, message }: { icon: any, message: string }) => (
-    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-      <Icon className="h-12 w-12 mb-4" />
-      <p className="text-sm">{message}</p>
+    <div className="flex flex-col items-center justify-center h-[calc(100%-80px)]">
+      <Icon className="h-16 w-16 text-muted-foreground mb-4" />
+      <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
 
@@ -367,7 +367,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
             </div>
           </Card>
 
-          {/* Recent Activities Card */}
+          {/* Recent Activities Card with updated empty state */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
             <h3 className="text-lg font-medium mb-4">Recent Activities</h3>
             {isDoctorStatsLoading ? (
