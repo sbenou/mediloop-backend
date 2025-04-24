@@ -1,6 +1,11 @@
 
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import NotificationBell from "../NotificationBell";
+import UserMenu from "../UserMenu";
+import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
+import { MainNavigation } from "./navigation/MainNavigation";
+import CartButton from "./navigation/CartButton";
 
 interface UnifiedHeaderProps {
   showBackLink?: boolean;
@@ -33,10 +38,18 @@ export const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </button>
-          ) : null}
+          ) : (
+            <NavigationMenu>
+              <NavigationMenuList>
+                <MainNavigation />
+              </NavigationMenuList>
+            </NavigationMenu>
+          )}
         </div>
         <div className="flex items-center space-x-4">
-          {/* User menu and other elements will be added here if needed */}
+          <CartButton />
+          <NotificationBell />
+          {showUserMenu && <UserMenu />}
         </div>
       </div>
     </header>
