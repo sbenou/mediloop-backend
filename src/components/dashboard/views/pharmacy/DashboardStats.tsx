@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -327,12 +328,12 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         <>
           {/* Active Patients Card - Direct implementation without nested PatientsGoalCard */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
-            <h3 className="text-lg font-medium mb-3">Active Patients</h3>
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-medium mb-6">Active Patients</h3>
+            <div className="flex-1 space-y-6">
+              <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Total Patients</p>
-                  <p className="text-xl font-semibold">{stats?.total_patients || 0}</p>
+                  <p className="text-xl font-semibold mt-1">{stats?.total_patients || 0}</p>
                 </div>
                 <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center">
                   <Users className="h-3.5 w-3.5 text-blue-600" />
@@ -340,8 +341,8 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
               </div>
               
               {/* Patient Goal Chart - directly integrated */}
-              <div>
-                <div className="flex items-center text-xs mb-2">
+              <div className="space-y-6">
+                <div className="flex items-center text-xs mb-3 mt-4">
                   {patientsPercentChange >= 0 ? (
                     <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
                   ) : (
@@ -351,7 +352,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                     {patientsPercentChange}% YTD
                   </span>
                 </div>
-                <div>
+                <div className="mt-2">
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
                     <span>Progress</span>
                     <span>{Math.round(progress)}%</span>
@@ -368,7 +369,8 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
               </div>
               
-              <div className="mt-auto">
+              {/* Button pushed to bottom with flex-grow and mt-auto to align with other cards */}
+              <div className="mt-auto pt-2">
                 <Button 
                   variant="ghost" 
                   className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
@@ -383,7 +385,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
           {/* Recent Activities Card */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
-            <h3 className="text-lg font-medium mb-3">Recent Activities</h3>
+            <h3 className="text-lg font-medium mb-6">Recent Activities</h3>
             <div className="space-y-3 flex flex-col h-[calc(100%-80px)]">
               {recentActivities.map((activity, index) => (
                 <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
@@ -395,7 +397,8 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
               ))}
               
-              <div className="mt-auto">
+              {/* Button pushed to bottom with flex-grow and mt-auto to align with other cards */}
+              <div className="mt-auto pt-2">
                 <Button 
                   variant="ghost" 
                   className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"

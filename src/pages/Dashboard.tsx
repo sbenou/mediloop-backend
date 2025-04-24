@@ -1,8 +1,8 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { Loader } from "lucide-react";
+import { Loader, SidebarClose, SidebarOpen } from "lucide-react";
 import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import DashboardRouter from "@/components/dashboard/DashboardRouter";
@@ -10,6 +10,10 @@ import RequireRoleGuard from "@/components/auth/RequireRoleGuard";
 import { CartProvider } from "@/contexts/CartContext";
 import DoctorLayout from "@/components/layout/DoctorLayout";
 import PatientLayout from "@/components/layout/PatientLayout";
+import { ActivityFeed } from "@/components/activity/ActivityFeed";
+import { Advertisements } from "@/components/activity/Advertisements";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading, userRole, profile } = useAuth();
@@ -18,6 +22,10 @@ const Dashboard = () => {
   const hasInitializedRef = useRef(false);
   const redirectedRef = useRef(false);
   const renderCountRef = useRef(0);
+  
+  // Activity drawer state
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
 
   // Add more detailed logging to help debug
   useEffect(() => {
@@ -59,6 +67,11 @@ const Dashboard = () => {
       console.log("❌ Dashboard unmounted");
     };
   }, [isAuthenticated, navigate, isLoading, userRole, profile, searchParams]);
+  
+  // Force recalculation of chart dimensions when drawer state changes
+  useEffect(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, [isDrawerOpen]);
 
   // Prevent unnecessary re-renderings by memoizing the search params
   const paramsObj = Object.fromEntries(searchParams.entries());
@@ -82,6 +95,58 @@ const Dashboard = () => {
     return null;
   }
 
+  // Activity drawer component - shared across all layouts
+  const ActivityDrawer = () => (
+    <>
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed right-0 top-20 z-50"
+        onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+      >
+        {isDrawerOpen ? <SidebarClose className="h-4 w-4" /> : <SidebarOpen className="h-4 w-4" />}
+      </Button>
+
+      <div 
+        className={`fixed inset-y-0 right-0 mt-16 w-[300px] border-l bg-white shadow-md transition-transform duration-300 z-40 overflow-hidden ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <div className="p-4 h-full overflow-y-auto">
+          <Tabs 
+            defaultValue="home" 
+            className="w-full" 
+            value={activeDrawerTab}
+            onValueChange={setActiveDrawerTab}
+          >
+            <TabsList className="grid grid-cols-2 mb-4">
+              <TabsTrigger value="home">Home</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="home" className="mt-0">
+              <Advertisements />
+            </TabsContent>
+            
+            <TabsContent value="activity" className="mt-0">
+              <ActivityFeed />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </>
+  );
+  
+  // Content with right drawer wrapper
+  const WithRightDrawer = ({ children }: { children: React.ReactNode }) => (
+    <div className="flex flex-1 overflow-hidden relative">
+      <main className={`flex-1 p-4 md:p-6 overflow-auto hover-scroll main-content-scroll transition-all duration-300 ${isDrawerOpen ? 'mr-[300px]' : 'mr-0'}`}>
+        <ScrollArea className="h-full w-full">
+          {children}
+        </ScrollArea>
+      </main>
+      <ActivityDrawer />
+    </div>
+  );
+
   if (isAuthenticated && userRole) {
     console.log("🔓 Access granted to role:", userRole);
     
@@ -91,7 +156,9 @@ const Dashboard = () => {
         <RequireRoleGuard allowedRoles={["patient", "superadmin"]}>
           <CartProvider>
             <PatientLayout>
-              <DashboardRouter userRole={userRole} />
+              <WithRightDrawer>
+                <DashboardRouter userRole={userRole} />
+              </WithRightDrawer>
             </PatientLayout>
           </CartProvider>
         </RequireRoleGuard>
@@ -103,7 +170,9 @@ const Dashboard = () => {
         <RequireRoleGuard allowedRoles={["doctor", "superadmin"]}>
           <CartProvider>
             <DoctorLayout>
-              <DashboardRouter userRole={userRole} />
+              <WithRightDrawer>
+                <DashboardRouter userRole={userRole} />
+              </WithRightDrawer>
             </DoctorLayout>
           </CartProvider>
         </RequireRoleGuard>
@@ -115,11 +184,9 @@ const Dashboard = () => {
         <RequireRoleGuard allowedRoles={["patient", "doctor", "pharmacist", "superadmin"]}>
           <CartProvider>
             <UnifiedLayoutTemplate>
-              <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-                <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-                  <DashboardRouter userRole={userRole} />
-                </ScrollArea>
-              </div>
+              <WithRightDrawer>
+                <DashboardRouter userRole={userRole} />
+              </WithRightDrawer>
             </UnifiedLayoutTemplate>
           </CartProvider>
         </RequireRoleGuard>
