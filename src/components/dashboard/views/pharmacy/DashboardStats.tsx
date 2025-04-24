@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -322,65 +321,119 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         </div>
       </Card>
       
-      {/* Recent Activities Card */}
-      <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
-        <h3 className="text-lg font-medium mb-3">Recent Activities</h3>
-        <div className="space-y-3">
-          {recentActivities.map((activity, index) => (
-            <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-              <div>
-                <p className="text-sm font-medium">{activity.type}</p>
-                <p className="text-xs text-muted-foreground">{activity.status}</p>
+      {userRole === 'doctor' ? (
+        <>
+          {/* Active Patients Card (for doctor only) */}
+          <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
+            <h3 className="text-lg font-medium mb-3">Active Patients</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Active</p>
+                  <p className="text-xl font-semibold">{stats?.total_patients || 0}</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground">{activity.date}</div>
+              {showPatientsGoal && (
+                <PatientsGoalCard
+                  total={patientsCount}
+                  goal={patientsGoal}
+                  percentChange={patientsPercentChange}
+                  isPositive={patientsPercentChange >= 0}
+                />
+              )}
             </div>
-          ))}
-        </div>
-        <Button 
-          variant="ghost" 
-          className="w-full mt-3 text-sm"
-          onClick={() => onNavigate('notifications')}
-        >
-          View All
-          <Activity className="ml-2 h-4 w-4" />
-        </Button>
-      </Card>
-      
-      {/* Referrals Card */}
-      <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
-        <h3 className="text-lg font-medium mb-3">Referrals</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Total Referrals</p>
-              <p className="text-xl font-semibold">{referrals.count}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <Share className="h-5 w-5 text-blue-600" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Total Points</p>
-              <p className="text-xl font-semibold">{referrals.points}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Redeemed</p>
-              <p className="text-sm font-medium">{referrals.redeemed}</p>
-            </div>
-          </div>
-        </div>
-        <Button 
-          variant="ghost" 
-          className="w-full mt-4 text-sm"
-          onClick={() => onNavigate('referral')}
-        >
-          View Referrals
-          <Share className="ml-2 h-4 w-4" />
-        </Button>
-      </Card>
+          </Card>
 
-      {showPatientsGoal && (
+          {/* Recent Activities Card */}
+          <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
+            <h3 className="text-lg font-medium mb-3">Recent Activities</h3>
+            <div className="space-y-3">
+              {recentActivities.map((activity, index) => (
+                <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium">{activity.type}</p>
+                    <p className="text-xs text-muted-foreground">{activity.status}</p>
+                  </div>
+                  <div className="text-xs text-muted-foreground">{activity.date}</div>
+                </div>
+              ))}
+            </div>
+            <Button 
+              variant="ghost" 
+              className="w-full mt-3 text-sm"
+              onClick={() => onNavigate('notifications')}
+            >
+              View All
+              <Activity className="ml-2 h-4 w-4" />
+            </Button>
+          </Card>
+        </>
+      ) : (
+        <>
+          {/* Recent Activities Card */}
+          <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
+            <h3 className="text-lg font-medium mb-3">Recent Activities</h3>
+            <div className="space-y-3">
+              {recentActivities.map((activity, index) => (
+                <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium">{activity.type}</p>
+                    <p className="text-xs text-muted-foreground">{activity.status}</p>
+                  </div>
+                  <div className="text-xs text-muted-foreground">{activity.date}</div>
+                </div>
+              ))}
+            </div>
+            <Button 
+              variant="ghost" 
+              className="w-full mt-3 text-sm"
+              onClick={() => onNavigate('notifications')}
+            >
+              View All
+              <Activity className="ml-2 h-4 w-4" />
+            </Button>
+          </Card>
+          
+          {/* Referrals Card */}
+          <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
+            <h3 className="text-lg font-medium mb-3">Referrals</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Referrals</p>
+                  <p className="text-xl font-semibold">{referrals.count}</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Share className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Points</p>
+                  <p className="text-xl font-semibold">{referrals.points}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Redeemed</p>
+                  <p className="text-sm font-medium">{referrals.redeemed}</p>
+                </div>
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              className="w-full mt-4 text-sm"
+              onClick={() => onNavigate('referral')}
+            >
+              View Referrals
+              <Share className="ml-2 h-4 w-4" />
+            </Button>
+          </Card>
+        </>
+      )}
+
+      {showPatientsGoal && userRole !== 'doctor' && (
         <PatientsGoalCard
           total={patientsCount}
           goal={patientsGoal}
