@@ -1137,6 +1137,57 @@ export type Database = {
           },
         ]
       }
+      user_wearables: {
+        Row: {
+          access_token: string | null
+          battery_level: number | null
+          connection_status: string
+          created_at: string
+          device_id: string
+          device_name: string
+          device_type: Database["public"]["Enums"]["wearable_device_type"]
+          id: string
+          last_synced: string | null
+          meta: Json | null
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          battery_level?: number | null
+          connection_status?: string
+          created_at?: string
+          device_id: string
+          device_name: string
+          device_type: Database["public"]["Enums"]["wearable_device_type"]
+          id?: string
+          last_synced?: string | null
+          meta?: Json | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          battery_level?: number | null
+          connection_status?: string
+          created_at?: string
+          device_id?: string
+          device_name?: string
+          device_type?: Database["public"]["Enums"]["wearable_device_type"]
+          id?: string
+          last_synced?: string | null
+          meta?: Json | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       workplaces: {
         Row: {
           address: string
@@ -1371,6 +1422,13 @@ export type Database = {
         | "confirmed"
         | "cancelled"
         | "completed"
+      wearable_device_type:
+        | "apple_watch"
+        | "fitbit"
+        | "oura_ring"
+        | "samsung_galaxy_watch"
+        | "garmin"
+        | "whoop"
       workplace_type: "cabinet" | "clinic" | "hospital" | "pharmacy" | "other"
     }
     CompositeTypes: {
@@ -1502,6 +1560,14 @@ export const Constants = {
         "confirmed",
         "cancelled",
         "completed",
+      ],
+      wearable_device_type: [
+        "apple_watch",
+        "fitbit",
+        "oura_ring",
+        "samsung_galaxy_watch",
+        "garmin",
+        "whoop",
       ],
       workplace_type: ["cabinet", "clinic", "hospital", "pharmacy", "other"],
     },
