@@ -13,6 +13,169 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Function to fetch data from Fitbit API
+async function fetchFitbitData(accessToken: string) {
+  try {
+    // Fetch activity data
+    const activityResponse = await fetch('https://api.fitbit.com/1/user/-/activities/date/today.json', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!activityResponse.ok) {
+      throw new Error(`Fitbit API error: ${activityResponse.status}`);
+    }
+    
+    const activityData = await activityResponse.json();
+    
+    // Fetch heart rate data
+    const heartRateResponse = await fetch('https://api.fitbit.com/1/user/-/activities/heart/date/today/1d.json', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!heartRateResponse.ok) {
+      throw new Error(`Fitbit API error: ${heartRateResponse.status}`);
+    }
+    
+    const heartRateData = await heartRateResponse.json();
+    
+    // Process and return the combined data
+    return {
+      steps: activityData.summary.steps,
+      heart_rate: heartRateData.activities-heart[0]?.value?.restingHeartRate || null,
+      calories_burned: activityData.summary.caloriesOut,
+      active_minutes: activityData.summary.veryActiveMinutes,
+      floors_climbed: activityData.summary.floors,
+      distance_km: activityData.summary.distances.find(d => d.activity === 'total')?.distance || 0,
+      // Fitbit doesn't provide sleep data in this endpoint - would need separate sleep API call
+    };
+  } catch (error) {
+    console.error('Error fetching Fitbit data:', error);
+    throw error;
+  }
+}
+
+// Function to fetch data from Oura API
+async function fetchOuraData(accessToken: string) {
+  try {
+    // Fetch daily activity summary
+    const dailyResponse = await fetch('https://api.ouraring.com/v2/usercollection/daily_activity', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!dailyResponse.ok) {
+      throw new Error(`Oura API error: ${dailyResponse.status}`);
+    }
+    
+    const dailyData = await dailyResponse.json();
+    
+    // Fetch heart rate data
+    const heartRateResponse = await fetch('https://api.ouraring.com/v2/usercollection/heartrate', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!heartRateResponse.ok) {
+      throw new Error(`Oura API error: ${heartRateResponse.status}`);
+    }
+    
+    const heartRateData = await heartRateResponse.json();
+    
+    // Process and return the data
+    // Note: Structure depends on actual Oura API response
+    const latestDaily = dailyData.data[0] || {};
+    
+    // Calculate average heart rate (simplified)
+    let avgHeartRate = null;
+    if (heartRateData.data && heartRateData.data.length > 0) {
+      const samples = heartRateData.data[0].heart_rate_data || [];
+      if (samples.length > 0) {
+        const sum = samples.reduce((acc, val) => acc + val.bpm, 0);
+        avgHeartRate = Math.round(sum / samples.length);
+      }
+    }
+    
+    return {
+      steps: latestDaily.steps || 0,
+      heart_rate: avgHeartRate,
+      calories_burned: latestDaily.calories_active || 0,
+      temperature: latestDaily.temperature_deviation,
+      readiness_score: latestDaily.readiness_score,
+      sleep_hours: latestDaily.sleep_duration / 3600, // Convert from seconds to hours
+      sleep_quality: latestDaily.sleep_score
+    };
+  } catch (error) {
+    console.error('Error fetching Oura data:', error);
+    throw error;
+  }
+}
+
+// Function to fetch data from WHOOP API
+async function fetchWhoopData(accessToken: string) {
+  try {
+    // Fetch user data
+    const userResponse = await fetch('https://api.prod.whoop.com/developer/v1/user/self', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!userResponse.ok) {
+      throw new Error(`WHOOP API error: ${userResponse.status}`);
+    }
+    
+    const userData = await userResponse.json();
+    
+    // Fetch recovery data
+    const recoveryResponse = await fetch('https://api.prod.whoop.com/developer/v1/recovery', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!recoveryResponse.ok) {
+      throw new Error(`WHOOP API error: ${recoveryResponse.status}`);
+    }
+    
+    const recoveryData = await recoveryResponse.json();
+    
+    // Fetch workout data
+    const workoutResponse = await fetch('https://api.prod.whoop.com/developer/v1/workout', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!workoutResponse.ok) {
+      throw new Error(`WHOOP API error: ${workoutResponse.status}`);
+    }
+    
+    const workoutData = await workoutResponse.json();
+    
+    // Process and return data
+    const latestRecovery = recoveryData.records[0] || {};
+    const latestWorkout = workoutData.records[0] || {};
+    
+    return {
+      heart_rate: latestRecovery.restingHeartRate || null,
+      hrv: latestRecovery.heartRateVariabilityRmssd,
+      recovery_score: latestRecovery.score * 100,
+      calories_burned: latestWorkout.calories || 0,
+      strain_score: latestWorkout.score || 0,
+      sleep_hours: latestRecovery.sleepPerformance?.qualityDuration / 3600 || null,
+    };
+  } catch (error) {
+    console.error('Error fetching WHOOP data:', error);
+    throw error;
+  }
+}
+
 // Generate mock health data based on device type
 const generateMockHealthData = (deviceType: string) => {
   const baseData = {
@@ -129,11 +292,42 @@ serve(async (req) => {
       );
     }
     
-    // In a real implementation, you would fetch data from the wearable's API
-    // using the stored access_token and refresh_token
+    // Try to fetch data from the appropriate wearable API based on the access token
+    let healthData;
     
-    // For this demo, generate mock health data
-    const healthData = generateMockHealthData(wearable.device_type);
+    if (wearable.access_token) {
+      try {
+        // Fetch real data from the appropriate API
+        switch (wearable.device_type) {
+          case 'fitbit':
+            healthData = await fetchFitbitData(wearable.access_token);
+            break;
+          case 'oura_ring':
+            healthData = await fetchOuraData(wearable.access_token);
+            break;
+          case 'whoop':
+            healthData = await fetchWhoopData(wearable.access_token);
+            break;
+          default:
+            // Use mock data for unsupported devices or Apple Watch (requires mobile app)
+            healthData = generateMockHealthData(wearable.device_type);
+        }
+      } catch (error) {
+        console.error(`Error fetching data from ${wearable.device_type} API:`, error);
+        
+        // Check if it might be an expired token
+        if (error.message?.includes('401') || error.message?.includes('unauthorized')) {
+          // In production, you would implement token refresh logic here
+          console.log(`Token may be expired for ${wearable.device_type}`);
+        }
+        
+        // Fall back to mock data
+        healthData = generateMockHealthData(wearable.device_type);
+      }
+    } else {
+      // No access token, use mock data
+      healthData = generateMockHealthData(wearable.device_type);
+    }
     
     // Update wearable with new data
     const { error: updateError } = await supabase
