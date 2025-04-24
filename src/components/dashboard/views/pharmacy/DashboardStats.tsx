@@ -323,21 +323,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
       
       {userRole === 'doctor' ? (
         <>
-          {/* Active Patients Card (for doctor only) */}
+          {/* Single Active Patients Card */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
-            <h3 className="text-lg font-medium mb-3">Active Patients</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">Total Patients</p>
-                  <p className="text-xl font-semibold">{stats?.total_patients || 0}</p>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-blue-600" />
-                </div>
-              </div>
-              
-              {/* Restore the PatientsGoalCard */}
+            <div className="flex-1 space-y-4">
               <PatientsGoalCard
                 total={patientsCount}
                 goal={patientsGoal}
@@ -345,8 +333,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 isPositive={patientsPercentChange >= 0}
               />
               
-              {/* Add margin-top to create space for the button */}
-              <div className="pt-2">
+              <div className="mt-auto">
                 <Button 
                   variant="ghost" 
                   className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
@@ -362,7 +349,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
           {/* Recent Activities Card */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
             <h3 className="text-lg font-medium mb-3">Recent Activities</h3>
-            <div className="space-y-3">
+            <div className="space-y-3 flex flex-col h-[calc(100%-80px)]">
               {recentActivities.map((activity, index) => (
                 <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                   <div>
@@ -373,8 +360,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
               ))}
               
-              {/* Add margin-top to align with the other button */}
-              <div className="pt-2">
+              <div className="mt-auto">
                 <Button 
                   variant="ghost" 
                   className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
