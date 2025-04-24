@@ -6,7 +6,7 @@ import { StatsSection } from "@/components/home/StatsSection";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import GetStartedSteps from "@/components/home/GetStartedSteps";
 import { PartnerSection } from "@/components/home/PartnerSection";
-import Header from "@/components/layout/Header";
+import UnifiedHeader from "@/components/layout/UnifiedHeader";
 import Footer from "@/components/layout/Footer";
 import CountrySelector from "@/components/CountrySelector";
 import { CookieConsent } from "@/components/cookies/CookieConsent";
@@ -31,7 +31,7 @@ export default function Index() {
     <CurrencyProvider>
       <CartProvider>
         <>
-          <Header />
+          <UnifiedHeader />
           <CountrySelector />
           <HeroSection />
           <div className="container mx-auto px-4">

@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import Header from '@/components/layout/Header';
+import UnifiedHeader from '@/components/layout/UnifiedHeader';
 import Footer from '@/components/layout/Footer';
 import { HeroSection } from '@/components/home/HeroSection';
 import { FeaturesGrid } from '@/components/home/FeaturesGrid';
@@ -27,7 +27,7 @@ const Home = () => {
     <CurrencyProvider>
       <CartProvider>
         <div className="min-h-screen flex flex-col">
-          <Header />
+          <UnifiedHeader />
           <main className="flex-1">
             <HeroSection />
             <FeaturesGrid />
