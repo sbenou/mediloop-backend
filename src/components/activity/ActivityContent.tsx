@@ -5,6 +5,7 @@ import { ActivityEmptyState } from "./ActivityEmptyState";
 import { Activity, ActivityType } from "./ActivityItem";
 import { groupActivitiesByDate } from "@/utils/activityGroupUtils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Activity as ActivityIcon } from "lucide-react"; // Import Activity icon
 
 interface ActivityContentProps {
   activities: Activity[];
@@ -59,10 +60,21 @@ export const ActivityContent: React.FC<ActivityContentProps> = ({
     );
   }
   
+  // Updated EmptyState component with Activity icon and tighter positioning
+  const EmptyState = ({ icon: Icon, message }: { icon: any, message: string }) => (
+    <div className="flex flex-col items-center justify-center pt-16 pb-8">
+      <Icon className="h-12 w-12 text-muted-foreground mb-2" />
+      <p className="text-sm text-muted-foreground text-center">{message}</p>
+    </div>
+  );
+
   return (
     <ScrollArea className="h-[calc(100vh-250px)]">
       {!hasActivities ? (
-        <ActivityEmptyState />
+        <EmptyState 
+          icon={ActivityIcon} 
+          message="No activities to display" 
+        />
       ) : (
         <div className="space-y-6">
           <ActivityGroup 
