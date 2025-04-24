@@ -325,7 +325,18 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
         <>
           {/* Single Active Patients Card */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
+            <h3 className="text-lg font-medium mb-3">Active Patients</h3>
             <div className="flex-1 space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Patients</p>
+                  <p className="text-xl font-semibold">{stats?.total_patients || 0}</p>
+                </div>
+                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-blue-600" />
+                </div>
+              </div>
+              
               <PatientsGoalCard
                 total={patientsCount}
                 goal={patientsGoal}
@@ -333,7 +344,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 isPositive={patientsPercentChange >= 0}
               />
               
-              <div className="mt-auto">
+              <div className="mt-auto pt-2">
                 <Button 
                   variant="ghost" 
                   className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
