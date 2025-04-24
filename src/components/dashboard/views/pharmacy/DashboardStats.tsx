@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Users, ShoppingBag, FileText, CreditCard, TrendingUp, TrendingDown,
-  Activity, MessageCircle, Video, Bell, Share
+  Activity, MessageCircle, Video, Bell, Share, List
 } from "lucide-react";
 import { 
   ResponsiveContainer, 
@@ -147,9 +147,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
     }
   };
 
-  // Updated EmptyState component with centered layout and consistent height
+  // Updated EmptyState component with List icon and consistent styling
   const EmptyState = ({ icon: Icon, message }: { icon: any, message: string }) => (
-    <div className="flex flex-col items-center justify-center h-[calc(100%-80px)]">
+    <div className="flex flex-col items-center justify-center h-[calc(100%-80px)] mb-4">
       <Icon className="h-16 w-16 text-muted-foreground mb-4" />
       <p className="text-sm text-muted-foreground">{message}</p>
     </div>
@@ -380,7 +380,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                healthcareStats.consultations.active === 0 &&
                healthcareStats.prescriptions.active === 0 ? (
               <EmptyState 
-                icon={Activity} 
+                icon={List} 
                 message="No recent activities to display"
               />
             ) : (
