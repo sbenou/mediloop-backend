@@ -311,7 +311,7 @@ const PatientDashboard = () => {
     );
   }
 
-  // Updated EmptyState component with improved styling to match doctor dashboard
+  // Updated EmptyState component with improved styling
   const EmptyState = ({ icon: Icon, message }: { icon: any, message: string }) => (
     <div className="flex flex-col items-center justify-center h-[calc(100%-80px)] mb-4">
       <Icon className="h-16 w-16 text-muted-foreground mb-4" />
@@ -351,7 +351,7 @@ const PatientDashboard = () => {
           ) : activities.length === 0 ? (
             <EmptyState 
               icon={ActivityIcon} 
-              message="No recent activities to display"
+              message="No recent activities to display" 
             />
           ) : (
             <div className="space-y-3 flex flex-col h-[calc(100%-80px)]">
@@ -371,18 +371,6 @@ const PatientDashboard = () => {
               })}
             </div>
           )}
-          
-          {/* View All Button */}
-          <div className="mt-auto pt-2">
-            <Button 
-              variant="ghost" 
-              className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
-              onClick={() => navigate('notifications')}
-            >
-              View All
-              <ActivityIcon className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
         </Card>
         
         <HealthStateIndicator userRole="patient" />
