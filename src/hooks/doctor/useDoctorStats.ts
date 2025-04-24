@@ -35,6 +35,9 @@ export const useDoctorStats = (doctorId?: string) => {
 
       if (teleError) throw teleError;
 
+      // Get active consultations (if we had a consultations table)
+      // For now, this will be 0 until we implement consultations
+
       // Get active prescriptions
       const { count: prescriptionsCount, error: prescriptionsError } = await supabase
         .from('prescriptions')

@@ -128,41 +128,32 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
   const premiumContent = getPremiumContent(userRole);
 
-  // Mock data for Healthcare Stats
+  // Updated healthcare stats with real data
   const healthcareStats = {
     teleconsultations: {
-      active: 5,
+      active: doctorStats?.active_teleconsultations || 0,
       trend: isPatientTrendPositive,
       color: "bg-blue-100 text-blue-600"
     },
     consultations: {
-      active: 3,
+      active: doctorStats?.active_consultations || 0,
       trend: isPrescriptionsTrendPositive,
       color: "bg-violet-100 text-violet-600"
     },
     prescriptions: {
-      active: stats?.total_prescriptions || 8,
+      active: doctorStats?.active_prescriptions || 0,
       trend: isPrescriptionsTrendPositive,
       color: "bg-green-100 text-green-600"
     }
   };
 
-  // Mock data for Recent Activities
-  const recentActivities = [
-    { type: "Consultation", status: "Scheduled", date: "Today, 2:00 PM" },
-    { type: "Prescription", status: "Renewed", date: "Yesterday" },
-    { type: "Order", status: "Delivered", date: "Apr 21, 2025" }
-  ];
-
-  // Mock data for Referrals
-  const referrals = {
-    count: 12,
-    points: 1200,
-    redeemed: 500
-  };
-
-  // Calculate progress for the patients goal chart
-  const progress = (patientsCount / patientsGoal) * 100;
+  // Empty state component
+  const EmptyState = ({ icon: Icon, message }: { icon: any, message: string }) => (
+    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+      <Icon className="h-12 w-12 mb-4" />
+      <p className="text-sm">{message}</p>
+    </div>
+  );
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -189,58 +180,34 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
       
       {/* Healthcare Stats Card */}
       <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-2">
-        <h3 className="text-lg font-medium mb-4">Healthcare Overview</h3>
+        <h3 className="text-lg font-medium mb-6">Healthcare Overview</h3>
         <div className="grid grid-cols-3 gap-4">
-          {/* Teleconsultations */}
-          <div className="flex flex-col items-center">
-            <div className={`h-12 w-12 rounded-full ${healthcareStats.teleconsultations.color} flex items-center justify-center mb-2`}>
-              <Video className="h-6 w-6" />
+          {Object.entries(healthcareStats).map(([key, stat]) => (
+            <div key={key} className="flex flex-col items-center">
+              <div className={`h-12 w-12 rounded-full ${stat.color} flex items-center justify-center mb-2`}>
+                {key === 'teleconsultations' ? (
+                  <Video className="h-6 w-6" />
+                ) : key === 'consultations' ? (
+                  <MessageCircle className="h-6 w-6" />
+                ) : (
+                  <FileText className="h-6 w-6" />
+                )}
+              </div>
+              <div className="text-sm text-center">
+                <p className="text-xl font-semibold">{stat.active}</p>
+                <p className="text-xs text-muted-foreground">
+                  Active {key.charAt(0).toUpperCase() + key.slice(1)}
+                </p>
+              </div>
+              <div className="flex items-center text-xs mt-1">
+                {stat.trend ? (
+                  <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
+                ) : (
+                  <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                )}
+              </div>
             </div>
-            <div className="text-sm text-center">
-              <p className="text-xl font-semibold">{healthcareStats.teleconsultations.active}</p>
-              <p className="text-xs text-muted-foreground">Active Teleconsultations</p>
-            </div>
-            <div className="flex items-center text-xs mt-1">
-              {healthcareStats.teleconsultations.trend ? 
-                <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
-                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-              }
-            </div>
-          </div>
-          
-          {/* Consultations */}
-          <div className="flex flex-col items-center">
-            <div className={`h-12 w-12 rounded-full ${healthcareStats.consultations.color} flex items-center justify-center mb-2`}>
-              <MessageCircle className="h-6 w-6" />
-            </div>
-            <div className="text-sm text-center">
-              <p className="text-xl font-semibold">{healthcareStats.consultations.active}</p>
-              <p className="text-xs text-muted-foreground">Active Consultations</p>
-            </div>
-            <div className="flex items-center text-xs mt-1">
-              {healthcareStats.consultations.trend ? 
-                <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
-                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-              }
-            </div>
-          </div>
-          
-          {/* Prescriptions */}
-          <div className="flex flex-col items-center">
-            <div className={`h-12 w-12 rounded-full ${healthcareStats.prescriptions.color} flex items-center justify-center mb-2`}>
-              <FileText className="h-6 w-6" />
-            </div>
-            <div className="text-sm text-center">
-              <p className="text-xl font-semibold">{healthcareStats.prescriptions.active}</p>
-              <p className="text-xs text-muted-foreground">Active Prescriptions</p>
-            </div>
-            <div className="flex items-center text-xs mt-1">
-              {healthcareStats.prescriptions.trend ? 
-                <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" /> : 
-                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-              }
-            </div>
-          </div>
+          ))}
         </div>
       </Card>
 
@@ -372,12 +339,12 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 <div className="mt-2">
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
                     <span>Progress</span>
-                    <span>{Math.round(progress)}%</span>
+                    <span>{Math.round(0)}%</span>
                   </div>
                   <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-emerald-500 transition-all duration-500 ease-in-out"
-                      style={{ width: `${Math.min(progress, 100)}%` }}
+                      style={{ width: `${Math.min(0, 100)}%` }}
                     />
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">
@@ -403,66 +370,81 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
           {/* Recent Activities Card */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
             <h3 className="text-lg font-medium mb-4">Recent Activities</h3>
-            <div className="space-y-3 flex flex-col h-[calc(100%-80px)]">
-              <div className="flex flex-col items-center">
-                <div className={`h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-2`}>
-                  <Video className="h-6 w-6" />
-                </div>
-                <div className="text-sm text-center">
-                  <p className="text-xl font-semibold">
-                    {isDoctorStatsLoading ? (
-                      <Skeleton className="h-6 w-16" />
-                    ) : (
-                      doctorStats?.active_teleconsultations || 0
-                    )}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Active Teleconsultations</p>
-                </div>
+            {isDoctorStatsLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
               </div>
+            ) : healthcareStats.teleconsultations.active === 0 &&
+               healthcareStats.consultations.active === 0 &&
+               healthcareStats.prescriptions.active === 0 ? (
+              <EmptyState 
+                icon={Activity} 
+                message="No recent activities to display"
+              />
+            ) : (
+              <div className="space-y-3 flex flex-col h-[calc(100%-80px)]">
+                <div className="flex flex-col items-center">
+                  <div className={`h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-2`}>
+                    <Video className="h-6 w-6" />
+                  </div>
+                  <div className="text-sm text-center">
+                    <p className="text-xl font-semibold">
+                      {isDoctorStatsLoading ? (
+                        <Skeleton className="h-6 w-16" />
+                      ) : (
+                        doctorStats?.active_teleconsultations || 0
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Active Teleconsultations</p>
+                  </div>
+                </div>
 
-              <div className="flex flex-col items-center">
-                <div className={`h-12 w-12 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mb-2`}>
-                  <MessageCircle className="h-6 w-6" />
+                <div className="flex flex-col items-center">
+                  <div className={`h-12 w-12 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mb-2`}>
+                    <MessageCircle className="h-6 w-6" />
+                  </div>
+                  <div className="text-sm text-center">
+                    <p className="text-xl font-semibold">
+                      {isDoctorStatsLoading ? (
+                        <Skeleton className="h-6 w-16" />
+                      ) : (
+                        doctorStats?.active_consultations || 0
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Active Consultations</p>
+                  </div>
                 </div>
-                <div className="text-sm text-center">
-                  <p className="text-xl font-semibold">
-                    {isDoctorStatsLoading ? (
-                      <Skeleton className="h-6 w-16" />
-                    ) : (
-                      doctorStats?.active_consultations || 0
-                    )}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Active Consultations</p>
-                </div>
-              </div>
 
-              <div className="flex flex-col items-center">
-                <div className={`h-12 w-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-2`}>
-                  <FileText className="h-6 w-6" />
-                </div>
-                <div className="text-sm text-center">
-                  <p className="text-xl font-semibold">
-                    {isDoctorStatsLoading ? (
-                      <Skeleton className="h-6 w-16" />
-                    ) : (
-                      doctorStats?.active_prescriptions || 0
-                    )}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Active Prescriptions</p>
+                <div className="flex flex-col items-center">
+                  <div className={`h-12 w-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-2`}>
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <div className="text-sm text-center">
+                    <p className="text-xl font-semibold">
+                      {isDoctorStatsLoading ? (
+                        <Skeleton className="h-6 w-16" />
+                      ) : (
+                        doctorStats?.active_prescriptions || 0
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Active Prescriptions</p>
+                  </div>
                 </div>
               </div>
-              
-              {/* View All Button */}
-              <div className="mt-auto pt-2">
-                <Button 
-                  variant="ghost" 
-                  className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
-                  onClick={() => onNavigate('notifications')}
-                >
-                  View All
-                  <Activity className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
+            )}
+            
+            {/* View All Button */}
+            <div className="mt-auto pt-2">
+              <Button 
+                variant="ghost" 
+                className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
+                onClick={() => onNavigate('notifications')}
+              >
+                View All
+                <Activity className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </Card>
         </>
@@ -472,15 +454,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
             <h3 className="text-lg font-medium mb-3">Recent Activities</h3>
             <div className="space-y-3">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">{activity.type}</p>
-                    <p className="text-xs text-muted-foreground">{activity.status}</p>
-                  </div>
-                  <div className="text-xs text-muted-foreground">{activity.date}</div>
-                </div>
-              ))}
+              {[]}
             </div>
             <Button 
               variant="ghost" 
@@ -499,7 +473,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">Total Referrals</p>
-                  <p className="text-xl font-semibold">{referrals.count}</p>
+                  <p className="text-xl font-semibold">0</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                   <Share className="h-5 w-5 text-blue-600" />
@@ -508,11 +482,11 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">Total Points</p>
-                  <p className="text-xl font-semibold">{referrals.points}</p>
+                  <p className="text-xl font-semibold">0</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Redeemed</p>
-                  <p className="text-sm font-medium">{referrals.redeemed}</p>
+                  <p className="text-sm font-medium">0</p>
                 </div>
               </div>
             </div>
@@ -552,12 +526,12 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
               <div>
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
                   <span>Progress</span>
-                  <span>{Math.round(progress)}%</span>
+                  <span>{Math.round(0)}%</span>
                 </div>
                 <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 transition-all duration-500 ease-in-out"
-                    style={{ width: `${Math.min(progress, 100)}%` }}
+                    style={{ width: `${Math.min(0, 100)}%` }}
                   />
                 </div>
                 <div className="mt-2 text-xs text-muted-foreground">
