@@ -472,15 +472,15 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
       {showPatientsGoal && userRole !== 'doctor' && (
         <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 hover:shadow-md transition-shadow duration-200">
-          <div className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div className="flex flex-row items-center justify-between space-y-0 pb-6">
             <h3 className="text-sm font-medium text-muted-foreground">Total Patients</h3>
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
               <Users className="h-4 w-4 text-blue-600" />
             </div>
           </div>
-          <div className="pt-4 space-y-4">
+          <div className="space-y-6">
             <div className="text-2xl font-semibold">+{patientsCount.toLocaleString()}</div>
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div className="flex items-center text-xs">
                 {patientsPercentChange >= 0 ? (
                   <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
@@ -491,7 +491,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                   {patientsPercentChange}% YTD
                 </span>
               </div>
-              <div className="mt-2">
+              <div>
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
                   <span>Progress</span>
                   <span>{Math.round(progress)}%</span>
@@ -507,7 +507,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
               </div>
             </div>
-            <div className="mt-4">
+            <div>
               <Button 
                 variant="ghost" 
                 className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
