@@ -12,6 +12,8 @@ import {
   Area 
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { useDoctorStats } from "@/hooks/doctor/useDoctorStats";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface DashboardStatsProps {
   stats: {
@@ -40,6 +42,12 @@ const generateMockTrendData = (trend: number = 1) => {
 };
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNavigate, userRole = 'pharmacist' }) => {
+  const { profile } = useAuth();
+  const { 
+    data: doctorStats, 
+    isLoading: isDoctorStatsLoading 
+  } = useDoctorStats(userRole === 'doctor' ? profile?.id : undefined);
+
   const patientTrend = stats?.patient_trend || generateMockTrendData(1);
   const ordersTrend = stats?.orders_trend || generateMockTrendData(-0.5);
   const prescriptionsTrend = stats?.prescriptions_trend || generateMockTrendData(0.8);
@@ -332,7 +340,13 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Total Patients</p>
-                  <p className="text-xl font-semibold mt-1">{stats?.total_patients || 0}</p>
+                  <p className="text-xl font-semibold mt-1">
+                    {isDoctorStatsLoading ? (
+                      <Skeleton className="h-6 w-16" />
+                    ) : (
+                      doctorStats?.total_patients || 0
+                    )}
+                  </p>
                 </div>
                 <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center">
                   <Users className="h-3.5 w-3.5 text-blue-600" />
@@ -342,14 +356,18 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
               {/* Patient Goal Chart */}
               <div className="space-y-6 mb-4">
                 <div className="flex items-center text-xs mb-3">
-                  {patientsPercentChange >= 0 ? (
-                    <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                  {!isDoctorStatsLoading && (
+                    <>
+                      {(doctorStats?.percent_change || 0) >= 0 ? (
+                        <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                      )}
+                      <span className={(doctorStats?.percent_change || 0) >= 0 ? "text-emerald-500" : "text-red-500"}>
+                        {doctorStats?.percent_change || 0}% YTD
+                      </span>
+                    </>
                   )}
-                  <span className={patientsPercentChange >= 0 ? "text-emerald-500" : "text-red-500"}>
-                    {patientsPercentChange}% YTD
-                  </span>
                 </div>
                 <div className="mt-2">
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -384,17 +402,55 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
 
           {/* Recent Activities Card */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
-            <h3 className="text-lg font-medium mb-6">Recent Activities</h3>
+            <h3 className="text-lg font-medium mb-4">Recent Activities</h3>
             <div className="space-y-3 flex flex-col h-[calc(100%-80px)]">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">{activity.type}</p>
-                    <p className="text-xs text-muted-foreground">{activity.status}</p>
-                  </div>
-                  <div className="text-xs text-muted-foreground">{activity.date}</div>
+              <div className="flex flex-col items-center">
+                <div className={`h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-2`}>
+                  <Video className="h-6 w-6" />
                 </div>
-              ))}
+                <div className="text-sm text-center">
+                  <p className="text-xl font-semibold">
+                    {isDoctorStatsLoading ? (
+                      <Skeleton className="h-6 w-16" />
+                    ) : (
+                      doctorStats?.active_teleconsultations || 0
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Active Teleconsultations</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className={`h-12 w-12 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mb-2`}>
+                  <MessageCircle className="h-6 w-6" />
+                </div>
+                <div className="text-sm text-center">
+                  <p className="text-xl font-semibold">
+                    {isDoctorStatsLoading ? (
+                      <Skeleton className="h-6 w-16" />
+                    ) : (
+                      doctorStats?.active_consultations || 0
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Active Consultations</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className={`h-12 w-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-2`}>
+                  <FileText className="h-6 w-6" />
+                </div>
+                <div className="text-sm text-center">
+                  <p className="text-xl font-semibold">
+                    {isDoctorStatsLoading ? (
+                      <Skeleton className="h-6 w-16" />
+                    ) : (
+                      doctorStats?.active_prescriptions || 0
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Active Prescriptions</p>
+                </div>
+              </div>
               
               {/* View All Button */}
               <div className="mt-auto pt-2">
