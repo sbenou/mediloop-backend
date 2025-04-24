@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -33,7 +34,7 @@ const PatientDashboard = () => {
   const ordersTab = searchParams.get('ordersTab') || 'orders';
   const profileTab = searchParams.get('profileTab') || 'personal';
   const [isOpen, setIsOpen] = useState(true);
-  const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const [activities, setActivities] = useState<Activity[]>([]); // Start with empty activities
   const [activeDrawerTab, setActiveDrawerTab] = useState<string>("home");
   const navigate = useNavigate();
   
@@ -42,6 +43,11 @@ const PatientDashboard = () => {
 
   useEffect(() => {
     console.log("PatientDashboard page loaded with view:", view, "and ordersTab:", ordersTab);
+    
+    // Simulate loading data
+    setTimeout(() => {
+      setActivities(mockActivities);
+    }, 500);
     
     window.dispatchEvent(new Event('resize'));
   }, [view, ordersTab]);
@@ -314,8 +320,8 @@ const PatientDashboard = () => {
   // EmptyState component
   const EmptyState = ({ icon: Icon, message }: { icon: any, message: string }) => (
     <div className="flex flex-col items-center justify-center py-8">
-      <Icon className="h-16 w-16 text-muted-foreground mb-4" />
-      <p className="text-sm text-muted-foreground text-center">{message}</p>
+      <Icon className="h-16 w-16 text-gray-400 mb-4" />
+      <p className="text-sm text-gray-500 text-center">{message}</p>
     </div>
   );
 
@@ -341,7 +347,15 @@ const PatientDashboard = () => {
         
         {/* Recent Activities Card with updated styling */}
         <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
-          <h3 className="text-lg font-medium mb-8">Recent Activities</h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-medium">Recent Activities</h3>
+            {activities.length > 0 && (
+              <Button variant="ghost" size="sm" className="text-xs">
+                View All
+              </Button>
+            )}
+          </div>
+          
           {isStatsLoading ? (
             <div className="space-y-4">
               <Skeleton className="h-12 w-full" />
