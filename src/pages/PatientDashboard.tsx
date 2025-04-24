@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -24,6 +23,8 @@ import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorSearch from "@/components/DoctorSearch";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import PatientLayout from "@/components/layout/PatientLayout";
+import { Activity as ActivityIcon } from "lucide-react";
+import { List } from "lucide-react";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
@@ -289,6 +290,13 @@ const PatientDashboard = () => {
     );
   }
 
+  const EmptyState = ({ icon: Icon, message }: { icon: any, message: string }) => (
+    <div className="flex flex-col items-center justify-center h-[calc(100%-80px)] mb-4">
+      <Icon className="h-16 w-16 text-muted-foreground mb-4" />
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
+
   return (
     <PatientLayout>
       <div className="space-y-8">
@@ -308,6 +316,49 @@ const PatientDashboard = () => {
           isLoading={isStatsLoading}
           onNavigate={handleViewChange}
         />
+        
+        {/* Recent Activities Card with updated styling */}
+        <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
+          <h3 className="text-lg font-medium mb-8">Recent Activities</h3>
+          {isStatsLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : activities.length === 0 ? (
+            <EmptyState 
+              icon={List} 
+              message="No recent activities to display"
+            />
+          ) : (
+            <div className="space-y-3 flex flex-col h-[calc(100%-80px)]">
+              {activities.map((activity) => (
+                <div key={activity.id} className="flex flex-col items-center">
+                  <div className={`h-12 w-12 rounded-full bg-${activity.color || 'blue'}-100 text-${activity.color || 'blue'}-600 flex items-center justify-center mb-2`}>
+                    <activity.icon className="h-6 w-6" />
+                  </div>
+                  <div className="text-sm text-center">
+                    <p className="text-xl font-semibold">{activity.title}</p>
+                    <p className="text-xs text-muted-foreground">{activity.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* View All Button */}
+          <div className="mt-auto pt-2">
+            <Button 
+              variant="ghost" 
+              className="w-full text-sm text-[#7E69AB] hover:text-[#7E69AB] hover:bg-[#7E69AB]/10"
+              onClick={() => navigate('notifications')}
+            >
+              View All
+              <ActivityIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </Card>
         
         <HealthStateIndicator userRole="patient" />
         
