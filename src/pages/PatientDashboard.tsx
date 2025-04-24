@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -23,8 +24,8 @@ import PharmacySelection from "@/components/settings/PharmacySelection";
 import DoctorSearch from "@/components/DoctorSearch";
 import DoctorManagement from "@/components/settings/DoctorManagement";
 import PatientLayout from "@/components/layout/PatientLayout";
-import { Activity as ActivityIcon } from "lucide-react";
-import { List } from "lucide-react";
+import { Activity as ActivityIcon, FileText, Calendar, Package, AlertCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PatientDashboard = () => {
   const { profile } = useAuth();
@@ -82,6 +83,27 @@ const PatientDashboard = () => {
 
   const handleProfileTabChange = (value: string) => {
     setSearchParams({ view: 'profile', profileTab: value });
+  };
+
+  // Helper function to get icon based on activity type
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "prescription_created":
+      case "prescription_updated":
+        return FileText;
+      case "appointment_scheduled":
+      case "teleconsultation_scheduled":
+        return Calendar;
+      case "order_placed":
+      case "order_shipped":
+      case "order_delivered":
+        return Package;
+      case "system_alert":
+      case "payment_failed":
+        return AlertCircle;
+      default:
+        return ActivityIcon;
+    }
   };
 
   if (view === "profile") {
@@ -328,22 +350,25 @@ const PatientDashboard = () => {
             </div>
           ) : activities.length === 0 ? (
             <EmptyState 
-              icon={List} 
+              icon={ActivityIcon} 
               message="No recent activities to display"
             />
           ) : (
             <div className="space-y-3 flex flex-col h-[calc(100%-80px)]">
-              {activities.map((activity) => (
-                <div key={activity.id} className="flex flex-col items-center">
-                  <div className={`h-12 w-12 rounded-full bg-${activity.color || 'blue'}-100 text-${activity.color || 'blue'}-600 flex items-center justify-center mb-2`}>
-                    <activity.icon className="h-6 w-6" />
+              {activities.map((activity) => {
+                const ActivityTypeIcon = getActivityIcon(activity.type);
+                return (
+                  <div key={activity.id} className="flex flex-col items-center">
+                    <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-2">
+                      <ActivityTypeIcon className="h-6 w-6" />
+                    </div>
+                    <div className="text-sm text-center">
+                      <p className="text-xl font-semibold">{activity.title}</p>
+                      <p className="text-xs text-muted-foreground">{activity.description}</p>
+                    </div>
                   </div>
-                  <div className="text-sm text-center">
-                    <p className="text-xl font-semibold">{activity.title}</p>
-                    <p className="text-xs text-muted-foreground">{activity.description}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           
