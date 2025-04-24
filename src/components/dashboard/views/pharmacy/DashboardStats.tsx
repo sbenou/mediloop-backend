@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -326,9 +325,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
       
       {userRole === 'doctor' ? (
         <>
-          {/* Active Patients Card - Direct implementation without nested PatientsGoalCard */}
+          {/* Active Patients Card */}
           <Card className="relative overflow-hidden bg-white p-6 shadow-sm border-0 md:col-span-1 lg:col-span-1">
-            <h3 className="text-lg font-medium mb-6">Active Patients</h3>
+            <h3 className="text-lg font-medium mb-8">Active Patients</h3>
             <div className="flex-1 space-y-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -340,9 +339,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
               </div>
               
-              {/* Patient Goal Chart - directly integrated */}
-              <div className="space-y-6">
-                <div className="flex items-center text-xs mb-3 mt-4">
+              {/* Patient Goal Chart */}
+              <div className="space-y-6 mb-4">
+                <div className="flex items-center text-xs mb-3">
                   {patientsPercentChange >= 0 ? (
                     <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
                   ) : (
@@ -369,7 +368,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
               </div>
               
-              {/* Button pushed to bottom with flex-grow and mt-auto to align with other cards */}
+              {/* View All Button */}
               <div className="mt-auto pt-2">
                 <Button 
                   variant="ghost" 
@@ -397,7 +396,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, isLoading, onNav
                 </div>
               ))}
               
-              {/* Button pushed to bottom with flex-grow and mt-auto to align with other cards */}
+              {/* View All Button */}
               <div className="mt-auto pt-2">
                 <Button 
                   variant="ghost" 
