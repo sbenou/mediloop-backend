@@ -1,7 +1,7 @@
 
 import { Fragment, useCallback } from "react";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Bell, UserCircle, CreditCard, Share } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { getMenuItemsByRole } from "./userMenuItemsByRole";
 import { useUserMenuNavigation } from "./userMenuNavigation";
@@ -44,7 +44,10 @@ export function UserMenuItems() {
     return (
       <Fragment key={`${item.label}-${index}`}>
         <DropdownMenuItem
-          onClick={() => handleNavigation(item.path)}
+          onClick={() => {
+            console.log(`Clicked menu item: ${item.label} with path: ${item.path}`);
+            handleNavigation(item.path);
+          }}
           data-testid={`user-menu-item-${index}`}
         >
           <item.icon className="mr-2 h-4 w-4" />

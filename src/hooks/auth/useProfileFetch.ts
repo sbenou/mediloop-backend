@@ -4,6 +4,12 @@ import { supabase } from '@/lib/supabase';
 import { UserProfile, safeQueryResult } from '@/types/user';
 import { fetchUserPermissions } from '@/lib/auth/sessionUtils';
 
+interface AuthUserInfo {
+  id: string;
+  role?: string;
+  email?: string;
+}
+
 export const useProfileFetch = () => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,7 +63,7 @@ export const useProfileFetch = () => {
       });
 
       // First, check if the user exists in auth users with a shorter timeout
-      const authUserPromise = new Promise<{ id: string, role?: string, email?: string }>(async (resolve) => {
+      const authUserPromise = new Promise<AuthUserInfo>(async (resolve) => {
         try {
           const { data: authUser, error: authError } = await supabase.auth.getUser();
 
@@ -79,7 +85,7 @@ export const useProfileFetch = () => {
       // Enforce a timeout on the auth user check
       const authUserWithTimeout = Promise.race([
         authUserPromise,
-        new Promise<{ id: string }>(resolve => 
+        new Promise<AuthUserInfo>(resolve => 
           setTimeout(() => resolve({ id: userId }), 3000)
         )
       ]);
