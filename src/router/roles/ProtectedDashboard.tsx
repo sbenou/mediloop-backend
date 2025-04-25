@@ -1,15 +1,11 @@
 
 import ProtectedRoute from '@/components/routing/ProtectedRoute';
 import Dashboard from '@/pages/Dashboard';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 
 const ProtectedDashboard = () => {
-  const { userRole, isPharmacist, isLoading, isAuthenticated } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { userRole, isLoading, isAuthenticated } = useAuth();
   
   // Handle initial loading state when auth is being determined
   if (isLoading) {

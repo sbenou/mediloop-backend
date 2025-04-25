@@ -32,38 +32,21 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
   console.log("🚦 DashboardRouter rendering:", { userRole, view, section, profileTab, ordersTab });
   console.log("🚦 DashboardRouter auth state:", { isPharmacist, profileRole: profile?.role });
   
-  // Auto-setting parameters for pharmacists
   useEffect(() => {
     if (userRole === "pharmacist" || isPharmacist) {
-      // Only set default params if they're not already set appropriately
-      if (view !== 'pharmacy' || !section) {
-        console.log("Setting default pharmacist params in DashboardRouter");
+      // For pharmacist users, simply set view=pharmacy and section=dashboard if no section
+      // This simplifies the approach by just ensuring pharmacists have a default view
+      if (!section) {
         setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
       }
     }
-  }, [userRole, isPharmacist, view, section, setSearchParams]);
-  
-  if (!userRole) {
-    console.warn("[DashboardRouter] Warning: userRole is not defined. Rendering fallback view.");
-    return (
-      <div className="p-6 border border-red-300 rounded bg-red-50">
-        <h2 className="text-xl font-semibold text-red-700 mb-2">Dashboard Error</h2>
-        <p className="text-red-600">User role is undefined. Please try logging in again.</p>
-        <button 
-          onClick={() => window.location.href = "/login"}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-        >
-          Return to Login
-        </button>
-      </div>
-    );
-  }
+  }, [userRole, isPharmacist, section, setSearchParams]);
   
   // For pharmacists, always show pharmacy views
   if (userRole === "pharmacist" || isPharmacist) {
-    const currentSection = searchParams.get("section") || "dashboard";
-    console.log("Rendering PharmacyView for pharmacist with section:", currentSection);
-    return <PharmacyView userRole={userRole} section={currentSection} />;
+    const sectionToUse = section || "dashboard";
+    console.log("Rendering PharmacyView for pharmacist with section:", sectionToUse);
+    return <PharmacyView userRole={userRole} section={sectionToUse} />;
   }
   
   // For doctors, handle special views based on section parameter

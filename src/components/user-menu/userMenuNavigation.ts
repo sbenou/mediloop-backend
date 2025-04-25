@@ -33,30 +33,21 @@ export function useUserMenuNavigation() {
     // Mark navigation as in progress
     navigationInProgressRef.current = true;
     
-    // For pharmacy users, handle dashboard navigation specially
-    if (isPharmacist || userRole === 'pharmacist') {
-      // Special handling for pharmacy dashboard
-      if (path.includes('dashboard')) {
-        console.log("Using pharmacy-specific navigation for:", path);
-        
-        // For pharmacy dashboard, ensure we have the correct query parameters
-        const searchParams = new URLSearchParams(path.includes('?') ? path.split('?')[1] : '');
-        searchParams.set('view', 'pharmacy');
-        
-        if (!searchParams.has('section')) {
-          searchParams.set('section', 'dashboard');
-        }
-        
-        const dashboardPath = `/dashboard?${searchParams.toString()}`;
-        console.log("Navigating to pharmacy dashboard:", dashboardPath);
-        
-        // Use navigate with replace to avoid back-button issues
-        navigate(dashboardPath, { 
+    // For all users, simply navigate to the path
+    if (path === '/dashboard') {
+      // For pharmacist users, ensure they are sent to the pharmacy dashboard view
+      if (isPharmacist || userRole === 'pharmacist') {
+        navigate('/dashboard', {
           replace: true,
           state: { preserveAuth: true }
         });
-        return;
+      } else {
+        navigate(path, {
+          replace: false,
+          state: { preserveAuth: true }
+        });
       }
+      return;
     }
     
     // Account page: special state for header
