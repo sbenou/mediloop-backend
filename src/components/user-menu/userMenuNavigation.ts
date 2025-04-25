@@ -1,10 +1,12 @@
 
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCallback } from "react";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 export function useUserMenuNavigation() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isPharmacist, userRole } = useAuth();
   const isActivitiesPage = location.pathname.includes('/activities') || location.pathname.includes('/notifications');
 
   const handleNavigation = useCallback((path: string) => {
@@ -14,6 +16,21 @@ export function useUserMenuNavigation() {
     if (location.pathname === path && !path.includes("?")) {
       console.log("Already on this path, skipping navigation");
       return;
+    }
+    
+    // Check if the user is a pharmacist
+    if (isPharmacist || userRole === 'pharmacist') {
+      console.log("Using pharmacy-specific navigation for:", path);
+      
+      // For pharmacy users, always use direct navigation to preserve state
+      if (path.includes('dashboard') || path.includes('pharmacy')) {
+        const pharmacyPath = path.includes('?view=pharmacy') ? 
+          path : 
+          '/dashboard?view=pharmacy&section=dashboard';
+        
+        window.location.href = pharmacyPath;
+        return;
+      }
     }
     
     // Always use direct navigation for pharmacy routes to avoid state issues
@@ -39,7 +56,7 @@ export function useUserMenuNavigation() {
     // For all other paths, use standard navigation
     navigate(path);
     
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, isPharmacist, userRole]);
 
   return { handleNavigation };
 }
