@@ -10,36 +10,8 @@ const ProtectedDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   
-  // Check if this is a navigation with preserved auth state
-  const isPreservedAuthNav = location.state && location.state.preserveAuth === true;
-  
-  // Handle pharmacist redirections with proper params
-  useEffect(() => {
-    if (!isLoading && !hasAttemptedRedirect) {
-      setHasAttemptedRedirect(true);
-      
-      if (!isAuthenticated) {
-        console.log('User not authenticated, navigating to login');
-        navigate('/login', { replace: true });
-        return;
-      }
-      
-      // For pharmacists, ensure the correct view parameters
-      if (isPharmacist || userRole === 'pharmacist') {
-        const currentView = searchParams.get('view');
-        const currentSection = searchParams.get('section');
-        
-        if (currentView !== 'pharmacy' || !currentSection) {
-          console.log('Setting default pharmacist params for dashboard');
-          setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
-        }
-      }
-    }
-  }, [userRole, isPharmacist, isLoading, isAuthenticated, navigate, hasAttemptedRedirect, searchParams, setSearchParams]);
-  
-  // If we're still in the loading state, show a short-circuit loading indicator
+  // Handle initial loading state when auth is being determined
   if (isLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
@@ -51,6 +23,7 @@ const ProtectedDashboard = () => {
     );
   }
   
+  // If not authenticated, ProtectedRoute will handle redirection
   return (
     <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
       <Dashboard />

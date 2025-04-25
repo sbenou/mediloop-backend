@@ -7,7 +7,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { storeSession } from '@/lib/auth/sessionUtils';
-import { getDashboardRouteByRole } from '@/utils/auth/getDashboardRouteByRole';
 
 interface UsePasswordLoginResult {
   isLoading: boolean;
@@ -122,7 +121,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         pharmacy_logo_url: null
       };
 
-      // 6. Update auth state with minimal profile to ensure we can navigate immediately
+      // 6. Update auth state with minimal profile
       setAuth({
         user: data.user,
         profile: minimalProfile,
@@ -130,38 +129,18 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         isLoading: false,
       });
       
-      // 7. Determine redirect route
-      const role = minimalProfile.role || 'patient';
-      const redirectRoute = getDashboardRouteByRole(role);
-      console.log("[usePasswordLogin] Redirecting to:", redirectRoute);
-      
-      // 8. Invoke success callback
+      // 7. Invoke success callback
       if (onSuccess) {
         onSuccess();
       }
 
-      // 9. Cleanup
+      // 8. Cleanup
       setIsLoading(false);
       clearTimeout(loginTimeout);
       
-      // 10. Special handling for pharmacist role
-      if (role === 'pharmacist') {
-        console.log('[usePasswordLogin] Detected pharmacist role, using direct navigation');
-        window.location.href = redirectRoute;
-        return;
-      }
+      // 9. Unified redirection approach for ALL roles
+      navigate('/dashboard', { replace: true });
       
-      // 11. Normal navigation with fallback for other roles
-      navigate(redirectRoute, { replace: true });
-      
-      // Set a fallback in case navigate doesn't work
-      setTimeout(() => {
-        const currentPath = window.location.pathname;
-        if (currentPath === '/' || currentPath === '/login') {
-          console.log('[usePasswordLogin] Fallback navigation triggered - forcing page reload to dashboard');
-          window.location.href = redirectRoute;
-        }
-      }, 1500);
     } catch (err: any) {
       clearTimeout(loginTimeout);
       console.error('[usePasswordLogin] Unexpected error during login:', err);
