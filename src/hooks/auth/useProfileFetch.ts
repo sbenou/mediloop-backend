@@ -74,7 +74,9 @@ export const useProfileFetch = () => {
             pharmacist_signature_url,
             deleted_at,
             created_at,
-            updated_at
+            updated_at,
+            pharmacy_name,
+            pharmacy_logo_url
           `)
           .eq('id', userId)
           .maybeSingle();
@@ -133,7 +135,10 @@ export const useProfileFetch = () => {
             const completeNewProfile: UserProfile = {
               ...newProfile as any,
               pharmacist_stamp_url: null,
-              pharmacist_signature_url: null
+              pharmacist_signature_url: null,
+              pharmacy_id: null,
+              pharmacy_name: null,
+              pharmacy_logo_url: null
             };
             
             const safeNewProfile = safeQueryResult<UserProfile>(completeNewProfile);
@@ -155,7 +160,9 @@ export const useProfileFetch = () => {
 
         // Get the pharmacy_id separately to handle the case where the column might not exist yet
         let pharmacyId = null;
+        let pharmacyName = null;
         try {
+          console.log('Attempting to fetch pharmacy data for user:', userId);
           // Add a timeout to prevent hanging operations
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Pharmacy fetch timeout')), 5000);
@@ -168,13 +175,41 @@ export const useProfileFetch = () => {
             .maybeSingle();
             
           // Use Promise.race to implement a timeout
-          const { data: pharmacyData } = await Promise.race([
+          const { data: pharmacyData, error: pharmacyError } = await Promise.race([
             fetchPromise,
             timeoutPromise
           ]) as any;
           
-          pharmacyId = pharmacyData?.pharmacy_id || null;
-          console.log('Fetched pharmacy_id from user_pharmacies:', pharmacyId);
+          if (pharmacyError) {
+            console.error('Error fetching pharmacy_id:', pharmacyError);
+          } else if (pharmacyData?.pharmacy_id) {
+            pharmacyId = pharmacyData.pharmacy_id;
+            console.log('Fetched pharmacy_id from user_pharmacies:', pharmacyId);
+            
+            // Also fetch pharmacy name
+            try {
+              const { data: pharmacy, error: pharmacyNameError } = await supabase
+                .from('pharmacies')
+                .select('name')
+                .eq('id', pharmacyId)
+                .single();
+                
+              if (!pharmacyNameError && pharmacy) {
+                pharmacyName = pharmacy.name;
+                console.log('Fetched pharmacy name:', pharmacyName);
+                
+                // Update the profile with pharmacy name if it's not already set
+                if (profile.role === 'pharmacist' && (!profile.pharmacy_name || profile.pharmacy_name !== pharmacyName)) {
+                  await supabase
+                    .from('profiles')
+                    .update({ pharmacy_name: pharmacyName })
+                    .eq('id', userId);
+                }
+              }
+            } catch (nameError) {
+              console.error('Error fetching pharmacy name:', nameError);
+            }
+          }
         } catch (pharmacyError) {
           console.error('Error or timeout fetching pharmacy_id:', pharmacyError);
           // Continue without pharmacy data - don't let this block the auth process
@@ -183,20 +218,18 @@ export const useProfileFetch = () => {
         // Ensure the profile object has all required properties
         const completeProfile: UserProfile = {
           ...profile as any,
-          // Make sure pharmacist fields are set, even if they're not in the database
+          // Make sure all fields are set, even if they're not in the database
           pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile?.pharmacist_signature_url || null
+          pharmacist_signature_url: profile?.pharmacist_signature_url || null,
+          pharmacy_id: pharmacyId || null,
+          pharmacy_name: profile?.pharmacy_name || pharmacyName || null,
+          pharmacy_logo_url: profile?.pharmacy_logo_url || null
         };
 
         const safeProfile = safeQueryResult<UserProfile>(completeProfile);
         if (!safeProfile) {
           console.error('Failed to process profile data for user:', userId);
           return { profile: null, permissions: [] };
-        }
-
-        // Manually add the pharmacy_id to the profile
-        if (pharmacyId) {
-          safeProfile.pharmacy_id = pharmacyId;
         }
 
         // Add a timeout for permissions fetch to prevent hanging
@@ -222,6 +255,7 @@ export const useProfileFetch = () => {
           profileId: safeProfile.id, 
           role: safeProfile.role,
           pharmacyId: safeProfile.pharmacy_id,
+          pharmacyName: safeProfile.pharmacy_name,
           permissionsCount: permissions.length 
         });
 

@@ -79,7 +79,10 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       }
         
       // Store the session immediately after login
-      storeSession(data.session);
+      const sessionStored = storeSession(data.session);
+      console.log("[usePasswordLogin] Login successful, storing session:", sessionStored ? "success" : "failed");
+      console.log("[usePasswordLogin] User ID:", data.user?.id);
+      console.log("[usePasswordLogin] User metadata:", data.user?.user_metadata);
 
       // Show success toast with specific duration
       toast({
@@ -125,10 +128,38 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         console.log("[usePasswordLogin] Fetched profile:", profile);
         console.log("[usePasswordLogin] Raw profile role:", profile?.role);
         
+        // Special handling for pharmacists - check if we need to get pharmacy info
+        let pharmacyId = null;
+        if (profile?.role === 'pharmacist') {
+          console.log("[usePasswordLogin] Pharmacist detected, fetching pharmacy relationship");
+          try {
+            // Set a pharmacy fetch timeout
+            const pharmacyPromise = supabase
+              .from('user_pharmacies')
+              .select('pharmacy_id')
+              .eq('user_id', data.user?.id)
+              .maybeSingle();
+              
+            const pharmacyTimeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => {
+                console.log("[usePasswordLogin] Pharmacy fetch timed out, continuing without pharmacy data");
+                return { data: null, error: new Error('Pharmacy fetch timed out') };
+              }, 3000); 
+            });
+            
+            const { data: pharmacyData } = await Promise.race([pharmacyPromise, pharmacyTimeoutPromise]) as any;
+            pharmacyId = pharmacyData?.pharmacy_id;
+            console.log("[usePasswordLogin] Pharmacist pharmacy_id:", pharmacyId);
+          } catch (pharmErr) {
+            console.error("[usePasswordLogin] Error fetching pharmacy relationship:", pharmErr);
+          }
+        }
+        
         const completeProfile = profile ? {
           ...profile as any,
           pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile.pharmacist_signature_url || null
+          pharmacist_signature_url: profile.pharmacist_signature_url || null,
+          pharmacy_id: pharmacyId
         } : null;
 
         // Update auth state
@@ -143,7 +174,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         sessionStorage.setItem('login_successful', 'true');
         
         // Log role detection for debugging
-        console.log("[usePasswordLogin] Role detected:", completeProfile?.role || 'No role');
+        console.log("[usePasswordLogin] Role detected:", completeProfile?.role || 'patient');
         
         // Determine the redirect route based on role
         const role = completeProfile?.role || 'patient';
@@ -193,6 +224,9 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
             license_number: data.user.user_metadata?.license_number || null,
             phone_number: null,
             address: null,
+            pharmacy_id: null,
+            pharmacy_name: null,
+            pharmacy_logo_url: null
           },
           permissions: [],
           isLoading: false,
