@@ -89,10 +89,13 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         duration: 3000,
       });
 
-      // 4. Create minimal profile with defaults
+      // 4. Get user role from metadata
+      const userRole = data.user.user_metadata?.role || 'patient';
+      
+      // 5. Create minimal profile with defaults
       const minimalProfile = {
         id: data.user.id,
-        role: data.user.user_metadata?.role || 'patient',
+        role: userRole,
         email: data.user.email,
         full_name: data.user.user_metadata?.full_name || 'User',
         role_id: null,
@@ -119,7 +122,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         pharmacy_logo_url: null
       };
 
-      // 5. Update auth state with minimal profile to ensure we can navigate immediately
+      // 6. Update auth state with minimal profile to ensure we can navigate immediately
       setAuth({
         user: data.user,
         profile: minimalProfile,
@@ -127,22 +130,29 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         isLoading: false,
       });
       
-      // 6. Determine redirect route
+      // 7. Determine redirect route
       const role = minimalProfile.role || 'patient';
       const redirectRoute = getDashboardRouteByRole(role);
       console.log("[usePasswordLogin] Redirecting to:", redirectRoute);
       
-      // 7. Invoke success callback
+      // 8. Invoke success callback
       if (onSuccess) {
         onSuccess();
       }
 
-      // 8. Cleanup and navigate
+      // 9. Cleanup
       setIsLoading(false);
       clearTimeout(loginTimeout);
       
-      // 9. Immediate navigation with fallback - if for some reason navigation fails, force reload
-      const navigateSuccess = navigate(redirectRoute, { replace: true });
+      // 10. Special handling for pharmacist role
+      if (role === 'pharmacist') {
+        console.log('[usePasswordLogin] Detected pharmacist role, using direct navigation');
+        window.location.href = redirectRoute;
+        return;
+      }
+      
+      // 11. Normal navigation with fallback for other roles
+      navigate(redirectRoute, { replace: true });
       
       // Set a fallback in case navigate doesn't work
       setTimeout(() => {

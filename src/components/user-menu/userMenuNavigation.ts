@@ -16,13 +16,10 @@ export function useUserMenuNavigation() {
       return;
     }
     
-    // For pharmacist dashboard routes, use special handling to ensure proper URL parameters
-    if (path.includes('pharmacy') || (path === '/dashboard' && location.pathname.includes('pharmacy'))) {
-      console.log("Using pharmacy-specific navigation for:", path);
-      
-      // For pharmacy routes, ensure we have the correct params
-      const targetPath = '/dashboard?view=pharmacy&section=dashboard';
-      window.location.href = targetPath;
+    // Always use direct navigation for pharmacy routes to avoid state issues
+    if (path.includes('pharmacy') || path === '/dashboard?view=pharmacy&section=dashboard') {
+      console.log("Using direct navigation for pharmacy path:", path);
+      window.location.href = path;
       return;
     }
     

@@ -23,7 +23,14 @@ const Login = () => {
       // Set navigation in progress to prevent duplicate redirects
       setNavigationInProgress(true);
       
-      // Using navigate with replace to avoid back button issues
+      // Force a direct browser navigation for pharmacists to ensure clean state
+      if (profile.role === 'pharmacist') {
+        console.log('[Login] Using direct navigation for pharmacist role');
+        window.location.href = route;
+        return;
+      }
+      
+      // Using navigate with replace for other roles
       navigate(route, { replace: true });
       
       // Set a fallback in case navigate doesn't work
@@ -34,7 +41,7 @@ const Login = () => {
           console.log('[Login] Navigation appears to have failed, using location.href fallback');
           window.location.href = route;
         }
-      }, 2000);
+      }, 1500);
       
       return () => clearTimeout(fallbackTimeout);
     }
