@@ -100,9 +100,10 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         .eq('id', data.user?.id)
         .maybeSingle();
         
-      const profileTimeoutPromise = new Promise((_, reject) => {
+      const profileTimeoutPromise = new Promise((resolve) => {
         setTimeout(() => {
-          reject(new Error('Profile fetch timed out'));
+          console.log("[usePasswordLogin] Profile fetch timed out, continuing without profile data");
+          resolve({ data: null, error: new Error('Profile fetch timed out') });
         }, 5000);
       });
       
@@ -189,7 +190,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         setIsLoading(false);
         clearTimeout(loginTimeout);
         
-        // Use React Router navigation (consistently for all roles)
+        // Use React Router navigation consistently for all roles
         navigate(redirectRoute, { replace: true });
       } catch (profileError: any) {
         console.error("[usePasswordLogin] Error or timeout during profile fetch:", profileError);

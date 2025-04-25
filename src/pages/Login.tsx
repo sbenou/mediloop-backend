@@ -8,12 +8,14 @@ import { useLoginManager } from "@/hooks/auth/useLoginManager";
 import { useEffect, useState } from "react";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const { redirected, navigationInProgress } = useLoginManager();
   const [showManualRedirect, setShowManualRedirect] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const navigate = useNavigate();
 
   // Escape hatch: Force navigation if auth is complete but redirect is stuck
   useEffect(() => {
@@ -37,13 +39,8 @@ const Login = () => {
       const route = getDashboardRouteByRole(profile.role);
       console.log("[Login] Manual navigation to:", route);
       
-      // For pharmacist role specifically, try direct location change as last resort
-      if (profile.role === 'pharmacist') {
-        window.location.href = route;
-      } else {
-        // For other roles, open in new tab as fallback
-        window.open(route, '_self');
-      }
+      // Use React Router's navigate function for all roles
+      navigate(route, { replace: true });
     }
   };
 

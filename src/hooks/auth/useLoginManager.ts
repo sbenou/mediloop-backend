@@ -104,17 +104,6 @@ export const useLoginManager = () => {
         setTimeout(() => {
           const currentLocation = window.location.href;
           console.log("[LoginManager] Post-redirect check - Current URL:", currentLocation);
-          
-          // If we're still not at the expected route, try a direct window.location approach
-          if (!currentLocation.includes(route.split('?')[0])) {
-            console.log("[LoginManager] React Router navigation may have failed, trying direct location change");
-            
-            // For dashboard routes, use direct navigation as a last resort
-            if (route.includes('dashboard')) {
-              window.location.href = route;
-            }
-          }
-          
           setNavigationInProgress(false);
         }, 300);
       } catch (error) {
