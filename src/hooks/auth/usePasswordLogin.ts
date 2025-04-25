@@ -89,59 +89,8 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         duration: 3000,
       });
 
-      // 4. Fetch user profile with timeout protection
-      console.log("[usePasswordLogin] Fetching user profile");
-      let profile = null;
-      let pharmacyId = null;
-      
-      try {
-        const profilePromise = supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user?.id)
-          .maybeSingle();
-          
-        // Use Promise.race with timeout
-        const profileResult = await Promise.race([
-          profilePromise,
-          new Promise(resolve => {
-            setTimeout(() => {
-              console.log("[usePasswordLogin] Profile fetch timed out, continuing without profile data");
-              resolve({ data: null, error: new Error('Profile fetch timed out') });
-            }, 5000);
-          })
-        ]) as any;
-        
-        profile = profileResult?.data;
-        
-        // If we have a pharmacist role, try to fetch pharmacy relationship
-        if (profile?.role === 'pharmacist') {
-          try {
-            const { data: pharmacyData } = await supabase
-              .from('user_pharmacies')
-              .select('pharmacy_id')
-              .eq('user_id', data.user?.id)
-              .maybeSingle();
-              
-            pharmacyId = pharmacyData?.pharmacy_id;
-            console.log("[usePasswordLogin] Pharmacist pharmacy_id:", pharmacyId);
-          } catch (err) {
-            console.error("[usePasswordLogin] Error fetching pharmacy relationship:", err);
-          }
-        }
-      } catch (profileError) {
-        console.error('[usePasswordLogin] Error fetching profile:', profileError);
-      }
-      
-      // 5. Create complete profile object with defaults for missing data
-      const completeProfile = profile ? {
-        ...profile as any,
-        pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-        pharmacist_signature_url: profile.pharmacist_signature_url || null,
-        pharmacy_id: pharmacyId || null,
-        pharmacy_name: profile.pharmacy_name || null,
-        pharmacy_logo_url: profile.pharmacy_logo_url || null
-      } : {
+      // 4. Create minimal profile with defaults
+      const minimalProfile = {
         id: data.user.id,
         role: data.user.user_metadata?.role || 'patient',
         email: data.user.email,
@@ -165,36 +114,44 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         license_number: data.user.user_metadata?.license_number || null,
         phone_number: null,
         address: null,
-        pharmacy_id: pharmacyId,
+        pharmacy_id: null,
         pharmacy_name: null,
         pharmacy_logo_url: null
       };
 
-      // 6. Update auth state
+      // 5. Update auth state with minimal profile to ensure we can navigate immediately
       setAuth({
         user: data.user,
-        profile: completeProfile,
+        profile: minimalProfile,
         permissions: [],
         isLoading: false,
       });
       
-      // 7. Set flags for redirecting
-      sessionStorage.setItem('login_successful', 'true');
-      
-      // 8. Determine redirect route
-      const role = completeProfile?.role || 'patient';
+      // 6. Determine redirect route
+      const role = minimalProfile.role || 'patient';
       const redirectRoute = getDashboardRouteByRole(role);
       console.log("[usePasswordLogin] Redirecting to:", redirectRoute);
       
-      // 9. Invoke success callback
+      // 7. Invoke success callback
       if (onSuccess) {
         onSuccess();
       }
 
-      // 10. Cleanup and navigate
+      // 8. Cleanup and navigate
       setIsLoading(false);
       clearTimeout(loginTimeout);
-      navigate(redirectRoute, { replace: true });
+      
+      // 9. Immediate navigation with fallback - if for some reason navigation fails, force reload
+      const navigateSuccess = navigate(redirectRoute, { replace: true });
+      
+      // Set a fallback in case navigate doesn't work
+      setTimeout(() => {
+        const currentPath = window.location.pathname;
+        if (currentPath === '/' || currentPath === '/login') {
+          console.log('[usePasswordLogin] Fallback navigation triggered - forcing page reload to dashboard');
+          window.location.href = redirectRoute;
+        }
+      }, 1500);
     } catch (err: any) {
       clearTimeout(loginTimeout);
       console.error('[usePasswordLogin] Unexpected error during login:', err);

@@ -16,257 +16,341 @@ export const useProfileFetch = () => {
     console.log('Starting profile fetch for user:', userId);
     try {
       setIsLoading(true);
-
-      // First, check if the user exists in auth users
-      try {
-        // Directly use getUser without passing userId - it will use the current session
-        const { data: authUser, error: authError } = await supabase.auth.getUser();
-
-        if (authError) {
-          console.error('Error fetching auth user:', authError);
-          return { profile: null, permissions: [] };
-        }
-
-        if (!authUser?.user) {
-          console.error('No auth user found in current session');
-          return { profile: null, permissions: [] };
-        }
-
-        if (authUser.user.id !== userId) {
-          console.warn('Session user ID does not match requested user ID', { 
-            sessionUserId: authUser.user.id, 
-            requestedUserId: userId 
-          });
+      
+      // Set a global timeout for the entire fetch operation
+      const timeoutPromise = new Promise<{ profile: UserProfile | null; permissions: string[] }>(resolve => {
+        setTimeout(() => {
+          console.log('Profile fetch operation timed out after 8 seconds, returning minimal profile');
           
-          // If IDs don't match, use the session user ID instead as it's more reliable
-          userId = authUser.user.id;
-          console.log('Switching to session user ID for profile fetch:', userId);
-        }
+          // Create a minimal emergency profile when timing out
+          const minimalProfile: UserProfile = {
+            id: userId,
+            role: 'patient', // Default fallback role
+            role_id: null,
+            full_name: 'User',
+            email: null,
+            avatar_url: null,
+            date_of_birth: null,
+            city: null,
+            auth_method: 'password',
+            is_blocked: false,
+            doctor_stamp_url: null,
+            doctor_signature_url: null,
+            pharmacist_stamp_url: null,
+            pharmacist_signature_url: null,
+            cns_card_front: null,
+            cns_card_back: null,
+            cns_number: null,
+            deleted_at: null,
+            created_at: null,
+            updated_at: null,
+            license_number: null,
+            phone_number: null,
+            address: null,
+            pharmacy_id: null,
+            pharmacy_name: null,
+            pharmacy_logo_url: null
+          };
+          
+          resolve({ profile: minimalProfile, permissions: [] });
+        }, 8000);
+      });
 
-        console.log('Auth user found, fetching profile:', authUser.user.id);
-      } catch (userFetchError) {
-        console.error('Exception during auth user fetch:', userFetchError);
-        // Continue anyway to check if we have a profile
-      }
+      // First, check if the user exists in auth users with a shorter timeout
+      const authUserPromise = new Promise<{ id: string, role?: string, email?: string }>(async (resolve) => {
+        try {
+          const { data: authUser, error: authError } = await supabase.auth.getUser();
 
-      // Fetch user profile
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select(`
-            id,
-            role,
-            role_id,
-            full_name,
-            email,
-            avatar_url,
-            auth_method,
-            is_blocked,
-            city,
-            date_of_birth,
-            license_number,
-            cns_card_front,
-            cns_card_back,
-            cns_number,
-            doctor_stamp_url,
-            doctor_signature_url,
-            pharmacist_stamp_url,
-            pharmacist_signature_url,
-            deleted_at,
-            created_at,
-            updated_at,
-            pharmacy_name,
-            pharmacy_logo_url
-          `)
-          .eq('id', userId)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Profile fetch error:', error);
-          return { profile: null, permissions: [] };
-        }
-
-        if (!profile) {
-          console.log('No profile found for user:', userId);
-          // If there's no profile, create one automatically
-          try {
-            console.log('Creating profile for user:', userId);
-            
-            // Get user data directly to ensure we have the latest
-            const { data: userData, error: userDataError } = await supabase.auth.getUser();
-            
-            if (userDataError || !userData.user) {
-              console.error('Error getting user data for profile creation:', userDataError);
-              return { profile: null, permissions: [] };
-            }
-            
-            // Extract role from user metadata if available
-            const role = userData.user.user_metadata?.role || 'patient';
-            const fullName = userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || 'User';
-            
-            const { error: createError } = await supabase.rpc('create_profile_secure', {
-              user_id: userId,
-              user_role: role,
-              user_full_name: fullName,
-              user_email: userData.user.email || '',
-              user_license_number: userData.user.user_metadata?.license_number || null,
+          if (!authError && authUser?.user) {
+            resolve({
+              id: authUser.user.id,
+              role: authUser.user.user_metadata?.role,
+              email: authUser.user.email
             });
-            
-            if (createError) {
-              console.error('Error creating profile:', createError);
-              return { profile: null, permissions: [] };
-            }
-            
-            // Try to fetch the newly created profile
-            const { data: newProfile, error: newProfileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', userId)
-              .maybeSingle();
-              
-            if (newProfileError || !newProfile) {
-              console.error('Error fetching newly created profile:', newProfileError);
-              return { profile: null, permissions: [] };
-            }
-            
-            console.log('Profile created and fetched successfully');
-            
-            // Create a complete profile object with default values for all fields
-            const completeNewProfile: UserProfile = {
-              ...newProfile as any,
-              pharmacist_stamp_url: null,
-              pharmacist_signature_url: null,
-              pharmacy_id: null,
-              pharmacy_name: null,
-              pharmacy_logo_url: null
-            };
-            
-            const safeNewProfile = safeQueryResult<UserProfile>(completeNewProfile);
-            
-            // Ensure all expected fields are present even if the database doesn't have them
-            if (safeNewProfile && !safeNewProfile.role) {
-              safeNewProfile.role = role;
-            }
-            
-            return { 
-              profile: safeNewProfile, 
-              permissions: [] 
-            };
-          } catch (createProfileError) {
-            console.error('Error in profile creation:', createProfileError);
+          } else {
+            resolve({ id: userId });
+          }
+        } catch (err) {
+          console.error('Error fetching auth user:', err);
+          resolve({ id: userId });
+        }
+      });
+      
+      // Enforce a timeout on the auth user check
+      const authUserWithTimeout = Promise.race([
+        authUserPromise,
+        new Promise<{ id: string }>(resolve => 
+          setTimeout(() => resolve({ id: userId }), 3000)
+        )
+      ]);
+      
+      // Get auth user info with timeout protection
+      const authUserInfo = await authUserWithTimeout;
+      const effectiveUserId = authUserInfo.id || userId;
+      
+      // Main profile fetch operation
+      const profileFetchOperation = async () => {
+        try {
+          // Fetch user profile
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select(`
+              id, role, role_id, full_name, email, avatar_url, auth_method,
+              is_blocked, city, date_of_birth, license_number, cns_card_front,
+              cns_card_back, cns_number, doctor_stamp_url, doctor_signature_url,
+              pharmacist_stamp_url, pharmacist_signature_url, deleted_at,
+              created_at, updated_at, pharmacy_name, pharmacy_logo_url
+            `)
+            .eq('id', effectiveUserId)
+            .maybeSingle();
+
+          if (error) {
+            console.error('Profile fetch error:', error);
             return { profile: null, permissions: [] };
           }
-        }
 
-        // Get the pharmacy_id separately to handle the case where the column might not exist yet
-        let pharmacyId = null;
-        let pharmacyName = null;
-        try {
-          console.log('Attempting to fetch pharmacy data for user:', userId);
-          // Add a timeout to prevent hanging operations
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Pharmacy fetch timeout')), 5000);
-          });
-          
-          const fetchPromise = supabase
-            .from('user_pharmacies')
-            .select('pharmacy_id')
-            .eq('user_id', userId)
-            .maybeSingle();
+          if (!profile) {
+            console.log('No profile found for user:', effectiveUserId);
             
-          // Use Promise.race to implement a timeout
-          const { data: pharmacyData, error: pharmacyError } = await Promise.race([
-            fetchPromise,
-            timeoutPromise
-          ]) as any;
-          
-          if (pharmacyError) {
-            console.error('Error fetching pharmacy_id:', pharmacyError);
-          } else if (pharmacyData?.pharmacy_id) {
-            pharmacyId = pharmacyData.pharmacy_id;
-            console.log('Fetched pharmacy_id from user_pharmacies:', pharmacyId);
-            
-            // Also fetch pharmacy name
+            // If there's no profile, create one automatically with a separate timeout
             try {
-              const { data: pharmacy, error: pharmacyNameError } = await supabase
-                .from('pharmacies')
-                .select('name')
-                .eq('id', pharmacyId)
-                .single();
+              console.log('Creating profile for user:', effectiveUserId);
+              
+              // Use auth user metadata if available, otherwise use defaults
+              const role = authUserInfo.role || 'patient';
+              const email = authUserInfo.email || '';
+              
+              // Create profile with simplified approach
+              const createProfilePromise = supabase.rpc('create_profile_secure', {
+                user_id: effectiveUserId,
+                user_role: role,
+                user_full_name: 'User',
+                user_email: email,
+                user_license_number: null,
+              });
+              
+              // Set timeout for profile creation
+              await Promise.race([
+                createProfilePromise,
+                new Promise(resolve => setTimeout(resolve, 4000))
+              ]);
+              
+              // Try to fetch the newly created profile
+              const { data: newProfile, error: newProfileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', effectiveUserId)
+                .maybeSingle();
                 
-              if (!pharmacyNameError && pharmacy) {
-                pharmacyName = pharmacy.name;
-                console.log('Fetched pharmacy name:', pharmacyName);
+              if (newProfileError || !newProfile) {
+                console.error('Error fetching newly created profile:', newProfileError);
                 
-                // Update the profile with pharmacy name if it's not already set
-                if (profile.role === 'pharmacist' && (!profile.pharmacy_name || profile.pharmacy_name !== pharmacyName)) {
-                  await supabase
-                    .from('profiles')
-                    .update({ pharmacy_name: pharmacyName })
-                    .eq('id', userId);
-                }
+                // Return minimal profile as fallback
+                const minimalProfile: UserProfile = {
+                  id: effectiveUserId,
+                  role: role || 'patient',
+                  role_id: null,
+                  full_name: 'User',
+                  email: email || null,
+                  avatar_url: null,
+                  date_of_birth: null,
+                  city: null,
+                  auth_method: 'password',
+                  is_blocked: false,
+                  doctor_stamp_url: null,
+                  doctor_signature_url: null,
+                  pharmacist_stamp_url: null,
+                  pharmacist_signature_url: null,
+                  cns_card_front: null,
+                  cns_card_back: null,
+                  cns_number: null,
+                  deleted_at: null,
+                  created_at: null,
+                  updated_at: null,
+                  license_number: null,
+                  phone_number: null,
+                  address: null,
+                  pharmacy_id: null,
+                  pharmacy_name: null,
+                  pharmacy_logo_url: null
+                };
+                
+                return { profile: minimalProfile, permissions: [] };
               }
-            } catch (nameError) {
-              console.error('Error fetching pharmacy name:', nameError);
+              
+              console.log('Profile created and fetched successfully');
+              
+              const completeNewProfile: UserProfile = {
+                ...newProfile as any,
+                pharmacist_stamp_url: null,
+                pharmacist_signature_url: null,
+                pharmacy_id: null,
+                pharmacy_name: null,
+                pharmacy_logo_url: null
+              };
+              
+              return { profile: completeNewProfile, permissions: [] };
+            } catch (createProfileError) {
+              console.error('Error in profile creation:', createProfileError);
+              
+              // Return minimal profile as fallback
+              const minimalProfile: UserProfile = {
+                id: effectiveUserId,
+                role: authUserInfo.role || 'patient',
+                role_id: null,
+                full_name: 'User',
+                email: authUserInfo.email || null,
+                avatar_url: null,
+                date_of_birth: null,
+                city: null,
+                auth_method: 'password',
+                is_blocked: false,
+                doctor_stamp_url: null,
+                doctor_signature_url: null,
+                pharmacist_stamp_url: null,
+                pharmacist_signature_url: null,
+                cns_card_front: null,
+                cns_card_back: null,
+                cns_number: null,
+                deleted_at: null,
+                created_at: null,
+                updated_at: null,
+                license_number: null,
+                phone_number: null,
+                address: null,
+                pharmacy_id: null,
+                pharmacy_name: null,
+                pharmacy_logo_url: null
+              };
+              
+              return { profile: minimalProfile, permissions: [] };
             }
           }
-        } catch (pharmacyError) {
-          console.error('Error or timeout fetching pharmacy_id:', pharmacyError);
-          // Continue without pharmacy data - don't let this block the auth process
-        }
 
-        // Ensure the profile object has all required properties
-        const completeProfile: UserProfile = {
-          ...profile as any,
-          // Make sure all fields are set, even if they're not in the database
-          pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile?.pharmacist_signature_url || null,
-          pharmacy_id: pharmacyId || null,
-          pharmacy_name: profile?.pharmacy_name || pharmacyName || null,
-          pharmacy_logo_url: profile?.pharmacy_logo_url || null
-        };
-
-        const safeProfile = safeQueryResult<UserProfile>(completeProfile);
-        if (!safeProfile) {
-          console.error('Failed to process profile data for user:', userId);
-          return { profile: null, permissions: [] };
-        }
-
-        // Add a timeout for permissions fetch to prevent hanging
-        let permissions: string[] = [];
-        try {
-          if (safeProfile.role_id) {
-            const permissionsPromise = fetchUserPermissions(safeProfile.role_id);
-            const timeoutPromise = new Promise<string[]>((_, reject) => {
-              setTimeout(() => {
-                console.log('Permissions fetch timeout, continuing without permissions');
-                return [];
-              }, 3000);
-            });
+          // Get pharmacy_id if available (with timeout protection)
+          let pharmacyId = null;
+          try {
+            const pharmacyPromise = supabase
+              .from('user_pharmacies')
+              .select('pharmacy_id')
+              .eq('user_id', effectiveUserId)
+              .maybeSingle();
+              
+            const { data: pharmacyData } = await Promise.race([
+              pharmacyPromise,
+              new Promise(resolve => setTimeout(() => resolve({ data: null }), 3000))
+            ]) as any;
             
-            permissions = await Promise.race([permissionsPromise, timeoutPromise]);
+            pharmacyId = pharmacyData?.pharmacy_id || null;
+          } catch (pharmacyError) {
+            console.error('Error fetching pharmacy_id:', pharmacyError);
           }
-        } catch (permError) {
-          console.error('Error fetching permissions:', permError);
-          // Continue without permissions
+
+          // Ensure the profile object has all required properties
+          const completeProfile: UserProfile = {
+            ...profile as any,
+            pharmacist_stamp_url: profile?.pharmacist_stamp_url || null,
+            pharmacist_signature_url: profile?.pharmacist_signature_url || null,
+            pharmacy_id: pharmacyId || null,
+            pharmacy_name: profile?.pharmacy_name || null,
+            pharmacy_logo_url: profile?.pharmacy_logo_url || null
+          };
+
+          // Fetch permissions with timeout protection
+          let permissions: string[] = [];
+          try {
+            if (completeProfile.role_id) {
+              const permissionsPromise = fetchUserPermissions(completeProfile.role_id);
+              permissions = await Promise.race([
+                permissionsPromise,
+                new Promise<string[]>(resolve => setTimeout(() => resolve([]), 3000))
+              ]);
+            }
+          } catch (permError) {
+            console.error('Error fetching permissions:', permError);
+          }
+
+          console.log('Profile and permissions fetched successfully:', {
+            profileId: completeProfile.id,
+            role: completeProfile.role,
+            permissionsCount: permissions.length
+          });
+
+          return { profile: completeProfile, permissions };
+        } catch (profileError) {
+          console.error('Exception during profile fetch:', profileError);
+          
+          // Return minimal profile as fallback
+          const minimalProfile: UserProfile = {
+            id: effectiveUserId,
+            role: authUserInfo.role || 'patient',
+            role_id: null,
+            full_name: 'User',
+            email: authUserInfo.email || null,
+            avatar_url: null,
+            date_of_birth: null,
+            city: null,
+            auth_method: 'password',
+            is_blocked: false,
+            doctor_stamp_url: null,
+            doctor_signature_url: null,
+            pharmacist_stamp_url: null,
+            pharmacist_signature_url: null,
+            cns_card_front: null,
+            cns_card_back: null,
+            cns_number: null,
+            deleted_at: null,
+            created_at: null,
+            updated_at: null,
+            license_number: null,
+            phone_number: null,
+            address: null,
+            pharmacy_id: null,
+            pharmacy_name: null,
+            pharmacy_logo_url: null
+          };
+          
+          return { profile: minimalProfile, permissions: [] };
         }
+      };
 
-        console.log('Profile and permissions fetched:', { 
-          profileId: safeProfile.id, 
-          role: safeProfile.role,
-          pharmacyId: safeProfile.pharmacy_id,
-          pharmacyName: safeProfile.pharmacy_name,
-          permissionsCount: permissions.length 
-        });
-
-        return { profile: safeProfile, permissions };
-      } catch (profileFetchError) {
-        console.error('Exception during profile fetch:', profileFetchError);
-        return { profile: null, permissions: [] };
-      }
+      // Race the main operation against the timeout
+      const result = await Promise.race([profileFetchOperation(), timeoutPromise]);
+      return result;
     } catch (error) {
-      console.error('Error in fetchAndSetProfile:', error);
-      return { profile: null, permissions: [] };
+      console.error('Fatal error in fetchAndSetProfile:', error);
+      
+      // Return minimal profile as fallback
+      const minimalProfile: UserProfile = {
+        id: userId,
+        role: 'patient',
+        role_id: null,
+        full_name: 'User',
+        email: null,
+        avatar_url: null,
+        date_of_birth: null,
+        city: null,
+        auth_method: 'password',
+        is_blocked: false,
+        doctor_stamp_url: null,
+        doctor_signature_url: null,
+        pharmacist_stamp_url: null,
+        pharmacist_signature_url: null,
+        cns_card_front: null,
+        cns_card_back: null,
+        cns_number: null,
+        deleted_at: null,
+        created_at: null,
+        updated_at: null,
+        license_number: null,
+        phone_number: null,
+        address: null,
+        pharmacy_id: null,
+        pharmacy_name: null,
+        pharmacy_logo_url: null
+      };
+      
+      return { profile: minimalProfile, permissions: [] };
     } finally {
       setIsLoading(false);
     }

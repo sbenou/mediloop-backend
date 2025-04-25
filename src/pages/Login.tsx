@@ -11,17 +11,34 @@ import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
-  const { redirected } = useLoginManager();
+  const { redirected, setNavigationInProgress } = useLoginManager();
   const navigate = useNavigate();
 
-  // Remove manual redirect timeout logic
+  // Handle navigation to dashboard based on role
   useEffect(() => {
     if (isAuthenticated && profile?.role && !isLoading) {
       const route = getDashboardRouteByRole(profile.role);
       console.log("[Login] Automatic navigation to:", route);
+      
+      // Set navigation in progress to prevent duplicate redirects
+      setNavigationInProgress(true);
+      
+      // Using navigate with replace to avoid back button issues
       navigate(route, { replace: true });
+      
+      // Set a fallback in case navigate doesn't work
+      const fallbackTimeout = setTimeout(() => {
+        console.log('[Login] Checking if navigation succeeded');
+        const currentPath = window.location.pathname;
+        if (currentPath === '/' || currentPath === '/login') {
+          console.log('[Login] Navigation appears to have failed, using location.href fallback');
+          window.location.href = route;
+        }
+      }, 2000);
+      
+      return () => clearTimeout(fallbackTimeout);
     }
-  }, [isAuthenticated, profile, isLoading, navigate]);
+  }, [isAuthenticated, profile, isLoading, navigate, setNavigationInProgress]);
 
   // Show loading state during initial load
   if (isLoading) {
@@ -88,4 +105,3 @@ const Login = () => {
 };
 
 export default Login;
-
