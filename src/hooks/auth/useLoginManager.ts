@@ -11,11 +11,20 @@ export const useLoginManager = () => {
   const redirected = useRef(false);
   const initialPathChecked = useRef(false);
   const redirectAttempts = useRef(0);
+  const navigationTimeout = useRef<NodeJS.Timeout>();
+
+  // Clear any existing navigation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (navigationTimeout.current) {
+        clearTimeout(navigationTimeout.current);
+      }
+    };
+  }, []);
 
   // Handle role-based redirects
   useEffect(() => {
-    // Skip redirects if we're not on the auth pages, we're already on a proper route,
-    // or if we've already performed a redirect, or if we're still loading
+    // Skip redirects if we're not ready
     if (isLoading || !isAuthenticated || !profile || redirected.current) {
       console.log("[LoginManager] Not ready for redirect yet:", { 
         isLoading, 
@@ -35,7 +44,7 @@ export const useLoginManager = () => {
     
     redirectAttempts.current += 1;
     
-    // Prevent redirect loops by checking if we're already on a valid dashboard path
+    // Check if we're already on a valid route
     const currentPath = location.pathname;
     const isAlreadyOnValidRoute = 
       currentPath === '/dashboard' || 
@@ -44,7 +53,6 @@ export const useLoginManager = () => {
       currentPath.includes('/pharmacy') ||
       currentPath.includes('/superadmin');
     
-    // Only redirect from login/signup pages, not from dashboard pages
     const isOnAuthPage = 
       currentPath === '/login' || 
       currentPath === '/signup' || 
@@ -67,15 +75,21 @@ export const useLoginManager = () => {
     const route = getDashboardRouteByRole(role);
 
     console.log("[LoginManager] Redirecting user to:", route, "with role:", role);
-    console.log("[LoginManager] Full profile data:", profile);
     
-    // Store a flag to avoid multiple redirects in SessionStorage
-    sessionStorage.setItem('dashboard_redirect_performed', 'true');
+    // Set redirect flag before navigation
     redirected.current = true;
     initialPathChecked.current = true;
     
+    // Clear any existing timeout
+    if (navigationTimeout.current) {
+      clearTimeout(navigationTimeout.current);
+    }
+
+    // Store a flag to avoid multiple redirects
+    sessionStorage.setItem('dashboard_redirect_performed', 'true');
+    
     // Add a small delay before navigation to avoid race conditions
-    setTimeout(() => {
+    navigationTimeout.current = setTimeout(() => {
       navigate(route, { replace: true });
       // Log after navigation attempt
       console.log("[LoginManager] Navigation triggered, redirected state:", redirected.current);
@@ -84,7 +98,7 @@ export const useLoginManager = () => {
       setTimeout(() => {
         console.log("[LoginManager] Post-redirect check - Current URL:", window.location.href);
       }, 500);
-    }, 50);
+    }, 100);
     
   }, [isAuthenticated, profile, navigate, isLoading, location.pathname]);
 

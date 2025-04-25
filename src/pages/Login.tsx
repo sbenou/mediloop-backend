@@ -8,9 +8,9 @@ import { useLoginManager } from "@/hooks/auth/useLoginManager";
 
 const Login = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const { redirected } = useLoginManager(); // Use the login manager to handle redirects
+  const { redirected } = useLoginManager();
 
-  // Show loading state
+  // Show loading state during initial load
   if (isLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
@@ -29,8 +29,8 @@ const Login = () => {
     );
   }
 
-  // If already authenticated and redirected, show a temporary loading state
-  if (isAuthenticated && redirected) {
+  // If authenticated, show redirect state
+  if (isAuthenticated) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-lg">
@@ -39,7 +39,7 @@ const Login = () => {
               <Loader className="h-8 w-8 animate-spin text-primary" />
               <CardTitle className="text-2xl">Redirecting...</CardTitle>
               <CardDescription>
-                Please wait while we redirect you to the appropriate dashboard
+                Please wait while we redirect you to your dashboard
               </CardDescription>
             </div>
           </CardHeader>
@@ -48,7 +48,7 @@ const Login = () => {
     );
   }
 
-  // Show login form
+  // Show login form for unauthenticated users
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-lg">
