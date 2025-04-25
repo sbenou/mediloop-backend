@@ -44,6 +44,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           variant: "destructive",
           title: "Login failed",
           description: authError.message,
+          duration: 5000, // Explicitly set duration
         });
         setIsLoading(false);
         return;
@@ -56,6 +57,13 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         
         // Store the session immediately after login
         storeSession(data.session);
+
+        // Show success toast with specific duration
+        toast({
+          title: "Login successful",
+          description: "You've been logged in successfully",
+          duration: 5000, // Ensure 5-second display
+        });
 
         console.log("[usePasswordLogin] Fetching user profile");
         const { data: profile, error: profileError } = await supabase
@@ -124,6 +132,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         variant: "destructive",
         title: "Login failed",
         description: err.message,
+        duration: 5000, // Explicitly set duration
       });
       setIsLoading(false);
     }
