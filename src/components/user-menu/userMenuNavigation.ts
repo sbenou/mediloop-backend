@@ -18,32 +18,32 @@ export function useUserMenuNavigation() {
       return;
     }
     
-    // Check if the user is a pharmacist
-    if (isPharmacist || userRole === 'pharmacist') {
+    // For pharmacy and dashboard routes, use navigate with replace to maintain state
+    if ((isPharmacist || userRole === 'pharmacist') && 
+        (path.includes('dashboard') || path.includes('pharmacy'))) {
       console.log("Using pharmacy-specific navigation for:", path);
       
-      // For pharmacy users, always use direct navigation to preserve state
-      if (path.includes('dashboard') || path.includes('pharmacy')) {
-        const pharmacyPath = path.includes('?view=pharmacy') ? 
-          path : 
-          '/dashboard?view=pharmacy&section=dashboard';
-        
-        window.location.href = pharmacyPath;
-        return;
-      }
-    }
-    
-    // Always use direct navigation for pharmacy routes to avoid state issues
-    if (path.includes('pharmacy') || path === '/dashboard?view=pharmacy&section=dashboard') {
-      console.log("Using direct navigation for pharmacy path:", path);
-      window.location.href = path;
+      // For pharmacy users, ensure the correct query params
+      const pharmacyPath = path.includes('?view=pharmacy') ? 
+        path : 
+        '/dashboard?view=pharmacy&section=dashboard';
+      
+      // Use replace: true to avoid back button issues
+      navigate(pharmacyPath, { replace: true, state: { fromPharmacy: true } });
       return;
     }
     
-    // For regular dashboard paths, use direct navigation to avoid partial state issues
+    // For pharmacy routes, use navigate with replace
+    if (path.includes('pharmacy') || path === '/dashboard?view=pharmacy&section=dashboard') {
+      console.log("Using replace navigation for pharmacy path:", path);
+      navigate(path, { replace: true });
+      return;
+    }
+    
+    // For regular dashboard paths, use navigate with replace to avoid state issues
     if (path === '/dashboard' || path.includes('dashboard')) {
-      console.log("Using direct navigation for dashboard path:", path);
-      window.location.href = path;
+      console.log("Using replace navigation for dashboard path:", path);
+      navigate(path, { replace: true });
       return;
     }
     
