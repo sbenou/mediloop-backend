@@ -6,12 +6,12 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useSearchParams } from 'react-router-dom';
 
 const ProtectedDashboard = () => {
-  const { userRole, isPharmacist } = useAuth();
+  const { userRole, isPharmacist, isLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Make sure pharmacy users always have the correct params
   useEffect(() => {
-    if (isPharmacist || userRole === 'pharmacist') {
+    if (!isLoading && (isPharmacist || userRole === 'pharmacist')) {
       const currentView = searchParams.get('view');
       const currentSection = searchParams.get('section');
       
@@ -20,7 +20,7 @@ const ProtectedDashboard = () => {
         setSearchParams({ view: 'pharmacy', section: 'dashboard' });
       }
     }
-  }, [userRole, isPharmacist, searchParams, setSearchParams]);
+  }, [userRole, isPharmacist, searchParams, setSearchParams, isLoading]);
   
   return (
     <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>

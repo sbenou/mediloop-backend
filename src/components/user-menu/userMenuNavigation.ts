@@ -16,7 +16,17 @@ export function useUserMenuNavigation() {
       return;
     }
     
-    // Handle all dashboard paths consistently
+    // For pharmacist dashboard routes, use special handling to ensure proper URL parameters
+    if (path.includes('pharmacy') || (path === '/dashboard' && location.pathname.includes('pharmacy'))) {
+      console.log("Using pharmacy-specific navigation for:", path);
+      
+      // For pharmacy routes, ensure we have the correct params
+      const targetPath = '/dashboard?view=pharmacy&section=dashboard';
+      window.location.href = targetPath;
+      return;
+    }
+    
+    // For regular dashboard paths, use direct navigation to avoid partial state issues
     if (path === '/dashboard' || path.includes('dashboard')) {
       console.log("Using direct navigation for dashboard path:", path);
       window.location.href = path;
