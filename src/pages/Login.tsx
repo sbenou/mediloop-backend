@@ -23,27 +23,30 @@ const Login = () => {
       // Set navigation in progress to prevent duplicate redirects
       setNavigationInProgress(true);
       
-      // Force a direct browser navigation for pharmacists to ensure clean state
+      // For pharmacist role, ensure query params are correct
       if (profile.role === 'pharmacist') {
-        console.log('[Login] Using direct navigation for pharmacist role');
-        window.location.href = route;
+        const dashboardUrl = new URL(route, window.location.origin);
+        
+        if (!dashboardUrl.searchParams.has('view')) {
+          dashboardUrl.searchParams.set('view', 'pharmacy');
+        }
+        
+        if (!dashboardUrl.searchParams.has('section')) {
+          dashboardUrl.searchParams.set('section', 'dashboard');
+        }
+        
+        navigate(dashboardUrl.pathname + dashboardUrl.search, { 
+          replace: true,
+          state: { preserveAuth: true }
+        });
         return;
       }
       
-      // Using navigate with replace for other roles
-      navigate(route, { replace: true });
-      
-      // Set a fallback in case navigate doesn't work
-      const fallbackTimeout = setTimeout(() => {
-        console.log('[Login] Checking if navigation succeeded');
-        const currentPath = window.location.pathname;
-        if (currentPath === '/' || currentPath === '/login') {
-          console.log('[Login] Navigation appears to have failed, using location.href fallback');
-          window.location.href = route;
-        }
-      }, 1500);
-      
-      return () => clearTimeout(fallbackTimeout);
+      // For other roles, use standard navigation
+      navigate(route, { 
+        replace: true,
+        state: { preserveAuth: true }
+      });
     }
   }, [isAuthenticated, profile, isLoading, navigate, setNavigationInProgress]);
 
