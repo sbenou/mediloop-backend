@@ -16,10 +16,10 @@ export function useUserMenuNavigation() {
       return;
     }
     
-    // Dashboard with query params
-    if (path.startsWith('/dashboard?')) {
-      console.log("Navigating to dashboard with params:", path);
-      navigate(path);
+    // Handle all dashboard paths consistently
+    if (path === '/dashboard' || path.includes('dashboard')) {
+      console.log("Using direct navigation for dashboard path:", path);
+      window.location.href = path;
       return;
     }
     
