@@ -13,26 +13,37 @@ const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const { redirected, navigationInProgress } = useLoginManager();
   const [showManualRedirect, setShowManualRedirect] = useState(false);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
 
   // Escape hatch: Force navigation if auth is complete but redirect is stuck
   useEffect(() => {
-    if (isAuthenticated && profile?.role && !isLoading) {
+    if (isAuthenticated && profile?.role && !isLoading && !redirectAttempted) {
+      // Mark that we've attempted a redirect to avoid multiple attempts
+      setRedirectAttempted(true);
+      
       const forceNavigationTimeout = setTimeout(() => {
         // If we're still on the login page after 2 seconds, show manual redirect option
         setShowManualRedirect(true);
-        console.log("[Login] Navigation may be stuck, showing manual redirect option");
+        console.log("[Login] Navigation may be taking longer than expected, showing manual redirect option");
       }, 2000);
       
       return () => clearTimeout(forceNavigationTimeout);
     }
-  }, [isAuthenticated, profile, isLoading]);
+  }, [isAuthenticated, profile, isLoading, redirectAttempted]);
 
   // Handle manual redirect
   const handleManualRedirect = () => {
     if (profile?.role) {
       const route = getDashboardRouteByRole(profile.role);
       console.log("[Login] Manual navigation to:", route);
-      window.location.href = route;
+      
+      // For pharmacist role specifically, try direct location change as last resort
+      if (profile.role === 'pharmacist') {
+        window.location.href = route;
+      } else {
+        // For other roles, open in new tab as fallback
+        window.open(route, '_self');
+      }
     }
   };
 

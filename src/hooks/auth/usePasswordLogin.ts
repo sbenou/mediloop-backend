@@ -140,10 +140,10 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
               .eq('user_id', data.user?.id)
               .maybeSingle();
               
-            const pharmacyTimeoutPromise = new Promise((_, reject) => {
+            const pharmacyTimeoutPromise = new Promise((resolve) => {
               setTimeout(() => {
                 console.log("[usePasswordLogin] Pharmacy fetch timed out, continuing without pharmacy data");
-                return { data: null, error: new Error('Pharmacy fetch timed out') };
+                resolve({ data: null, error: new Error('Pharmacy fetch timed out') });
               }, 3000); 
             });
             
@@ -189,19 +189,8 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         setIsLoading(false);
         clearTimeout(loginTimeout);
         
-        // Direct navigation using window.location instead of React Router's navigate
-        // This ensures a full page reload and consistent state
-        if (role === 'pharmacist') {
-          console.log("[usePasswordLogin] Using direct location change for pharmacist");
-          setTimeout(() => {
-            window.location.href = redirectRoute;
-          }, 100);
-        } else {
-          // Use React Router navigation for other roles
-          setTimeout(() => {
-            navigate(redirectRoute, { replace: true });
-          }, 100);
-        }
+        // Use React Router navigation (consistently for all roles)
+        navigate(redirectRoute, { replace: true });
       } catch (profileError: any) {
         console.error("[usePasswordLogin] Error or timeout during profile fetch:", profileError);
         
@@ -254,16 +243,8 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         const redirectRoute = getDashboardRouteByRole(role);
         console.log("[usePasswordLogin] Using fallback route:", redirectRoute);
         
-        // Use direct location change for consistent behavior
-        if (role === 'pharmacist') {
-          setTimeout(() => {
-            window.location.href = redirectRoute;
-          }, 100);
-        } else {
-          setTimeout(() => {
-            navigate(redirectRoute, { replace: true });
-          }, 100);
-        }
+        // Use React Router navigation consistently
+        navigate(redirectRoute, { replace: true });
       }
     } catch (err: any) {
       clearTimeout(loginTimeout);
