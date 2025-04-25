@@ -5,38 +5,23 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { useLoginManager } from "@/hooks/auth/useLoginManager";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const { redirected } = useLoginManager();
-  const [showManualRedirect, setShowManualRedirect] = useState(false);
   const navigate = useNavigate();
 
-  // Show manual redirect button if authenticated but still on login page after delay
+  // Remove manual redirect timeout logic
   useEffect(() => {
     if (isAuthenticated && profile?.role && !isLoading) {
-      // If we're still on the login page after 3 seconds, show manual redirect option
-      const redirectTimeout = setTimeout(() => {
-        setShowManualRedirect(true);
-        console.log("[Login] Navigation may be taking longer than expected, showing manual redirect option");
-      }, 3000);
-      
-      return () => clearTimeout(redirectTimeout);
-    }
-  }, [isAuthenticated, profile, isLoading]);
-
-  // Handle manual redirect
-  const handleManualRedirect = () => {
-    if (profile?.role) {
       const route = getDashboardRouteByRole(profile.role);
-      console.log("[Login] Manual navigation to:", route);
+      console.log("[Login] Automatic navigation to:", route);
       navigate(route, { replace: true });
     }
-  };
+  }, [isAuthenticated, profile, isLoading, navigate]);
 
   // Show loading state during initial load
   if (isLoading) {
@@ -57,7 +42,7 @@ const Login = () => {
     );
   }
 
-  // If authenticated, show redirect state
+  // If authenticated
   if (isAuthenticated) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
@@ -69,15 +54,6 @@ const Login = () => {
               <CardDescription>
                 Please wait while we redirect you to your dashboard
               </CardDescription>
-              
-              {showManualRedirect && (
-                <div className="mt-4">
-                  <p className="text-amber-600 mb-2">Navigation may be taking longer than expected</p>
-                  <Button onClick={handleManualRedirect} variant="default">
-                    Continue to Dashboard
-                  </Button>
-                </div>
-              )}
             </div>
           </CardHeader>
         </Card>
@@ -112,3 +88,4 @@ const Login = () => {
 };
 
 export default Login;
+
