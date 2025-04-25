@@ -20,7 +20,9 @@ export const supabase = createClient(url, key, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: localStorage // Explicitly set storage to localStorage
+    storage: localStorage, // Explicitly set storage to localStorage
+    storageKey: `sb-${url.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`,
+    debug: process.env.NODE_ENV === 'development' // Enable debug logs in development
   }
 });
 
@@ -29,15 +31,39 @@ export const getSessionFromStorage = () => {
   try {
     const storedSession = localStorage.getItem(STORAGE_KEY);
     if (storedSession) {
-      return JSON.parse(storedSession);
+      try {
+        // Validate that we can parse the stored session
+        const parsed = JSON.parse(storedSession);
+        if (parsed && parsed.user && parsed.access_token) {
+          return parsed;
+        } else {
+          console.warn('Invalid session format in localStorage, removing');
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } catch (parseError) {
+        console.error('Error parsing session from localStorage:', parseError);
+        localStorage.removeItem(STORAGE_KEY);
+      }
     }
     
     // Try session storage as fallback
     const sessionStorageSession = sessionStorage.getItem(STORAGE_KEY);
     if (sessionStorageSession) {
-      // Copy to localStorage for better persistence
-      localStorage.setItem(STORAGE_KEY, sessionStorageSession);
-      return JSON.parse(sessionStorageSession);
+      try {
+        // Validate that we can parse the stored session
+        const parsed = JSON.parse(sessionStorageSession);
+        if (parsed && parsed.user && parsed.access_token) {
+          // Copy to localStorage for better persistence
+          localStorage.setItem(STORAGE_KEY, sessionStorageSession);
+          return parsed;
+        } else {
+          console.warn('Invalid session format in sessionStorage, removing');
+          sessionStorage.removeItem(STORAGE_KEY);
+        }
+      } catch (parseError) {
+        console.error('Error parsing session from sessionStorage:', parseError);
+        sessionStorage.removeItem(STORAGE_KEY);
+      }
     }
     
     return null;
@@ -52,6 +78,13 @@ export const clearAllAuthStorage = () => {
   try {
     localStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(STORAGE_KEY);
+    
+    // Clear any additional auth-related flags
+    sessionStorage.removeItem('login_successful');
+    sessionStorage.removeItem('dashboard_redirect_performed');
+    localStorage.removeItem('last_auth_event');
+    localStorage.removeItem('last_session_store');
+    
     console.log('Local and session storage cleared');
   } catch (error) {
     console.error('Error clearing storage:', error);

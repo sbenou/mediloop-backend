@@ -156,16 +156,28 @@ export const useProfileFetch = () => {
         // Get the pharmacy_id separately to handle the case where the column might not exist yet
         let pharmacyId = null;
         try {
-          const { data: pharmacyData } = await supabase
+          // Add a timeout to prevent hanging operations
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Pharmacy fetch timeout')), 5000);
+          });
+          
+          const fetchPromise = supabase
             .from('user_pharmacies')
             .select('pharmacy_id')
             .eq('user_id', userId)
             .maybeSingle();
+            
+          // Use Promise.race to implement a timeout
+          const { data: pharmacyData } = await Promise.race([
+            fetchPromise,
+            timeoutPromise
+          ]) as any;
           
           pharmacyId = pharmacyData?.pharmacy_id || null;
           console.log('Fetched pharmacy_id from user_pharmacies:', pharmacyId);
         } catch (pharmacyError) {
-          console.error('Error fetching pharmacy_id:', pharmacyError);
+          console.error('Error or timeout fetching pharmacy_id:', pharmacyError);
+          // Continue without pharmacy data - don't let this block the auth process
         }
 
         // Ensure the profile object has all required properties
@@ -187,9 +199,24 @@ export const useProfileFetch = () => {
           safeProfile.pharmacy_id = pharmacyId;
         }
 
-        const permissions = safeProfile.role_id 
-          ? await fetchUserPermissions(safeProfile.role_id)
-          : [];
+        // Add a timeout for permissions fetch to prevent hanging
+        let permissions: string[] = [];
+        try {
+          if (safeProfile.role_id) {
+            const permissionsPromise = fetchUserPermissions(safeProfile.role_id);
+            const timeoutPromise = new Promise<string[]>((_, reject) => {
+              setTimeout(() => {
+                console.log('Permissions fetch timeout, continuing without permissions');
+                return [];
+              }, 3000);
+            });
+            
+            permissions = await Promise.race([permissionsPromise, timeoutPromise]);
+          }
+        } catch (permError) {
+          console.error('Error fetching permissions:', permError);
+          // Continue without permissions
+        }
 
         console.log('Profile and permissions fetched:', { 
           profileId: safeProfile.id, 

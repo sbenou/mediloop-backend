@@ -32,6 +32,12 @@ export const storeSession = (session) => {
     // Define the storage key in the Supabase format
     const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
     
+    // Validate session object before storing
+    if (!session.access_token || !session.user || !session.user.id) {
+      console.error("[sessionUtils][DEBUG] Invalid session object:", session);
+      return false;
+    }
+    
     // Store in both storage types for maximum persistence
     const sessionStr = JSON.stringify(session);
     localStorage.setItem(STORAGE_KEY, sessionStr);
@@ -113,15 +119,31 @@ export const getSessionFromStorage = () => {
       return null;
     }
     
-    const session = JSON.parse(sessionStr);
-    console.log("[sessionUtils][DEBUG] Session retrieved from storage", { 
-      userId: session.user?.id,
-      expiresAt: session.expires_at,
-      hasUser: !!session.user,
-      sessionKeys: Object.keys(session)
-    });
-    
-    return session;
+    try {
+      const session = JSON.parse(sessionStr);
+      
+      // Validate session structure
+      if (!session.access_token || !session.user || !session.user.id) {
+        console.warn("[sessionUtils][DEBUG] Invalid session format in storage, clearing");
+        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      
+      console.log("[sessionUtils][DEBUG] Session retrieved from storage", { 
+        userId: session.user?.id,
+        expiresAt: session.expires_at,
+        hasUser: !!session.user,
+        sessionKeys: Object.keys(session)
+      });
+      
+      return session;
+    } catch (parseError) {
+      console.error("[sessionUtils][DEBUG] Error parsing session from storage:", parseError);
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
   } catch (error) {
     console.error("[sessionUtils][DEBUG] Error getting session from storage:", error);
     return null;
@@ -169,11 +191,23 @@ export const fetchUserPermissions = async (roleId: string): Promise<string[]> =>
     // Import supabase here to avoid circular dependencies
     const { supabase } = await import('@/lib/supabase');
     
-    // Fetch permissions from role_permissions table
-    const { data, error } = await supabase
+    // Use Promise.race to implement a timeout
+    const permissionsPromise = supabase
       .from('role_permissions')
       .select('permission_id')
       .eq('role_id', roleId);
+      
+    const timeoutPromise = new Promise<{data: any, error: any}>((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: [],
+          error: new Error('Permissions fetch timed out')
+        });
+      }, 3000);
+    });
+    
+    // Use Promise.race to ensure the fetch doesn't hang
+    const { data, error } = await Promise.race([permissionsPromise, timeoutPromise]);
       
     if (error) {
       console.error("[sessionUtils][DEBUG] Error fetching permissions:", error);

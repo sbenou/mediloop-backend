@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -31,6 +32,19 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
     setError(null);
     console.log(`[usePasswordLogin] Attempting login for email: ${email}`);
 
+    // Set a global timeout to prevent the login process from hanging indefinitely
+    const loginTimeout = setTimeout(() => {
+      console.error('[usePasswordLogin] Login process timed out after 15 seconds');
+      setIsLoading(false);
+      
+      toast({
+        variant: "destructive",
+        title: "Login timed out",
+        description: "The login process took too long. Please try again.",
+        duration: 5000, // Explicitly set duration
+      });
+    }, 15000);
+
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
@@ -47,30 +61,53 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           duration: 5000, // Explicitly set duration
         });
         setIsLoading(false);
+        clearTimeout(loginTimeout);
         return;
       }
 
-      if (data?.session) {
-        console.log("[usePasswordLogin] Login successful, storing session");
-        console.log("[usePasswordLogin] User ID:", data.user?.id);
-        console.log("[usePasswordLogin] User metadata:", data.user?.user_metadata);
-        
-        // Store the session immediately after login
-        storeSession(data.session);
-
-        // Show success toast with specific duration
+      if (!data?.session) {
+        console.error('[usePasswordLogin] No session data returned');
         toast({
-          title: "Login successful",
-          description: "You've been logged in successfully",
-          duration: 5000, // Ensure 5-second display
+          variant: "destructive",
+          title: "Login failed",
+          description: "Unable to establish a session. Please try again.",
+          duration: 5000,
         });
+        setIsLoading(false);
+        clearTimeout(loginTimeout);
+        return;
+      }
+        
+      // Store the session immediately after login
+      storeSession(data.session);
 
-        console.log("[usePasswordLogin] Fetching user profile");
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user?.id)
-          .maybeSingle();
+      // Show success toast with specific duration
+      toast({
+        title: "Login successful",
+        description: "You've been logged in successfully",
+        duration: 5000, // Ensure 5-second display
+      });
+
+      console.log("[usePasswordLogin] Fetching user profile");
+      
+      // Set a timeout just for the profile fetch to prevent it from hanging
+      const profilePromise = supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user?.id)
+        .maybeSingle();
+        
+      const profileTimeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Profile fetch timed out'));
+        }, 5000);
+      });
+      
+      try {
+        const { data: profile, error: profileError } = await Promise.race([
+          profilePromise,
+          profileTimeoutPromise
+        ]) as any;
 
         if (profileError) {
           console.error("[usePasswordLogin] Profile fetch error:", profileError);
@@ -78,8 +115,10 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
             variant: "destructive",
             title: "Profile Error",
             description: "There was an error loading your profile. Please try again.",
+            duration: 5000,
           });
           setIsLoading(false);
+          clearTimeout(loginTimeout);
           return;
         }
         
@@ -100,12 +139,6 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           isLoading: false,
         });
         
-        // Show success toast
-        toast({
-          title: "Login successful",
-          description: "You've been logged in successfully",
-        });
-        
         // Set flags for redirecting
         sessionStorage.setItem('login_successful', 'true');
         
@@ -123,15 +156,74 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         }
 
         setIsLoading(false);
-        navigate(redirectRoute, { replace: true });
+        clearTimeout(loginTimeout);
+        
+        // Use setTimeout for the navigation to ensure any state updates have completed
+        setTimeout(() => {
+          navigate(redirectRoute, { replace: true });
+        }, 100);
+      } catch (profileError: any) {
+        console.error("[usePasswordLogin] Error or timeout during profile fetch:", profileError);
+        
+        // Even if profile fetch fails, try to continue with basic user data
+        setAuth({
+          user: data.user,
+          profile: {
+            id: data.user.id,
+            role: data.user.user_metadata?.role || 'patient',
+            email: data.user.email,
+            full_name: data.user.user_metadata?.full_name || 'User',
+            // Add other default fields
+            role_id: null,
+            avatar_url: null,
+            date_of_birth: null,
+            city: null,
+            auth_method: 'password',
+            is_blocked: false,
+            doctor_stamp_url: null,
+            doctor_signature_url: null,
+            pharmacist_stamp_url: null,
+            pharmacist_signature_url: null,
+            cns_card_front: null,
+            cns_card_back: null,
+            cns_number: null,
+            deleted_at: null,
+            created_at: null,
+            updated_at: null,
+            license_number: data.user.user_metadata?.license_number || null,
+            phone_number: null,
+            address: null,
+          },
+          permissions: [],
+          isLoading: false,
+        });
+        
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess();
+        }
+        
+        setIsLoading(false);
+        clearTimeout(loginTimeout);
+        
+        // Use role from user metadata as fallback
+        const role = data.user.user_metadata?.role || 'patient';
+        const redirectRoute = getDashboardRouteByRole(role);
+        console.log("[usePasswordLogin] Using fallback route:", redirectRoute);
+        
+        // Use setTimeout for the navigation to ensure any state updates have completed
+        setTimeout(() => {
+          navigate(redirectRoute, { replace: true });
+        }, 100);
       }
     } catch (err: any) {
+      clearTimeout(loginTimeout);
       console.error('[usePasswordLogin] Unexpected error during login:', err);
       setError(err);
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: err.message,
+        description: err.message || "An unexpected error occurred",
         duration: 5000, // Explicitly set duration
       });
       setIsLoading(false);
