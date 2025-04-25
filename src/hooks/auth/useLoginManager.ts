@@ -1,34 +1,24 @@
 
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
-import { toast } from "@/components/ui/use-toast";
 
+/**
+ * This hook monitors authentication state and helps determine if 
+ * the user is already on a valid route or being redirected
+ */
 export const useLoginManager = () => {
   const { isAuthenticated, profile, isLoading } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const redirected = useRef(false);
   const initialPathChecked = useRef(false);
-  const redirectAttempts = useRef(0);
-  const navigationTimeout = useRef<NodeJS.Timeout>();
   const [navigationInProgress, setNavigationInProgress] = useState(false);
 
-  // Clear any existing navigation timeout on unmount
+  // Handle role-based route validation
   useEffect(() => {
-    return () => {
-      if (navigationTimeout.current) {
-        clearTimeout(navigationTimeout.current);
-      }
-    };
-  }, []);
-
-  // Handle role-based redirects
-  useEffect(() => {
-    // Skip redirects if we're not ready
+    // Skip checks if we're not ready
     if (isLoading || !isAuthenticated || !profile || redirected.current || navigationInProgress) {
-      console.log("[LoginManager] Not ready for redirect yet:", { 
+      console.log("[LoginManager] Not ready for route validation:", { 
         isLoading, 
         isAuthenticated, 
         hasProfile: !!profile, 
@@ -37,15 +27,6 @@ export const useLoginManager = () => {
       });
       return;
     }
-
-    // Prevent excessive redirect attempts
-    if (redirectAttempts.current >= 2) {
-      console.log("[LoginManager] Too many redirect attempts, skipping further redirects");
-      redirected.current = true;
-      return;
-    }
-    
-    redirectAttempts.current += 1;
     
     // Check if we're already on a valid route
     const currentPath = location.pathname;
@@ -62,65 +43,18 @@ export const useLoginManager = () => {
       currentPath === '/';
     
     if (isAlreadyOnValidRoute && !isOnAuthPage) {
-      console.log("[LoginManager] Already on valid route, skipping redirect:", currentPath);
+      console.log("[LoginManager] Already on valid route, validation complete:", currentPath);
       redirected.current = true;
       initialPathChecked.current = true;
-      return;
-    }
-    
-    if (!isOnAuthPage && !initialPathChecked.current) {
-      console.log("[LoginManager] Not on auth page, skipping redirect:", currentPath);
+    } else if (!isOnAuthPage && !initialPathChecked.current) {
+      console.log("[LoginManager] Not on auth page, validation complete:", currentPath);
       initialPathChecked.current = true;
-      return;
     }
-
-    const role = profile.role;
-    const route = getDashboardRouteByRole(role);
-
-    console.log("[LoginManager] Redirecting user to:", route, "with role:", role);
-    
-    // Set navigation state to prevent concurrent redirect attempts
-    setNavigationInProgress(true);
-    
-    // Set redirect flag before navigation
-    redirected.current = true;
-    initialPathChecked.current = true;
-    
-    // Clear any existing timeout
-    if (navigationTimeout.current) {
-      clearTimeout(navigationTimeout.current);
-    }
-
-    // Store a flag to avoid multiple redirects
-    sessionStorage.setItem('dashboard_redirect_performed', 'true');
-    
-    // Add a small delay before navigation to avoid race conditions
-    navigationTimeout.current = setTimeout(() => {
-      try {
-        navigate(route, { replace: true });
-        console.log("[LoginManager] Navigation triggered to:", route);
-        
-        // Check if navigation succeeded after a short delay
-        setTimeout(() => {
-          const currentLocation = window.location.href;
-          console.log("[LoginManager] Post-redirect check - Current URL:", currentLocation);
-          setNavigationInProgress(false);
-        }, 300);
-      } catch (error) {
-        console.error("[LoginManager] Navigation error:", error);
-        toast({
-          title: "Navigation error",
-          description: "There was a problem navigating to your dashboard. Please try again.",
-          variant: "destructive",
-        });
-        setNavigationInProgress(false);
-      }
-    }, 100);
-    
-  }, [isAuthenticated, profile, navigate, isLoading, location.pathname]);
+  }, [isAuthenticated, profile, isLoading, location.pathname, navigationInProgress]);
 
   return {
     redirected: redirected.current,
     navigationInProgress,
+    setNavigationInProgress
   };
 };

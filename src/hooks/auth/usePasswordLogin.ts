@@ -32,20 +32,20 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
     setError(null);
     console.log(`[usePasswordLogin] Attempting login for email: ${email}`);
 
-    // Set a global timeout to prevent the login process from hanging indefinitely
+    // Global timeout to prevent hanging
     const loginTimeout = setTimeout(() => {
       console.error('[usePasswordLogin] Login process timed out after 15 seconds');
       setIsLoading(false);
-      
       toast({
         variant: "destructive",
         title: "Login timed out",
         description: "The login process took too long. Please try again.",
-        duration: 5000, // Explicitly set duration
+        duration: 5000,
       });
     }, 15000);
 
     try {
+      // 1. Authentication step
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
@@ -58,7 +58,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
           variant: "destructive",
           title: "Login failed",
           description: authError.message,
-          duration: 5000, // Explicitly set duration
+          duration: 5000,
         });
         setIsLoading(false);
         clearTimeout(loginTimeout);
@@ -78,175 +78,123 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         return;
       }
         
-      // Store the session immediately after login
-      const sessionStored = storeSession(data.session);
-      console.log("[usePasswordLogin] Login successful, storing session:", sessionStored ? "success" : "failed");
-      console.log("[usePasswordLogin] User ID:", data.user?.id);
-      console.log("[usePasswordLogin] User metadata:", data.user?.user_metadata);
-
-      // Show success toast with specific duration
+      // 2. Store the session
+      storeSession(data.session);
+      console.log("[usePasswordLogin] Login successful, session stored");
+      
+      // 3. Success notification
       toast({
         title: "Login successful",
         description: "You've been logged in successfully",
-        duration: 5000, // Ensure 5-second display
+        duration: 3000,
       });
 
+      // 4. Fetch user profile with timeout protection
       console.log("[usePasswordLogin] Fetching user profile");
-      
-      // Set a timeout just for the profile fetch to prevent it from hanging
-      const profilePromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user?.id)
-        .maybeSingle();
-        
-      const profileTimeoutPromise = new Promise((resolve) => {
-        setTimeout(() => {
-          console.log("[usePasswordLogin] Profile fetch timed out, continuing without profile data");
-          resolve({ data: null, error: new Error('Profile fetch timed out') });
-        }, 5000);
-      });
+      let profile = null;
+      let pharmacyId = null;
       
       try {
-        const { data: profile, error: profileError } = await Promise.race([
+        const profilePromise = supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user?.id)
+          .maybeSingle();
+          
+        // Use Promise.race with timeout
+        const profileResult = await Promise.race([
           profilePromise,
-          profileTimeoutPromise
+          new Promise(resolve => {
+            setTimeout(() => {
+              console.log("[usePasswordLogin] Profile fetch timed out, continuing without profile data");
+              resolve({ data: null, error: new Error('Profile fetch timed out') });
+            }, 5000);
+          })
         ]) as any;
-
-        if (profileError) {
-          console.error("[usePasswordLogin] Profile fetch error:", profileError);
-          toast({
-            variant: "destructive",
-            title: "Profile Error",
-            description: "There was an error loading your profile. Please try again.",
-            duration: 5000,
-          });
-          setIsLoading(false);
-          clearTimeout(loginTimeout);
-          return;
-        }
         
-        console.log("[usePasswordLogin] Fetched profile:", profile);
-        console.log("[usePasswordLogin] Raw profile role:", profile?.role);
+        profile = profileResult?.data;
         
-        // Special handling for pharmacists - check if we need to get pharmacy info
-        let pharmacyId = null;
+        // If we have a pharmacist role, try to fetch pharmacy relationship
         if (profile?.role === 'pharmacist') {
-          console.log("[usePasswordLogin] Pharmacist detected, fetching pharmacy relationship");
           try {
-            // Set a pharmacy fetch timeout
-            const pharmacyPromise = supabase
+            const { data: pharmacyData } = await supabase
               .from('user_pharmacies')
               .select('pharmacy_id')
               .eq('user_id', data.user?.id)
               .maybeSingle();
               
-            const pharmacyTimeoutPromise = new Promise((resolve) => {
-              setTimeout(() => {
-                console.log("[usePasswordLogin] Pharmacy fetch timed out, continuing without pharmacy data");
-                resolve({ data: null, error: new Error('Pharmacy fetch timed out') });
-              }, 3000); 
-            });
-            
-            const { data: pharmacyData } = await Promise.race([pharmacyPromise, pharmacyTimeoutPromise]) as any;
             pharmacyId = pharmacyData?.pharmacy_id;
             console.log("[usePasswordLogin] Pharmacist pharmacy_id:", pharmacyId);
-          } catch (pharmErr) {
-            console.error("[usePasswordLogin] Error fetching pharmacy relationship:", pharmErr);
+          } catch (err) {
+            console.error("[usePasswordLogin] Error fetching pharmacy relationship:", err);
           }
         }
-        
-        const completeProfile = profile ? {
-          ...profile as any,
-          pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
-          pharmacist_signature_url: profile.pharmacist_signature_url || null,
-          pharmacy_id: pharmacyId
-        } : null;
-
-        // Update auth state
-        setAuth({
-          user: data.user,
-          profile: completeProfile,
-          permissions: [],
-          isLoading: false,
-        });
-        
-        // Set flags for redirecting
-        sessionStorage.setItem('login_successful', 'true');
-        
-        // Log role detection for debugging
-        console.log("[usePasswordLogin] Role detected:", completeProfile?.role || 'patient');
-        
-        // Determine the redirect route based on role
-        const role = completeProfile?.role || 'patient';
-        const redirectRoute = getDashboardRouteByRole(role);
-        console.log("[usePasswordLogin] Redirecting to:", redirectRoute);
-        
-        // Call onSuccess callback if provided
-        if (onSuccess) {
-          onSuccess();
-        }
-
-        setIsLoading(false);
-        clearTimeout(loginTimeout);
-        
-        // Use React Router navigation consistently for all roles
-        navigate(redirectRoute, { replace: true });
-      } catch (profileError: any) {
-        console.error("[usePasswordLogin] Error or timeout during profile fetch:", profileError);
-        
-        // Even if profile fetch fails, try to continue with basic user data
-        setAuth({
-          user: data.user,
-          profile: {
-            id: data.user.id,
-            role: data.user.user_metadata?.role || 'patient',
-            email: data.user.email,
-            full_name: data.user.user_metadata?.full_name || 'User',
-            // Add other default fields
-            role_id: null,
-            avatar_url: null,
-            date_of_birth: null,
-            city: null,
-            auth_method: 'password',
-            is_blocked: false,
-            doctor_stamp_url: null,
-            doctor_signature_url: null,
-            pharmacist_stamp_url: null,
-            pharmacist_signature_url: null,
-            cns_card_front: null,
-            cns_card_back: null,
-            cns_number: null,
-            deleted_at: null,
-            created_at: null,
-            updated_at: null,
-            license_number: data.user.user_metadata?.license_number || null,
-            phone_number: null,
-            address: null,
-            pharmacy_id: null,
-            pharmacy_name: null,
-            pharmacy_logo_url: null
-          },
-          permissions: [],
-          isLoading: false,
-        });
-        
-        // Call onSuccess callback if provided
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        setIsLoading(false);
-        clearTimeout(loginTimeout);
-        
-        // Use role from user metadata as fallback
-        const role = data.user.user_metadata?.role || 'patient';
-        const redirectRoute = getDashboardRouteByRole(role);
-        console.log("[usePasswordLogin] Using fallback route:", redirectRoute);
-        
-        // Use React Router navigation consistently
-        navigate(redirectRoute, { replace: true });
+      } catch (profileError) {
+        console.error('[usePasswordLogin] Error fetching profile:', profileError);
       }
+      
+      // 5. Create complete profile object with defaults for missing data
+      const completeProfile = profile ? {
+        ...profile as any,
+        pharmacist_stamp_url: profile.pharmacist_stamp_url || null,
+        pharmacist_signature_url: profile.pharmacist_signature_url || null,
+        pharmacy_id: pharmacyId || null,
+        pharmacy_name: profile.pharmacy_name || null,
+        pharmacy_logo_url: profile.pharmacy_logo_url || null
+      } : {
+        id: data.user.id,
+        role: data.user.user_metadata?.role || 'patient',
+        email: data.user.email,
+        full_name: data.user.user_metadata?.full_name || 'User',
+        role_id: null,
+        avatar_url: null,
+        date_of_birth: null,
+        city: null,
+        auth_method: 'password',
+        is_blocked: false,
+        doctor_stamp_url: null,
+        doctor_signature_url: null,
+        pharmacist_stamp_url: null,
+        pharmacist_signature_url: null,
+        cns_card_front: null,
+        cns_card_back: null,
+        cns_number: null,
+        deleted_at: null,
+        created_at: null,
+        updated_at: null,
+        license_number: data.user.user_metadata?.license_number || null,
+        phone_number: null,
+        address: null,
+        pharmacy_id: pharmacyId,
+        pharmacy_name: null,
+        pharmacy_logo_url: null
+      };
+
+      // 6. Update auth state
+      setAuth({
+        user: data.user,
+        profile: completeProfile,
+        permissions: [],
+        isLoading: false,
+      });
+      
+      // 7. Set flags for redirecting
+      sessionStorage.setItem('login_successful', 'true');
+      
+      // 8. Determine redirect route
+      const role = completeProfile?.role || 'patient';
+      const redirectRoute = getDashboardRouteByRole(role);
+      console.log("[usePasswordLogin] Redirecting to:", redirectRoute);
+      
+      // 9. Invoke success callback
+      if (onSuccess) {
+        onSuccess();
+      }
+
+      // 10. Cleanup and navigate
+      setIsLoading(false);
+      clearTimeout(loginTimeout);
+      navigate(redirectRoute, { replace: true });
     } catch (err: any) {
       clearTimeout(loginTimeout);
       console.error('[usePasswordLogin] Unexpected error during login:', err);
@@ -255,7 +203,7 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         variant: "destructive",
         title: "Login failed",
         description: err.message || "An unexpected error occurred",
-        duration: 5000, // Explicitly set duration
+        duration: 5000,
       });
       setIsLoading(false);
     }

@@ -12,34 +12,28 @@ import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
-  const { redirected, navigationInProgress } = useLoginManager();
+  const { redirected } = useLoginManager();
   const [showManualRedirect, setShowManualRedirect] = useState(false);
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
   const navigate = useNavigate();
 
-  // Escape hatch: Force navigation if auth is complete but redirect is stuck
+  // Show manual redirect button if authenticated but still on login page after delay
   useEffect(() => {
-    if (isAuthenticated && profile?.role && !isLoading && !redirectAttempted) {
-      // Mark that we've attempted a redirect to avoid multiple attempts
-      setRedirectAttempted(true);
-      
-      const forceNavigationTimeout = setTimeout(() => {
-        // If we're still on the login page after 2 seconds, show manual redirect option
+    if (isAuthenticated && profile?.role && !isLoading) {
+      // If we're still on the login page after 3 seconds, show manual redirect option
+      const redirectTimeout = setTimeout(() => {
         setShowManualRedirect(true);
         console.log("[Login] Navigation may be taking longer than expected, showing manual redirect option");
-      }, 2000);
+      }, 3000);
       
-      return () => clearTimeout(forceNavigationTimeout);
+      return () => clearTimeout(redirectTimeout);
     }
-  }, [isAuthenticated, profile, isLoading, redirectAttempted]);
+  }, [isAuthenticated, profile, isLoading]);
 
   // Handle manual redirect
   const handleManualRedirect = () => {
     if (profile?.role) {
       const route = getDashboardRouteByRole(profile.role);
       console.log("[Login] Manual navigation to:", route);
-      
-      // Use React Router's navigate function for all roles
       navigate(route, { replace: true });
     }
   };
