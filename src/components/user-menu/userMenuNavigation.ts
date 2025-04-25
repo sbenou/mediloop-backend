@@ -16,10 +16,10 @@ export function useUserMenuNavigation() {
       return;
     }
     
-    // For direct paths and special cases, use location.href for more reliable navigation
-    if (path === '/dashboard' || path.includes('dashboard')) {
-      console.log("Using direct navigation for dashboard path");
-      window.location.href = path;
+    // Dashboard with query params
+    if (path.startsWith('/dashboard?')) {
+      console.log("Navigating to dashboard with params:", path);
+      navigate(path);
       return;
     }
     
@@ -29,7 +29,7 @@ export function useUserMenuNavigation() {
       return;
     }
     
-    // For all other paths, use React Router
+    // For all other paths, use standard navigation
     navigate(path);
     
   }, [location.pathname, navigate]);
