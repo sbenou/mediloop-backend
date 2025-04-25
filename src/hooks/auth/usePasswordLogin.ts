@@ -189,10 +189,19 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         setIsLoading(false);
         clearTimeout(loginTimeout);
         
-        // Use setTimeout for the navigation to ensure any state updates have completed
-        setTimeout(() => {
-          navigate(redirectRoute, { replace: true });
-        }, 100);
+        // Direct navigation using window.location instead of React Router's navigate
+        // This ensures a full page reload and consistent state
+        if (role === 'pharmacist') {
+          console.log("[usePasswordLogin] Using direct location change for pharmacist");
+          setTimeout(() => {
+            window.location.href = redirectRoute;
+          }, 100);
+        } else {
+          // Use React Router navigation for other roles
+          setTimeout(() => {
+            navigate(redirectRoute, { replace: true });
+          }, 100);
+        }
       } catch (profileError: any) {
         console.error("[usePasswordLogin] Error or timeout during profile fetch:", profileError);
         
@@ -245,10 +254,16 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
         const redirectRoute = getDashboardRouteByRole(role);
         console.log("[usePasswordLogin] Using fallback route:", redirectRoute);
         
-        // Use setTimeout for the navigation to ensure any state updates have completed
-        setTimeout(() => {
-          navigate(redirectRoute, { replace: true });
-        }, 100);
+        // Use direct location change for consistent behavior
+        if (role === 'pharmacist') {
+          setTimeout(() => {
+            window.location.href = redirectRoute;
+          }, 100);
+        } else {
+          setTimeout(() => {
+            navigate(redirectRoute, { replace: true });
+          }, 100);
+        }
       }
     } catch (err: any) {
       clearTimeout(loginTimeout);

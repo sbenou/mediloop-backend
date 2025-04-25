@@ -5,26 +5,36 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { useLoginManager } from "@/hooks/auth/useLoginManager";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import { Button } from "@/components/ui/button";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const { redirected, navigationInProgress } = useLoginManager();
+  const [showManualRedirect, setShowManualRedirect] = useState(false);
 
   // Escape hatch: Force navigation if auth is complete but redirect is stuck
   useEffect(() => {
     if (isAuthenticated && profile?.role && !isLoading) {
       const forceNavigationTimeout = setTimeout(() => {
-        // If we're still on the login page after 2 seconds, force navigation
-        const route = getDashboardRouteByRole(profile.role);
-        console.log("[Login] Force navigation fallback to:", route);
-        window.location.href = route;
+        // If we're still on the login page after 2 seconds, show manual redirect option
+        setShowManualRedirect(true);
+        console.log("[Login] Navigation may be stuck, showing manual redirect option");
       }, 2000);
       
       return () => clearTimeout(forceNavigationTimeout);
     }
   }, [isAuthenticated, profile, isLoading]);
+
+  // Handle manual redirect
+  const handleManualRedirect = () => {
+    if (profile?.role) {
+      const route = getDashboardRouteByRole(profile.role);
+      console.log("[Login] Manual navigation to:", route);
+      window.location.href = route;
+    }
+  };
 
   // Show loading state during initial load
   if (isLoading) {
@@ -57,6 +67,15 @@ const Login = () => {
               <CardDescription>
                 Please wait while we redirect you to your dashboard
               </CardDescription>
+              
+              {showManualRedirect && (
+                <div className="mt-4">
+                  <p className="text-amber-600 mb-2">Navigation may be taking longer than expected</p>
+                  <Button onClick={handleManualRedirect} variant="default">
+                    Continue to Dashboard
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
         </Card>
