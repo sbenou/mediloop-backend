@@ -87,6 +87,9 @@ export const useProfileFetch = () => {
       // Get auth user info with timeout protection
       const authUserInfo = await authUserWithTimeout;
       const effectiveUserId = authUserInfo.id || userId;
+      // Default role and email values to use if not provided
+      const defaultRole = authUserInfo.role || 'patient';
+      const defaultEmail = authUserInfo.email || '';
       
       // Main profile fetch operation
       const profileFetchOperation = async () => {
@@ -116,16 +119,12 @@ export const useProfileFetch = () => {
             try {
               console.log('Creating profile for user:', effectiveUserId);
               
-              // Use auth user metadata if available, otherwise use defaults
-              const role = authUserInfo.role || 'patient';
-              const email = authUserInfo.email || '';
-              
               // Create profile with simplified approach
               const createProfilePromise = supabase.rpc('create_profile_secure', {
                 user_id: effectiveUserId,
-                user_role: role,
+                user_role: defaultRole,
                 user_full_name: 'User',
-                user_email: email,
+                user_email: defaultEmail,
                 user_license_number: null,
               });
               
@@ -148,10 +147,10 @@ export const useProfileFetch = () => {
                 // Return minimal profile as fallback
                 const minimalProfile: UserProfile = {
                   id: effectiveUserId,
-                  role: role || 'patient',
+                  role: defaultRole,
                   role_id: null,
                   full_name: 'User',
-                  email: email || null,
+                  email: defaultEmail,
                   avatar_url: null,
                   date_of_birth: null,
                   city: null,
@@ -196,10 +195,10 @@ export const useProfileFetch = () => {
               // Return minimal profile as fallback
               const minimalProfile: UserProfile = {
                 id: effectiveUserId,
-                role: authUserInfo.role || 'patient',
+                role: defaultRole,
                 role_id: null,
                 full_name: 'User',
-                email: authUserInfo.email || null,
+                email: defaultEmail,
                 avatar_url: null,
                 date_of_birth: null,
                 city: null,
@@ -283,10 +282,10 @@ export const useProfileFetch = () => {
           // Return minimal profile as fallback
           const minimalProfile: UserProfile = {
             id: effectiveUserId,
-            role: authUserInfo.role || 'patient',
+            role: defaultRole,
             role_id: null,
             full_name: 'User',
-            email: authUserInfo.email || null,
+            email: defaultEmail,
             avatar_url: null,
             date_of_birth: null,
             city: null,
