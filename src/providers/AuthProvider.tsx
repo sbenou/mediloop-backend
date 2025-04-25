@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { supabase, getSessionFromStorage } from '@/lib/supabase';
@@ -15,24 +14,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { handleVisibilityChange } = useVisibilityChange();
   const { handleStorageChange, handleTokenUpdate } = useStorageEvents();
   
-  // Set up session polling
   useSessionPolling();
 
-  // Listen for auth state changes from Supabase
   useEffect(() => {
     let mounted = true;
 
     const initializeAuth = async () => {
       try {
-        console.log('Initializing auth provider...');
+        console.log('[AuthProvider] Starting auth initialization', {
+          timestamp: new Date().toISOString()
+        });
+        
         setAuth(prev => ({ ...prev, isLoading: true }));
         
-        // First try to get session from storage (faster)
         const storedSession = getSessionFromStorage();
         
         if (storedSession) {
-          console.log('Found existing session in storage, using it temporarily');
-          // Temporarily set auth state with stored session while we validate
+          console.log('[AuthProvider] Found stored session:', {
+            userId: storedSession.user?.id,
+            timestamp: new Date().toISOString()
+          });
+          
           if (mounted) {
             setAuth(prev => ({
               ...prev,
@@ -42,21 +44,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
         
-        // Always get fresh session from API to validate
+        console.log('[AuthProvider] Fetching fresh session from API');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting session from API:', error);
+          console.error('[AuthProvider] Error getting session from API:', error);
           throw error;
         }
         
         if (!mounted) return;
         
         if (session) {
-          console.log(`Using API session for user: ${session.user.id}`);
+          console.log('[AuthProvider] Using API session for user:', {
+            userId: session.user.id,
+            timestamp: new Date().toISOString()
+          });
           await updateAuthState(session);
         } else if (storedSession?.user?.id) {
-          console.log('API returned no session but we have one in storage');
+          console.log('[AuthProvider] API returned no session but found one in storage');
           // Try to refresh the session
           try {
             const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
@@ -96,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
           }
         } else {
-          console.log('No active session found, clearing auth state');
+          console.log('[AuthProvider] No active session found, clearing auth state');
           if (mounted) {
             setAuth({
               user: null,
@@ -107,7 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('[AuthProvider] Auth initialization error:', error);
         if (mounted) {
           setAuth({
             user: null,
@@ -127,15 +132,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initializeAuth();
 
-    // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
-        console.log(`Auth state changed: ${event} for user: ${session?.user?.id || 'none'}`);
+        console.log('[AuthProvider] Auth state changed:', {
+          event,
+          userId: session?.user?.id,
+          timestamp: new Date().toISOString()
+        });
 
         if (event === 'SIGNED_IN' && session) {
+          console.log('[AuthProvider] Processing SIGNED_IN event');
           await updateAuthState(session);
         } else if (event === 'SIGNED_OUT') {
+          console.log('[AuthProvider] Processing SIGNED_OUT event');
           setAuth({
             user: null,
             profile: null,
@@ -143,6 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             isLoading: false,
           });
         } else if ((event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session) {
+          console.log('[AuthProvider] Processing token refresh/user update');
           await updateAuthState(session);
         }
       }
@@ -154,7 +165,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for visibility changes
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Clean up all listeners on unmount
     return () => {
       mounted = false;
       subscription?.unsubscribe();

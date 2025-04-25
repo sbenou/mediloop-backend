@@ -1,4 +1,3 @@
-
 /**
  * Broadcast authentication events to other tabs
  * @param eventType The type of auth event (LOGIN, LOGOUT, TOKEN_REFRESHED)
@@ -23,10 +22,16 @@ export const broadcastAuthEvent = (eventType: 'LOGIN' | 'LOGOUT' | 'TOKEN_REFRES
 export const storeSession = (session) => {
   if (!session) {
     console.warn("[sessionUtils][DEBUG] Attempted to store null/undefined session");
+    console.trace("[sessionUtils][DEBUG] Stack trace for null session store attempt");
     return;
   }
   
-  console.log("[sessionUtils][DEBUG] Storing session for user:", session.user.id);
+  console.log("[sessionUtils][DEBUG] Storing session for user:", {
+    userId: session.user.id,
+    timestamp: new Date().toISOString(),
+    hasAccessToken: !!session.access_token,
+    expiresAt: session.expires_at
+  });
   
   try {
     // Define the storage key in the Supabase format
@@ -34,7 +39,12 @@ export const storeSession = (session) => {
     
     // Validate session object before storing
     if (!session.access_token || !session.user || !session.user.id) {
-      console.error("[sessionUtils][DEBUG] Invalid session object:", session);
+      console.error("[sessionUtils][DEBUG] Invalid session object:", {
+        hasAccessToken: !!session.access_token,
+        hasUser: !!session.user,
+        userId: session.user?.id,
+        timestamp: new Date().toISOString()
+      });
       return false;
     }
     
@@ -63,12 +73,14 @@ export const storeSession = (session) => {
       expiresAt: session.expires_at,
       expiresIn: session.expires_in,
       storageKey: STORAGE_KEY,
-      sessionKeys: Object.keys(session)
+      sessionKeys: Object.keys(session),
+      timestamp: new Date().toISOString()
     });
     
     return true;
   } catch (error) {
     console.error("[sessionUtils][DEBUG] Error storing session:", error);
+    console.trace("[sessionUtils][DEBUG] Stack trace for session store error");
     return false;
   }
 };

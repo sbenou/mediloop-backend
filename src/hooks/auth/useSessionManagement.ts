@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { supabase, getSessionFromStorage, clearAllAuthStorage } from '@/lib/supabase';
 import { useProfileFetch } from './useProfileFetch';
@@ -12,8 +11,14 @@ export const useSessionManagement = () => {
   const { fetchAndSetProfile } = useProfileFetch();
   
   const updateAuthState = useCallback(async (session: any | null) => {
+    console.log('[SessionManagement] updateAuthState called with session:', {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      timestamp: new Date().toISOString()
+    });
+
     if (!session?.user) {
-      console.log('No session or user, clearing auth state');
+      console.log('[SessionManagement] No session or user, clearing auth state');
       setAuth({
         user: null,
         profile: null,
@@ -24,34 +29,34 @@ export const useSessionManagement = () => {
     }
 
     try {
-      // Ensure session is stored for maximum persistence before proceeding
+      console.log('[SessionManagement] Storing session before proceeding');
       storeSession(session);
       
+      console.log('[SessionManagement] Setting initial auth state with user');
       setAuth(prev => ({
         ...prev,
         user: session.user,
         isLoading: true,
       }));
 
-      // Before trying to fetch the profile, verify that the token is still valid
+      // Validate token
       try {
-        // Perform a lightweight check to verify token validity
+        console.log('[SessionManagement] Starting token validation');
         const { data: userData, error: userError } = await supabase.auth.getUser();
         
         if (userError) {
-          console.error('Token validation error:', userError);
+          console.error('[SessionManagement] Token validation error:', userError);
           throw userError;
         }
         
         if (!userData.user || userData.user.id !== session.user.id) {
-          console.error('User ID mismatch or missing user data');
+          console.error('[SessionManagement] User ID mismatch or missing user data');
           throw new Error('User identity validation failed');
         }
         
-        console.log('Token validation successful for user:', userData.user.id);
+        console.log('[SessionManagement] Token validation successful');
       } catch (tokenError) {
-        console.error('Token validation failed:', tokenError);
-        // Clear all auth storage to remove invalid tokens
+        console.error('[SessionManagement] Token validation failed:', tokenError);
         clearAllAuthStorage();
         setAuth({
           user: null,
@@ -68,11 +73,11 @@ export const useSessionManagement = () => {
         return;
       }
 
-      // Fetch the user profile
+      console.log('[SessionManagement] Fetching user profile');
       const { profile, permissions } = await fetchAndSetProfile(session.user.id);
 
       if (!profile) {
-        console.error('No profile found after fetch, trying to create one');
+        console.error('[SessionManagement] No profile found after fetch, trying to create one');
         // Try to create profile one last time if it doesn't exist
         try {
           const userData = session.user;
@@ -130,10 +135,11 @@ export const useSessionManagement = () => {
         return;
       }
 
-      console.log('Updating auth state with:', {
+      console.log('[SessionManagement] Final auth state update with:', {
         userId: session.user.id,
-        role: profile.role,
-        permissionsCount: permissions.length
+        role: profile?.role,
+        permissionsCount: permissions.length,
+        timestamp: new Date().toISOString()
       });
 
       setAuth({
@@ -144,11 +150,8 @@ export const useSessionManagement = () => {
       });
 
     } catch (error) {
-      console.error('Error in updateAuthState:', error);
-      
-      // Clear auth storage to prevent reusing bad tokens
+      console.error('[SessionManagement] Error in updateAuthState:', error);
       clearAllAuthStorage();
-      
       setAuth({
         user: null,
         profile: null,
