@@ -5,10 +5,26 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { useLoginManager } from "@/hooks/auth/useLoginManager";
+import { useEffect } from "react";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 const Login = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const { redirected } = useLoginManager();
+  const { isAuthenticated, isLoading, profile } = useAuth();
+  const { redirected, navigationInProgress } = useLoginManager();
+
+  // Escape hatch: Force navigation if auth is complete but redirect is stuck
+  useEffect(() => {
+    if (isAuthenticated && profile?.role && !isLoading) {
+      const forceNavigationTimeout = setTimeout(() => {
+        // If we're still on the login page after 2 seconds, force navigation
+        const route = getDashboardRouteByRole(profile.role);
+        console.log("[Login] Force navigation fallback to:", route);
+        window.location.href = route;
+      }, 2000);
+      
+      return () => clearTimeout(forceNavigationTimeout);
+    }
+  }, [isAuthenticated, profile, isLoading]);
 
   // Show loading state during initial load
   if (isLoading) {
