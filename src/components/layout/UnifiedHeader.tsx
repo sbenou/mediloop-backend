@@ -6,6 +6,7 @@ import UserMenu from "../UserMenu";
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { MainNavigation } from "./navigation/MainNavigation";
 import CartButton from "./navigation/CartButton";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 interface UnifiedHeaderProps {
   showBackLink?: boolean;
@@ -20,6 +21,7 @@ export const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
 }) => {
   // Add state to control cart open/close
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const handleBackClick = () => {
     if (onBackClick) {
@@ -54,7 +56,7 @@ export const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
             isOpen={isCartOpen}
             onOpenChange={setIsCartOpen}
           />
-          <NotificationBell />
+          {isAuthenticated && <NotificationBell />}
           {showUserMenu && <UserMenu />}
         </div>
       </div>
