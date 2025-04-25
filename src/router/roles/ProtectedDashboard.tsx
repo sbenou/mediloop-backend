@@ -3,16 +3,15 @@ import ProtectedRoute from '@/components/routing/ProtectedRoute';
 import Dashboard from '@/pages/Dashboard';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const ProtectedDashboard = () => {
   const { userRole, isPharmacist, isLoading, isAuthenticated } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   
-  // Handle redirection for pharmacists
+  // Force immediate redirection for pharmacists to avoid loading issues
   useEffect(() => {
     if (!isLoading && !hasAttemptedRedirect) {
       setHasAttemptedRedirect(true);
@@ -24,25 +23,16 @@ const ProtectedDashboard = () => {
       }
       
       if (isPharmacist || userRole === 'pharmacist') {
-        console.log('Setting default pharmacist params for dashboard - using navigate');
-        // Check if we're coming from a pharmacy-specific navigation
-        const fromPharmacy = location.state?.fromPharmacy;
-        
-        if (!fromPharmacy) {
-          // Use navigate with replace to avoid history stacking
-          navigate('/dashboard?view=pharmacy&section=dashboard', { 
-            replace: true,
-            state: { fromPharmacy: true } 
-          });
-        }
+        console.log('Setting default pharmacist params for dashboard - direct navigation');
+        window.location.href = '/dashboard?view=pharmacy&section=dashboard';
         return;
       }
     }
-  }, [userRole, isPharmacist, isLoading, isAuthenticated, navigate, hasAttemptedRedirect, location.state]);
+  }, [userRole, isPharmacist, isLoading, isAuthenticated, navigate, hasAttemptedRedirect]);
   
   // Make sure pharmacy users always have the correct params
   useEffect(() => {
-    if (!isLoading && isAuthenticated && (isPharmacist || userRole === 'pharmacist')) {
+    if (!isLoading && !hasAttemptedRedirect && (isPharmacist || userRole === 'pharmacist')) {
       const currentView = searchParams.get('view');
       const currentSection = searchParams.get('section');
       
@@ -51,7 +41,7 @@ const ProtectedDashboard = () => {
         setSearchParams({ view: 'pharmacy', section: 'dashboard' });
       }
     }
-  }, [userRole, isPharmacist, searchParams, setSearchParams, isLoading, isAuthenticated]);
+  }, [userRole, isPharmacist, searchParams, setSearchParams, isLoading, hasAttemptedRedirect]);
   
   // If we're still in the loading state, show a short-circuit loading indicator
   if (isLoading && (isPharmacist || userRole === 'pharmacist')) {
