@@ -87,9 +87,11 @@ export const useProfileFetch = () => {
       // Get auth user info with timeout protection
       const authUserInfo = await authUserWithTimeout;
       const effectiveUserId = authUserInfo.id || userId;
+      
+      // Use optional chaining to safely access properties that might not exist
       // Default role and email values to use if not provided
-      const defaultRole = authUserInfo.role || 'patient';
-      const defaultEmail = authUserInfo.email || '';
+      const defaultRole = authUserInfo?.role || 'patient';
+      const defaultEmail = authUserInfo?.email || '';
       
       // Main profile fetch operation
       const profileFetchOperation = async () => {
