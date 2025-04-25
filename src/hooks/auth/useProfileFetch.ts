@@ -8,6 +8,11 @@ export const useProfileFetch = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchAndSetProfile = useCallback(async (userId: string): Promise<{ profile: UserProfile | null; permissions: string[] }> => {
+    if (!userId) {
+      console.error('No user ID provided to fetchAndSetProfile');
+      return { profile: null, permissions: [] };
+    }
+    
     console.log('Starting profile fetch for user:', userId);
     try {
       setIsLoading(true);
@@ -32,6 +37,10 @@ export const useProfileFetch = () => {
             sessionUserId: authUser.user.id, 
             requestedUserId: userId 
           });
+          
+          // If IDs don't match, use the session user ID instead as it's more reliable
+          userId = authUser.user.id;
+          console.log('Switching to session user ID for profile fetch:', userId);
         }
 
         console.log('Auth user found, fetching profile:', authUser.user.id);
@@ -128,6 +137,12 @@ export const useProfileFetch = () => {
             };
             
             const safeNewProfile = safeQueryResult<UserProfile>(completeNewProfile);
+            
+            // Ensure all expected fields are present even if the database doesn't have them
+            if (safeNewProfile && !safeNewProfile.role) {
+              safeNewProfile.role = role;
+            }
+            
             return { 
               profile: safeNewProfile, 
               permissions: [] 

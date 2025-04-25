@@ -1,3 +1,4 @@
+
 /**
  * Broadcast authentication events to other tabs
  * @param eventType The type of auth event (LOGIN, LOGOUT, TOKEN_REFRESHED)
@@ -25,7 +26,7 @@ export const storeSession = (session) => {
     return;
   }
   
-  console.log("[sessionUtils][DEBUG] Session explicitly stored for user:", session.user.id);
+  console.log("[sessionUtils][DEBUG] Storing session for user:", session.user.id);
   
   try {
     // Define the storage key in the Supabase format

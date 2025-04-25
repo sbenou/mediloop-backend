@@ -24,7 +24,7 @@ export const useSessionManagement = () => {
     }
 
     try {
-      // Ensure session is stored for maximum persistence
+      // Ensure session is stored for maximum persistence before proceeding
       storeSession(session);
       
       setAuth(prev => ({
@@ -36,7 +36,7 @@ export const useSessionManagement = () => {
       // Before trying to fetch the profile, verify that the token is still valid
       try {
         // Perform a lightweight check to verify token validity
-        const { data: userData, error: userError } = await supabase.auth.getUser(session.access_token);
+        const { data: userData, error: userError } = await supabase.auth.getUser();
         
         if (userError) {
           console.error('Token validation error:', userError);
@@ -117,7 +117,7 @@ export const useSessionManagement = () => {
         // Clear session as well to force a new login
         try {
           clearAllAuthStorage();
-          await supabase.auth.signOut({ scope: 'global' });
+          await supabase.auth.signOut({ scope: 'local' });
         } catch (signOutError) {
           console.error('Error signing out after profile fetch failure:', signOutError);
         }
@@ -173,13 +173,31 @@ export const useSessionManagement = () => {
       try {
         console.log(`Attempting to refresh session... (attempt ${refreshAttempts}/${MAX_ATTEMPTS})`);
         
-        // First try to completely refresh token to get a clean session
+        // First try to get a new session directly from Supabase
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (!error && data.session) {
+            console.log('Session retrieved successfully via API');
+            storeSession(data.session); // Ensure it's properly stored
+            return data.session;
+          } else if (error) {
+            console.error('Error getting session from API:', error);
+          }
+        } catch (getSessionErr) {
+          console.error('Error during getSession:', getSessionErr);
+        }
+        
+        // If getSession fails, try explicit refresh
         try {
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
           
           if (!refreshError && refreshData.session) {
             console.log('Session refreshed successfully via API');
+            storeSession(refreshData.session); // Ensure it's properly stored
             return refreshData.session;
+          } else if (refreshError) {
+            console.error('Error refreshing session:', refreshError);
           }
         } catch (refreshErr) {
           console.error('Error during refresh attempt:', refreshErr);
@@ -190,21 +208,8 @@ export const useSessionManagement = () => {
         
         if (!storedSession) {
           if (refreshAttempts < MAX_ATTEMPTS) {
-            console.log('No session found, checking Supabase directly...');
-            // Try to get from Supabase
-            const { data, error } = await supabase.auth.getSession();
-            
-            if (error) {
-              console.error('Error fetching session:', error);
-              throw error;
-            }
-            
-            if (!data.session) {
-              console.log('No session found, attempting refresh one more time...');
-              return attemptRefresh();
-            }
-            
-            return data.session;
+            console.log('No session found, trying one more refresh attempt...');
+            return attemptRefresh();
           } else {
             console.log(`Maximum refresh attempts (${MAX_ATTEMPTS}) reached`);
             return null;
@@ -216,8 +221,8 @@ export const useSessionManagement = () => {
           const { data: userData, error: userError } = await supabase.auth.getUser();
           
           if (userError) {
+            console.error('Stored session invalid, attempting refresh again');
             if (refreshAttempts < MAX_ATTEMPTS) {
-              console.error('Stored session invalid, attempting refresh again');
               return attemptRefresh();
             } else {
               console.warn(`Maximum refresh attempts (${MAX_ATTEMPTS}) reached`);
@@ -226,7 +231,15 @@ export const useSessionManagement = () => {
             }
           }
           
-          return storedSession;
+          if (userData.user) {
+            console.log('Stored session validated successfully');
+            return storedSession;
+          } else {
+            console.log('Stored session validation returned no user');
+            clearAllAuthStorage();
+            return null;
+          }
+          
         } catch (validateErr) {
           console.error('Error validating stored session:', validateErr);
           if (refreshAttempts < MAX_ATTEMPTS) {

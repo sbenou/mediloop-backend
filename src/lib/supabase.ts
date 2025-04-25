@@ -19,15 +19,28 @@ export const supabase = createClient(url, key, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: localStorage // Explicitly set storage to localStorage
   }
 });
 
 export const getSessionFromStorage = () => {
-  const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+  const STORAGE_KEY = `sb-${url.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`;
   try {
-    const storedSession = window.localStorage.getItem(STORAGE_KEY) || window.sessionStorage.getItem(STORAGE_KEY);
-    return storedSession ? JSON.parse(storedSession) : null;
+    const storedSession = localStorage.getItem(STORAGE_KEY);
+    if (storedSession) {
+      return JSON.parse(storedSession);
+    }
+    
+    // Try session storage as fallback
+    const sessionStorageSession = sessionStorage.getItem(STORAGE_KEY);
+    if (sessionStorageSession) {
+      // Copy to localStorage for better persistence
+      localStorage.setItem(STORAGE_KEY, sessionStorageSession);
+      return JSON.parse(sessionStorageSession);
+    }
+    
+    return null;
   } catch (error) {
     console.error('Error getting session from storage:', error);
     return null;
@@ -35,7 +48,7 @@ export const getSessionFromStorage = () => {
 };
 
 export const clearAllAuthStorage = () => {
-  const STORAGE_KEY = `sb-${window.location.hostname.split('.')[0]}-auth-token`;
+  const STORAGE_KEY = `sb-${url.replace(/^(https?:\/\/)?(.*?)\..*$/, '$2')}-auth-token`;
   try {
     localStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(STORAGE_KEY);
