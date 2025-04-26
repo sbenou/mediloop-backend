@@ -25,6 +25,7 @@ import ProtectedAccountPage from './roles/ProtectedAccountPage';
 import ProtectedManageBoostsPage from './roles/ProtectedManageBoostsPage';
 import ProtectedDashboard from './roles/ProtectedDashboard';
 import ProtectedDoctorDashboard from './roles/ProtectedDoctorDashboard';
+import ProtectedPharmacyDashboard from './roles/ProtectedPharmacyDashboard';
 import ProtectedUniversalDashboard from './roles/ProtectedUniversalDashboard';
 import ProtectedDoctorProfilePage from './roles/ProtectedDoctorProfilePage';
 import ProtectedPharmacyProfilePage from './roles/ProtectedPharmacyProfilePage';
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
   { path: '/dashboard', element: <ProtectedDashboard /> },
   { path: '/doctor/dashboard', element: <ProtectedDoctorDashboard /> },
+  { path: '/pharmacy/dashboard', element: <ProtectedPharmacyDashboard /> },
   { path: '/universal-dashboard', element: <ProtectedUniversalDashboard /> },
   { path: '/unauthorized', element: <UnauthorizedPage /> },
   { path: '/doctor/profile', element: <ProtectedDoctorProfilePage /> },
@@ -90,4 +92,3 @@ const router = createBrowserRouter([
 export function RouterProvider() {
   return <ReactRouterProvider router={router} />;
 }
-
