@@ -21,13 +21,15 @@ interface DashboardStatsProps {
     total_prescriptions?: number;
   } | null;
   isLoading: boolean;
-  onNavigate: (path: string) => void;
+  onNavigate: (path: string, tab?: string) => void;
+  userRole?: string;
 }
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({ 
   stats, 
   isLoading,
-  onNavigate
+  onNavigate,
+  userRole
 }) => {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
