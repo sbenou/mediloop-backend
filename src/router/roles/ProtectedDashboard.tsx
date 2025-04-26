@@ -3,22 +3,9 @@ import ProtectedRoute from '@/components/routing/ProtectedRoute';
 import Dashboard from '@/pages/Dashboard';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { getDashboardRouteByRole } from '@/utils/auth/getDashboardRouteByRole';
 
 const ProtectedDashboard = () => {
   const { userRole, isLoading, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  
-  // Redirect to role-specific dashboard if authenticated
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && userRole) {
-      const dashboardRoute = getDashboardRouteByRole(userRole);
-      if (dashboardRoute !== '/dashboard') {
-        navigate(dashboardRoute, { replace: true });
-      }
-    }
-  }, [isLoading, isAuthenticated, userRole, navigate]);
   
   // Handle initial loading state when auth is being determined
   if (isLoading) {
