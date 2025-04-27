@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Products from '@/pages/Products';
@@ -35,6 +34,7 @@ import ProtectedMyPrescriptions from './roles/ProtectedMyPrescriptions';
 import ProtectedReferral from './roles/ProtectedReferral';
 import ProtectedSettings from './roles/ProtectedSettings';
 import ProtectedBillingDetails from './roles/ProtectedBillingDetails';
+import ProtectedPharmacyDashboard from './roles/ProtectedPharmacyDashboard';
 
 // Wrapper component that injects Currency and Cart context to products routes
 const ProductsLayout = () => (
@@ -68,6 +68,7 @@ const router = createBrowserRouter([
   { path: '/unauthorized', element: <UnauthorizedPage /> },
   { path: '/doctor/profile', element: <ProtectedDoctorProfilePage /> },
   { path: '/pharmacy/profile', element: <ProtectedPharmacyProfilePage /> },
+  { path: '/pharmacy/dashboard', element: <ProtectedPharmacyDashboard /> },
   {
     path: '/notifications',
     element: <ProtectedActivities initialView="notifications" />,
@@ -90,4 +91,3 @@ const router = createBrowserRouter([
 export function RouterProvider() {
   return <ReactRouterProvider router={router} />;
 }
-
