@@ -23,19 +23,10 @@ const Login = () => {
       // Set navigation in progress to prevent duplicate redirects
       setNavigationInProgress(true);
       
-      // For pharmacist role, ensure query params are correct
+      // For pharmacist role, ensure we're using the new route
       if (profile.role === 'pharmacist') {
-        const dashboardUrl = new URL(route, window.location.origin);
-        
-        if (!dashboardUrl.searchParams.has('view')) {
-          dashboardUrl.searchParams.set('view', 'pharmacy');
-        }
-        
-        if (!dashboardUrl.searchParams.has('section')) {
-          dashboardUrl.searchParams.set('section', 'dashboard');
-        }
-        
-        navigate(dashboardUrl.pathname + dashboardUrl.search, { 
+        // Direct to the new dedicated pharmacy dashboard route
+        navigate('/pharmacy/dashboard?section=dashboard', { 
           replace: true,
           state: { preserveAuth: true }
         });

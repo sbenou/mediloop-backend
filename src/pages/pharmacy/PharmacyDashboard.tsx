@@ -35,6 +35,8 @@ const PharmacyDashboard = () => {
         return <OrdersView activeTab={ordersTab} userRole={userRole} />;
       case "prescriptions":
         return <PrescriptionsView userRole={userRole} />;
+      case "patients":
+        return <PharmacyView userRole={userRole} section="patients" />;
       case "dashboard":
       default:
         return <PharmacyView userRole={userRole} section={section} />;

@@ -9,23 +9,15 @@ export const usePharmacyNavigation = () => {
   const [isOrdersOpen, setIsOrdersOpen] = useState<boolean>(false);
   
   const isProfilePage = location.pathname.includes('/pharmacy/profile');
+  const isDashboardPage = location.pathname.includes('/pharmacy/dashboard');
 
   const navigateToPharmacySection = (section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy section: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
-    if (isProfilePage) {
-      if (tab && tabParam) {
-        navigate(`/dashboard?view=pharmacy&section=${section}&${tabParam}=${tab}`);
-      } else {
-        navigate(`/dashboard?view=pharmacy&section=${section}`);
-      }
-      return;
-    }
-    
     if (tab && tabParam) {
-      navigate(`/dashboard?view=pharmacy&section=${section}&${tabParam}=${tab}`);
+      navigate(`/pharmacy/dashboard?section=${section}&${tabParam}=${tab}`);
     } else {
-      navigate(`/dashboard?view=pharmacy&section=${section}`);
+      navigate(`/pharmacy/dashboard?section=${section}`);
     }
   };
 
@@ -61,6 +53,7 @@ export const usePharmacyNavigation = () => {
     navigateToStampSignature,
     navigateToNextOfKin,
     isProfilePage,
+    isDashboardPage,
     isProfileOpen,
     setIsProfileOpen,
     isOrdersOpen,

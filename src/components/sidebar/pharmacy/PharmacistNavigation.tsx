@@ -31,11 +31,11 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
   const { 
     navigateToPharmacySection,
     navigateToProducts,
-    isProfilePage,
     isProfileOpen,
     setIsProfileOpen,
     isOrdersOpen,
-    setIsOrdersOpen
+    setIsOrdersOpen,
+    isDashboardPage
   } = usePharmacyNavigation();
 
   return (
@@ -43,7 +43,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
       <SidebarItem
         icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
         label="Dashboard"
-        isActive={location.pathname.includes('/dashboard') && !location.search.includes('section=')}
+        isActive={isDashboardPage && location.search.includes('section=dashboard')}
         onClick={() => navigateToPharmacySection('dashboard')}
       />
       
