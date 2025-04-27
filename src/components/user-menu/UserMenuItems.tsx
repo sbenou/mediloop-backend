@@ -36,6 +36,16 @@ export function UserMenuItems() {
       return true;
     }
     
+    // For pharmacy dashboard specific paths, compare with the current section
+    if (isPharmacist && location.pathname === '/pharmacy/dashboard') {
+      const currentSection = new URLSearchParams(location.search).get('section');
+      const itemSection = new URLSearchParams(item.path.split('?')[1] || '').get('section');
+      
+      if (currentSection === itemSection) {
+        return false;
+      }
+    }
+    
     // For other items, check if we're already on that page
     return !location.pathname.startsWith(item.path.split('?')[0]);
   });

@@ -37,7 +37,7 @@ export function useUserMenuNavigation() {
     if (path === '/dashboard') {
       // For pharmacist users, ensure they are sent to the pharmacy dashboard view
       if (isPharmacist || userRole === 'pharmacist') {
-        navigate('/dashboard', {
+        navigate('/pharmacy/dashboard?section=dashboard', {
           replace: true,
           state: { preserveAuth: true }
         });

@@ -1,4 +1,3 @@
-
 import { Home, Award, User, Store, Users, FileText, ShoppingBag, CreditCard, HeartPulse, Bell, Settings, BarChart, Heart, Share } from "lucide-react";
 
 export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
@@ -35,16 +34,16 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
   }
   if (isPharmacist) {
     return [
-      { icon: Home, label: 'Dashboard', path: '/dashboard?view=pharmacy&section=dashboard' },
+      { icon: Home, label: 'Dashboard', path: '/pharmacy/dashboard?section=dashboard' },
       { icon: Award, label: 'Account', path: '/account' },
-      { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
+      { icon: User, label: 'Profile', path: '/pharmacy/dashboard?section=profile&profileTab=personal' },
       { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
-      { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=pharmacy&section=orders' },
-      { icon: Users, label: 'Patients', path: '/dashboard?view=pharmacy&section=patients' },
-      { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=pharmacy&section=prescriptions' },
+      { icon: ShoppingBag, label: 'Orders', path: '/pharmacy/dashboard?section=orders' },
+      { icon: Users, label: 'Patients', path: '/pharmacy/dashboard?section=patients' },
+      { icon: FileText, label: 'Prescriptions', path: '/pharmacy/dashboard?section=prescriptions' },
       { icon: Bell, label: 'Notifications', path: '/activities' },
       { icon: Share, label: 'Referral', path: '/referral' },
-      { icon: BarChart, label: 'Analytics', path: '/dashboard?view=pharmacy&section=analytics' },
+      { icon: BarChart, label: 'Analytics', path: '/pharmacy/dashboard?section=analytics' },
       { icon: Settings, label: 'Settings', path: '/settings' },
       { icon: CreditCard, label: 'Billing', path: '/billing-details' }
     ];
