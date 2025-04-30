@@ -5,41 +5,10 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
 import { useLoginManager } from "@/hooks/auth/useLoginManager";
-import { useEffect } from "react";
-import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
-import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const { redirected, setNavigationInProgress } = useLoginManager();
-  const navigate = useNavigate();
-
-  // Handle navigation to dashboard based on role
-  useEffect(() => {
-    if (isAuthenticated && profile?.role && !isLoading) {
-      const route = getDashboardRouteByRole(profile.role);
-      console.log("[Login] Automatic navigation to:", route);
-      
-      // Set navigation in progress to prevent duplicate redirects
-      setNavigationInProgress(true);
-      
-      // For pharmacist role, ensure we're using the new route
-      if (profile.role === 'pharmacist') {
-        // Direct to the new dedicated pharmacy dashboard route
-        navigate('/pharmacy/dashboard?section=dashboard', { 
-          replace: true,
-          state: { preserveAuth: true }
-        });
-        return;
-      }
-      
-      // For other roles, use standard navigation
-      navigate(route, { 
-        replace: true,
-        state: { preserveAuth: true }
-      });
-    }
-  }, [isAuthenticated, profile, isLoading, navigate, setNavigationInProgress]);
 
   // Show loading state during initial load
   if (isLoading) {

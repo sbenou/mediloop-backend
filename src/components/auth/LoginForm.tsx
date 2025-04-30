@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,14 +8,12 @@ import { PasswordFields } from "./login/PasswordFields";
 import { AuthOptions } from "./login/AuthOptions";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";
-import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showResetOptions, setShowResetOptions] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,46 +38,8 @@ export const LoginForm = () => {
   };
 
   const handleLoginSuccess = async () => {
-    console.log('Login success, checking session...');
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('Session check error after login:', error);
-      return;
-    }
-
-    if (session?.user) {
-      console.log('Valid session found, proceeding with success callback');
-      // Check user role and redirect accordingly
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          navigate('/dashboard');
-          return;
-        }
-        
-        // Use the new utility to get the appropriate dashboard route
-        const route = getDashboardRouteByRole(profile?.role);
-        console.log(`Redirecting user with role ${profile?.role} to ${route}`);
-        navigate(route, { replace: true });
-      } catch (err) {
-        console.error('Error during role check:', err);
-        navigate('/dashboard'); // Fallback redirect
-      }
-    } else {
-      console.error('No session found after successful login');
-      toast({
-        variant: "destructive",
-        title: "Login Error",
-        description: "Failed to establish session. Please try again.",
-      });
-    }
+    console.log('Login success handled by usePasswordLogin');
+    // Navigation is now handled directly in usePasswordLogin
   };
 
   const handleBackToEmail = () => {

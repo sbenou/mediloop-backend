@@ -138,8 +138,23 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       setIsLoading(false);
       clearTimeout(loginTimeout);
       
-      // 9. Unified redirection approach for ALL roles
-      navigate('/dashboard', { replace: true });
+      // 9. Role-based redirection
+      console.log('[usePasswordLogin] Redirecting based on role:', userRole);
+      
+      // Direct pharmacists to their dedicated dashboard
+      if (userRole === 'pharmacist') {
+        console.log('[usePasswordLogin] Redirecting pharmacist to dedicated dashboard');
+        navigate('/pharmacy/dashboard?section=dashboard', { 
+          replace: true,
+          state: { preserveAuth: true }
+        });
+      } else {
+        // For other roles, use standard redirection
+        navigate('/dashboard', { 
+          replace: true,
+          state: { preserveAuth: true }
+        });
+      }
       
     } catch (err: any) {
       clearTimeout(loginTimeout);
