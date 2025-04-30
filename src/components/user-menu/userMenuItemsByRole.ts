@@ -1,4 +1,3 @@
-
 import { Home, Award, User, Store, Users, FileText, ShoppingBag, CreditCard, HeartPulse, Bell, Settings, BarChart, Heart, Share } from "lucide-react";
 
 export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
@@ -17,12 +16,11 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
     ];
   }
   if (role === 'doctor') {
-    // For doctors, ALWAYS include Doctor Profile entry
     return [
       { icon: Home, label: 'Dashboard', path: '/doctor/dashboard' },
       { icon: Award, label: 'Account', path: '/account' },
       { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
-      { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Always include this item
+      { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, 
       { icon: Users, label: 'Patients', path: '/dashboard?view=patients' },
       { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
       { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },

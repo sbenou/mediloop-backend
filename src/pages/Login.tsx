@@ -17,7 +17,10 @@ const Login = () => {
     if (isAuthenticated && profile?.role) {
       const dashboardRoute = getDashboardRouteByRole(profile.role);
       console.log(`[Login] Redirecting authenticated user to ${dashboardRoute}`);
-      navigate(dashboardRoute, { replace: true });
+      navigate(dashboardRoute, { 
+        replace: true,
+        state: { preserveAuth: true }
+      });
     }
   }, [isAuthenticated, profile, navigate]);
 

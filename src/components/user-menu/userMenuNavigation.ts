@@ -2,6 +2,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
 
 export function useUserMenuNavigation() {
   const navigate = useNavigate();
@@ -35,23 +36,12 @@ export function useUserMenuNavigation() {
     
     // Special handling for dashboard paths based on role
     if (path === '/dashboard') {
-      // For pharmacist users, ensure they are sent to the pharmacy dashboard
-      if (isPharmacist || userRole === 'pharmacist') {
-        navigate('/pharmacy/dashboard', {
-          replace: true,
-          state: { preserveAuth: true }
-        });
-      } else if (userRole === 'doctor') {
-        navigate('/doctor/dashboard', {
-          replace: true,
-          state: { preserveAuth: true }
-        });
-      } else {
-        navigate(path, {
-          replace: false,
-          state: { preserveAuth: true }
-        });
-      }
+      // Get the correct dashboard route based on user role
+      const dashboardRoute = getDashboardRouteByRole(userRole);
+      navigate(dashboardRoute, {
+        replace: true,
+        state: { preserveAuth: true }
+      });
       return;
     }
     
@@ -70,7 +60,7 @@ export function useUserMenuNavigation() {
       state: { preserveAuth: true }
     });
     
-  }, [location.pathname, navigate, isPharmacist, userRole]);
+  }, [location.pathname, navigate, userRole]);
 
   return { handleNavigation };
 }
