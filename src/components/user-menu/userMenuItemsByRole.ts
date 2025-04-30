@@ -1,3 +1,4 @@
+
 import { Home, Award, User, Store, Users, FileText, ShoppingBag, CreditCard, HeartPulse, Bell, Settings, BarChart, Heart, Share } from "lucide-react";
 
 export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
@@ -18,7 +19,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
   if (role === 'doctor') {
     // For doctors, ALWAYS include Doctor Profile entry
     return [
-      { icon: Home, label: 'Dashboard', path: '/dashboard' },
+      { icon: Home, label: 'Dashboard', path: '/doctor/dashboard' },
       { icon: Award, label: 'Account', path: '/account' },
       { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
       { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, // Always include this item
@@ -32,9 +33,9 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: CreditCard, label: 'Billing', path: '/billing-details' }
     ];
   }
-  if (isPharmacist) {
+  if (isPharmacist || role === 'pharmacist') {
     return [
-      { icon: Home, label: 'Dashboard', path: '/pharmacy/dashboard?section=dashboard' },
+      { icon: Home, label: 'Dashboard', path: '/pharmacy/dashboard' },
       { icon: Award, label: 'Account', path: '/account' },
       { icon: User, label: 'Profile', path: '/pharmacy/dashboard?section=profile&profileTab=personal' },
       { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },

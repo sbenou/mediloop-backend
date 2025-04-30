@@ -33,11 +33,16 @@ export function useUserMenuNavigation() {
     // Mark navigation as in progress
     navigationInProgressRef.current = true;
     
-    // For all users, simply navigate to the path
+    // Special handling for dashboard paths based on role
     if (path === '/dashboard') {
-      // For pharmacist users, ensure they are sent to the pharmacy dashboard view
+      // For pharmacist users, ensure they are sent to the pharmacy dashboard
       if (isPharmacist || userRole === 'pharmacist') {
-        navigate('/pharmacy/dashboard?section=dashboard', {
+        navigate('/pharmacy/dashboard', {
+          replace: true,
+          state: { preserveAuth: true }
+        });
+      } else if (userRole === 'doctor') {
+        navigate('/doctor/dashboard', {
           replace: true,
           state: { preserveAuth: true }
         });

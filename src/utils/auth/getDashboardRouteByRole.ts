@@ -11,7 +11,7 @@ export function getDashboardRouteByRole(role?: string | null): string {
 
   switch (role.toLowerCase()) {
     case "pharmacist":
-      return "/pharmacy/dashboard?section=dashboard";
+      return "/pharmacy/dashboard";
     case "doctor":
       return "/doctor/dashboard";
     case "superadmin":

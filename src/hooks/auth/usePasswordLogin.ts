@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useSetRecoilState } from 'recoil';
 import { authState } from '@/store/auth/atoms';
 import { storeSession } from '@/lib/auth/sessionUtils';
+import { getDashboardRouteByRole } from '@/utils/auth/getDashboardRouteByRole';
 
 interface UsePasswordLoginResult {
   isLoading: boolean;
@@ -138,23 +139,14 @@ export const usePasswordLogin = ({ email, onSuccess }: UsePasswordLoginProps): U
       setIsLoading(false);
       clearTimeout(loginTimeout);
       
-      // 9. Role-based redirection
-      console.log('[usePasswordLogin] Redirecting based on role:', userRole);
+      // 9. Role-based redirection using getDashboardRouteByRole to ensure consistent routing
+      const dashboardRoute = getDashboardRouteByRole(userRole);
+      console.log(`[usePasswordLogin] Redirecting user with role ${userRole} to: ${dashboardRoute}`);
       
-      // Direct pharmacists to their dedicated dashboard
-      if (userRole === 'pharmacist') {
-        console.log('[usePasswordLogin] Redirecting pharmacist to dedicated dashboard');
-        navigate('/pharmacy/dashboard?section=dashboard', { 
-          replace: true,
-          state: { preserveAuth: true }
-        });
-      } else {
-        // For other roles, use standard redirection
-        navigate('/dashboard', { 
-          replace: true,
-          state: { preserveAuth: true }
-        });
-      }
+      navigate(dashboardRoute, { 
+        replace: true,
+        state: { preserveAuth: true }
+      });
       
     } catch (err: any) {
       clearTimeout(loginTimeout);

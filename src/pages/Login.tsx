@@ -4,11 +4,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Loader } from "lucide-react";
-import { useLoginManager } from "@/hooks/auth/useLoginManager";
+import { getDashboardRouteByRole } from "@/utils/auth/getDashboardRouteByRole";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Login = () => {
   const { isAuthenticated, isLoading, profile } = useAuth();
-  const { redirected, setNavigationInProgress } = useLoginManager();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to their appropriate dashboard
+  useEffect(() => {
+    if (isAuthenticated && profile?.role) {
+      const dashboardRoute = getDashboardRouteByRole(profile.role);
+      console.log(`[Login] Redirecting authenticated user to ${dashboardRoute}`);
+      navigate(dashboardRoute, { replace: true });
+    }
+  }, [isAuthenticated, profile, navigate]);
 
   // Show loading state during initial load
   if (isLoading) {
@@ -29,7 +40,7 @@ const Login = () => {
     );
   }
 
-  // If authenticated
+  // If authenticated but still on this page, show redirecting message
   if (isAuthenticated) {
     return (
       <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
