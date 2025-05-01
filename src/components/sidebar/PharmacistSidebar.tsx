@@ -1,7 +1,8 @@
+
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Settings, Users, Share } from "lucide-react";
+import { Settings, Share } from "lucide-react";
 import SidebarBrand from "./SidebarBrand";
 import SidebarItem from "./SidebarItem";
 import SidebarUserMenu from "./SidebarUserMenu";
@@ -19,19 +20,18 @@ interface PharmacistSidebarProps {
 }
 
 const PharmacistSidebar = ({
-  canViewProducts = false,
+  canViewProducts = true,
   canEditProducts = false,
   canManageStaff = false,
-  canManagePrescriptions = false,
-  canViewPrescriptions = false
+  canManagePrescriptions = true,
+  canViewPrescriptions = true
 }: PharmacistSidebarProps) => {
   const { profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { 
-    isProfileOpen, setIsProfileOpen, 
-    isOrdersOpen, setIsOrdersOpen,
-    navigateToPharmacySection 
+    navigateToDashboard,
+    navigateToPharmacyProfile
   } = usePharmacyNavigation();
   
   const { 
@@ -52,9 +52,14 @@ const PharmacistSidebar = ({
     navigate('/upgrade');
   };
   
-  // Correct handler for navigating to pharmacy profile
-  const navigateToPharmacyProfile = () => {
-    navigate('/pharmacy/profile');
+  // Navigate to settings
+  const navigateToSettings = () => {
+    navigate('/settings');
+  };
+  
+  // Navigate to referral
+  const navigateToReferral = () => {
+    navigate('/referral');
   };
   
   return (
@@ -74,7 +79,7 @@ const PharmacistSidebar = ({
             icon={<Share className="w-5 h-5 mr-4" />}
             label="Referral"
             isActive={location.pathname === "/referral"}
-            onClick={() => navigate('/referral')}
+            onClick={navigateToReferral}
           />
         </div>
         
@@ -83,7 +88,7 @@ const PharmacistSidebar = ({
         {/* Admin Section */}
         {canManageStaff && (
           <SidebarItem
-            icon={<Users className="w-5 h-5 mr-4" />}
+            icon={<Settings className="w-5 h-5 mr-4" />}
             label="Staff Management"
             isActive={location.pathname.includes('/staff-management')}
             onClick={() => navigate('/staff-management')}
@@ -93,7 +98,7 @@ const PharmacistSidebar = ({
           icon={<Settings className="w-5 h-5 mr-4" />}
           label="Settings"
           isActive={location.pathname === '/settings'}
-          onClick={() => navigate('/settings')}
+          onClick={navigateToSettings}
         />
       </div>
       

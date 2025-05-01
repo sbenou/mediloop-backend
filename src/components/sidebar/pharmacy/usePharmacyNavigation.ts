@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const usePharmacyNavigation = () => {
@@ -11,7 +11,7 @@ export const usePharmacyNavigation = () => {
   const isProfilePage = location.pathname.includes('/pharmacy/profile');
   const isDashboardPage = location.pathname.includes('/pharmacy/dashboard');
 
-  const navigateToPharmacySection = (section: string, tab?: string, tabParam?: string) => {
+  const navigateToPharmacySection = useCallback((section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy section: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
     if (tab && tabParam) {
@@ -19,31 +19,35 @@ export const usePharmacyNavigation = () => {
     } else {
       navigate(`/pharmacy/dashboard?section=${section}`);
     }
-  };
+  }, [navigate]);
 
-  const navigateToLink = (path: string) => {
+  const navigateToLink = useCallback((path: string) => {
     console.log(`Navigating to: ${path}`);
     navigate(path);
-  };
+  }, [navigate]);
 
-  const navigateToPharmacyProfile = () => {
+  const navigateToPharmacyProfile = useCallback(() => {
     console.log('Navigating to pharmacy profile from PharmacistSidebar');
     navigate('/pharmacy/profile');
-  };
+  }, [navigate]);
 
-  const navigateToProducts = () => {
+  const navigateToProducts = useCallback(() => {
     console.log('Navigating to products page from PharmacistSidebar');
     navigate('/products');
-  };
+  }, [navigate]);
 
-  // Add these helper methods for navigating to specific profile tabs
-  const navigateToStampSignature = () => {
+  const navigateToStampSignature = useCallback(() => {
     navigateToPharmacySection('profile', 'stampSignature', 'profileTab');
-  };
+  }, [navigateToPharmacySection]);
 
-  const navigateToNextOfKin = () => {
+  const navigateToNextOfKin = useCallback(() => {
     navigateToPharmacySection('profile', 'nextofkin', 'profileTab');
-  };
+  }, [navigateToPharmacySection]);
+
+  const navigateToDashboard = useCallback(() => {
+    console.log('Navigating to pharmacy dashboard');
+    navigate('/pharmacy/dashboard');
+  }, [navigate]);
 
   return {
     navigateToPharmacySection,
@@ -52,6 +56,7 @@ export const usePharmacyNavigation = () => {
     navigateToLink,
     navigateToStampSignature,
     navigateToNextOfKin,
+    navigateToDashboard,
     isProfilePage,
     isDashboardPage,
     isProfileOpen,

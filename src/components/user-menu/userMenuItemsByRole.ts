@@ -1,3 +1,4 @@
+
 import { Home, Award, User, Store, Users, FileText, ShoppingBag, CreditCard, HeartPulse, Bell, Settings, BarChart, Heart, Share } from "lucide-react";
 
 export function getMenuItemsByRole(role: string, isPharmacist: boolean) {

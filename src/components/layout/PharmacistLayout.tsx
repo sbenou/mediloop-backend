@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
 import { Button } from "@/components/ui/button";
-import { Search, Menu, X, AlertTriangle, SidebarClose, SidebarOpen } from "lucide-react";
+import { Menu, X, AlertTriangle, SidebarClose, SidebarOpen } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
