@@ -26,7 +26,7 @@ const Sidebar = () => {
       return (
         <PharmacistSidebar
           canViewProducts={hasPermission(PERMISSIONS.PRODUCTS.VIEW)}
-          canEditProducts={hasPermission(PERMISSIONS.PRODUCTS.MANAGE)}
+          canEditProducts={hasPermission(PERMISSIONS.PRODUCTS.EDIT)}
           canManageStaff={hasPermission(PERMISSIONS.ADMIN.MANAGE_USERS)}
           canManagePrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.MANAGE)}
           canViewPrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.VIEW)}
