@@ -5,7 +5,7 @@ import {
   Users, ShoppingBag, Settings, 
   LayoutDashboard, FileText, UserCircle, 
   MapPin, Store, Pill, CreditCard,
-  Share
+  Share, BarChart
 } from "lucide-react";
 import SidebarSection from "../SidebarSection";
 import SidebarItem from "../SidebarItem";
@@ -30,6 +30,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
   const navigate = useNavigate();
   const { 
     navigateToPharmacySection,
+    navigateToDashboard,
     navigateToProducts,
     isProfileOpen,
     setIsProfileOpen,
@@ -44,7 +45,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
         icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
         label="Dashboard"
         isActive={isDashboardPage && (location.search === '' || location.search.includes('section=dashboard'))}
-        onClick={() => navigateToPharmacySection('dashboard')}
+        onClick={navigateToDashboard}
       />
       
       <SidebarCollapsibleItem 
@@ -91,6 +92,13 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
         label="Patients"
         isActive={location.search.includes('section=patients')}
         onClick={() => navigateToPharmacySection('patients')}
+      />
+
+      <SidebarItem
+        icon={<BarChart className="w-5 h-5 mr-3" />}
+        label="Analytics"
+        isActive={location.search.includes('section=analytics')}
+        onClick={() => navigateToPharmacySection('analytics')}
       />
       
       <SidebarItem

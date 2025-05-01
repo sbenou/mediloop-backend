@@ -34,7 +34,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
   }
   if (isPharmacist || role === 'pharmacist') {
     return [
-      { icon: Home, label: 'Dashboard', path: '/pharmacy/dashboard' },
+      { icon: Home, label: 'Dashboard', path: '/pharmacy/dashboard?section=dashboard' },
       { icon: Award, label: 'Account', path: '/account' },
       { icon: User, label: 'Profile', path: '/pharmacy/dashboard?section=profile&profileTab=personal' },
       { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },

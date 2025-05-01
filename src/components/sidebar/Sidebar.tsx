@@ -24,7 +24,13 @@ const Sidebar = () => {
       );
     case "pharmacist":
       return (
-        <UnifiedSidebar />
+        <PharmacistSidebar
+          canViewProducts={hasPermission(PERMISSIONS.PRODUCTS.VIEW)}
+          canEditProducts={hasPermission(PERMISSIONS.PRODUCTS.MANAGE)}
+          canManageStaff={hasPermission(PERMISSIONS.ADMIN.MANAGE_USERS)}
+          canManagePrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.MANAGE)}
+          canViewPrescriptions={hasPermission(PERMISSIONS.PRESCRIPTIONS.VIEW)}
+        />
       );
     case "superadmin":
       return <SuperAdminSidebar />;

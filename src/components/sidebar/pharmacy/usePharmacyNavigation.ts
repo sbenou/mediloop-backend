@@ -45,8 +45,8 @@ export const usePharmacyNavigation = () => {
   }, [navigateToPharmacySection]);
 
   const navigateToDashboard = useCallback(() => {
-    console.log('Navigating to pharmacy dashboard');
-    navigate('/pharmacy/dashboard');
+    console.log('Navigating to pharmacy dashboard main view');
+    navigate('/pharmacy/dashboard?section=dashboard');
   }, [navigate]);
 
   return {
