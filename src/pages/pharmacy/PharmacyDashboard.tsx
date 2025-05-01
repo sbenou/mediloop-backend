@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import PharmacistLayout from '@/components/layout/PharmacistLayout';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { 
   ProfileView, 
@@ -9,6 +8,9 @@ import {
   PrescriptionsView,
   PharmacyView 
 } from "@/components/dashboard/views";
+import PharmacistSidebar from '@/components/sidebar/PharmacistSidebar';
+import UnifiedHeader from '@/components/layout/UnifiedHeader';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const PharmacyDashboard = () => {
   const [searchParams] = useSearchParams();
@@ -44,9 +46,23 @@ const PharmacyDashboard = () => {
   };
 
   return (
-    <PharmacistLayout>
-      {getContent()}
-    </PharmacistLayout>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <div className="flex flex-1">
+        <div className="hidden md:block">
+          <PharmacistSidebar />
+        </div>
+        
+        <div className="flex-1 flex flex-col">
+          <UnifiedHeader />
+          
+          <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+            <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+              {getContent()}
+            </ScrollArea>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
