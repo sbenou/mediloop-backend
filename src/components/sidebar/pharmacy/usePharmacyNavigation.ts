@@ -6,6 +6,10 @@ export const usePharmacyNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
+  // State for managing collapsible sidebar sections
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+  
   // Navigation handlers
   const navigateToDashboard = useCallback(() => {
     console.log('Navigating to pharmacy dashboard main view');
@@ -43,6 +47,10 @@ export const usePharmacyNavigation = () => {
     navigateToProducts,
     navigateToLink,
     navigateToDashboard,
+    isProfileOpen,
+    setIsProfileOpen,
+    isOrdersOpen,
+    setIsOrdersOpen,
     isProfilePage: location.pathname.includes('/pharmacy/profile'),
     isDashboardPage: location.pathname.includes('/pharmacy/dashboard')
   };

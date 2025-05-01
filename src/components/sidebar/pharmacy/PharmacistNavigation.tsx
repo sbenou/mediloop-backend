@@ -34,7 +34,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
     navigateToProducts,
     isProfileOpen,
     setIsProfileOpen,
-    isOrdersOpen,
+    isOrdersOpen, 
     setIsOrdersOpen,
     isDashboardPage
   } = usePharmacyNavigation();
