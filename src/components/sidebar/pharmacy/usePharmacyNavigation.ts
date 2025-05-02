@@ -26,6 +26,16 @@ export const usePharmacyNavigation = () => {
     navigate('/products');
   }, [navigate]);
 
+  const navigateToReferral = useCallback(() => {
+    console.log('Navigating to referral page');
+    navigate('/referral');
+  }, [navigate]);
+
+  const navigateToSettings = useCallback(() => {
+    console.log('Navigating to settings page');
+    navigate('/pharmacy/dashboard?section=settings');
+  }, [navigate]);
+
   const navigateToLink = useCallback((path: string) => {
     console.log(`Navigating to: ${path}`);
     navigate(path);
@@ -45,6 +55,8 @@ export const usePharmacyNavigation = () => {
     navigateToPharmacySection,
     navigateToPharmacyProfile,
     navigateToProducts,
+    navigateToReferral,
+    navigateToSettings,
     navigateToLink,
     navigateToDashboard,
     isProfileOpen,

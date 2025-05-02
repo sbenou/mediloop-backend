@@ -38,13 +38,13 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: Award, label: 'Account', path: '/account' },
       { icon: User, label: 'Profile', path: '/pharmacy/dashboard?section=profile&profileTab=personal' },
       { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
-      { icon: ShoppingBag, label: 'Orders', path: '/pharmacy/dashboard?section=orders' },
+      { icon: ShoppingBag, label: 'Orders', path: '/pharmacy/dashboard?section=orders&ordersTab=all' },
       { icon: Users, label: 'Patients', path: '/pharmacy/dashboard?section=patients' },
       { icon: FileText, label: 'Prescriptions', path: '/pharmacy/dashboard?section=prescriptions' },
       { icon: Activity, label: 'Activity', path: '/activities' },
       { icon: Gift, label: 'Referral', path: '/referral' },
       { icon: BarChart, label: 'Analytics', path: '/pharmacy/dashboard?section=analytics' },
-      { icon: Settings, label: 'Settings', path: '/settings' },
+      { icon: Settings, label: 'Settings', path: '/pharmacy/dashboard?section=settings' },
       { icon: CreditCard, label: 'Billing', path: '/billing-details' }
     ];
   }

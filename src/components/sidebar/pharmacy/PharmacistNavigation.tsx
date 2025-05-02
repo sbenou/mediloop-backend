@@ -1,11 +1,10 @@
 
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { 
   Users, ShoppingBag, Settings, 
-  LayoutDashboard, FileText, UserCircle, 
-  MapPin, Store, Pill, CreditCard,
-  Share, BarChart
+  LayoutDashboard, FileText, 
+  CreditCard, Share, BarChart
 } from "lucide-react";
 import SidebarSection from "../SidebarSection";
 import SidebarItem from "../SidebarItem";
@@ -27,11 +26,12 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
   canViewPrescriptions = false
 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { 
     navigateToPharmacySection,
     navigateToDashboard,
     navigateToProducts,
+    navigateToReferral,
+    navigateToSettings,
     isProfileOpen,
     setIsProfileOpen,
     isOrdersOpen, 
@@ -78,15 +78,6 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
         />
       )}
       
-      {canViewProducts && (
-        <SidebarItem
-          icon={<Pill className="w-5 h-5 mr-3" />}
-          label="Products"
-          isActive={location.pathname === '/products'}
-          onClick={navigateToProducts}
-        />
-      )}
-      
       <SidebarItem
         icon={<Users className="w-5 h-5 mr-3" />}
         label="Patients"
@@ -105,47 +96,14 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
         icon={<Share className="w-5 h-5 mr-3" />}
         label="Referral"
         isActive={location.pathname === "/referral"}
-        onClick={() => navigate('/referral')}
+        onClick={navigateToReferral}
       />
-      
-      <SidebarCollapsibleItem 
-        icon={<UserCircle className="w-5 h-5 mr-3" />}
-        label="Profile"
-        isOpen={isProfileOpen}
-        isActive={location.search.includes('section=profile')}
-        onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
-      >
-        <SidebarSubItem
-          icon={<UserCircle className="w-4 h-4 mr-3" />}
-          label="Personal Details"
-          isActive={location.search.includes('section=profile') && location.search.includes('profileTab=personal')}
-          onClick={() => navigateToPharmacySection('profile', 'personal', 'profileTab')}
-        />
-        <SidebarSubItem
-          icon={<MapPin className="w-4 h-4 mr-3" />}
-          label="Addresses"
-          isActive={location.search.includes('section=profile') && location.search.includes('profileTab=addresses')}
-          onClick={() => navigateToPharmacySection('profile', 'addresses', 'profileTab')}
-        />
-        <SidebarSubItem
-          icon={<Users className="w-4 h-4 mr-3" />}
-          label="Next of Kin"
-          isActive={location.search.includes('section=profile') && location.search.includes('profileTab=nextofkin')}
-          onClick={() => navigateToPharmacySection('profile', 'nextofkin', 'profileTab')}
-        />
-        <SidebarSubItem
-          icon={<Store className="w-4 h-4 mr-3" />}
-          label="Stamp & Signature"
-          isActive={location.search.includes('section=profile') && location.search.includes('profileTab=stampSignature')}
-          onClick={() => navigateToPharmacySection('profile', 'stampSignature', 'profileTab')}
-        />
-      </SidebarCollapsibleItem>
       
       <SidebarItem
         icon={<Settings className="w-5 h-5 mr-3" />}
         label="Settings"
         isActive={location.search.includes('section=settings')}
-        onClick={() => navigateToPharmacySection('settings')}
+        onClick={navigateToSettings}
       />
     </SidebarSection>
   );
