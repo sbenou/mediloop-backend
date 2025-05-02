@@ -41,8 +41,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: ShoppingBag, label: 'Orders', path: '/pharmacy/dashboard?section=orders&ordersTab=all' },
       { icon: Users, label: 'Patients', path: '/pharmacy/dashboard?section=patients' },
       { icon: FileText, label: 'Prescriptions', path: '/pharmacy/dashboard?section=prescriptions' },
-      { icon: Activity, label: 'Activity', path: '/activities' },
-      { icon: Gift, label: 'Referral', path: '/referral' },
+      { icon: Share, label: 'Referral', path: '/referral' },
       { icon: BarChart, label: 'Analytics', path: '/pharmacy/dashboard?section=analytics' },
       { icon: Settings, label: 'Settings', path: '/pharmacy/dashboard?section=settings' },
       { icon: CreditCard, label: 'Billing', path: '/billing-details' }

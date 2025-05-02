@@ -1,6 +1,8 @@
+
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import DoctorLayout from "@/components/layout/DoctorLayout";
+import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReferralTimeline } from "@/components/loyalty/ReferralTimeline";
@@ -11,7 +13,7 @@ import { Check, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const Referral = () => {
-  const { profile, isLoading } = useAuth();
+  const { profile, isLoading, userRole } = useAuth();
   const [emails, setEmails] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendStatus, setSendStatus] = useState<"idle" | "success" | "error">("idle");
@@ -96,53 +98,59 @@ const Referral = () => {
     return "Send Referral";
   };
 
-  return (
-    <DoctorLayout>
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Referral Program</h1>
+  // Wrap content in appropriate layout based on user role
+  const content = (
+    <div className="max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-8">Referral Program</h1>
 
-        <Tabs defaultValue="refer" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="refer">Refer Friends</TabsTrigger>
-            <TabsTrigger value="history">Referral History</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="refer" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="refer">Refer Friends</TabsTrigger>
+          <TabsTrigger value="history">Referral History</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="refer">
-            <Card>
-              <CardHeader>
-                <CardTitle>Refer Friends & Earn Points</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Share your referral program with friends and family. When
-                  they join and make their first purchase, you'll both earn
-                  loyalty points!
-                </p>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    placeholder="friend@example.com, colleague@example.com"
-                    value={emails}
-                    onChange={(e) => setEmails(e.target.value)}
-                    className="flex-grow"
-                  />
-                  <Button onClick={handleSendReferrals} disabled={isSending || !emails.trim()}>
-                    {buttonContent()}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        <TabsContent value="refer">
+          <Card>
+            <CardHeader>
+              <CardTitle>Refer Friends & Earn Points</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Share your referral program with friends and family. When
+                they join and make their first purchase, you'll both earn
+                loyalty points!
+              </p>
+              <div className="flex items-center space-x-2">
+                <Input
+                  placeholder="friend@example.com, colleague@example.com"
+                  value={emails}
+                  onChange={(e) => setEmails(e.target.value)}
+                  className="flex-grow"
+                />
+                <Button onClick={handleSendReferrals} disabled={isSending || !emails.trim()}>
+                  {buttonContent()}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="history">
-            <ReferralTimeline
-              hideLoyaltyProgramDetails={true}
-              hideSeniorityBadges={true}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </DoctorLayout>
+        <TabsContent value="history">
+          <ReferralTimeline
+            hideLoyaltyProgramDetails={true}
+            hideSeniorityBadges={true}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
+
+  // Return the appropriate layout based on user role
+  if (userRole === 'pharmacist') {
+    return <PharmacistLayout>{content}</PharmacistLayout>;
+  } else {
+    return <DoctorLayout>{content}</DoctorLayout>;
+  }
 };
 
 export default Referral;

@@ -2,9 +2,10 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { 
-  Users, ShoppingBag, Settings, 
+  ShoppingBag, Settings, 
   LayoutDashboard, FileText, 
-  CreditCard, Share, BarChart
+  CreditCard, Users, BarChart,
+  Share
 } from "lucide-react";
 import SidebarSection from "../SidebarSection";
 import SidebarItem from "../SidebarItem";
@@ -29,83 +30,84 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
   const { 
     navigateToPharmacySection,
     navigateToDashboard,
-    navigateToProducts,
     navigateToReferral,
     navigateToSettings,
-    isProfileOpen,
-    setIsProfileOpen,
     isOrdersOpen, 
     setIsOrdersOpen,
     isDashboardPage
   } = usePharmacyNavigation();
 
   return (
-    <SidebarSection title="Navigation">
-      <SidebarItem
-        icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
-        label="Dashboard"
-        isActive={isDashboardPage && (location.search === '' || location.search.includes('section=dashboard'))}
-        onClick={navigateToDashboard}
-      />
-      
-      <SidebarCollapsibleItem 
-        icon={<ShoppingBag className="w-5 h-5 mr-3" />}
-        label="Orders"
-        isOpen={isOrdersOpen}
-        isActive={location.search.includes('section=orders')}
-        onOpenChange={(isOpen) => setIsOrdersOpen(isOpen)}
-      >
-        <SidebarSubItem
-          icon={<ShoppingBag className="w-4 h-4 mr-3" />}
-          label="Orders"
-          isActive={location.search.includes('section=orders') && location.search.includes('ordersTab=all')}
-          onClick={() => navigateToPharmacySection('orders', 'all', 'ordersTab')}
-        />
-        <SidebarSubItem
-          icon={<CreditCard className="w-4 h-4 mr-3" />}
-          label="Payments"
-          isActive={location.search.includes('section=orders') && location.search.includes('ordersTab=payments')}
-          onClick={() => navigateToPharmacySection('orders', 'payments', 'ordersTab')}
-        />
-      </SidebarCollapsibleItem>
-      
-      {canViewPrescriptions && (
+    <>
+      <SidebarSection title="PLATFORM">
         <SidebarItem
-          icon={<FileText className="w-5 h-5 mr-3" />}
-          label="Prescriptions"
-          isActive={location.search.includes('section=prescriptions')}
-          onClick={() => navigateToPharmacySection('prescriptions')}
+          icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
+          label="Dashboard"
+          isActive={isDashboardPage && (location.search === '' || location.search.includes('section=dashboard'))}
+          onClick={navigateToDashboard}
         />
-      )}
-      
-      <SidebarItem
-        icon={<Users className="w-5 h-5 mr-3" />}
-        label="Patients"
-        isActive={location.search.includes('section=patients')}
-        onClick={() => navigateToPharmacySection('patients')}
-      />
+        
+        <SidebarCollapsibleItem 
+          icon={<ShoppingBag className="w-5 h-5 mr-3" />}
+          label="Orders"
+          isOpen={isOrdersOpen}
+          isActive={location.search.includes('section=orders')}
+          onOpenChange={(isOpen) => setIsOrdersOpen(isOpen)}
+        >
+          <SidebarSubItem
+            icon={<ShoppingBag className="w-4 h-4 mr-3" />}
+            label="Orders"
+            isActive={location.search.includes('section=orders') && location.search.includes('ordersTab=all')}
+            onClick={() => navigateToPharmacySection('orders', 'all', 'ordersTab')}
+          />
+          <SidebarSubItem
+            icon={<CreditCard className="w-4 h-4 mr-3" />}
+            label="Payments"
+            isActive={location.search.includes('section=orders') && location.search.includes('ordersTab=payments')}
+            onClick={() => navigateToPharmacySection('orders', 'payments', 'ordersTab')}
+          />
+        </SidebarCollapsibleItem>
+        
+        <SidebarItem
+          icon={<Users className="w-5 h-5 mr-3" />}
+          label="Patients"
+          isActive={location.search.includes('section=patients')}
+          onClick={() => navigateToPharmacySection('patients')}
+        />
+        
+        {canViewPrescriptions && (
+          <SidebarItem
+            icon={<FileText className="w-5 h-5 mr-3" />}
+            label="Prescriptions"
+            isActive={location.search.includes('section=prescriptions')}
+            onClick={() => navigateToPharmacySection('prescriptions')}
+          />
+        )}
 
-      <SidebarItem
-        icon={<BarChart className="w-5 h-5 mr-3" />}
-        label="Analytics"
-        isActive={location.search.includes('section=analytics')}
-        onClick={() => navigateToPharmacySection('analytics')}
-      />
+        <SidebarItem
+          icon={<BarChart className="w-5 h-5 mr-3" />}
+          label="Analytics"
+          isActive={location.search.includes('section=analytics')}
+          onClick={() => navigateToPharmacySection('analytics')}
+        />
+        
+        <SidebarItem
+          icon={<Share className="w-5 h-5 mr-3" />}
+          label="Referral"
+          isActive={location.pathname === "/referral"}
+          onClick={navigateToReferral}
+        />
+      </SidebarSection>
       
-      <SidebarItem
-        icon={<Share className="w-5 h-5 mr-3" />}
-        label="Referral"
-        isActive={location.pathname === "/referral"}
-        onClick={navigateToReferral}
-      />
-      
-      <SidebarItem
-        icon={<Settings className="w-5 h-5 mr-3" />}
-        label="Settings"
-        isActive={location.search.includes('section=settings')}
-        onClick={navigateToSettings}
-      />
-    </SidebarSection>
+      <SidebarSection title="ADMIN">
+        <SidebarItem
+          icon={<Settings className="w-5 h-5 mr-3" />}
+          label="Settings"
+          isActive={location.search.includes('section=settings')}
+          onClick={navigateToSettings}
+        />
+      </SidebarSection>
+    </>
   );
 };
 
