@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import SidebarBrand from "./SidebarBrand";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
@@ -25,6 +25,7 @@ const PharmacistSidebar = ({
 }: PharmacistSidebarProps) => {
   const { profile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
   const { 
     fileInputRef,
@@ -34,6 +35,21 @@ const PharmacistSidebar = ({
   } = useSidebarUserProfile(profile);
   
   const { handleLogout } = useSidebarLogout();
+  
+  const navigateToPharmacyProfile = () => {
+    console.log('Navigating to pharmacy profile from PharmacistSidebar');
+    navigate('/pharmacy/profile');
+  };
+  
+  const navigateToBilling = () => {
+    console.log('Navigating to billing page from PharmacistSidebar');
+    navigate('/pharmacy/dashboard?section=orders&ordersTab=payments');
+  };
+  
+  const navigateToUpgrade = () => {
+    console.log('Navigating to upgrade page from PharmacistSidebar');
+    navigate('/upgrade');
+  };
   
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -56,9 +72,9 @@ const PharmacistSidebar = ({
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         handleFileChange={handleFileChange}
-        navigateToPharmacyProfile={() => {
-          window.location.href = '/pharmacy/profile';
-        }}
+        navigateToPharmacyProfile={navigateToPharmacyProfile}
+        navigateToBilling={navigateToBilling}
+        navigateToUpgrade={navigateToUpgrade}
       />
     </aside>
   );
