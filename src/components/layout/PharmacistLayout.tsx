@@ -92,12 +92,12 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <div className="flex flex-1">
-        {/* Desktop Sidebar */}
+        {/* Always use PharmacistSidebar for desktop sidebar */}
         <div className="hidden md:block">
           <PharmacistSidebar />
         </div>
 
-        {/* Mobile Sidebar */}
+        {/* Mobile Sidebar using the same PharmacistSidebar component */}
         <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <SheetTrigger asChild className="md:hidden absolute top-20 left-4 z-50">
             <Button variant="ghost" size="icon">

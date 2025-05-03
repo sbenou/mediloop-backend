@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import DoctorLayout from "@/components/layout/DoctorLayout";
@@ -98,7 +97,7 @@ const Referral = () => {
     return "Send Referral";
   };
 
-  // Wrap content in appropriate layout based on user role
+  // Content for the referral page
   const content = (
     <div className="max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Referral Program</h1>
@@ -145,7 +144,7 @@ const Referral = () => {
     </div>
   );
 
-  // Return the appropriate layout based on user role
+  // Return the appropriate layout based on user role, ensuring it uses the correct layout for pharmacists
   if (userRole === 'pharmacist') {
     return <PharmacistLayout>{content}</PharmacistLayout>;
   } else {

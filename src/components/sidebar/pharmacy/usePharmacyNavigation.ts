@@ -21,11 +21,6 @@ export const usePharmacyNavigation = () => {
     navigate('/pharmacy/profile');
   }, [navigate]);
 
-  const navigateToProducts = useCallback(() => {
-    console.log('Navigating to products page');
-    navigate('/products');
-  }, [navigate]);
-
   const navigateToReferral = useCallback(() => {
     console.log('Navigating to referral page');
     navigate('/referral');
@@ -54,7 +49,6 @@ export const usePharmacyNavigation = () => {
   return {
     navigateToPharmacySection,
     navigateToPharmacyProfile,
-    navigateToProducts,
     navigateToReferral,
     navigateToSettings,
     navigateToLink,
