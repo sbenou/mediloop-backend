@@ -39,7 +39,7 @@ const PharmacistSidebar = ({
   // Navigation functions with proper state preservation
   const navigateToPharmacyProfile = () => {
     navigate('/pharmacy/profile', { 
-      state: { preserveAuth: true },
+      state: { preserveAuth: true, keepSidebar: true },
       replace: false 
     });
   };
@@ -53,14 +53,14 @@ const PharmacistSidebar = ({
   
   const navigateToUpgrade = () => {
     navigate('/upgrade', { 
-      state: { preserveAuth: true },
+      state: { preserveAuth: true, keepSidebar: true },
       replace: false 
     });
   };
 
   const navigateToAccount = () => {
     navigate('/account', { 
-      state: { showHeader: false, preserveAuth: true },
+      state: { showHeader: false, preserveAuth: true, keepSidebar: true },
       replace: false 
     });
   };

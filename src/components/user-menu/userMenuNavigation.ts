@@ -40,7 +40,7 @@ export function useUserMenuNavigation() {
       const dashboardRoute = getDashboardRouteByRole(userRole);
       navigate(dashboardRoute, {
         replace: false,
-        state: { preserveAuth: true }
+        state: { preserveAuth: true, keepSidebar: true }
       });
       return;
     }
@@ -48,7 +48,7 @@ export function useUserMenuNavigation() {
     // Account page: special state for header
     if (path === '/account') {
       navigate('/account', { 
-        state: { showHeader: false, preserveAuth: true },
+        state: { showHeader: false, preserveAuth: true, keepSidebar: true },
         replace: false
       });
       return;
@@ -57,7 +57,7 @@ export function useUserMenuNavigation() {
     // For pharmacy-specific paths
     if (path.startsWith('/pharmacy/')) {
       navigate(path, {
-        state: { preserveAuth: true },
+        state: { preserveAuth: true, keepSidebar: true },
         replace: false
       });
       return;
@@ -66,7 +66,7 @@ export function useUserMenuNavigation() {
     // For billing details path - ensure preserveAuth and the sidebar stays visible
     if (path === '/billing-details' || path.includes('/billing-details')) {
       navigate(path, {
-        state: { preserveAuth: true, keepSidebar: true },
+        state: { preserveAuth: true, keepSidebar: true, showHeader: false },
         replace: false
       });
       return;
@@ -75,7 +75,7 @@ export function useUserMenuNavigation() {
     // For referral path
     if (path === '/referral') {
       navigate(path, {
-        state: { preserveAuth: true },
+        state: { preserveAuth: true, keepSidebar: true },
         replace: false
       });
       return;
@@ -84,7 +84,7 @@ export function useUserMenuNavigation() {
     // For all other paths, use standard navigation with preserved auth state
     navigate(path, {
       replace: false,
-      state: { preserveAuth: true }
+      state: { preserveAuth: true, keepSidebar: true }
     });
     
   }, [location.pathname, navigate, userRole]);

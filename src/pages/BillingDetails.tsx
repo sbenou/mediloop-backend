@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
+import PharmacistLayout from "@/components/layout/PharmacistLayout";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -86,7 +86,7 @@ function filterPayments(payments, { search, status, dateRange, sort }) {
 }
 
 export default function BillingDetails() {
-  const { profile } = useAuth();
+  const { profile, userRole } = useAuth();
   // Handle billing address safely
   const billingAddress = profile?.address || (profile?.city ? `City: ${profile.city}` : "No address provided");
 
@@ -102,6 +102,126 @@ export default function BillingDetails() {
     [search, status, dateRange, sortBy]
   );
 
+  // Use PharmacistLayout for pharmacist users, UnifiedLayoutTemplate for others
+  if (userRole === 'pharmacist') {
+    return (
+      <PharmacistLayout>
+        <div className="max-w-7xl mx-auto py-8 space-y-8">
+          <h2 className="text-3xl font-bold mb-6 mt-2">Billing</h2>
+          <Tabs defaultValue="details" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="details">Billing Details</TabsTrigger>
+              <TabsTrigger value="history">Payment History</TabsTrigger>
+            </TabsList>
+            {/* Billing Address Tab */}
+            <TabsContent value="details" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Billing Address</CardTitle>
+                  <CardDescription>This is the billing address associated with your account.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="px-2 py-2 text-muted-foreground text-lg">
+                    {billingAddress}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            {/* Payment History Tab */}
+            <TabsContent value="history" className="space-y-4">
+              <BillingHistoryFilters
+                searchQuery={search}
+                onSearchChange={setSearch}
+                statusFilter={status as any}
+                onStatusFilterChange={setStatus}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                view={view}
+                onViewChange={setView}
+              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment History</CardTitle>
+                  <CardDescription>Review all past payments on your account.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {filteredPayments.length === 0 ? (
+                    <div className="text-center py-10 border rounded-lg bg-gray-50">
+                      <p className="text-muted-foreground">
+                        No payment history available.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {view === "table" ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Product</TableHead>
+                              <TableHead>Purchased Date</TableHead>
+                              <TableHead>Paid By</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Attempts</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredPayments.map((log) => (
+                              <TableRow key={log.id}>
+                                <TableCell>{log.product}</TableCell>
+                                <TableCell>{log.date}</TableCell>
+                                <TableCell>{log.paidBy}</TableCell>
+                                <TableCell>
+                                  <Badge variant={log.status === "success" ? "default" : "destructive"}>
+                                    {log.status === "success" ? "Successful" : "Failed"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>{log.attempts}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        // Card view
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {filteredPayments.map(log => (
+                            <Card key={log.id}>
+                              <CardHeader>
+                                <CardTitle className="text-base font-semibold">{log.product}</CardTitle>
+                                <CardDescription>
+                                  <span className="text-sm text-muted-foreground">{log.date}</span>
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="flex flex-col gap-2">
+                                <div><span className="font-medium">Paid By: </span>{log.paidBy}</div>
+                                <div>
+                                  <span className="font-medium">Status: </span>
+                                  <Badge variant={log.status === "success" ? "default" : "destructive"}>
+                                    {log.status === "success" ? "Successful" : "Failed"}
+                                  </Badge>
+                                </div>
+                                <div>
+                                  <span className="font-medium">Attempts: </span>{log.attempts}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                      {/* REMOVED: Sort and View controls from the bottom! */}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </PharmacistLayout>
+    );
+  }
+
+  // For non-pharmacist users, use UnifiedLayoutTemplate (preserved from original)
   return (
     <UnifiedLayoutTemplate>
       <div className="max-w-7xl mx-auto py-8 space-y-8">

@@ -14,7 +14,7 @@ export const usePharmacyNavigation = () => {
   const navigateToDashboard = useCallback(() => {
     console.log('Navigating to pharmacy dashboard main view');
     navigate('/pharmacy/dashboard', { 
-      state: { preserveAuth: true },
+      state: { preserveAuth: true, keepSidebar: true },
       replace: false
     });
   }, [navigate]);
@@ -22,7 +22,7 @@ export const usePharmacyNavigation = () => {
   const navigateToPharmacyProfile = useCallback(() => {
     console.log('Navigating to pharmacy profile');
     navigate('/pharmacy/profile', { 
-      state: { preserveAuth: true },
+      state: { preserveAuth: true, keepSidebar: true },
       replace: false
     });
   }, [navigate]);
@@ -30,7 +30,7 @@ export const usePharmacyNavigation = () => {
   const navigateToPharmacyPatientsPage = useCallback(() => {
     console.log('Navigating to pharmacy patients page');
     navigate('/pharmacy/patients', {
-      state: { preserveAuth: true },
+      state: { preserveAuth: true, keepSidebar: true },
       replace: false
     });
   }, [navigate]);
@@ -38,7 +38,7 @@ export const usePharmacyNavigation = () => {
   const navigateToReferral = useCallback(() => {
     console.log('Navigating to referral page');
     navigate('/referral', { 
-      state: { preserveAuth: true },
+      state: { preserveAuth: true, keepSidebar: true },
       replace: false
     });
   }, [navigate]);
@@ -46,7 +46,7 @@ export const usePharmacyNavigation = () => {
   const navigateToBilling = useCallback(() => {
     console.log('Navigating to billing details');
     navigate('/billing-details', { 
-      state: { preserveAuth: true, showHeader: false },
+      state: { preserveAuth: true, showHeader: false, keepSidebar: true },
       replace: false
     });
   }, [navigate]);
@@ -54,7 +54,7 @@ export const usePharmacyNavigation = () => {
   const navigateToSettings = useCallback(() => {
     console.log('Navigating to settings page');
     navigate('/pharmacy/dashboard?section=settings', { 
-      state: { preserveAuth: true },
+      state: { preserveAuth: true, keepSidebar: true },
       replace: false
     });
   }, [navigate]);
@@ -62,7 +62,7 @@ export const usePharmacyNavigation = () => {
   const navigateToLink = useCallback((path: string) => {
     console.log(`Navigating to: ${path}`);
     navigate(path, { 
-      state: { preserveAuth: true },
+      state: { preserveAuth: true, keepSidebar: true },
       replace: false
     });
   }, [navigate]);
@@ -72,12 +72,12 @@ export const usePharmacyNavigation = () => {
     
     if (tab && tabParam) {
       navigate(`/pharmacy/dashboard?section=${section}&${tabParam}=${tab}`, { 
-        state: { preserveAuth: true },
+        state: { preserveAuth: true, keepSidebar: true },
         replace: false
       });
     } else {
       navigate(`/pharmacy/dashboard?section=${section}`, { 
-        state: { preserveAuth: true },
+        state: { preserveAuth: true, keepSidebar: true },
         replace: false
       });
     }
@@ -97,7 +97,7 @@ export const usePharmacyNavigation = () => {
     isOrdersOpen,
     setIsOrdersOpen,
     isProfilePage: location.pathname.includes('/pharmacy/profile'),
-    isDashboardPage: location.pathname === '/pharmacy/dashboard'
+    isDashboardPage: location.pathname === '/pharmacy/dashboard' || (location.pathname.includes('/pharmacy/dashboard') && !location.search)
   };
 };
 

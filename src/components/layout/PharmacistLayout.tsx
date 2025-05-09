@@ -18,6 +18,10 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
   const location = useLocation();
+  const { state } = location;
+
+  // Determine if sidebar should be shown based on location state
+  const showSidebar = state?.keepSidebar !== false; // Default to showing sidebar unless explicitly set to false
 
   useEffect(() => {
     // Verify session directly with Supabase to ensure we have a valid session
@@ -98,7 +102,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <div className="flex flex-1">
-        {/* Always use PharmacistSidebar for desktop sidebar */}
+        {/* Always use PharmacistSidebar for desktop sidebar - never hide it */}
         <div className="hidden md:block">
           <PharmacistSidebar />
         </div>
