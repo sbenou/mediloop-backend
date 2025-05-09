@@ -76,14 +76,12 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
           onClick={navigateToPharmacyPatientsPage}
         />
         
-        {canViewPrescriptions && (
-          <SidebarItem
-            icon={<FileText className="w-5 h-5 mr-3" />}
-            label="Prescriptions"
-            isActive={location.search.includes('section=prescriptions')}
-            onClick={() => navigateToPharmacySection('prescriptions')}
-          />
-        )}
+        <SidebarItem
+          icon={<FileText className="w-5 h-5 mr-3" />}
+          label="Prescriptions"
+          isActive={location.search.includes('section=prescriptions')}
+          onClick={() => navigateToPharmacySection('prescriptions')}
+        />
 
         <SidebarCollapsibleItem 
           icon={<User className="w-5 h-5 mr-3" />}

@@ -46,7 +46,7 @@ const PharmacistSidebar = ({
   
   const navigateToBilling = () => {
     navigate('/billing-details', { 
-      state: { preserveAuth: true, showHeader: false },
+      state: { preserveAuth: true, showHeader: false, keepSidebar: true },
       replace: false 
     });
   };
@@ -74,7 +74,7 @@ const PharmacistSidebar = ({
           canViewProducts={canViewProducts}
           canEditProducts={canEditProducts}
           canManagePrescriptions={canManagePrescriptions}
-          canViewPrescriptions={canViewPrescriptions}
+          canViewPrescriptions={true} // Always true to ensure always visible
         />
       </div>
       

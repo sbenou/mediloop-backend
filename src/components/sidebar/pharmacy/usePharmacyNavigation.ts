@@ -15,7 +15,7 @@ export const usePharmacyNavigation = () => {
     console.log('Navigating to pharmacy dashboard main view');
     navigate('/pharmacy/dashboard', { 
       state: { preserveAuth: true },
-      replace: true
+      replace: false
     });
   }, [navigate]);
 
@@ -55,7 +55,7 @@ export const usePharmacyNavigation = () => {
     console.log('Navigating to settings page');
     navigate('/pharmacy/dashboard?section=settings', { 
       state: { preserveAuth: true },
-      replace: true
+      replace: false
     });
   }, [navigate]);
 
@@ -73,12 +73,12 @@ export const usePharmacyNavigation = () => {
     if (tab && tabParam) {
       navigate(`/pharmacy/dashboard?section=${section}&${tabParam}=${tab}`, { 
         state: { preserveAuth: true },
-        replace: true
+        replace: false
       });
     } else {
       navigate(`/pharmacy/dashboard?section=${section}`, { 
         state: { preserveAuth: true },
-        replace: true
+        replace: false
       });
     }
   }, [navigate]);
@@ -97,7 +97,7 @@ export const usePharmacyNavigation = () => {
     isOrdersOpen,
     setIsOrdersOpen,
     isProfilePage: location.pathname.includes('/pharmacy/profile'),
-    isDashboardPage: location.pathname.includes('/pharmacy/dashboard')
+    isDashboardPage: location.pathname === '/pharmacy/dashboard'
   };
 };
 

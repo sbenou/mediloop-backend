@@ -39,7 +39,7 @@ export function useUserMenuNavigation() {
       // Get the correct dashboard route based on user role
       const dashboardRoute = getDashboardRouteByRole(userRole);
       navigate(dashboardRoute, {
-        replace: true,
+        replace: false,
         state: { preserveAuth: true }
       });
       return;
@@ -63,10 +63,10 @@ export function useUserMenuNavigation() {
       return;
     }
 
-    // For billing details path
-    if (path === '/billing-details') {
+    // For billing details path - ensure preserveAuth and the sidebar stays visible
+    if (path === '/billing-details' || path.includes('/billing-details')) {
       navigate(path, {
-        state: { preserveAuth: true, showHeader: false },
+        state: { preserveAuth: true, keepSidebar: true },
         replace: false
       });
       return;
