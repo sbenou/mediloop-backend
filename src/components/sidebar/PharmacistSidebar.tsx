@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import SidebarBrand from "./SidebarBrand";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { useSidebarLogout } from "./hooks/useSidebarLogout";
@@ -25,7 +25,6 @@ const PharmacistSidebar = ({
 }: PharmacistSidebarProps) => {
   const { profile } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   
   const { 
     fileInputRef,
@@ -36,19 +35,17 @@ const PharmacistSidebar = ({
   
   const { handleLogout } = useSidebarLogout();
   
+  // Navigation functions for sidebar user menu
   const navigateToPharmacyProfile = () => {
-    console.log('Navigating to pharmacy profile from PharmacistSidebar');
-    navigate('/pharmacy/profile');
+    window.location.href = '/pharmacy/profile';
   };
   
   const navigateToBilling = () => {
-    console.log('Navigating to billing page from PharmacistSidebar');
-    navigate('/pharmacy/dashboard?section=orders&ordersTab=payments');
+    window.location.href = '/billing-details';
   };
   
   const navigateToUpgrade = () => {
-    console.log('Navigating to upgrade page from PharmacistSidebar');
-    navigate('/upgrade');
+    window.location.href = '/upgrade';
   };
   
   return (

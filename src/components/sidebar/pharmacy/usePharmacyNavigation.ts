@@ -25,6 +25,11 @@ export const usePharmacyNavigation = () => {
     console.log('Navigating to referral page');
     navigate('/referral');
   }, [navigate]);
+  
+  const navigateToBilling = useCallback(() => {
+    console.log('Navigating to billing details');
+    navigate('/billing-details');
+  }, [navigate]);
 
   const navigateToSettings = useCallback(() => {
     console.log('Navigating to settings page');
@@ -51,6 +56,7 @@ export const usePharmacyNavigation = () => {
     navigateToPharmacyProfile,
     navigateToReferral,
     navigateToSettings,
+    navigateToBilling,
     navigateToLink,
     navigateToDashboard,
     isProfileOpen,

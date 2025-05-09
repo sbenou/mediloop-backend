@@ -32,6 +32,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
     navigateToDashboard,
     navigateToReferral,
     navigateToSettings,
+    navigateToBilling,
     isOrdersOpen, 
     setIsOrdersOpen,
     isDashboardPage
@@ -96,6 +97,13 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
           label="Referral"
           isActive={location.pathname === "/referral"}
           onClick={navigateToReferral}
+        />
+        
+        <SidebarItem
+          icon={<CreditCard className="w-5 h-5 mr-3" />}
+          label="Billing"
+          isActive={location.pathname === "/billing-details"}
+          onClick={navigateToBilling}
         />
       </SidebarSection>
       
