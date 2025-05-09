@@ -1,5 +1,7 @@
+
 import React, { useState, useMemo } from "react";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
+import UnifiedLayoutTemplate from "@/components/layout/UnifiedLayoutTemplate";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
