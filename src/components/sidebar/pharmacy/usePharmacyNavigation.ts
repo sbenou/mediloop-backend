@@ -97,7 +97,7 @@ export const usePharmacyNavigation = () => {
     isOrdersOpen,
     setIsOrdersOpen,
     isProfilePage: location.pathname.includes('/pharmacy/profile'),
-    isDashboardPage: location.pathname === '/pharmacy/dashboard' || (location.pathname.includes('/pharmacy/dashboard') && !location.search)
+    isDashboardPage: location.pathname === '/pharmacy/dashboard' || location.pathname.includes('/pharmacy/dashboard')
   };
 };
 
