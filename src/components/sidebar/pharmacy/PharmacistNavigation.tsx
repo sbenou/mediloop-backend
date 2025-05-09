@@ -23,13 +23,14 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
   canViewProducts = false,
   canEditProducts = false,
   canManagePrescriptions = false,
-  canViewPrescriptions = false
+  canViewPrescriptions = true // Default to true to ensure prescriptions are visible
 }) => {
   const location = useLocation();
   const { 
     navigateToPharmacySection,
     navigateToDashboard,
     navigateToReferral,
+    navigateToPharmacyPatientsPage,
     isOrdersOpen, 
     setIsOrdersOpen,
     isProfileOpen,
@@ -71,8 +72,8 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
         <SidebarItem
           icon={<Users className="w-5 h-5 mr-3" />}
           label="Patients"
-          isActive={location.search.includes('section=patients')}
-          onClick={() => navigateToPharmacySection('patients')}
+          isActive={location.pathname.includes('/pharmacy/patients')}
+          onClick={navigateToPharmacyPatientsPage}
         />
         
         {canViewPrescriptions && (

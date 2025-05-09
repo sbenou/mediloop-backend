@@ -4,10 +4,10 @@ import PharmacistSidebar from "@/components/sidebar/PharmacistSidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, X, AlertTriangle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
 import UnifiedHeader from "./UnifiedHeader";
+import { useLocation } from "react-router-dom";
 
 interface PharmacistLayoutProps {
   children: React.ReactNode;
@@ -17,6 +17,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     // Verify session directly with Supabase to ensure we have a valid session
@@ -49,6 +50,11 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Log current location to help with debugging
+  useEffect(() => {
+    console.log("PharmacistLayout: Current location:", location.pathname, location.search);
+  }, [location]);
 
   const handleRetrySession = async () => {
     try {

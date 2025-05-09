@@ -27,6 +27,14 @@ export const usePharmacyNavigation = () => {
     });
   }, [navigate]);
 
+  const navigateToPharmacyPatientsPage = useCallback(() => {
+    console.log('Navigating to pharmacy patients page');
+    navigate('/pharmacy/patients', {
+      state: { preserveAuth: true },
+      replace: false
+    });
+  }, [navigate]);
+
   const navigateToReferral = useCallback(() => {
     console.log('Navigating to referral page');
     navigate('/referral', { 
@@ -38,7 +46,7 @@ export const usePharmacyNavigation = () => {
   const navigateToBilling = useCallback(() => {
     console.log('Navigating to billing details');
     navigate('/billing-details', { 
-      state: { preserveAuth: true },
+      state: { preserveAuth: true, showHeader: false },
       replace: false
     });
   }, [navigate]);
@@ -83,6 +91,7 @@ export const usePharmacyNavigation = () => {
     navigateToBilling,
     navigateToLink,
     navigateToDashboard,
+    navigateToPharmacyPatientsPage,
     isProfileOpen,
     setIsProfileOpen,
     isOrdersOpen,

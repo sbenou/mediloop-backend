@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { 
   ProfileView, 
   OrdersView, 
   PrescriptionsView,
-  PharmacyView 
+  PharmacyView,
+  SettingsView 
 } from "@/components/dashboard/views";
 import PharmacistLayout from '@/components/layout/PharmacistLayout';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,13 +21,15 @@ const PharmacyDashboard = () => {
   const profileTab = searchParams.get("profileTab") || "personal";
   const ordersTab = searchParams.get("ordersTab") || "all";
   
-  console.log("PharmacyDashboard render:", { 
-    userRole, 
-    section,
-    profileTab,
-    ordersTab,
-    location: location.pathname + location.search
-  });
+  useEffect(() => {
+    console.log("PharmacyDashboard render:", { 
+      userRole, 
+      section,
+      profileTab,
+      ordersTab,
+      location: location.pathname + location.search
+    });
+  }, [userRole, section, profileTab, ordersTab, location]);
 
   const getContent = () => {
     switch (section) {
@@ -39,7 +42,7 @@ const PharmacyDashboard = () => {
       case "patients":
         return <PharmacyView userRole={userRole} section="patients" />;
       case "settings":
-        return <PharmacyView userRole={userRole} section="settings" />;
+        return <SettingsView userRole={userRole} />;
       case "dashboard":
       default:
         return <PharmacyView userRole={userRole} section="dashboard" />;

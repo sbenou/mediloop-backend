@@ -24,6 +24,7 @@ const PatientsPage = () => {
     const fetchPatients = async () => {
       try {
         setLoading(true);
+        console.log("Fetching patients for pharmacy view");
         // In a real implementation, this would be filtered to only show patients associated with this pharmacy
         const { data, error } = await supabase
           .from('profiles')
@@ -32,6 +33,7 @@ const PatientsPage = () => {
 
         if (error) throw error;
         
+        console.log("Fetched patients:", data?.length);
         setPatients(data || []);
       } catch (error) {
         console.error('Error fetching patients:', error);
