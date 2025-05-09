@@ -115,9 +115,7 @@ const PharmacistLayout = ({ children }: PharmacistLayoutProps) => {
           
           {/* Main content area */}
           <main className="flex-1 p-4 md:p-6 overflow-auto">
-            <ScrollArea className="h-full w-full">
-              {children}
-            </ScrollArea>
+            {children}
           </main>
         </div>
       </div>

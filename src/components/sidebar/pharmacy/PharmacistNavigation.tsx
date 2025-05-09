@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { 
   ShoppingBag, Settings, 
   LayoutDashboard, FileText, 
-  CreditCard, Users, BarChart,
+  Users, BarChart,
   Share
 } from "lucide-react";
 import SidebarSection from "../SidebarSection";
@@ -32,7 +32,6 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
     navigateToDashboard,
     navigateToReferral,
     navigateToSettings,
-    navigateToBilling,
     isOrdersOpen, 
     setIsOrdersOpen,
     isDashboardPage
@@ -62,7 +61,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
             onClick={() => navigateToPharmacySection('orders', 'all', 'ordersTab')}
           />
           <SidebarSubItem
-            icon={<CreditCard className="w-4 h-4 mr-3" />}
+            icon={<ShoppingBag className="w-4 h-4 mr-3" />}
             label="Payments"
             isActive={location.search.includes('section=orders') && location.search.includes('ordersTab=payments')}
             onClick={() => navigateToPharmacySection('orders', 'payments', 'ordersTab')}
@@ -97,13 +96,6 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
           label="Referral"
           isActive={location.pathname === "/referral"}
           onClick={navigateToReferral}
-        />
-        
-        <SidebarItem
-          icon={<CreditCard className="w-5 h-5 mr-3" />}
-          label="Billing"
-          isActive={location.pathname === "/billing-details"}
-          onClick={navigateToBilling}
         />
       </SidebarSection>
       

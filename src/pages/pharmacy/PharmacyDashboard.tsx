@@ -8,8 +8,7 @@ import {
   PrescriptionsView,
   PharmacyView 
 } from "@/components/dashboard/views";
-import PharmacistSidebar from '@/components/sidebar/PharmacistSidebar';
-import UnifiedHeader from '@/components/layout/UnifiedHeader';
+import PharmacistLayout from '@/components/layout/PharmacistLayout';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const PharmacyDashboard = () => {
@@ -19,7 +18,7 @@ const PharmacyDashboard = () => {
   
   const section = searchParams.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || "personal";
-  const ordersTab = searchParams.get("ordersTab") || "orders";
+  const ordersTab = searchParams.get("ordersTab") || "all";
   
   console.log("PharmacyDashboard render:", { 
     userRole, 
@@ -39,30 +38,24 @@ const PharmacyDashboard = () => {
         return <PrescriptionsView userRole={userRole} />;
       case "patients":
         return <PharmacyView userRole={userRole} section="patients" />;
+      case "settings":
+        return <PharmacyView userRole={userRole} section="settings" />;
+      case "analytics":
+        return <PharmacyView userRole={userRole} section="analytics" />;
       case "dashboard":
       default:
-        return <PharmacyView userRole={userRole} section={section} />;
+        return <PharmacyView userRole={userRole} section="dashboard" />;
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="flex flex-1">
-        <div className="hidden md:block">
-          <PharmacistSidebar />
-        </div>
-        
-        <div className="flex-1 flex flex-col">
-          <UnifiedHeader />
-          
-          <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
-            <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
-              {getContent()}
-            </ScrollArea>
-          </div>
-        </div>
+    <PharmacistLayout>
+      <div className="container px-4 py-4 md:py-8 mx-auto max-w-7xl h-full">
+        <ScrollArea className="h-full w-full hover-scroll main-content-scroll">
+          {getContent()}
+        </ScrollArea>
       </div>
-    </div>
+    </PharmacistLayout>
   );
 };
 

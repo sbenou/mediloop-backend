@@ -13,7 +13,9 @@ const Account = () => {
   // Wrap content with the appropriate layout based on user role
   const content = (
     <RequireRoleGuard allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-      <AccountPage />
+      <div className="container mx-auto px-4 py-4 md:py-8">
+        <AccountPage />
+      </div>
     </RequireRoleGuard>
   );
 
