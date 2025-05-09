@@ -36,6 +36,8 @@ import ProtectedReferral from './roles/ProtectedReferral';
 import ProtectedSettings from './roles/ProtectedSettings';
 import ProtectedBillingDetails from './roles/ProtectedBillingDetails';
 import ProtectedPharmacyDashboard from './roles/ProtectedPharmacyDashboard';
+import PatientsPage from '@/pages/pharmacy/PatientsPage';
+import ProtectedPharmacyPatientsPage from './roles/ProtectedPharmacyPatientsPage';
 
 // Wrapper component that injects Currency and Cart context to products routes
 const ProductsLayout = () => (
@@ -70,6 +72,8 @@ const router = createBrowserRouter([
   { path: '/doctor/profile', element: <ProtectedDoctorProfilePage /> },
   { path: '/pharmacy/profile', element: <ProtectedPharmacyProfilePage /> },
   { path: '/pharmacy/dashboard', element: <ProtectedPharmacyDashboard /> },
+  { path: '/pharmacy/patients', element: <ProtectedPharmacyPatientsPage /> },
+  { path: '/pharmacy/patients/:id', element: <ProtectedPharmacyPatientsPage /> },
   {
     path: '/notifications',
     element: <ProtectedActivities initialView="notifications" />,

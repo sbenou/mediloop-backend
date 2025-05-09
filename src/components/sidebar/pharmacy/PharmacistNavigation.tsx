@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { 
   ShoppingBag, Settings, 
   LayoutDashboard, FileText, 
-  Users, User
+  Users, User, Share
 } from "lucide-react";
 import SidebarSection from "../SidebarSection";
 import SidebarItem from "../SidebarItem";
@@ -29,6 +29,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
   const { 
     navigateToPharmacySection,
     navigateToDashboard,
+    navigateToReferral,
     isOrdersOpen, 
     setIsOrdersOpen,
     isProfileOpen,
@@ -102,7 +103,26 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
             isActive={location.search.includes('section=profile') && location.search.includes('profileTab=addresses')}
             onClick={() => navigateToPharmacySection('profile', 'addresses', 'profileTab')}
           />
+          <SidebarSubItem
+            icon={<User className="w-4 h-4 mr-3" />}
+            label="Next of Kin"
+            isActive={location.search.includes('section=profile') && location.search.includes('profileTab=nextofkin')}
+            onClick={() => navigateToPharmacySection('profile', 'nextofkin', 'profileTab')}
+          />
+          <SidebarSubItem
+            icon={<User className="w-4 h-4 mr-3" />}
+            label="Stamp & Signature"
+            isActive={location.search.includes('section=profile') && location.search.includes('profileTab=stampSignature')}
+            onClick={() => navigateToPharmacySection('profile', 'stampSignature', 'profileTab')}
+          />
         </SidebarCollapsibleItem>
+
+        <SidebarItem
+          icon={<Share className="w-5 h-5 mr-3" />}
+          label="Referral"
+          isActive={location.pathname === '/referral'}
+          onClick={navigateToReferral}
+        />
       </SidebarSection>
       
       <SidebarSection title="ADMIN">

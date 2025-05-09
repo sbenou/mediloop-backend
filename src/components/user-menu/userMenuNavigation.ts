@@ -49,7 +49,7 @@ export function useUserMenuNavigation() {
     if (path === '/account') {
       navigate('/account', { 
         state: { showHeader: false, preserveAuth: true },
-        replace: true
+        replace: false
       });
       return;
     }
@@ -57,7 +57,26 @@ export function useUserMenuNavigation() {
     // For pharmacy-specific paths
     if (path.startsWith('/pharmacy/')) {
       navigate(path, {
-        state: { preserveAuth: true }
+        state: { preserveAuth: true },
+        replace: false
+      });
+      return;
+    }
+
+    // For billing details path
+    if (path === '/billing-details') {
+      navigate(path, {
+        state: { preserveAuth: true, showHeader: false },
+        replace: false
+      });
+      return;
+    }
+
+    // For referral path
+    if (path === '/referral') {
+      navigate(path, {
+        state: { preserveAuth: true },
+        replace: false
       });
       return;
     }

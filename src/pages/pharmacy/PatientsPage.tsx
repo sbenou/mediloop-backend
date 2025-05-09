@@ -88,7 +88,9 @@ const PatientsPage = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => navigate(`/pharmacy/patients/${patient.id}`)}
+                        onClick={() => navigate(`/pharmacy/patients/${patient.id}`, {
+                          state: { preserveAuth: true }
+                        })}
                       >
                         <Eye className="h-4 w-4 mr-1" /> View
                       </Button>

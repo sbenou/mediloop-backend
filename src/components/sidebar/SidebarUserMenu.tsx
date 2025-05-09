@@ -86,7 +86,37 @@ const SidebarUserMenu = ({
   // Modify navigateToAccount to use state for hiding header
   const handleNavigateToAccount = () => {
     console.log('Navigating to account page with no header from sidebar');
-    navigate('/account', { state: { showHeader: false, preserveAuth: true } });
+    navigate('/account', { 
+      state: { showHeader: false, preserveAuth: true },
+      replace: false 
+    });
+  };
+
+  // Improved navigation to Pharmacy Profile
+  const handleNavigateToPharmacyProfile = () => {
+    console.log('Navigating to pharmacy profile from sidebar');
+    navigate('/pharmacy/profile', { 
+      state: { preserveAuth: true },
+      replace: false
+    });
+  };
+
+  // Improved navigation to Billing
+  const handleNavigateToBilling = () => {
+    console.log('Navigating to billing details from sidebar');
+    navigate('/billing-details', { 
+      state: { preserveAuth: true, showHeader: false },
+      replace: false
+    });
+  };
+
+  // Improved navigation to Upgrade
+  const handleNavigateToUpgrade = () => {
+    console.log('Navigating to upgrade page from sidebar');
+    navigate('/upgrade', { 
+      state: { preserveAuth: true },
+      replace: false
+    });
   };
 
   return (
@@ -125,9 +155,9 @@ const SidebarUserMenu = ({
             userRole={userRole}
             profile={profile}
             navigateToAccount={navigateToAccount || handleNavigateToAccount}
-            navigateToBilling={navigateToBilling}
-            navigateToUpgrade={navigateToUpgrade}
-            navigateToPharmacyProfile={navigateToPharmacyProfile}
+            navigateToBilling={navigateToBilling || handleNavigateToBilling}
+            navigateToUpgrade={navigateToUpgrade || handleNavigateToUpgrade}
+            navigateToPharmacyProfile={navigateToPharmacyProfile || handleNavigateToPharmacyProfile}
             navigateToDoctorProfile={navigateToDoctorProfile}
             handleLogout={handleLogout}
           />
