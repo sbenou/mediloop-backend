@@ -13,6 +13,7 @@ export const usePharmacyNavigation = () => {
   // Navigation handlers
   const navigateToDashboard = useCallback(() => {
     console.log('Navigating to pharmacy dashboard main view');
+    // Using the route directly to the dashboard page
     navigate('/pharmacy/dashboard', { 
       state: { preserveAuth: true, keepSidebar: true },
       replace: false

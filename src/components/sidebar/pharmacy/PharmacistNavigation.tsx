@@ -44,7 +44,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
         <SidebarItem
           icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
           label="Dashboard"
-          isActive={isDashboardPage && (location.search === '' || location.search.includes('section=dashboard'))}
+          isActive={isDashboardPage}
           onClick={navigateToDashboard}
         />
         
