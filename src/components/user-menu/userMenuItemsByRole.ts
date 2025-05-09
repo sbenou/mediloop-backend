@@ -34,7 +34,7 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
   }
   if (isPharmacist || role === 'pharmacist') {
     return [
-      { icon: LayoutDashboard, label: 'Dashboard', path: '/pharmacy/dashboard?section=dashboard' },
+      { icon: LayoutDashboard, label: 'Dashboard', path: '/pharmacy/dashboard' },
       { icon: Award, label: 'Account', path: '/account' },
       { icon: User, label: 'Profile', path: '/pharmacy/dashboard?section=profile&profileTab=personal' },
       { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
@@ -42,7 +42,6 @@ export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
       { icon: Users, label: 'Patients', path: '/pharmacy/dashboard?section=patients' },
       { icon: FileText, label: 'Prescriptions', path: '/pharmacy/dashboard?section=prescriptions' },
       { icon: Share, label: 'Referral', path: '/referral' },
-      { icon: BarChart, label: 'Analytics', path: '/pharmacy/dashboard?section=analytics' },
       { icon: Settings, label: 'Settings', path: '/pharmacy/dashboard?section=settings' },
       { icon: CreditCard, label: 'Billing', path: '/billing-details' }
     ];

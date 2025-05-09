@@ -40,8 +40,6 @@ const PharmacyDashboard = () => {
         return <PharmacyView userRole={userRole} section="patients" />;
       case "settings":
         return <PharmacyView userRole={userRole} section="settings" />;
-      case "analytics":
-        return <PharmacyView userRole={userRole} section="analytics" />;
       case "dashboard":
       default:
         return <PharmacyView userRole={userRole} section="dashboard" />;

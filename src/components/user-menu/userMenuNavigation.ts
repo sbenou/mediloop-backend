@@ -53,6 +53,14 @@ export function useUserMenuNavigation() {
       });
       return;
     }
+
+    // For pharmacy-specific paths
+    if (path.startsWith('/pharmacy/')) {
+      navigate(path, {
+        state: { preserveAuth: true }
+      });
+      return;
+    }
     
     // For all other paths, use standard navigation with preserved auth state
     navigate(path, {

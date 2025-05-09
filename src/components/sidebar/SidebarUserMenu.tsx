@@ -86,7 +86,7 @@ const SidebarUserMenu = ({
   // Modify navigateToAccount to use state for hiding header
   const handleNavigateToAccount = () => {
     console.log('Navigating to account page with no header from sidebar');
-    navigate('/account', { state: { showHeader: false } });
+    navigate('/account', { state: { showHeader: false, preserveAuth: true } });
   };
 
   return (

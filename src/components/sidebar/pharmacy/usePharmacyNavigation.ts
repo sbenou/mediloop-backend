@@ -13,41 +13,41 @@ export const usePharmacyNavigation = () => {
   // Navigation handlers
   const navigateToDashboard = useCallback(() => {
     console.log('Navigating to pharmacy dashboard main view');
-    navigate('/pharmacy/dashboard?section=dashboard');
+    navigate('/pharmacy/dashboard', { state: { preserveAuth: true } });
   }, [navigate]);
 
   const navigateToPharmacyProfile = useCallback(() => {
     console.log('Navigating to pharmacy profile');
-    navigate('/pharmacy/profile');
+    navigate('/pharmacy/profile', { state: { preserveAuth: true } });
   }, [navigate]);
 
   const navigateToReferral = useCallback(() => {
     console.log('Navigating to referral page');
-    navigate('/referral');
+    navigate('/referral', { state: { preserveAuth: true } });
   }, [navigate]);
   
   const navigateToBilling = useCallback(() => {
     console.log('Navigating to billing details');
-    navigate('/billing-details');
+    navigate('/billing-details', { state: { preserveAuth: true } });
   }, [navigate]);
 
   const navigateToSettings = useCallback(() => {
     console.log('Navigating to settings page');
-    navigate('/pharmacy/dashboard?section=settings');
+    navigate('/pharmacy/dashboard?section=settings', { state: { preserveAuth: true } });
   }, [navigate]);
 
   const navigateToLink = useCallback((path: string) => {
     console.log(`Navigating to: ${path}`);
-    navigate(path);
+    navigate(path, { state: { preserveAuth: true } });
   }, [navigate]);
 
   const navigateToPharmacySection = useCallback((section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy section: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
     if (tab && tabParam) {
-      navigate(`/pharmacy/dashboard?section=${section}&${tabParam}=${tab}`);
+      navigate(`/pharmacy/dashboard?section=${section}&${tabParam}=${tab}`, { state: { preserveAuth: true } });
     } else {
-      navigate(`/pharmacy/dashboard?section=${section}`);
+      navigate(`/pharmacy/dashboard?section=${section}`, { state: { preserveAuth: true } });
     }
   }, [navigate]);
 

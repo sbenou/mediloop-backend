@@ -4,8 +4,7 @@ import { useLocation } from "react-router-dom";
 import { 
   ShoppingBag, Settings, 
   LayoutDashboard, FileText, 
-  Users, BarChart,
-  Share
+  Users, User
 } from "lucide-react";
 import SidebarSection from "../SidebarSection";
 import SidebarItem from "../SidebarItem";
@@ -30,10 +29,10 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
   const { 
     navigateToPharmacySection,
     navigateToDashboard,
-    navigateToReferral,
-    navigateToSettings,
     isOrdersOpen, 
     setIsOrdersOpen,
+    isProfileOpen,
+    setIsProfileOpen,
     isDashboardPage
   } = usePharmacyNavigation();
 
@@ -84,19 +83,26 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
           />
         )}
 
-        <SidebarItem
-          icon={<BarChart className="w-5 h-5 mr-3" />}
-          label="Analytics"
-          isActive={location.search.includes('section=analytics')}
-          onClick={() => navigateToPharmacySection('analytics')}
-        />
-        
-        <SidebarItem
-          icon={<Share className="w-5 h-5 mr-3" />}
-          label="Referral"
-          isActive={location.pathname === "/referral"}
-          onClick={navigateToReferral}
-        />
+        <SidebarCollapsibleItem 
+          icon={<User className="w-5 h-5 mr-3" />}
+          label="Profile"
+          isOpen={isProfileOpen}
+          isActive={location.search.includes('section=profile')}
+          onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
+        >
+          <SidebarSubItem
+            icon={<User className="w-4 h-4 mr-3" />}
+            label="Personal Details"
+            isActive={location.search.includes('section=profile') && location.search.includes('profileTab=personal')}
+            onClick={() => navigateToPharmacySection('profile', 'personal', 'profileTab')}
+          />
+          <SidebarSubItem
+            icon={<User className="w-4 h-4 mr-3" />}
+            label="Addresses"
+            isActive={location.search.includes('section=profile') && location.search.includes('profileTab=addresses')}
+            onClick={() => navigateToPharmacySection('profile', 'addresses', 'profileTab')}
+          />
+        </SidebarCollapsibleItem>
       </SidebarSection>
       
       <SidebarSection title="ADMIN">
@@ -104,7 +110,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
           icon={<Settings className="w-5 h-5 mr-3" />}
           label="Settings"
           isActive={location.search.includes('section=settings')}
-          onClick={navigateToSettings}
+          onClick={() => navigateToPharmacySection('settings')}
         />
       </SidebarSection>
     </>
