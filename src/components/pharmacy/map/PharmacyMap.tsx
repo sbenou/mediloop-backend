@@ -142,11 +142,18 @@ export function PharmacyMap({
 
   // Add key state to force re-render when needed
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
+  const mapInitialized = useRef(false);
+  const [mapInitError, setMapInitError] = useState<string | null>(null);
   
   // Force re-render of the map when coordinates change
   useEffect(() => {
+    // Only update the key if the coordinates have actually changed
     if (coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number') {
-      setMapKey(`map-${Date.now()}-${coordinates.lat.toFixed(4)}-${coordinates.lon.toFixed(4)}`);
+      if (!mapInitialized.current) {
+        mapInitialized.current = true;
+      } else {
+        setMapKey(`map-${Date.now()}-${coordinates.lat.toFixed(4)}-${coordinates.lon.toFixed(4)}`);
+      }
     }
   }, [coordinates?.lat, coordinates?.lon]);
   
@@ -176,12 +183,18 @@ export function PharmacyMap({
             }
           });
           
-          onPharmaciesInShape(nearbyPharmacies);
-          
           if (nearbyPharmacies.length > 0) {
+            onPharmaciesInShape(nearbyPharmacies);
             toast({
               title: "Location Used",
               description: `Found ${nearbyPharmacies.length} pharmacies within 2km`,
+            });
+          } else {
+            // If no nearby pharmacies found, show all pharmacies
+            onPharmaciesInShape(pharmacies);
+            toast({
+              title: "No Pharmacies Nearby",
+              description: "Showing all pharmacies instead",
             });
           }
         }
@@ -206,83 +219,118 @@ export function PharmacyMap({
       typeof pharmacy.coordinates.lon !== 'undefined'
     );
   }, [filteredPharmacies]);
+  
+  // Handle map initialization errors
+  useEffect(() => {
+    const handleMapError = (event: ErrorEvent) => {
+      if (event.message.includes('a is not a function')) {
+        console.error('Caught map initialization error:', event);
+        setMapInitError('Map initialization error. Please try refreshing the page.');
+      }
+    };
+    
+    window.addEventListener('error', handleMapError);
+    
+    return () => {
+      window.removeEventListener('error', handleMapError);
+    };
+  }, []);
 
   return (
     <div className="w-full h-full">
-      <MapContainer
-        key={mapKey}
-        center={centerCoords}
-        zoom={12}
-        scrollWheelZoom={true}
-        style={{ height: '100%', width: '100%' }}
-        whenCreated={(map) => {
-          // Prevent the "touchleave" error by ensuring events are properly handled
-          if (map && map.getContainer()) {
-            const container = map.getContainer();
-            const originalAddEventListener = container.addEventListener;
-            
-            // Override addEventListener to catch problematic events
-            container.addEventListener = function (type, fn, ...rest) {
-              if (type === 'touchleave') {
-                console.warn('wrong event specified: touchleave');
-                return;
-              }
-              return originalAddEventListener.call(this, type, fn, ...rest);
-            };
-          }
-        }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        <SimplifiedMapUpdater coordinates={coordinates} />
-        
-        {/* Conditionally include DrawControl to prevent errors */}
-        {L.Draw && <DrawControl />}
-        
-        {/* Render user location marker if using location */}
-        {showDefaultLocation && coordinates && (
-          <Marker 
-            position={centerCoords}
-            icon={userLocationIcon}
-          >
-            <Popup>Your location</Popup>
-          </Marker>
-        )}
-        
-        {/* Render pharmacy markers */}
-        {validPharmacies.map((pharmacy) => {
-          if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
-          
-          // Ensure coordinates are numbers
-          let pharmLat, pharmLon;
-          try {
-            pharmLat = parseFloat(pharmacy.coordinates.lat);
-            pharmLon = parseFloat(pharmacy.coordinates.lon);
-          } catch (e) {
-            return null;
-          }
-          
-          if (isNaN(pharmLat) || isNaN(pharmLon)) return null;
-          
-          return (
-            <Marker
-              key={`pharmacy-${pharmacy.id || Math.random().toString(36).substr(2, 9)}`}
-              position={[pharmLat, pharmLon]}
+      {mapInitError ? (
+        <div className="w-full h-full bg-gray-100 rounded-md flex flex-col items-center justify-center p-6">
+          <div className="bg-white p-6 rounded-lg shadow-md max-w-md">
+            <h3 className="text-lg font-medium text-red-600 mb-2">Map Error</h3>
+            <p className="text-gray-600 mb-4">{mapInitError}</p>
+            <button 
+              className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+              onClick={() => window.location.reload()}
             >
-              <Popup>
-                <div className="text-sm">
-                  <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
-                  <p>{pharmacy.address || 'Address not available'}</p>
-                  <p>{pharmacy.hours || 'Hours not available'}</p>
-                </div>
-              </Popup>
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      ) : (
+        <MapContainer
+          key={mapKey}
+          center={centerCoords}
+          zoom={12}
+          scrollWheelZoom={true}
+          style={{ height: '100%', width: '100%' }}
+          whenCreated={(map) => {
+            // Prevent the "touchleave" error by patching the event handler
+            try {
+              if (map && map.getContainer()) {
+                const container = map.getContainer();
+                const originalAddEventListener = container.addEventListener;
+                
+                // Override addEventListener to catch problematic events
+                container.addEventListener = function (type, fn, ...rest) {
+                  if (type === 'touchleave') {
+                    console.warn('Prevented problematic touchleave event');
+                    return undefined;
+                  }
+                  return originalAddEventListener.call(this, type, fn, ...rest) as any;
+                };
+              }
+            } catch (e) {
+              console.error("Error patching map event handlers:", e);
+            }
+          }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          <SimplifiedMapUpdater coordinates={coordinates} />
+          
+          {/* Conditionally include DrawControl to prevent errors */}
+          {L.Draw && <DrawControl />}
+          
+          {/* Render user location marker if using location */}
+          {showDefaultLocation && coordinates && (
+            <Marker 
+              position={centerCoords}
+              icon={userLocationIcon}
+            >
+              <Popup>Your location</Popup>
             </Marker>
-          );
-        })}
-      </MapContainer>
+          )}
+          
+          {/* Render pharmacy markers */}
+          {validPharmacies.map((pharmacy) => {
+            if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
+            
+            // Ensure coordinates are numbers
+            let pharmLat, pharmLon;
+            try {
+              pharmLat = parseFloat(pharmacy.coordinates.lat);
+              pharmLon = parseFloat(pharmacy.coordinates.lon);
+            } catch (e) {
+              return null;
+            }
+            
+            if (isNaN(pharmLat) || isNaN(pharmLon)) return null;
+            
+            return (
+              <Marker
+                key={`pharmacy-${pharmacy.id || Math.random().toString(36).substr(2, 9)}`}
+                position={[pharmLat, pharmLon]}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
+                    <p>{pharmacy.address || 'Address not available'}</p>
+                    <p>{pharmacy.hours || 'Hours not available'}</p>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
+      )}
     </div>
   );
 }

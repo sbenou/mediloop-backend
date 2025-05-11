@@ -21,8 +21,13 @@ const FindDoctor = () => {
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        return session;
+      } catch (error) {
+        console.error('Error fetching session:', error);
+        return null;
+      }
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -36,6 +41,7 @@ const FindDoctor = () => {
   const radiusUpdateAllowedRef = useRef(true);
   const radiusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchRadius, setSearchRadiusState] = useState(2000);
+  const [initialLocationSet, setInitialLocationSet] = useState(false);
 
   const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
 
@@ -50,40 +56,71 @@ const FindDoctor = () => {
     setSearchRadiusState(value);
   }, []);
 
-  const searchCoordinates = coordinates 
-    ? { 
-        lat: coordinates.lat, 
-        lon: coordinates.lon 
-      } 
-    : userLocation 
-      ? {
-          lat: userLocation.lat.toString(),
-          lon: userLocation.lon.toString()
-        }
-      : {
-          lat: LUXEMBOURG_COORDINATES.lat.toString(),
-          lon: LUXEMBOURG_COORDINATES.lon.toString()
+  // Safely create search coordinates with validation
+  const searchCoordinates = useMemo(() => {
+    try {
+      if (coordinates?.lat && coordinates?.lon) {
+        return { 
+          lat: String(coordinates.lat), 
+          lon: String(coordinates.lon) 
         };
+      }
+      
+      if (userLocation?.lat && userLocation?.lon) {
+        return {
+          lat: String(userLocation.lat),
+          lon: String(userLocation.lon)
+        };
+      }
+      
+      // Default to Luxembourg
+      return {
+        lat: String(LUXEMBOURG_COORDINATES.lat),
+        lon: String(LUXEMBOURG_COORDINATES.lon)
+      };
+    } catch (error) {
+      console.error("Error creating search coordinates:", error);
+      return {
+        lat: String(LUXEMBOURG_COORDINATES.lat),
+        lon: String(LUXEMBOURG_COORDINATES.lon)
+      };
+    }
+  }, [coordinates, userLocation]);
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
   // Handle session-based location initialization
   useEffect(() => {
-    if (!session) {
-      console.log('No session, setting default location');
-      setUserLocation(LUXEMBOURG_COORDINATES);
-      setIsUsingLocation(false);
-      if (!coordinates) {
+    if (initialLocationSet) {
+      return; // Don't re-initialize if already done
+    }
+
+    try {
+      if (!session) {
+        console.log('No session, setting default location');
+        setUserLocation(LUXEMBOURG_COORDINATES);
+        setIsUsingLocation(false);
+        
+        if (!coordinates) {
+          handleCitySearch("Luxembourg City");
+        }
+      } else if (!coordinates && userProfile?.city) {
+        console.log('Using profile city:', userProfile.city);
+        handleCitySearch(userProfile.city);
+      } else if (!coordinates) {
+        // Fallback to ensure we always have some coordinates
         handleCitySearch("Luxembourg City");
       }
-    } else if (!coordinates && userProfile?.city) {
-      console.log('Using profile city:', userProfile.city);
-      handleCitySearch(userProfile.city);
-    } else if (!coordinates) {
-      // Fallback to ensure we always have some coordinates
+      
+      setInitialLocationSet(true);
+    } catch (error) {
+      console.error("Error initializing location:", error);
+      // Fallback to default location
+      setUserLocation(LUXEMBOURG_COORDINATES);
+      setIsUsingLocation(false);
       handleCitySearch("Luxembourg City");
     }
-  }, [session, coordinates, userProfile?.city, setUserLocation, setIsUsingLocation, handleCitySearch]);
+  }, [session, coordinates, userProfile?.city, setUserLocation, setIsUsingLocation, handleCitySearch, initialLocationSet]);
 
   // Handle search radius updates only when we have data and no doctors are found
   useEffect(() => {
@@ -111,27 +148,33 @@ const FindDoctor = () => {
           radiusUpdateAllowedRef.current = true;
         }, 3000);
       }, 1500);
-      
-      // Clean up timer on component unmount
-      return () => {
-        if (radiusTimerRef.current) {
-          clearTimeout(radiusTimerRef.current);
-        }
-      };
     }
+    
+    // Clean up timer on component unmount
+    return () => {
+      if (radiusTimerRef.current) {
+        clearTimeout(radiusTimerRef.current);
+      }
+    };
   }, [doctors, searchRadius, isDoctorsLoading, isSearching]);
 
   // Convert string coordinates to numbers for DoctorListSection
-  const displayCoordinates = {
-    lat: parseFloat(searchCoordinates.lat),
-    lon: parseFloat(searchCoordinates.lon)
-  };
+  const displayCoordinates = useMemo(() => {
+    try {
+      return {
+        lat: parseFloat(searchCoordinates.lat) || LUXEMBOURG_COORDINATES.lat,
+        lon: parseFloat(searchCoordinates.lon) || LUXEMBOURG_COORDINATES.lon
+      };
+    } catch (error) {
+      console.error("Error parsing coordinates:", error);
+      return {
+        lat: LUXEMBOURG_COORDINATES.lat,
+        lon: LUXEMBOURG_COORDINATES.lon
+      };
+    }
+  }, [searchCoordinates]);
 
-  // Add fallback values in case parsing fails
-  if (isNaN(displayCoordinates.lat)) displayCoordinates.lat = 49.8153;
-  if (isNaN(displayCoordinates.lon)) displayCoordinates.lon = 6.1296;
-
-  const handleLocationToggle = (checked: boolean) => {
+  const handleLocationToggle = useCallback((checked: boolean) => {
     if (!checked) {
       // When disabling location
       setUserLocation(LUXEMBOURG_COORDINATES);
@@ -179,13 +222,7 @@ const FindDoctor = () => {
     setSearchRadius(2000);
     radiusUpdateAllowedRef.current = true;
     setMapError(null); // Reset any map errors when toggling location
-  };
-
-  // Error handler for the map
-  const handleMapError = (error: Error) => {
-    console.error("Map error:", error);
-    setMapError("Failed to load map properly. Please try refreshing.");
-  };
+  }, [handleCitySearch, setIsUsingLocation, setUserLocation, userProfile?.city]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -207,7 +244,7 @@ const FindDoctor = () => {
                 </div>
               ) : (
                 <DoctorListSection
-                  doctors={doctors}
+                  doctors={doctors || []}
                   isLoading={isDoctorsLoading || isSearching}
                   coordinates={displayCoordinates}
                   showUserLocation={isUsingLocation}
