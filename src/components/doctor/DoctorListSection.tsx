@@ -216,7 +216,7 @@ const DoctorListSection = ({
               zoom={10}
               style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
               scrollWheelZoom={true}
-              whenCreated={handleMapReady}
+              whenReady={handleMapReady}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

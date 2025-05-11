@@ -61,15 +61,29 @@ export default function AppRoutes() {
 
         {/* Dashboard routes */}
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
         
         {/* Add Billing Details route for all authenticated users */}
         <Route path="/billing-details" element={<ProtectedBillingDetails />} />
         <Route path="/billing" element={<Billing />} />
         
-        {/* Pharmacy specific routes */}
-        <Route path="/pharmacy/profile" element={<ProtectedPharmacyProfilePage />} />
-        <Route path="/pharmacy/patients" element={<ProtectedPharmacyPatientsPage />} />
+        {/* Pharmacy specific routes - need to be protected */}
+        <Route path="/pharmacy/dashboard" element={
+          <ProtectedRoute allowedRoles={['pharmacist', 'superadmin']}>
+            <PharmacyDashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/pharmacy/profile" element={
+          <ProtectedRoute allowedRoles={['pharmacist', 'superadmin']}>
+            <ProtectedPharmacyProfilePage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/pharmacy/patients" element={
+          <ProtectedRoute allowedRoles={['pharmacist', 'superadmin']}>
+            <ProtectedPharmacyPatientsPage />
+          </ProtectedRoute>
+        } />
 
         <Route path="*" element={<NotFound />} />
 
