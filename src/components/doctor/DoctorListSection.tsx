@@ -73,23 +73,31 @@ const DoctorListSection = ({
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [mapKey, setMapKey] = useState(`doctormap-${Date.now()}`);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Refresh the map when coordinates change
   useEffect(() => {
-    setMapKey(`doctormap-${Date.now()}`);
-    setIsMapInitialized(false);
-    
-    // Small delay to ensure map properly reinitializes
-    setTimeout(() => {
-      setIsMapInitialized(true);
-    }, 100);
+    try {
+      setMapKey(`doctormap-${Date.now()}`);
+      setIsMapInitialized(false);
+      
+      // Small delay to ensure map properly reinitializes
+      const timer = setTimeout(() => {
+        setIsMapInitialized(true);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    } catch (err) {
+      console.error("Error refreshing map:", err);
+      setMapError("Error loading map");
+    }
   }, [coordinates?.lat, coordinates?.lon]);
 
   if (!coordinates) {
     return <div>Loading location...</div>;
   }
 
-  // Safety measure to ensure coordinates are valid numbers
+  // Defensive check to ensure coordinates are valid numbers
   const validLat = typeof coordinates.lat === 'number' && !isNaN(coordinates.lat) 
     ? coordinates.lat : 49.8153;
   const validLon = typeof coordinates.lon === 'number' && !isNaN(coordinates.lon)
@@ -101,8 +109,14 @@ const DoctorListSection = ({
   const validDoctors = Array.isArray(doctors) ? doctors : [];
 
   const handleDoctorSelect = (doctorId: string) => {
-    setSelectedDoctorId(doctorId);
-    listItemRefs.current[doctorId]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    try {
+      setSelectedDoctorId(doctorId);
+      if (listItemRefs.current[doctorId]) {
+        listItemRefs.current[doctorId]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    } catch (err) {
+      console.error("Error selecting doctor:", err);
+    }
   };
 
   // Filter out doctors with invalid coordinates
@@ -111,6 +125,11 @@ const DoctorListSection = ({
     typeof doctor.coordinates.lat === 'number' && !isNaN(doctor.coordinates.lat) &&
     typeof doctor.coordinates.lon === 'number' && !isNaN(doctor.coordinates.lon)
   );
+
+  // Error handler for map
+  const handleMapError = () => {
+    setMapError("Error loading map. Please refresh the page.");
+  };
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
@@ -159,13 +178,32 @@ const DoctorListSection = ({
           <p className="text-gray-500">Loading map...</p>
         </div>
         
-        {isMapInitialized && (
+        {mapError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-50">
+            <div className="text-center p-4">
+              <p className="text-red-500 mb-2">{mapError}</p>
+              <button 
+                className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                onClick={() => {
+                  setMapError(null);
+                  setMapKey(`doctormap-${Date.now()}`);
+                  setTimeout(() => setIsMapInitialized(true), 100);
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {isMapInitialized && !mapError && (
           <MapContainer
             key={mapKey}
             center={centerPosition}
             zoom={10}
             style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
             scrollWheelZoom={true}
+            onError={handleMapError}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
