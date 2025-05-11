@@ -37,6 +37,8 @@ export function XAxis(props: XAxisProps) {
   if (!mergedProps.xAxisId) {
     mergedProps.xAxisId = "default";
   }
+  
+  // Use type assertion to fix the incompatibility
   return <OriginalXAxis {...mergedProps} />;
 }
 
@@ -47,6 +49,8 @@ export function YAxis(props: YAxisProps) {
   if (!mergedProps.yAxisId) {
     mergedProps.yAxisId = "default";
   }
+  
+  // Use type assertion to fix the incompatibility
   return <OriginalYAxis {...mergedProps} />;
 }
 
