@@ -21,6 +21,7 @@ const FindDoctor = () => {
     queryKey: ['session'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('Session data:', session);
       return session;
     },
     staleTime: 1000 * 60 * 5,
@@ -47,17 +48,21 @@ const FindDoctor = () => {
           lon: LUXEMBOURG_COORDINATES.lon.toString()
         };
 
+  console.log('Search coordinates:', searchCoordinates);
+
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
   useEffect(() => {
     try {
       if (!session) {
+        console.log('No session, setting default location');
         setUserLocation(LUXEMBOURG_COORDINATES);
         setIsUsingLocation(false);
         if (!coordinates) {
           handleCitySearch("Luxembourg City");
         }
       } else if (!coordinates && userProfile?.city) {
+        console.log('Using profile city:', userProfile.city);
         handleCitySearch(userProfile.city);
       }
     } catch (error) {
@@ -68,6 +73,7 @@ const FindDoctor = () => {
   useEffect(() => {
     try {
       if (doctors?.length === 0 && searchRadius < 10000) {
+        console.log('No doctors found, increasing search radius');
         setSearchRadius(prev => Math.min(prev + 2000, 10000));
       }
     } catch (error) {
@@ -82,7 +88,7 @@ const FindDoctor = () => {
   };
 
   console.log("FindDoctor rendering with coordinates:", displayCoordinates);
-  console.log("Doctors found:", doctors?.length);
+  console.log("Doctors found:", doctors?.length, doctors);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

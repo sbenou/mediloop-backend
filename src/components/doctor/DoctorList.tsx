@@ -1,10 +1,11 @@
+
 import { Skeleton } from "@/components/ui/skeleton";
 import DoctorCard from "./DoctorCard";
 
 interface Doctor {
   id: string;
   full_name: string;
-  city: string;
+  city: string | null;
   license_number: string;
   email?: string;
   hours?: string;
@@ -29,13 +30,17 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
     );
   }
 
-  if (doctors?.length === 0 && searchCity) {
-    return <p className="text-center text-gray-500">No doctors found in {searchCity}</p>;
+  if (!doctors || doctors.length === 0) {
+    return (
+      <p className="text-center text-gray-500">
+        {searchCity ? `No doctors found in ${searchCity}` : "No doctors found. Try searching for a different location."}
+      </p>
+    );
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {doctors?.map((doctor) => (
+      {doctors.map((doctor) => (
         <DoctorCard
           key={doctor.id}
           {...doctor}
