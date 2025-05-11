@@ -124,13 +124,14 @@ export const useDoctorSearch = (
       }
     },
     // Query configuration
-    staleTime: 0, // Ensure fresh data each time
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes stale time
+    gcTime: 30 * 60 * 1000, // 30 minutes cache time
     retry: 1, // Limit retries
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchInterval: false, // Disable automatic refetching
     enabled: Boolean(coordinates), // Only run when we have coordinates
+    suspense: false, // Don't use suspense
   });
 
   return { 

@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -41,17 +41,17 @@ const defaultIcon = new L.Icon.Default();
 
 // Helper component to update map view when coordinates change
 function MapUpdater({ center, zoom }: { center: LatLngExpression, zoom?: number }) {
-  const map = useMap();
-  
+  const map = useRef<L.Map | null>(null);
+
   useEffect(() => {
-    if (!map) return;
+    if (!map.current) return;
     
     try {
-      map.setView(center, zoom || map.getZoom());
+      map.current.setView(center, zoom || map.current.getZoom());
     } catch (error) {
       console.error("Error updating map view:", error);
     }
-  }, [center, map, zoom]);
+  }, [center, zoom]);
   
   return null;
 }
@@ -87,6 +87,8 @@ const DoctorListSection = ({
 }: DoctorListSectionProps) => {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const mapRef = useRef<L.Map | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // Create a stable key for the MapContainer to prevent recreation when search radius changes
   const mapKey = useMemo(() => {
@@ -137,6 +139,24 @@ const DoctorListSection = ({
       typeof doctor.coordinates.lon === 'number' && !isNaN(doctor.coordinates.lon)
     );
   }, [validDoctors]);
+
+  // When map is ready, update markers
+  useEffect(() => {
+    if (isMapReady && mapRef.current) {
+      try {
+        // Update map view to center position
+        mapRef.current.setView(centerPosition, 10);
+      } catch (error) {
+        console.error("Failed to update map view:", error);
+      }
+    }
+  }, [isMapReady, centerPosition]);
+
+  // Handler for when map is ready
+  const handleMapReady = (map: L.Map) => {
+    mapRef.current = map;
+    setIsMapReady(true);
+  };
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
@@ -189,67 +209,67 @@ const DoctorListSection = ({
         
         {/* Render map only when we have valid data */}
         <div className="h-full w-full relative z-1">
-          <MapContainer
-            key={mapKey}
-            center={centerPosition}
-            zoom={10}
-            style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
-            scrollWheelZoom={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            
-            {/* Update map view when coordinates change */}
-            <MapUpdater center={centerPosition} />
-            
-            {/* Show user location marker if enabled */}
-            {showUserLocation && validCoordinates && (
-              <Marker 
-                position={centerPosition} 
-                icon={userLocationIcon}
-              >
-                <Popup>Your location</Popup>
-              </Marker>
-            )}
-
-            {/* Show doctor location markers */}
-            {doctorsWithValidCoordinates.map((doctor) => {
-              if (!doctor.coordinates) return null;
+          {validCoordinates && (
+            <MapContainer
+              key={mapKey}
+              center={centerPosition}
+              zoom={10}
+              style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
+              scrollWheelZoom={true}
+              whenCreated={handleMapReady}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
               
-              // Ensure coordinates are valid numbers
-              const docLat = doctor.coordinates?.lat;
-              const docLon = doctor.coordinates?.lon;
-              
-              if (typeof docLat !== 'number' || typeof docLon !== 'number' || 
-                  isNaN(docLat) || isNaN(docLon)) {
-                return null;
-              }
-              
-              const position: LatLngExpression = [docLat, docLon];
-              
-              return (
-                <Marker
-                  key={doctor.id}
-                  position={position}
-                  icon={selectedDoctorId === doctor.id ? selectedIcon : defaultIcon}
-                  eventHandlers={{
-                    click: () => handleDoctorSelect(doctor.id)
-                  }}
+              {/* Show user location marker if enabled */}
+              {showUserLocation && validCoordinates && (
+                <Marker 
+                  position={centerPosition} 
+                  icon={userLocationIcon}
                 >
-                  <Popup>
-                    <div className="text-sm">
-                      <p className="font-semibold">{doctor.full_name}</p>
-                      <p>{doctor.city || 'Unknown location'}</p>
-                      <p>{doctor.license_number}</p>
-                      {doctor.hours && <p>{doctor.hours}</p>}
-                    </div>
-                  </Popup>
+                  <Popup>Your location</Popup>
                 </Marker>
-              );
-            })}
-          </MapContainer>
+              )}
+
+              {/* Show doctor location markers */}
+              {isMapReady && doctorsWithValidCoordinates.map((doctor) => {
+                if (!doctor.coordinates) return null;
+                
+                // Ensure coordinates are valid numbers
+                const docLat = doctor.coordinates?.lat;
+                const docLon = doctor.coordinates?.lon;
+                
+                if (typeof docLat !== 'number' || typeof docLon !== 'number' || 
+                    isNaN(docLat) || isNaN(docLon)) {
+                  return null;
+                }
+                
+                const position: LatLngExpression = [docLat, docLon];
+                
+                return (
+                  <Marker
+                    key={doctor.id}
+                    position={position}
+                    icon={selectedDoctorId === doctor.id ? selectedIcon : defaultIcon}
+                    eventHandlers={{
+                      click: () => handleDoctorSelect(doctor.id)
+                    }}
+                  >
+                    <Popup>
+                      <div className="text-sm">
+                        <p className="font-semibold">{doctor.full_name}</p>
+                        <p>{doctor.city || 'Unknown location'}</p>
+                        <p>{doctor.license_number}</p>
+                        {doctor.hours && <p>{doctor.hours}</p>}
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+            </MapContainer>
+          )}
         </div>
       </div>
     </div>
