@@ -40,13 +40,18 @@ const selectedIcon = new L.Icon({
 const defaultIcon = new L.Icon.Default();
 
 // Helper component to update map view when coordinates change
-// This replaces the old whenCreated prop which is not available in React Leaflet v5
-const MapUpdater = ({ center }: { center: LatLngExpression }) => {
+const MapViewUpdater = ({ center, zoom }: { center: LatLngExpression, zoom?: number }) => {
   const map = useMap();
   
   useEffect(() => {
-    map.setView(center, map.getZoom());
-  }, [center, map]);
+    if (map) {
+      try {
+        map.setView(center, zoom || map.getZoom());
+      } catch (error) {
+        console.error("Error updating map view:", error);
+      }
+    }
+  }, [center, map, zoom]);
   
   return null;
 };
@@ -82,28 +87,15 @@ const DoctorListSection = ({
 }: DoctorListSectionProps) => {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [mapKey, setMapKey] = useState(`doctormap-${Date.now()}`);
-  const [isMapInitialized, setIsMapInitialized] = useState(false);
+  const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
   const [mapError, setMapError] = useState<string | null>(null);
 
-  // Refresh the map when coordinates change
+  // Refresh the map when coordinates change significantly
   useEffect(() => {
-    try {
-      setMapKey(`doctormap-${Date.now()}`);
-      setIsMapInitialized(false);
-      
-      // Small delay to ensure map properly reinitializes
-      const timer = setTimeout(() => {
-        setIsMapInitialized(true);
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    } catch (err) {
-      console.error("Error refreshing map:", err);
-      setMapError("Error loading map");
-    }
+    setMapKey(`map-${Date.now()}`);
   }, [coordinates?.lat, coordinates?.lon]);
 
+  // Safe guard for missing coordinates
   if (!coordinates) {
     return <div>Loading location...</div>;
   }
@@ -192,8 +184,7 @@ const DoctorListSection = ({
                 className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
                 onClick={() => {
                   setMapError(null);
-                  setMapKey(`doctormap-${Date.now()}`);
-                  setTimeout(() => setIsMapInitialized(true), 100);
+                  setMapKey(`map-${Date.now()}`);
                 }}
               >
                 Retry
@@ -202,63 +193,60 @@ const DoctorListSection = ({
           </div>
         )}
         
-        {isMapInitialized && !mapError && (
-          <MapContainer
-            key={mapKey}
-            center={centerPosition}
-            zoom={10}
-            style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
-            scrollWheelZoom={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            
-            {/* Update map center when coordinates change */}
-            <MapUpdater center={centerPosition} />
-            
-            {showUserLocation && (
-              <Marker 
-                position={centerPosition} 
-                icon={userLocationIcon}
-              >
-                <Popup>Your location</Popup>
-              </Marker>
-            )}
+        <MapContainer
+          key={mapKey}
+          center={centerPosition}
+          zoom={10}
+          style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
+          scrollWheelZoom={true}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          <MapViewUpdater center={centerPosition} />
+          
+          {showUserLocation && (
+            <Marker 
+              position={centerPosition} 
+              icon={userLocationIcon}
+            >
+              <Popup>Your location</Popup>
+            </Marker>
+          )}
 
-            {doctorsWithValidCoordinates.map((doctor) => {
-              const docLat = doctor.coordinates?.lat || validLat;
-              const docLon = doctor.coordinates?.lon || validLon;
-              
-              // Ensure coordinates are valid numbers
-              const position: LatLngExpression = [
-                typeof docLat === 'number' && !isNaN(docLat) ? docLat : validLat,
-                typeof docLon === 'number' && !isNaN(docLon) ? docLon : validLon
-              ];
-              
-              return (
-                <Marker
-                  key={doctor.id}
-                  position={position}
-                  icon={selectedDoctorId === doctor.id ? selectedIcon : defaultIcon}
-                  eventHandlers={{
-                    click: () => handleDoctorSelect(doctor.id)
-                  }}
-                >
-                  <Popup>
-                    <div className="text-sm">
-                      <p className="font-semibold">{doctor.full_name}</p>
-                      <p>{doctor.city || 'Unknown location'}</p>
-                      <p>{doctor.license_number}</p>
-                      {doctor.hours && <p>{doctor.hours}</p>}
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MapContainer>
-        )}
+          {doctorsWithValidCoordinates.map((doctor) => {
+            const docLat = doctor.coordinates?.lat || validLat;
+            const docLon = doctor.coordinates?.lon || validLon;
+            
+            // Ensure coordinates are valid numbers
+            const position: LatLngExpression = [
+              typeof docLat === 'number' && !isNaN(docLat) ? docLat : validLat,
+              typeof docLon === 'number' && !isNaN(docLon) ? docLon : validLon
+            ];
+            
+            return (
+              <Marker
+                key={doctor.id}
+                position={position}
+                icon={selectedDoctorId === doctor.id ? selectedIcon : defaultIcon}
+                eventHandlers={{
+                  click: () => handleDoctorSelect(doctor.id)
+                }}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <p className="font-semibold">{doctor.full_name}</p>
+                    <p>{doctor.city || 'Unknown location'}</p>
+                    <p>{doctor.license_number}</p>
+                    {doctor.hours && <p>{doctor.hours}</p>}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
       </div>
     </div>
   );
