@@ -40,7 +40,7 @@ const selectedIcon = new L.Icon({
 const defaultIcon = new L.Icon.Default();
 
 // Helper component to update map view when coordinates change
-const MapViewUpdater = ({ center, zoom }: { center: LatLngExpression, zoom?: number }) => {
+function MapUpdater({ center, zoom }: { center: LatLngExpression, zoom?: number }) {
   const map = useMap();
   
   useEffect(() => {
@@ -54,7 +54,7 @@ const MapViewUpdater = ({ center, zoom }: { center: LatLngExpression, zoom?: num
   }, [center, map, zoom]);
   
   return null;
-};
+}
 
 interface Doctor {
   id: string;
@@ -87,41 +87,41 @@ const DoctorListSection = ({
 }: DoctorListSectionProps) => {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
-  const [mapError, setMapError] = useState<string | null>(null);
-
-  // Refresh the map when coordinates change significantly
+  const [mapUniqueKey, setMapUniqueKey] = useState(`map-${Date.now()}`);
+  
+  // Force map to re-render when coordinates change significantly
   useEffect(() => {
-    setMapKey(`map-${Date.now()}`);
+    setMapUniqueKey(`map-${Date.now()}`);
   }, [coordinates?.lat, coordinates?.lon]);
-
-  // Safe guard for missing coordinates
-  if (!coordinates) {
-    return <div>Loading location...</div>;
-  }
-
-  // Defensive check to ensure coordinates are valid numbers
-  const validLat = typeof coordinates.lat === 'number' && !isNaN(coordinates.lat) 
-    ? coordinates.lat : 49.8153;
-  const validLon = typeof coordinates.lon === 'number' && !isNaN(coordinates.lon)
-    ? coordinates.lon : 6.1296;
-    
-  const centerPosition: LatLngExpression = [validLat, validLon];
-
-  // Ensure doctors is an array 
+  
+  // Safety checks for coordinates
+  const validCoordinates = coordinates && 
+    typeof coordinates.lat === 'number' && !isNaN(coordinates.lat) &&
+    typeof coordinates.lon === 'number' && !isNaN(coordinates.lon);
+  
+  // Default coordinates (Luxembourg)
+  const defaultLat = 49.8153;
+  const defaultLon = 6.1296;
+  
+  // Use valid coordinates or fallback to defaults
+  const centerPosition: LatLngExpression = validCoordinates
+    ? [coordinates.lat, coordinates.lon]
+    : [defaultLat, defaultLon];
+  
+  // Ensure doctors is an array
   const validDoctors = Array.isArray(doctors) ? doctors : [];
-
+  
   const handleDoctorSelect = (doctorId: string) => {
-    try {
-      setSelectedDoctorId(doctorId);
-      if (listItemRefs.current[doctorId]) {
-        listItemRefs.current[doctorId]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    } catch (err) {
-      console.error("Error selecting doctor:", err);
+    setSelectedDoctorId(doctorId);
+    // Scroll the selected doctor into view in the list
+    if (listItemRefs.current[doctorId]) {
+      listItemRefs.current[doctorId]?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'nearest' 
+      });
     }
   };
-
+  
   // Filter out doctors with invalid coordinates
   const doctorsWithValidCoordinates = validDoctors.filter(doctor => 
     doctor.coordinates && 
@@ -131,6 +131,7 @@ const DoctorListSection = ({
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
+      {/* Doctor list section */}
       <div className="overflow-y-auto space-y-4 pr-4 relative z-50">
         {isLoading && (
           <>
@@ -170,31 +171,16 @@ const DoctorListSection = ({
         )}
       </div>
 
+      {/* Map section */}
       <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
-        {/* Add fallback div for when map is loading */}
+        {/* Loading indicator */}
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-0">
           <p className="text-gray-500">Loading map...</p>
         </div>
         
-        {mapError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-50">
-            <div className="text-center p-4">
-              <p className="text-red-500 mb-2">{mapError}</p>
-              <button 
-                className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
-                onClick={() => {
-                  setMapError(null);
-                  setMapKey(`map-${Date.now()}`);
-                }}
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        )}
-        
+        {/* Map container */}
         <MapContainer
-          key={mapKey}
+          key={mapUniqueKey}
           center={centerPosition}
           zoom={10}
           style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
@@ -205,9 +191,11 @@ const DoctorListSection = ({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           
-          <MapViewUpdater center={centerPosition} />
+          {/* Update map view when coordinates change */}
+          <MapUpdater center={centerPosition} />
           
-          {showUserLocation && (
+          {/* Show user location marker if enabled */}
+          {showUserLocation && validCoordinates && (
             <Marker 
               position={centerPosition} 
               icon={userLocationIcon}
@@ -216,15 +204,20 @@ const DoctorListSection = ({
             </Marker>
           )}
 
+          {/* Show doctor location markers */}
           {doctorsWithValidCoordinates.map((doctor) => {
-            const docLat = doctor.coordinates?.lat || validLat;
-            const docLon = doctor.coordinates?.lon || validLon;
+            if (!doctor.coordinates) return null;
             
             // Ensure coordinates are valid numbers
-            const position: LatLngExpression = [
-              typeof docLat === 'number' && !isNaN(docLat) ? docLat : validLat,
-              typeof docLon === 'number' && !isNaN(docLon) ? docLon : validLon
-            ];
+            const docLat = doctor.coordinates?.lat;
+            const docLon = doctor.coordinates?.lon;
+            
+            if (typeof docLat !== 'number' || typeof docLon !== 'number' || 
+                isNaN(docLat) || isNaN(docLon)) {
+              return null;
+            }
+            
+            const position: LatLngExpression = [docLat, docLon];
             
             return (
               <Marker
