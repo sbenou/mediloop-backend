@@ -16,6 +16,8 @@ import ProtectedReferral from "@/router/roles/ProtectedReferral";
 import Referral from "@/pages/Referral";
 import TestDataLoader from "@/components/testing/TestDataLoader";
 import FindDoctor from "@/pages/FindDoctor";
+import Dashboard from "@/pages/Dashboard";
+import PharmacyDashboard from "@/pages/pharmacy/PharmacyDashboard";
 
 // Create a simple placeholder component for missing pages
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -45,6 +47,20 @@ export default function AppRoutes() {
         <Route path="/doctors" element={<FindDoctor />} />
         <Route path="/doctors/:id" element={<DoctorDetails />} />
         <Route path="/find-doctor" element={<FindDoctor />} /> {/* Add this route as an alias */}
+
+        {/* Dashboard routes */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
+        <Route path="/pharmacy/profile" element={
+          <ProtectedRoute allowedRoles={['pharmacist']}>
+            <PharmacyDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/pharmacy/patients" element={
+          <ProtectedRoute allowedRoles={['pharmacist']}>
+            <PharmacyDashboard />
+          </ProtectedRoute>
+        } />
 
         <Route path="*" element={<NotFound />} />
 
