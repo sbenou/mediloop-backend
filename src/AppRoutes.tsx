@@ -51,9 +51,9 @@ export default function AppRoutes() {
         
         <Route path="/doctors" element={<FindDoctor />} />
         <Route path="/doctors/:id" element={<DoctorDetails />} />
-        <Route path="/find-doctor" element={<FindDoctor />} /> {/* Add this route as an alias */}
+        <Route path="/find-doctor" element={<FindDoctor />} />
 
-        {/* Add missing routes for pharmacy search */}
+        {/* Add consistent routes for pharmacy search */}
         <Route path="/search-pharmacy" element={<SearchPharmacy />} />
         <Route path="/pharmacies" element={<SearchPharmacy />} />
         <Route path="/find-pharmacy" element={<SearchPharmacy />} />

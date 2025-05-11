@@ -107,12 +107,14 @@ export const useDoctorSearch = (
         return [];
       }
     },
-    // Important: Fix to prevent refetching when increasing search radius
-    staleTime: 0, // Set to 0 to ensure fresh data each time
+    // Query configuration
+    staleTime: 0, // Ensure fresh data each time
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
-    retry: 1, // Limit retries to avoid too many network requests
-    refetchOnWindowFocus: false, // Prevent refetching when window regains focus
-    refetchOnMount: false // Prevent refetching when component mounts
+    retry: 1, // Limit retries
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false, // Disable automatic refetching
+    enabled: Boolean(coordinates) // Only run when we have coordinates
   });
 
   return { 

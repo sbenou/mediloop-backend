@@ -31,6 +31,7 @@ const FindDoctor = () => {
   const [isUsingLocation, setIsUsingLocation] = useRecoilState(isUsingLocationState);
   const { userProfile } = usePharmacyState(session);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [radiusUpdateAllowed, setRadiusUpdateAllowed] = useState(true);
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
@@ -51,6 +52,7 @@ const FindDoctor = () => {
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
+  // Handle session-based location initialization
   useEffect(() => {
     try {
       if (!session) {
@@ -69,19 +71,33 @@ const FindDoctor = () => {
     }
   }, [session, coordinates, userProfile?.city]);
 
+  // Handle search radius updates with proper debouncing
   useEffect(() => {
-    try {
-      if (Array.isArray(doctors) && doctors.length === 0 && searchRadius < 10000) {
-        console.log('No doctors found, increasing search radius');
-        // Use setTimeout to delay the radius increase slightly to avoid React state batching issues
+    if (Array.isArray(doctors) && doctors.length === 0 && searchRadius < 10000 && radiusUpdateAllowed) {
+      console.log('No doctors found, increasing search radius');
+      
+      // Disable further radius updates temporarily to prevent cascading
+      setRadiusUpdateAllowed(false);
+      
+      // Use setTimeout with a delay to avoid React state batching issues
+      const timer = setTimeout(() => {
+        setSearchRadius(prevRadius => {
+          const newRadius = Math.min(prevRadius + 2000, 10000);
+          console.log(`Increasing radius from ${prevRadius} to ${newRadius}`);
+          return newRadius;
+        });
+        
+        // Re-enable radius updates after a longer delay
         setTimeout(() => {
-          setSearchRadius(prev => Math.min(prev + 2000, 10000));
-        }, 500);
-      }
-    } catch (error) {
-      console.error("Error in doctors effect:", error);
+          setRadiusUpdateAllowed(true);
+        }, 2000);
+      }, 1000);
+      
+      return () => {
+        clearTimeout(timer);
+      };
     }
-  }, [doctors, searchRadius]);
+  }, [doctors, searchRadius, radiusUpdateAllowed]);
 
   // Convert string coordinates to numbers for DoctorListSection
   const displayCoordinates = {
@@ -132,10 +148,16 @@ const FindDoctor = () => {
           );
         }
       }
-      // Reset search radius when toggling location
+      
+      // Reset search radius when toggling location, with delay to prevent race conditions
+      setRadiusUpdateAllowed(false);
       setTimeout(() => {
         setSearchRadius(2000);
-      }, 100);
+        setTimeout(() => {
+          setRadiusUpdateAllowed(true);
+        }, 2000);
+      }, 500);
+      
       setMapError(null); // Reset any map errors when toggling location
     } catch (err) {
       console.error("Error toggling location:", err);
