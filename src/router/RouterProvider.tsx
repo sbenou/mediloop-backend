@@ -38,6 +38,7 @@ import ProtectedBillingDetails from './roles/ProtectedBillingDetails';
 import ProtectedPharmacyDashboard from './roles/ProtectedPharmacyDashboard';
 import PatientsPage from '@/pages/pharmacy/PatientsPage';
 import ProtectedPharmacyPatientsPage from './roles/ProtectedPharmacyPatientsPage';
+import FindDoctor from '@/pages/FindDoctor';
 
 // Wrapper component that injects Currency and Cart context to products routes
 const ProductsLayout = () => (
@@ -74,6 +75,8 @@ const router = createBrowserRouter([
   { path: '/pharmacy/dashboard', element: <ProtectedPharmacyDashboard /> },
   { path: '/pharmacy/patients', element: <ProtectedPharmacyPatientsPage /> },
   { path: '/pharmacy/patients/:id', element: <ProtectedPharmacyPatientsPage /> },
+  { path: '/doctors', element: <FindDoctor /> },
+  { path: '/find-doctor', element: <FindDoctor /> }, // Add this route as an alias
   {
     path: '/notifications',
     element: <ProtectedActivities initialView="notifications" />,

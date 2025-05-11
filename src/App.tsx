@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { RouterProvider } from '@/router/RouterProvider';
+import AppRoutes from './AppRoutes';
 import { AuthProviderWithRecoil as AuthProvider } from '@/contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster"
@@ -11,7 +11,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RouterProvider />
+        <AppRoutes />
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
