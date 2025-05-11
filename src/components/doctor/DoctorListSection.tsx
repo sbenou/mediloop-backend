@@ -5,9 +5,8 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { SimplifiedMapUpdater } from "../pharmacy/map/SimplifiedMapUpdater";
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -126,10 +125,15 @@ const DoctorListSection = ({
     typeof doctor.coordinates.lon === 'number' && !isNaN(doctor.coordinates.lon)
   );
 
-  // Handle map error
-  const handleMapErrorEvent = useCallback(() => {
-    setMapError("Error loading map. Please refresh the page.");
-  }, []);
+  // Update map center when coordinates change
+  const updateMapCenter = (map) => {
+    if (!map) return;
+    try {
+      map.setView([validLat, validLon], map.getZoom());
+    } catch (err) {
+      console.error("Error updating map center:", err);
+    }
+  };
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
@@ -203,18 +207,12 @@ const DoctorListSection = ({
             zoom={10}
             style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
             scrollWheelZoom={true}
+            whenCreated={updateMapCenter}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            
-            {/* Add an error boundary for the map */}
-            <div onError={handleMapErrorEvent} className="h-0 w-0 overflow-hidden">
-              {/* This div just exists to attach the error handler */}
-            </div>
-            
-            <SimplifiedMapUpdater coordinates={{ lat: validLat, lon: validLon }} />
             
             {showUserLocation && (
               <Marker 
