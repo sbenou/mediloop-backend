@@ -22,6 +22,7 @@ import ProtectedBillingDetails from "@/router/roles/ProtectedBillingDetails";
 import ProtectedPharmacyProfilePage from "@/router/roles/ProtectedPharmacyProfilePage";
 import ProtectedPharmacyPatientsPage from "@/router/roles/ProtectedPharmacyPatientsPage";
 import Billing from "@/pages/Billing";
+import SearchPharmacy from "@/pages/SearchPharmacy";
 
 // Create a simple placeholder component for missing pages
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -51,6 +52,11 @@ export default function AppRoutes() {
         <Route path="/doctors" element={<FindDoctor />} />
         <Route path="/doctors/:id" element={<DoctorDetails />} />
         <Route path="/find-doctor" element={<FindDoctor />} /> {/* Add this route as an alias */}
+
+        {/* Add missing routes for pharmacy search */}
+        <Route path="/search-pharmacy" element={<SearchPharmacy />} />
+        <Route path="/pharmacies" element={<SearchPharmacy />} />
+        <Route path="/find-pharmacy" element={<SearchPharmacy />} />
 
         {/* Dashboard routes */}
         <Route path="/dashboard" element={<Dashboard />} />

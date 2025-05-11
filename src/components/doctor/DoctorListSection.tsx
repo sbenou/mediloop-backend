@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 // Fix for default marker icons in Leaflet with Vite
@@ -87,23 +87,36 @@ const DoctorListSection = ({
 }: DoctorListSectionProps) => {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Create a stable key for the MapContainer to prevent recreation when search radius changes
+  const mapKey = useMemo(() => {
+    if (!coordinates) return 'default-map';
+    return `map-${coordinates.lat.toFixed(4)}-${coordinates.lon.toFixed(4)}`;
+  }, [coordinates?.lat, coordinates?.lon]);
   
   // Safety checks for coordinates
-  const validCoordinates = coordinates && 
-    typeof coordinates.lat === 'number' && !isNaN(coordinates.lat) &&
-    typeof coordinates.lon === 'number' && !isNaN(coordinates.lon);
+  const validCoordinates = useMemo(() => {
+    return coordinates && 
+      typeof coordinates.lat === 'number' && !isNaN(coordinates.lat) &&
+      typeof coordinates.lon === 'number' && !isNaN(coordinates.lon);
+  }, [coordinates]);
   
   // Default coordinates (Luxembourg)
   const defaultLat = 49.8153;
   const defaultLon = 6.1296;
   
   // Use valid coordinates or fallback to defaults
-  const centerPosition: LatLngExpression = validCoordinates
-    ? [coordinates.lat, coordinates.lon]
-    : [defaultLat, defaultLon];
+  const centerPosition = useMemo<LatLngExpression>(() => {
+    if (validCoordinates) {
+      return [coordinates.lat, coordinates.lon];
+    }
+    return [defaultLat, defaultLon];
+  }, [validCoordinates, coordinates]);
   
   // Ensure doctors is an array
-  const validDoctors = Array.isArray(doctors) ? doctors : [];
+  const validDoctors = useMemo(() => {
+    return Array.isArray(doctors) ? doctors : [];
+  }, [doctors]);
   
   const handleDoctorSelect = (doctorId: string) => {
     setSelectedDoctorId(doctorId);
@@ -117,11 +130,13 @@ const DoctorListSection = ({
   };
   
   // Filter out doctors with invalid coordinates
-  const doctorsWithValidCoordinates = validDoctors.filter(doctor => 
-    doctor.coordinates && 
-    typeof doctor.coordinates.lat === 'number' && !isNaN(doctor.coordinates.lat) &&
-    typeof doctor.coordinates.lon === 'number' && !isNaN(doctor.coordinates.lon)
-  );
+  const doctorsWithValidCoordinates = useMemo(() => {
+    return validDoctors.filter(doctor => 
+      doctor.coordinates && 
+      typeof doctor.coordinates.lat === 'number' && !isNaN(doctor.coordinates.lat) &&
+      typeof doctor.coordinates.lon === 'number' && !isNaN(doctor.coordinates.lon)
+    );
+  }, [validDoctors]);
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
@@ -175,7 +190,7 @@ const DoctorListSection = ({
         {/* Render map only when we have valid data */}
         <div className="h-full w-full relative z-1">
           <MapContainer
-            key={`map-${validCoordinates ? coordinates.lat : 'default'}-${validCoordinates ? coordinates.lon : 'default'}`}
+            key={mapKey}
             center={centerPosition}
             zoom={10}
             style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
