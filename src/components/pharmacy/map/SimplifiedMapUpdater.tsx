@@ -23,7 +23,7 @@ export const SimplifiedMapUpdater = ({ coordinates, onMapReady }: SimplifiedMapU
         try {
           mapReadyFired.current = true;
           onMapReady();
-          console.log("Map ready callback fired");
+          console.log("Map ready callback fired from SimplifiedMapUpdater");
         } catch (error) {
           console.error('Error in onMapReady callback:', error);
         }
@@ -66,39 +66,38 @@ export const SimplifiedMapUpdater = ({ coordinates, onMapReady }: SimplifiedMapU
     }
   }, [coordinates, map]);
   
-  // Apply safer event handling for problematic events
+  // Make event handling safer by patching problematic methods
   useEffect(() => {
     if (!map) return;
     
-    // Safe wrapper function for touch events
-    const makeEventSafe = (eventName) => {
-      const originalOn = map.on;
+    // Store the original on method
+    const originalOn = map.on;
+    
+    // Create a safer version of map.on that catches errors for specific events
+    const safeOn = function(type: string, fn: Function, context?: any) {
+      // For known problematic touch events, wrap the handler in a try-catch
+      if (type === 'touchend' || type === 'touchleave' || type === 'touchcancel') {
+        const safeHandler = function(e: any) {
+          try {
+            return fn.call(context || this, e);
+          } catch (error) {
+            console.warn(`Prevented error in ${type} handler:`, error);
+            return undefined;
+          }
+        };
+        return originalOn.call(this, type, safeHandler, context);
+      }
       
-      map.on = function(type, fn, context) {
-        if (type === eventName) {
-          const safeHandler = (e) => {
-            try {
-              return fn.call(context || this, e);
-            } catch (error) {
-              console.warn(`Prevented error in ${eventName} handler:`, error);
-              return undefined;
-            }
-          };
-          return originalOn.call(this, type, safeHandler, context);
-        }
-        return originalOn.call(this, type, fn, context);
-      };
+      // Use original behavior for other events
+      return originalOn.call(this, type, fn, context);
     };
     
-    // Apply safer event handling for problematic events
-    const problematicEvents = ['touchend', 'touchleave', 'touchcancel'];
-    problematicEvents.forEach(makeEventSafe);
+    // Patch the map.on method
+    map.on = safeOn as any;
     
     return () => {
-      // Restore original on method if possible
-      if (map._originalOn) {
-        map.on = map._originalOn;
-      }
+      // Restore original method when component unmounts
+      map.on = originalOn;
     };
   }, [map]);
   

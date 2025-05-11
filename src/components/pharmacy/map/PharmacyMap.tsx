@@ -183,15 +183,20 @@ export function PharmacyMap({
                 zIndex: 1 
               }}
               scrollWheelZoom={true}
-              whenReady={() => handleMapReady()}
               whenCreated={(map) => {
                 // Additional safety for map initialization
                 try {
                   // Disable problematic handlers
                   map.options.touchZoom = false;
                   map.options.tap = false;
+                  
+                  // Fire ready event after a short delay to ensure map is fully loaded
+                  setTimeout(() => {
+                    handleMapReady();
+                  }, 200);
                 } catch (e) {
                   console.warn('Error in map creation:', e);
+                  handleMapError();
                 }
               }}
             >

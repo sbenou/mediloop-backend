@@ -11,7 +11,7 @@ import { toast } from "@/components/ui/use-toast";
 if (typeof window !== 'undefined') {
   // Add a global error handler for the "a is not a function" error
   window.addEventListener('error', (e) => {
-    if (e.message && e.message.includes('a is not a function')) {
+    if (e.message && (e.message.includes('a is not a function') || e.message.includes('touchleave'))) {
       console.warn('Caught global Leaflet error:', e.message);
       e.preventDefault();
       return true;
