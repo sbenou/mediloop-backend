@@ -25,42 +25,27 @@ const userLocationIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
+// Add global error catching for Leaflet specifically
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (e) => {
+    if (e.message && (
+      e.message.includes('a is not a function') || 
+      e.message.includes('touchleave')
+    )) {
+      console.warn('Caught Leaflet-related error:', e.message);
+      e.preventDefault();
+      return true;
+    }
+    return false;
+  }, true);
+}
+
 interface PharmacyMapProps {
   coordinates: { lat: number; lon: number };
   pharmacies: any[];
   filteredPharmacies: any[];
   onPharmaciesInShape: (pharmacies: any[]) => void;
   showDefaultLocation: boolean;
-}
-
-// Add this patch to prevent the "a is not a function" error globally
-// This will intercept the error before it even happens
-if (typeof window !== 'undefined') {
-  const originalAddEventListener = EventTarget.prototype.addEventListener;
-  
-  EventTarget.prototype.addEventListener = function(type, listener, options) {
-    // For problematic touch events in Leaflet, use a safe wrapper
-    if (type === 'touchleave' || type === 'MSPointerLeave' || type === 'pointerleave') {
-      console.warn(`Safely wrapping ${type} event`);
-      
-      const safeListener = function(event) {
-        try {
-          if (typeof listener === 'function') {
-            return listener(event);
-          } else if (listener && typeof listener.handleEvent === 'function') {
-            return listener.handleEvent(event);
-          }
-        } catch (err) {
-          console.warn(`Prevented error in ${type} handler:`, err);
-        }
-      };
-      
-      return originalAddEventListener.call(this, type, safeListener, options);
-    }
-    
-    // Normal handling for non-problematic events
-    return originalAddEventListener.call(this, type, listener, options);
-  };
 }
 
 export function PharmacyMap({ 
@@ -88,50 +73,27 @@ export function PharmacyMap({
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const errorHandlerAttached = useRef(false);
+  const maxRetries = 3;
   
-  // Add global error handler for map initialization errors
-  useEffect(() => {
-    if (errorHandlerAttached.current) return;
+  // Handle map creation errors with auto-retry
+  const handleMapError = useCallback(() => {
+    console.log("Map initialization error detected");
+    setMapInitError("Map initialization error. Retrying...");
     
-    const handleError = (event: ErrorEvent) => {
-      if (event.message.includes('a is not a function')) {
-        console.error('Caught map initialization error:', event);
-        setMapInitError('Map initialization error. Please try again.');
-        
-        // Prevent error from propagating
-        event.preventDefault();
-        event.stopPropagation();
-        
-        // Attempt auto-recovery by regenerating the map
-        if (retryCount < 2) {
-          setTimeout(() => {
-            setMapKey(`map-retry-${Date.now()}`);
-            setRetryCount(prev => prev + 1);
-            setMapInitError(null);
-          }, 500);
-        }
-        
-        return true;
-      }
-      return false;
-    };
-    
-    errorHandlerAttached.current = true;
-    window.addEventListener('error', handleError, true);
-    
-    return () => {
-      window.removeEventListener('error', handleError, true);
-      errorHandlerAttached.current = false;
-    };
+    if (retryCount < maxRetries) {
+      setTimeout(() => {
+        setMapKey(`map-retry-${Date.now()}`);
+        setRetryCount(prev => prev + 1);
+      }, 500);
+    } else {
+      setMapInitError("Could not initialize map. Please try again later.");
+    }
   }, [retryCount]);
   
   // Handle map ready state
   const handleMapReady = useCallback(() => {
     console.log("Map is ready");
     setIsMapReady(true);
-    
-    // Try to reset any pending error state
     setMapInitError(null);
   }, []);
   
@@ -221,6 +183,17 @@ export function PharmacyMap({
                 zIndex: 1 
               }}
               scrollWheelZoom={true}
+              whenReady={() => handleMapReady()}
+              whenCreated={(map) => {
+                // Additional safety for map initialization
+                try {
+                  // Disable problematic handlers
+                  map.options.touchZoom = false;
+                  map.options.tap = false;
+                } catch (e) {
+                  console.warn('Error in map creation:', e);
+                }
+              }}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

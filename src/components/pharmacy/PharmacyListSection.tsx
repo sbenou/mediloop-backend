@@ -7,20 +7,17 @@ import { PharmacyList } from "./list/PharmacyList";
 import { PharmacyMap } from "./map/PharmacyMap";
 import { toast } from "@/components/ui/use-toast";
 
-// Ensure measurement types are initialized
+// Ensure leaflet is properly initialized on the client side
 if (typeof window !== 'undefined') {
-  (window as any).type = true;
-}
-
-// Add a global error handler for the "a is not a function" error
-if (typeof window !== 'undefined' && !window.onerror) {
-  window.onerror = (message, source, lineno, colno, error) => {
-    if (message && message.toString().includes('a is not a function')) {
-      console.warn('Caught global Leaflet error:', message);
-      return true; // Prevent default error handling
+  // Add a global error handler for the "a is not a function" error
+  window.addEventListener('error', (e) => {
+    if (e.message && e.message.includes('a is not a function')) {
+      console.warn('Caught global Leaflet error:', e.message);
+      e.preventDefault();
+      return true;
     }
-    return false; // Let other errors propagate normally
-  };
+    return false;
+  }, true);
 }
 
 interface PharmacyListSectionProps {
