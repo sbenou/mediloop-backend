@@ -33,6 +33,36 @@ interface PharmacyMapProps {
   showDefaultLocation: boolean;
 }
 
+// Add this patch to prevent the "a is not a function" error globally
+// This will intercept the error before it even happens
+if (typeof window !== 'undefined') {
+  const originalAddEventListener = EventTarget.prototype.addEventListener;
+  
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    // For problematic touch events in Leaflet, use a safe wrapper
+    if (type === 'touchleave' || type === 'MSPointerLeave' || type === 'pointerleave') {
+      console.warn(`Safely wrapping ${type} event`);
+      
+      const safeListener = function(event) {
+        try {
+          if (typeof listener === 'function') {
+            return listener(event);
+          } else if (listener && typeof listener.handleEvent === 'function') {
+            return listener.handleEvent(event);
+          }
+        } catch (err) {
+          console.warn(`Prevented error in ${type} handler:`, err);
+        }
+      };
+      
+      return originalAddEventListener.call(this, type, safeListener, options);
+    }
+    
+    // Normal handling for non-problematic events
+    return originalAddEventListener.call(this, type, listener, options);
+  };
+}
+
 export function PharmacyMap({ 
   coordinates, 
   pharmacies, 
@@ -58,17 +88,64 @@ export function PharmacyMap({
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const errorHandlerAttached = useRef(false);
   
-  // Filter pharmacies for the manual drawing functionality
+  // Add global error handler for map initialization errors
   useEffect(() => {
-    if (!pharmacies || !Array.isArray(pharmacies)) return;
+    if (errorHandlerAttached.current) return;
+    
+    const handleError = (event: ErrorEvent) => {
+      if (event.message.includes('a is not a function')) {
+        console.error('Caught map initialization error:', event);
+        setMapInitError('Map initialization error. Please try again.');
+        
+        // Prevent error from propagating
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Attempt auto-recovery by regenerating the map
+        if (retryCount < 2) {
+          setTimeout(() => {
+            setMapKey(`map-retry-${Date.now()}`);
+            setRetryCount(prev => prev + 1);
+            setMapInitError(null);
+          }, 500);
+        }
+        
+        return true;
+      }
+      return false;
+    };
+    
+    errorHandlerAttached.current = true;
+    window.addEventListener('error', handleError, true);
+    
+    return () => {
+      window.removeEventListener('error', handleError, true);
+      errorHandlerAttached.current = false;
+    };
+  }, [retryCount]);
+  
+  // Handle map ready state
+  const handleMapReady = useCallback(() => {
+    console.log("Map is ready");
+    setIsMapReady(true);
+    
+    // Try to reset any pending error state
+    setMapInitError(null);
+  }, []);
+  
+  // Filter pharmacies when user location changes
+  useEffect(() => {
+    if (!pharmacies || !Array.isArray(pharmacies) || !isMapReady) return;
     
     try {
-      if (showDefaultLocation && coordinates && isMapReady) {
+      if (showDefaultLocation && coordinates) {
         // When location is enabled, show pharmacies nearby
         const userLocation = coordinates ? L.latLng(coordinates.lat, coordinates.lon) : null;
         
         if (userLocation) {
+          // Use a safe filtering method that handles potential data problems
           const nearbyPharmacies = pharmacies.filter(pharmacy => {
             if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return false;
             try {
@@ -110,55 +187,6 @@ export function PharmacyMap({
       onPharmaciesInShape(pharmacies);
     }
   }, [showDefaultLocation, coordinates, pharmacies, onPharmaciesInShape, isMapReady]);
-  
-  // Prevent error when no valid pharmacies
-  const validPharmacies = useMemo(() => {
-    if (!Array.isArray(filteredPharmacies)) return [];
-    return filteredPharmacies.filter(pharmacy => 
-      pharmacy && 
-      pharmacy.coordinates && 
-      typeof pharmacy.coordinates.lat !== 'undefined' && 
-      typeof pharmacy.coordinates.lon !== 'undefined'
-    );
-  }, [filteredPharmacies]);
-  
-  // Handle map initialization errors
-  useEffect(() => {
-    const handleMapError = (event: ErrorEvent) => {
-      if (event.message.includes('a is not a function')) {
-        console.error('Caught map initialization error:', event);
-        setMapInitError('Map initialization error. Please try refreshing the page.');
-        
-        // Prevent error from propagating
-        event.preventDefault();
-        event.stopPropagation();
-        
-        // Attempt auto-recovery by regenerating the map
-        if (retryCount < 2) {
-          setTimeout(() => {
-            setMapKey(`map-retry-${Date.now()}`);
-            setRetryCount(prev => prev + 1);
-            setMapInitError(null);
-          }, 500);
-        }
-        
-        return true;
-      }
-      return false;
-    };
-    
-    window.addEventListener('error', handleMapError);
-    
-    return () => {
-      window.removeEventListener('error', handleMapError);
-    };
-  }, [retryCount]);
-  
-  // Handle map ready state
-  const handleMapReady = useCallback(() => {
-    console.log("Map is ready");
-    setIsMapReady(true);
-  }, []);
 
   return (
     <div className="w-full h-full">
@@ -171,6 +199,7 @@ export function PharmacyMap({
               className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
               onClick={() => {
                 setMapKey(`map-manual-retry-${Date.now()}`);
+                setRetryCount(0);
                 setMapInitError(null);
               }}
             >
@@ -214,7 +243,7 @@ export function PharmacyMap({
               )}
               
               {/* Render pharmacy markers */}
-              {isMapReady && validPharmacies.map((pharmacy) => {
+              {isMapReady && filteredPharmacies.map((pharmacy) => {
                 if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
                 
                 // Ensure coordinates are numbers

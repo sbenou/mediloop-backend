@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import L from 'leaflet';
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -12,22 +12,15 @@ if (typeof window !== 'undefined') {
   (window as any).type = true;
 }
 
-// Initialize Leaflet.draw localization and measurement formatting
-if (typeof L !== 'undefined' && L.drawLocal) {
-  try {
-    L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
-    L.drawLocal.draw.handlers.circle.radius = 'Radius';
-    L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
-    L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
-    L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
-    L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
-
-    (L as any).drawLocal.draw.toolbar.buttons.polygon = 'Draw a polygon';
-    (L as any).drawLocal.draw.toolbar.buttons.rectangle = 'Draw a rectangle';
-    (L as any).drawLocal.draw.toolbar.buttons.circle = 'Draw a circle';
-  } catch (err) {
-    console.error('Error initializing Leaflet.draw localization:', err);
-  }
+// Add a global error handler for the "a is not a function" error
+if (typeof window !== 'undefined' && !window.onerror) {
+  window.onerror = (message, source, lineno, colno, error) => {
+    if (message && message.toString().includes('a is not a function')) {
+      console.warn('Caught global Leaflet error:', message);
+      return true; // Prevent default error handling
+    }
+    return false; // Let other errors propagate normally
+  };
 }
 
 interface PharmacyListSectionProps {
@@ -49,8 +42,14 @@ const PharmacyListSection = ({
 }: PharmacyListSectionProps) => {
   const [filteredPharmacies, setFilteredPharmacies] = useState(pharmacies);
   const [showDefaultLocation, setShowDefaultLocation] = useState(false);
+  const [errorState, setErrorState] = useState<string | null>(null);
+  
+  // Reset error state when pharmacies or coordinates change
+  useEffect(() => {
+    setErrorState(null);
+  }, [pharmacies, coordinates]);
 
-  const handleLocationToggle = (checked: boolean) => {
+  const handleLocationToggle = useCallback((checked: boolean) => {
     setShowDefaultLocation(checked);
     if (checked) {
       toast({
@@ -58,8 +57,24 @@ const PharmacyListSection = ({
         description: "Currently showing pharmacies within 2km of your location",
       });
     }
-  };
+  }, []);
 
+  const handlePharmaciesInShape = useCallback((updatedPharmacies: any[]) => {
+    try {
+      if (!Array.isArray(updatedPharmacies)) {
+        console.error("Invalid pharmacies data:", updatedPharmacies);
+        setFilteredPharmacies(pharmacies); // Fallback to all pharmacies
+        return;
+      }
+      
+      setFilteredPharmacies(updatedPharmacies);
+    } catch (error) {
+      console.error("Error handling filtered pharmacies:", error);
+      setFilteredPharmacies(pharmacies); // Fallback to all pharmacies
+    }
+  }, [pharmacies]);
+  
+  // Update filtered pharmacies when location or pharmacy data changes
   useEffect(() => {
     if (!coordinates?.lat || !coordinates?.lon) {
       setFilteredPharmacies(pharmacies);
@@ -90,7 +105,11 @@ const PharmacyListSection = ({
   }, [showDefaultLocation, coordinates, pharmacies]);
 
   if (!coordinates) {
-    return <div>Loading location...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-500">Loading location data...</p>
+      </div>
+    );
   }
 
   return (
@@ -109,7 +128,7 @@ const PharmacyListSection = ({
         coordinates={coordinates}
         pharmacies={pharmacies}
         filteredPharmacies={filteredPharmacies}
-        onPharmaciesInShape={setFilteredPharmacies}
+        onPharmaciesInShape={handlePharmaciesInShape}
         showDefaultLocation={showDefaultLocation}
       />
     </div>

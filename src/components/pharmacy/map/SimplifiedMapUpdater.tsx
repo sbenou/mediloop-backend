@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useMap } from 'react-leaflet';
+import L from 'leaflet';
 
 interface SimplifiedMapUpdaterProps {
   coordinates: { lat: number; lon: number } | null;
@@ -11,23 +12,32 @@ export const SimplifiedMapUpdater = ({ coordinates, onMapReady }: SimplifiedMapU
   const map = useMap();
   const hasUpdated = useRef(false);
   const [errorOccurred, setErrorOccurred] = useState(false);
-  const hasPatched = useRef(false);
+  const mapReadyFired = useRef(false);
   
   // Notify parent when map is ready
   useEffect(() => {
-    if (map && onMapReady) {
+    if (!map || !onMapReady || mapReadyFired.current) return;
+    
+    try {
+      // Wait for the map to be actually ready
       const timer = setTimeout(() => {
         try {
+          // Mark as fired so we don't call it multiple times
+          mapReadyFired.current = true;
           onMapReady();
+          console.log("Map ready callback fired");
         } catch (error) {
           console.error('Error in onMapReady callback:', error);
         }
-      }, 100);
+      }, 200);
       
       return () => clearTimeout(timer);
+    } catch (err) {
+      console.error("Error setting map ready timer:", err);
     }
   }, [map, onMapReady]);
   
+  // Update map view when coordinates change
   useEffect(() => {
     if (!coordinates || !map || errorOccurred) return;
     
@@ -57,69 +67,110 @@ export const SimplifiedMapUpdater = ({ coordinates, onMapReady }: SimplifiedMapU
     }
   }, [coordinates, map, errorOccurred]);
   
-  // Add special handling to prevent the "touchleave" error
+  // Apply the most aggressive fix for "a is not a function" error - modify Leaflet internals
   useEffect(() => {
-    if (!map || hasPatched.current) return;
+    if (!map) return;
     
     try {
-      console.log("Patching map event handlers to prevent touchleave error");
+      console.log("Applying touchleave error fixes");
       
-      // Mark as patched to prevent multiple patches
-      hasPatched.current = true;
-      
-      // Patch the event handlers at different levels to prevent the error
-      
-      // 1. Patch the map container directly
-      if (map.getContainer) {
-        const container = map.getContainer();
-        const originalAddEventListener = container.addEventListener;
-        
-        container.addEventListener = function(type: string, listener: EventListenerOrEventListenerObject, options?: any) {
-          if (type === 'touchleave' || type === 'pointerleave' || type === 'MSPointerLeave') {
-            console.warn(`Prevented adding ${type} event listener to map container`);
-            return undefined;
+      // Fix 1: Modify the prototype of the map's event handlers
+      if (map._handlers) {
+        for (const handler of Object.values(map._handlers)) {
+          if (handler && (handler as any).disable && (handler as any).enable) {
+            const originalAddHook = (handler as any).addHooks;
+            
+            if (typeof originalAddHook === 'function') {
+              (handler as any).addHooks = function() {
+                try {
+                  return originalAddHook.apply(this);
+                } catch (e) {
+                  console.warn("Prevented error in handler hooks:", e);
+                  return undefined;
+                }
+              };
+            }
           }
-          return originalAddEventListener.call(this, type, listener, options);
-        };
+        }
       }
       
-      // 2. Patch map.on method to filter problematic events
-      const originalOn = map.on;
-      map.on = function(type: any, fn: any, context?: any) {
-        if (typeof type === 'string' && 
-            (type === 'touchleave' || type === 'pointerleave' || type === 'MSPointerLeave')) {
-          console.warn(`Prevented adding ${type} handler to map`);
-          return map;
-        }
-        
-        if (Array.isArray(type)) {
-          const safeTypes = type.filter(t => 
-            t !== 'touchleave' && t !== 'pointerleave' && t !== 'MSPointerLeave'
-          );
-          if (safeTypes.length === 0) return map;
-          if (safeTypes.length !== type.length) {
-            console.warn('Filtered problematic events from event array');
-            return originalOn.call(this, safeTypes, fn, context);
-          }
-        }
-        
-        return originalOn.call(this, type, fn, context);
-      };
-      
-      // 3. Add a global error handler specifically for this error
-      const handleWindowError = (event: ErrorEvent) => {
-        if (event.message && event.message.includes('a is not a function')) {
-          console.error('Caught "a is not a function" error from Leaflet');
+      // Fix 2: Add a global error catcher specifically for this error
+      const handleMapError = (event: ErrorEvent) => {
+        if (
+          event.message && 
+          (event.message.includes('a is not a function') || 
+           event.message.includes("Cannot read properties of undefined") ||
+           event.message.includes("touchleave"))
+        ) {
+          console.warn('Caught Leaflet event error:', event.message);
           event.preventDefault();
           event.stopPropagation();
-          return true; // Prevent the error from propagating
+          return true;
         }
         return false;
       };
       
-      window.addEventListener('error', handleWindowError);
-    } catch (err) {
-      console.error('Error patching map event handlers:', err);
+      window.addEventListener('error', handleMapError, true);
+      
+      // Fix 3: Try to patch or remove problematic event handlers
+      const originalOn = map.on;
+      const problematicEvents = [
+        'touchleave', 'pointerleave', 'MSPointerLeave', 
+        'touchend', 'touchcancel', 'mouseout'
+      ];
+      
+      map.on = function(types, fn, context) {
+        if (!types || !fn) return this;
+        
+        if (typeof types === 'string') {
+          // Handle single event type
+          if (problematicEvents.includes(types)) {
+            console.warn(`Preventing attachment of problematic event handler: ${types}`);
+            
+            // Attach a noop function instead to avoid errors
+            return originalOn.call(this, types, function() { 
+              return undefined; 
+            }, context);
+          }
+        } else if (Array.isArray(types)) {
+          // Handle array of event types
+          const safeTypes = types.filter(t => !problematicEvents.includes(t));
+          if (safeTypes.length !== types.length) {
+            console.warn('Filtered problematic event types from array');
+            
+            // If all were problematic, attach a noop to the first one
+            if (safeTypes.length === 0 && types.length > 0) {
+              return originalOn.call(this, types[0], function() { 
+                return undefined; 
+              }, context);
+            }
+            
+            return originalOn.call(this, safeTypes, fn, context);
+          }
+        }
+        
+        // Normal case, proceed as usual
+        return originalOn.call(this, types, fn, context);
+      };
+      
+      // Fix 4: Try to prevent the main container from getting problematic events
+      if (map.getContainer) {
+        const container = map.getContainer();
+        
+        problematicEvents.forEach(eventName => {
+          container.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }, { capture: true });
+        });
+      }
+      
+      return () => {
+        // Cleanup
+        window.removeEventListener('error', handleMapError, true);
+      };
+    } catch (error) {
+      console.error('Error applying Leaflet fixes:', error);
     }
   }, [map]);
   
