@@ -82,7 +82,16 @@ const DoctorListSection = ({
     return <div>Loading location...</div>;
   }
 
-  const centerPosition: LatLngExpression = [coordinates.lat, coordinates.lon];
+  // Safety measure to ensure coordinates are valid numbers
+  const validLat = typeof coordinates.lat === 'number' && !isNaN(coordinates.lat) 
+    ? coordinates.lat : 49.8153;
+  const validLon = typeof coordinates.lon === 'number' && !isNaN(coordinates.lon)
+    ? coordinates.lon : 6.1296;
+    
+  const centerPosition: LatLngExpression = [validLat, validLon];
+
+  // Ensure doctors is an array 
+  const validDoctors = Array.isArray(doctors) ? doctors : [];
 
   const handleDoctorSelect = (doctorId: string) => {
     setSelectedDoctorId(doctorId);
@@ -106,7 +115,7 @@ const DoctorListSection = ({
           </>
         )}
 
-        {doctors?.map((doctor) => (
+        {validDoctors.length > 0 && validDoctors.map((doctor) => (
           <div
             key={doctor.id}
             ref={(el) => listItemRefs.current[doctor.id] = el}
@@ -124,40 +133,48 @@ const DoctorListSection = ({
           </div>
         ))}
 
-        {doctors?.length === 0 && coordinates && !isLoading && (
+        {validDoctors.length === 0 && !isLoading && (
           <p className="text-center text-gray-500">No doctors found in this area</p>
         )}
       </div>
 
       <div className="rounded-lg overflow-hidden border border-gray-200 h-full relative z-10">
+        {/* Add fallback div for when map is loading */}
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-0">
+          <p className="text-gray-500">Loading map...</p>
+        </div>
+        
         <MapContainer
           key={mapKey}
           center={centerPosition}
           zoom={10}
-          className="h-full"
-          style={{ height: '100%', width: '100%' }}
+          style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
           scrollWheelZoom={true}
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <SimplifiedMapUpdater coordinates={coordinates} />
+          
+          <SimplifiedMapUpdater coordinates={{ lat: validLat, lon: validLon }} />
           
           {showUserLocation && (
             <Marker 
               position={centerPosition} 
-              key="user-location"
               icon={userLocationIcon}
             >
               <Popup>Your location</Popup>
             </Marker>
           )}
 
-          {doctors?.filter(doctor => doctor.coordinates).map((doctor) => {
+          {validDoctors.filter(doctor => doctor.coordinates).map((doctor) => {
+            const docLat = doctor.coordinates?.lat || validLat;
+            const docLon = doctor.coordinates?.lon || validLon;
+            
+            // Ensure coordinates are valid numbers
             const position: LatLngExpression = [
-              doctor.coordinates?.lat || coordinates.lat,
-              doctor.coordinates?.lon || coordinates.lon
+              typeof docLat === 'number' && !isNaN(docLat) ? docLat : validLat,
+              typeof docLon === 'number' && !isNaN(docLon) ? docLon : validLon
             ];
             
             return (

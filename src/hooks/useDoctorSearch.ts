@@ -43,7 +43,8 @@ export const useDoctorSearch = (
         const formattedDbDoctors = Array.isArray(dbDoctors) 
           ? dbDoctors.map(doc => ({
               ...doc,
-              source: 'database' as const
+              source: 'database' as const,
+              city: doc.city || 'Unknown location'  // Ensure city is never null
             }))
           : [];
 
@@ -61,6 +62,7 @@ export const useDoctorSearch = (
           searchRadius
         );
 
+        // Handle unexpected response format safely
         if (!Array.isArray(overpassDoctors)) {
           console.error('Invalid response from searchDoctors:', overpassDoctors);
           return formattedDbDoctors; // Return just database doctors
@@ -71,6 +73,7 @@ export const useDoctorSearch = (
           .filter(doc => doc && typeof doc === 'object')
           .map(doc => ({
             ...doc,
+            city: doc.city || 'Unknown location',  // Ensure city is never null
             source: 'overpass' as const
           }));
 

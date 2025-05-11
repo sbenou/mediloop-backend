@@ -14,6 +14,7 @@ import DoctorListSection from "@/components/doctor/DoctorListSection";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { LocationToggle } from "@/components/shared/LocationToggle";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FindDoctor = () => {
   const { isAuthenticated } = useAuth();
@@ -21,7 +22,6 @@ const FindDoctor = () => {
     queryKey: ['session'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session data:', session);
       return session;
     },
     staleTime: 1000 * 60 * 5,
@@ -48,8 +48,6 @@ const FindDoctor = () => {
           lon: LUXEMBOURG_COORDINATES.lon.toString()
         };
 
-  console.log('Search coordinates:', searchCoordinates);
-
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
 
   useEffect(() => {
@@ -72,14 +70,14 @@ const FindDoctor = () => {
 
   useEffect(() => {
     try {
-      if (doctors?.length === 0 && searchRadius < 10000) {
+      if (Array.isArray(doctors) && doctors.length === 0 && searchRadius < 10000) {
         console.log('No doctors found, increasing search radius');
         setSearchRadius(prev => Math.min(prev + 2000, 10000));
       }
     } catch (error) {
       console.error("Error in doctors effect:", error);
     }
-  }, [doctors?.length, searchRadius]);
+  }, [doctors, searchRadius]);
 
   // Convert string coordinates to numbers for DoctorListSection
   const displayCoordinates = {
@@ -87,8 +85,54 @@ const FindDoctor = () => {
     lon: parseFloat(searchCoordinates.lon)
   };
 
-  console.log("FindDoctor rendering with coordinates:", displayCoordinates);
-  console.log("Doctors found:", doctors?.length, doctors);
+  // Add fallback values in case parsing fails
+  if (isNaN(displayCoordinates.lat)) displayCoordinates.lat = 49.8153;
+  if (isNaN(displayCoordinates.lon)) displayCoordinates.lon = 6.1296;
+
+  const handleLocationToggle = (checked: boolean) => {
+    try {
+      if (!checked) {
+        // When disabling location
+        setUserLocation(LUXEMBOURG_COORDINATES);
+        setIsUsingLocation(false);
+        if (userProfile?.city) {
+          handleCitySearch(userProfile.city);
+        } else {
+          handleCitySearch("Luxembourg City");
+        }
+      } else {
+        // When enabling location
+        if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              setUserLocation({
+                lat: position.coords.latitude,
+                lon: position.coords.longitude
+              });
+              setIsUsingLocation(true);
+              toast({
+                title: "Using your location",
+                description: "Showing locations near you",
+              });
+            },
+            (error) => {
+              console.error('Geolocation error:', error);
+              setUserLocation(LUXEMBOURG_COORDINATES);
+              setIsUsingLocation(false);
+              toast({
+                title: "Location Error",
+                description: "Could not get your location. Using default location instead.",
+                variant: "destructive",
+              });
+            }
+          );
+        }
+      }
+      setSearchRadius(2000);
+    } catch (err) {
+      console.error("Error toggling location:", err);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -100,54 +144,15 @@ const FindDoctor = () => {
             <div className="mb-4">
               <LocationToggle
                 showDefaultLocation={isUsingLocation}
-                onLocationToggle={(checked) => {
-                  try {
-                    if (!checked) {
-                      // When disabling location
-                      setUserLocation(LUXEMBOURG_COORDINATES);
-                      setIsUsingLocation(false);
-                      if (userProfile?.city) {
-                        handleCitySearch(userProfile.city);
-                      } else {
-                        handleCitySearch("Luxembourg City");
-                      }
-                    } else {
-                      // When enabling location
-                      if ("geolocation" in navigator) {
-                        navigator.geolocation.getCurrentPosition(
-                          (position) => {
-                            setUserLocation({
-                              lat: position.coords.latitude,
-                              lon: position.coords.longitude
-                            });
-                            setIsUsingLocation(true);
-                            toast({
-                              title: "Using your location",
-                              description: "Showing locations near you",
-                            });
-                          },
-                          (error) => {
-                            console.error('Geolocation error:', error);
-                            setUserLocation(LUXEMBOURG_COORDINATES);
-                            setIsUsingLocation(false);
-                            toast({
-                              title: "Location Error",
-                              description: "Could not get your location. Using default location instead.",
-                              variant: "destructive",
-                            });
-                          }
-                        );
-                      }
-                    }
-                    setSearchRadius(2000);
-                  } catch (err) {
-                    console.error("Error toggling location:", err);
-                  }
-                }}
+                onLocationToggle={handleLocationToggle}
               />
             </div>
             <div className="w-full mt-6">
-              {Array.isArray(doctors) ? (
+              {isSearching ? (
+                <div className="flex justify-center items-center h-64">
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              ) : (
                 <DoctorListSection
                   doctors={doctors}
                   isLoading={isDoctorsLoading || isSearching}
@@ -175,10 +180,6 @@ const FindDoctor = () => {
                     }
                   }}
                 />
-              ) : (
-                <div className="flex justify-center items-center h-64">
-                  <p className="text-gray-500">Loading doctors...</p>
-                </div>
               )}
             </div>
           </div>

@@ -20,25 +20,32 @@ export function SimplifiedMapUpdater({ coordinates, zoom = 10 }: SimplifiedMapUp
     }
     
     try {
-      if (typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number') {
-        console.log('SimplifiedMapUpdater: Setting view to coordinates', coordinates);
-        
-        // Use flyTo instead of setView for a smoother transition
-        // This approach is less likely to cause event handling issues
-        map.flyTo([coordinates.lat, coordinates.lon], zoom, {
-          duration: 1.5,  // Animation duration in seconds
-          easeLinearity: 0.25
-        });
-        
-        hasUpdatedRef.current = true;
-      }
+      // Ensure coordinates are valid numbers
+      const validLat = typeof coordinates.lat === 'number' && !isNaN(coordinates.lat)
+        ? coordinates.lat : 49.8153;
+      const validLon = typeof coordinates.lon === 'number' && !isNaN(coordinates.lon)
+        ? coordinates.lon : 6.1296;
+      
+      console.log('SimplifiedMapUpdater: Setting view to coordinates', { lat: validLat, lon: validLon });
+      
+      // Use flyTo instead of setView for a smoother transition
+      map.flyTo([validLat, validLon], zoom, {
+        duration: 1.5,
+        easeLinearity: 0.25
+      });
+      
+      // Force a resize after setting the view to ensure proper rendering
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+      
+      hasUpdatedRef.current = true;
     } catch (err) {
       console.error('Error setting map view:', err);
     }
     
-    // Clean up function is intentionally empty - we don't attach any events
     return () => {
-      // No event handlers to remove
+      // Cleanup function - no event handlers to remove
     };
   }, [map, coordinates, zoom]);
   

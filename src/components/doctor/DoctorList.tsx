@@ -20,6 +20,9 @@ interface DoctorListProps {
 }
 
 const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListProps) => {
+  // Ensure doctors is always an array
+  const validDoctors = Array.isArray(doctors) ? doctors : [];
+  
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -30,7 +33,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
     );
   }
 
-  if (!doctors || doctors.length === 0) {
+  if (validDoctors.length === 0) {
     return (
       <p className="text-center text-gray-500">
         {searchCity ? `No doctors found in ${searchCity}` : "No doctors found. Try searching for a different location."}
@@ -40,7 +43,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {doctors.map((doctor) => (
+      {validDoctors.map((doctor) => (
         <DoctorCard
           key={doctor.id}
           {...doctor}
