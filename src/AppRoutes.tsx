@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -49,16 +48,14 @@ export default function AppRoutes() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         
-        {/* Doctor routes - multiple consistent paths mapped to the same page */}
+        {/* Doctor and pharmacy routes - accessible to all users */}
         <Route path="/doctors" element={<FindDoctor />} />
         <Route path="/find-doctor" element={<FindDoctor />} />
         <Route path="/doctors/:id" element={<DoctorDetails />} />
-        
-        {/* Pharmacy routes - multiple consistent paths mapped to the same page */}
         <Route path="/search-pharmacy" element={<SearchPharmacy />} />
         <Route path="/pharmacies" element={<SearchPharmacy />} />
         <Route path="/find-pharmacy" element={<SearchPharmacy />} />
-
+        
         {/* Dashboard routes */}
         <Route path="/dashboard" element={<Dashboard />} />
         

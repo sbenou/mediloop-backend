@@ -16,19 +16,22 @@ const GetStartedSteps = () => {
       icon: Store,
       title: t('home.getStarted.steps.findPharmacy.title'),
       description: t('home.getStarted.steps.findPharmacy.description'),
-      link: "/search-pharmacy" // Direct path to search pharmacy
+      link: "/search-pharmacy",
+      dataTestId: "find-pharmacy-link"
     },
     {
       icon: UserRound,
       title: t('home.getStarted.steps.connectDoctor.title'),
       description: t('home.getStarted.steps.connectDoctor.description'),
-      link: "/find-doctor" // Updated to /find-doctor to ensure correct routing
+      link: "/find-doctor",
+      dataTestId: "find-doctor-link"
     },
     {
       icon: Pill,
       title: t('home.getStarted.steps.orderMedications.title'),
       description: t('home.getStarted.steps.orderMedications.description'),
-      link: "/products"
+      link: "/products",
+      dataTestId: "order-medications-link"
     }
   ];
 
@@ -67,6 +70,7 @@ const GetStartedSteps = () => {
                     <Link
                       to={step.link}
                       className="text-[#7E69AB] hover:text-[#7E69AB]/80 font-semibold"
+                      data-testid={step.dataTestId || ""}
                     >
                       Get Started
                     </Link>

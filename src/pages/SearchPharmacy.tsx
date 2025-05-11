@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -65,15 +64,16 @@ const SearchPharmacy = () => {
     },
   });
 
+  // Modified to only redirect if explicitly coming from a fresh signup or profile completion flow
   useEffect(() => {
     try {
-      if (profile?.role === 'pharmacist' && pharmacyAssignment?.pharmacy_id) {
+      if (profile?.role === 'pharmacist' && pharmacyAssignment?.pharmacy_id && locationState.fromOnboarding) {
         navigate('/pharmacy/profile');
       }
     } catch (err) {
       console.error("Error in pharmacist navigation effect:", err);
     }
-  }, [profile, pharmacyAssignment, navigate]);
+  }, [profile, pharmacyAssignment, navigate, locationState]);
 
   useEffect(() => {
     // Initialize with Luxembourg City as default
@@ -131,6 +131,7 @@ const SearchPharmacy = () => {
     setMapPharmacies(filteredPharmacies);
   };
 
+  // Special case for pharmacists who need to select their pharmacy
   if (isPharmacist && (!pharmacyAssignment?.pharmacy_id || isPharmacistSignup)) {
     return (
       <div className="min-h-screen flex flex-col">
