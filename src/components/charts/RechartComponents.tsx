@@ -4,11 +4,17 @@ import {
   XAxis as OriginalXAxis,
   YAxis as OriginalYAxis,
   XAxisProps,
-  YAxisProps
+  YAxisProps,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
 } from "recharts";
 
 // Default props that will be applied to our XAxis wrapper
-const defaultXAxisProps = {
+const defaultXAxisProps: Partial<XAxisProps> = {
   dataKey: "name",
   height: 30,
   axisLine: { stroke: '#E5E7EB' },
@@ -17,7 +23,7 @@ const defaultXAxisProps = {
 };
 
 // Default props that will be applied to our YAxis wrapper
-const defaultYAxisProps = {
+const defaultYAxisProps: Partial<YAxisProps> = {
   width: 60,
   axisLine: { stroke: '#E5E7EB' },
   tickLine: { stroke: '#E5E7EB' },
@@ -26,22 +32,22 @@ const defaultYAxisProps = {
 
 // Fix XAxis deprecation warning with a wrapper component using default parameters
 export function XAxis(props: XAxisProps) {
-  // Make sure xAxisId is undefined by default to avoid conflicts
-  const mergedProps = { ...props };
+  // Make sure xAxisId is provided to avoid conflicts
+  const mergedProps = { ...defaultXAxisProps, ...props };
   if (!mergedProps.xAxisId) {
     mergedProps.xAxisId = "default";
   }
-  return <OriginalXAxis {...defaultXAxisProps} {...mergedProps} />;
+  return <OriginalXAxis {...mergedProps} />;
 }
 
 // Fix YAxis deprecation warning with a wrapper component using default parameters
 export function YAxis(props: YAxisProps) {
-  // Make sure yAxisId is undefined by default to avoid conflicts
-  const mergedProps = { ...props };
+  // Make sure yAxisId is provided to avoid conflicts
+  const mergedProps = { ...defaultYAxisProps, ...props };
   if (!mergedProps.yAxisId) {
     mergedProps.yAxisId = "default";
   }
-  return <OriginalYAxis {...defaultYAxisProps} {...mergedProps} />;
+  return <OriginalYAxis {...mergedProps} />;
 }
 
 // Re-export other components from recharts that we'll need
