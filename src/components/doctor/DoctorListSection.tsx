@@ -44,12 +44,12 @@ function MapUpdater({ center, zoom }: { center: LatLngExpression, zoom?: number 
   const map = useMap();
   
   useEffect(() => {
-    if (map) {
-      try {
-        map.setView(center, zoom || map.getZoom());
-      } catch (error) {
-        console.error("Error updating map view:", error);
-      }
+    if (!map) return;
+    
+    try {
+      map.setView(center, zoom || map.getZoom());
+    } catch (error) {
+      console.error("Error updating map view:", error);
     }
   }, [center, map, zoom]);
   
@@ -87,12 +87,6 @@ const DoctorListSection = ({
 }: DoctorListSectionProps) => {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [mapUniqueKey, setMapUniqueKey] = useState(`map-${Date.now()}`);
-  
-  // Force map to re-render when coordinates change significantly
-  useEffect(() => {
-    setMapUniqueKey(`map-${Date.now()}`);
-  }, [coordinates?.lat, coordinates?.lon]);
   
   // Safety checks for coordinates
   const validCoordinates = coordinates && 
@@ -178,68 +172,70 @@ const DoctorListSection = ({
           <p className="text-gray-500">Loading map...</p>
         </div>
         
-        {/* Map container */}
-        <MapContainer
-          key={mapUniqueKey}
-          center={centerPosition}
-          zoom={10}
-          style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          
-          {/* Update map view when coordinates change */}
-          <MapUpdater center={centerPosition} />
-          
-          {/* Show user location marker if enabled */}
-          {showUserLocation && validCoordinates && (
-            <Marker 
-              position={centerPosition} 
-              icon={userLocationIcon}
-            >
-              <Popup>Your location</Popup>
-            </Marker>
-          )}
-
-          {/* Show doctor location markers */}
-          {doctorsWithValidCoordinates.map((doctor) => {
-            if (!doctor.coordinates) return null;
+        {/* Render map only when we have valid data */}
+        <div className="h-full w-full relative z-1">
+          <MapContainer
+            key={`map-${validCoordinates ? coordinates.lat : 'default'}-${validCoordinates ? coordinates.lon : 'default'}`}
+            center={centerPosition}
+            zoom={10}
+            style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
             
-            // Ensure coordinates are valid numbers
-            const docLat = doctor.coordinates?.lat;
-            const docLon = doctor.coordinates?.lon;
+            {/* Update map view when coordinates change */}
+            <MapUpdater center={centerPosition} />
             
-            if (typeof docLat !== 'number' || typeof docLon !== 'number' || 
-                isNaN(docLat) || isNaN(docLon)) {
-              return null;
-            }
-            
-            const position: LatLngExpression = [docLat, docLon];
-            
-            return (
-              <Marker
-                key={doctor.id}
-                position={position}
-                icon={selectedDoctorId === doctor.id ? selectedIcon : defaultIcon}
-                eventHandlers={{
-                  click: () => handleDoctorSelect(doctor.id)
-                }}
+            {/* Show user location marker if enabled */}
+            {showUserLocation && validCoordinates && (
+              <Marker 
+                position={centerPosition} 
+                icon={userLocationIcon}
               >
-                <Popup>
-                  <div className="text-sm">
-                    <p className="font-semibold">{doctor.full_name}</p>
-                    <p>{doctor.city || 'Unknown location'}</p>
-                    <p>{doctor.license_number}</p>
-                    {doctor.hours && <p>{doctor.hours}</p>}
-                  </div>
-                </Popup>
+                <Popup>Your location</Popup>
               </Marker>
-            );
-          })}
-        </MapContainer>
+            )}
+
+            {/* Show doctor location markers */}
+            {doctorsWithValidCoordinates.map((doctor) => {
+              if (!doctor.coordinates) return null;
+              
+              // Ensure coordinates are valid numbers
+              const docLat = doctor.coordinates?.lat;
+              const docLon = doctor.coordinates?.lon;
+              
+              if (typeof docLat !== 'number' || typeof docLon !== 'number' || 
+                  isNaN(docLat) || isNaN(docLon)) {
+                return null;
+              }
+              
+              const position: LatLngExpression = [docLat, docLon];
+              
+              return (
+                <Marker
+                  key={doctor.id}
+                  position={position}
+                  icon={selectedDoctorId === doctor.id ? selectedIcon : defaultIcon}
+                  eventHandlers={{
+                    click: () => handleDoctorSelect(doctor.id)
+                  }}
+                >
+                  <Popup>
+                    <div className="text-sm">
+                      <p className="font-semibold">{doctor.full_name}</p>
+                      <p>{doctor.city || 'Unknown location'}</p>
+                      <p>{doctor.license_number}</p>
+                      {doctor.hours && <p>{doctor.hours}</p>}
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
+          </MapContainer>
+        </div>
       </div>
     </div>
   );
