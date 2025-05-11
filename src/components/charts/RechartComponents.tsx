@@ -30,29 +30,33 @@ const defaultYAxisProps: Partial<YAxisProps> = {
   tick: { fontSize: 12 }
 };
 
-// Fix XAxis deprecation warning with a wrapper component using default parameters
-export function XAxis(props: XAxisProps) {
-  // Make sure xAxisId is provided to avoid conflicts
-  const mergedProps = { ...defaultXAxisProps, ...props };
-  if (!mergedProps.xAxisId) {
-    mergedProps.xAxisId = "default";
-  }
+// Fix XAxis wrapper component to properly handle types
+export const XAxis = (props: XAxisProps) => {
+  // Create a new props object with defaults and user props
+  const combinedProps = {
+    ...defaultXAxisProps,
+    ...props,
+    // Ensure xAxisId is provided
+    xAxisId: props.xAxisId || "default"
+  };
   
-  // Use type assertion to fix the incompatibility
-  return <OriginalXAxis {...mergedProps} />;
-}
+  // Return the original component with combined props
+  return <OriginalXAxis {...combinedProps} />;
+};
 
-// Fix YAxis deprecation warning with a wrapper component using default parameters
-export function YAxis(props: YAxisProps) {
-  // Make sure yAxisId is provided to avoid conflicts
-  const mergedProps = { ...defaultYAxisProps, ...props };
-  if (!mergedProps.yAxisId) {
-    mergedProps.yAxisId = "default";
-  }
+// Fix YAxis wrapper component to properly handle types
+export const YAxis = (props: YAxisProps) => {
+  // Create a new props object with defaults and user props
+  const combinedProps = {
+    ...defaultYAxisProps,
+    ...props,
+    // Ensure yAxisId is provided
+    yAxisId: props.yAxisId || "default"
+  };
   
-  // Use type assertion to fix the incompatibility
-  return <OriginalYAxis {...mergedProps} />;
-}
+  // Return the original component with combined props
+  return <OriginalYAxis {...combinedProps} />;
+};
 
 // Re-export other components from recharts that we'll need
 export {
