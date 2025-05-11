@@ -39,6 +39,31 @@ const selectedIcon = new L.Icon({
 // Default icon for non-selected markers
 const defaultIcon = new L.Icon.Default();
 
+// Simple map component to avoid direct reference to external components
+const SimpleMap = ({ 
+  center, 
+  zoom, 
+  children, 
+  onMapReady 
+}: { 
+  center: LatLngExpression; 
+  zoom: number; 
+  children: React.ReactNode;
+  onMapReady: (map: L.Map) => void;
+}) => {
+  return (
+    <MapContainer
+      center={center}
+      zoom={zoom}
+      style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
+      scrollWheelZoom={true}
+      whenCreated={onMapReady}
+    >
+      {children}
+    </MapContainer>
+  );
+};
+
 // Helper component to update map view when coordinates change
 function MapUpdater({ center, zoom }: { center: LatLngExpression, zoom?: number }) {
   const map = useRef<L.Map | null>(null);
@@ -140,20 +165,9 @@ const DoctorListSection = ({
     );
   }, [validDoctors]);
 
-  // When map is ready, update markers
-  useEffect(() => {
-    if (isMapReady && mapRef.current) {
-      try {
-        // Update map view to center position
-        mapRef.current.setView(centerPosition, 10);
-      } catch (error) {
-        console.error("Failed to update map view:", error);
-      }
-    }
-  }, [isMapReady, centerPosition]);
-
   // Handler for when map is ready
   const handleMapReady = (map: L.Map) => {
+    console.log('Map is ready');
     mapRef.current = map;
     setIsMapReady(true);
   };
@@ -210,13 +224,11 @@ const DoctorListSection = ({
         {/* Render map only when we have valid data */}
         <div className="h-full w-full relative z-1">
           {validCoordinates && (
-            <MapContainer
+            <SimpleMap
               key={mapKey}
               center={centerPosition}
               zoom={10}
-              style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
-              scrollWheelZoom={true}
-              whenCreated={handleMapReady}
+              onMapReady={handleMapReady}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -268,7 +280,7 @@ const DoctorListSection = ({
                   </Marker>
                 );
               })}
-            </MapContainer>
+            </SimpleMap>
           )}
         </div>
       </div>
