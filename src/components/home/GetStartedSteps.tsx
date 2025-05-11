@@ -22,7 +22,7 @@ const GetStartedSteps = () => {
       icon: UserRound,
       title: t('home.getStarted.steps.connectDoctor.title'),
       description: t('home.getStarted.steps.connectDoctor.description'),
-      link: "/doctors" // Direct path to find doctors
+      link: "/find-doctor" // Updated to /find-doctor to ensure correct routing
     },
     {
       icon: Pill,

@@ -26,7 +26,7 @@ export const usePharmacyNavigation = () => {
     console.log('Navigating to pharmacy dashboard main view');
     navigate('/pharmacy/dashboard', { 
       state: { preserveAuth: true },
-      replace: true
+      replace: false
     });
   }, [navigate]);
 
@@ -35,6 +35,15 @@ export const usePharmacyNavigation = () => {
     navigate('/pharmacy/profile', { 
       state: { preserveAuth: true },
       replace: false
+    });
+  }, [navigate]);
+
+  const navigateToPrescriptions = useCallback(() => {
+    console.log('Navigating to prescriptions page');
+    navigate('/pharmacy/dashboard', { 
+      state: { preserveAuth: true },
+      replace: false,
+      search: '?section=prescriptions'
     });
   }, [navigate]);
 
@@ -64,19 +73,11 @@ export const usePharmacyNavigation = () => {
 
   const navigateToSettings = useCallback(() => {
     console.log('Navigating to settings page');
-    // Fix: Separate the path from the search params
     navigate('/pharmacy/dashboard', { 
       state: { preserveAuth: true },
-      replace: true
+      replace: false,
+      search: '?section=settings'
     });
-    // Set the search params separately
-    setTimeout(() => {
-      window.history.replaceState(
-        null,
-        '',
-        '/pharmacy/dashboard?section=settings'
-      );
-    }, 0);
   }, [navigate]);
 
   const navigateToLink = useCallback((path: string) => {
@@ -91,34 +92,16 @@ export const usePharmacyNavigation = () => {
   const navigateToPharmacySection = useCallback((section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy section: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
-    // Fix: Separate the path from the search params
+    let search = `?section=${section}`;
     if (tab && tabParam) {
-      navigate('/pharmacy/dashboard', { 
-        state: { preserveAuth: true },
-        replace: true
-      });
-      // Set the search params separately
-      setTimeout(() => {
-        window.history.replaceState(
-          null,
-          '',
-          `/pharmacy/dashboard?section=${section}&${tabParam}=${tab}`
-        );
-      }, 0);
-    } else {
-      navigate('/pharmacy/dashboard', { 
-        state: { preserveAuth: true },
-        replace: true
-      });
-      // Set the search params separately
-      setTimeout(() => {
-        window.history.replaceState(
-          null,
-          '',
-          `/pharmacy/dashboard?section=${section}`
-        );
-      }, 0);
+      search += `&${tabParam}=${tab}`;
     }
+    
+    navigate('/pharmacy/dashboard', { 
+      state: { preserveAuth: true },
+      replace: false,
+      search: search
+    });
   }, [navigate]);
 
   return {
@@ -129,6 +112,7 @@ export const usePharmacyNavigation = () => {
     navigateToBilling,
     navigateToLink,
     navigateToDashboard,
+    navigateToPrescriptions,
     navigateToPharmacyPatientsPage,
     isProfileOpen,
     setIsProfileOpen,

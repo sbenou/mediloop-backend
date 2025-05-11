@@ -30,7 +30,9 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
     navigateToPharmacySection,
     navigateToDashboard,
     navigateToReferral,
+    navigateToPharmacyProfile,
     navigateToPharmacyPatientsPage,
+    navigateToPrescriptions,
     isOrdersOpen, 
     setIsOrdersOpen,
     isProfileOpen,
@@ -80,7 +82,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
           icon={<FileText className="w-5 h-5 mr-3" />}
           label="Prescriptions"
           isActive={location.search.includes('section=prescriptions')}
-          onClick={() => navigateToPharmacySection('prescriptions')}
+          onClick={() => navigateToPrescriptions()}
         />
 
         <SidebarCollapsibleItem 
