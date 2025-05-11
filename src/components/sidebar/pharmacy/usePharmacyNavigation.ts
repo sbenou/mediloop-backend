@@ -40,10 +40,11 @@ export const usePharmacyNavigation = () => {
 
   const navigateToPrescriptions = useCallback(() => {
     console.log('Navigating to prescriptions page');
-    navigate('/pharmacy/dashboard', { 
+    // Instead of using search in NavigateOptions, create the URL with the search params
+    const url = '/pharmacy/dashboard?section=prescriptions';
+    navigate(url, { 
       state: { preserveAuth: true },
-      replace: false,
-      search: '?section=prescriptions'
+      replace: false
     });
   }, [navigate]);
 
@@ -73,10 +74,11 @@ export const usePharmacyNavigation = () => {
 
   const navigateToSettings = useCallback(() => {
     console.log('Navigating to settings page');
-    navigate('/pharmacy/dashboard', { 
+    // Create the URL with search params instead of using the search property
+    const url = '/pharmacy/dashboard?section=settings';
+    navigate(url, { 
       state: { preserveAuth: true },
-      replace: false,
-      search: '?section=settings'
+      replace: false
     });
   }, [navigate]);
 
@@ -92,15 +94,15 @@ export const usePharmacyNavigation = () => {
   const navigateToPharmacySection = useCallback((section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy section: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
-    let search = `?section=${section}`;
+    // Create the URL with search params
+    let url = `/pharmacy/dashboard?section=${section}`;
     if (tab && tabParam) {
-      search += `&${tabParam}=${tab}`;
+      url += `&${tabParam}=${tab}`;
     }
     
-    navigate('/pharmacy/dashboard', { 
+    navigate(url, { 
       state: { preserveAuth: true },
-      replace: false,
-      search: search
+      replace: false
     });
   }, [navigate]);
 
