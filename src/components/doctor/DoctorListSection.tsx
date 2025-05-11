@@ -7,6 +7,7 @@ import type { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { cn } from "@/lib/utils";
+import { SimplifiedMapUpdater } from "@/components/pharmacy/map/SimplifiedMapUpdater";
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -72,6 +73,8 @@ const DoctorListSection = ({
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapInitError, setMapInitError] = useState<string | null>(null);
+  const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Default coordinates (Luxembourg)
   const defaultLat = 49.8153;
@@ -137,7 +140,9 @@ const DoctorListSection = ({
         setMapInitError('Map initialization error. Please try refreshing the page.');
         event.preventDefault();
         event.stopPropagation();
+        return true;
       }
+      return false;
     };
     
     window.addEventListener('error', handleMapError);
@@ -146,6 +151,26 @@ const DoctorListSection = ({
       window.removeEventListener('error', handleMapError);
     };
   }, []);
+
+  // Auto-retry logic for map errors
+  useEffect(() => {
+    if (mapInitError && retryCount < 2) {
+      const timer = setTimeout(() => {
+        console.log(`Auto-retrying map initialization (attempt ${retryCount + 1})...`);
+        setMapKey(`map-retry-${Date.now()}`);
+        setMapInitError(null);
+        setRetryCount(prev => prev + 1);
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [mapInitError, retryCount]);
+
+  // Handle map ready callback
+  const handleMapReady = () => {
+    console.log("Map is ready");
+    setIsMapReady(true);
+  };
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
@@ -204,9 +229,12 @@ const DoctorListSection = ({
               <p className="text-sm text-gray-600 mb-4">{mapInitError}</p>
               <button 
                 className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  setMapKey(`map-manual-retry-${Date.now()}`);
+                  setMapInitError(null);
+                }}
               >
-                Refresh Page
+                Retry Loading Map
               </button>
             </div>
           </div>
@@ -217,7 +245,7 @@ const DoctorListSection = ({
           <div className="h-full w-full relative z-1">
             <div id="doctor-map-container" className="h-full w-full">
               <MapContainer
-                key={`map-${centerPosition[0]}-${centerPosition[1]}`}
+                key={mapKey}
                 center={centerPosition}
                 zoom={12}
                 style={{ 
@@ -227,11 +255,16 @@ const DoctorListSection = ({
                   zIndex: 1 
                 }}
                 scrollWheelZoom={true}
-                whenReady={() => setIsMapReady(true)}
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                
+                {/* Use SimplifiedMapUpdater to handle map events and readiness */}
+                <SimplifiedMapUpdater 
+                  coordinates={coordinates}
+                  onMapReady={handleMapReady} 
                 />
                 
                 {/* Show user location marker if enabled */}
