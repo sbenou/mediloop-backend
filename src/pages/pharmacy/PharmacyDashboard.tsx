@@ -1,7 +1,7 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { 
   ProfileView, 
   OrdersView, 
@@ -14,22 +14,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const PharmacyDashboard = () => {
   const [searchParams] = useSearchParams();
-  const location = useLocation();
-  const { userRole, isLoading } = useAuth();
+  const { userRole } = useAuth();
   
   const section = searchParams.get("section") || "dashboard";
   const profileTab = searchParams.get("profileTab") || "personal";
   const ordersTab = searchParams.get("ordersTab") || "all";
   
-  useEffect(() => {
-    console.log("PharmacyDashboard render:", { 
-      userRole, 
-      section,
-      profileTab,
-      ordersTab,
-      location: location.pathname + location.search
-    });
-  }, [userRole, section, profileTab, ordersTab, location]);
+  console.log("PharmacyDashboard rendering with section:", section);
 
   const getContent = () => {
     switch (section) {

@@ -1,22 +1,33 @@
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const usePharmacyNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // State for managing collapsible sidebar sections
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+  // Simplified state management - we'll get the open state from URL params
+  const isProfileOpen = location.search.includes('section=profile');
+  const isOrdersOpen = location.search.includes('section=orders');
+  const setIsProfileOpen = useCallback((isOpen) => {
+    if (isOpen && !isProfileOpen) {
+      navigateToPharmacySection('profile', 'personal', 'profileTab');
+    }
+  }, [isProfileOpen]);
+  
+  const setIsOrdersOpen = useCallback((isOpen) => {
+    if (isOpen && !isOrdersOpen) {
+      navigateToPharmacySection('orders', 'all', 'ordersTab');
+    }
+  }, [isOrdersOpen]);
   
   // Navigation handlers
   const navigateToDashboard = useCallback(() => {
     console.log('Navigating to pharmacy dashboard main view');
-    // Using the route directly to the dashboard page
-    navigate('/pharmacy/dashboard', { 
+    // Using search params to avoid path conflicts
+    navigate('/pharmacy/dashboard?section=dashboard', { 
       state: { preserveAuth: true, keepSidebar: true },
-      replace: false
+      replace: true // Use replace to avoid history stacking
     });
   }, [navigate]);
 
@@ -56,7 +67,7 @@ export const usePharmacyNavigation = () => {
     console.log('Navigating to settings page');
     navigate('/pharmacy/dashboard?section=settings', { 
       state: { preserveAuth: true, keepSidebar: true },
-      replace: false
+      replace: true
     });
   }, [navigate]);
 
@@ -74,12 +85,12 @@ export const usePharmacyNavigation = () => {
     if (tab && tabParam) {
       navigate(`/pharmacy/dashboard?section=${section}&${tabParam}=${tab}`, { 
         state: { preserveAuth: true, keepSidebar: true },
-        replace: false
+        replace: true
       });
     } else {
       navigate(`/pharmacy/dashboard?section=${section}`, { 
         state: { preserveAuth: true, keepSidebar: true },
-        replace: false
+        replace: true
       });
     }
   }, [navigate]);

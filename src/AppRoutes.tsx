@@ -14,6 +14,8 @@ import ManageBoostsPage from "./pages/ManageBoostsPage";
 import ProtectedRoute from "@/components/routing/ProtectedRoute";
 import ProtectedReferral from "@/router/roles/ProtectedReferral";
 import Referral from "@/pages/Referral";
+import TestDataLoader from "@/components/testing/TestDataLoader";
+import FindDoctor from "@/pages/FindDoctor";
 
 // Create a simple placeholder component for missing pages
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -27,66 +29,67 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 const Register = () => <PlaceholderPage title="Register" />;
 const EditProfile = () => <PlaceholderPage title="Edit Profile" />;
 const Appointments = () => <PlaceholderPage title="Appointments" />;
-const Doctors = () => <PlaceholderPage title="Doctors" />;
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      {/* Public routes that don't require authentication */}
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/contact" element={<Contact />} />
-      
-      <Route path="/doctors" element={<Doctors />} />
-      <Route path="/doctors/:id" element={<DoctorDetails />} />
+    <TestDataLoader>
+      <Routes>
+        {/* Public routes that don't require authentication */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        
+        <Route path="/doctors" element={<FindDoctor />} />
+        <Route path="/doctors/:id" element={<DoctorDetails />} />
 
-      <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
 
-      {/* Protected routes - these require authentication */}
-      <Route path="/profile" element={
-        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-          <Profile />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/edit-profile" element={
-        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-          <EditProfile />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/appointments" element={
-        <ProtectedRoute allowedRoles={['patient', 'doctor']}>
-          <Appointments />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/upgrade" element={
-        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
-          <UpgradePage />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/account" element={
-        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
-          <Account />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/manage-boosts" element={
-        <ProtectedRoute allowedRoles={['doctor', 'pharmacist']}>
-          <ManageBoostsPage />
-        </ProtectedRoute>
-      } />
+        {/* Protected routes - these require authentication */}
+        <Route path="/profile" element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/edit-profile" element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+            <EditProfile />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/appointments" element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor']}>
+            <Appointments />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/upgrade" element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
+            <UpgradePage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/account" element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist', 'superadmin']}>
+            <Account />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/manage-boosts" element={
+          <ProtectedRoute allowedRoles={['doctor', 'pharmacist']}>
+            <ManageBoostsPage />
+          </ProtectedRoute>
+        } />
 
-      <Route path="/referral" element={
-        <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
-          <Referral />
-        </ProtectedRoute>
-      } />
-    </Routes>
+        <Route path="/referral" element={
+          <ProtectedRoute allowedRoles={['patient', 'doctor', 'pharmacist']}>
+            <Referral />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </TestDataLoader>
   );
 }
