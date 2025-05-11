@@ -30,33 +30,35 @@ const defaultYAxisProps: Partial<YAxisProps> = {
   tick: { fontSize: 12 }
 };
 
-// Fix XAxis wrapper component to properly handle types
-export const XAxis = (props: XAxisProps) => {
-  // Create a new props object with defaults and user props
-  const combinedProps = {
-    ...defaultXAxisProps,
-    ...props,
-    // Ensure xAxisId is provided
-    xAxisId: props.xAxisId || "default"
-  };
-  
-  // Return the original component with combined props
-  return <OriginalXAxis {...combinedProps} />;
-};
+/**
+ * A wrapper for the XAxis component with default styling
+ */
+export function XAxis(props: Omit<XAxisProps, 'ref'>) {
+  // Use the spread operator to combine the default props with the user-provided props
+  // This ensures the user props take precedence over defaults
+  return (
+    <OriginalXAxis
+      {...defaultXAxisProps}
+      {...props}
+      xAxisId={props.xAxisId || "default"}
+    />
+  );
+}
 
-// Fix YAxis wrapper component to properly handle types
-export const YAxis = (props: YAxisProps) => {
-  // Create a new props object with defaults and user props
-  const combinedProps = {
-    ...defaultYAxisProps,
-    ...props,
-    // Ensure yAxisId is provided
-    yAxisId: props.yAxisId || "default"
-  };
-  
-  // Return the original component with combined props
-  return <OriginalYAxis {...combinedProps} />;
-};
+/**
+ * A wrapper for the YAxis component with default styling
+ */
+export function YAxis(props: Omit<YAxisProps, 'ref'>) {
+  // Use the spread operator to combine the default props with the user-provided props
+  // This ensures the user props take precedence over defaults
+  return (
+    <OriginalYAxis
+      {...defaultYAxisProps}
+      {...props}
+      yAxisId={props.yAxisId || "default"}
+    />
+  );
+}
 
 // Re-export other components from recharts that we'll need
 export {
