@@ -131,7 +131,6 @@ export const useDoctorSearch = (
     refetchOnMount: true,
     refetchInterval: false, // Disable automatic refetching
     enabled: Boolean(coordinates), // Only run when we have coordinates
-    suspense: false, // Don't use suspense
   });
 
   return { 
