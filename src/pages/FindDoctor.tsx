@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState } from 'recoil';
 import { supabase } from "@/lib/supabase";
@@ -65,39 +65,53 @@ const FindDoctor = () => {
       } else if (!coordinates && userProfile?.city) {
         console.log('Using profile city:', userProfile.city);
         handleCitySearch(userProfile.city);
+      } else if (!coordinates) {
+        // Fallback to ensure we always have some coordinates
+        handleCitySearch("Luxembourg City");
       }
     } catch (error) {
       console.error("Error in session effect:", error);
     }
   }, [session, coordinates, userProfile?.city]);
 
-  // Handle search radius updates with proper debouncing
+  // Safely increase search radius with proper throttling
+  const safelyIncreaseRadius = useCallback(() => {
+    if (!radiusUpdateAllowed) return;
+    
+    setRadiusUpdateAllowed(false);
+    
+    // Use a safe timeout approach that won't cause React state batching issues
+    const timerId = setTimeout(() => {
+      setSearchRadius(prevRadius => {
+        const newRadius = Math.min(prevRadius + 2000, 10000);
+        console.log(`Increasing radius from ${prevRadius} to ${newRadius}`);
+        return newRadius;
+      });
+      
+      // Re-enable radius updates after a delay to avoid rapid repeated calls
+      const enableTimer = setTimeout(() => {
+        setRadiusUpdateAllowed(true);
+      }, 3000);
+      
+      return () => clearTimeout(enableTimer);
+    }, 1500);
+    
+    return () => clearTimeout(timerId);
+  }, [radiusUpdateAllowed, setSearchRadius]);
+
+  // Handle search radius updates only when we have data and no doctors are found
   useEffect(() => {
-    if (Array.isArray(doctors) && doctors.length === 0 && searchRadius < 10000 && radiusUpdateAllowed) {
-      console.log('No doctors found, increasing search radius');
-      
-      // Disable further radius updates temporarily to prevent cascading
-      setRadiusUpdateAllowed(false);
-      
-      // Use setTimeout with a delay to avoid React state batching issues
-      const timer = setTimeout(() => {
-        setSearchRadius(prevRadius => {
-          const newRadius = Math.min(prevRadius + 2000, 10000);
-          console.log(`Increasing radius from ${prevRadius} to ${newRadius}`);
-          return newRadius;
-        });
-        
-        // Re-enable radius updates after a longer delay
-        setTimeout(() => {
-          setRadiusUpdateAllowed(true);
-        }, 2000);
-      }, 1000);
-      
-      return () => {
-        clearTimeout(timer);
-      };
+    if (
+      Array.isArray(doctors) && 
+      doctors.length === 0 && 
+      searchRadius < 10000 &&
+      !isSearching && 
+      !isDoctorsLoading
+    ) {
+      console.log('No doctors found, will try increasing search radius');
+      safelyIncreaseRadius();
     }
-  }, [doctors, searchRadius, radiusUpdateAllowed]);
+  }, [doctors, searchRadius, isDoctorsLoading, isSearching, safelyIncreaseRadius]);
 
   // Convert string coordinates to numbers for DoctorListSection
   const displayCoordinates = {
@@ -149,16 +163,19 @@ const FindDoctor = () => {
         }
       }
       
-      // Reset search radius when toggling location, with delay to prevent race conditions
+      // Reset search radius when toggling location but with more delay to avoid race conditions
       setRadiusUpdateAllowed(false);
-      setTimeout(() => {
+      const resetTimer = setTimeout(() => {
         setSearchRadius(2000);
-        setTimeout(() => {
+        const enableTimer = setTimeout(() => {
           setRadiusUpdateAllowed(true);
-        }, 2000);
-      }, 500);
+        }, 3000);
+        return () => clearTimeout(enableTimer);
+      }, 1000);
       
       setMapError(null); // Reset any map errors when toggling location
+      
+      return () => clearTimeout(resetTimer);
     } catch (err) {
       console.error("Error toggling location:", err);
       setMapError("Error accessing location services");

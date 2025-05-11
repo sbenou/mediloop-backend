@@ -16,13 +16,13 @@ const GetStartedSteps = () => {
       icon: Store,
       title: t('home.getStarted.steps.findPharmacy.title'),
       description: t('home.getStarted.steps.findPharmacy.description'),
-      link: "/search-pharmacy"
+      link: "/pharmacies" // Changed to use a consistent path that's already set up
     },
     {
       icon: UserRound,
       title: t('home.getStarted.steps.connectDoctor.title'),
       description: t('home.getStarted.steps.connectDoctor.description'),
-      link: "/find-doctor"
+      link: "/doctors" // Using the most reliable route
     },
     {
       icon: Pill,

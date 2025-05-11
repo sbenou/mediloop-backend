@@ -55,7 +55,8 @@ export const useDoctorSearch = (
           return formattedDbDoctors;
         }
 
-        // Get doctors from Overpass API with current radius
+        // Get doctors from Overpass API with current radius - wrap in try/catch to avoid breaking the entire query
+        let formattedOverpassDoctors = [];
         try {
           const overpassDoctors = await searchDoctors(
             parseFloat(coordinates.lat),
@@ -70,7 +71,7 @@ export const useDoctorSearch = (
           }
 
           // Add source field to Overpass results
-          const formattedOverpassDoctors = overpassDoctors
+          formattedOverpassDoctors = overpassDoctors
             .filter(doc => doc && typeof doc === 'object')
             .map(doc => ({
               ...doc,
@@ -79,29 +80,29 @@ export const useDoctorSearch = (
             }));
 
           console.log('Overpass doctors found:', formattedOverpassDoctors.length);
-
-          // Combine and deduplicate results
-          const allDoctors = [
-            ...formattedDbDoctors,
-            ...formattedOverpassDoctors
-          ].filter(Boolean);
-
-          // Remove duplicates based on id
-          const doctorMap = new Map();
-          allDoctors.forEach(item => {
-            if (item && item.id) {
-              doctorMap.set(item.id, item);
-            }
-          });
-          
-          const result = Array.from(doctorMap.values());
-          console.log('Final doctor count:', result.length);
-          return result;
         } catch (overpassError) {
           console.error("Error fetching overpass doctors:", overpassError);
-          // Return database doctors as fallback
-          return formattedDbDoctors;
+          // Just continue with database doctors
+          formattedOverpassDoctors = [];
         }
+
+        // Combine and deduplicate results
+        const allDoctors = [
+          ...formattedDbDoctors,
+          ...formattedOverpassDoctors
+        ].filter(Boolean);
+
+        // Remove duplicates based on id
+        const doctorMap = new Map();
+        allDoctors.forEach(item => {
+          if (item && item.id) {
+            doctorMap.set(item.id, item);
+          }
+        });
+        
+        const result = Array.from(doctorMap.values());
+        console.log('Final doctor count:', result.length);
+        return result;
       } catch (err) {
         console.error("Error in useDoctorSearch:", err);
         return [];

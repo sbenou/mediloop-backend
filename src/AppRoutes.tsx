@@ -49,11 +49,12 @@ export default function AppRoutes() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         
+        {/* Doctor routes - multiple consistent paths mapped to the same page */}
         <Route path="/doctors" element={<FindDoctor />} />
         <Route path="/doctors/:id" element={<DoctorDetails />} />
         <Route path="/find-doctor" element={<FindDoctor />} />
-
-        {/* Add consistent routes for pharmacy search */}
+        
+        {/* Pharmacy routes - multiple consistent paths mapped to the same page */}
         <Route path="/search-pharmacy" element={<SearchPharmacy />} />
         <Route path="/pharmacies" element={<SearchPharmacy />} />
         <Route path="/find-pharmacy" element={<SearchPharmacy />} />
