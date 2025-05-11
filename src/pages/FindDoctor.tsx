@@ -73,7 +73,10 @@ const FindDoctor = () => {
     try {
       if (Array.isArray(doctors) && doctors.length === 0 && searchRadius < 10000) {
         console.log('No doctors found, increasing search radius');
-        setSearchRadius(prev => Math.min(prev + 2000, 10000));
+        // Use setTimeout to delay the radius increase slightly to avoid React state batching issues
+        setTimeout(() => {
+          setSearchRadius(prev => Math.min(prev + 2000, 10000));
+        }, 500);
       }
     } catch (error) {
       console.error("Error in doctors effect:", error);
@@ -129,7 +132,10 @@ const FindDoctor = () => {
           );
         }
       }
-      setSearchRadius(2000);
+      // Reset search radius when toggling location
+      setTimeout(() => {
+        setSearchRadius(2000);
+      }, 100);
       setMapError(null); // Reset any map errors when toggling location
     } catch (err) {
       console.error("Error toggling location:", err);
