@@ -1,3 +1,4 @@
+
 import { Store, UserRound, Pill } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInView } from "react-intersection-observer";
@@ -21,7 +22,7 @@ const GetStartedSteps = () => {
       icon: UserRound,
       title: t('home.getStarted.steps.connectDoctor.title'),
       description: t('home.getStarted.steps.connectDoctor.description'),
-      link: "/find-doctor"
+      link: "/doctors"
     },
     {
       icon: Pill,
