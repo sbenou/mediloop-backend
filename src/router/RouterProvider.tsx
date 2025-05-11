@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { createBrowserRouter, RouterProvider as ReactRouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Products from '@/pages/Products';
@@ -39,6 +38,12 @@ import ProtectedPharmacyDashboard from './roles/ProtectedPharmacyDashboard';
 import PatientsPage from '@/pages/pharmacy/PatientsPage';
 import ProtectedPharmacyPatientsPage from './roles/ProtectedPharmacyPatientsPage';
 import FindDoctor from '@/pages/FindDoctor';
+
+/**
+ * This file is maintained as a placeholder to prevent import errors.
+ * The application now uses the Routes/Route approach in AppRoutes.tsx
+ * instead of the RouterProvider approach.
+ */
 
 // Wrapper component that injects Currency and Cart context to products routes
 const ProductsLayout = () => (
@@ -97,5 +102,5 @@ const router = createBrowserRouter([
 ]);
 
 export function RouterProvider() {
-  return <ReactRouterProvider router={router} />;
+  return null;
 }
