@@ -18,6 +18,10 @@ import TestDataLoader from "@/components/testing/TestDataLoader";
 import FindDoctor from "@/pages/FindDoctor";
 import Dashboard from "@/pages/Dashboard";
 import PharmacyDashboard from "@/pages/pharmacy/PharmacyDashboard";
+import ProtectedBillingDetails from "@/router/roles/ProtectedBillingDetails";
+import ProtectedPharmacyProfilePage from "@/router/roles/ProtectedPharmacyProfilePage";
+import ProtectedPharmacyPatientsPage from "@/router/roles/ProtectedPharmacyPatientsPage";
+import Billing from "@/pages/Billing";
 
 // Create a simple placeholder component for missing pages
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -51,16 +55,14 @@ export default function AppRoutes() {
         {/* Dashboard routes */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
-        <Route path="/pharmacy/profile" element={
-          <ProtectedRoute allowedRoles={['pharmacist']}>
-            <PharmacyDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/pharmacy/patients" element={
-          <ProtectedRoute allowedRoles={['pharmacist']}>
-            <PharmacyDashboard />
-          </ProtectedRoute>
-        } />
+        
+        {/* Add Billing Details route for all authenticated users */}
+        <Route path="/billing-details" element={<ProtectedBillingDetails />} />
+        <Route path="/billing" element={<Billing />} />
+        
+        {/* Pharmacy specific routes */}
+        <Route path="/pharmacy/profile" element={<ProtectedPharmacyProfilePage />} />
+        <Route path="/pharmacy/patients" element={<ProtectedPharmacyPatientsPage />} />
 
         <Route path="*" element={<NotFound />} />
 

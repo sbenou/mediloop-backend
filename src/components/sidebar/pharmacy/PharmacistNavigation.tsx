@@ -44,7 +44,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
         <SidebarItem
           icon={<LayoutDashboard className="w-5 h-5 mr-3" />}
           label="Dashboard"
-          isActive={isDashboardPage}
+          isActive={isDashboardPage && !location.search.includes('section=')}
           onClick={navigateToDashboard}
         />
         
@@ -72,7 +72,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
         <SidebarItem
           icon={<Users className="w-5 h-5 mr-3" />}
           label="Patients"
-          isActive={location.pathname.includes('/pharmacy/patients')}
+          isActive={location.pathname === '/pharmacy/patients'}
           onClick={navigateToPharmacyPatientsPage}
         />
         
@@ -87,7 +87,7 @@ const PharmacistNavigation: React.FC<PharmacistNavigationProps> = ({
           icon={<User className="w-5 h-5 mr-3" />}
           label="Profile"
           isOpen={isProfileOpen}
-          isActive={location.search.includes('section=profile')}
+          isActive={location.search.includes('section=profile') || location.pathname === '/pharmacy/profile'}
           onOpenChange={(isOpen) => setIsProfileOpen(isOpen)}
         >
           <SidebarSubItem

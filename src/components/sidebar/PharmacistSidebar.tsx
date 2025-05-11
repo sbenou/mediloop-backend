@@ -36,31 +36,31 @@ const PharmacistSidebar = ({
   
   const { handleLogout } = useSidebarLogout();
   
-  // Navigation functions with proper state preservation
+  // Direct navigation functions - avoid using parameterized routes
   const navigateToPharmacyProfile = () => {
     navigate('/pharmacy/profile', { 
-      state: { preserveAuth: true, keepSidebar: true },
+      state: { preserveAuth: true },
       replace: false 
     });
   };
   
   const navigateToBilling = () => {
     navigate('/billing-details', { 
-      state: { preserveAuth: true, showHeader: false, keepSidebar: true },
+      state: { preserveAuth: true, showHeader: false },
       replace: false 
     });
   };
   
   const navigateToUpgrade = () => {
     navigate('/upgrade', { 
-      state: { preserveAuth: true, keepSidebar: true },
+      state: { preserveAuth: true },
       replace: false 
     });
   };
 
   const navigateToAccount = () => {
     navigate('/account', { 
-      state: { showHeader: false, preserveAuth: true, keepSidebar: true },
+      state: { showHeader: false, preserveAuth: true },
       replace: false 
     });
   };

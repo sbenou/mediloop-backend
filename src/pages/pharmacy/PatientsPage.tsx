@@ -1,9 +1,9 @@
 
+import React, { useEffect, useState } from "react";
 import PharmacistLayout from "@/components/layout/PharmacistLayout";
-import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
@@ -19,24 +19,32 @@ const PatientsPage = () => {
   const navigate = useNavigate();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPatients = async () => {
       try {
         setLoading(true);
+        setError(null);
         console.log("Fetching patients for pharmacy view");
-        // In a real implementation, this would be filtered to only show patients associated with this pharmacy
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, email, created_at, city')
-          .eq('role', 'user');
+          .eq('role', 'user')
+          .limit(50); // Limit to prevent large data sets that might cause freezing
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching patients:', error);
+          setError(error.message);
+          return;
+        }
         
         console.log("Fetched patients:", data?.length);
         setPatients(data || []);
       } catch (error) {
         console.error('Error fetching patients:', error);
+        setError('Failed to load patients');
       } finally {
         setLoading(false);
       }
@@ -44,6 +52,11 @@ const PatientsPage = () => {
 
     fetchPatients();
   }, []);
+
+  const handleViewPatient = (patientId: string) => {
+    // Use direct navigation without state to prevent freezing
+    navigate(`/pharmacy/patients/${patientId}`);
+  };
 
   return (
     <PharmacistLayout>
@@ -54,6 +67,12 @@ const PatientsPage = () => {
             View and manage all your patients.
           </p>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+            {error}
+          </div>
+        )}
 
         <div className="bg-white shadow rounded-lg">
           <Table>
@@ -70,7 +89,10 @@ const PatientsPage = () => {
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8">
-                    Loading patients...
+                    <div className="flex justify-center items-center">
+                      <Loader className="h-5 w-5 animate-spin mr-2" />
+                      <span>Loading patients...</span>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : patients.length === 0 ? (
@@ -82,7 +104,7 @@ const PatientsPage = () => {
               ) : (
                 patients.map((patient) => (
                   <TableRow key={patient.id}>
-                    <TableCell className="font-medium">{patient.full_name}</TableCell>
+                    <TableCell className="font-medium">{patient.full_name || 'Unknown'}</TableCell>
                     <TableCell>{patient.email}</TableCell>
                     <TableCell>{patient.city || 'Unknown'}</TableCell>
                     <TableCell>{new Date(patient.created_at).toLocaleDateString()}</TableCell>
@@ -90,9 +112,7 @@ const PatientsPage = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => navigate(`/pharmacy/patients/${patient.id}`, {
-                          state: { preserveAuth: true }
-                        })}
+                        onClick={() => handleViewPatient(patient.id)}
                       >
                         <Eye className="h-4 w-4 mr-1" /> View
                       </Button>
