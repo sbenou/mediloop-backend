@@ -41,18 +41,6 @@ const UniversalDashboard = () => {
     });
   }, [userRole, currentView, pharmacySection, searchParams, location, isPharmacist, profile]);
   
-  // Make sure we have a default section for pharmacists
-  useEffect(() => {
-    if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad) {
-      console.log("Checking pharmacist params:", { currentView, pharmacySection, isPharmacist });
-      
-      if (currentView !== 'pharmacy' || !pharmacySection) {
-        console.log("Setting default pharmacist params");
-        setSearchParams({ view: 'pharmacy', section: 'dashboard' }, { replace: true });
-      }
-    }
-  }, [userRole, setSearchParams, currentView, pharmacySection, isInitialLoad, isPharmacist]);
-  
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
     if (!isLoading) {
@@ -60,11 +48,19 @@ const UniversalDashboard = () => {
     }
   }, [isLoading]);
   
+  // If user is a pharmacist, redirect to pharmacy dashboard
+  useEffect(() => {
+    if ((userRole === "pharmacist" || isPharmacist) && !isInitialLoad) {
+      // Instead of updating search params, we'll redirect to the dedicated pharmacy route
+      // This prevents the infinite loop from occurring
+      navigate("/pharmacy/dashboard", { replace: true });
+    }
+  }, [userRole, isPharmacist, isInitialLoad, navigate]);
+  
   const getContent = () => {
-    // For pharmacists, always show the pharmacy view regardless of the URL parameter
+    // For pharmacy roles, direct them to use /pharmacy/dashboard instead
     if (userRole === "pharmacist" || isPharmacist) {
-      console.log("Rendering PharmacyView with section:", pharmacySection);
-      return <PharmacyView userRole={userRole} section={pharmacySection} />;
+      return <HomeView userRole={userRole} />;
     }
     
     // For other roles, show the view based on the URL parameter

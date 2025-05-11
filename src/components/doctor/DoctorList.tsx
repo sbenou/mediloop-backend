@@ -47,6 +47,7 @@ const DoctorList = ({ doctors, isLoading, onConnect, searchCity }: DoctorListPro
         <DoctorCard
           key={doctor.id}
           {...doctor}
+          city={doctor.city || 'Unknown location'}
           onConnect={() => onConnect(doctor.id, doctor.source || 'database')}
         />
       ))}

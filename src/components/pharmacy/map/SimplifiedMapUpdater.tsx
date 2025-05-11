@@ -13,9 +13,13 @@ export function SimplifiedMapUpdater({ coordinates, zoom = 10 }: SimplifiedMapUp
   const hasUpdatedRef = useRef(false);
   
   useEffect(() => {
+    // Reset the update flag when coordinates change
+    hasUpdatedRef.current = false;
+  }, [coordinates.lat, coordinates.lon]);
+  
+  useEffect(() => {
     // Only run this once after the map and coordinates are available
-    if (!map || !coordinates) {
-      console.log('Map or coordinates not available yet');
+    if (!map || !coordinates || hasUpdatedRef.current) {
       return;
     }
     
@@ -28,25 +32,20 @@ export function SimplifiedMapUpdater({ coordinates, zoom = 10 }: SimplifiedMapUp
       
       console.log('SimplifiedMapUpdater: Setting view to coordinates', { lat: validLat, lon: validLon });
       
-      // Use flyTo instead of setView for a smoother transition
+      // Use flyTo instead of setView for a smoother transition with a shorter duration
       map.flyTo([validLat, validLon], zoom, {
-        duration: 1.5,
-        easeLinearity: 0.25
+        duration: 1
       });
       
       // Force a resize after setting the view to ensure proper rendering
       setTimeout(() => {
         map.invalidateSize();
-      }, 100);
+      }, 250);
       
       hasUpdatedRef.current = true;
     } catch (err) {
       console.error('Error setting map view:', err);
     }
-    
-    return () => {
-      // Cleanup function - no event handlers to remove
-    };
   }, [map, coordinates, zoom]);
   
   // Return null as this is a utility component with no UI

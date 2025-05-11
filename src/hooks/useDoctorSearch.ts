@@ -6,7 +6,7 @@ import { searchDoctors } from "@/lib/overpass";
 interface Doctor {
   id: string;
   full_name: string;
-  city: string;
+  city: string | null;
   license_number: string;
   source?: 'database' | 'overpass';
 }
@@ -39,7 +39,7 @@ export const useDoctorSearch = (
 
         console.log('Database doctors:', dbDoctors);
 
-        // Add source field to database results
+        // Add source field to database results, handle null cities
         const formattedDbDoctors = Array.isArray(dbDoctors) 
           ? dbDoctors.map(doc => ({
               ...doc,
@@ -56,46 +56,52 @@ export const useDoctorSearch = (
         }
 
         // Get doctors from Overpass API with current radius
-        const overpassDoctors = await searchDoctors(
-          parseFloat(coordinates.lat),
-          parseFloat(coordinates.lon),
-          searchRadius
-        );
-
-        // Handle unexpected response format safely
-        if (!Array.isArray(overpassDoctors)) {
-          console.error('Invalid response from searchDoctors:', overpassDoctors);
-          return formattedDbDoctors; // Return just database doctors
-        }
-
-        // Add source field to Overpass results
-        const formattedOverpassDoctors = overpassDoctors
-          .filter(doc => doc && typeof doc === 'object')
-          .map(doc => ({
-            ...doc,
-            city: doc.city || 'Unknown location',  // Ensure city is never null
-            source: 'overpass' as const
-          }));
-
-        console.log('Overpass doctors found:', formattedOverpassDoctors.length);
-
-        // Combine and deduplicate results
-        const allDoctors = [
-          ...formattedDbDoctors,
-          ...formattedOverpassDoctors
-        ].filter(Boolean);
-
-        // Remove duplicates based on id
-        const doctorMap = new Map();
-        allDoctors.forEach(item => {
-          if (item && item.id) {
-            doctorMap.set(item.id, item);
+        try {
+          const overpassDoctors = await searchDoctors(
+            parseFloat(coordinates.lat),
+            parseFloat(coordinates.lon),
+            searchRadius
+          );
+          
+          // Handle unexpected response format safely
+          if (!Array.isArray(overpassDoctors)) {
+            console.error('Invalid response from searchDoctors:', overpassDoctors);
+            return formattedDbDoctors; // Return just database doctors
           }
-        });
-        
-        const result = Array.from(doctorMap.values());
-        console.log('Final doctor count:', result.length);
-        return result;
+
+          // Add source field to Overpass results
+          const formattedOverpassDoctors = overpassDoctors
+            .filter(doc => doc && typeof doc === 'object')
+            .map(doc => ({
+              ...doc,
+              city: doc.city || 'Unknown location',  // Ensure city is never null
+              source: 'overpass' as const
+            }));
+
+          console.log('Overpass doctors found:', formattedOverpassDoctors.length);
+
+          // Combine and deduplicate results
+          const allDoctors = [
+            ...formattedDbDoctors,
+            ...formattedOverpassDoctors
+          ].filter(Boolean);
+
+          // Remove duplicates based on id
+          const doctorMap = new Map();
+          allDoctors.forEach(item => {
+            if (item && item.id) {
+              doctorMap.set(item.id, item);
+            }
+          });
+          
+          const result = Array.from(doctorMap.values());
+          console.log('Final doctor count:', result.length);
+          return result;
+        } catch (overpassError) {
+          console.error("Error fetching overpass doctors:", overpassError);
+          // Return database doctors as fallback
+          return formattedDbDoctors;
+        }
       } catch (err) {
         console.error("Error in useDoctorSearch:", err);
         return [];
@@ -104,6 +110,8 @@ export const useDoctorSearch = (
     enabled: true, // Always run query, even with null coordinates
     staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    retry: 1, // Limit retries to avoid too many network requests
+    refetchOnWindowFocus: false // Prevent refetching when window regains focus
   });
 
   return { 

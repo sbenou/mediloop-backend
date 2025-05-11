@@ -43,7 +43,7 @@ const defaultIcon = new L.Icon.Default();
 interface Doctor {
   id: string;
   full_name: string;
-  city: string;
+  city: string | null;
   license_number: string;
   email?: string;
   hours?: string;
@@ -72,10 +72,17 @@ const DoctorListSection = ({
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [mapKey, setMapKey] = useState(`doctormap-${Date.now()}`);
+  const [isMapInitialized, setIsMapInitialized] = useState(false);
 
   // Refresh the map when coordinates change
   useEffect(() => {
     setMapKey(`doctormap-${Date.now()}`);
+    setIsMapInitialized(false);
+    
+    // Small delay to ensure map properly reinitializes
+    setTimeout(() => {
+      setIsMapInitialized(true);
+    }, 100);
   }, [coordinates?.lat, coordinates?.lon]);
 
   if (!coordinates) {
@@ -97,6 +104,13 @@ const DoctorListSection = ({
     setSelectedDoctorId(doctorId);
     listItemRefs.current[doctorId]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
+
+  // Filter out doctors with invalid coordinates
+  const doctorsWithValidCoordinates = validDoctors.filter(doctor => 
+    doctor.coordinates && 
+    typeof doctor.coordinates.lat === 'number' && !isNaN(doctor.coordinates.lat) &&
+    typeof doctor.coordinates.lon === 'number' && !isNaN(doctor.coordinates.lon)
+  );
 
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
@@ -127,6 +141,7 @@ const DoctorListSection = ({
           >
             <DoctorCard
               {...doctor}
+              city={doctor.city || 'Unknown location'}
               onConnect={() => onConnect(doctor.id, doctor.source || 'database')}
               isSelected={selectedDoctorId === doctor.id}
             />
@@ -144,60 +159,62 @@ const DoctorListSection = ({
           <p className="text-gray-500">Loading map...</p>
         </div>
         
-        <MapContainer
-          key={mapKey}
-          center={centerPosition}
-          zoom={10}
-          style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          
-          <SimplifiedMapUpdater coordinates={{ lat: validLat, lon: validLon }} />
-          
-          {showUserLocation && (
-            <Marker 
-              position={centerPosition} 
-              icon={userLocationIcon}
-            >
-              <Popup>Your location</Popup>
-            </Marker>
-          )}
-
-          {validDoctors.filter(doctor => doctor.coordinates).map((doctor) => {
-            const docLat = doctor.coordinates?.lat || validLat;
-            const docLon = doctor.coordinates?.lon || validLon;
+        {isMapInitialized && (
+          <MapContainer
+            key={mapKey}
+            center={centerPosition}
+            zoom={10}
+            style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
             
-            // Ensure coordinates are valid numbers
-            const position: LatLngExpression = [
-              typeof docLat === 'number' && !isNaN(docLat) ? docLat : validLat,
-              typeof docLon === 'number' && !isNaN(docLon) ? docLon : validLon
-            ];
+            <SimplifiedMapUpdater coordinates={{ lat: validLat, lon: validLon }} />
             
-            return (
-              <Marker
-                key={doctor.id}
-                position={position}
-                icon={selectedDoctorId === doctor.id ? selectedIcon : defaultIcon}
-                eventHandlers={{
-                  click: () => handleDoctorSelect(doctor.id)
-                }}
+            {showUserLocation && (
+              <Marker 
+                position={centerPosition} 
+                icon={userLocationIcon}
               >
-                <Popup>
-                  <div className="text-sm">
-                    <p className="font-semibold">{doctor.full_name}</p>
-                    <p>{doctor.city}</p>
-                    <p>{doctor.license_number}</p>
-                    {doctor.hours && <p>{doctor.hours}</p>}
-                  </div>
-                </Popup>
+                <Popup>Your location</Popup>
               </Marker>
-            );
-          })}
-        </MapContainer>
+            )}
+
+            {doctorsWithValidCoordinates.map((doctor) => {
+              const docLat = doctor.coordinates?.lat || validLat;
+              const docLon = doctor.coordinates?.lon || validLon;
+              
+              // Ensure coordinates are valid numbers
+              const position: LatLngExpression = [
+                typeof docLat === 'number' && !isNaN(docLat) ? docLat : validLat,
+                typeof docLon === 'number' && !isNaN(docLon) ? docLon : validLon
+              ];
+              
+              return (
+                <Marker
+                  key={doctor.id}
+                  position={position}
+                  icon={selectedDoctorId === doctor.id ? selectedIcon : defaultIcon}
+                  eventHandlers={{
+                    click: () => handleDoctorSelect(doctor.id)
+                  }}
+                >
+                  <Popup>
+                    <div className="text-sm">
+                      <p className="font-semibold">{doctor.full_name}</p>
+                      <p>{doctor.city || 'Unknown location'}</p>
+                      <p>{doctor.license_number}</p>
+                      {doctor.hours && <p>{doctor.hours}</p>}
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
+          </MapContainer>
+        )}
       </div>
     </div>
   );

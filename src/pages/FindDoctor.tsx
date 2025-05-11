@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState } from 'recoil';
 import { supabase } from "@/lib/supabase";
@@ -30,6 +30,7 @@ const FindDoctor = () => {
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
   const [isUsingLocation, setIsUsingLocation] = useRecoilState(isUsingLocationState);
   const { userProfile } = usePharmacyState(session);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
@@ -129,9 +130,17 @@ const FindDoctor = () => {
         }
       }
       setSearchRadius(2000);
+      setMapError(null); // Reset any map errors when toggling location
     } catch (err) {
       console.error("Error toggling location:", err);
+      setMapError("Error accessing location services");
     }
+  };
+
+  // Error handler for the map
+  const handleMapError = (error: Error) => {
+    console.error("Map error:", error);
+    setMapError("Failed to load map properly. Please try refreshing.");
   };
 
   return (
@@ -180,6 +189,18 @@ const FindDoctor = () => {
                     }
                   }}
                 />
+              )}
+              
+              {mapError && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-600">{mapError}</p>
+                  <button 
+                    className="mt-2 text-sm text-blue-600 hover:underline"
+                    onClick={() => window.location.reload()}
+                  >
+                    Refresh page
+                  </button>
+                </div>
               )}
             </div>
           </div>
