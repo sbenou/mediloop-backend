@@ -71,6 +71,7 @@ const GetStartedSteps = () => {
                       to={step.link}
                       className="text-[#7E69AB] hover:text-[#7E69AB]/80 font-semibold"
                       data-testid={step.dataTestId || ""}
+                      state={{ fromHomePage: true }}
                     >
                       Get Started
                     </Link>
