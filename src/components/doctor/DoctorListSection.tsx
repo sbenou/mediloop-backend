@@ -39,36 +39,6 @@ const selectedIcon = new L.Icon({
 // Default icon for non-selected markers
 const defaultIcon = new L.Icon.Default();
 
-// Helper component to update map view when coordinates change
-function MapUpdater({ center, zoom }: { center: LatLngExpression, zoom?: number }) {
-  const map = useRef<L.Map | null>(null);
-
-  // Safe access to Leaflet API
-  useEffect(() => {
-    // Get map instance from Leaflet context
-    try {
-      if (!map.current) {
-        const leafletMap = document.querySelector('.leaflet-container');
-        if (leafletMap && (leafletMap as any)._leaflet_id) {
-          map.current = (L as any).maps[(leafletMap as any)._leaflet_id];
-        }
-      }
-    } catch (err) {
-      console.error("Error accessing map instance:", err);
-    }
-
-    if (!map.current) return;
-    
-    try {
-      map.current.setView(center, zoom || map.current.getZoom());
-    } catch (error) {
-      console.error("Error updating map view:", error);
-    }
-  }, [center, zoom]);
-  
-  return null;
-}
-
 interface Doctor {
   id: string;
   full_name: string;
@@ -102,7 +72,6 @@ const DoctorListSection = ({
   const listItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapInitError, setMapInitError] = useState<string | null>(null);
-  const mapComponentMounted = useRef(false);
 
   // Default coordinates (Luxembourg)
   const defaultLat = 49.8153;
@@ -117,18 +86,6 @@ const DoctorListSection = ({
     }
     return [defaultLat, defaultLon];
   }, [coordinates]);
-
-  // Create a stable key for the MapContainer to prevent recreation when search radius changes
-  const mapKey = useMemo(() => {
-    try {
-      const lat = coordinates?.lat ? coordinates.lat.toFixed(4) : defaultLat.toFixed(4);
-      const lon = coordinates?.lon ? coordinates.lon.toFixed(4) : defaultLon.toFixed(4);
-      return `map-${lat}-${lon}-${Date.now()}`;
-    } catch (error) {
-      console.error("Error creating map key:", error);
-      return `map-default-${Date.now()}`;
-    }
-  }, [coordinates?.lat, coordinates?.lon]);
 
   // Ensure doctors is an array with robust error handling
   const validDoctors = useMemo(() => {
@@ -172,43 +129,14 @@ const DoctorListSection = ({
     }
   };
   
-  // Handler for when map is ready
-  const handleMapReady = (map: L.Map) => {
-    console.log('Map is ready');
-    setIsMapReady(true);
-    
-    // Prevent the "touchleave" error
-    try {
-      const container = map.getContainer();
-      const originalAddEventListener = container.addEventListener;
-      
-      container.addEventListener = function (type, fn, ...rest) {
-        if (type === 'touchleave') {
-          console.warn('Prevented problematic touchleave event');
-          return undefined;
-        }
-        return originalAddEventListener.call(this, type, fn, ...rest);
-      };
-    } catch (error) {
-      console.error('Error patching map event listeners:', error);
-    }
-  };
-
-  // Set component mounted flag on initial render
-  useEffect(() => {
-    mapComponentMounted.current = true;
-    
-    return () => {
-      mapComponentMounted.current = false;
-    };
-  }, []);
-
   // Handle map initialization errors
   useEffect(() => {
     const handleMapError = (event: ErrorEvent) => {
-      if (event.message.includes('a is not a function') && mapComponentMounted.current) {
+      if (event.message.includes('a is not a function')) {
         console.error('Caught map initialization error:', event);
         setMapInitError('Map initialization error. Please try refreshing the page.');
+        event.preventDefault();
+        event.stopPropagation();
       }
     };
     
@@ -284,17 +212,22 @@ const DoctorListSection = ({
           </div>
         )}
         
-        {/* Render map only when we have valid data */}
-        <div className="h-full w-full relative z-1">
-          <div id="doctor-map-container" className="h-full w-full">
-            {!mapInitError && (
+        {/* Render map only when we have valid data and no error */}
+        {!mapInitError && (
+          <div className="h-full w-full relative z-1">
+            <div id="doctor-map-container" className="h-full w-full">
               <MapContainer
-                key={mapKey}
+                key={`map-${centerPosition[0]}-${centerPosition[1]}`}
                 center={centerPosition}
                 zoom={12}
-                style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
+                style={{ 
+                  height: '100%', 
+                  width: '100%', 
+                  position: 'relative', 
+                  zIndex: 1 
+                }}
                 scrollWheelZoom={true}
-                whenCreated={handleMapReady}
+                whenReady={() => setIsMapReady(true)}
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -347,9 +280,9 @@ const DoctorListSection = ({
                   );
                 })}
               </MapContainer>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

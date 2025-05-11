@@ -59,6 +59,8 @@ const FindDoctor = () => {
   // Safely create search coordinates with validation
   const searchCoordinates = useMemo(() => {
     try {
+      console.log("Creating search coordinates", { coordinates, userLocation });
+      
       if (coordinates?.lat && coordinates?.lon) {
         return { 
           lat: String(coordinates.lat), 
@@ -74,6 +76,7 @@ const FindDoctor = () => {
       }
       
       // Default to Luxembourg
+      console.log("Using default Luxembourg coordinates");
       return {
         lat: String(LUXEMBOURG_COORDINATES.lat),
         lon: String(LUXEMBOURG_COORDINATES.lon)
@@ -92,16 +95,20 @@ const FindDoctor = () => {
   // Handle session-based location initialization
   useEffect(() => {
     if (initialLocationSet) {
+      console.log("Location already initialized, skipping");
       return; // Don't re-initialize if already done
     }
 
     try {
+      console.log("Initializing location", { session, coordinates, userProfile });
+      
       if (!session) {
         console.log('No session, setting default location');
         setUserLocation(LUXEMBOURG_COORDINATES);
         setIsUsingLocation(false);
         
         if (!coordinates) {
+          console.log("No coordinates, searching for Luxembourg City");
           handleCitySearch("Luxembourg City");
         }
       } else if (!coordinates && userProfile?.city) {
@@ -109,6 +116,7 @@ const FindDoctor = () => {
         handleCitySearch(userProfile.city);
       } else if (!coordinates) {
         // Fallback to ensure we always have some coordinates
+        console.log("No coordinates or profile city, using Luxembourg City");
         handleCitySearch("Luxembourg City");
       }
       
@@ -161,6 +169,7 @@ const FindDoctor = () => {
   // Convert string coordinates to numbers for DoctorListSection
   const displayCoordinates = useMemo(() => {
     try {
+      console.log("Converting display coordinates", searchCoordinates);
       return {
         lat: parseFloat(searchCoordinates.lat) || LUXEMBOURG_COORDINATES.lat,
         lon: parseFloat(searchCoordinates.lon) || LUXEMBOURG_COORDINATES.lon
@@ -175,6 +184,8 @@ const FindDoctor = () => {
   }, [searchCoordinates]);
 
   const handleLocationToggle = useCallback((checked: boolean) => {
+    console.log("Location toggle changed to:", checked);
+    
     if (!checked) {
       // When disabling location
       setUserLocation(LUXEMBOURG_COORDINATES);
