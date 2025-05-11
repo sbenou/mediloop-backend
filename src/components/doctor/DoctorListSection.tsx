@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import DoctorCard from "@/components/doctor/DoctorCard";
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -38,6 +38,18 @@ const selectedIcon = new L.Icon({
 
 // Default icon for non-selected markers
 const defaultIcon = new L.Icon.Default();
+
+// Helper component to update map view when coordinates change
+// This replaces the old whenCreated prop which is not available in React Leaflet v5
+const MapUpdater = ({ center }: { center: LatLngExpression }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  
+  return null;
+};
 
 interface Doctor {
   id: string;
@@ -125,16 +137,6 @@ const DoctorListSection = ({
     typeof doctor.coordinates.lon === 'number' && !isNaN(doctor.coordinates.lon)
   );
 
-  // Update map center when coordinates change
-  const updateMapCenter = (map) => {
-    if (!map) return;
-    try {
-      map.setView([validLat, validLon], map.getZoom());
-    } catch (err) {
-      console.error("Error updating map center:", err);
-    }
-  };
-
   return (
     <div className="mt-24 grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
       <div className="overflow-y-auto space-y-4 pr-4 relative z-50">
@@ -207,12 +209,14 @@ const DoctorListSection = ({
             zoom={10}
             style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
             scrollWheelZoom={true}
-            whenCreated={updateMapCenter}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            
+            {/* Update map center when coordinates change */}
+            <MapUpdater center={centerPosition} />
             
             {showUserLocation && (
               <Marker 
