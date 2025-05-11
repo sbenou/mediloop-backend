@@ -64,11 +64,19 @@ export const usePharmacyNavigation = () => {
 
   const navigateToSettings = useCallback(() => {
     console.log('Navigating to settings page');
+    // Fix: Separate the path from the search params
     navigate('/pharmacy/dashboard', { 
-      search: '?section=settings',
       state: { preserveAuth: true },
       replace: true
     });
+    // Set the search params separately
+    setTimeout(() => {
+      window.history.replaceState(
+        null,
+        '',
+        '/pharmacy/dashboard?section=settings'
+      );
+    }, 0);
   }, [navigate]);
 
   const navigateToLink = useCallback((path: string) => {
@@ -83,18 +91,33 @@ export const usePharmacyNavigation = () => {
   const navigateToPharmacySection = useCallback((section: string, tab?: string, tabParam?: string) => {
     console.log(`Navigating to pharmacy section: ${section}${tab ? ` with ${tabParam}: ${tab}` : ''}`);
     
+    // Fix: Separate the path from the search params
     if (tab && tabParam) {
-      navigate(`/pharmacy/dashboard`, { 
-        search: `?section=${section}&${tabParam}=${tab}`,
+      navigate('/pharmacy/dashboard', { 
         state: { preserveAuth: true },
         replace: true
       });
+      // Set the search params separately
+      setTimeout(() => {
+        window.history.replaceState(
+          null,
+          '',
+          `/pharmacy/dashboard?section=${section}&${tabParam}=${tab}`
+        );
+      }, 0);
     } else {
-      navigate(`/pharmacy/dashboard`, { 
-        search: `?section=${section}`,
+      navigate('/pharmacy/dashboard', { 
         state: { preserveAuth: true },
         replace: true
       });
+      // Set the search params separately
+      setTimeout(() => {
+        window.history.replaceState(
+          null,
+          '',
+          `/pharmacy/dashboard?section=${section}`
+        );
+      }, 0);
     }
   }, [navigate]);
 
