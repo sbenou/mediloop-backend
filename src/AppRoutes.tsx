@@ -51,8 +51,8 @@ export default function AppRoutes() {
         
         {/* Doctor routes - multiple consistent paths mapped to the same page */}
         <Route path="/doctors" element={<FindDoctor />} />
-        <Route path="/doctors/:id" element={<DoctorDetails />} />
         <Route path="/find-doctor" element={<FindDoctor />} />
+        <Route path="/doctors/:id" element={<DoctorDetails />} />
         
         {/* Pharmacy routes - multiple consistent paths mapped to the same page */}
         <Route path="/search-pharmacy" element={<SearchPharmacy />} />

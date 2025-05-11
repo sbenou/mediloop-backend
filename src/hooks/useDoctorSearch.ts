@@ -55,7 +55,7 @@ export const useDoctorSearch = (
           return formattedDbDoctors;
         }
 
-        // Get doctors from Overpass API with current radius - wrap in try/catch to avoid breaking the entire query
+        // Get doctors from Overpass API with current radius
         let formattedOverpassDoctors = [];
         try {
           const overpassDoctors = await searchDoctors(
@@ -83,15 +83,30 @@ export const useDoctorSearch = (
         } catch (overpassError) {
           console.error("Error fetching overpass doctors:", overpassError);
           // Just continue with database doctors
-          formattedOverpassDoctors = [];
+          return formattedDbDoctors;
         }
 
-        // Combine and deduplicate results
-        const allDoctors = [
-          ...formattedDbDoctors,
-          ...formattedOverpassDoctors
-        ].filter(Boolean);
-
+        // Combine and deduplicate results (safely)
+        const allDoctors = [];
+        
+        // Add database doctors first
+        if (Array.isArray(formattedDbDoctors)) {
+          formattedDbDoctors.forEach(doc => {
+            if (doc && doc.id) {
+              allDoctors.push(doc);
+            }
+          });
+        }
+        
+        // Then add overpass doctors
+        if (Array.isArray(formattedOverpassDoctors)) {
+          formattedOverpassDoctors.forEach(doc => {
+            if (doc && doc.id) {
+              allDoctors.push(doc);
+            }
+          });
+        }
+        
         // Remove duplicates based on id
         const doctorMap = new Map();
         allDoctors.forEach(item => {
@@ -115,7 +130,7 @@ export const useDoctorSearch = (
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false, // Disable automatic refetching
-    enabled: Boolean(coordinates) // Only run when we have coordinates
+    enabled: Boolean(coordinates), // Only run when we have coordinates
   });
 
   return { 

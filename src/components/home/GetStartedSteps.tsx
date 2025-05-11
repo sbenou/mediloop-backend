@@ -16,7 +16,7 @@ const GetStartedSteps = () => {
       icon: Store,
       title: t('home.getStarted.steps.findPharmacy.title'),
       description: t('home.getStarted.steps.findPharmacy.description'),
-      link: "/pharmacies" // Changed to use a consistent path that's already set up
+      link: "/search-pharmacy" // Use the direct path to search-pharmacy
     },
     {
       icon: UserRound,

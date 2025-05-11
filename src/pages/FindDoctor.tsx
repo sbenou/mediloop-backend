@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState } from 'recoil';
 import { supabase } from "@/lib/supabase";
@@ -31,9 +31,24 @@ const FindDoctor = () => {
   const [isUsingLocation, setIsUsingLocation] = useRecoilState(isUsingLocationState);
   const { userProfile } = usePharmacyState(session);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [radiusUpdateAllowed, setRadiusUpdateAllowed] = useState(true);
+  
+  // Refs for managing updates safely
+  const radiusUpdateAllowedRef = useRef(true);
+  const radiusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [searchRadius, setSearchRadiusState] = useState(2000);
 
-  const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
+  const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
+
+  // Wrapper for safer state updates
+  const setSearchRadius = useCallback((value: number | ((prev: number) => number)) => {
+    // Clear any pending timers
+    if (radiusTimerRef.current) {
+      clearTimeout(radiusTimerRef.current);
+      radiusTimerRef.current = null;
+    }
+    
+    setSearchRadiusState(value);
+  }, []);
 
   const searchCoordinates = coordinates 
     ? { 
@@ -54,64 +69,57 @@ const FindDoctor = () => {
 
   // Handle session-based location initialization
   useEffect(() => {
-    try {
-      if (!session) {
-        console.log('No session, setting default location');
-        setUserLocation(LUXEMBOURG_COORDINATES);
-        setIsUsingLocation(false);
-        if (!coordinates) {
-          handleCitySearch("Luxembourg City");
-        }
-      } else if (!coordinates && userProfile?.city) {
-        console.log('Using profile city:', userProfile.city);
-        handleCitySearch(userProfile.city);
-      } else if (!coordinates) {
-        // Fallback to ensure we always have some coordinates
+    if (!session) {
+      console.log('No session, setting default location');
+      setUserLocation(LUXEMBOURG_COORDINATES);
+      setIsUsingLocation(false);
+      if (!coordinates) {
         handleCitySearch("Luxembourg City");
       }
-    } catch (error) {
-      console.error("Error in session effect:", error);
+    } else if (!coordinates && userProfile?.city) {
+      console.log('Using profile city:', userProfile.city);
+      handleCitySearch(userProfile.city);
+    } else if (!coordinates) {
+      // Fallback to ensure we always have some coordinates
+      handleCitySearch("Luxembourg City");
     }
-  }, [session, coordinates, userProfile?.city]);
-
-  // Safely increase search radius with proper throttling
-  const safelyIncreaseRadius = useCallback(() => {
-    if (!radiusUpdateAllowed) return;
-    
-    setRadiusUpdateAllowed(false);
-    
-    // Use a safe timeout approach that won't cause React state batching issues
-    const timerId = setTimeout(() => {
-      setSearchRadius(prevRadius => {
-        const newRadius = Math.min(prevRadius + 2000, 10000);
-        console.log(`Increasing radius from ${prevRadius} to ${newRadius}`);
-        return newRadius;
-      });
-      
-      // Re-enable radius updates after a delay to avoid rapid repeated calls
-      const enableTimer = setTimeout(() => {
-        setRadiusUpdateAllowed(true);
-      }, 3000);
-      
-      return () => clearTimeout(enableTimer);
-    }, 1500);
-    
-    return () => clearTimeout(timerId);
-  }, [radiusUpdateAllowed, setSearchRadius]);
+  }, [session, coordinates, userProfile?.city, setUserLocation, setIsUsingLocation, handleCitySearch]);
 
   // Handle search radius updates only when we have data and no doctors are found
   useEffect(() => {
+    // Check if no doctors found and we haven't reached max radius
     if (
       Array.isArray(doctors) && 
       doctors.length === 0 && 
       searchRadius < 10000 &&
       !isSearching && 
-      !isDoctorsLoading
+      !isDoctorsLoading &&
+      radiusUpdateAllowedRef.current
     ) {
       console.log('No doctors found, will try increasing search radius');
-      safelyIncreaseRadius();
+      
+      // Disable radius updates temporarily
+      radiusUpdateAllowedRef.current = false;
+      
+      // Schedule radius increase with a safe delay
+      radiusTimerRef.current = setTimeout(() => {
+        console.log(`Increasing radius from ${searchRadius} to ${Math.min(searchRadius + 2000, 10000)}`);
+        setSearchRadiusState(prevRadius => Math.min(prevRadius + 2000, 10000));
+        
+        // Re-enable radius updates after a delay
+        setTimeout(() => {
+          radiusUpdateAllowedRef.current = true;
+        }, 3000);
+      }, 1500);
+      
+      // Clean up timer on component unmount
+      return () => {
+        if (radiusTimerRef.current) {
+          clearTimeout(radiusTimerRef.current);
+        }
+      };
     }
-  }, [doctors, searchRadius, isDoctorsLoading, isSearching, safelyIncreaseRadius]);
+  }, [doctors, searchRadius, isDoctorsLoading, isSearching]);
 
   // Convert string coordinates to numbers for DoctorListSection
   const displayCoordinates = {
@@ -124,62 +132,53 @@ const FindDoctor = () => {
   if (isNaN(displayCoordinates.lon)) displayCoordinates.lon = 6.1296;
 
   const handleLocationToggle = (checked: boolean) => {
-    try {
-      if (!checked) {
-        // When disabling location
-        setUserLocation(LUXEMBOURG_COORDINATES);
-        setIsUsingLocation(false);
-        if (userProfile?.city) {
-          handleCitySearch(userProfile.city);
-        } else {
-          handleCitySearch("Luxembourg City");
-        }
+    if (!checked) {
+      // When disabling location
+      setUserLocation(LUXEMBOURG_COORDINATES);
+      setIsUsingLocation(false);
+      if (userProfile?.city) {
+        handleCitySearch(userProfile.city);
       } else {
-        // When enabling location
-        if ("geolocation" in navigator) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              setUserLocation({
-                lat: position.coords.latitude,
-                lon: position.coords.longitude
-              });
-              setIsUsingLocation(true);
-              toast({
-                title: "Using your location",
-                description: "Showing locations near you",
-              });
-            },
-            (error) => {
-              console.error('Geolocation error:', error);
-              setUserLocation(LUXEMBOURG_COORDINATES);
-              setIsUsingLocation(false);
-              toast({
-                title: "Location Error",
-                description: "Could not get your location. Using default location instead.",
-                variant: "destructive",
-              });
-            }
-          );
-        }
+        handleCitySearch("Luxembourg City");
       }
-      
-      // Reset search radius when toggling location but with more delay to avoid race conditions
-      setRadiusUpdateAllowed(false);
-      const resetTimer = setTimeout(() => {
-        setSearchRadius(2000);
-        const enableTimer = setTimeout(() => {
-          setRadiusUpdateAllowed(true);
-        }, 3000);
-        return () => clearTimeout(enableTimer);
-      }, 1000);
-      
-      setMapError(null); // Reset any map errors when toggling location
-      
-      return () => clearTimeout(resetTimer);
-    } catch (err) {
-      console.error("Error toggling location:", err);
-      setMapError("Error accessing location services");
+    } else {
+      // When enabling location
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            });
+            setIsUsingLocation(true);
+            toast({
+              title: "Using your location",
+              description: "Showing locations near you",
+            });
+          },
+          (error) => {
+            console.error('Geolocation error:', error);
+            setUserLocation(LUXEMBOURG_COORDINATES);
+            setIsUsingLocation(false);
+            toast({
+              title: "Location Error",
+              description: "Could not get your location. Using default location instead.",
+              variant: "destructive",
+            });
+          }
+        );
+      }
     }
+    
+    // Reset search radius
+    if (radiusTimerRef.current) {
+      clearTimeout(radiusTimerRef.current);
+      radiusTimerRef.current = null;
+    }
+    
+    setSearchRadius(2000);
+    radiusUpdateAllowedRef.current = true;
+    setMapError(null); // Reset any map errors when toggling location
   };
 
   // Error handler for the map
