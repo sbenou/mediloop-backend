@@ -4,11 +4,11 @@ export interface Activity {
   type: string;
   title: string;
   description?: string;
-  timestamp?: string;
+  timestamp: string | Date;  // Accept both string and Date types
   date?: string;
   user_id?: string;
   status?: 'read' | 'unread';
-  read?: boolean;  // Add this to support both status and read property access patterns
+  read: boolean;  // Make read required to match ActivityItem expectations
   metadata?: Record<string, any>;
   image_url?: string;
   icon?: string;

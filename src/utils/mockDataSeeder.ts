@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { mockActivities } from "@/components/activity/mockActivities";
 import { toast } from "@/components/ui/use-toast";
@@ -44,18 +45,25 @@ export const seedTimBurtonData = async () => {
     }
 
     // 3. Insert mock activities for the current user
-    const activitiesForUser = mockActivities.map(activity => ({
-      // Use the UUID from mockActivities directly instead of numeric strings
-      id: activity.id,
-      user_id: userId,
-      type: activity.type,
-      title: activity.title,
-      description: activity.description,
-      timestamp: activity.timestamp.toISOString(),
-      read: activity.read,
-      created_at: activity.timestamp.toISOString(),
-      updated_at: activity.timestamp.toISOString()
-    }));
+    const activitiesForUser = mockActivities.map(activity => {
+      // Fix: Ensure we're safely handling timestamp conversion based on type
+      const timestamp = typeof activity.timestamp === 'string' 
+        ? activity.timestamp 
+        : activity.timestamp.toISOString();
+      
+      return {
+        // Use the UUID from mockActivities directly instead of numeric strings
+        id: activity.id,
+        user_id: userId,
+        type: activity.type,
+        title: activity.title,
+        description: activity.description,
+        timestamp: timestamp,
+        read: activity.read,
+        created_at: timestamp,
+        updated_at: timestamp
+      };
+    });
 
     console.log("Preparing to insert activities:", activitiesForUser);
 

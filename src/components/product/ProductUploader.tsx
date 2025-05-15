@@ -67,9 +67,9 @@ export const ProductUploader = () => {
       const result = await processProductFile(file, categories, subcategories);
       
       // Dismiss the processing toast
+      // Fix: Use proper toast dismiss pattern without action property
       toast({
         id: processingToastId,
-        action: "dismiss"
       });
       
       if (result.newProducts.length > 0) {
@@ -86,9 +86,9 @@ export const ProductUploader = () => {
       }
     } catch (error) {
       // Dismiss the processing toast
+      // Fix: Use proper toast dismiss pattern without action property
       toast({
         id: processingToastId,
-        action: "dismiss"
       });
       
       toast({

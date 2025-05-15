@@ -8,7 +8,7 @@ import type {
 const TOAST_LIMIT = 10
 const TOAST_REMOVE_DELAY = 1000000
 
-type ToasterToast = ToastProps & {
+export type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
@@ -137,16 +137,13 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id"> & { 
-  id?: string;
-  action?: "dismiss";  // Add support for dismissing a toast
-}
+type Toast = Omit<ToasterToast, "id"> & { id?: string }
 
 function toast(props: Toast) {
   const id = props.id || genId()
 
   // If action is dismiss, dismiss the toast with the given id
-  if (props.action === "dismiss") {
+  if (props.id && !props.title && !props.description) {
     dispatch({
       type: "DISMISS_TOAST",
       toastId: id,

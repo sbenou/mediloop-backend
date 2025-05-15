@@ -63,7 +63,6 @@ const UserLocationMarker = ({
       <Marker position={position} icon={userLocationIcon}>
         <Popup>Your location</Popup>
       </Marker>
-      {/* Create a circle using Leaflet's L.Circle directly after render */}
     </>
   );
 };
@@ -268,7 +267,10 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     if (!userLocation || !useLocationFilter) return;
 
     const addUserCircle = () => {
-      const map = document.querySelector('.leaflet-container')?._leaflet_map;
+      // Fix: Properly access the map instance using the querySelector and type casting
+      const container = document.querySelector('.leaflet-container');
+      const map = container ? (container as any).__leafletMap || (container as any)._leaflet_map : null;
+      
       if (map && userLocation) {
         // Remove existing circle if any
         if (userCircleRef.current) {
@@ -296,7 +298,10 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
 
     return () => {
       if (userCircleRef.current) {
-        const map = document.querySelector('.leaflet-container')?._leaflet_map;
+        // Fix: Properly access the map instance using the querySelector and type casting
+        const container = document.querySelector('.leaflet-container');
+        const map = container ? (container as any).__leafletMap || (container as any)._leaflet_map : null;
+        
         if (map) {
           map.removeLayer(userCircleRef.current);
         }

@@ -1,26 +1,17 @@
 
-import { Activity as HookActivity } from './types';
-import { Activity as ComponentActivity } from '@/components/activity/ActivityItem';
+import { Activity } from './types';
 
-/**
- * Adapter function to convert between the hook Activity type and the component Activity type
- * This helps bridge the gap between different parts of the codebase that expect different formats
- */
-export function adaptActivitiesForComponent(activities: HookActivity[]): ComponentActivity[] {
-  return activities.map(activity => ({
-    ...activity,
-    read: activity.read ?? activity.status === 'read',
-    timestamp: activity.timestamp || new Date().toISOString()
-  }));
-}
-
-/**
- * Helper to convert a single activity for the component
- */
-export function adaptActivityForComponent(activity: HookActivity): ComponentActivity {
-  return {
-    ...activity,
-    read: activity.read ?? activity.status === 'read',
-    timestamp: activity.timestamp || new Date().toISOString()
-  };
-}
+// This adapter converts activities from the database format to the component format
+export const adaptActivitiesForComponent = (activities: Activity[]): Activity[] => {
+  return activities.map(activity => {
+    // Ensure all required properties are present for component consumption
+    return {
+      ...activity,
+      // Ensure read property is always boolean
+      read: typeof activity.read === 'boolean' ? activity.read : 
+            activity.status === 'read',
+      // Ensure timestamp is always present
+      timestamp: activity.timestamp || new Date().toISOString()
+    };
+  });
+};
