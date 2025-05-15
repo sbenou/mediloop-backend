@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -43,16 +43,16 @@ const MapUpdater = ({
     
     try {
       // Force resize and redraw
-      map.invalidateSize(true);
-      
-      if (userLocation) {
-        map.setView([userLocation.lat, userLocation.lon], 13);
-      }
-      
-      // Notify parent the map is ready
       setTimeout(() => {
+        map.invalidateSize(true);
+        
+        if (userLocation) {
+          map.setView([userLocation.lat, userLocation.lon], 13);
+        }
+        
+        // Notify parent the map is ready
         onMapReady();
-      }, 200);
+      }, 300);
     } catch (err) {
       console.warn('Error updating map view:', err);
     }
@@ -193,18 +193,20 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     : [49.8153, 6.1296];
   
   // Handle map initialization
-  const handleMapReady = () => {
+  const handleMapReady = useCallback(() => {
+    console.log("Leaflet map is ready");
     setIsMapReady(true);
     setIsLoading(false);
     setError(null);
-  };
+  }, []);
   
   // Handle map initialization errors
   const handleRetry = () => {
-    setRetryCount(0);
+    setRetryCount(prev => prev < MAX_ATTEMPTS ? prev + 1 : prev);
     setError(null);
     setMapKey(`map-retry-${Date.now()}`);
     setIsLoading(true);
+    setIsMapReady(false);
   };
   
   // If loading, show a skeleton

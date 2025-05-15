@@ -8,7 +8,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 console.log(`Function "get-mapbox-token" up and running!`);
 
 serve(async (req) => {
-  // This is needed if you're planning to invoke your function from a browser.
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -30,7 +30,7 @@ serve(async (req) => {
     const headers = {
       ...corsHeaders, 
       "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=3600", // Cache for 1 hour
+      "Cache-Control": "public, max-age=86400", // Cache for 24 hours
     };
 
     console.log("Returning Mapbox token successfully");
@@ -46,15 +46,16 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in get-mapbox-token function:", error);
     
+    // Return the fallback token when there's an error
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        message: "Failed to retrieve Mapbox token",
-        status: "error" 
+        token: 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA',
+        message: "Using fallback token due to error",
+        status: "fallback" 
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+        status: 200, // Still return 200 with fallback
       },
     );
   }

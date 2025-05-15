@@ -5,42 +5,59 @@ import { calculateDistance } from '@/lib/utils/distance';
 const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
 
 /**
- * Get Mapbox public token from Supabase Edge Function
+ * Get Mapbox public token from Supabase Edge Function or fallback to default
  */
 export const getMapboxToken = async (): Promise<string> => {
   try {
+    // Check if we have a cached token
+    const cachedToken = localStorage.getItem('mapbox_token');
+    if (cachedToken) {
+      console.log('Using cached Mapbox token');
+      return cachedToken;
+    }
+    
     console.log('Fetching Mapbox token from Edge Function...');
     
-    // Try to get from the Supabase Edge Function
-    const response = await fetch('/api/get-mapbox-token');
+    // Try to get from the Supabase Edge Function with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     
-    if (!response.ok) {
-      console.error(`Failed to fetch Mapbox token: ${response.status}`);
-      return FALLBACK_TOKEN;
+    try {
+      const response = await fetch('/api/get-mapbox-token', {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.warn(`Failed to fetch Mapbox token: ${response.status}`);
+        return useFallbackToken();
+      }
+      
+      const data = await response.json();
+      
+      if (data && data.token) {
+        console.log('Successfully retrieved Mapbox token');
+        localStorage.setItem('mapbox_token', data.token);
+        return data.token;
+      }
+    } catch (fetchError) {
+      console.warn('Error fetching Mapbox token:', fetchError);
+      return useFallbackToken();
     }
     
-    // Check response content type
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error('Invalid response content type:', contentType);
-      return FALLBACK_TOKEN;
-    }
-    
-    // Parse the response as JSON
-    const data = await response.json();
-    
-    if (data && data.token) {
-      console.log('Successfully retrieved Mapbox token');
-      return data.token;
-    }
-    
-    console.error('Invalid token response format');
-    return FALLBACK_TOKEN;
+    return useFallbackToken();
   } catch (error) {
-    console.error('Error getting Mapbox token:', error);
-    return FALLBACK_TOKEN;
+    console.error('Unexpected error getting Mapbox token:', error);
+    return useFallbackToken();
   }
 };
+
+function useFallbackToken(): string {
+  console.log('Using fallback Mapbox token');
+  localStorage.setItem('mapbox_token', FALLBACK_TOKEN);
+  return FALLBACK_TOKEN;
+}
 
 /**
  * Get coordinates of a location using Mapbox Geocoding API
@@ -62,11 +79,6 @@ export const getCoordinatesWithMapbox = async (
     
     // Get Mapbox token
     const token = await getMapboxToken();
-    
-    if (!token) {
-      console.error('No valid Mapbox token available');
-      return fallbackCoordinates || null;
-    }
     
     // Fetch coordinates from Mapbox API
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=1`;

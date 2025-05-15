@@ -11,7 +11,7 @@ import LeafletPharmacyMap from '@/components/pharmacy/finder/LeafletPharmacyMap'
 import { usePharmacyFinder } from '@/hooks/usePharmacyFinder';
 import { toast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Search, ArrowRight } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -35,7 +35,9 @@ const FindPharmacy = () => {
 
   // Initialize leaflet filtered pharmacies with all pharmacies
   useEffect(() => {
-    setLeafletFilteredPharmacies(filteredPharmacies);
+    if (filteredPharmacies && filteredPharmacies.length > 0) {
+      setLeafletFilteredPharmacies(filteredPharmacies);
+    }
   }, [filteredPharmacies]);
 
   // Show error if API fails
@@ -51,6 +53,7 @@ const FindPharmacy = () => {
 
   // Handle pharmacies filtered by map shape
   const handlePharmaciesInShape = (shapeFilteredPharmacies: any[]) => {
+    console.log("Pharmacies in shape:", shapeFilteredPharmacies.length);
     setLeafletFilteredPharmacies(shapeFilteredPharmacies);
   };
 
