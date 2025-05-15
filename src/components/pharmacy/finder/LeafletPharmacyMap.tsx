@@ -1,12 +1,12 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { toast } from "@/components/ui/use-toast";
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
-import { Card } from "@/components/ui/card";
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/use-toast';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -16,8 +16,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Create a red icon for user location
-const userLocationIcon = new L.Icon({
+// Create a red marker for user location
+const redIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -26,166 +26,104 @@ const userLocationIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Fix for incompatible handlers (for mobile devices)
-if (L.Browser.touch) {
-  L.Map.addInitHook("addHandler", "touchExtend", L.Map.TouchExtend);
-}
-
-// Component to update map view when coordinates change
-const MapUpdater = ({ coordinates }: { coordinates: { lat: number; lon: number } }) => {
+// Safe Map Controls component
+const SafeDrawControl = ({ onShapeCreated, pharmacies }: { onShapeCreated: (pharmaciesInShape: any[]) => void, pharmacies: any[] }) => {
   const map = useMap();
-  
-  useEffect(() => {
-    if (coordinates && coordinates.lat && coordinates.lon) {
-      map.setView([coordinates.lat, coordinates.lon], map.getZoom());
-    }
-  }, [coordinates, map]);
-  
-  return null;
-};
-
-// Component for user's location marker with circle
-const UserLocationMarker = ({ 
-  coordinates,
-  radius = 2000 // 2km radius
-}: { 
-  coordinates: { lat: number; lon: number },
-  radius?: number
-}) => {
-  if (!coordinates || !coordinates.lat || !coordinates.lon) {
-    return null;
-  }
-  
-  const position: [number, number] = [coordinates.lat, coordinates.lon];
-  
-  return (
-    <>
-      <Marker position={position} icon={userLocationIcon}>
-        <Popup>Your location</Popup>
-      </Marker>
-    </>
-  );
-};
-
-// Custom draw control component
-const DrawControl = ({ onShapesDrawn }: { onShapesDrawn: (shapes: any[]) => void }) => {
-  const map = useMap();
-  const drawControlRef = useRef<any>(null);
-  const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
+  const drawnItemsRef = useRef(new L.FeatureGroup());
   
   useEffect(() => {
     if (!map) return;
-
+    
     try {
       // Add the FeatureGroup to the map
       map.addLayer(drawnItemsRef.current);
-      
-      // Initialize the draw control
-      const drawControl = new (L.Control as any).Draw({
-        position: 'topright',
-        draw: {
-          polyline: false,
-          polygon: {
-            allowIntersection: false,
-            showArea: true,
-            drawError: {
-              color: '#e1e100',
-              message: '<strong>Error:</strong> Polygon edges cannot cross!'
-            }
-          },
-          circle: true,
-          rectangle: true,
-          marker: false,
-          circlemarker: false
-        },
+
+      // Initialize the draw control with safe options
+      const drawControl = new L.Control.Draw({
         edit: {
           featureGroup: drawnItemsRef.current
+        },
+        draw: {
+          polygon: {
+            allowIntersection: false,
+            showArea: true
+          },
+          polyline: false,
+          rectangle: true,
+          circle: true,
+          marker: false,
+          circlemarker: false
         }
       });
-      
-      map.addControl(drawControl);
-      drawControlRef.current = drawControl;
-      
-      // Event handler for when a shape is created
-      const handleDrawCreated = (e: any) => {
+
+      // Safely add control
+      try {
+        map.addControl(drawControl);
+      } catch (err) {
+        console.warn('Error adding draw control:', err);
+      }
+
+      // Handle the created event safely
+      map.on(L.Draw.Event.CREATED, (e: any) => {
         try {
           const layer = e.layer;
           drawnItemsRef.current.addLayer(layer);
           
-          // Get all shapes in the current drawn items
-          const shapes: any[] = [];
-          drawnItemsRef.current.eachLayer((layer: any) => {
-            shapes.push(layer);
+          // Filter pharmacies within the shape
+          const shape = layer;
+          const pharmaciesInShape = pharmacies.filter(pharmacy => {
+            if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
+            
+            const point = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+            
+            if (shape instanceof L.Circle) {
+              return shape.getLatLng().distanceTo(point) <= shape.getRadius();
+            } else if (shape instanceof L.Polygon || shape instanceof L.Rectangle) {
+              return shape.getBounds().contains(point);
+            }
+            
+            return false;
           });
           
-          // Call callback with shapes
-          onShapesDrawn(shapes);
-        } catch (err) {
-          console.error('Error handling draw created event:', err);
+          // Callback with filtered pharmacies
+          onShapeCreated(pharmaciesInShape);
+        } catch (e) {
+          console.error('Error processing drawn shape:', e);
         }
-      };
-      
-      // Event handler for when shapes are edited
-      const handleDrawEdited = (e: any) => {
-        try {
-          // Get all shapes in the current drawn items
-          const shapes: any[] = [];
-          drawnItemsRef.current.eachLayer((layer: any) => {
-            shapes.push(layer);
-          });
-          
-          // Call callback with shapes
-          onShapesDrawn(shapes);
-        } catch (err) {
-          console.error('Error handling draw edited event:', err);
-        }
-      };
-      
-      // Event handler for when shapes are deleted
-      const handleDrawDeleted = (e: any) => {
-        try {
-          // Get all shapes in the current drawn items
-          const shapes: any[] = [];
-          drawnItemsRef.current.eachLayer((layer: any) => {
-            shapes.push(layer);
-          });
-          
-          // Call callback with shapes
-          onShapesDrawn(shapes);
-        } catch (err) {
-          console.error('Error handling draw deleted event:', err);
-        }
-      };
-      
-      // Add event listeners
-      map.on(L.Draw.Event.CREATED, handleDrawCreated);
-      map.on(L.Draw.Event.EDITED, handleDrawEdited);
-      map.on(L.Draw.Event.DELETED, handleDrawDeleted);
-      
+      });
+
+      // Clean up
       return () => {
-        // Clean up event listeners
-        map.off(L.Draw.Event.CREATED, handleDrawCreated);
-        map.off(L.Draw.Event.EDITED, handleDrawEdited);
-        map.off(L.Draw.Event.DELETED, handleDrawDeleted);
-        
-        // Remove control and layer
-        if (drawControlRef.current) {
-          map.removeControl(drawControlRef.current);
-        }
-        
-        if (drawnItemsRef.current) {
+        try {
+          map.removeControl(drawControl);
           map.removeLayer(drawnItemsRef.current);
+        } catch (e) {
+          console.warn('Error during cleanup:', e);
         }
       };
     } catch (err) {
       console.error('Error setting up draw control:', err);
-      toast({
-        title: "Map Error",
-        description: "There was a problem initializing the map drawing tools.",
-        variant: "destructive"
-      });
+      return () => {};
     }
-  }, [map, onShapesDrawn]);
+  }, [map, pharmacies, onShapeCreated]);
+
+  return null;
+};
+
+// Safe map updater component
+const SafeMapUpdater = ({ userLocation }: { userLocation: { lat: number; lon: number } | null }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!map || !userLocation) return;
+    
+    try {
+      // Safely update view
+      map.setView([userLocation.lat, userLocation.lon], 13);
+    } catch (err) {
+      console.warn('Error updating map view:', err);
+    }
+  }, [map, userLocation]);
   
   return null;
 };
@@ -197,165 +135,157 @@ interface LeafletPharmacyMapProps {
   onPharmaciesInShape: (pharmacies: any[]) => void;
 }
 
-const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
-  pharmacies,
-  userLocation,
+const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({ 
+  pharmacies, 
+  userLocation, 
   useLocationFilter,
   onPharmaciesInShape
 }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMapReady, setIsMapReady] = useState(false);
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
-  const mapRef = useRef(null);
-  const userCircleRef = useRef<L.Circle | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [mapInitAttempts, setMapInitAttempts] = useState(0);
+  const MAX_ATTEMPTS = 3;
+
+  const defaultCenter: [number, number] = userLocation 
+    ? [userLocation.lat, userLocation.lon] 
+    : [49.8153, 6.1296]; // Luxembourg center
   
-  // Default coordinates for Luxembourg
-  const defaultCoordinates = { lat: 49.8153, lon: 6.1296 };
-  const coordinates = userLocation || defaultCoordinates;
-  
-  // Force map re-render when coordinates change
+  // Add global error handler for Leaflet errors
   useEffect(() => {
-    setMapKey(`map-${Date.now()}`);
-  }, [coordinates.lat, coordinates.lon]);
+    const handleError = (e: ErrorEvent) => {
+      if (e.message && (
+        e.message.includes('a is not a function') || 
+        e.message.includes('touchleave')
+      )) {
+        console.warn('Caught Leaflet-related error:', e.message);
+        e.preventDefault();
+        return true;
+      }
+      return false;
+    };
+    
+    window.addEventListener('error', handleError, true);
+    
+    return () => {
+      window.removeEventListener('error', handleError, true);
+    };
+  }, []);
   
-  // Handle shapes drawn on the map
-  const handleShapesDrawn = (shapes: any[]) => {
+  // Safely initialize map with retry mechanism
+  const handleMapCreated = (map: L.Map) => {
     try {
-      if (!shapes || shapes.length === 0) {
-        // No shapes drawn, return all pharmacies
-        onPharmaciesInShape(pharmacies);
-        return;
+      // Disable problematic touch handlers
+      if (map) {
+        map.options.touchZoom = false;
+        map.options.tap = false;
+        
+        // Apply additional fixes for mobile
+        if (typeof window !== 'undefined' && 'ontouchstart' in window) {
+          // Manually disable handlers that are causing issues
+          const mapProto = (L.Map as any).prototype;
+          const originalAddHandler = mapProto.addHandler;
+          
+          // Replace the addHandler method to skip problematic handlers
+          mapProto.addHandler = function(name: string, HandlerClass: any) {
+            if (name === 'touchZoom' || name === 'tap') {
+              return this;
+            }
+            return originalAddHandler.call(this, name, HandlerClass);
+          };
+        }
       }
       
-      // Filter pharmacies based on shapes
-      const filteredPharmacies = pharmacies.filter(pharmacy => {
-        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
-        
-        const pharmacyLatLng = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-        
-        // Check if pharmacy is inside any of the drawn shapes
-        return shapes.some(shape => {
-          try {
-            if (shape instanceof L.Circle) {
-              const center = shape.getLatLng();
-              const radius = shape.getRadius();
-              return center.distanceTo(pharmacyLatLng) <= radius;
-            }
-            
-            if (shape instanceof L.Rectangle || shape instanceof L.Polygon) {
-              return shape.getBounds().contains(pharmacyLatLng);
-            }
-            
-            return false;
-          } catch (err) {
-            console.error('Error checking if pharmacy is in shape:', err);
-            return false;
-          }
-        });
-      });
-      
-      onPharmaciesInShape(filteredPharmacies);
-      toast({
-        title: `${filteredPharmacies.length} pharmacies found`,
-        description: `Found ${filteredPharmacies.length} pharmacies in the selected area.`,
-      });
+      setIsMapReady(true);
+      setIsLoading(false);
     } catch (err) {
-      console.error('Error handling shapes drawn:', err);
+      console.error("Error during map initialization:", err);
+      
+      if (mapInitAttempts < MAX_ATTEMPTS) {
+        // Try to recover
+        setMapKey(`map-retry-${Date.now()}-${mapInitAttempts}`);
+        setMapInitAttempts(prev => prev + 1);
+      } else {
+        setError("Failed to initialize map after multiple attempts");
+        setIsLoading(false);
+      }
     }
   };
-
-  // Effect to add the user location circle after the map is loaded
-  useEffect(() => {
-    if (!userLocation || !useLocationFilter) return;
-
-    const addUserCircle = () => {
-      // Fix: Properly access the map instance using the querySelector and type casting
-      const container = document.querySelector('.leaflet-container');
-      const map = container ? (container as any).__leafletMap || (container as any)._leaflet_map : null;
-      
-      if (map && userLocation) {
-        // Remove existing circle if any
-        if (userCircleRef.current) {
-          map.removeLayer(userCircleRef.current);
-        }
-        
-        // Create new circle
-        const circle = L.circle(
-          [userLocation.lat, userLocation.lon],
-          {
-            radius: 2000, // 2km radius
-            color: 'blue',
-            fillColor: 'blue',
-            fillOpacity: 0.05,
-            weight: 0.5
-          }
-        ).addTo(map);
-        
-        userCircleRef.current = circle;
-      }
-    };
-
-    // Small delay to ensure map is rendered
-    setTimeout(addUserCircle, 500);
-
-    return () => {
-      if (userCircleRef.current) {
-        // Fix: Properly access the map instance using the querySelector and type casting
-        const container = document.querySelector('.leaflet-container');
-        const map = container ? (container as any).__leafletMap || (container as any)._leaflet_map : null;
-        
-        if (map) {
-          map.removeLayer(userCircleRef.current);
-        }
-        userCircleRef.current = null;
-      }
-    };
-  }, [userLocation, useLocationFilter, mapKey]);
   
+  if (isLoading && !isMapReady) {
+    return <Skeleton className="w-full h-[400px]" />;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-muted p-4 rounded-md text-center h-[400px] flex items-center justify-center flex-col">
+        <p className="text-red-500 font-semibold mb-2">{error}</p>
+        <p className="text-sm text-muted-foreground">Please try again later</p>
+        <button 
+          className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+          onClick={() => {
+            setMapInitAttempts(0);
+            setError(null);
+            setMapKey(`map-fresh-${Date.now()}`);
+            setIsLoading(true);
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <Card className="overflow-hidden border border-gray-200 h-[500px]">
+    <div className="h-[400px] border rounded-md overflow-hidden">
       <MapContainer
         key={mapKey}
-        center={[coordinates.lat, coordinates.lon]}
+        center={defaultCenter}
         zoom={13}
-        scrollWheelZoom={true}
         style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={true}
+        whenCreated={handleMapCreated}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        {/* Update map when coordinates change */}
-        <MapUpdater coordinates={coordinates} />
+        <SafeMapUpdater userLocation={userLocation} />
+        <SafeDrawControl onShapeCreated={onPharmaciesInShape} pharmacies={pharmacies} />
         
-        {/* Add draw control */}
-        <DrawControl onShapesDrawn={handleShapesDrawn} />
-        
-        {/* Show user location marker */}
-        {useLocationFilter && userLocation && (
-          <UserLocationMarker coordinates={userLocation} />
+        {/* User location marker */}
+        {userLocation && (
+          <Marker 
+            position={[userLocation.lat, userLocation.lon]}
+            icon={redIcon}
+          >
+            <Popup>Your location</Popup>
+          </Marker>
         )}
         
-        {/* Render pharmacy markers */}
-        {pharmacies.map((pharmacy) => {
+        {/* Pharmacy markers */}
+        {isMapReady && pharmacies.map((pharmacy) => {
           if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
           
           return (
             <Marker
-              key={`pharmacy-${pharmacy.id}`}
+              key={pharmacy.id}
               position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
             >
               <Popup>
-                <div className="text-sm">
-                  <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
-                  <p>{pharmacy.address || 'Address not available'}</p>
-                  {pharmacy.hours && <p>{pharmacy.hours}</p>}
+                <div className="text-sm max-w-[250px]">
+                  <h3 className="font-semibold">{pharmacy.name}</h3>
+                  <p className="text-xs">{pharmacy.address}</p>
+                  {pharmacy.hours && <p className="text-xs">Hours: {pharmacy.hours}</p>}
                 </div>
               </Popup>
             </Marker>
           );
         })}
       </MapContainer>
-    </Card>
+    </div>
   );
 };
 

@@ -5,6 +5,9 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Pharmacy } from '@/lib/types/overpass.types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
+import { RefreshCw } from 'lucide-react';
 
 // Fix Leaflet default icon issue with Vite/React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -39,22 +42,26 @@ const MapViewHandler = ({
   useEffect(() => {
     if (!map || !userLocation) return;
     
-    // Set view to user location
-    map.setView([userLocation.lat, userLocation.lon], 14);
-    
-    // If using location filter, fit bounds to include user and nearby pharmacies
-    if (useLocationFilter && pharmacies.length > 0) {
-      const bounds = L.latLngBounds([L.latLng(userLocation.lat, userLocation.lon)]);
+    try {
+      // Set view to user location
+      map.setView([userLocation.lat, userLocation.lon], 14);
       
-      pharmacies.forEach(pharmacy => {
-        if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
-          bounds.extend(L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon));
+      // If using location filter, fit bounds to include user and nearby pharmacies
+      if (useLocationFilter && pharmacies.length > 0) {
+        const bounds = L.latLngBounds([L.latLng(userLocation.lat, userLocation.lon)]);
+        
+        pharmacies.forEach(pharmacy => {
+          if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
+            bounds.extend(L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon));
+          }
+        });
+        
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
         }
-      });
-      
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
       }
+    } catch (error) {
+      console.error("Error updating map view:", error);
     }
   }, [map, userLocation, pharmacies, useLocationFilter]);
 
@@ -76,7 +83,9 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   const [map, setMap] = useState<L.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [mapKey, setMapKey] = useState(`map-${Date.now()}`); // Add a key to force re-render if needed
+  const [mapKey, setMapKey] = useState(`map-${Date.now()}`); 
+  const [mapInitAttempts, setMapInitAttempts] = useState(0);
+  const MAX_ATTEMPTS = 3;
 
   // Default center (Luxembourg)
   const defaultCenter: [number, number] = [49.8153, 6.1296];
@@ -86,7 +95,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
     ? [userLocation.lat, userLocation.lon] 
     : defaultCenter;
 
-  // Handle map initialization
+  // Handle map initialization with error handling
   const handleMapInit = (mapInstance: L.Map) => {
     try {
       // Apply fixes for touch events
@@ -96,27 +105,65 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         mapInstance.options.tap = false;
         
         // Override problematic methods
-        if (typeof window !== 'undefined') {
-          // Patch the touchHandlers to prevent errors with touchleave
+        if (typeof window !== 'undefined' && 'ontouchstart' in window) {
+          // Safe patching for touch handlers
           const mapProto = (L.Map as any).prototype;
           const originalAddHandler = mapProto.addHandler;
           
+          // Replace addHandler to skip problematic handlers
           mapProto.addHandler = function(name: string, HandlerClass: any) {
-            // Skip touch handlers that are causing issues
             if (name === 'touchZoom' || name === 'tap') {
               return this;
             }
             return originalAddHandler.call(this, name, HandlerClass);
+          };
+          
+          // Additional safety for event handling
+          const originalOn = mapInstance.on;
+          mapInstance.on = function(type: string, fn: Function, context?: any) {
+            if (type.includes('touch')) {
+              try {
+                return originalOn.call(this, type, function(e: any) {
+                  try {
+                    return fn.call(context || this, e);
+                  } catch (error) {
+                    console.warn(`Caught error in ${type} handler:`, error);
+                    return undefined;
+                  }
+                }, context);
+              } catch (error) {
+                console.warn(`Error attaching ${type} handler:`, error);
+                return this;
+              }
+            }
+            return originalOn.call(this, type, fn, context);
           };
         }
       }
       
       setMap(mapInstance);
       setIsLoading(false);
+      setError(null);
     } catch (err) {
       console.error("Error initializing map:", err);
       setError(err instanceof Error ? err : new Error("Failed to initialize map"));
       setIsLoading(false);
+      
+      // Attempt recovery if under max attempts
+      if (mapInitAttempts < MAX_ATTEMPTS) {
+        setTimeout(() => {
+          setMapKey(`map-retry-${Date.now()}-${mapInitAttempts}`);
+          setMapInitAttempts(prev => prev + 1);
+          setError(null);
+          setIsLoading(true);
+        }, 1000);
+      } else {
+        toast({
+          title: "Map Error",
+          description: "Failed to initialize map after multiple attempts. Please refresh the page.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -128,7 +175,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         e.message.includes('a is not a function') || 
         e.message.includes('touchleave')
       )) {
-        console.warn('Caught Leaflet-related error:', e.message);
+        console.warn('Caught global Leaflet error:', e.message);
         e.preventDefault();
         return true;
       }
@@ -141,20 +188,6 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       window.removeEventListener('error', handleError, true);
     };
   }, []);
-  
-  // Retry rendering if errors occur
-  useEffect(() => {
-    if (error) {
-      console.log('Attempting to recover from map error...');
-      const timer = setTimeout(() => {
-        setMapKey(`map-retry-${Date.now()}`);
-        setError(null);
-        setIsLoading(true);
-      }, 2000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
 
   if (isLoading) {
     return <Skeleton className="w-full h-full" />;
@@ -165,7 +198,20 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       <div className="flex items-center justify-center h-full">
         <div className="text-center p-4">
           <p className="text-red-500 mb-2">Failed to load map</p>
-          <p className="text-muted-foreground">{error.message}</p>
+          <p className="text-muted-foreground mb-4">{error.message}</p>
+          <Button 
+            onClick={() => {
+              setMapKey(`map-retry-${Date.now()}`);
+              setMapInitAttempts(0);
+              setError(null);
+              setIsLoading(true);
+            }}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -180,8 +226,6 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
         whenCreated={handleMapInit}
-        // Remove the problematic props from here
-        // Instead, they're set in the handleMapInit callback function
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

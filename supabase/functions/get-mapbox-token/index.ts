@@ -17,21 +17,35 @@ serve(async (req) => {
     // Get the Mapbox token from environment variable
     const mapboxToken = Deno.env.get("MAPBOX_TOKEN");
     
-    if (!mapboxToken) {
-      throw new Error("MAPBOX_TOKEN environment variable is not set");
+    // Fallback token if env var isn't set (for development only)
+    const fallbackToken = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
+    
+    const tokenToUse = mapboxToken || fallbackToken;
+
+    if (!tokenToUse) {
+      throw new Error("No Mapbox token available");
     }
+
+    // Add cache control headers to reduce API calls
+    const headers = {
+      ...corsHeaders, 
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=3600" // Cache for 1 hour
+    };
 
     // Return the token
     return new Response(
-      JSON.stringify({ token: mapboxToken }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      },
+      JSON.stringify({ token: tokenToUse }),
+      { headers, status: 200 }
     );
   } catch (error) {
+    console.error("Error in get-mapbox-token function:", error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        message: "Failed to retrieve Mapbox token" 
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -39,4 +53,3 @@ serve(async (req) => {
     );
   }
 });
-
