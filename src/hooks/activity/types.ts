@@ -1,32 +1,17 @@
 
-import { Activity } from '@/components/activity/ActivityItem';
-
-// Define type for activities table in Supabase
-export interface ActivitiesResponse {
-  id: string; // Using string for UUID compatibility
+export interface Activity {
+  id: string;
   user_id: string;
   type: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  read: boolean;
   created_at: string;
-  updated_at: string;
-  meta?: any;
-  team_id?: string;
-  tenant_id?: string;
-  related_id?: string;
-  related_type?: string;
+  details: Record<string, any>;
+  read?: boolean;
+  title?: string;
+  description?: string;
+  metadata?: Record<string, any>;
 }
 
-export interface UseActivitiesReturn {
+export interface ActivityGroup {
+  date: string;
   activities: Activity[];
-  isLoading: boolean;
-  error: Error | null;
-  unreadCount: number;
-  fetchActivities: () => Promise<void>;
-  refreshActivities: () => void;
-  markAsRead: (id: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
-  setupRealtimeSubscription: () => () => void;
 }

@@ -36,89 +36,114 @@ const DrawingControl = ({ onPharmaciesInShape, pharmacies }: {
   pharmacies: Pharmacy[];
 }) => {
   const map = useMap();
+  const drawControlRef = useRef<L.Control.Draw | null>(null);
+  const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
   
   useEffect(() => {
     if (!map) return;
 
-    // Initialize the draw control
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-    
-    // Use type assertion to avoid TypeScript errors with Leaflet.draw
-    // @ts-ignore - Leaflet.draw types are not complete
-    const drawControl = new L.Control.Draw({
-      draw: {
-        marker: false,
-        polyline: false,
-        circlemarker: false,
-        polygon: {
-          allowIntersection: false,
-          showArea: true
-        },
-        rectangle: true,
-        circle: true,
-      },
-      edit: {
-        featureGroup: drawnItems,
-        remove: true
-      }
-    });
-    
-    map.addControl(drawControl);
-    
-    // Handle completed draw events
-    map.on(L.Draw.Event.CREATED, (e: any) => {
-      const layer = e.layer;
-      drawnItems.addLayer(layer);
+    try {
+      // Initialize the draw control
+      const drawnItems = new L.FeatureGroup();
+      drawnItemsRef.current = drawnItems;
+      map.addLayer(drawnItems);
       
-      // Filter pharmacies based on the drawn shape
-      if (onPharmaciesInShape) {
-        const filteredPharmacies = pharmacies.filter(pharmacy => {
-          if (!pharmacy.coordinates) return false;
+      // Ensure Leaflet.Draw is available
+      if (typeof L.Control.Draw === 'undefined') {
+        console.error('Leaflet.Draw is not defined');
+        return;
+      }
+      
+      // Use type assertion to avoid TypeScript errors with Leaflet.draw
+      // @ts-ignore - Leaflet.draw types are not complete
+      const drawControl = new L.Control.Draw({
+        draw: {
+          marker: false,
+          polyline: false,
+          circlemarker: false,
+          polygon: {
+            allowIntersection: false,
+            showArea: true
+          },
+          rectangle: true,
+          circle: true,
+        },
+        edit: {
+          featureGroup: drawnItems,
+          remove: true
+        }
+      });
+      
+      drawControlRef.current = drawControl;
+      map.addControl(drawControl);
+      
+      const handleDrawCreated = (e: any) => {
+        const layer = e.layer;
+        if (drawnItemsRef.current) {
+          drawnItemsRef.current.addLayer(layer);
           
-          const pharmacyLatLng = L.latLng(
-            pharmacy.coordinates.lat, 
-            pharmacy.coordinates.lon
-          );
-          
-          let isInside = false;
-          
-          if (e.layerType === 'circle') {
-            const center = layer.getLatLng();
-            const radius = layer.getRadius();
-            isInside = center.distanceTo(pharmacyLatLng) <= radius;
-          } else if (e.layerType === 'rectangle' || e.layerType === 'polygon') {
-            isInside = layer.contains(pharmacyLatLng);
+          // Filter pharmacies based on the drawn shape
+          if (onPharmaciesInShape) {
+            const filteredPharmacies = pharmacies.filter(pharmacy => {
+              if (!pharmacy.coordinates) return false;
+              
+              const pharmacyLatLng = L.latLng(
+                pharmacy.coordinates.lat, 
+                pharmacy.coordinates.lon
+              );
+              
+              let isInside = false;
+              
+              if (e.layerType === 'circle') {
+                const center = layer.getLatLng();
+                const radius = layer.getRadius();
+                isInside = center.distanceTo(pharmacyLatLng) <= radius;
+              } else if (e.layerType === 'rectangle' || e.layerType === 'polygon') {
+                isInside = layer.contains(pharmacyLatLng);
+              }
+              
+              return isInside;
+            });
+            
+            onPharmaciesInShape(filteredPharmacies);
+            
+            // Show toast with count of pharmacies in the shape
+            toast({
+              title: `${filteredPharmacies.length} pharmacies found`,
+              description: `Found ${filteredPharmacies.length} pharmacies within the selected area.`
+            });
           }
-          
-          return isInside;
-        });
+        }
+      };
+      
+      const handleDeleted = () => {
+        if (onPharmaciesInShape) {
+          // Reset to all pharmacies when shapes are deleted
+          onPharmaciesInShape(pharmacies);
+        }
+      };
+      
+      // Use standard DOM event listeners to avoid React synthetic event issues
+      map.on(L.Draw.Event.CREATED, handleDrawCreated);
+      map.on(L.Draw.Event.DELETED, handleDeleted);
+      
+      return () => {
+        // Properly clean up all event listeners and controls
+        map.off(L.Draw.Event.CREATED, handleDrawCreated);
+        map.off(L.Draw.Event.DELETED, handleDeleted);
         
-        onPharmaciesInShape(filteredPharmacies);
+        if (drawControlRef.current) {
+          map.removeControl(drawControlRef.current);
+        }
         
-        // Show toast with count of pharmacies in the shape
-        toast({
-          title: `${filteredPharmacies.length} pharmacies found`,
-          description: `Found ${filteredPharmacies.length} pharmacies within the selected area.`
-        });
-      }
-    });
-    
-    // Handle deleted draw items
-    map.on(L.Draw.Event.DELETED, (e: any) => {
-      if (onPharmaciesInShape) {
-        // Reset to all pharmacies when shapes are deleted
-        onPharmaciesInShape(pharmacies);
-      }
-    });
-    
-    return () => {
-      map.removeLayer(drawnItems);
-      // @ts-ignore - Leaflet typings don't include remove method on Control.Draw
-      map.removeControl(drawControl);
-      map.off(L.Draw.Event.CREATED);
-      map.off(L.Draw.Event.DELETED);
-    };
+        if (drawnItemsRef.current) {
+          map.removeLayer(drawnItemsRef.current);
+        }
+      };
+    } catch (error) {
+      console.error('Error setting up drawing control:', error);
+      return () => {};
+    }
   }, [map, onPharmaciesInShape, pharmacies]);
   
   return null;
@@ -170,6 +195,7 @@ const MapUpdater = ({ pharmacies, userLocation }: {
 // User location component with circle
 const UserLocationMarker = ({ position }: { position: [number, number] }) => {
   const map = useMap();
+  const circleRef = useRef<L.Circle | null>(null);
   
   useEffect(() => {
     // Add a circle around the user's location
@@ -180,8 +206,12 @@ const UserLocationMarker = ({ position }: { position: [number, number] }) => {
       fillOpacity: 0.1
     }).addTo(map);
     
+    circleRef.current = circle;
+    
     return () => {
-      map.removeLayer(circle);
+      if (circleRef.current) {
+        map.removeLayer(circleRef.current);
+      }
     };
   }, [map, position]);
   
@@ -228,6 +258,28 @@ export const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   // Default center if no user location (Luxembourg)
   const defaultCenter = { lat: 49.8153, lon: 6.1296 };
   const center = userLocation || defaultCenter;
+  const [mapReady, setMapReady] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
+  
+  // Setup global error handling for Leaflet
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      // Filter out common Leaflet errors
+      if (event.message && (
+        event.message.includes('a is not a function') ||
+        event.message.includes('touchleave') ||
+        event.message.includes('canvas is null')
+      )) {
+        event.preventDefault();
+        return true;
+      }
+      return false;
+    };
+    
+    window.addEventListener('error', handleError);
+    
+    return () => window.removeEventListener('error', handleError);
+  }, []);
   
   // If no pharmacies, show a message
   if (pharmacies.length === 0) {
@@ -244,6 +296,14 @@ export const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         center={[center.lat, center.lon]}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
+        whenCreated={(map) => {
+          mapRef.current = map;
+          // Disable problematic touch handlers in Leaflet
+          map.options.tap = false;
+          map.options.touchZoom = false;
+          // Set flag that map is ready
+          setMapReady(true);
+        }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -264,10 +324,12 @@ export const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         <MapUpdater pharmacies={pharmacies} userLocation={userLocation} />
         
         {/* Drawing tools */}
-        <DrawingControl 
-          onPharmaciesInShape={onPharmaciesInShape} 
-          pharmacies={pharmacies} 
-        />
+        {mapReady && (
+          <DrawingControl 
+            onPharmaciesInShape={onPharmaciesInShape} 
+            pharmacies={pharmacies} 
+          />
+        )}
       </MapContainer>
       
       <div className="absolute bottom-2 left-2 bg-white p-2 rounded shadow z-[1000]">
