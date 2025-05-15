@@ -103,43 +103,37 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         // Disable the problematic handlers
         mapInstance.options.touchZoom = false;
         mapInstance.options.tap = false;
-        
-        // Override problematic methods
-        if (typeof window !== 'undefined' && 'ontouchstart' in window) {
-          // Safe patching for touch handlers
-          const mapProto = (L.Map as any).prototype;
-          const originalAddHandler = mapProto.addHandler;
-          
-          // Replace addHandler to skip problematic handlers
-          mapProto.addHandler = function(name: string, HandlerClass: any) {
-            if (name === 'touchZoom' || name === 'tap') {
-              return this;
-            }
-            return originalAddHandler.call(this, name, HandlerClass);
-          };
-          
-          // Additional safety for event handling
-          const originalOn = mapInstance.on;
-          mapInstance.on = function(type: string, fn: Function, context?: any) {
-            if (type.includes('touch')) {
-              try {
-                return originalOn.call(this, type, function(e: any) {
-                  try {
-                    return fn.call(context || this, e);
-                  } catch (error) {
-                    console.warn(`Caught error in ${type} handler:`, error);
-                    return undefined;
-                  }
-                }, context);
-              } catch (error) {
-                console.warn(`Error attaching ${type} handler:`, error);
-                return this;
-              }
-            }
-            return originalOn.call(this, type, fn, context);
-          };
-        }
       }
+      
+      setTimeout(() => {
+        // Force a resize and redraw
+        mapInstance.invalidateSize(true);
+        
+        if (userLocation) {
+          mapInstance.setView([userLocation.lat, userLocation.lon], 13);
+        } else {
+          mapInstance.setView(defaultCenter, 13);
+        }
+        
+        // Add markers to the map
+        if (pharmacies.length > 0) {
+          const bounds = new L.LatLngBounds([]);
+          
+          pharmacies.forEach(pharmacy => {
+            if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
+              const marker = L.marker([pharmacy.coordinates.lat, pharmacy.coordinates.lon])
+                .addTo(mapInstance)
+                .bindPopup(`<b>${pharmacy.name}</b><br>${pharmacy.address}`);
+              
+              bounds.extend([pharmacy.coordinates.lat, pharmacy.coordinates.lon]);
+            }
+          });
+          
+          if (bounds.isValid()) {
+            mapInstance.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+          }
+        }
+      }, 100);
       
       setMap(mapInstance);
       setIsLoading(false);
@@ -218,12 +212,12 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full relative">
       <MapContainer
         key={mapKey}
         center={centerCoordinates}
         zoom={13}
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         scrollWheelZoom={true}
         whenCreated={handleMapInit}
       >

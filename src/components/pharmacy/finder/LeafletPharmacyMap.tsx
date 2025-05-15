@@ -120,6 +120,11 @@ const SafeMapUpdater = ({ userLocation }: { userLocation: { lat: number; lon: nu
     try {
       // Safely update view
       map.setView([userLocation.lat, userLocation.lon], 13);
+      
+      // Force a resize to ensure proper rendering
+      setTimeout(() => {
+        map.invalidateSize(true);
+      }, 100);
     } catch (err) {
       console.warn('Error updating map view:', err);
     }
@@ -181,20 +186,34 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         map.options.touchZoom = false;
         map.options.tap = false;
         
-        // Apply additional fixes for mobile
-        if (typeof window !== 'undefined' && 'ontouchstart' in window) {
-          // Manually disable handlers that are causing issues
-          const mapProto = (L.Map as any).prototype;
-          const originalAddHandler = mapProto.addHandler;
+        // Force a resize and redraw
+        setTimeout(() => {
+          map.invalidateSize(true);
           
-          // Replace the addHandler method to skip problematic handlers
-          mapProto.addHandler = function(name: string, HandlerClass: any) {
-            if (name === 'touchZoom' || name === 'tap') {
-              return this;
+          // Add markers directly via the Leaflet API
+          pharmacies.forEach(pharmacy => {
+            if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
+              L.marker([pharmacy.coordinates.lat, pharmacy.coordinates.lon])
+                .addTo(map)
+                .bindPopup(`<b>${pharmacy.name}</b><br>${pharmacy.address}`);
             }
-            return originalAddHandler.call(this, name, HandlerClass);
-          };
-        }
+          });
+          
+          // Fit bounds if we have pharmacies
+          if (pharmacies.length > 0) {
+            const bounds = new L.LatLngBounds([]);
+            
+            pharmacies.forEach(pharmacy => {
+              if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
+                bounds.extend([pharmacy.coordinates.lat, pharmacy.coordinates.lon]);
+              }
+            });
+            
+            if (bounds.isValid()) {
+              map.fitBounds(bounds);
+            }
+          }
+        }, 100);
       }
       
       setIsMapReady(true);
@@ -238,12 +257,20 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   }
 
   return (
-    <div className="h-[400px] border rounded-md overflow-hidden">
+    <div className="h-[400px] border rounded-md overflow-hidden relative">
       <MapContainer
         key={mapKey}
         center={defaultCenter}
         zoom={13}
-        style={{ height: '100%', width: '100%' }}
+        style={{ 
+          height: '400px', 
+          width: '100%', 
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0
+        }}
         scrollWheelZoom={true}
         whenCreated={handleMapCreated}
       >

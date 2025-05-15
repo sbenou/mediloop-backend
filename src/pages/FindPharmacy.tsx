@@ -91,7 +91,7 @@ const FindPharmacy = () => {
           </TabsContent>
           
           <TabsContent value="map" className="mt-4">
-            <div className="bg-card rounded-lg border shadow-sm p-1 h-[600px]">
+            <div className="bg-card rounded-lg border shadow-sm p-1" style={{ height: "600px" }}>
               <PharmacyFinderMap 
                 pharmacies={filteredPharmacies}
                 userLocation={userLocation}

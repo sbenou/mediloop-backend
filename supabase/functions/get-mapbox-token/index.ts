@@ -33,6 +33,9 @@ serve(async (req) => {
       "Cache-Control": "public, max-age=3600" // Cache for 1 hour
     };
 
+    // Log success
+    console.log("Returning Mapbox token successfully");
+    
     // Return the token
     return new Response(
       JSON.stringify({ token: tokenToUse }),
