@@ -31,19 +31,20 @@ const DoctorSearch = () => {
 
   const { coordinates, searchRadius, setSearchRadius, handleCitySearch, isSearching } = useLocationSearch();
 
+  // Convert string coordinates to numbers to match the expected type
   const searchCoordinates = coordinates 
     ? { 
-        lat: coordinates.lat, 
-        lon: coordinates.lon 
+        lat: Number(coordinates.lat), 
+        lon: Number(coordinates.lon) 
       } 
     : userLocation 
       ? {
-          lat: userLocation.lat.toString(),
-          lon: userLocation.lon.toString()
+          lat: Number(userLocation.lat),
+          lon: Number(userLocation.lon)
         }
       : {
-          lat: LUXEMBOURG_COORDINATES.lat.toString(),
-          lon: LUXEMBOURG_COORDINATES.lon.toString()
+          lat: Number(LUXEMBOURG_COORDINATES.lat),
+          lon: Number(LUXEMBOURG_COORDINATES.lon)
         };
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
@@ -66,10 +67,10 @@ const DoctorSearch = () => {
     }
   }, [doctors?.length, searchRadius]);
 
-  // Convert string coordinates to numbers for DoctorListSection
+  // Convert to numbers for DoctorListSection
   const displayCoordinates = {
-    lat: parseFloat(searchCoordinates.lat),
-    lon: parseFloat(searchCoordinates.lon)
+    lat: searchCoordinates.lat,
+    lon: searchCoordinates.lon
   };
 
   return (
