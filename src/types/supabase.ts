@@ -94,27 +94,28 @@ export interface DoctorAvailability {
 // Add the AppointmentType type
 export type AppointmentType = 'teleconsultation' | 'in-person' | 'both';
 
-// Add the Teleconsultation interface
+// Updated Teleconsultation interface with meta property and optional fields
 export interface Teleconsultation {
   id: string;
   doctor_id: string;
   patient_id: string;
   start_time: string;
   end_time: string;
-  reason?: string;
+  reason?: string; // Making reason optional to match both usages
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   room_id?: string;
   created_at: string;
   updated_at: string;
+  meta?: Record<string, any>; // Adding meta property for appointment type information
   doctor?: {
-    id: string;
+    id?: string; // Making id optional to avoid type errors
     full_name: string;
-    email: string;
+    email: string | null;
   };
   patient?: {
-    id: string;
+    id?: string; // Making id optional to avoid type errors
     full_name: string;
-    email: string;
+    email: string | null;
   };
 }
 

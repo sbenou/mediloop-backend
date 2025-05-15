@@ -7,25 +7,7 @@ import DoctorAvailabilityCalendar from "@/components/teleconsultation/DoctorAvai
 import AvailabilityWeeklyCalendar from "@/components/teleconsultation/AvailabilityWeeklyCalendar";
 import TeleconsultationList from "@/components/teleconsultation/TeleconsultationList";
 import { useAuth } from "@/hooks/auth/useAuth";
-
-interface Teleconsultation {
-  id: string;
-  patient_id: string;
-  doctor_id: string;
-  start_time: string;
-  end_time: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  reason: string;
-  room_id?: string;
-  patient?: {
-    full_name: string;
-    email: string;
-  };
-  doctor?: {
-    full_name: string;
-    email: string;
-  };
-}
+import { Teleconsultation } from "@/types/supabase";
 
 const DoctorTeleconsultationsView = () => {
   const { profile } = useAuth();

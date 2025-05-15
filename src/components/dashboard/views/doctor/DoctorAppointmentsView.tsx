@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Calendar, Users, ArrowLeft, ArrowRight } from "lucide-react";
 import { addDays, format, startOfWeek, isSameDay } from "date-fns";
@@ -38,8 +37,10 @@ const DoctorAppointmentsView = () => {
   // Filter to show only in-person appointments
   const inPersonAppointments = teleconsultations.filter(appointment => {
     // Check if appointment has in-person metadata
-    if (appointment.meta && (appointment.meta.is_in_person || appointment.meta.appointment_type === 'in-person')) {
-      return true;
+    if (appointment.meta) {
+      if (appointment.meta.is_in_person || appointment.meta.appointment_type === 'in-person') {
+        return true;
+      }
     }
     
     // Fallback to checking the reason field

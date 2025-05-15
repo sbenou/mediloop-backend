@@ -10,29 +10,10 @@ import DoctorConnectionsList from "@/components/teleconsultation/DoctorConnectio
 import DoctorAvailabilityCalendar from "@/components/teleconsultation/DoctorAvailabilityCalendar";
 import TeleconsultationExplanation from "@/components/teleconsultation/TeleconsultationExplanation";
 import AvailabilityWeeklyCalendar from "@/components/teleconsultation/AvailabilityWeeklyCalendar";
+import { Teleconsultation } from "@/types/supabase";
 
 interface TeleconsultationsViewProps {
   userRole: string | null;
-}
-
-// Define teleconsultation type for the view
-interface Teleconsultation {
-  id: string;
-  patient_id: string;
-  doctor_id: string;
-  start_time: string;
-  end_time: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  reason: string;
-  room_id?: string;
-  patient?: {
-    full_name: string;
-    email: string;
-  };
-  doctor?: {
-    full_name: string;
-    email: string;
-  };
 }
 
 const TeleconsultationsView: React.FC<TeleconsultationsViewProps> = ({ userRole }) => {

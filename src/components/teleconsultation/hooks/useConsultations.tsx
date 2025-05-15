@@ -48,8 +48,8 @@ export const useConsultations = (profileId: string | undefined, filterRole?: str
           .from('teleconsultations')
           .select(`
             *,
-            patient:profiles!teleconsultations_patient_id_fkey(full_name, email),
-            doctor:profiles!teleconsultations_doctor_id_fkey(full_name, email)
+            patient:profiles!teleconsultations_patient_id_fkey(id, full_name, email),
+            doctor:profiles!teleconsultations_doctor_id_fkey(id, full_name, email)
           `)
           .eq(filterField, profileId)
           .order('start_time', { ascending: true });
@@ -75,16 +75,14 @@ export const useConsultations = (profileId: string | undefined, filterRole?: str
         
         // Create properly typed objects from filtered data
         const typedConsultations: Teleconsultation[] = validConsultations.map(consultation => {
-          // Default values for patient data
-          const defaultPatientData = { full_name: 'Unknown Patient', email: null };
-          
           // Extract patient data safely with proper null checks
           const patientData = (() => {
-            if (!consultation.patient) return defaultPatientData;
+            if (!consultation.patient) return { id: undefined, full_name: 'Unknown Patient', email: null };
             
             const patientObj = consultation.patient as Record<string, any>;
             
             return {
+              id: patientObj.id,
               full_name: typeof patientObj === 'object' && 
                         'full_name' in patientObj &&
                         patientObj.full_name !== null
@@ -97,16 +95,14 @@ export const useConsultations = (profileId: string | undefined, filterRole?: str
             };
           })();
           
-          // Default values for doctor data
-          const defaultDoctorData = { full_name: 'Unknown Doctor', email: null };
-          
           // Extract doctor data safely with proper null checks
           const doctorData = (() => {
-            if (!consultation.doctor) return defaultDoctorData;
+            if (!consultation.doctor) return { id: undefined, full_name: 'Unknown Doctor', email: null };
             
             const doctorObj = consultation.doctor as Record<string, any>;
             
             return {
+              id: doctorObj.id,
               full_name: typeof doctorObj === 'object' && 
                         'full_name' in doctorObj &&
                         doctorObj.full_name !== null
@@ -131,7 +127,8 @@ export const useConsultations = (profileId: string | undefined, filterRole?: str
             created_at: consultation.created_at,
             updated_at: consultation.updated_at,
             patient: patientData,
-            doctor: doctorData
+            doctor: doctorData,
+            meta: (consultation as any).meta || {}
           };
         });
         

@@ -54,11 +54,12 @@ const processTimeSlots = (item: any): TimeSlot[] => {
  * Safely extracts patient or doctor data from a teleconsultation record
  */
 const extractEntityData = (entity: any, defaultName: string) => {
-  if (!entity) return { full_name: defaultName, email: null };
+  if (!entity) return { id: undefined, full_name: defaultName, email: null };
   
   const entityObj = entity as Record<string, any>;
   
   return {
+    id: typeof entityObj === 'object' && 'id' in entityObj ? entityObj.id : undefined,
     full_name: typeof entityObj === 'object' && 
               'full_name' in entityObj &&
               entityObj.full_name !== null
@@ -146,7 +147,7 @@ export const fetchTeleconsultations = async (
   try {
     const query = supabase
       .from('teleconsultations')
-      .select('*, patient:patient_id(full_name, email), doctor:doctor_id(full_name, email)')
+      .select('*, patient:patient_id(id, full_name, email), doctor:doctor_id(id, full_name, email)')
       .eq('doctor_id', doctorId)
       .eq('status', 'confirmed');
 
@@ -176,6 +177,7 @@ export const fetchTeleconsultations = async (
       // Initialize metaData as an empty object if it doesn't exist in the item
       const metaData = (item as any).meta || {};
       
+      // Type assertion to handle conversion properly
       return {
         id: item.id,
         patient_id: item.patient_id,
