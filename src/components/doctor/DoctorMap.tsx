@@ -13,25 +13,39 @@ const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b
 // Default coordinates for Luxembourg
 const DEFAULT_COORDINATES = { lat: 49.8153, lng: 6.1296 };
 
-interface DoctorMapProps {
-  doctors: Array<{
-    id: string;
-    full_name: string;
-    address?: string;
-    city?: string | null;
-    coordinates?: { lat: number; lon: number } | null;
-  }>;
-  userCoordinates: { lat: number; lon: number } | null;
-  showUserLocation: boolean;
+interface Doctor {
+  id: string;
+  full_name: string;
+  address?: string;
+  city?: string | null;
+  coordinates?: { lat: number; lon: number } | null;
+}
+
+export interface DoctorMapProps {
+  doctors: Array<Doctor>;
+  userCoordinates?: { lat: number; lon: number } | null;
+  showUserLocation?: boolean;
   onDoctorSelect?: (doctorId: string) => void;
 }
 
+// Additional prop types for the single doctor use case
+export interface SingleDoctorMapProps {
+  doctor: {
+    id: string;
+    name: string;
+    address: string;
+    city: string;
+    postal_code: string;
+  };
+}
+
 const DoctorMap = ({
-  doctors,
-  userCoordinates,
-  showUserLocation,
-  onDoctorSelect
-}: DoctorMapProps) => {
+  doctors = [],
+  userCoordinates = null,
+  showUserLocation = false,
+  onDoctorSelect,
+  ...props
+}: DoctorMapProps | SingleDoctorMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
@@ -41,6 +55,23 @@ const DoctorMap = ({
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapInitialized, setMapInitialized] = useState(false);
+  
+  // Handle the case of a single doctor passed as prop
+  const doctorsArray = React.useMemo(() => {
+    // If 'doctor' prop exists (SingleDoctorMapProps), convert it to the expected format
+    if ('doctor' in props && props.doctor) {
+      const doctor = props.doctor;
+      return [{
+        id: doctor.id,
+        full_name: doctor.name,
+        address: doctor.address,
+        city: doctor.city,
+        // For single doctor map, we don't have coordinates, 
+        // so we'll geocode the address later or center on a default location
+      }];
+    }
+    return doctors;
+  }, [doctors, props]);
 
   // Get Mapbox token
   useEffect(() => {
@@ -143,40 +174,47 @@ const DoctorMap = ({
     const bounds = new mapboxgl.LngLatBounds();
     
     // Add doctor markers
-    doctors.forEach(doctor => {
-      if (!doctor.coordinates?.lat || !doctor.coordinates?.lon) return;
-      
-      try {
-        const popupContent = document.createElement('div');
-        popupContent.className = 'p-2';
-        popupContent.innerHTML = `
-          <div class="text-sm font-medium">${doctor.full_name}</div>
-          ${doctor.address ? `<div class="text-xs">${doctor.address}</div>` : ''}
-          ${doctor.city ? `<div class="text-xs">${doctor.city}</div>` : ''}
-        `;
-        
-        // Add button if onDoctorSelect is provided
-        if (onDoctorSelect) {
-          const button = document.createElement('button');
-          button.className = 'mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded';
-          button.innerText = 'Select';
-          button.onclick = () => onDoctorSelect(doctor.id);
-          popupContent.appendChild(button);
+    doctorsArray.forEach(doctor => {
+      if (doctor.coordinates?.lat && doctor.coordinates?.lon) {
+        try {
+          const popupContent = document.createElement('div');
+          popupContent.className = 'p-2';
+          popupContent.innerHTML = `
+            <div class="text-sm font-medium">${doctor.full_name}</div>
+            ${doctor.address ? `<div class="text-xs">${doctor.address}</div>` : ''}
+            ${doctor.city ? `<div class="text-xs">${doctor.city}</div>` : ''}
+          `;
+          
+          // Add button if onDoctorSelect is provided
+          if (onDoctorSelect) {
+            const button = document.createElement('button');
+            button.className = 'mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded';
+            button.innerText = 'Select';
+            button.onclick = () => onDoctorSelect(doctor.id);
+            popupContent.appendChild(button);
+          }
+          
+          const popup = new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent);
+          
+          const marker = new mapboxgl.Marker()
+            .setLngLat([doctor.coordinates.lon, doctor.coordinates.lat])
+            .setPopup(popup)
+            .addTo(map.current!);
+          
+          markers.current.push(marker);
+          
+          // Add to bounds
+          bounds.extend([doctor.coordinates.lon, doctor.coordinates.lat]);
+        } catch (error) {
+          console.error('Error creating doctor marker:', error);
         }
-        
-        const popup = new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent);
-        
-        const marker = new mapboxgl.Marker()
-          .setLngLat([doctor.coordinates.lon, doctor.coordinates.lat])
-          .setPopup(popup)
-          .addTo(map.current!);
-        
-        markers.current.push(marker);
-        
-        // Add to bounds
-        bounds.extend([doctor.coordinates.lon, doctor.coordinates.lat]);
-      } catch (error) {
-        console.error('Error creating doctor marker:', error);
+      } else if ('doctor' in props && map.current) {
+        // For single doctor view without coordinates, center on default location
+        // You could potentially call a geocoding service here to get coordinates from the address
+        map.current.flyTo({
+          center: [DEFAULT_COORDINATES.lng, DEFAULT_COORDINATES.lat],
+          zoom: 13
+        });
       }
     });
     
@@ -222,7 +260,7 @@ const DoctorMap = ({
         }
       }
     }
-  }, [doctors, userCoordinates, showUserLocation, isMapLoaded, onDoctorSelect]);
+  }, [doctorsArray, userCoordinates, showUserLocation, isMapLoaded, onDoctorSelect, props]);
 
   // Recenter map on user button
   const handleCenterOnUser = () => {

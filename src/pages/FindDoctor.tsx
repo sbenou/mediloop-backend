@@ -41,20 +41,20 @@ const FindDoctor = () => {
 
   const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
 
-  // Create computed search coordinates
+  // Create computed search coordinates - ensure consistent number types
   const searchCoordinates = coordinates 
     ? { 
-        lat: coordinates.lat, 
-        lon: coordinates.lon 
+        lat: Number(coordinates.lat), 
+        lon: Number(coordinates.lon) 
       } 
     : userLocation 
       ? {
-          lat: userLocation.lat,
-          lon: userLocation.lon
+          lat: Number(userLocation.lat),
+          lon: Number(userLocation.lon)
         }
       : {
-          lat: LUXEMBOURG_COORDINATES.lat,
-          lon: LUXEMBOURG_COORDINATES.lon
+          lat: Number(LUXEMBOURG_COORDINATES.lat),
+          lon: Number(LUXEMBOURG_COORDINATES.lon)
         };
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
@@ -105,12 +105,6 @@ const FindDoctor = () => {
       setSearchRadius(newRadius);
     }
   }, [doctors, searchRadius, isDoctorsLoading, isSearching]);
-
-  // Convert string coordinates to numbers for DoctorListSection
-  const displayCoordinates = {
-    lat: parseFloat(searchCoordinates.lat.toString()),
-    lon: parseFloat(searchCoordinates.lon.toString())
-  };
 
   // Handle location toggle
   const handleLocationToggle = useCallback((checked: boolean) => {
@@ -178,7 +172,7 @@ const FindDoctor = () => {
                 <DoctorListSection
                   doctors={doctors || []}
                   isLoading={isDoctorsLoading}
-                  coordinates={displayCoordinates}
+                  coordinates={searchCoordinates}
                   showUserLocation={isUsingLocation}
                   onConnect={(doctorId, source) => {
                     try {
