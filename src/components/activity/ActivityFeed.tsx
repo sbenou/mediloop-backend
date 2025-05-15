@@ -16,18 +16,21 @@ import {
 import { Filter } from "lucide-react";
 
 export const ActivityFeed = () => {
+  // Get the current user ID - assuming we have user data
+  const userId = "current-user-id"; // This should be replaced with actual user ID
+  
   const { 
     activities, 
     isLoading, 
     unreadCount, 
     markAsRead,
     markAllAsRead
-  } = useActivities();
+  } = useActivities(userId);
   
   const [selectedTypes, setSelectedTypes] = useState<ActivityType[]>([]);
   
   // Get unique activity types from the loaded activities
-  const activityTypes = Array.from(new Set(activities.map(activity => activity.type)));
+  const activityTypes = Array.from(new Set(activities.map(activity => activity.type as ActivityType)));
   
   return (
     <div className="h-full flex flex-col">
@@ -37,7 +40,7 @@ export const ActivityFeed = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={markAllAsRead}
+            onClick={() => markAllAsRead()}
             className="text-xs"
           >
             Mark all read
@@ -93,7 +96,11 @@ export const ActivityFeed = () => {
       </div>
       
       <ActivityContent 
-        activities={activities}
+        activities={activities.map(activity => ({
+          ...activity,
+          read: activity.read || activity.status === 'read',
+          timestamp: activity.timestamp ? new Date(activity.timestamp) : new Date()
+        }))}
         onMarkRead={markAsRead}
         activeTab="all"
         selectedTypes={selectedTypes}

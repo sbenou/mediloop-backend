@@ -8,6 +8,7 @@ export interface Activity {
   date?: string;
   user_id?: string;
   status?: 'read' | 'unread';
+  read?: boolean;  // Add this to support both status and read property access patterns
   metadata?: Record<string, any>;
   image_url?: string;
   icon?: string;

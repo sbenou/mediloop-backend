@@ -1,16 +1,22 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { Activity } from './types';
 
-export const useActivities = (userId: string | undefined, limit = 10) => {
+export const useActivities = (userId?: string, limit = 10) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchActivities = async (userId: string, startFrom = 0) => {
-    if (!userId) return;
+  // Calculate unread count from activities
+  const unreadCount = useMemo(() => {
+    return activities.filter(activity => !activity.read && activity.status !== 'read').length;
+  }, [activities]);
+
+  const fetchActivities = async (userId?: string, startFrom = 0) => {
+    if (!userId) return [];
     
     try {
       setIsLoading(true);
@@ -28,15 +34,21 @@ export const useActivities = (userId: string | undefined, limit = 10) => {
       // If we got fewer results than the limit, there are no more to fetch
       setHasMore(data.length === limit);
       
+      // Add read property based on status
+      const processedData = data.map(item => ({
+        ...item,
+        read: item.status === 'read'
+      }));
+      
       // If this is the first page, replace the state
       // Otherwise append to the existing activities
       if (startFrom === 0) {
-        setActivities(data);
+        setActivities(processedData);
       } else {
-        setActivities(prev => [...prev, ...data]);
+        setActivities(prev => [...prev, ...processedData]);
       }
       
-      return data;
+      return processedData;
     } catch (err) {
       console.error('Error fetching activities:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch activities'));
@@ -52,7 +64,7 @@ export const useActivities = (userId: string | undefined, limit = 10) => {
   };
 
   const loadMoreActivities = () => {
-    if (!userId || !hasMore || isLoading) return;
+    if (!userId || !hasMore || isLoading) return Promise.resolve([]);
     return fetchActivities(userId, activities.length);
   };
 
@@ -60,7 +72,7 @@ export const useActivities = (userId: string | undefined, limit = 10) => {
     try {
       const { error } = await supabase
         .from('activities')
-        .update({ read: true })
+        .update({ status: 'read' })
         .eq('id', activityId);
 
       if (error) throw error;
@@ -68,40 +80,45 @@ export const useActivities = (userId: string | undefined, limit = 10) => {
       // Update the local state
       setActivities(prev =>
         prev.map(activity =>
-          activity.id === activityId ? { ...activity, read: true } : activity
+          activity.id === activityId ? { ...activity, status: 'read', read: true } : activity
         )
       );
+      
+      return true;
     } catch (err) {
       console.error('Error marking activity as read:', err);
+      return false;
     }
   };
 
   const markAllAsRead = async () => {
-    if (!userId) return;
+    if (!userId) return Promise.resolve(false);
     
     try {
       const unreadActivityIds = activities
-        .filter(activity => !activity.read)
+        .filter(activity => activity.status !== 'read' || !activity.read)
         .map(activity => activity.id);
       
-      if (unreadActivityIds.length === 0) return;
+      if (unreadActivityIds.length === 0) return false;
       
       const { error } = await supabase
         .from('activities')
-        .update({ read: true })
+        .update({ status: 'read' })
         .in('id', unreadActivityIds);
 
       if (error) throw error;
 
       // Update the local state
       setActivities(prev =>
-        prev.map(activity => ({ ...activity, read: true }))
+        prev.map(activity => ({ ...activity, status: 'read', read: true }))
       );
       
       toast({
         title: 'All activities marked as read',
         variant: 'success',
       });
+      
+      return true;
     } catch (err) {
       console.error('Error marking all activities as read:', err);
       toast({
@@ -109,6 +126,7 @@ export const useActivities = (userId: string | undefined, limit = 10) => {
         description: 'Could not mark activities as read',
         variant: 'destructive',
       });
+      return false;
     }
   };
 
@@ -127,9 +145,11 @@ export const useActivities = (userId: string | undefined, limit = 10) => {
     isLoading,
     error,
     hasMore,
+    unreadCount,
     loadMoreActivities,
     markAsRead,
     markAllAsRead,
-    refreshActivities: () => userId && fetchActivities(userId)
+    refreshActivities: () => userId ? fetchActivities(userId) : Promise.resolve([]),
+    fetchActivities
   };
 };

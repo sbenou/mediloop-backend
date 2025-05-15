@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import { toast } from "@/components/ui/use-toast";
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -63,10 +63,16 @@ const UserLocationMarker = ({
       <Marker position={position} icon={userLocationIcon}>
         <Popup>Your location</Popup>
       </Marker>
-      <Circle
-        center={position}
-        radius={radius}
+      <CircleMarker 
+        center={position} 
+        radius={20} // This is the pixel radius, not meters
         pathOptions={{ fillColor: 'blue', fillOpacity: 0.1, color: 'blue', weight: 1 }}
+      />
+      {/* Use a CircleMarker with custom styling to emulate the area */}
+      <CircleMarker 
+        center={position}
+        radius={radius / 100} // Scale down meters to pixel radius
+        pathOptions={{ fillColor: 'blue', fillOpacity: 0.05, color: 'blue', weight: 0.5 }}
       />
     </>
   );
@@ -209,7 +215,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   onPharmaciesInShape
 }) => {
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
-  const mapRef = useRef<L.Map | null>(null);
   
   // Default coordinates for Luxembourg
   const defaultCoordinates = { lat: 49.8153, lon: 6.1296 };
@@ -274,7 +279,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         zoom={13}
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%' }}
-        ref={mapRef}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

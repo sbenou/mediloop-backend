@@ -1,7 +1,7 @@
 
 // Hooks
 import * as React from "react"
-import { toast as sonnerToast } from "sonner"
+import { toast as sonnerToast, type ToastT } from "sonner"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -11,6 +11,11 @@ type ToasterToast = {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: React.ReactNode
+  variant?: "default" | "destructive" | "success"
+}
+
+// Define props that are allowed in our toast function
+interface ToastOptions extends Omit<ToastT, "id"> {
   variant?: "default" | "destructive" | "success"
 }
 
@@ -119,23 +124,22 @@ function dispatch(action: Action) {
   }
 }
 
-function toast({
-  variant = "default",
-  ...props
-}: Omit<ToasterToast, "id"> & {
-  variant?: "default" | "destructive" | "success";
-}) {
+function toast(props: Omit<ToasterToast, "id"> & ToastOptions) {
   const id = genId()
-  const toastOptions = { id, variant, ...props }
+  
+  // Extract props needed for our toast component
+  const { variant = "default", ...sonnerProps } = props
   
   // Use sonner toast
   sonnerToast(props.title as string, {
     id,
     description: props.description,
     action: props.action,
-    ...props,
+    ...sonnerProps
   })
 
+  const toastOptions = { id, variant, ...props }
+  
   dispatch({
     type: "ADD_TOAST",
     toast: toastOptions,

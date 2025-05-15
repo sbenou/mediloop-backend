@@ -14,6 +14,7 @@ const mapActivities = (activities: any[]): Activity[] => {
     date: activity.created_at ? new Date(activity.created_at).toISOString().split('T')[0] : '',
     user_id: activity.user_id,
     status: activity.status || 'unread',
+    read: activity.status === 'read', // Add read property based on status
     metadata: activity.metadata || {},
     image_url: activity.image_url,
     icon: activity.icon,
@@ -28,6 +29,9 @@ export const useActivitiesFetch = () => {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const limit = 20;
+  
+  // Calculate unreadCount from activities
+  const unreadCount = activities.filter(a => a.status !== 'read' && !a.read).length;
 
   // Load activities from Supabase
   const fetchActivities = useCallback(async (userId: string = '', page: number = 0) => {
@@ -100,7 +104,7 @@ export const useActivitiesFetch = () => {
       setActivities(prev => 
         prev.map(activity => 
           activity.id === activityId 
-            ? { ...activity, status: 'read' } 
+            ? { ...activity, status: 'read', read: true } 
             : activity
         )
       );
@@ -123,7 +127,7 @@ export const useActivitiesFetch = () => {
       if (error) throw error;
       
       setActivities(prev => 
-        prev.map(activity => ({ ...activity, status: 'read' }))
+        prev.map(activity => ({ ...activity, status: 'read', read: true }))
       );
       
       return true;
@@ -144,6 +148,7 @@ export const useActivitiesFetch = () => {
     isLoading,
     error,
     hasMore,
+    unreadCount,
     loadMoreActivities,
     markAsRead,
     markAllAsRead,

@@ -1,4 +1,3 @@
-
 import { formatDistanceToNow } from "date-fns";
 import { 
   Pill, 
@@ -20,6 +19,7 @@ import {
   User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Activity as BaseActivity } from "@/hooks/activity/types";
 
 export type ActivityType = 
   | "prescription_created" 
@@ -39,13 +39,10 @@ export type ActivityType =
   | "new_teleconsultation"
   | string; // Allow any string to support future activity types
 
-export interface Activity {
-  id: string;  // This can now be a UUID string
-  type: ActivityType;
-  title: string;
-  description: string;
-  timestamp: Date;
+// Extend the base Activity with the specific requirements for the ActivityItem component
+export interface Activity extends BaseActivity {
   read: boolean;
+  timestamp: Date;
 }
 
 interface ActivityItemProps {
@@ -162,7 +159,7 @@ export const ActivityItem = ({ activity, onMarkRead }: ActivityItemProps) => {
     }
   };
 
-  const { icon, color } = getActivityStyles(activity.type);
+  const { icon, color } = getActivityStyles(activity.type as ActivityType);
 
   return (
     <div 
