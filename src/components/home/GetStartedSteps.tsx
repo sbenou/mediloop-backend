@@ -16,7 +16,7 @@ const GetStartedSteps = () => {
       icon: Store,
       title: t('home.getStarted.steps.findPharmacy.title'),
       description: t('home.getStarted.steps.findPharmacy.description'),
-      link: "/search-pharmacy",
+      link: "/find-pharmacy", // Updated link to the new FindPharmacy page
       dataTestId: "find-pharmacy-link"
     },
     {
