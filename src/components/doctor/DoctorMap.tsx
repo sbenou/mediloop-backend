@@ -39,13 +39,12 @@ export interface SingleDoctorMapProps {
   };
 }
 
-const DoctorMap = ({
-  doctors = [],
-  userCoordinates = null,
-  showUserLocation = false,
-  onDoctorSelect,
-  ...props
-}: DoctorMapProps | SingleDoctorMapProps) => {
+// Type guard to check if props are SingleDoctorMapProps
+function isSingleDoctorProps(props: DoctorMapProps | SingleDoctorMapProps): props is SingleDoctorMapProps {
+  return 'doctor' in props && props.doctor !== undefined;
+}
+
+const DoctorMap = (props: DoctorMapProps | SingleDoctorMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
@@ -56,22 +55,32 @@ const DoctorMap = ({
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapInitialized, setMapInitialized] = useState(false);
   
-  // Handle the case of a single doctor passed as prop
-  const doctorsArray = React.useMemo(() => {
-    // If 'doctor' prop exists (SingleDoctorMapProps), convert it to the expected format
-    if ('doctor' in props && props.doctor) {
-      const doctor = props.doctor;
-      return [{
-        id: doctor.id,
-        full_name: doctor.name,
-        address: doctor.address,
-        city: doctor.city,
-        // For single doctor map, we don't have coordinates, 
-        // so we'll geocode the address later or center on a default location
-      }];
+  // Process props based on which interface we're using
+  const { doctorsArray, userCoordinates, showUserLocation, onDoctorSelect } = React.useMemo(() => {
+    if (isSingleDoctorProps(props)) {
+      // Single doctor case
+      const { doctor } = props;
+      return {
+        doctorsArray: [{ 
+          id: doctor.id, 
+          full_name: doctor.name,
+          address: doctor.address,
+          city: doctor.city
+        }],
+        userCoordinates: null,
+        showUserLocation: false,
+        onDoctorSelect: undefined
+      };
+    } else {
+      // Multiple doctors case
+      return {
+        doctorsArray: props.doctors || [],
+        userCoordinates: props.userCoordinates,
+        showUserLocation: props.showUserLocation,
+        onDoctorSelect: props.onDoctorSelect
+      };
     }
-    return doctors;
-  }, [doctors, props]);
+  }, [props]);
 
   // Get Mapbox token
   useEffect(() => {
@@ -208,7 +217,7 @@ const DoctorMap = ({
         } catch (error) {
           console.error('Error creating doctor marker:', error);
         }
-      } else if ('doctor' in props && map.current) {
+      } else if (isSingleDoctorProps(props) && map.current) {
         // For single doctor view without coordinates, center on default location
         // You could potentially call a geocoding service here to get coordinates from the address
         map.current.flyTo({

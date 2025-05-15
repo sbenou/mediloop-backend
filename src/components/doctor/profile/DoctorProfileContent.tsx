@@ -127,7 +127,7 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
           <CardTitle>Location</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Using the single doctor prop pattern for the map */}
+          {/* Use SingleDoctorMapProps interface for the map */}
           <DoctorMap doctor={doctorData} />
         </CardContent>
       </Card>

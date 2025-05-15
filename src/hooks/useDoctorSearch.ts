@@ -9,10 +9,11 @@ interface Doctor {
   city: string | null;
   license_number: string;
   source?: 'database' | 'overpass';
+  coordinates?: { lat: number; lon: number } | null;
 }
 
 export const useDoctorSearch = (
-  coordinates: { lat: string; lon: string } | null,
+  coordinates: { lat: number; lon: number } | null,
   searchRadius: number
 ) => {
   const { data: doctors, isLoading } = useQuery({
@@ -50,7 +51,7 @@ export const useDoctorSearch = (
 
         // If there are no valid coordinates, just return the database doctors
         if (!coordinates.lat || !coordinates.lon || 
-            isNaN(parseFloat(coordinates.lat)) || isNaN(parseFloat(coordinates.lon))) {
+            isNaN(coordinates.lat) || isNaN(coordinates.lon)) {
           console.log('Invalid coordinates, skipping overpass search');
           return formattedDbDoctors;
         }
@@ -59,8 +60,8 @@ export const useDoctorSearch = (
         let formattedOverpassDoctors = [];
         try {
           const overpassDoctors = await searchDoctors(
-            parseFloat(coordinates.lat),
-            parseFloat(coordinates.lon),
+            coordinates.lat,
+            coordinates.lon,
             searchRadius
           );
           
