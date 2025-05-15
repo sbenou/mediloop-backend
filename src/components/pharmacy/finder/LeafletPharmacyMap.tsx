@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
@@ -44,6 +44,8 @@ const DrawingControl = ({ onPharmaciesInShape, pharmacies }: {
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     
+    // Use type assertion to avoid TypeScript errors with Leaflet.draw
+    // @ts-ignore - Leaflet.draw types are not complete
     const drawControl = new L.Control.Draw({
       draw: {
         marker: false,
@@ -165,6 +167,31 @@ const MapUpdater = ({ pharmacies, userLocation }: {
   return null;
 };
 
+// User location component with circle
+const UserLocationMarker = ({ position }: { position: [number, number] }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    // Add a circle around the user's location
+    const circle = L.circle(position, {
+      radius: 2000, // 2km radius
+      color: 'blue',
+      fillColor: 'blue',
+      fillOpacity: 0.1
+    }).addTo(map);
+    
+    return () => {
+      map.removeLayer(circle);
+    };
+  }, [map, position]);
+  
+  return (
+    <Marker position={position}>
+      <Popup>Your location</Popup>
+    </Marker>
+  );
+};
+
 // Pharmacy marker with custom color
 const PharmacyMarker = ({ pharmacy }: { pharmacy: Pharmacy }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -217,7 +244,6 @@ export const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         center={[center.lat, center.lon]}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
-        attributionControl={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -226,16 +252,7 @@ export const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         
         {/* User location marker and circle */}
         {userLocation && useLocationFilter && (
-          <>
-            <Marker position={[userLocation.lat, userLocation.lon]}>
-              <Popup>Your location</Popup>
-            </Marker>
-            <Circle 
-              center={[userLocation.lat, userLocation.lon]} 
-              radius={2000} // 2km radius
-              pathOptions={{ color: 'blue', fillColor: 'blue', fillOpacity: 0.1 }}
-            />
-          </>
+          <UserLocationMarker position={[userLocation.lat, userLocation.lon]} />
         )}
         
         {/* Pharmacy markers */}
