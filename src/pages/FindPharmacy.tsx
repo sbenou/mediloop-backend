@@ -7,14 +7,18 @@ import Footer from '@/components/layout/Footer';
 import { PharmacyFinderMap } from '@/components/pharmacy/finder/PharmacyFinderMap';
 import { PharmacyFinderList } from '@/components/pharmacy/finder/PharmacyFinderList';
 import { PharmacySearch } from '@/components/pharmacy/finder/PharmacySearch';
+import LeafletPharmacyMap from '@/components/pharmacy/finder/LeafletPharmacyMap';
 import { usePharmacyFinder } from '@/hooks/usePharmacyFinder';
 import { toast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Search, ArrowRight } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 const FindPharmacy = () => {
   const userLocation = useRecoilValue(userLocationState);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [leafletFilteredPharmacies, setLeafletFilteredPharmacies] = useState<any[]>([]);
   
   // Use our custom hook for pharmacy finding logic
   const { 
@@ -27,6 +31,11 @@ const FindPharmacy = () => {
     useLocationFilter,
     setUseLocationFilter
   } = usePharmacyFinder(userLocation);
+
+  // Initialize leaflet filtered pharmacies with all pharmacies
+  useEffect(() => {
+    setLeafletFilteredPharmacies(filteredPharmacies);
+  }, [filteredPharmacies]);
 
   // Show error if API fails
   useEffect(() => {
@@ -91,6 +100,57 @@ const FindPharmacy = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* React-Leaflet implementation comparison section */}
+        <div className="mt-16 mb-8">
+          <Separator className="my-8" />
+          <Card>
+            <CardHeader>
+              <CardTitle>React-Leaflet Implementation</CardTitle>
+              <CardDescription>
+                This is an alternative implementation using React-Leaflet. Try drawing shapes on the map to filter pharmacies.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LeafletPharmacyMap 
+                pharmacies={pharmacies}
+                userLocation={userLocation}
+                useLocationFilter={useLocationFilter}
+                onPharmaciesInShape={setLeafletFilteredPharmacies}
+              />
+              
+              <div className="mt-6">
+                <h3 className="font-medium mb-4">Filtered Pharmacies ({leafletFilteredPharmacies.length})</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {leafletFilteredPharmacies.slice(0, 3).map((pharmacy) => (
+                    <Card key={pharmacy.id} className="overflow-hidden">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">{pharmacy.name}</CardTitle>
+                        {pharmacy.distance && (
+                          <CardDescription>
+                            {pharmacy.distance}km away
+                          </CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className="text-sm space-y-2">
+                        <p>{pharmacy.address}</p>
+                        {pharmacy.hours && <p>{pharmacy.hours}</p>}
+                      </CardContent>
+                    </Card>
+                  ))}
+                  
+                  {leafletFilteredPharmacies.length > 3 && (
+                    <div className="col-span-full mt-4">
+                      <p className="text-sm text-muted-foreground">
+                        {leafletFilteredPharmacies.length - 3} more pharmacies found in the selected area.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </main>
       
       <Footer />
