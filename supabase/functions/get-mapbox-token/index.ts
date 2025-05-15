@@ -17,7 +17,7 @@ serve(async (req) => {
     // Get the Mapbox token from environment variable
     const mapboxToken = Deno.env.get("MAPBOX_TOKEN");
     
-    // Fallback token if env var isn't set (for development only)
+    // Use a reliable fallback token
     const fallbackToken = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
     
     const tokenToUse = mapboxToken || fallbackToken;
@@ -26,19 +26,21 @@ serve(async (req) => {
       throw new Error("No Mapbox token available");
     }
 
-    // Add cache control headers to reduce API calls
+    // Add cache control and CORS headers
     const headers = {
       ...corsHeaders, 
       "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=3600" // Cache for 1 hour
+      "Cache-Control": "public, max-age=3600", // Cache for 1 hour
     };
 
-    // Log success
     console.log("Returning Mapbox token successfully");
     
-    // Return the token
+    // Return the token in a simple format
     return new Response(
-      JSON.stringify({ token: tokenToUse }),
+      JSON.stringify({ 
+        token: tokenToUse,
+        status: "success" 
+      }),
       { headers, status: 200 }
     );
   } catch (error) {
@@ -47,7 +49,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        message: "Failed to retrieve Mapbox token" 
+        message: "Failed to retrieve Mapbox token",
+        status: "error" 
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,74 +1,41 @@
 
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useRef } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Pharmacy } from '@/lib/types/overpass.types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { RefreshCw } from 'lucide-react';
+import { getMapboxToken } from '@/services/mapbox';
 
-// Fix Leaflet default icon issue with Vite/React
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Create a custom red icon for user location
-const userIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-// Map updater component to handle map view updates
-const MapViewHandler = ({ 
-  map, 
-  pharmacies, 
-  userLocation, 
-  useLocationFilter 
-}: { 
-  map: L.Map; 
-  pharmacies: Pharmacy[]; 
-  userLocation: { lat: number; lon: number } | null; 
-  useLocationFilter: boolean;
-}) => {
-  useEffect(() => {
-    if (!map || !userLocation) return;
-    
-    try {
-      // Set view to user location
-      map.setView([userLocation.lat, userLocation.lon], 14);
-      
-      // If using location filter, fit bounds to include user and nearby pharmacies
-      if (useLocationFilter && pharmacies.length > 0) {
-        const bounds = L.latLngBounds([L.latLng(userLocation.lat, userLocation.lon)]);
-        
-        pharmacies.forEach(pharmacy => {
-          if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
-            bounds.extend(L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon));
-          }
-        });
-        
-        if (bounds.isValid()) {
-          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-        }
-      }
-    } catch (error) {
-      console.error("Error updating map view:", error);
-    }
-  }, [map, userLocation, pharmacies, useLocationFilter]);
-
-  return null;
+// Create custom HTML marker for pharmacy locations
+const createPharmacyMarker = (pharmacy: Pharmacy) => {
+  const el = document.createElement('div');
+  el.className = 'pharmacy-marker';
+  el.style.backgroundImage = "url(https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png)";
+  el.style.backgroundSize = 'contain';
+  el.style.width = '25px';
+  el.style.height = '41px';
+  el.style.backgroundRepeat = 'no-repeat';
+  
+  return el;
 };
 
-// Main map component
+// Create custom HTML marker for user location
+const createUserMarker = () => {
+  const el = document.createElement('div');
+  el.className = 'user-location-marker';
+  el.style.width = '15px';
+  el.style.height = '15px';
+  el.style.borderRadius = '50%';
+  el.style.backgroundColor = '#3b82f6';
+  el.style.border = '2px solid white';
+  el.style.boxShadow = '0 0 0 2px rgba(0, 0, 0, 0.2)';
+  
+  return el;
+};
+
 interface PharmacyFinderMapProps {
   pharmacies: Pharmacy[];
   userLocation: { lat: number; lon: number } | null;
@@ -80,131 +47,206 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   userLocation, 
   useLocationFilter 
 }) => {
-  const [map, setMap] = useState<L.Map | null>(null);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const markers = useRef<mapboxgl.Marker[]>([]);
+  const userMarker = useRef<mapboxgl.Marker | null>(null);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [mapKey, setMapKey] = useState(`map-${Date.now()}`); 
   const [mapInitAttempts, setMapInitAttempts] = useState(0);
   const MAX_ATTEMPTS = 3;
 
   // Default center (Luxembourg)
-  const defaultCenter: [number, number] = [49.8153, 6.1296];
-  
-  // Center coordinates based on user location or default
-  const centerCoordinates: [number, number] = userLocation 
-    ? [userLocation.lat, userLocation.lon] 
-    : defaultCenter;
+  const defaultCenter: [number, number] = [6.1296, 49.8153];
 
-  // Handle map initialization with error handling
-  const handleMapInit = (mapInstance: L.Map) => {
-    try {
-      // Apply fixes for touch events
-      if (L.Browser.touch) {
-        // Disable the problematic handlers
-        mapInstance.options.touchZoom = false;
-        mapInstance.options.tap = false;
-      }
-      
-      setTimeout(() => {
-        // Force a resize and redraw
-        mapInstance.invalidateSize(true);
+  // Initialize map when component mounts
+  useEffect(() => {
+    if (!mapContainer.current) return;
+    
+    let isMounted = true;
+    const initializeMap = async () => {
+      try {
+        setIsLoading(true);
         
-        if (userLocation) {
-          mapInstance.setView([userLocation.lat, userLocation.lon], 13);
-        } else {
-          mapInstance.setView(defaultCenter, 13);
-        }
+        // Get Mapbox token
+        const token = await getMapboxToken();
+        if (!token) throw new Error("Could not retrieve Mapbox token");
         
-        // Add markers to the map
-        if (pharmacies.length > 0) {
-          const bounds = new L.LatLngBounds([]);
+        mapboxgl.accessToken = token;
+        
+        // Initialize map
+        if (!map.current && mapContainer.current) {
+          map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: userLocation ? [userLocation.lon, userLocation.lat] : defaultCenter,
+            zoom: 12,
+            attributionControl: true,
+            trackResize: true,
+            failIfMajorPerformanceCaveat: false,
+            cooperativeGestures: true // Better handling for mobile
+          });
           
-          pharmacies.forEach(pharmacy => {
-            if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
-              const marker = L.marker([pharmacy.coordinates.lat, pharmacy.coordinates.lon])
-                .addTo(mapInstance)
-                .bindPopup(`<b>${pharmacy.name}</b><br>${pharmacy.address}`);
+          // Add navigation controls
+          map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+          
+          // Wait for map to load
+          map.current.on('load', () => {
+            if (isMounted) {
+              setIsLoading(false);
               
-              bounds.extend([pharmacy.coordinates.lat, pharmacy.coordinates.lon]);
+              // Update markers when map is ready
+              updateMarkers();
             }
           });
           
-          if (bounds.isValid()) {
-            mapInstance.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+          // Handle map errors
+          map.current.on('error', (e) => {
+            console.error('Mapbox error:', e);
+            if (isMounted) {
+              setError(new Error('Failed to load map resources'));
+              setIsLoading(false);
+            }
+          });
+        }
+      } catch (err) {
+        console.error("Error initializing map:", err);
+        if (isMounted) {
+          setError(err instanceof Error ? err : new Error('Failed to initialize map'));
+          setIsLoading(false);
+          
+          // Try to recover if under max attempts
+          if (mapInitAttempts < MAX_ATTEMPTS) {
+            setMapInitAttempts(prev => prev + 1);
+            setTimeout(initializeMap, 1000);
           }
         }
-      }, 100);
-      
-      setMap(mapInstance);
-      setIsLoading(false);
-      setError(null);
-    } catch (err) {
-      console.error("Error initializing map:", err);
-      setError(err instanceof Error ? err : new Error("Failed to initialize map"));
-      setIsLoading(false);
-      
-      // Attempt recovery if under max attempts
-      if (mapInitAttempts < MAX_ATTEMPTS) {
-        setTimeout(() => {
-          setMapKey(`map-retry-${Date.now()}-${mapInitAttempts}`);
-          setMapInitAttempts(prev => prev + 1);
-          setError(null);
-          setIsLoading(true);
-        }, 1000);
-      } else {
-        toast({
-          title: "Map Error",
-          description: "Failed to initialize map after multiple attempts. Please refresh the page.",
-          variant: "destructive"
-        });
       }
-    }
-  };
-
-  // Global error handler for Leaflet
-  useEffect(() => {
-    // Setup a global error handler to catch touch-related errors
-    const handleError = (e: ErrorEvent) => {
-      if (e.message && (
-        e.message.includes('a is not a function') || 
-        e.message.includes('touchleave')
-      )) {
-        console.warn('Caught global Leaflet error:', e.message);
-        e.preventDefault();
-        return true;
-      }
-      return false;
     };
     
-    window.addEventListener('error', handleError, true);
+    initializeMap();
     
     return () => {
-      window.removeEventListener('error', handleError, true);
+      isMounted = false;
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
     };
-  }, []);
+  }, [mapInitAttempts]);
+
+  // Update markers when pharmacies or user location changes
+  const updateMarkers = useEffect(() => {
+    if (!map.current || isLoading) return;
+    
+    try {
+      // Clear existing markers
+      markers.current.forEach(marker => marker.remove());
+      markers.current = [];
+      
+      if (userMarker.current) {
+        userMarker.current.remove();
+        userMarker.current = null;
+      }
+      
+      // Add user location marker if available
+      if (userLocation) {
+        const el = createUserMarker();
+        userMarker.current = new mapboxgl.Marker(el)
+          .setLngLat([userLocation.lon, userLocation.lat])
+          .addTo(map.current);
+      }
+      
+      // Add pharmacy markers
+      pharmacies.forEach(pharmacy => {
+        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return;
+        
+        try {
+          const el = createPharmacyMarker(pharmacy);
+          const marker = new mapboxgl.Marker(el)
+            .setLngLat([pharmacy.coordinates.lon, pharmacy.coordinates.lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 })
+              .setHTML(`
+                <div style="max-width: 200px;">
+                  <h3 style="font-weight: bold; margin-bottom: 5px;">${pharmacy.name || 'Pharmacy'}</h3>
+                  <p style="font-size: 0.9em;">${pharmacy.address || 'Address unavailable'}</p>
+                  ${pharmacy.hours ? `<p style="font-size: 0.8em; margin-top: 5px;">Hours: ${pharmacy.hours}</p>` : ''}
+                </div>
+              `))
+            .addTo(map.current);
+            
+          markers.current.push(marker);
+        } catch (err) {
+          console.warn(`Error adding marker for pharmacy ${pharmacy.id}:`, err);
+        }
+      });
+      
+      // If no pharmacies to display or no user location
+      if (markers.current.length === 0 && !userMarker.current) {
+        // Set default view of Luxembourg
+        map.current.setCenter(defaultCenter);
+        map.current.setZoom(10);
+        return;
+      }
+      
+      // Fit map bounds to include all markers and user location
+      if (markers.current.length > 0 || userMarker.current) {
+        const bounds = new mapboxgl.LngLatBounds();
+        
+        // Include user location in bounds if available
+        if (userLocation) {
+          bounds.extend([userLocation.lon, userLocation.lat]);
+        }
+        
+        // Include all pharmacy markers in bounds
+        markers.current.forEach(marker => {
+          bounds.extend(marker.getLngLat());
+        });
+        
+        if (bounds.isEmpty()) {
+          // If bounds are empty, set default view
+          map.current.setCenter(defaultCenter);
+          map.current.setZoom(10);
+        } else {
+          // Apply bounds with padding
+          map.current.fitBounds(bounds, {
+            padding: 50,
+            maxZoom: 14
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error updating markers:", err);
+    }
+  }, [pharmacies, userLocation, isLoading, useLocationFilter]);
+
+  // Handle retry when map fails to load
+  const handleRetry = () => {
+    setError(null);
+    setMapInitAttempts(0);
+    setIsLoading(true);
+  };
 
   if (isLoading) {
-    return <Skeleton className="w-full h-full" />;
+    return (
+      <div className="w-full h-full min-h-[500px]">
+        <Skeleton className="w-full h-full min-h-[500px]" />
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center p-4">
-          <p className="text-red-500 mb-2">Failed to load map</p>
-          <p className="text-muted-foreground mb-4">{error.message}</p>
-          <Button 
-            onClick={() => {
-              setMapKey(`map-retry-${Date.now()}`);
-              setMapInitAttempts(0);
-              setError(null);
-              setIsLoading(true);
-            }}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
+      <div className="flex items-center justify-center h-full min-h-[500px] bg-gray-100 rounded-lg">
+        <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md">
+          <h3 className="text-lg font-semibold text-red-500 mb-3">Map Loading Error</h3>
+          <p className="text-muted-foreground mb-4">
+            {error.message || 'Failed to load the map. Please try again or check your connection.'}
+          </p>
+          <Button onClick={handleRetry} variant="outline" className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" />
-            Retry
+            Retry Loading Map
           </Button>
         </div>
       </div>
@@ -212,61 +254,12 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   }
 
   return (
-    <div className="h-full w-full relative">
-      <MapContainer
-        key={mapKey}
-        center={centerCoordinates}
-        zoom={13}
-        style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-        scrollWheelZoom={true}
-        whenCreated={handleMapInit}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        {map && (
-          <MapViewHandler 
-            map={map}
-            pharmacies={pharmacies}
-            userLocation={userLocation}
-            useLocationFilter={useLocationFilter}
-          />
-        )}
-        
-        {/* User location marker */}
-        {userLocation && (
-          <Marker 
-            position={[userLocation.lat, userLocation.lon]}
-            icon={userIcon}
-          >
-            <Popup>Your location</Popup>
-          </Marker>
-        )}
-        
-        {/* Pharmacy markers */}
-        {pharmacies.map((pharmacy) => {
-          if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
-          
-          return (
-            <Marker
-              key={pharmacy.id}
-              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
-            >
-              <Popup>
-                <div className="text-sm max-w-[250px]">
-                  <h3 className="font-semibold">{pharmacy.name}</h3>
-                  <p className="text-xs mt-1">{pharmacy.address}</p>
-                  {pharmacy.hours && <p className="text-xs mt-1">Hours: {pharmacy.hours}</p>}
-                  {pharmacy.phone && <p className="text-xs mt-1">Phone: {pharmacy.phone}</p>}
-                  {pharmacy.distance && <p className="text-xs mt-1">Distance: {pharmacy.distance}</p>}
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
-      </MapContainer>
+    <div className="w-full h-full min-h-[500px] relative">
+      <div 
+        ref={mapContainer} 
+        className="w-full h-full absolute inset-0 rounded-lg"
+        style={{ minHeight: '500px' }}
+      />
     </div>
   );
 };

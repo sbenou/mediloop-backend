@@ -7,6 +7,8 @@ import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -26,22 +28,70 @@ const redIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Safe Map Controls component
-const SafeDrawControl = ({ onShapeCreated, pharmacies }: { onShapeCreated: (pharmaciesInShape: any[]) => void, pharmacies: any[] }) => {
+// Map updater component
+const MapUpdater = ({ 
+  userLocation, 
+  onMapReady 
+}: { 
+  userLocation: { lat: number; lon: number } | null;
+  onMapReady: () => void;
+}) => {
   const map = useMap();
-  const drawnItemsRef = useRef(new L.FeatureGroup());
   
   useEffect(() => {
     if (!map) return;
     
     try {
+      // Force resize and redraw
+      map.invalidateSize(true);
+      
+      if (userLocation) {
+        map.setView([userLocation.lat, userLocation.lon], 13);
+      }
+      
+      // Notify parent the map is ready
+      setTimeout(() => {
+        onMapReady();
+      }, 200);
+    } catch (err) {
+      console.warn('Error updating map view:', err);
+    }
+  }, [map, userLocation, onMapReady]);
+  
+  return null;
+};
+
+// Safe Draw Control component
+const SafeDrawControl = ({ 
+  onShapeCreated, 
+  pharmacies,
+  enabled
+}: { 
+  onShapeCreated: (pharmaciesInShape: any[]) => void, 
+  pharmacies: any[],
+  enabled: boolean
+}) => {
+  const map = useMap();
+  const drawnItemsRef = useRef(new L.FeatureGroup());
+  
+  useEffect(() => {
+    if (!map || !enabled) return;
+    
+    try {
+      // Clear existing layers
+      drawnItemsRef.current.clearLayers();
+      
       // Add the FeatureGroup to the map
       map.addLayer(drawnItemsRef.current);
 
-      // Initialize the draw control with safe options
+      // Initialize draw control
       const drawControl = new L.Control.Draw({
+        position: 'topright',
         edit: {
-          featureGroup: drawnItemsRef.current
+          featureGroup: drawnItemsRef.current,
+          poly: {
+            allowIntersection: false
+          }
         },
         draw: {
           polygon: {
@@ -56,17 +106,16 @@ const SafeDrawControl = ({ onShapeCreated, pharmacies }: { onShapeCreated: (phar
         }
       });
 
-      // Safely add control
-      try {
-        map.addControl(drawControl);
-      } catch (err) {
-        console.warn('Error adding draw control:', err);
-      }
+      // Add control to map
+      map.addControl(drawControl);
 
-      // Handle the created event safely
-      map.on(L.Draw.Event.CREATED, (e: any) => {
+      // Handle created event
+      const handleDrawCreated = (e: any) => {
         try {
           const layer = e.layer;
+          
+          // Clear previous layers
+          drawnItemsRef.current.clearLayers();
           drawnItemsRef.current.addLayer(layer);
           
           // Filter pharmacies within the shape
@@ -85,17 +134,25 @@ const SafeDrawControl = ({ onShapeCreated, pharmacies }: { onShapeCreated: (phar
             return false;
           });
           
-          // Callback with filtered pharmacies
+          // Notify parent component
           onShapeCreated(pharmaciesInShape);
+          
+          toast({
+            title: "Selection Complete",
+            description: `Found ${pharmaciesInShape.length} pharmacies in selected area`,
+          });
         } catch (e) {
           console.error('Error processing drawn shape:', e);
         }
-      });
+      };
+      
+      map.on(L.Draw.Event.CREATED, handleDrawCreated);
 
       // Clean up
       return () => {
         try {
           map.removeControl(drawControl);
+          map.off(L.Draw.Event.CREATED, handleDrawCreated);
           map.removeLayer(drawnItemsRef.current);
         } catch (e) {
           console.warn('Error during cleanup:', e);
@@ -105,31 +162,8 @@ const SafeDrawControl = ({ onShapeCreated, pharmacies }: { onShapeCreated: (phar
       console.error('Error setting up draw control:', err);
       return () => {};
     }
-  }, [map, pharmacies, onShapeCreated]);
+  }, [map, pharmacies, onShapeCreated, enabled]);
 
-  return null;
-};
-
-// Safe map updater component
-const SafeMapUpdater = ({ userLocation }: { userLocation: { lat: number; lon: number } | null }) => {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (!map || !userLocation) return;
-    
-    try {
-      // Safely update view
-      map.setView([userLocation.lat, userLocation.lon], 13);
-      
-      // Force a resize to ensure proper rendering
-      setTimeout(() => {
-        map.invalidateSize(true);
-      }, 100);
-    } catch (err) {
-      console.warn('Error updating map view:', err);
-    }
-  }, [map, userLocation]);
-  
   return null;
 };
 
@@ -150,140 +184,94 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
   const [error, setError] = useState<string | null>(null);
-  const [mapInitAttempts, setMapInitAttempts] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
   const MAX_ATTEMPTS = 3;
 
+  // Default center position (Luxembourg)
   const defaultCenter: [number, number] = userLocation 
     ? [userLocation.lat, userLocation.lon] 
-    : [49.8153, 6.1296]; // Luxembourg center
+    : [49.8153, 6.1296];
   
-  // Add global error handler for Leaflet errors
-  useEffect(() => {
-    const handleError = (e: ErrorEvent) => {
-      if (e.message && (
-        e.message.includes('a is not a function') || 
-        e.message.includes('touchleave')
-      )) {
-        console.warn('Caught Leaflet-related error:', e.message);
-        e.preventDefault();
-        return true;
-      }
-      return false;
-    };
-    
-    window.addEventListener('error', handleError, true);
-    
-    return () => {
-      window.removeEventListener('error', handleError, true);
-    };
-  }, []);
-  
-  // Safely initialize map with retry mechanism
-  const handleMapCreated = (map: L.Map) => {
-    try {
-      // Disable problematic touch handlers
-      if (map) {
-        map.options.touchZoom = false;
-        map.options.tap = false;
-        
-        // Force a resize and redraw
-        setTimeout(() => {
-          map.invalidateSize(true);
-          
-          // Add markers directly via the Leaflet API
-          pharmacies.forEach(pharmacy => {
-            if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
-              L.marker([pharmacy.coordinates.lat, pharmacy.coordinates.lon])
-                .addTo(map)
-                .bindPopup(`<b>${pharmacy.name}</b><br>${pharmacy.address}`);
-            }
-          });
-          
-          // Fit bounds if we have pharmacies
-          if (pharmacies.length > 0) {
-            const bounds = new L.LatLngBounds([]);
-            
-            pharmacies.forEach(pharmacy => {
-              if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
-                bounds.extend([pharmacy.coordinates.lat, pharmacy.coordinates.lon]);
-              }
-            });
-            
-            if (bounds.isValid()) {
-              map.fitBounds(bounds);
-            }
-          }
-        }, 100);
-      }
-      
-      setIsMapReady(true);
-      setIsLoading(false);
-    } catch (err) {
-      console.error("Error during map initialization:", err);
-      
-      if (mapInitAttempts < MAX_ATTEMPTS) {
-        // Try to recover
-        setMapKey(`map-retry-${Date.now()}-${mapInitAttempts}`);
-        setMapInitAttempts(prev => prev + 1);
-      } else {
-        setError("Failed to initialize map after multiple attempts");
-        setIsLoading(false);
-      }
-    }
+  // Handle map initialization
+  const handleMapReady = () => {
+    setIsMapReady(true);
+    setIsLoading(false);
+    setError(null);
   };
   
+  // Handle map initialization errors
+  const handleRetry = () => {
+    setRetryCount(0);
+    setError(null);
+    setMapKey(`map-retry-${Date.now()}`);
+    setIsLoading(true);
+  };
+  
+  // If loading, show a skeleton
   if (isLoading && !isMapReady) {
-    return <Skeleton className="w-full h-[400px]" />;
+    return (
+      <div className="w-full h-full min-h-[400px]">
+        <Skeleton className="w-full h-full min-h-[400px]" />
+      </div>
+    );
   }
 
+  // If error occurred, show error message
   if (error) {
     return (
       <div className="bg-muted p-4 rounded-md text-center h-[400px] flex items-center justify-center flex-col">
         <p className="text-red-500 font-semibold mb-2">{error}</p>
         <p className="text-sm text-muted-foreground">Please try again later</p>
-        <button 
-          className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
-          onClick={() => {
-            setMapInitAttempts(0);
-            setError(null);
-            setMapKey(`map-fresh-${Date.now()}`);
-            setIsLoading(true);
-          }}
+        <Button 
+          className="mt-4"
+          variant="outline"
+          onClick={handleRetry}
         >
-          Retry
-        </button>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Retry Loading Map
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="h-[400px] border rounded-md overflow-hidden relative">
+    <div className="w-full h-[400px] relative border rounded-md overflow-hidden">
       <MapContainer
         key={mapKey}
         center={defaultCenter}
         zoom={13}
         style={{ 
-          height: '400px', 
+          height: '100%', 
           width: '100%', 
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          bottom: 0
+          bottom: 0,
+          zIndex: 1
         }}
         scrollWheelZoom={true}
-        whenCreated={handleMapCreated}
+        doubleClickZoom={true}
+        attributionControl={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <SafeMapUpdater userLocation={userLocation} />
-        <SafeDrawControl onShapeCreated={onPharmaciesInShape} pharmacies={pharmacies} />
+        <MapUpdater 
+          userLocation={userLocation} 
+          onMapReady={handleMapReady}
+        />
+        
+        <SafeDrawControl 
+          onShapeCreated={onPharmaciesInShape} 
+          pharmacies={pharmacies}
+          enabled={isMapReady}
+        />
         
         {/* User location marker */}
-        {userLocation && (
+        {userLocation && isMapReady && (
           <Marker 
             position={[userLocation.lat, userLocation.lon]}
             icon={redIcon}
@@ -293,18 +281,18 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         )}
         
         {/* Pharmacy markers */}
-        {isMapReady && pharmacies.map((pharmacy) => {
-          if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
+        {isMapReady && pharmacies && pharmacies.map((pharmacy) => {
+          if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return null;
           
           return (
             <Marker
-              key={pharmacy.id}
+              key={pharmacy.id || `pharmacy-${Math.random().toString(36).substr(2, 9)}`}
               position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
             >
               <Popup>
                 <div className="text-sm max-w-[250px]">
-                  <h3 className="font-semibold">{pharmacy.name}</h3>
-                  <p className="text-xs">{pharmacy.address}</p>
+                  <h3 className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</h3>
+                  <p className="text-xs">{pharmacy.address || 'Address not available'}</p>
                   {pharmacy.hours && <p className="text-xs">Hours: {pharmacy.hours}</p>}
                 </div>
               </Popup>

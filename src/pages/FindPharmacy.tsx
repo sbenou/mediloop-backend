@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Search, ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const FindPharmacy = () => {
   const userLocation = useRecoilValue(userLocationState);
@@ -47,6 +48,11 @@ const FindPharmacy = () => {
       });
     }
   }, [error]);
+
+  // Handle pharmacies filtered by map shape
+  const handlePharmaciesInShape = (shapeFilteredPharmacies: any[]) => {
+    setLeafletFilteredPharmacies(shapeFilteredPharmacies);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -91,59 +97,75 @@ const FindPharmacy = () => {
           </TabsContent>
           
           <TabsContent value="map" className="mt-4">
-            <div className="bg-card rounded-lg border shadow-sm p-1" style={{ height: "600px" }}>
-              <PharmacyFinderMap 
-                pharmacies={filteredPharmacies}
-                userLocation={userLocation}
-                useLocationFilter={useLocationFilter}
-              />
-            </div>
+            <Card className="p-1 shadow-sm">
+              <CardContent className="p-0 h-[600px] relative">
+                <PharmacyFinderMap 
+                  pharmacies={filteredPharmacies}
+                  userLocation={userLocation}
+                  useLocationFilter={useLocationFilter}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
-        {/* React-Leaflet implementation comparison section */}
+        {/* React-Leaflet implementation section */}
         <div className="mt-16 mb-8">
           <Separator className="my-8" />
           <Card>
             <CardHeader>
-              <CardTitle>React-Leaflet Implementation</CardTitle>
+              <CardTitle>Alternative Map Implementation</CardTitle>
               <CardDescription>
-                This is an alternative implementation using React-Leaflet. Try drawing shapes on the map to filter pharmacies.
+                Try drawing shapes on the map to filter pharmacies within a specific area.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <LeafletPharmacyMap 
-                pharmacies={pharmacies}
-                userLocation={userLocation}
-                useLocationFilter={useLocationFilter}
-                onPharmaciesInShape={setLeafletFilteredPharmacies}
-              />
+              <div className="bg-white">
+                <LeafletPharmacyMap 
+                  pharmacies={pharmacies || []}
+                  userLocation={userLocation}
+                  useLocationFilter={useLocationFilter}
+                  onPharmaciesInShape={handlePharmaciesInShape}
+                />
+              </div>
               
               <div className="mt-6">
                 <h3 className="font-medium mb-4">Filtered Pharmacies ({leafletFilteredPharmacies.length})</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {leafletFilteredPharmacies.slice(0, 3).map((pharmacy) => (
-                    <Card key={pharmacy.id} className="overflow-hidden">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">{pharmacy.name}</CardTitle>
-                        {pharmacy.distance && (
-                          <CardDescription>
-                            {pharmacy.distance}km away
-                          </CardDescription>
-                        )}
-                      </CardHeader>
-                      <CardContent className="text-sm space-y-2">
-                        <p>{pharmacy.address}</p>
-                        {pharmacy.hours && <p>{pharmacy.hours}</p>}
-                      </CardContent>
-                    </Card>
-                  ))}
-                  
-                  {leafletFilteredPharmacies.length > 3 && (
-                    <div className="col-span-full mt-4">
-                      <p className="text-sm text-muted-foreground">
-                        {leafletFilteredPharmacies.length - 3} more pharmacies found in the selected area.
-                      </p>
+                  {leafletFilteredPharmacies.length > 0 ? (
+                    <>
+                      {leafletFilteredPharmacies.slice(0, 3).map((pharmacy) => (
+                        <Card key={pharmacy.id || Math.random().toString(36).substr(2, 9)} className="overflow-hidden">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">{pharmacy.name || 'Unnamed Pharmacy'}</CardTitle>
+                            {pharmacy.distance && (
+                              <CardDescription>
+                                {pharmacy.distance}km away
+                              </CardDescription>
+                            )}
+                          </CardHeader>
+                          <CardContent className="text-sm space-y-2">
+                            <p>{pharmacy.address || 'Address not available'}</p>
+                            {pharmacy.hours && <p>{pharmacy.hours}</p>}
+                          </CardContent>
+                        </Card>
+                      ))}
+                      
+                      {leafletFilteredPharmacies.length > 3 && (
+                        <div className="col-span-full mt-4">
+                          <p className="text-sm text-muted-foreground">
+                            {leafletFilteredPharmacies.length - 3} more pharmacies found in the selected area.
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="col-span-full">
+                      <Alert>
+                        <AlertDescription>
+                          Draw a shape on the map to filter pharmacies in that area.
+                        </AlertDescription>
+                      </Alert>
                     </div>
                   )}
                 </div>
