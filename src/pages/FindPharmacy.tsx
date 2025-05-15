@@ -17,7 +17,10 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const FindPharmacy = () => {
+  console.log('FindPharmacy component rendering');
   const userLocation = useRecoilValue(userLocationState);
+  console.log('User location from state:', userLocation);
+  
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [leafletFilteredPharmacies, setLeafletFilteredPharmacies] = useState<any[]>([]);
   
@@ -33,9 +36,15 @@ const FindPharmacy = () => {
     setUseLocationFilter
   } = usePharmacyFinder(userLocation);
 
+  console.log('Pharmacies loaded:', pharmacies?.length || 0);
+  console.log('Filtered pharmacies:', filteredPharmacies?.length || 0);
+  console.log('Loading state:', isLoading);
+  console.log('Error state:', error);
+
   // Initialize leaflet filtered pharmacies with all pharmacies
   useEffect(() => {
     if (filteredPharmacies && filteredPharmacies.length > 0) {
+      console.log('Setting leaflet filtered pharmacies:', filteredPharmacies.length);
       setLeafletFilteredPharmacies(filteredPharmacies);
     }
   }, [filteredPharmacies]);
@@ -43,6 +52,7 @@ const FindPharmacy = () => {
   // Show error if API fails
   useEffect(() => {
     if (error) {
+      console.error('Error loading pharmacies:', error);
       toast({
         title: "Error loading pharmacies",
         description: "There was a problem loading pharmacy data. Please try again later.",
@@ -56,6 +66,8 @@ const FindPharmacy = () => {
     console.log("Pharmacies in shape:", shapeFilteredPharmacies.length);
     setLeafletFilteredPharmacies(shapeFilteredPharmacies);
   };
+
+  console.log('Rendering FindPharmacy with view mode:', viewMode);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -79,7 +91,10 @@ const FindPharmacy = () => {
         />
         
         {/* View mode tabs */}
-        <Tabs defaultValue="list" className="mt-6" onValueChange={(value) => setViewMode(value as 'list' | 'map')}>
+        <Tabs defaultValue="list" className="mt-6" onValueChange={(value) => {
+          console.log('Changing view mode to:', value);
+          setViewMode(value as 'list' | 'map');
+        }}>
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="list" className="flex items-center gap-2">
               <Search className="h-4 w-4" />
@@ -123,13 +138,15 @@ const FindPharmacy = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="bg-white">
-                <LeafletPharmacyMap 
-                  pharmacies={pharmacies || []}
-                  userLocation={userLocation}
-                  useLocationFilter={useLocationFilter}
-                  onPharmaciesInShape={handlePharmaciesInShape}
-                />
+              <div className="bg-white border border-gray-200 rounded-md">
+                <div className="h-[500px] w-full relative">
+                  <LeafletPharmacyMap 
+                    pharmacies={pharmacies || []}
+                    userLocation={userLocation}
+                    useLocationFilter={useLocationFilter}
+                    onPharmaciesInShape={handlePharmaciesInShape}
+                  />
+                </div>
               </div>
               
               <div className="mt-6">

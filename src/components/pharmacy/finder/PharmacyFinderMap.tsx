@@ -9,6 +9,8 @@ import { toast } from '@/components/ui/use-toast';
 import { RefreshCw } from 'lucide-react';
 import { getMapboxToken } from '@/services/mapbox';
 
+console.log('PharmacyFinderMap component loaded');
+
 // Create custom HTML marker for pharmacy locations
 const createPharmacyMarker = (pharmacy: Pharmacy) => {
   const el = document.createElement('div');
@@ -47,6 +49,12 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   userLocation, 
   useLocationFilter 
 }) => {
+  console.log('PharmacyFinderMap rendering with:', {
+    pharmaciesCount: pharmacies?.length || 0,
+    userLocation,
+    useLocationFilter
+  });
+  
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
@@ -56,16 +64,49 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   const [error, setError] = useState<Error | null>(null);
   const [mapInitAttempts, setMapInitAttempts] = useState(0);
   const [mapInitialized, setMapInitialized] = useState(false);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const MAX_ATTEMPTS = 3;
 
   // Default center (Luxembourg)
   const defaultCenter: [number, number] = [6.1296, 49.8153];
 
+  // Log when component mounts/unmounts
+  useEffect(() => {
+    console.log('PharmacyFinderMap mounted');
+    return () => console.log('PharmacyFinderMap unmounted');
+  }, []);
+
+  // Fetch Mapbox token
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        console.log('Fetching Mapbox token');
+        const token = await getMapboxToken();
+        if (token) {
+          console.log('Mapbox token received successfully');
+          setMapboxToken(token);
+          mapboxgl.accessToken = token;
+        } else {
+          throw new Error('Invalid token received');
+        }
+      } catch (err) {
+        console.error('Error fetching Mapbox token:', err);
+        setError(new Error('Failed to load map resources'));
+      }
+    };
+    
+    fetchToken();
+  }, []);
+  
   // Update markers when pharmacies or user location changes
   const updateMarkers = useCallback(() => {
-    if (!map.current || isLoading) return;
+    if (!map.current || isLoading) {
+      console.log('Cannot update markers: Map not ready or still loading');
+      return;
+    }
     
     try {
+      console.log('Updating markers on map');
       // Clear existing markers
       markers.current.forEach(marker => marker.remove());
       markers.current = [];
@@ -77,6 +118,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       
       // Add user location marker if available
       if (userLocation) {
+        console.log('Adding user location marker at', [userLocation.lon, userLocation.lat]);
         const el = createUserMarker();
         userMarker.current = new mapboxgl.Marker(el)
           .setLngLat([userLocation.lon, userLocation.lat])
@@ -84,8 +126,14 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       }
       
       // Add pharmacy markers
-      pharmacies.forEach(pharmacy => {
-        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return;
+      console.log(`Adding ${pharmacies.length} pharmacy markers`);
+      let markersAdded = 0;
+      
+      pharmacies.forEach((pharmacy, index) => {
+        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) {
+          console.log(`Pharmacy ${index} missing coordinates:`, pharmacy);
+          return;
+        }
         
         try {
           const el = createPharmacyMarker(pharmacy);
@@ -102,14 +150,18 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
             .addTo(map.current);
             
           markers.current.push(marker);
+          markersAdded++;
         } catch (err) {
           console.warn(`Error adding marker for pharmacy ${pharmacy.id}:`, err);
         }
       });
       
+      console.log(`Successfully added ${markersAdded} pharmacy markers`);
+      
       // If no pharmacies to display or no user location
       if (markers.current.length === 0 && !userMarker.current) {
         // Set default view of Luxembourg
+        console.log('No markers or user location, setting default center view');
         map.current.setCenter(defaultCenter);
         map.current.setZoom(10);
         return;
@@ -117,6 +169,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       
       // Fit map bounds to include all markers and user location
       if (markers.current.length > 0 || userMarker.current) {
+        console.log('Fitting map to bounds of markers');
         const bounds = new mapboxgl.LngLatBounds();
         
         // Include user location in bounds if available
@@ -130,6 +183,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         });
         
         if (!bounds.isEmpty()) {
+          console.log('Adjusting map bounds to fit all markers');
           // Apply bounds with padding
           map.current.fitBounds(bounds, {
             padding: 50,
@@ -137,6 +191,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
           });
         } else {
           // If bounds are empty, set default view
+          console.log('Bounds empty, using default center');
           map.current.setCenter(defaultCenter);
           map.current.setZoom(10);
         }
@@ -148,20 +203,22 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
 
   // Initialize map when component mounts
   useEffect(() => {
-    if (!mapContainer.current || mapInitialized) return;
+    if (!mapContainer.current || mapInitialized || !mapboxToken) {
+      console.log('Map initialization conditions not met:', {
+        containerExists: !!mapContainer.current,
+        alreadyInitialized: mapInitialized, 
+        hasToken: !!mapboxToken
+      });
+      return;
+    }
     
     let isMounted = true;
+    console.log('Initializing Mapbox map');
+    
     const initializeMap = async () => {
       try {
         setIsLoading(true);
-        
-        // Get Mapbox token
-        const token = await getMapboxToken();
-        if (!token) throw new Error("Could not retrieve Mapbox token");
-        
-        // Set token explicitly
-        mapboxgl.accessToken = token;
-        console.log("Map initialization starting", token);
+        console.log('Map initialization starting', { token: mapboxToken ? 'exists' : 'missing' });
         
         // Initialize map
         if (!map.current && mapContainer.current) {
@@ -174,6 +231,8 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
             trackResize: true,
             failIfMajorPerformanceCaveat: false
           });
+          
+          console.log('Mapbox map instance created');
           
           // Add navigation controls
           map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -207,6 +266,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
           
           // Try to recover if under max attempts
           if (mapInitAttempts < MAX_ATTEMPTS) {
+            console.log('Will retry map initialization');
             setMapInitAttempts(prev => prev + 1);
             setTimeout(initializeMap, 1000);
           }
@@ -219,21 +279,24 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
     return () => {
       isMounted = false;
       if (map.current) {
+        console.log('Cleaning up Mapbox map');
         map.current.remove();
         map.current = null;
       }
     };
-  }, [mapInitAttempts, userLocation, defaultCenter, updateMarkers, mapInitialized]);
+  }, [mapInitAttempts, userLocation, defaultCenter, updateMarkers, mapInitialized, mapboxToken]);
 
   // Effect to update markers when pharmacies or user location changes
   useEffect(() => {
-    if (map.current && !isLoading) {
+    if (map.current && !isLoading && mapInitialized) {
+      console.log('Triggering marker update due to pharmacies or location change');
       updateMarkers();
     }
-  }, [pharmacies, userLocation, isLoading, updateMarkers]);
+  }, [pharmacies, userLocation, isLoading, updateMarkers, mapInitialized]);
 
   // Handle retry when map fails to load
   const handleRetry = () => {
+    console.log('Retrying map initialization');
     setError(null);
     setMapInitAttempts(0);
     setIsLoading(true);
@@ -241,6 +304,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   };
 
   if (isLoading) {
+    console.log('Showing loading skeleton for map');
     return (
       <div className="w-full h-full min-h-[500px]">
         <Skeleton className="w-full h-full min-h-[500px]" />
@@ -249,6 +313,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   }
 
   if (error) {
+    console.log('Showing error state for map:', error.message);
     return (
       <div className="flex items-center justify-center h-full min-h-[500px] bg-gray-100 rounded-lg">
         <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md">
@@ -264,6 +329,8 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       </div>
     );
   }
+
+  console.log('Rendering final map container div');
 
   return (
     <div className="w-full h-full min-h-[500px] relative">

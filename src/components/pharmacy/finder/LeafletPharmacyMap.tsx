@@ -18,6 +18,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+console.log('LeafletPharmacyMap component loaded');
+
 // Create a red marker for user location
 const redIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -42,15 +44,21 @@ const MapUpdater = ({
     if (!map) return;
     
     try {
+      console.log('MapUpdater: Map instance available', map);
       // Force resize and redraw
       setTimeout(() => {
+        console.log('MapUpdater: Invalidating map size');
         map.invalidateSize(true);
         
         if (userLocation) {
+          console.log('MapUpdater: Setting view to user location', userLocation);
           map.setView([userLocation.lat, userLocation.lon], 13);
+        } else {
+          console.log('MapUpdater: No user location available');
         }
         
         // Notify parent the map is ready
+        console.log('MapUpdater: Notifying parent map is ready');
         onMapReady();
       }, 300);
     } catch (err) {
@@ -75,7 +83,12 @@ const SafeDrawControl = ({
   const drawnItemsRef = useRef(new L.FeatureGroup());
   
   useEffect(() => {
-    if (!map || !enabled) return;
+    if (!map || !enabled) {
+      console.log('SafeDrawControl: Map not ready or drawing not enabled');
+      return;
+    }
+    
+    console.log('SafeDrawControl: Initializing draw controls');
     
     try {
       // Clear existing layers
@@ -106,12 +119,14 @@ const SafeDrawControl = ({
         }
       });
 
+      console.log('SafeDrawControl: Adding draw control to map');
       // Add control to map
       map.addControl(drawControl);
 
       // Handle created event
       const handleDrawCreated = (e: any) => {
         try {
+          console.log('SafeDrawControl: Shape created', e.layerType);
           const layer = e.layer;
           
           // Clear previous layers
@@ -134,6 +149,7 @@ const SafeDrawControl = ({
             return false;
           });
           
+          console.log(`SafeDrawControl: Found ${pharmaciesInShape.length} pharmacies in shape`);
           // Notify parent component
           onShapeCreated(pharmaciesInShape);
           
@@ -146,11 +162,13 @@ const SafeDrawControl = ({
         }
       };
       
+      console.log('SafeDrawControl: Attaching draw created event');
       map.on(L.Draw.Event.CREATED, handleDrawCreated);
 
       // Clean up
       return () => {
         try {
+          console.log('SafeDrawControl: Cleaning up draw control');
           map.removeControl(drawControl);
           map.off(L.Draw.Event.CREATED, handleDrawCreated);
           map.removeLayer(drawnItemsRef.current);
@@ -180,6 +198,12 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   useLocationFilter,
   onPharmaciesInShape
 }) => {
+  console.log('LeafletPharmacyMap rendering with:', {
+    pharmaciesCount: pharmacies?.length || 0,
+    userLocation,
+    useLocationFilter
+  });
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
@@ -192,6 +216,8 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     ? [userLocation.lat, userLocation.lon] 
     : [49.8153, 6.1296];
   
+  console.log('LeafletPharmacyMap using center:', defaultCenter);
+  
   // Handle map initialization
   const handleMapReady = useCallback(() => {
     console.log("Leaflet map is ready");
@@ -202,15 +228,30 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   
   // Handle map initialization errors
   const handleRetry = () => {
+    console.log('Retrying map initialization', retryCount + 1);
     setRetryCount(prev => prev < MAX_ATTEMPTS ? prev + 1 : prev);
     setError(null);
     setMapKey(`map-retry-${Date.now()}`);
     setIsLoading(true);
     setIsMapReady(false);
   };
+
+  // Log when the component re-renders
+  useEffect(() => {
+    console.log('LeafletPharmacyMap mounted/updated');
+    return () => console.log('LeafletPharmacyMap unmounted');
+  }, []);
+
+  // Debug pharmacy data
+  useEffect(() => {
+    if (pharmacies && pharmacies.length > 0) {
+      console.log('Sample pharmacy data:', pharmacies[0]);
+    }
+  }, [pharmacies]);
   
   // If loading, show a skeleton
   if (isLoading && !isMapReady) {
+    console.log('LeafletPharmacyMap showing loading state');
     return (
       <div className="w-full h-full min-h-[400px]">
         <Skeleton className="w-full h-full min-h-[400px]" />
@@ -220,6 +261,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
 
   // If error occurred, show error message
   if (error) {
+    console.log('LeafletPharmacyMap showing error state:', error);
     return (
       <div className="bg-muted p-4 rounded-md text-center h-[400px] flex items-center justify-center flex-col">
         <p className="text-red-500 font-semibold mb-2">{error}</p>
@@ -236,8 +278,13 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     );
   }
 
+  console.log('LeafletPharmacyMap rendering MapContainer', {
+    key: mapKey,
+    center: defaultCenter
+  });
+
   return (
-    <div className="w-full h-[400px] relative border rounded-md overflow-hidden">
+    <div className="w-full h-[500px] relative border rounded-md overflow-hidden">
       <MapContainer
         key={mapKey}
         center={defaultCenter}
@@ -281,8 +328,13 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         )}
         
         {/* Pharmacy markers */}
-        {isMapReady && pharmacies && pharmacies.map((pharmacy) => {
-          if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return null;
+        {isMapReady && pharmacies && pharmacies.map((pharmacy, index) => {
+          if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) {
+            console.log(`Pharmacy ${index} missing coordinates`, pharmacy);
+            return null;
+          }
+          
+          console.log(`Adding marker for pharmacy ${index} at`, [pharmacy.coordinates.lat, pharmacy.coordinates.lon]);
           
           return (
             <Marker
