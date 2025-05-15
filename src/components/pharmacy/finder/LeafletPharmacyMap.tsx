@@ -251,7 +251,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           zIndex: 1
         }}
         scrollWheelZoom={true}
-        attributionControl={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
