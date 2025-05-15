@@ -180,9 +180,8 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
         whenCreated={handleMapInit}
-        // Explicitly disable problematic touch handlers
-        touchZoom={false}
-        tap={false}
+        // Remove the problematic props from here
+        // Instead, they're set in the handleMapInit callback function
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -233,4 +232,3 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
     </div>
   );
 };
-
