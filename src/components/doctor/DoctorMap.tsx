@@ -1,64 +1,47 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, MapPinOff } from 'lucide-react';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { userLocationState, isUsingLocationState } from '@/store/location/atoms';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
+import { MapPin, Navigation } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { getCoordinatesWithMapbox, getDistanceFromUserToPharmacy, getMapboxToken } from '@/services/mapbox';
+import { getMapboxToken } from '@/services/mapbox';
+import { toast } from '@/components/ui/use-toast';
 
-// Default coordinates for common locations in case geocoding fails
-const DEFAULT_COORDINATES = {
-  // Luxembourg as general fallback
-  'luxembourg': { lat: 49.8153, lng: 6.1296 },
-  // Additional cities for better fallbacks
-  'luxembourg city': { lat: 49.6116, lng: 6.1319 },
-  'dudelange': { lat: 49.4783, lng: 6.0844 },
-  'esch-sur-alzette': { lat: 49.4941, lng: 5.9806 },
-  'differdange': { lat: 49.5242, lng: 5.8903 }
-};
+// Fallback token in case the Edge Function fails
+const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
+
+// Default coordinates for Luxembourg
+const DEFAULT_COORDINATES = { lat: 49.8153, lng: 6.1296 };
 
 interface DoctorMapProps {
-  doctor: {
+  doctors: Array<{
+    id: string;
+    full_name: string;
     address?: string;
-    city?: string;
-    postal_code?: string;
-  };
+    city?: string | null;
+    coordinates?: { lat: number; lon: number } | null;
+  }>;
+  userCoordinates: { lat: number; lon: number } | null;
+  showUserLocation: boolean;
+  onDoctorSelect?: (doctorId: string) => void;
 }
 
-const DoctorMap: React.FC<DoctorMapProps> = ({ doctor }) => {
+const DoctorMap = ({
+  doctors,
+  userCoordinates,
+  showUserLocation,
+  onDoctorSelect
+}: DoctorMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const doctorMarker = useRef<mapboxgl.Marker | null>(null);
+  const markers = useRef<mapboxgl.Marker[]>([]);
   const userMarker = useRef<mapboxgl.Marker | null>(null);
-  
-  const [doctorCoordinates, setDoctorCoordinates] = useState<{lat: number, lng: number} | null>(null);
+
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [distance, setDistance] = useState<string | null>(null);
-  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [hasRendered, setHasRendered] = useState(false);
   const [mapInitialized, setMapInitialized] = useState(false);
-  
-  const userLocation = useRecoilValue(userLocationState);
-  const setUserLocation = useSetRecoilState(userLocationState);
-  const isUsingLocation = useRecoilValue(isUsingLocationState);
-  const setIsUsingLocation = useSetRecoilState(isUsingLocationState);
-  
-  const hasLocationInfo = Boolean(doctor.address || doctor.city || doctor.postal_code);
-  const address = [doctor.address, doctor.city, doctor.postal_code]
-    .filter(Boolean)
-    .join(', ');
-  
-  // Set rendered flag after first render
-  useEffect(() => {
-    setHasRendered(true);
-  }, []);
-  
+
   // Get Mapbox token
   useEffect(() => {
     const fetchMapboxToken = async () => {
@@ -67,360 +50,240 @@ const DoctorMap: React.FC<DoctorMapProps> = ({ doctor }) => {
         const token = await getMapboxToken();
         
         if (token) {
-          console.log('Received token:', token ? 'Valid token' : 'No token');
           setMapboxToken(token);
           mapboxgl.accessToken = token;
         } else {
-          throw new Error('Invalid token received');
+          // Use fallback token
+          console.warn('Using fallback Mapbox token');
+          setMapboxToken(FALLBACK_TOKEN);
+          mapboxgl.accessToken = FALLBACK_TOKEN;
         }
       } catch (error) {
-        console.error('Error setting Mapbox token:', error);
-        setMapError('Failed to load map resources');
-        
-        // Always set a fallback token
-        const fallbackToken = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
-        console.log('Using fallback token');
-        setMapboxToken(fallbackToken);
-        mapboxgl.accessToken = fallbackToken;
+        console.error('Error fetching Mapbox token:', error);
+        // Use fallback token on error
+        setMapboxToken(FALLBACK_TOKEN);
+        mapboxgl.accessToken = FALLBACK_TOKEN;
       }
     };
     
     fetchMapboxToken();
   }, []);
 
-  // Get doctor coordinates based on address
+  // Initialize map once token is available
   useEffect(() => {
-    const getDoctorCoordinates = async () => {
-      if (!doctor || !hasLocationInfo) return;
+    if (!mapboxToken || !mapContainer.current || map.current || mapInitialized) {
+      return;
+    }
+
+    const initializeMap = () => {
+      if (!mapContainer.current) return;
       
       try {
-        // Cache check - this will help avoid unnecessary API calls
-        const cacheKey = `doctor-coords-${doctor.address}-${doctor.city}-${doctor.postal_code}`;
-        const cachedCoords = sessionStorage.getItem(cacheKey);
+        console.log('Initializing map with token:', mapboxToken);
         
-        if (cachedCoords) {
-          console.log('Using cached doctor coordinates');
-          const coords = JSON.parse(cachedCoords);
-          setDoctorCoordinates(coords);
-          return;
-        }
+        // Set explicit height/width to ensure container is visible
+        mapContainer.current.style.height = '400px';
+        mapContainer.current.style.minHeight = '400px';
+        mapContainer.current.style.width = '100%';
         
-        console.log('Fetching doctor coordinates for:', doctor.address);
-        const fullQuery = `${doctor.address || ''}, ${doctor.city || ''} ${doctor.postal_code || ''}`.trim();
+        // Initialize map with default center
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [DEFAULT_COORDINATES.lng, DEFAULT_COORDINATES.lat],
+          zoom: 12,
+          attributionControl: false,
+        });
         
-        if (!fullQuery) {
-          console.log('No address information available');
-          setDoctorCoordinates(DEFAULT_COORDINATES.luxembourg);
-          return;
-        }
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
         
-        // First try with full address
-        let coordinates = await getCoordinatesWithMapbox(fullQuery);
-        
-        // If first request fails, try with just city and postal code
-        if (!coordinates) {
-          console.log('No results found with full address, trying with city and postal code');
-          const simplifiedQuery = `${doctor.city || ''} ${doctor.postal_code || ''}`.trim();
-          if (simplifiedQuery) {
-            coordinates = await getCoordinatesWithMapbox(simplifiedQuery);
-          }
-        }
-        
-        if (coordinates) {
-          console.log('Found coordinates:', coordinates);
+        // Handle map load
+        map.current.on('load', () => {
+          console.log('Map loaded successfully');
+          setIsMapLoaded(true);
+          setMapError(null);
           
-          // Cache the coordinates
-          sessionStorage.setItem(cacheKey, JSON.stringify(coordinates));
-          setDoctorCoordinates(coordinates);
-        } else {
-          console.error('No location found for address:', fullQuery);
-          
-          // Use city-specific fallback if available
-          const cityLower = (doctor.city || '').toLowerCase();
-          const fallbackCoords = DEFAULT_COORDINATES[cityLower as keyof typeof DEFAULT_COORDINATES] 
-            || DEFAULT_COORDINATES.luxembourg;
-            
-          console.log(`Using default coordinates for ${doctor.city || 'unknown location'}`);
-          setDoctorCoordinates(fallbackCoords);
-        }
+          // Force resize to ensure proper rendering
+          setTimeout(() => {
+            if (map.current) map.current.resize();
+          }, 200);
+        });
+        
+        // Handle map errors
+        map.current.on('error', (e) => {
+          console.error('Map error:', e);
+          setMapError('Error loading map');
+        });
+        
+        setMapInitialized(true);
       } catch (error) {
-        console.error('Error fetching doctor coordinates:', error);
-        // Default coordinates for Luxembourg as fallback
-        setDoctorCoordinates(DEFAULT_COORDINATES.luxembourg);
+        console.error('Error initializing map:', error);
+        setMapError('Failed to initialize map');
       }
     };
-    
-    getDoctorCoordinates();
-  }, [doctor, hasLocationInfo]);
-  
-  // Initialize map when token is available
+
+    initializeMap();
+  }, [mapboxToken, mapInitialized]);
+
+  // Update markers when doctors or user location changes
   useEffect(() => {
-    if (!mapboxToken || !mapContainer.current || map.current || !hasRendered || mapInitialized) {
-      return;
+    if (!map.current || !isMapLoaded) return;
+    
+    // Clear existing markers
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
+    
+    if (userMarker.current) {
+      userMarker.current.remove();
+      userMarker.current = null;
     }
     
-    console.log('Initializing Mapbox map with token');
-    setMapInitialized(true);
+    // Coordinates for map bounds
+    const bounds = new mapboxgl.LngLatBounds();
     
-    try {
-      // Force explicit height and ensure container is visible
-      if (mapContainer.current) {
-        mapContainer.current.style.height = '200px';
-        mapContainer.current.style.width = '100%';
-        mapContainer.current.style.display = 'block';
-        mapContainer.current.style.visibility = 'visible';
-      }
-      
-      // Initialize map with default center
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [6.1296, 49.8153], // Luxembourg center as default
-        zoom: 13,
-        attributionControl: false,
-        interactive: true,
-        antialias: true
-      });
-      
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-      
-      // Set loaded state when map is ready
-      map.current.on('load', () => {
-        console.log('Mapbox map loaded successfully');
-        setIsMapLoaded(true);
-        setMapError(null);
-        
-        // Force resize after load to ensure proper rendering
-        setTimeout(() => {
-          if (map.current) map.current.resize();
-        }, 200);
-      });
-      
-      map.current.on('error', (e) => {
-        console.error('Mapbox map error:', e);
-        setMapError('Error loading map');
-      });
-    } catch (error) {
-      console.error('Error creating Mapbox map:', error);
-      setMapError('Failed to initialize map');
-    }
-  }, [mapboxToken, hasRendered, mapInitialized]);
-  
-  // Calculate distance when user location or doctor coordinates change
-  useEffect(() => {
-    if (userLocation && doctorCoordinates && isUsingLocation) {
-      setIsCalculatingDistance(true);
+    // Add doctor markers
+    doctors.forEach(doctor => {
+      if (!doctor.coordinates?.lat || !doctor.coordinates?.lon) return;
       
       try {
-        const distanceValue = getDistanceFromUserToPharmacy(userLocation, doctorCoordinates);
-        console.log('Distance calculated:', distanceValue);
-        setDistance(distanceValue);
+        const popupContent = document.createElement('div');
+        popupContent.className = 'p-2';
+        popupContent.innerHTML = `
+          <div class="text-sm font-medium">${doctor.full_name}</div>
+          ${doctor.address ? `<div class="text-xs">${doctor.address}</div>` : ''}
+          ${doctor.city ? `<div class="text-xs">${doctor.city}</div>` : ''}
+        `;
+        
+        // Add button if onDoctorSelect is provided
+        if (onDoctorSelect) {
+          const button = document.createElement('button');
+          button.className = 'mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded';
+          button.innerText = 'Select';
+          button.onclick = () => onDoctorSelect(doctor.id);
+          popupContent.appendChild(button);
+        }
+        
+        const popup = new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent);
+        
+        const marker = new mapboxgl.Marker()
+          .setLngLat([doctor.coordinates.lon, doctor.coordinates.lat])
+          .setPopup(popup)
+          .addTo(map.current!);
+        
+        markers.current.push(marker);
+        
+        // Add to bounds
+        bounds.extend([doctor.coordinates.lon, doctor.coordinates.lat]);
       } catch (error) {
-        console.error('Error calculating distance:', error);
-        setDistance(null);
-      } finally {
-        setIsCalculatingDistance(false);
-      }
-    } else if (!isUsingLocation) {
-      setDistance(null);
-    }
-  }, [userLocation, doctorCoordinates, isUsingLocation]);
-  
-  // Get user's location when isUsingLocation changes to true
-  useEffect(() => {
-    if (isUsingLocation && navigator.geolocation) {
-      setIsCalculatingDistance(true);
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const newUserLocation = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          };
-          
-          console.log('User location obtained:', newUserLocation);
-          setUserLocation(newUserLocation);
-          setIsCalculatingDistance(false);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setIsUsingLocation(false);
-          setIsCalculatingDistance(false);
-          toast({
-            variant: "destructive",
-            title: "Location Error",
-            description: "Could not access your location. Please check your browser permissions.",
-          });
-        }
-      );
-    }
-  }, [isUsingLocation, setUserLocation, setIsUsingLocation]);
-  
-  // Update markers when coordinates or map changes
-  useEffect(() => {
-    if (!map.current || !isMapLoaded) {
-      console.log('Map not ready or not loaded yet');
-      return;
-    }
-    
-    console.log('Updating map markers with doctor coordinates:', doctorCoordinates);
-    console.log('User location:', userLocation);
-    
-    // Request an animation frame to ensure the map container is rendered
-    requestAnimationFrame(() => {
-      if (!map.current) return;
-      
-      // Force map resize to ensure proper display
-      map.current.resize();
-      
-      // Clear existing markers
-      if (doctorMarker.current) {
-        doctorMarker.current.remove();
-        doctorMarker.current = null;
-      }
-      
-      if (userMarker.current) {
-        userMarker.current.remove();
-        userMarker.current = null;
-      }
-      
-      // Add doctor marker and fly to it
-      if (doctorCoordinates) {
-        try {
-          // Create doctor marker
-          const el = document.createElement('div');
-          el.className = 'doctor-marker';
-          el.style.width = '25px';
-          el.style.height = '25px';
-          el.style.backgroundImage = 'url(https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png)';
-          el.style.backgroundSize = 'contain';
-          
-          doctorMarker.current = new mapboxgl.Marker(el)
-            .setLngLat([doctorCoordinates.lng, doctorCoordinates.lat])
-            .setPopup(new mapboxgl.Popup({ offset: 25 })
-              .setHTML(`<div class="text-sm font-medium">${doctor.address || 'Doctor Location'}</div><div class="text-xs">${doctor.city || ''} ${doctor.postal_code || ''}</div>`))
-            .addTo(map.current);
-          
-          // Fly to doctor location
-          map.current.flyTo({
-            center: [doctorCoordinates.lng, doctorCoordinates.lat],
-            zoom: 15,
-            essential: true
-          });
-          
-          console.log('Added doctor marker at:', [doctorCoordinates.lng, doctorCoordinates.lat]);
-        } catch (error) {
-          console.error('Error adding doctor marker:', error);
-        }
-      }
-      
-      // Add user location marker if available
-      if (userLocation && isUsingLocation) {
-        try {
-          const el = document.createElement('div');
-          el.className = 'user-marker';
-          el.style.width = '20px';
-          el.style.height = '20px';
-          el.style.borderRadius = '50%';
-          el.style.backgroundColor = '#3b82f6';
-          el.style.border = '2px solid white';
-          
-          userMarker.current = new mapboxgl.Marker(el)
-            .setLngLat([userLocation.lon, userLocation.lat])
-            .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
-            .addTo(map.current);
-            
-          console.log('Added user marker at:', [userLocation.lon, userLocation.lat]);
-        } catch (error) {
-          console.error('Error adding user marker:', error);
-        }
+        console.error('Error creating doctor marker:', error);
       }
     });
-  }, [doctorCoordinates, userLocation, isMapLoaded, doctor, isUsingLocation]);
-  
-  // Handle location toggle
-  const handleLocationToggle = (checked: boolean) => {
-    setIsUsingLocation(checked);
     
-    if (!checked) {
-      setDistance(null);
+    // Add user location marker if available
+    if (showUserLocation && userCoordinates) {
+      try {
+        const el = document.createElement('div');
+        el.className = 'user-location-marker';
+        el.style.width = '20px';
+        el.style.height = '20px';
+        el.style.borderRadius = '50%';
+        el.style.backgroundColor = '#3b82f6';
+        el.style.border = '2px solid white';
+        
+        userMarker.current = new mapboxgl.Marker(el)
+          .setLngLat([userCoordinates.lon, userCoordinates.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
+          .addTo(map.current!);
+        
+        // Add user location to bounds
+        bounds.extend([userCoordinates.lon, userCoordinates.lat]);
+      } catch (error) {
+        console.error('Error creating user marker:', error);
+      }
     }
+    
+    // Fit bounds if we have markers
+    if (!bounds.isEmpty() && map.current) {
+      try {
+        map.current.fitBounds(bounds, {
+          padding: 50,
+          maxZoom: 15
+        });
+      } catch (error) {
+        console.error('Error fitting bounds:', error);
+        
+        // Fallback to center on user or default
+        if (userCoordinates) {
+          map.current.flyTo({
+            center: [userCoordinates.lon, userCoordinates.lat],
+            zoom: 12
+          });
+        }
+      }
+    }
+  }, [doctors, userCoordinates, showUserLocation, isMapLoaded, onDoctorSelect]);
+
+  // Recenter map on user button
+  const handleCenterOnUser = () => {
+    if (!map.current || !userCoordinates) return;
+    
+    map.current.flyTo({
+      center: [userCoordinates.lon, userCoordinates.lat],
+      zoom: 13,
+      essential: true
+    });
+    
+    toast({
+      title: "Map Centered",
+      description: "The map has been centered on your location",
+    });
   };
 
-  if (!hasLocationInfo) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg border border-dashed border-gray-300 p-4 text-center">
-        <MapPin className="h-10 w-10 text-muted-foreground mb-2" />
-        <h3 className="text-lg font-medium">No location information</h3>
-        <p className="text-sm text-muted-foreground">
-          Edit your profile to add your address details.
-        </p>
-      </div>
-    );
-  }
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
 
   return (
-    <div className="space-y-3">
-      <div className="text-sm">
-        <p className="font-medium">{doctor.address}</p>
-        <p>
-          {doctor.city}
-          {doctor.postal_code && `, ${doctor.postal_code}`}
-        </p>
-      </div>
-      
-      <div className="h-[200px] rounded-md overflow-hidden border border-gray-200 relative bg-gray-100">
-        {mapError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <div className="text-center p-4">
-              <MapPinOff className="h-8 w-8 text-gray-400 mx-auto" />
-              <p className="text-sm text-gray-600 mt-1">{mapError}</p>
-            </div>
-          </div>
-        ) : (
+    <div className="w-full h-[400px] rounded-lg overflow-hidden relative border border-gray-200">
+      {mapError ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 p-4">
+          <MapPin className="h-8 w-8 text-gray-400" />
+          <p className="mt-2 text-gray-600">{mapError}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4" 
+            onClick={() => setMapInitialized(false)}
+          >
+            Retry Loading Map
+          </Button>
+        </div>
+      ) : (
+        <>
           <div 
             ref={mapContainer} 
             className="absolute inset-0"
-            style={{ 
-              width: '100%', 
-              height: '100%', 
-              position: 'absolute',
-              minHeight: '200px'
-            }}
+            style={{ width: '100%', height: '100%' }}
           />
-        )}
-      </div>
-      
-      <div className="flex items-center justify-between mt-2">
-        <div className="flex flex-col">
-          {isCalculatingDistance ? (
-            <p className="text-sm font-medium text-primary">
-              Calculating distance...
-            </p>
-          ) : isUsingLocation && distance ? (
-            <p className="text-sm font-medium text-primary">
-              Distance: {distance}
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Share your location to see distance
-            </p>
+          
+          {showUserLocation && userCoordinates && (
+            <Button
+              className="absolute bottom-4 right-4 z-10"
+              size="sm"
+              onClick={handleCenterOnUser}
+            >
+              <Navigation className="mr-2 h-4 w-4" />
+              Center on Me
+            </Button>
           )}
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="location-toggle" className="text-xs mr-2">
-            {isUsingLocation ? 'Using location' : 'Share location'}
-          </Label>
-          <Switch
-            id="location-toggle"
-            checked={isUsingLocation}
-            onCheckedChange={handleLocationToggle}
-            disabled={isCalculatingDistance}
-          />
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

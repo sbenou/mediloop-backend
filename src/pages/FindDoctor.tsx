@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState } from 'recoil';
 import { supabase } from "@/lib/supabase";
@@ -35,88 +35,48 @@ const FindDoctor = () => {
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
   const [isUsingLocation, setIsUsingLocation] = useRecoilState(isUsingLocationState);
   const { userProfile } = usePharmacyState(session);
-  const [mapError, setMapError] = useState<string | null>(null);
   
-  // Refs for managing updates safely
-  const radiusUpdateAllowedRef = useRef(true);
-  const radiusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [searchRadius, setSearchRadiusState] = useState(2000);
+  const [searchRadius, setSearchRadius] = useState(2000);
   const [initialLocationSet, setInitialLocationSet] = useState(false);
 
   const { coordinates, handleCitySearch, isSearching } = useLocationSearch();
 
-  // Wrapper for safer state updates
-  const setSearchRadius = useCallback((value: number | ((prev: number) => number)) => {
-    // Clear any pending timers
-    if (radiusTimerRef.current) {
-      clearTimeout(radiusTimerRef.current);
-      radiusTimerRef.current = null;
-    }
-    
-    setSearchRadiusState(value);
-  }, []);
-
-  // Safely create search coordinates with validation
-  const searchCoordinates = useMemo(() => {
-    try {
-      console.log("Creating search coordinates", { coordinates, userLocation });
-      
-      if (coordinates?.lat && coordinates?.lon) {
-        return { 
-          lat: String(coordinates.lat), 
-          lon: String(coordinates.lon) 
+  // Create computed search coordinates
+  const searchCoordinates = coordinates 
+    ? { 
+        lat: coordinates.lat, 
+        lon: coordinates.lon 
+      } 
+    : userLocation 
+      ? {
+          lat: userLocation.lat,
+          lon: userLocation.lon
+        }
+      : {
+          lat: LUXEMBOURG_COORDINATES.lat,
+          lon: LUXEMBOURG_COORDINATES.lon
         };
-      }
-      
-      if (userLocation?.lat && userLocation?.lon) {
-        return {
-          lat: String(userLocation.lat),
-          lon: String(userLocation.lon)
-        };
-      }
-      
-      // Default to Luxembourg
-      console.log("Using default Luxembourg coordinates");
-      return {
-        lat: String(LUXEMBOURG_COORDINATES.lat),
-        lon: String(LUXEMBOURG_COORDINATES.lon)
-      };
-    } catch (error) {
-      console.error("Error creating search coordinates:", error);
-      return {
-        lat: String(LUXEMBOURG_COORDINATES.lat),
-        lon: String(LUXEMBOURG_COORDINATES.lon)
-      };
-    }
-  }, [coordinates, userLocation]);
 
   const { doctors, isLoading: isDoctorsLoading } = useDoctorSearch(searchCoordinates, searchRadius);
-
-  // Handle session-based location initialization
+  
+  // Initialize location based on session/profile
   useEffect(() => {
     if (initialLocationSet) {
-      console.log("Location already initialized, skipping");
       return; // Don't re-initialize if already done
     }
 
     try {
-      console.log("Initializing location", { session, coordinates, userProfile });
-      
       if (!session) {
-        console.log('No session, setting default location');
         setUserLocation(LUXEMBOURG_COORDINATES);
         setIsUsingLocation(false);
         
         if (!coordinates) {
-          console.log("No coordinates, searching for Luxembourg City");
           handleCitySearch("Luxembourg City");
         }
       } else if (!coordinates && userProfile?.city) {
-        console.log('Using profile city:', userProfile.city);
         handleCitySearch(userProfile.city);
       } else if (!coordinates) {
-        // Fallback to ensure we always have some coordinates
-        console.log("No coordinates or profile city, using Luxembourg City");
+        // Fallback to ensure we always have coordinates
         handleCitySearch("Luxembourg City");
       }
       
@@ -130,7 +90,7 @@ const FindDoctor = () => {
     }
   }, [session, coordinates, userProfile?.city, setUserLocation, setIsUsingLocation, handleCitySearch, initialLocationSet]);
 
-  // Handle search radius updates only when we have data and no doctors are found
+  // Increase search radius when no doctors found
   useEffect(() => {
     // Check if no doctors found and we haven't reached max radius
     if (
@@ -138,54 +98,22 @@ const FindDoctor = () => {
       doctors.length === 0 && 
       searchRadius < 10000 &&
       !isSearching && 
-      !isDoctorsLoading &&
-      radiusUpdateAllowedRef.current
+      !isDoctorsLoading
     ) {
-      console.log('No doctors found, will try increasing search radius');
-      
-      // Disable radius updates temporarily
-      radiusUpdateAllowedRef.current = false;
-      
-      // Schedule radius increase with a safe delay
-      radiusTimerRef.current = setTimeout(() => {
-        console.log(`Increasing radius from ${searchRadius} to ${Math.min(searchRadius + 2000, 10000)}`);
-        setSearchRadiusState(prevRadius => Math.min(prevRadius + 2000, 10000));
-        
-        // Re-enable radius updates after a delay
-        setTimeout(() => {
-          radiusUpdateAllowedRef.current = true;
-        }, 3000);
-      }, 1500);
+      const newRadius = Math.min(searchRadius + 2000, 10000);
+      console.log(`Increasing radius from ${searchRadius} to ${newRadius}`);
+      setSearchRadius(newRadius);
     }
-    
-    // Clean up timer on component unmount
-    return () => {
-      if (radiusTimerRef.current) {
-        clearTimeout(radiusTimerRef.current);
-      }
-    };
   }, [doctors, searchRadius, isDoctorsLoading, isSearching]);
 
   // Convert string coordinates to numbers for DoctorListSection
-  const displayCoordinates = useMemo(() => {
-    try {
-      console.log("Converting display coordinates", searchCoordinates);
-      return {
-        lat: parseFloat(searchCoordinates.lat) || LUXEMBOURG_COORDINATES.lat,
-        lon: parseFloat(searchCoordinates.lon) || LUXEMBOURG_COORDINATES.lon
-      };
-    } catch (error) {
-      console.error("Error parsing coordinates:", error);
-      return {
-        lat: LUXEMBOURG_COORDINATES.lat,
-        lon: LUXEMBOURG_COORDINATES.lon
-      };
-    }
-  }, [searchCoordinates]);
+  const displayCoordinates = {
+    lat: parseFloat(searchCoordinates.lat.toString()),
+    lon: parseFloat(searchCoordinates.lon.toString())
+  };
 
+  // Handle location toggle
   const handleLocationToggle = useCallback((checked: boolean) => {
-    console.log("Location toggle changed to:", checked);
-    
     if (!checked) {
       // When disabling location
       setUserLocation(LUXEMBOURG_COORDINATES);
@@ -225,14 +153,7 @@ const FindDoctor = () => {
     }
     
     // Reset search radius
-    if (radiusTimerRef.current) {
-      clearTimeout(radiusTimerRef.current);
-      radiusTimerRef.current = null;
-    }
-    
     setSearchRadius(2000);
-    radiusUpdateAllowedRef.current = true;
-    setMapError(null); // Reset any map errors when toggling location
   }, [handleCitySearch, setIsUsingLocation, setUserLocation, userProfile?.city]);
 
   return (
@@ -256,7 +177,7 @@ const FindDoctor = () => {
               ) : (
                 <DoctorListSection
                   doctors={doctors || []}
-                  isLoading={isDoctorsLoading || isSearching}
+                  isLoading={isDoctorsLoading}
                   coordinates={displayCoordinates}
                   showUserLocation={isUsingLocation}
                   onConnect={(doctorId, source) => {
@@ -281,18 +202,6 @@ const FindDoctor = () => {
                     }
                   }}
                 />
-              )}
-              
-              {mapError && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-red-600">{mapError}</p>
-                  <button 
-                    className="mt-2 text-sm text-blue-600 hover:underline"
-                    onClick={() => window.location.reload()}
-                  >
-                    Refresh page
-                  </button>
-                </div>
               )}
             </div>
           </div>
