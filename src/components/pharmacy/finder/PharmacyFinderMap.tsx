@@ -134,10 +134,10 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         map.current = null;
       }
     };
-  }, [mapInitAttempts]);
+  }, [mapInitAttempts, userLocation]);
 
   // Update markers when pharmacies or user location changes
-  const updateMarkers = useEffect(() => {
+  const updateMarkers = () => {
     if (!map.current || isLoading) return;
     
     try {
@@ -219,6 +219,11 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
     } catch (err) {
       console.error("Error updating markers:", err);
     }
+  };
+
+  // Effect to update markers when pharmacies or user location changes
+  useEffect(() => {
+    updateMarkers();
   }, [pharmacies, userLocation, isLoading, useLocationFilter]);
 
   // Handle retry when map fails to load

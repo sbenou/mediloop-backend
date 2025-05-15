@@ -251,7 +251,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           zIndex: 1
         }}
         scrollWheelZoom={true}
-        doubleClickZoom={true}
         attributionControl={true}
       >
         <TileLayer
