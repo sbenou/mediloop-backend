@@ -10,7 +10,7 @@ export function adaptActivitiesForComponent(activities: HookActivity[]): Compone
   return activities.map(activity => ({
     ...activity,
     read: activity.read ?? activity.status === 'read',
-    timestamp: activity.timestamp ? new Date(activity.timestamp) : new Date()
+    timestamp: activity.timestamp || new Date().toISOString()
   }));
 }
 
@@ -21,6 +21,6 @@ export function adaptActivityForComponent(activity: HookActivity): ComponentActi
   return {
     ...activity,
     read: activity.read ?? activity.status === 'read',
-    timestamp: activity.timestamp ? new Date(activity.timestamp) : new Date()
+    timestamp: activity.timestamp || new Date().toISOString()
   };
 }

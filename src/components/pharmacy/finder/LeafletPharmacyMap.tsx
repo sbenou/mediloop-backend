@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { toast } from "@/components/ui/use-toast";
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -63,17 +63,7 @@ const UserLocationMarker = ({
       <Marker position={position} icon={userLocationIcon}>
         <Popup>Your location</Popup>
       </Marker>
-      <CircleMarker 
-        center={position} 
-        radius={20} // This is the pixel radius, not meters
-        pathOptions={{ fillColor: 'blue', fillOpacity: 0.1, color: 'blue', weight: 1 }}
-      />
-      {/* Use a CircleMarker with custom styling to emulate the area */}
-      <CircleMarker 
-        center={position}
-        radius={radius / 100} // Scale down meters to pixel radius
-        pathOptions={{ fillColor: 'blue', fillOpacity: 0.05, color: 'blue', weight: 0.5 }}
-      />
+      {/* Create a circle using Leaflet's L.Circle directly after render */}
     </>
   );
 };
@@ -215,6 +205,8 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   onPharmaciesInShape
 }) => {
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
+  const mapRef = useRef(null);
+  const userCircleRef = useRef<L.Circle | null>(null);
   
   // Default coordinates for Luxembourg
   const defaultCoordinates = { lat: 49.8153, lon: 6.1296 };
@@ -270,6 +262,48 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
       console.error('Error handling shapes drawn:', err);
     }
   };
+
+  // Effect to add the user location circle after the map is loaded
+  useEffect(() => {
+    if (!userLocation || !useLocationFilter) return;
+
+    const addUserCircle = () => {
+      const map = document.querySelector('.leaflet-container')?._leaflet_map;
+      if (map && userLocation) {
+        // Remove existing circle if any
+        if (userCircleRef.current) {
+          map.removeLayer(userCircleRef.current);
+        }
+        
+        // Create new circle
+        const circle = L.circle(
+          [userLocation.lat, userLocation.lon],
+          {
+            radius: 2000, // 2km radius
+            color: 'blue',
+            fillColor: 'blue',
+            fillOpacity: 0.05,
+            weight: 0.5
+          }
+        ).addTo(map);
+        
+        userCircleRef.current = circle;
+      }
+    };
+
+    // Small delay to ensure map is rendered
+    setTimeout(addUserCircle, 500);
+
+    return () => {
+      if (userCircleRef.current) {
+        const map = document.querySelector('.leaflet-container')?._leaflet_map;
+        if (map) {
+          map.removeLayer(userCircleRef.current);
+        }
+        userCircleRef.current = null;
+      }
+    };
+  }, [userLocation, useLocationFilter, mapKey]);
   
   return (
     <Card className="overflow-hidden border border-gray-200 h-[500px]">

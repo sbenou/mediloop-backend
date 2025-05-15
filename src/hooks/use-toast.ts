@@ -1,22 +1,18 @@
-
-// Hooks
 import * as React from "react"
-import { toast as sonnerToast, type ToastT } from "sonner"
 
-const TOAST_LIMIT = 1
+import type {
+  ToastActionElement,
+  ToastProps,
+} from "@/components/ui/toast"
+
+const TOAST_LIMIT = 10
 const TOAST_REMOVE_DELAY = 1000000
 
-type ToasterToast = {
+type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
-  action?: React.ReactNode
-  variant?: "default" | "destructive" | "success"
-}
-
-// Define props that are allowed in our toast function
-interface ToastOptions extends Omit<ToastT, "id"> {
-  variant?: "default" | "destructive" | "success"
+  action?: ToastActionElement
 }
 
 const actionTypes = {
@@ -29,8 +25,8 @@ const actionTypes = {
 let count = 0
 
 function genId() {
-  count = (count + 1) % Number.MAX_VALUE
-  return count.toString()
+  count = (count + 1) % Number.MAX_SAFE_INTEGER
+  return String(count)
 }
 
 type ActionType = typeof actionTypes
@@ -46,20 +42,20 @@ type Action =
     }
   | {
       type: ActionType["DISMISS_TOAST"]
-      toastId?: ToasterToast["id"]
+      toastId?: string
     }
   | {
       type: ActionType["REMOVE_TOAST"]
-      toastId?: ToasterToast["id"]
+      toastId?: string
     }
 
 interface State {
   toasts: ToasterToast[]
 }
 
-const toastState: State = { toasts: [] }
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-function addToRemoveQueue(toastId: string) {
+const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
     return
   }
@@ -75,103 +71,129 @@ function addToRemoveQueue(toastId: string) {
   toastTimeouts.set(toastId, timeout)
 }
 
-const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-
-function dispatch(action: Action) {
+export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
-      toastState.toasts = [action.toast, ...toastState.toasts].slice(0, TOAST_LIMIT)
-      break;
-      
+      return {
+        ...state,
+        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+      }
+
     case "UPDATE_TOAST":
-      toastState.toasts = toastState.toasts.map((t) =>
-        t.id === action.toast.id ? { ...t, ...action.toast } : t
-      )
-      break;
-      
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === action.toast.id ? { ...t, ...action.toast } : t
+        ),
+      }
+
     case "DISMISS_TOAST": {
       const { toastId } = action
 
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
-        toastState.toasts.forEach((toast) => {
+        state.toasts.forEach((toast) => {
           addToRemoveQueue(toast.id)
         })
       }
 
-      toastState.toasts = toastState.toasts.map((t) =>
-        t.id === toastId || toastId === undefined
-          ? {
-              ...t,
-              open: false,
-            }
-          : t
-      )
-      break;
-    }
-    
-    case "REMOVE_TOAST": {
-      const { toastId } = action
-
-      if (toastId === undefined) {
-        toastState.toasts = []
-      } else {
-        toastState.toasts = toastState.toasts.filter((t) => t.id !== toastId)
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === toastId || toastId === undefined
+            ? {
+                ...t,
+                open: false,
+              }
+            : t
+        ),
       }
-      break;
     }
+    case "REMOVE_TOAST":
+      if (action.toastId === undefined) {
+        return {
+          ...state,
+          toasts: [],
+        }
+      }
+      return {
+        ...state,
+        toasts: state.toasts.filter((t) => t.id !== action.toastId),
+      }
   }
 }
 
-function toast(props: Omit<ToasterToast, "id"> & ToastOptions) {
-  const id = genId()
-  
-  // Extract props needed for our toast component
-  const { variant = "default", ...sonnerProps } = props
-  
-  // Use sonner toast
-  sonnerToast(props.title as string, {
-    id,
-    description: props.description,
-    action: props.action,
-    ...sonnerProps
-  })
+const listeners: Array<(state: State) => void> = []
 
-  const toastOptions = { id, variant, ...props }
-  
+let memoryState: State = { toasts: [] }
+
+function dispatch(action: Action) {
+  memoryState = reducer(memoryState, action)
+  listeners.forEach((listener) => {
+    listener(memoryState)
+  })
+}
+
+type Toast = Omit<ToasterToast, "id"> & { 
+  id?: string;
+  action?: "dismiss";  // Add support for dismissing a toast
+}
+
+function toast(props: Toast) {
+  const id = props.id || genId()
+
+  // If action is dismiss, dismiss the toast with the given id
+  if (props.action === "dismiss") {
+    dispatch({
+      type: "DISMISS_TOAST",
+      toastId: id,
+    })
+    return id;
+  }
+
+  const update = (props: ToasterToast) =>
+    dispatch({
+      type: "UPDATE_TOAST",
+      toast: { ...props, id },
+    })
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+
   dispatch({
     type: "ADD_TOAST",
-    toast: toastOptions,
+    toast: {
+      ...props,
+      id,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss()
+      },
+    },
   })
 
-  return id
+  return id;
 }
 
 function useToast() {
-  const [toasts, setToasts] = React.useState<ToasterToast[]>([])
-  
+  const [state, setState] = React.useState<State>(memoryState)
+
   React.useEffect(() => {
-    // Create a function to update the state
-    const updateState = () => {
-      setToasts([...toastState.toasts])
+    listeners.push(setState)
+    return () => {
+      const index = listeners.indexOf(setState)
+      if (index > -1) {
+        listeners.splice(index, 1)
+      }
     }
-    
-    // Initial update
-    updateState()
-    
-    // Create a mutation observer to watch for changes to toastState.toasts
-    const interval = setInterval(updateState, 100)
-    
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(interval)
-  }, [])
+  }, [state])
 
   return {
+    ...state,
     toast,
-    toasts,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }
 }
 
-export { useToast, toast, type ToasterToast }
+export { useToast, toast }

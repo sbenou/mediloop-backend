@@ -5,6 +5,7 @@ import { ActivityType } from "./ActivityItem";
 import { useActivities } from "@/hooks/activity";
 import { ActivityContent } from "./ActivityContent";
 import { ViewAllActivitiesButton } from "./ViewAllActivitiesButton";
+import { adaptActivitiesForComponent } from "@/hooks/activity/useActivitiesAdapter";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -16,21 +17,23 @@ import {
 import { Filter } from "lucide-react";
 
 export const ActivityFeed = () => {
-  // Get the current user ID - assuming we have user data
-  const userId = "current-user-id"; // This should be replaced with actual user ID
-  
   const { 
     activities, 
     isLoading, 
-    unreadCount, 
     markAsRead,
     markAllAsRead
-  } = useActivities(userId);
+  } = useActivities("current-user-id");
   
   const [selectedTypes, setSelectedTypes] = useState<ActivityType[]>([]);
   
   // Get unique activity types from the loaded activities
   const activityTypes = Array.from(new Set(activities.map(activity => activity.type as ActivityType)));
+  
+  // Get unread count
+  const unreadCount = activities.filter(activity => !activity.read && activity.status !== 'read').length;
+  
+  // Convert hook activities to component activities
+  const adaptedActivities = adaptActivitiesForComponent(activities);
   
   return (
     <div className="h-full flex flex-col">
@@ -96,11 +99,7 @@ export const ActivityFeed = () => {
       </div>
       
       <ActivityContent 
-        activities={activities.map(activity => ({
-          ...activity,
-          read: activity.read || activity.status === 'read',
-          timestamp: activity.timestamp ? new Date(activity.timestamp) : new Date()
-        }))}
+        activities={adaptedActivities}
         onMarkRead={markAsRead}
         activeTab="all"
         selectedTypes={selectedTypes}

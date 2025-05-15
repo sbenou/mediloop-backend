@@ -1,3 +1,4 @@
+
 import { formatDistanceToNow } from "date-fns";
 import { 
   Pill, 
@@ -40,9 +41,23 @@ export type ActivityType =
   | string; // Allow any string to support future activity types
 
 // Extend the base Activity with the specific requirements for the ActivityItem component
-export interface Activity extends BaseActivity {
+export interface Activity {
+  id: string;
+  type: string;
+  title: string;
+  description?: string;
+  timestamp: Date | string;
+  date?: string;
+  user_id?: string;
+  status?: 'read' | 'unread';
   read: boolean;
-  timestamp: Date;
+  metadata?: Record<string, any>;
+  image_url?: string;
+  icon?: string;
+  action?: {
+    text: string;
+    url: string;
+  };
 }
 
 interface ActivityItemProps {
@@ -51,7 +66,10 @@ interface ActivityItemProps {
 }
 
 export const ActivityItem = ({ activity, onMarkRead }: ActivityItemProps) => {
-  const timeAgo = formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true });
+  const timeAgo = formatDistanceToNow(
+    typeof activity.timestamp === 'string' ? new Date(activity.timestamp) : activity.timestamp, 
+    { addSuffix: true }
+  );
   
   // Determine icon and color based on activity type
   const getActivityStyles = (type: ActivityType) => {

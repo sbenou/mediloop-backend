@@ -26,6 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import { adaptActivitiesForComponent } from "@/hooks/activity/useActivitiesAdapter";
 
 const ITEMS_PER_PAGE = 10;
 const ALERT_TYPES = ["payment_failed", "delivery_late", "delivery_failed"];
@@ -54,7 +55,7 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
   const { 
     activities, 
     isLoading: isActivitiesLoading, 
-    fetchActivities, 
+    refreshActivities,
     markAsRead: markActivityAsRead
   } = useActivities();
 
@@ -91,13 +92,18 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
   // Set up initial data fetching for both activities and notifications
   useEffect(() => {
     console.log("Activities page: Initial data fetch");
-    fetchActivities();
+    refreshActivities();
     fetchNotifications();
-  }, [fetchActivities, fetchNotifications]);
+  }, [refreshActivities, fetchNotifications]);
 
   // Get unique activity types
   const activityTypes = useMemo(() => {
     return getActivityTypes(activities);
+  }, [activities]);
+
+  // Convert activities to component format
+  const componentActivities = useMemo(() => {
+    return adaptActivitiesForComponent(activities);
   }, [activities]);
 
   // Get unique notification types
@@ -134,14 +140,14 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
   // Filter and sort activities
   const filteredActivities = useMemo(() => {
     return filterAndSortActivities(
-      activities,
+      componentActivities,
       "all",
       searchQuery,
       sortBy,
       dateRange,
       selectedTypeFilters
     );
-  }, [activities, selectedTypeFilters, searchQuery, sortBy, dateRange]);
+  }, [componentActivities, selectedTypeFilters, searchQuery, sortBy, dateRange]);
 
   // Filter notifications (based on search, type filters, and alerts filter)
   const filteredNotifications = useMemo(() => {
@@ -286,12 +292,12 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
     
     return view === "table" ? (
       <ActivitiesTableView
-        activities={paginatedContent as any[]}
+        activities={paginatedContent}
         markAsRead={markActivityAsRead}
       />
     ) : (
       <ActivitiesCardView
-        activities={paginatedContent as any[]}
+        activities={paginatedContent}
         markAsRead={markActivityAsRead}
       />
     );
