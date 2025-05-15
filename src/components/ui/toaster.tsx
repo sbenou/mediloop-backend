@@ -1,3 +1,4 @@
+
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -10,6 +11,10 @@ import {
 
 export function Toaster() {
   const { toasts } = useToast()
+
+  if (!toasts || !Array.isArray(toasts)) {
+    return null // Return null if toasts is undefined or not an array
+  }
 
   return (
     <ToastProvider>
