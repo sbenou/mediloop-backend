@@ -1,49 +1,42 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// Follow this setup guide to integrate the Deno runtime with your project:
+// https://deno.land/manual/getting_started/setup_your_environment
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Type': 'application/json',
-};
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
-// Working Mapbox token for fallback
-const FALLBACK_TOKEN = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
+console.log(`Function "get-mapbox-token" up and running!`);
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // This is needed if you're planning to invoke your function from a browser.
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Get the Mapbox token from environment variables
-    const mapboxToken = Deno.env.get('MAPBOX_ACCESS_TOKEN') || FALLBACK_TOKEN;
-
-    console.log('Returning Mapbox token from edge function');
+    // Get the Mapbox token from environment variable
+    const mapboxToken = Deno.env.get("MAPBOX_TOKEN");
     
-    // Return the token as JSON with proper headers
+    if (!mapboxToken) {
+      throw new Error("MAPBOX_TOKEN environment variable is not set");
+    }
+
+    // Return the token
     return new Response(
       JSON.stringify({ token: mapboxToken }),
-      { 
-        status: 200, 
-        headers: corsHeaders
-      }
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      },
     );
   } catch (error) {
-    console.error('Error getting Mapbox token:', error);
-    
-    // Return fallback token in case of any error
     return new Response(
-      JSON.stringify({ 
-        token: FALLBACK_TOKEN,
-        error: error.message,
-        fallback: true
-      }),
-      { 
-        status: 200, 
-        headers: corsHeaders
-      }
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      },
     );
   }
 });
+

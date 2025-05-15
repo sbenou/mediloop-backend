@@ -76,6 +76,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   const [map, setMap] = useState<L.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [mapKey, setMapKey] = useState(`map-${Date.now()}`); // Add a key to force re-render if needed
 
   // Default center (Luxembourg)
   const defaultCenter: [number, number] = [49.8153, 6.1296];
@@ -88,9 +89,27 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   // Handle map initialization
   const handleMapInit = (mapInstance: L.Map) => {
     try {
-      // Disable problematic touch handlers
-      mapInstance.options.touchZoom = false;
-      mapInstance.options.tap = false;
+      // Apply fixes for touch events
+      if (L.Browser.touch) {
+        // Disable the problematic handlers
+        mapInstance.options.touchZoom = false;
+        mapInstance.options.tap = false;
+        
+        // Override problematic methods
+        if (typeof window !== 'undefined') {
+          // Patch the touchHandlers to prevent errors with touchleave
+          const mapProto = (L.Map as any).prototype;
+          const originalAddHandler = mapProto.addHandler;
+          
+          mapProto.addHandler = function(name: string, HandlerClass: any) {
+            // Skip touch handlers that are causing issues
+            if (name === 'touchZoom' || name === 'tap') {
+              return this;
+            }
+            return originalAddHandler.call(this, name, HandlerClass);
+          };
+        }
+      }
       
       setMap(mapInstance);
       setIsLoading(false);
@@ -103,6 +122,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
 
   // Global error handler for Leaflet
   useEffect(() => {
+    // Setup a global error handler to catch touch-related errors
     const handleError = (e: ErrorEvent) => {
       if (e.message && (
         e.message.includes('a is not a function') || 
@@ -121,6 +141,20 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       window.removeEventListener('error', handleError, true);
     };
   }, []);
+  
+  // Retry rendering if errors occur
+  useEffect(() => {
+    if (error) {
+      console.log('Attempting to recover from map error...');
+      const timer = setTimeout(() => {
+        setMapKey(`map-retry-${Date.now()}`);
+        setError(null);
+        setIsLoading(true);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   if (isLoading) {
     return <Skeleton className="w-full h-full" />;
@@ -140,11 +174,15 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   return (
     <div className="h-full w-full">
       <MapContainer
+        key={mapKey}
         center={centerCoordinates}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
         whenCreated={handleMapInit}
+        // Explicitly disable problematic touch handlers
+        touchZoom={false}
+        tap={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -195,3 +233,4 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
     </div>
   );
 };
+
