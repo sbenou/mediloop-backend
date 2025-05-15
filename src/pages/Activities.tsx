@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useActivities } from "@/hooks/activity";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -27,6 +26,8 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { adaptActivitiesForComponent } from "@/hooks/activity/useActivitiesAdapter";
+import { adaptNotificationsToActivityFormat } from "@/utils/notificationAdapter";
+import { Activity } from "@/hooks/activity/types";
 
 const ITEMS_PER_PAGE = 10;
 const ALERT_TYPES = ["payment_failed", "delivery_late", "delivery_failed"];
@@ -290,14 +291,16 @@ const Activities = ({ initialView = "activities" }: ActivitiesProps) => {
       );
     }
     
+    const activities = paginatedContent as Activity[];
+    
     return view === "table" ? (
       <ActivitiesTableView
-        activities={paginatedContent}
+        activities={adaptActivitiesForComponent(activities)}
         markAsRead={markActivityAsRead}
       />
     ) : (
       <ActivitiesCardView
-        activities={paginatedContent}
+        activities={adaptActivitiesForComponent(activities)}
         markAsRead={markActivityAsRead}
       />
     );
