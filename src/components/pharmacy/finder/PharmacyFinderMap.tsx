@@ -173,7 +173,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       if (markers.current.length === 0 && !userMarker.current) {
         // Set default view of Luxembourg
         console.log('No markers or user location, setting default center view');
-        map.current.setCenter(defaultCenter);
+        map.current.setCenter(defaultCenter as mapboxgl.LngLatLike);
         map.current.setZoom(10);
         return;
       }
@@ -203,7 +203,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         } else {
           // If bounds are empty, set default view
           console.log('Bounds empty, using default center');
-          map.current.setCenter(defaultCenter);
+          map.current.setCenter(defaultCenter as mapboxgl.LngLatLike);
           map.current.setZoom(10);
         }
       }
@@ -235,6 +235,18 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
           height: mapContainer.current?.offsetHeight
         });
         
+        // Force dimensions on container if they're not set
+        if (mapContainer.current) {
+          if (!mapContainer.current.offsetHeight) {
+            console.log('Setting explicit height on container');
+            mapContainer.current.style.height = '500px';
+          }
+          if (!mapContainer.current.offsetWidth) {
+            console.log('Setting explicit width on container');
+            mapContainer.current.style.width = '100%';
+          }
+        }
+        
         // Initialize map
         if (!map.current && mapContainer.current) {
           const center = userLocation 
@@ -246,7 +258,7 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
           map.current = new mapboxgl.Map({
             container: mapContainer.current,
             style: 'mapbox://styles/mapbox/streets-v12',
-            center: center,
+            center: center as mapboxgl.LngLatLike,
             zoom: 12,
             attributionControl: true,
             trackResize: true,
@@ -267,6 +279,14 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
               
               // Update markers when map is ready
               updateMarkers();
+              
+              // Force resize to ensure proper rendering
+              setTimeout(() => {
+                if (map.current) {
+                  console.log('Forcing map resize');
+                  map.current.resize();
+                }
+              }, 300);
             }
           });
           
@@ -322,6 +342,11 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
     setMapInitAttempts(0);
     setIsLoading(true);
     setMapInitialized(false);
+    
+    // Force re-render by changing key
+    if (mapContainer.current) {
+      mapContainer.current.innerHTML = '';
+    }
   };
 
   if (isLoading) {

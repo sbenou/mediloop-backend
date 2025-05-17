@@ -210,6 +210,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_ATTEMPTS = 3;
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   // Default center position (Luxembourg)
   const defaultCenter: [number, number] = userLocation 
@@ -234,6 +235,11 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     setMapKey(`map-retry-${Date.now()}`);
     setIsLoading(true);
     setIsMapReady(false);
+    
+    // Force container clear
+    if (mapContainerRef.current) {
+      mapContainerRef.current.innerHTML = '';
+    }
   };
 
   // Log when the component re-renders
@@ -250,6 +256,15 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
       console.log('No pharmacy data available for LeafletPharmacyMap');
     }
   }, [pharmacies]);
+  
+  // Effect to ensure the map container is properly sized
+  useEffect(() => {
+    if (mapContainerRef.current) {
+      // Force explicit height and width
+      mapContainerRef.current.style.height = '500px';
+      mapContainerRef.current.style.width = '100%';
+    }
+  }, []);
   
   // If loading, show a skeleton
   if (isLoading && !isMapReady) {
@@ -286,7 +301,11 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   });
 
   return (
-    <div className="w-full h-[500px] relative border rounded-md overflow-hidden">
+    <div 
+      ref={mapContainerRef} 
+      className="w-full h-[500px] relative border rounded-md overflow-hidden"
+      style={{ height: '500px', width: '100%' }} // Force explicit dimensions
+    >
       <MapContainer
         key={mapKey}
         center={defaultCenter}
@@ -335,8 +354,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
             console.log(`Pharmacy ${index} missing coordinates`, pharmacy);
             return null;
           }
-          
-          console.log(`Adding marker for pharmacy ${index} at`, [pharmacy.coordinates.lat, pharmacy.coordinates.lon]);
           
           return (
             <Marker
