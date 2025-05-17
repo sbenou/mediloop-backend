@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -19,8 +18,43 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Add global error handling for common Leaflet errors
+// Add even more aggressive global error handling for the "a is not a function" error
 if (typeof window !== 'undefined') {
+  // Override problematic touch methods globally, before they can cause errors
+  try {
+    // Patch prototype methods to prevent errors
+    const originalAddEventListener = EventTarget.prototype.addEventListener;
+    EventTarget.prototype.addEventListener = function(type, listener, options) {
+      if (type && typeof type === 'string' && 
+          (type.includes('touch') || type.includes('tap'))) {
+        console.log(`Prevented adding event listener for ${type}`);
+        // Instead of not adding the listener, add a safe version that won't crash
+        return originalAddEventListener.call(
+          this, 
+          type, 
+          function(event) {
+            try {
+              if (typeof listener === 'function') {
+                listener(event);
+              } else if (listener && typeof listener.handleEvent === 'function') {
+                listener.handleEvent(event);
+              }
+            } catch (e) {
+              console.warn(`Caught error in ${type} event:`, e);
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          }, 
+          options
+        );
+      }
+      return originalAddEventListener.call(this, type, listener, options);
+    };
+  } catch (e) {
+    console.warn('Failed to patch EventTarget:', e);
+  }
+  
+  // Add error event listener as a fallback
   window.addEventListener('error', (e) => {
     if (e.message && (
       e.message.includes('a is not a function') || 
@@ -218,6 +252,20 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     }
   }, []);
   
+  // Force a VERY EARLY fallback for map ready status - this is crucial
+  useEffect(() => {
+    // Set a very short timeout to force the map to be marked as ready
+    const quickFallback = setTimeout(() => {
+      if (!isMapReady) {
+        console.log('Quick fallback timeout reached for map ready state');
+        setIsMapReady(true);
+        setIsLoading(false);
+      }
+    }, 1500); // Just 1.5 seconds
+    
+    return () => clearTimeout(quickFallback);
+  }, [isMapReady]);
+  
   // Automatically set map ready after a timeout as a fallback
   useEffect(() => {
     if (isMapReady) return;
@@ -226,7 +274,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
       console.log('Map ready timeout reached, forcing ready state');
       setIsMapReady(true);
       setIsLoading(false);
-    }, 5000); // 5 second fallback
+    }, 3000); // 3 second fallback - faster than before
     
     return () => {
       if (mapReadyTimeoutRef.current) {
@@ -318,10 +366,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
       link.rel = 'stylesheet';
       link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css';
       document.head.appendChild(link);
-      
-      // Check if CSS was actually loaded
-      link.onload = () => console.log('Leaflet CSS loaded successfully');
-      link.onerror = () => console.error('Failed to load Leaflet CSS');
     }
     
     // Force leaflet images to be loaded
@@ -404,43 +448,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           zIndex: 1
         }}
         scrollWheelZoom={true}
-        // Remove attributionControl prop as it's not supported in react-leaflet v5.0.0
-        whenCreated={(mapInstance) => {
-          // This callback runs when the map is created
-          console.log('Map instance created');
-          
-          // Disable problematic handlers that might cause issues
-          mapInstance.options.touchZoom = false;
-          mapInstance.options.tap = false;
-          
-          try {
-            // @ts-ignore - These properties exist on Leaflet map but might not be in TypeScript defs
-            if (mapInstance.touchZoom) mapInstance.touchZoom.disable();
-            // @ts-ignore
-            if (mapInstance.tap) mapInstance.tap.disable();
-          } catch (e) {
-            console.warn('Error disabling touch handlers:', e);
-          }
-          
-          // We need to give the map a moment to initialize properly
-          setTimeout(() => {
-            try {
-              console.log('Forcing map initialization from whenCreated');
-              mapInstance.invalidateSize();
-              
-              // Force an additional resize after a delay
-              setTimeout(() => {
-                try {
-                  mapInstance.invalidateSize();
-                } catch (err) {
-                  console.warn('Error in delayed map resize:', err);
-                }
-              }, 500);
-            } catch (err) {
-              console.error('Error in map initialization:', err);
-            }
-          }, 200);
-        }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

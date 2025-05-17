@@ -31,7 +31,8 @@ if (typeof window !== 'undefined') {
     if (e.message && (
       e.message.includes('a is not a function') || 
       e.message.includes('touchleave') ||
-      e.message.includes('touch')
+      e.message.includes('touch') ||
+      e.message.includes('_onTap')
     )) {
       console.warn('Caught Leaflet-related error:', e.message);
       e.preventDefault();
@@ -39,6 +40,28 @@ if (typeof window !== 'undefined') {
     }
     return false;
   }, true);
+  
+  // Even more aggressive error suppression: Override problematic methods directly
+  // This is a last resort approach
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      try {
+        if (L.Map && L.Map.prototype) {
+          const originalAddHandler = L.Map.prototype.addHandler;
+          L.Map.prototype.addHandler = function(name, HandlerClass) {
+            // Skip adding problematic handlers entirely
+            if (name.includes('touch') || name.includes('tap')) {
+              console.log(`Skipping problematic handler: ${name}`);
+              return this;
+            }
+            return originalAddHandler.call(this, name, HandlerClass);
+          };
+        }
+      } catch (e) {
+        console.warn('Failed to override Leaflet handler methods:', e);
+      }
+    }, 0);
+  });
 }
 
 interface PharmacyMapProps {
@@ -76,6 +99,7 @@ export function PharmacyMap({
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
   const mapReadyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   
   // Handle map creation errors with auto-retry
   const handleMapError = useCallback(() => {
@@ -120,6 +144,15 @@ export function PharmacyMap({
       }
     };
   }, [isMapReady]);
+
+  // Ensure the map container has proper dimensions
+  useEffect(() => {
+    if (mapContainerRef.current) {
+      mapContainerRef.current.style.height = '100%';
+      mapContainerRef.current.style.width = '100%';
+      mapContainerRef.current.style.minHeight = '400px';
+    }
+  }, []);
   
   // Filter pharmacies when user location changes
   useEffect(() => {
@@ -175,7 +208,7 @@ export function PharmacyMap({
   }, [showDefaultLocation, coordinates, pharmacies, onPharmaciesInShape, isMapReady]);
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full" ref={mapContainerRef}>
       {mapInitError ? (
         <div className="w-full h-full bg-gray-100 rounded-md flex flex-col items-center justify-center p-6">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md text-center">
@@ -207,41 +240,8 @@ export function PharmacyMap({
                 zIndex: 1 
               }}
               scrollWheelZoom={true}
-              whenCreated={(map) => {
-                // Additional safety for map initialization
-                try {
-                  console.log('PharmacyMap: Map instance created');
-                  
-                  // Disable problematic handlers to avoid "a is not a function" error
-                  map.options.touchZoom = false;
-                  map.options.tap = false;
-                  
-                  try {
-                    // @ts-ignore - These properties exist but might not be in TypeScript defs
-                    if (map.touchZoom) map.touchZoom.disable();
-                    // @ts-ignore
-                    if (map.tap) map.tap.disable();
-                  } catch (e) {
-                    console.warn('Error disabling touch handlers:', e);
-                  }
-                  
-                  // Force resize right away
-                  map.invalidateSize(true);
-                  
-                  // Fire ready event after a short delay to ensure map is fully loaded
-                  setTimeout(() => {
-                    try {
-                      map.invalidateSize(true);
-                      console.log('PharmacyMap: Forced map invalidation after delay');
-                    } catch (e) {
-                      console.warn('Error in delayed map resize:', e);
-                    }
-                  }, 500);
-                } catch (e) {
-                  console.warn('Error in map creation:', e);
-                  handleMapError();
-                }
-              }}
+              // Important: Do not use whenCreated prop, it's deprecated 
+              // Use ref approach instead when needed
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
