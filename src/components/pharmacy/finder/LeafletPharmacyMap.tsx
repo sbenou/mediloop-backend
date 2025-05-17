@@ -279,9 +279,9 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           zIndex: 1
         }}
         scrollWheelZoom={!isMobile}
-        doubleClickZoom={!isMobile}
-        dragging={!isMobile}
         zoomControl={true}
+        // For mobile devices, disable interactions that cause problems
+        {...(isMobile ? { dragging: false } : { dragging: true })}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

@@ -71,6 +71,10 @@ declare module 'react-leaflet' {
     children?: ReactNode;
     key?: string;
     whenCreated?: (map: L.Map) => void;
+    // Add the missing properties that we're using
+    doubleClickZoom?: boolean;
+    dragging?: boolean;
+    zoomControl?: boolean;
   }
 
   export interface TileLayerProps {

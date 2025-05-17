@@ -137,6 +137,11 @@ function DrawControl() {
   return null;
 }
 
+// Check if this is a mobile device
+const isMobile = typeof window !== 'undefined' ? 
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) : 
+  false;
+
 // Main page component
 const SearchPharmacyTest = () => {
   const [searchQuery, setSearchQuery] = useState('Luxembourg');
@@ -336,33 +341,11 @@ const SearchPharmacyTest = () => {
               key={mapKey}
               center={[currentCoordinates.lat, currentCoordinates.lon]}
               zoom={12}
-              scrollWheelZoom={true}
+              scrollWheelZoom={!isMobile}
               style={{ height: '100%', width: '100%' }}
-              whenCreated={(mapInstance) => {
-                console.log('SearchPharmacyTest: Map instance created');
-                
-                // Disable problematic handlers that might cause the "a is not a function" error
-                mapInstance.options.touchZoom = false;
-                mapInstance.options.tap = false;
-                
-                try {
-                  // @ts-ignore - These properties exist but might not be in TypeScript defs
-                  if (mapInstance.touchZoom) mapInstance.touchZoom.disable();
-                  // @ts-ignore
-                  if (mapInstance.tap) mapInstance.tap.disable();
-                } catch (e) {
-                  console.warn('Error disabling touch handlers:', e);
-                }
-                
-                // Force resize after a short delay
-                setTimeout(() => {
-                  try {
-                    mapInstance.invalidateSize();
-                  } catch (err) {
-                    console.warn('Error in initial map resize:', err);
-                  }
-                }, 200);
-              }}
+              // Use conditional props for different devices
+              {...(isMobile ? { dragging: false } : { dragging: true })}
+              zoomControl={true}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

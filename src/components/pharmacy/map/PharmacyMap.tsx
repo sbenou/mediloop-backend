@@ -210,9 +210,9 @@ export function PharmacyMap({
                 zIndex: 1 
               }}
               scrollWheelZoom={!isMobileDevice}
-              doubleClickZoom={!isMobileDevice}
-              dragging={!isMobileDevice}
               zoomControl={true}
+              // Use conditional prop spreading for mobile/desktop settings
+              {...(isMobileDevice ? { dragging: false } : { dragging: true })}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
