@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -25,6 +26,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Add global error handling specifically to catch the "a is not a function" error
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (e) => {
+    if (e.message && (
+      e.message.includes('a is not a function') || 
+      e.message.includes('touchleave') ||
+      e.message.includes('touch')
+    )) {
+      console.warn('Caught Leaflet-related error in SearchPharmacyTest:', e.message);
+      e.preventDefault();
+      return true;
+    }
+    return false;
+  }, true);
+}
+
 // Create a red icon for user location
 const userLocationIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -49,6 +66,18 @@ function DrawControl() {
     initCompletedRef.current = true;
 
     try {
+      // Disable problematic touch handlers to avoid "a is not a function" error
+      // @ts-ignore - These properties exist on Leaflet map but might not be in TypeScript defs
+      if (map.touchZoom) map.touchZoom.disable();
+      // @ts-ignore
+      if (map.tap) map.tap.disable();
+      
+      // Some browsers have issues with these handlers
+      if (map.options) {
+        map.options.touchZoom = false;
+        map.options.tap = false;
+      }
+      
       // Add the FeatureGroup to the map
       map.addLayer(drawnItemsRef.current);
 
@@ -311,6 +340,20 @@ const SearchPharmacyTest = () => {
               style={{ height: '100%', width: '100%' }}
               whenCreated={(mapInstance) => {
                 console.log('SearchPharmacyTest: Map instance created');
+                
+                // Disable problematic handlers that might cause the "a is not a function" error
+                mapInstance.options.touchZoom = false;
+                mapInstance.options.tap = false;
+                
+                try {
+                  // @ts-ignore - These properties exist but might not be in TypeScript defs
+                  if (mapInstance.touchZoom) mapInstance.touchZoom.disable();
+                  // @ts-ignore
+                  if (mapInstance.tap) mapInstance.tap.disable();
+                } catch (e) {
+                  console.warn('Error disabling touch handlers:', e);
+                }
+                
                 // Force resize after a short delay
                 setTimeout(() => {
                   try {

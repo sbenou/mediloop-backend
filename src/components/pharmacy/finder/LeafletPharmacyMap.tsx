@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { SimplifiedMapUpdater } from '@/components/pharmacy/map/SimplifiedMapUpdater';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -17,6 +18,22 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+// Add global error handling for common Leaflet errors
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (e) => {
+    if (e.message && (
+      e.message.includes('a is not a function') || 
+      e.message.includes('touchleave') ||
+      e.message.includes('touch')
+    )) {
+      console.warn('Caught Leaflet-related error:', e.message);
+      e.preventDefault();
+      return true;
+    }
+    return false;
+  }, true);
+}
 
 console.log('LeafletPharmacyMap component loaded');
 
@@ -29,67 +46,6 @@ const redIcon = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
-
-// Map updater component - Enhanced version with better handling of map initialization
-const MapUpdater = ({ 
-  userLocation, 
-  onMapReady 
-}: { 
-  userLocation: { lat: number; lon: number } | null;
-  onMapReady: () => void;
-}) => {
-  const map = useMap();
-  const initializationAttempted = useRef(false);
-  
-  useEffect(() => {
-    if (!map || initializationAttempted.current) return;
-    
-    initializationAttempted.current = true;
-    
-    try {
-      console.log('MapUpdater: Map instance available', map);
-      
-      // Force resize and redraw - use a more aggressive approach to ensure map initializes
-      const setupMap = () => {
-        try {
-          console.log('MapUpdater: Forcing map initialization');
-          map.invalidateSize(true);
-          
-          if (userLocation) {
-            console.log('MapUpdater: Setting view to user location', userLocation);
-            map.setView([userLocation.lat, userLocation.lon], 13);
-          } else {
-            console.log('MapUpdater: No user location available');
-          }
-          
-          // Notify parent the map is ready
-          console.log('MapUpdater: Notifying parent map is ready');
-          onMapReady();
-          
-          // Add additional resize for safety
-          setTimeout(() => {
-            try {
-              map.invalidateSize(true);
-            } catch (e) {
-              console.warn('Error in additional resize', e);
-            }
-          }, 500);
-        } catch (err) {
-          console.warn('Error in setupMap:', err);
-        }
-      };
-      
-      // Try immediately and then with delay to ensure map loads
-      setupMap();
-      setTimeout(setupMap, 500); 
-      setTimeout(setupMap, 1500);
-    } catch (err) {
-      console.warn('Error updating map view:', err);
-    }
-  }, [map, userLocation, onMapReady]);
-  
-  return null;
-};
 
 // Safe Draw Control component
 const SafeDrawControl = ({ 
@@ -113,6 +69,12 @@ const SafeDrawControl = ({
     console.log('SafeDrawControl: Initializing draw controls');
     
     try {
+      // Disable problematic touch handlers to avoid "a is not a function" error
+      // @ts-ignore - These properties exist on Leaflet map but might not be in TypeScript defs
+      if (map.touchZoom) map.touchZoom.disable();
+      // @ts-ignore
+      if (map.tap) map.tap.disable();
+      
       // Clear existing layers
       drawnItemsRef.current.clearLayers();
       
@@ -451,6 +413,15 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           mapInstance.options.touchZoom = false;
           mapInstance.options.tap = false;
           
+          try {
+            // @ts-ignore - These properties exist on Leaflet map but might not be in TypeScript defs
+            if (mapInstance.touchZoom) mapInstance.touchZoom.disable();
+            // @ts-ignore
+            if (mapInstance.tap) mapInstance.tap.disable();
+          } catch (e) {
+            console.warn('Error disabling touch handlers:', e);
+          }
+          
           // We need to give the map a moment to initialize properly
           setTimeout(() => {
             try {
@@ -476,8 +447,8 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <MapUpdater 
-          userLocation={userLocation} 
+        <SimplifiedMapUpdater 
+          coordinates={userLocation} 
           onMapReady={handleMapReady}
         />
         

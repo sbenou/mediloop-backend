@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -29,7 +30,8 @@ if (typeof window !== 'undefined') {
   window.addEventListener('error', (e) => {
     if (e.message && (
       e.message.includes('a is not a function') || 
-      e.message.includes('touchleave')
+      e.message.includes('touchleave') ||
+      e.message.includes('touch')
     )) {
       console.warn('Caught Leaflet-related error:', e.message);
       e.preventDefault();
@@ -210,9 +212,18 @@ export function PharmacyMap({
                 try {
                   console.log('PharmacyMap: Map instance created');
                   
-                  // Disable problematic handlers
+                  // Disable problematic handlers to avoid "a is not a function" error
                   map.options.touchZoom = false;
                   map.options.tap = false;
+                  
+                  try {
+                    // @ts-ignore - These properties exist but might not be in TypeScript defs
+                    if (map.touchZoom) map.touchZoom.disable();
+                    // @ts-ignore
+                    if (map.tap) map.tap.disable();
+                  } catch (e) {
+                    console.warn('Error disabling touch handlers:', e);
+                  }
                   
                   // Force resize right away
                   map.invalidateSize(true);

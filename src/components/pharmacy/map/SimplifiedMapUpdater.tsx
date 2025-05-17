@@ -20,6 +20,22 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
     
     console.log('SimplifiedMapUpdater: Starting initialization');
     
+    // Disable problematic touch handlers that might cause the "a is not a function" error
+    try {
+      // @ts-ignore - These properties exist on Leaflet map but might not be in TypeScript defs
+      if (map.touchZoom) map.touchZoom.disable();
+      // @ts-ignore
+      if (map.tap) map.tap.disable();
+      
+      // Some browsers have issues with these handlers
+      if (map.options) {
+        map.options.touchZoom = false;
+        map.options.tap = false;
+      }
+    } catch (err) {
+      console.warn('Error disabling touch handlers:', err);
+    }
+    
     // Use a slightly longer delay to ensure the container is ready
     const timer = setTimeout(() => {
       try {
@@ -53,7 +69,7 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
       } catch (error) {
         console.error('Error initializing map:', error);
       }
-    }, 1000); // Increased delay to ensure the container is fully rendered
+    }, 1000); // Delay to ensure the container is fully rendered
     
     return () => clearTimeout(timer);
   }, [map, coordinates, onMapReady]);
@@ -80,6 +96,16 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
         console.log('SimplifiedMapUpdater: Using fallback timer to mark map as ready');
         try {
           if (map) {
+            // Disable problematic touch handlers again in fallback
+            try {
+              // @ts-ignore
+              if (map.touchZoom) map.touchZoom.disable();
+              // @ts-ignore
+              if (map.tap) map.tap.disable();
+            } catch (e) {
+              console.warn('Error disabling touch handlers in fallback:', e);
+            }
+            
             map.invalidateSize(true);
             
             if (coordinates && coordinates.lat && coordinates.lon) {
@@ -95,7 +121,7 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
           onMapReady();
         }
       }
-    }, 2500); // 2.5 second absolute fallback
+    }, 2000); // 2 second absolute fallback
     
     return () => clearTimeout(fallbackTimer);
   }, [map, coordinates, onMapReady]);
