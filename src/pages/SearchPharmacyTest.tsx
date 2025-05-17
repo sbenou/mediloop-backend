@@ -40,57 +40,68 @@ function DrawControl() {
   const map = useMap();
   const drawControlRef = useRef<L.Control.Draw | null>(null);
   const drawnItemsRef = useRef(new L.FeatureGroup());
+  const initCompletedRef = useRef(false);
   
   useEffect(() => {
-    if (!map) return;
+    if (!map || initCompletedRef.current) return;
+    
+    console.log('DrawControl: Initializing draw control');
+    initCompletedRef.current = true;
 
-    // Add the FeatureGroup to the map
-    map.addLayer(drawnItemsRef.current);
+    try {
+      // Add the FeatureGroup to the map
+      map.addLayer(drawnItemsRef.current);
 
-    // Initialize the draw control and pass it the FeatureGroup of editable layers
-    const drawControl = new L.Control.Draw({
-      edit: {
-        featureGroup: drawnItemsRef.current,
-        poly: {
-          allowIntersection: false
-        }
-      },
-      draw: {
-        polygon: {
-          allowIntersection: false,
-          showArea: true
+      // Initialize the draw control and pass it the FeatureGroup of editable layers
+      const drawControl = new L.Control.Draw({
+        edit: {
+          featureGroup: drawnItemsRef.current,
+          poly: {
+            allowIntersection: false
+          }
         },
-        polyline: false,
-        rectangle: true,
-        circle: true,
-        marker: false,
-        circlemarker: false
-      }
-    });
+        draw: {
+          polygon: {
+            allowIntersection: false,
+            showArea: true
+          },
+          polyline: false,
+          rectangle: true,
+          circle: true,
+          marker: false,
+          circlemarker: false
+        }
+      });
 
-    // Add the draw control to the map
-    map.addControl(drawControl);
-    drawControlRef.current = drawControl;
+      // Add the draw control to the map
+      map.addControl(drawControl);
+      drawControlRef.current = drawControl;
 
-    // Handle the created event
-    map.on(L.Draw.Event.CREATED, (e: any) => {
-      const layer = e.layer;
-      drawnItemsRef.current.addLayer(layer);
-      
-      // You can perform filtering or other actions here
-      console.log('Shape created', layer);
-      
-      // If you want to get all pharmacies within the drawn shape
-      // You would implement that logic here
-    });
+      // Handle the created event
+      map.on(L.Draw.Event.CREATED, (e: any) => {
+        const layer = e.layer;
+        drawnItemsRef.current.addLayer(layer);
+        
+        // You can perform filtering or other actions here
+        console.log('Shape created', layer);
+      });
+    } catch (error) {
+      console.error('Error setting up draw control:', error);
+    }
 
     // Clean up on component unmount
     return () => {
-      if (drawControlRef.current) {
-        map.removeControl(drawControlRef.current);
+      if (!map) return;
+      
+      try {
+        if (drawControlRef.current) {
+          map.removeControl(drawControlRef.current);
+        }
+        map.removeLayer(drawnItemsRef.current);
+        map.off(L.Draw.Event.CREATED);
+      } catch (error) {
+        console.warn('Error cleaning up draw control:', error);
       }
-      map.removeLayer(drawnItemsRef.current);
-      map.off(L.Draw.Event.CREATED);
     };
   }, [map]);
 
@@ -155,11 +166,6 @@ const SearchPharmacyTest = () => {
     }
   }, [pharmacies]);
   
-  // Force map re-render when coordinates change
-  useEffect(() => {
-    setMapKey(`map-${Date.now()}`);
-  }, [currentCoordinates?.lat, currentCoordinates?.lon]);
-  
   // Handle search submission
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
@@ -219,6 +225,12 @@ const SearchPharmacyTest = () => {
     console.log('Map is ready in SearchPharmacyTest');
     setMapIsReady(true);
   }, []);
+  
+  // Force map re-render when coordinates change
+  useEffect(() => {
+    console.log('Coordinates changed, updating map key');
+    setMapKey(`map-${Date.now()}`);
+  }, [currentCoordinates?.lat, currentCoordinates?.lon]);
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -297,6 +309,17 @@ const SearchPharmacyTest = () => {
               zoom={12}
               scrollWheelZoom={true}
               style={{ height: '100%', width: '100%' }}
+              whenCreated={(mapInstance) => {
+                console.log('SearchPharmacyTest: Map instance created');
+                // Force resize after a short delay
+                setTimeout(() => {
+                  try {
+                    mapInstance.invalidateSize();
+                  } catch (err) {
+                    console.warn('Error in initial map resize:', err);
+                  }
+                }, 200);
+              }}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -311,7 +334,7 @@ const SearchPharmacyTest = () => {
               <DrawControl />
               
               {/* Render user location marker if using location */}
-              {showDefaultLocation && currentCoordinates && (
+              {showDefaultLocation && currentCoordinates && mapIsReady && (
                 <Marker 
                   position={[currentCoordinates.lat, currentCoordinates.lon]}
                   icon={userLocationIcon}
@@ -321,7 +344,7 @@ const SearchPharmacyTest = () => {
               )}
               
               {/* Render pharmacy markers */}
-              {filteredPharmacies.map((pharmacy) => {
+              {mapIsReady && filteredPharmacies.map((pharmacy) => {
                 if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
                 
                 return (

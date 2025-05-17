@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -74,6 +73,7 @@ export function PharmacyMap({
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
+  const mapReadyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Handle map creation errors with auto-retry
   const handleMapError = useCallback(() => {
@@ -92,10 +92,32 @@ export function PharmacyMap({
   
   // Handle map ready state
   const handleMapReady = useCallback(() => {
-    console.log("Map is ready");
+    console.log("PharmacyMap: Map is ready");
     setIsMapReady(true);
     setMapInitError(null);
+    
+    // Clear any pending timeouts
+    if (mapReadyTimeoutRef.current) {
+      clearTimeout(mapReadyTimeoutRef.current);
+      mapReadyTimeoutRef.current = null;
+    }
   }, []);
+  
+  // Add fallback timeout to set map as ready even if events fail
+  useEffect(() => {
+    if (isMapReady) return;
+    
+    mapReadyTimeoutRef.current = setTimeout(() => {
+      console.log('PharmacyMap: Fallback timeout reached, forcing ready state');
+      setIsMapReady(true);
+    }, 5000); // 5 second fallback
+    
+    return () => {
+      if (mapReadyTimeoutRef.current) {
+        clearTimeout(mapReadyTimeoutRef.current);
+      }
+    };
+  }, [isMapReady]);
   
   // Filter pharmacies when user location changes
   useEffect(() => {
@@ -186,14 +208,24 @@ export function PharmacyMap({
               whenCreated={(map) => {
                 // Additional safety for map initialization
                 try {
+                  console.log('PharmacyMap: Map instance created');
+                  
                   // Disable problematic handlers
                   map.options.touchZoom = false;
                   map.options.tap = false;
                   
+                  // Force resize right away
+                  map.invalidateSize(true);
+                  
                   // Fire ready event after a short delay to ensure map is fully loaded
                   setTimeout(() => {
-                    handleMapReady();
-                  }, 200);
+                    try {
+                      map.invalidateSize(true);
+                      console.log('PharmacyMap: Forced map invalidation after delay');
+                    } catch (e) {
+                      console.warn('Error in delayed map resize:', e);
+                    }
+                  }, 500);
                 } catch (e) {
                   console.warn('Error in map creation:', e);
                   handleMapError();
@@ -211,7 +243,7 @@ export function PharmacyMap({
               />
               
               {/* Show user location marker if enabled */}
-              {showDefaultLocation && (
+              {showDefaultLocation && isMapReady && (
                 <Marker 
                   position={centerCoords}
                   icon={userLocationIcon}
@@ -220,7 +252,7 @@ export function PharmacyMap({
                 </Marker>
               )}
               
-              {/* Render pharmacy markers */}
+              {/* Render pharmacy markers - only when map is ready */}
               {isMapReady && filteredPharmacies.map((pharmacy) => {
                 if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
                 

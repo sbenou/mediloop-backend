@@ -35,6 +35,17 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
         initCompletedRef.current = true;
         onMapReady();
         
+        // Add additional resize after a delay for extra safety
+        setTimeout(() => {
+          try {
+            if (map) {
+              map.invalidateSize(true);
+            }
+          } catch (error) {
+            console.warn('Error in additional map resize:', error);
+          }
+        }, 1000);
+        
       } catch (error) {
         console.error('Error initializing map:', error);
       }
@@ -66,6 +77,35 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
     }, 1500);
     
     return () => clearTimeout(secondaryTimer);
+  }, [map, coordinates, onMapReady]);
+  
+  // Add a final fallback to force map ready state
+  useEffect(() => {
+    if (initCompletedRef.current) return;
+    
+    const fallbackTimer = setTimeout(() => {
+      if (!initCompletedRef.current) {
+        console.log('SimplifiedMapUpdater: Using fallback timer to mark map as ready');
+        try {
+          if (map) {
+            map.invalidateSize(true);
+            
+            if (coordinates && coordinates.lat && coordinates.lon) {
+              map.setView([coordinates.lat, coordinates.lon], 13);
+            }
+          }
+          
+          initCompletedRef.current = true;
+          onMapReady();
+        } catch (error) {
+          console.error('Error in fallback map initialization:', error);
+          // Even if we get an error, mark as ready to prevent UI from being stuck
+          onMapReady();
+        }
+      }
+    }, 3000); // 3 second absolute fallback
+    
+    return () => clearTimeout(fallbackTimer);
   }, [map, coordinates, onMapReady]);
   
   return null;

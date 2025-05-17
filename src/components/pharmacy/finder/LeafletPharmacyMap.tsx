@@ -30,7 +30,7 @@ const redIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Map updater component
+// Map updater component - Enhanced version with better handling of map initialization
 const MapUpdater = ({ 
   userLocation, 
   onMapReady 
@@ -39,28 +39,50 @@ const MapUpdater = ({
   onMapReady: () => void;
 }) => {
   const map = useMap();
+  const initializationAttempted = useRef(false);
   
   useEffect(() => {
-    if (!map) return;
+    if (!map || initializationAttempted.current) return;
+    
+    initializationAttempted.current = true;
     
     try {
       console.log('MapUpdater: Map instance available', map);
-      // Force resize and redraw
-      setTimeout(() => {
-        console.log('MapUpdater: Invalidating map size');
-        map.invalidateSize(true);
-        
-        if (userLocation) {
-          console.log('MapUpdater: Setting view to user location', userLocation);
-          map.setView([userLocation.lat, userLocation.lon], 13);
-        } else {
-          console.log('MapUpdater: No user location available');
+      
+      // Force resize and redraw - use a more aggressive approach to ensure map initializes
+      const setupMap = () => {
+        try {
+          console.log('MapUpdater: Forcing map initialization');
+          map.invalidateSize(true);
+          
+          if (userLocation) {
+            console.log('MapUpdater: Setting view to user location', userLocation);
+            map.setView([userLocation.lat, userLocation.lon], 13);
+          } else {
+            console.log('MapUpdater: No user location available');
+          }
+          
+          // Notify parent the map is ready
+          console.log('MapUpdater: Notifying parent map is ready');
+          onMapReady();
+          
+          // Add additional resize for safety
+          setTimeout(() => {
+            try {
+              map.invalidateSize(true);
+            } catch (e) {
+              console.warn('Error in additional resize', e);
+            }
+          }, 500);
+        } catch (err) {
+          console.warn('Error in setupMap:', err);
         }
-        
-        // Notify parent the map is ready
-        console.log('MapUpdater: Notifying parent map is ready');
-        onMapReady();
-      }, 1000); // Increased timeout for better reliability
+      };
+      
+      // Try immediately and then with delay to ensure map loads
+      setupMap();
+      setTimeout(setupMap, 500); 
+      setTimeout(setupMap, 1500);
     } catch (err) {
       console.warn('Error updating map view:', err);
     }
@@ -211,6 +233,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   const [retryCount, setRetryCount] = useState(0);
   const MAX_ATTEMPTS = 3;
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapReadyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Default center position (Luxembourg)
   const defaultCenter: [number, number] = userLocation 
@@ -225,7 +248,30 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     setIsMapReady(true);
     setIsLoading(false);
     setError(null);
+    
+    // Clear any pending timeouts
+    if (mapReadyTimeoutRef.current) {
+      clearTimeout(mapReadyTimeoutRef.current);
+      mapReadyTimeoutRef.current = null;
+    }
   }, []);
+  
+  // Automatically set map ready after a timeout as a fallback
+  useEffect(() => {
+    if (isMapReady) return;
+    
+    mapReadyTimeoutRef.current = setTimeout(() => {
+      console.log('Map ready timeout reached, forcing ready state');
+      setIsMapReady(true);
+      setIsLoading(false);
+    }, 5000); // 5 second fallback
+    
+    return () => {
+      if (mapReadyTimeoutRef.current) {
+        clearTimeout(mapReadyTimeoutRef.current);
+      }
+    };
+  }, [isMapReady]);
   
   // Handle map initialization errors
   const handleRetry = () => {
@@ -288,35 +334,49 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   // Effect to ensure the map container is properly sized
   useEffect(() => {
     if (mapContainerRef.current) {
-      // Force explicit height and width
-      mapContainerRef.current.style.height = '500px';
-      mapContainerRef.current.style.width = '100%';
-      mapContainerRef.current.style.position = 'relative';
-      mapContainerRef.current.style.display = 'block';
+      // Force explicit height and width with important flags
+      mapContainerRef.current.style.cssText = `
+        height: 500px !important;
+        width: 100% !important; 
+        position: relative !important;
+        display: block !important;
+        visibility: visible !important;
+        z-index: 1 !important;
+      `;
     }
   }, []);
 
   // Preload Leaflet resources
   useEffect(() => {
-    // Preload Leaflet CSS
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css';
-    document.head.appendChild(link);
+    // Preload Leaflet CSS and ensure it's loaded
+    const linkExists = document.querySelector('link[href*="leaflet.css"]');
+    
+    if (!linkExists) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css';
+      document.head.appendChild(link);
+      
+      // Check if CSS was actually loaded
+      link.onload = () => console.log('Leaflet CSS loaded successfully');
+      link.onerror = () => console.error('Failed to load Leaflet CSS');
+    }
     
     // Force leaflet images to be loaded
-    const img1 = new Image();
-    img1.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png';
-    const img2 = new Image();
-    img2.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png';
-    const img3 = new Image();
-    img3.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png';
+    const preloadImages = [
+      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
+    ];
     
-    return () => {
-      document.head.removeChild(link);
-    };
+    // Create image elements to force preloading
+    preloadImages.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
   }, []);
-  
+
   // If loading, show a skeleton
   if (isLoading && !isMapReady) {
     console.log('LeafletPharmacyMap showing loading state');
@@ -363,7 +423,8 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         width: '100%', 
         position: 'relative',
         zIndex: 1,
-        visibility: 'visible'
+        visibility: 'visible',
+        display: 'block'
       }}
     >
       <MapContainer
@@ -381,14 +442,29 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           zIndex: 1
         }}
         scrollWheelZoom={true}
+        attributionControl={true}
         whenCreated={(mapInstance) => {
           // This callback runs when the map is created
           console.log('Map instance created');
           
+          // Disable problematic handlers that might cause issues
+          mapInstance.options.touchZoom = false;
+          mapInstance.options.tap = false;
+          
           // We need to give the map a moment to initialize properly
           setTimeout(() => {
             try {
+              console.log('Forcing map initialization from whenCreated');
               mapInstance.invalidateSize();
+              
+              // Force an additional resize after a delay
+              setTimeout(() => {
+                try {
+                  mapInstance.invalidateSize();
+                } catch (err) {
+                  console.warn('Error in delayed map resize:', err);
+                }
+              }, 500);
             } catch (err) {
               console.error('Error in map initialization:', err);
             }
@@ -405,13 +481,16 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           onMapReady={handleMapReady}
         />
         
-        <SafeDrawControl 
-          onShapeCreated={onPharmaciesInShape} 
-          pharmacies={pharmacies}
-          enabled={isMapReady}
-        />
+        {/* SafeDrawControl should only be included when map is ready */}
+        {isMapReady && (
+          <SafeDrawControl 
+            onShapeCreated={onPharmaciesInShape} 
+            pharmacies={pharmacies}
+            enabled={isMapReady}
+          />
+        )}
         
-        {/* User location marker */}
+        {/* User location marker - only show when map is ready */}
         {userLocation && isMapReady && (
           <Marker 
             position={[userLocation.lat, userLocation.lon]}
@@ -421,10 +500,9 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           </Marker>
         )}
         
-        {/* Pharmacy markers */}
+        {/* Pharmacy markers - only show when map is ready */}
         {isMapReady && pharmacies && pharmacies.map((pharmacy, index) => {
           if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) {
-            console.log(`Pharmacy ${index} missing coordinates`, pharmacy);
             return null;
           }
           
