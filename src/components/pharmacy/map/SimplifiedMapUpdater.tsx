@@ -5,7 +5,7 @@ import L from 'leaflet';
 
 interface SimplifiedMapUpdaterProps {
   coordinates: { lat: number; lon: number } | null;
-  onMapReady: () => void;
+  onMapReady: (map?: L.Map) => void;
 }
 
 export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({ 
@@ -22,7 +22,7 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
     console.log('SimplifiedMapUpdater: Starting initialization');
     
     try {
-      // CRITICAL: Remove ALL touch functionality to prevent "a is not a function" error
+      // CRITICAL: COMPLETELY remove ALL touch functionality to prevent "a is not a function" error
       if (map.options) {
         // Disable all interactive touch options
         map.options.touchZoom = false;
@@ -30,11 +30,13 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
         map.options.dragging = !L.Browser.mobile; // Disable dragging on mobile
         map.options.keyboard = false; // Disable keyboard navigation on mobile
         map.options.inertia = !L.Browser.mobile; // Disable inertia on mobile
+        map.options.zoomAnimation = !L.Browser.mobile; // Disable zoom animation on mobile
+        map.options.fadeAnimation = !L.Browser.mobile; // Disable fade animation on mobile
+        map.options.doubleClickZoom = false; // Disable double click zoom
         
-        // Disable the touch related event handlers directly
-        const touchHandlersToRemove = ['tap', 'touchZoom', 'tapHold', 'touchStart', 'touchEnd', 'touchCancel'];
+        // Try to directly disable handlers
         if (map._handlers) {
-          // Remove existing handlers
+          // Disable all handlers with names containing 'touch', 'tap', or 'drag'
           Object.keys(map._handlers).forEach(handlerId => {
             try {
               if (handlerId.includes('touch') || handlerId.includes('tap') || handlerId.includes('drag')) {
@@ -42,59 +44,68 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
                 console.log(`Disabled handler: ${handlerId}`);
               }
             } catch (e) {
-              // Silently ignore any errors from disabling handlers
+              // Ignore any errors from disabling handlers
             }
           });
         }
         
-        // Remove event listeners for problematic events
-        if (typeof window !== 'undefined' && typeof map._container !== 'undefined') {
+        // Try to completely remove problematic event handlers from the map container
+        if (typeof window !== 'undefined' && map._container) {
           try {
-            // Try to remove all touch event listeners from the map container
-            const container = map._container;
-            ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(eventType => {
-              container.removeEventListener(eventType, () => {}, { capture: true });
+            const touchEvents = ['touchstart', 'touchmove', 'touchend', 'touchcancel', 'tap', 'taphold', 'dbltap'];
+            
+            // Remove all touch event listeners from the map container
+            touchEvents.forEach(event => {
+              map._container.removeEventListener(event, () => {}, { capture: true });
+            });
+            
+            // Attempt to override touch event listeners with empty functions
+            touchEvents.forEach(event => {
+              const emptyHandler = (e: Event) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+              };
+              map._container.addEventListener(event, emptyHandler, { capture: true });
             });
           } catch (e) {
-            // Silently ignore errors from event listener removal
+            // Ignore errors from event handler manipulation
           }
         }
       }
       
-      // Force a delay before proceeding to ensure handlers are properly disabled
-      setTimeout(() => {
+      // For mobile, patch in a static, non-interactive map behavior
+      const isMobile = L.Browser.mobile || 
+        (typeof window !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+      
+      if (isMobile) {
+        // Make the map essentially static on mobile
         try {
-          console.log('SimplifiedMapUpdater: Initializing map');
+          if (map.dragging) map.dragging.disable();
+          if (map.touchZoom) map.touchZoom.disable();
+          if (map.doubleClickZoom) map.doubleClickZoom.disable();
+          if (map.scrollWheelZoom) map.scrollWheelZoom.disable();
+          if (map.boxZoom) map.boxZoom.disable();
+          if (map.keyboard) map.keyboard.disable();
           
-          // Force map to update its container size
-          map.invalidateSize(true);
-          
-          // If coordinates are provided, center the map on them
-          if (coordinates && coordinates.lat && coordinates.lon) {
-            console.log('SimplifiedMapUpdater: Setting view to coordinates:', coordinates);
-            map.setView([coordinates.lat, coordinates.lon], 13);
-          }
-          
-          // Notify parent that the map is ready
-          console.log('SimplifiedMapUpdater: Map ready, notifying parent');
-          initCompletedRef.current = true;
-          onMapReady();
-          
-          // Add additional resize after a delay for extra safety
-          setTimeout(() => {
-            if (map) {
-              map.invalidateSize(true);
-            }
-          }, 500);
-        } catch (error) {
-          console.error('Error initializing map:', error);
-          // Even with errors, mark as ready to prevent UI from being stuck
-          if (!initCompletedRef.current) {
-            initCompletedRef.current = true;
-            onMapReady();
-          }
+          console.log('Disabled all interactive features on mobile');
+        } catch (e) {
+          console.warn('Error disabling map interactions:', e);
         }
-      }, 200); // Shorter delay for faster initialization
+      }
+      
+      // Notify parent that the map is ready
+      console.log('SimplifiedMapUpdater: Map ready, notifying parent');
+      initCompletedRef.current = true;
+      onMapReady(map);
+      
+      // Force resize after a slight delay
+      setTimeout(() => {
+        if (map) {
+          map.invalidateSize(true);
+        }
+      }, 100);
+      
     } catch (error) {
       console.error('Error during map initialization:', error);
       // Ensure we always call onMapReady even if there's an error
@@ -105,7 +116,7 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
     }
     
     // No cleanup needed for touch handler disabling
-  }, [map, coordinates, onMapReady]);
+  }, [map, onMapReady]);
   
   // Secondary effect to handle coordinate changes after initialization
   useEffect(() => {
