@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -60,7 +59,7 @@ const MapUpdater = ({
         // Notify parent the map is ready
         console.log('MapUpdater: Notifying parent map is ready');
         onMapReady();
-      }, 300);
+      }, 500); // Increased timeout to ensure map is fully rendered
     } catch (err) {
       console.warn('Error updating map view:', err);
     }
@@ -265,13 +264,35 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
       mapContainerRef.current.style.width = '100%';
     }
   }, []);
+
+  // Preload Leaflet resources
+  useEffect(() => {
+    // Preload Leaflet CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css';
+    document.head.appendChild(link);
+    
+    // Force leaflet images to be loaded
+    const img1 = new Image();
+    img1.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png';
+    const img2 = new Image();
+    img2.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png';
+    
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
   
   // If loading, show a skeleton
   if (isLoading && !isMapReady) {
     console.log('LeafletPharmacyMap showing loading state');
     return (
-      <div className="w-full h-full min-h-[400px]">
-        <Skeleton className="w-full h-full min-h-[400px]" />
+      <div className="w-full h-full min-h-[400px] bg-gray-100 rounded-md flex items-center justify-center">
+        <div className="text-center">
+          <Skeleton className="w-full h-[400px]" />
+          <p className="mt-2 text-sm text-muted-foreground">Loading map...</p>
+        </div>
       </div>
     );
   }
@@ -304,7 +325,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     <div 
       ref={mapContainerRef} 
       className="w-full h-[500px] relative border rounded-md overflow-hidden"
-      style={{ height: '500px', width: '100%' }} // Force explicit dimensions
+      style={{ height: '500px', width: '100%', position: 'relative' }} // Force explicit dimensions
     >
       <MapContainer
         key={mapKey}
@@ -321,6 +342,19 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           zIndex: 1
         }}
         scrollWheelZoom={true}
+        whenCreated={(mapInstance) => {
+          // This callback runs when the map is created
+          console.log('Map instance created');
+          
+          // We need to give the map a moment to initialize properly
+          setTimeout(() => {
+            try {
+              mapInstance.invalidateSize();
+            } catch (err) {
+              console.error('Error in map initialization:', err);
+            }
+          }, 100);
+        }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
