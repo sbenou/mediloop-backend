@@ -6,6 +6,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import { PharmacyList } from "./list/PharmacyList";
 import { PharmacyMap } from "./map/PharmacyMap";
 import { toast } from "@/components/ui/use-toast";
+import { calculateDistance } from '@/lib/utils/distance';
 
 // Ensure leaflet is properly initialized on the client side
 if (typeof window !== 'undefined') {
@@ -71,32 +72,51 @@ const PharmacyListSection = ({
     }
   }, [pharmacies]);
   
-  // Update filtered pharmacies when location or pharmacy data changes
+  // Calculate distances and update filtered pharmacies when location or pharmacy data changes
   useEffect(() => {
     if (!coordinates?.lat || !coordinates?.lon) {
       setFilteredPharmacies(pharmacies);
       return;
     }
 
-    if (showDefaultLocation) {
-      try {
-        const userLocation = L.latLng(coordinates.lat, coordinates.lon);
-        const nearbyPharmacies = pharmacies.filter(pharmacy => {
-          if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
+    try {
+      // Add distance property to all pharmacies
+      const pharmaciesWithDistance = pharmacies.map(pharmacy => {
+        const updatedPharmacy = {...pharmacy};
+        
+        if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
           try {
-            const pharmacyLocation = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-            return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km radius
-          } catch (error) {
-            console.error('Error calculating distance for pharmacy:', pharmacy, error);
-            return false;
+            // Calculate distance using leaflet
+            const userPos = L.latLng(coordinates.lat, coordinates.lon);
+            const pharmPos = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+            const distanceInMeters = userPos.distanceTo(pharmPos);
+            
+            // Add distance in km with one decimal place
+            updatedPharmacy.distance = (distanceInMeters / 1000).toFixed(1);
+            updatedPharmacy.distanceRaw = distanceInMeters; // For sorting
+            
+            console.log(`Distance to ${pharmacy.name}: ${updatedPharmacy.distance}km`);
+          } catch (e) {
+            console.error("Error calculating distance:", e);
           }
+        }
+        
+        return updatedPharmacy;
+      });
+      
+      // Filter if showing only nearby pharmacies
+      if (showDefaultLocation) {
+        const nearbyPharmacies = pharmaciesWithDistance.filter(pharmacy => {
+          return pharmacy.distanceRaw && pharmacy.distanceRaw <= 2000; // 2km radius
         });
+        
         setFilteredPharmacies(nearbyPharmacies);
-      } catch (error) {
-        console.error('Error creating user location:', error);
-        setFilteredPharmacies(pharmacies);
+      } else {
+        setFilteredPharmacies(pharmaciesWithDistance);
       }
-    } else {
+      
+    } catch (error) {
+      console.error('Error processing pharmacies with location data:', error);
       setFilteredPharmacies(pharmacies);
     }
   }, [showDefaultLocation, coordinates, pharmacies]);

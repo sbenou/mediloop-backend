@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import PharmacyDetails from "./pharmacy/PharmacyDetails";
@@ -68,7 +69,7 @@ const PharmacyCard = ({
 
         <button
           onClick={() => onSelect(id)}
-          className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+          className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors mt-4"
         >
           Order
         </button>

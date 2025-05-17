@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -59,7 +60,7 @@ const MapUpdater = ({
         // Notify parent the map is ready
         console.log('MapUpdater: Notifying parent map is ready');
         onMapReady();
-      }, 500); // Increased timeout to ensure map is fully rendered
+      }, 1000); // Increased timeout for better reliability
     } catch (err) {
       console.warn('Error updating map view:', err);
     }
@@ -256,12 +257,42 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     }
   }, [pharmacies]);
   
+  // Add distance to pharmacies if userLocation is available
+  useEffect(() => {
+    if (userLocation && pharmacies?.length > 0) {
+      console.log('Calculating distances for pharmacies');
+      try {
+        const userPos = L.latLng(userLocation.lat, userLocation.lon);
+        
+        // Update pharmacy distances
+        pharmacies.forEach(pharmacy => {
+          if (pharmacy?.coordinates?.lat && pharmacy?.coordinates?.lon) {
+            try {
+              const pharmacyPos = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
+              const distanceInMeters = userPos.distanceTo(pharmacyPos);
+              
+              // Add distance in km with one decimal place
+              pharmacy.distance = (distanceInMeters / 1000).toFixed(1);
+              console.log(`Distance to ${pharmacy.name}: ${pharmacy.distance}km`);
+            } catch (err) {
+              console.warn('Error calculating distance for pharmacy:', pharmacy.id, err);
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error calculating pharmacy distances:', err);
+      }
+    }
+  }, [userLocation, pharmacies]);
+  
   // Effect to ensure the map container is properly sized
   useEffect(() => {
     if (mapContainerRef.current) {
       // Force explicit height and width
       mapContainerRef.current.style.height = '500px';
       mapContainerRef.current.style.width = '100%';
+      mapContainerRef.current.style.position = 'relative';
+      mapContainerRef.current.style.display = 'block';
     }
   }, []);
 
@@ -278,6 +309,8 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     img1.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png';
     const img2 = new Image();
     img2.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png';
+    const img3 = new Image();
+    img3.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png';
     
     return () => {
       document.head.removeChild(link);
@@ -325,7 +358,13 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     <div 
       ref={mapContainerRef} 
       className="w-full h-[500px] relative border rounded-md overflow-hidden"
-      style={{ height: '500px', width: '100%', position: 'relative' }} // Force explicit dimensions
+      style={{ 
+        height: '500px', 
+        width: '100%', 
+        position: 'relative',
+        zIndex: 1,
+        visibility: 'visible'
+      }}
     >
       <MapContainer
         key={mapKey}
@@ -353,7 +392,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
             } catch (err) {
               console.error('Error in map initialization:', err);
             }
-          }, 100);
+          }, 200);
         }}
       >
         <TileLayer
@@ -399,6 +438,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
                   <h3 className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</h3>
                   <p className="text-xs">{pharmacy.address || 'Address not available'}</p>
                   {pharmacy.hours && <p className="text-xs">Hours: {pharmacy.hours}</p>}
+                  {pharmacy.distance && <p className="text-xs font-medium">Distance: {pharmacy.distance} km</p>}
                 </div>
               </Popup>
             </Marker>
