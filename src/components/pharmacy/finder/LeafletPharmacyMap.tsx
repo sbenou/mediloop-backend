@@ -7,7 +7,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Map } from 'lucide-react';
 import { SimplifiedMapUpdater } from '@/components/pharmacy/map/SimplifiedMapUpdater';
 
 // Fix for default marker icons in Leaflet with Vite
@@ -28,6 +28,11 @@ const redIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
+// Detect if the current device is a mobile device
+const isMobile = typeof window !== 'undefined' ? 
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) : 
+  false;
+
 // Add extremely aggressive error prevention - intercept and suppress all touch-related errors
 if (typeof window !== 'undefined') {
   // Global error handler to catch "a is not a function" errors
@@ -45,72 +50,62 @@ if (typeof window !== 'undefined') {
     }
     return false;
   }, true);
-  
-  // Patch touch events globally
-  try {
-    if (typeof EventTarget !== 'undefined') {
-      const originalAddEventListener = EventTarget.prototype.addEventListener;
-      
-      EventTarget.prototype.addEventListener = function(type, listener, options) {
-        if (type && typeof type === 'string' && 
-            (type.includes('touch') || type.includes('tap'))) {
-          // For touch events, replace the handler with a no-op function that doesn't throw
-          const safeListener = function(event) {
-            try {
-              // Try the original listener
-              if (typeof listener === 'function') {
-                listener(event);
-              } else if (listener && typeof listener.handleEvent === 'function') {
-                listener.handleEvent(event);
-              }
-            } catch (e) {
-              // Suppress any errors in the handler
-              console.warn(`Suppressed error in ${type} handler:`, e.message);
-              event.preventDefault();
-              event.stopPropagation();
-            }
-          };
-          return originalAddEventListener.call(this, type, safeListener, options);
-        }
-        // For non-touch events, use the original handler
-        return originalAddEventListener.call(this, type, listener, options);
-      };
-      
-      console.log('Successfully patched EventTarget.prototype.addEventListener');
-    }
-  } catch (e) {
-    console.warn('Failed to patch EventTarget:', e);
-  }
 }
 
-// Simplified version of the draw control without touch
-const StaticDrawControl = ({ 
-  onShapeCreated, 
-  pharmacies 
-}: { 
-  onShapeCreated: (pharmaciesInShape: any[]) => void,
-  pharmacies: any[]
-}) => {
-  // We won't attempt to initialize the draw control on mobile
-  const isMobile = typeof window !== 'undefined' ? 
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) : 
-    false;
-
+// Static version that doesn't use Leaflet at all for mobile devices
+const MobileMapFallback: React.FC<{
+  userLocation: { lat: number; lon: number } | null;
+  pharmacies: any[];
+  onPharmaciesInShape: (pharmacies: any[]) => void;
+}> = ({ userLocation, pharmacies, onPharmaciesInShape }) => {
+  
   useEffect(() => {
-    // On mobile, just show all pharmacies to avoid the touch error
-    if (isMobile) {
-      console.log('Mobile detected, showing all pharmacies without draw control');
-      onShapeCreated(pharmacies);
+    // Just show all pharmacies without any filtering
+    onPharmaciesInShape(pharmacies);
+    
+    toast({
+      title: "Mobile Experience",
+      description: "Interactive maps are disabled on mobile for better compatibility.",
+      duration: 5000
+    });
+  }, [pharmacies, onPharmaciesInShape]);
+  
+  // Generate static map URL using Mapbox
+  const mapUrl = userLocation 
+    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${userLocation.lon},${userLocation.lat},11,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`
+    : `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/6.1296,49.8153,11,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+  
+  return (
+    <div className="w-full h-full bg-gray-50 relative overflow-hidden rounded-md border border-gray-200">
+      <div className="absolute inset-0 flex items-center justify-center z-10">
+        <div className="text-center p-6 bg-white/80 rounded-lg shadow-sm max-w-xs">
+          <Map className="h-10 w-10 text-primary/60 mx-auto mb-2" />
+          <h3 className="text-base font-medium mb-2">Static Map View</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Interactive maps are disabled on mobile devices for better compatibility.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {pharmacies.length} pharmacies available in this area
+          </p>
+        </div>
+      </div>
       
-      toast({
-        title: "Mobile Experience",
-        description: "Drawing on map is disabled on mobile devices. All pharmacies are shown.",
-        duration: 5000
-      });
-    }
-  }, [isMobile, pharmacies, onShapeCreated]);
-
-  return null;
+      <img 
+        src={mapUrl}
+        alt="Static pharmacy map" 
+        className="w-full h-full object-cover"
+        loading="eager"
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
+        }}
+      />
+      
+      <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-2 text-center text-xs">
+        <p>Interactive maps are not available on mobile devices</p>
+      </div>
+    </div>
+  );
 };
 
 interface LeafletPharmacyMapProps {
@@ -126,11 +121,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   useLocationFilter,
   onPharmaciesInShape
 }) => {
-  // Detect mobile browsers to provide fallback experience
-  const isMobile = typeof window !== 'undefined' ? 
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) : 
-    false;
-    
   const [isLoading, setIsLoading] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
@@ -219,16 +209,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
       visibility: visible !important;
       z-index: 1;
     `;
-    
-    // For mobile, show toast about limited functionality
-    if (isMobile && !isLoading) {
-      toast({
-        title: "Mobile Map Experience",
-        description: "Some map features are limited on mobile to ensure compatibility.",
-        duration: 5000
-      });
-    }
-  }, [isMobile, isLoading]);
+  }, []);
   
   if (isLoading && !isMapReady) {
     return (
@@ -258,6 +239,18 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     );
   }
 
+  // For mobile devices, don't even try to use Leaflet
+  if (isMobile) {
+    return (
+      <MobileMapFallback 
+        userLocation={userLocation}
+        pharmacies={pharmacies}
+        onPharmaciesInShape={onPharmaciesInShape}
+      />
+    );
+  }
+
+  // Desktop version uses Leaflet
   return (
     <div 
       ref={mapContainerRef} 
@@ -278,10 +271,9 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           bottom: 0,
           zIndex: 1
         }}
-        scrollWheelZoom={!isMobile}
+        scrollWheelZoom={true}
         zoomControl={true}
-        // For mobile devices, disable interactions that cause problems
-        {...(isMobile ? { dragging: false } : { dragging: true })}
+        dragging={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -292,14 +284,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           coordinates={userLocation} 
           onMapReady={handleMapReady}
         />
-        
-        {/* Static draw control - safe for all browsers */}
-        {isMapReady && (
-          <StaticDrawControl 
-            onShapeCreated={onPharmaciesInShape}
-            pharmacies={pharmacies}
-          />
-        )}
         
         {/* User location marker */}
         {userLocation && isMapReady && (
@@ -345,13 +329,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           }
         })}
       </MapContainer>
-      
-      {/* Mobile warning overlay */}
-      {isMobile && (
-        <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-2 text-center text-xs">
-          <p>Limited map functionality available on mobile devices</p>
-        </div>
-      )}
     </div>
   );
 };

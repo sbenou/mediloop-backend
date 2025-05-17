@@ -47,40 +47,26 @@ if (typeof window !== 'undefined') {
     return false;
   }, true);
   
-  // Try to patch all touch events globally
-  try {
-    if (typeof EventTarget !== 'undefined') {
-      const originalAddEventListener = EventTarget.prototype.addEventListener;
-      
-      EventTarget.prototype.addEventListener = function(type, listener, options) {
-        // For touch events, replace with a safe no-op function
-        if (type && typeof type === 'string' && 
-            (type.includes('touch') || type.includes('tap'))) {
-          console.log('PharmacyMap: Intercepting touch event:', type);
-          // Create a safe wrapper around the listener
-          const safeListener = function(event) {
-            try {
-              // Try the original listener
-              if (typeof listener === 'function') {
-                listener(event);
-              } else if (listener && typeof listener.handleEvent === 'function') {
-                listener.handleEvent(event);
-              }
-            } catch (e) {
-              // Suppress any errors from the handler
-              console.warn(`PharmacyMap: Suppressed error in ${type} handler:`, e.message);
-              event.preventDefault();
-              event.stopPropagation();
-            }
-          };
-          return originalAddEventListener.call(this, type, safeListener, options);
-        }
-        // For non-touch events, use the original handler
-        return originalAddEventListener.call(this, type, listener, options);
-      };
-    }
-  } catch (e) {
-    console.warn('PharmacyMap: Failed to patch EventTarget:', e);
+  // CRITICAL: Monkeypatch addEventListener for ALL elements to block touch events
+  if (isMobileDevice && typeof EventTarget !== 'undefined') {
+    const originalAddEventListener = EventTarget.prototype.addEventListener;
+    
+    EventTarget.prototype.addEventListener = function(type, listener, options) {
+      // For touch events, replace with a no-op function that prevents default
+      if (type && typeof type === 'string' && 
+          (type.includes('touch') || type.includes('tap'))) {
+        const safeListener = function(event) {
+          event.preventDefault();
+          event.stopPropagation();
+          return false;
+        };
+        return originalAddEventListener.call(this, type, safeListener, { capture: true, ...options });
+      }
+      // For non-touch events, use the original handler
+      return originalAddEventListener.call(this, type, listener, options);
+    };
+    
+    console.log('PharmacyMap: Patched EventTarget.addEventListener to block touch events');
   }
 }
 
@@ -91,6 +77,46 @@ interface PharmacyMapProps {
   onPharmaciesInShape: (pharmacies: any[]) => void;
   showDefaultLocation: boolean;
 }
+
+// Mobile-friendly static map component that doesn't use Leaflet
+const MobileStaticMap: React.FC<PharmacyMapProps> = ({ 
+  coordinates, 
+  filteredPharmacies,
+  showDefaultLocation 
+}) => {
+  const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+  
+  return (
+    <div className="w-full h-full bg-gray-50 relative overflow-hidden rounded-md border border-gray-200">
+      <div className="absolute inset-0 flex items-center justify-center z-10">
+        <div className="text-center p-6 bg-white/80 rounded-lg max-w-xs">
+          <p className="text-sm text-gray-600 mb-3">
+            Interactive maps are disabled on mobile devices to prevent errors.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {filteredPharmacies.length} pharmacies found 
+            {showDefaultLocation ? ' near your location' : ''}
+          </p>
+        </div>
+      </div>
+      
+      <img 
+        src={mapUrl}
+        alt="Static pharmacy map" 
+        className="w-full h-full object-cover"
+        loading="eager"
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
+        }}
+      />
+      
+      <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-2 text-center text-xs">
+        <p>Interactive maps are disabled on mobile devices</p>
+      </div>
+    </div>
+  );
+};
 
 export function PharmacyMap({ 
   coordinates, 
@@ -171,38 +197,12 @@ export function PharmacyMap({
     if (mapInstance) {
       mapRef.current = mapInstance;
       
-      // CRITICAL: Completely disable all touch functionality
-      try {
-        // @ts-ignore - These properties exist but might not be typed
-        if (mapInstance.touchZoom) mapInstance.touchZoom.disable();
-        // @ts-ignore
-        if (mapInstance.tap) mapInstance.tap.disable();
-        // @ts-ignore
-        if (mapInstance.boxZoom) mapInstance.boxZoom.disable();
-        // @ts-ignore
-        if (mapInstance.keyboard) mapInstance.keyboard.disable();
-        
-        // Disable event listeners for touch events on the map container
-        if (mapInstance._container) {
-          const touchEvents = ['touchstart', 'touchmove', 'touchend', 'touchcancel', 'tap'];
-          touchEvents.forEach(event => {
-            try {
-              mapInstance._container.removeEventListener(event, () => {}, { capture: true });
-            } catch (e) {
-              // Ignore errors when removing event listeners
-            }
-          });
+      // Force resize map
+      setTimeout(() => {
+        if (mapInstance) {
+          mapInstance.invalidateSize(true);
         }
-        
-        // Resize map
-        setTimeout(() => {
-          if (mapInstance) {
-            mapInstance.invalidateSize(true);
-          }
-        }, 200);
-      } catch (error) {
-        console.warn('Error disabling touch handlers:', error);
-      }
+      }, 200);
     }
     
     // Clear any pending timeouts
@@ -296,27 +296,15 @@ export function PharmacyMap({
       ) : (
         <div className="h-full w-full relative z-1">
           <div id="pharmacy-map-container" className="h-full w-full">
-            {/* Use a "safe" version of MapContainer specifically for mobile devices */}
+            {/* Use a completely different component for mobile devices */}
             {isMobileDevice ? (
-              <div className="h-full w-full bg-gray-50 relative overflow-hidden rounded-md border border-gray-200">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center p-6">
-                    <p className="text-sm text-gray-600 mb-3">
-                      Interactive maps are disabled on mobile devices to prevent errors.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Please use the list view for best experience on mobile.
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Static map display for mobile - no interactivity */}
-                <img 
-                  src={`https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`} 
-                  alt="Static pharmacy map" 
-                  className="w-full h-full object-cover opacity-50"
-                />
-              </div>
+              <MobileStaticMap
+                coordinates={coordinates}
+                pharmacies={pharmacies}
+                filteredPharmacies={filteredPharmacies}
+                onPharmaciesInShape={onPharmaciesInShape}
+                showDefaultLocation={showDefaultLocation}
+              />
             ) : (
               <MapContainer
                 key={mapKey}
@@ -386,13 +374,6 @@ export function PharmacyMap({
               </MapContainer>
             )}
           </div>
-          
-          {/* Mobile warning overlay */}
-          {isMobileDevice && (
-            <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-2 text-center text-xs">
-              <p>Interactive maps are disabled on mobile devices</p>
-            </div>
-          )}
         </div>
       )}
     </div>

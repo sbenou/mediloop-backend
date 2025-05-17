@@ -28,7 +28,7 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
         map.options.touchZoom = false;
         map.options.tap = false;
         map.options.dragging = !L.Browser.mobile; // Disable dragging on mobile
-        map.options.keyboard = false; // Disable keyboard navigation on mobile
+        map.options.keyboard = false; // Disable keyboard navigation
         map.options.inertia = !L.Browser.mobile; // Disable inertia on mobile
         map.options.zoomAnimation = !L.Browser.mobile; // Disable zoom animation on mobile
         map.options.fadeAnimation = !L.Browser.mobile; // Disable fade animation on mobile
@@ -54,20 +54,25 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
           try {
             const touchEvents = ['touchstart', 'touchmove', 'touchend', 'touchcancel', 'tap', 'taphold', 'dbltap'];
             
-            // Remove all touch event listeners from the map container
-            touchEvents.forEach(event => {
-              map._container.removeEventListener(event, () => {}, { capture: true });
-            });
+            // First try to remove all event listeners
+            const el = map._container;
+            const clone = el.cloneNode(true);
+            if (el.parentNode) {
+              el.parentNode.replaceChild(clone, el);
+              map._container = clone;
+            }
             
-            // Attempt to override touch event listeners with empty functions
+            // Prevent all touch events on the container
             touchEvents.forEach(event => {
-              const emptyHandler = (e: Event) => {
+              map._container.addEventListener(event, (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 return false;
-              };
-              map._container.addEventListener(event, emptyHandler, { capture: true });
+              }, { capture: true });
             });
+            
+            // Add inline style to disable touch actions
+            map._container.style.touchAction = 'none';
           } catch (e) {
             // Ignore errors from event handler manipulation
           }
@@ -81,12 +86,23 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
       if (isMobile) {
         // Make the map essentially static on mobile
         try {
+          // Disable ALL interaction methods
           if (map.dragging) map.dragging.disable();
           if (map.touchZoom) map.touchZoom.disable();
           if (map.doubleClickZoom) map.doubleClickZoom.disable();
           if (map.scrollWheelZoom) map.scrollWheelZoom.disable();
           if (map.boxZoom) map.boxZoom.disable();
           if (map.keyboard) map.keyboard.disable();
+          if (map.tap) map.tap.disable();
+          
+          // Remove all event listeners from the container
+          if (map._container) {
+            const clone = map._container.cloneNode(true);
+            if (map._container.parentNode) {
+              map._container.parentNode.replaceChild(clone, map._container);
+              map._container = clone;
+            }
+          }
           
           console.log('Disabled all interactive features on mobile');
         } catch (e) {
