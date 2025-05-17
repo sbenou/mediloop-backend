@@ -25,44 +25,9 @@ const userLocationIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Add global error catching for Leaflet specifically
-if (typeof window !== 'undefined') {
-  window.addEventListener('error', (e) => {
-    if (e.message && (
-      e.message.includes('a is not a function') || 
-      e.message.includes('touchleave') ||
-      e.message.includes('touch') ||
-      e.message.includes('_onTap')
-    )) {
-      console.warn('Caught Leaflet-related error:', e.message);
-      e.preventDefault();
-      return true;
-    }
-    return false;
-  }, true);
-  
-  // Even more aggressive error suppression: Override problematic methods directly
-  // This is a last resort approach
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      try {
-        if (L.Map && L.Map.prototype) {
-          const originalAddHandler = L.Map.prototype.addHandler;
-          L.Map.prototype.addHandler = function(name, HandlerClass) {
-            // Skip adding problematic handlers entirely
-            if (name.includes('touch') || name.includes('tap')) {
-              console.log(`Skipping problematic handler: ${name}`);
-              return this;
-            }
-            return originalAddHandler.call(this, name, HandlerClass);
-          };
-        }
-      } catch (e) {
-        console.warn('Failed to override Leaflet handler methods:', e);
-      }
-    }, 0);
-  });
-}
+// Detect if the current device is a mobile device
+const isMobileDevice = typeof navigator !== 'undefined' && 
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 interface PharmacyMapProps {
   coordinates: { lat: number; lon: number };
@@ -101,46 +66,29 @@ export function PharmacyMap({
   const mapReadyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   
-  // Handle map creation errors with auto-retry
-  const handleMapError = useCallback(() => {
-    console.log("Map initialization error detected");
-    setMapInitError("Map initialization error. Retrying...");
-    
-    if (retryCount < maxRetries) {
-      setTimeout(() => {
-        setMapKey(`map-retry-${Date.now()}`);
-        setRetryCount(prev => prev + 1);
-      }, 500);
-    } else {
-      setMapInitError("Could not initialize map. Please try again later.");
-    }
-  }, [retryCount]);
-  
-  // Handle map ready state
-  const handleMapReady = useCallback(() => {
-    console.log("PharmacyMap: Map is ready");
-    setIsMapReady(true);
-    setMapInitError(null);
-    
-    // Clear any pending timeouts
-    if (mapReadyTimeoutRef.current) {
-      clearTimeout(mapReadyTimeoutRef.current);
-      mapReadyTimeoutRef.current = null;
-    }
-  }, []);
-  
-  // Add fallback timeout to set map as ready even if events fail
+  // Add fallback timeout to ensure map is ready
   useEffect(() => {
     if (isMapReady) return;
     
+    // Quick fallback (500ms)
+    const quickTimeout = setTimeout(() => {
+      if (!isMapReady) {
+        console.log('PharmacyMap: Quick fallback for map ready state');
+        setIsMapReady(true);
+      }
+    }, 500);
+    
+    // Medium fallback (1.5s)
     mapReadyTimeoutRef.current = setTimeout(() => {
-      console.log('PharmacyMap: Fallback timeout reached, forcing ready state');
+      console.log('PharmacyMap: Medium fallback timeout reached, forcing ready state');
       setIsMapReady(true);
-    }, 5000); // 5 second fallback
+    }, 1500);
     
     return () => {
+      clearTimeout(quickTimeout);
       if (mapReadyTimeoutRef.current) {
         clearTimeout(mapReadyTimeoutRef.current);
+        mapReadyTimeoutRef.current = null;
       }
     };
   }, [isMapReady]);
@@ -154,13 +102,26 @@ export function PharmacyMap({
     }
   }, []);
   
+  // Handle map ready state
+  const handleMapReady = useCallback(() => {
+    console.log("PharmacyMap: Map is ready");
+    setIsMapReady(true);
+    setMapInitError(null);
+    
+    // Clear any pending timeouts
+    if (mapReadyTimeoutRef.current) {
+      clearTimeout(mapReadyTimeoutRef.current);
+      mapReadyTimeoutRef.current = null;
+    }
+  }, []);
+
   // Filter pharmacies when user location changes
   useEffect(() => {
-    if (!pharmacies || !Array.isArray(pharmacies) || !isMapReady) return;
+    if (!pharmacies || !Array.isArray(pharmacies)) return;
     
     try {
       if (showDefaultLocation && coordinates) {
-        // When location is enabled, show pharmacies nearby
+        // When location is enabled, show pharmacies nearby (2km radius)
         const userLocation = coordinates ? L.latLng(coordinates.lat, coordinates.lon) : null;
         
         if (userLocation) {
@@ -174,7 +135,12 @@ export function PharmacyMap({
               if (isNaN(pharmLat) || isNaN(pharmLon)) return false;
               
               const pharmacyLocation = L.latLng(pharmLat, pharmLon);
-              return userLocation.distanceTo(pharmacyLocation) <= 2000; // 2km radius
+              const distance = userLocation.distanceTo(pharmacyLocation);
+              
+              // Add distance to pharmacy for display
+              pharmacy.distance = (distance / 1000).toFixed(1) + " km";
+              
+              return distance <= 2000; // 2km radius
             } catch (error) {
               console.error('Error calculating distance for pharmacy:', error);
               return false;
@@ -183,17 +149,21 @@ export function PharmacyMap({
           
           if (nearbyPharmacies.length > 0) {
             onPharmaciesInShape(nearbyPharmacies);
-            toast({
-              title: "Location Used",
-              description: `Found ${nearbyPharmacies.length} pharmacies within 2km`,
-            });
+            if (isMapReady) {
+              toast({
+                title: "Location Used",
+                description: `Found ${nearbyPharmacies.length} pharmacies within 2km`,
+              });
+            }
           } else {
             // If no nearby pharmacies found, show all pharmacies
             onPharmaciesInShape(pharmacies);
-            toast({
-              title: "No Pharmacies Nearby",
-              description: "Showing all pharmacies instead",
-            });
+            if (isMapReady) {
+              toast({
+                title: "No Pharmacies Nearby",
+                description: "Showing all pharmacies instead",
+              });
+            }
           }
         }
       } else if (isMapReady) {
@@ -239,9 +209,10 @@ export function PharmacyMap({
                 position: 'relative', 
                 zIndex: 1 
               }}
-              scrollWheelZoom={true}
-              // Important: Do not use whenCreated prop, it's deprecated 
-              // Use ref approach instead when needed
+              scrollWheelZoom={!isMobileDevice}
+              doubleClickZoom={!isMobileDevice}
+              dragging={!isMobileDevice}
+              zoomControl={true}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -288,6 +259,7 @@ export function PharmacyMap({
                         <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
                         <p>{pharmacy.address || 'Address not available'}</p>
                         <p>{pharmacy.hours || 'Hours not available'}</p>
+                        {pharmacy.distance && <p>Distance: {pharmacy.distance}</p>}
                       </div>
                     </Popup>
                   </Marker>
@@ -295,6 +267,13 @@ export function PharmacyMap({
               })}
             </MapContainer>
           </div>
+          
+          {/* Mobile warning overlay */}
+          {isMobileDevice && (
+            <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-2 text-center text-xs">
+              <p>Limited map interactivity available on mobile devices</p>
+            </div>
+          )}
         </div>
       )}
     </div>

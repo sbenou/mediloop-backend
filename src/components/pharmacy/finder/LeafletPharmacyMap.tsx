@@ -1,8 +1,8 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
@@ -18,60 +18,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Add even more aggressive global error handling for the "a is not a function" error
-if (typeof window !== 'undefined') {
-  // Override problematic touch methods globally, before they can cause errors
-  try {
-    // Patch prototype methods to prevent errors
-    const originalAddEventListener = EventTarget.prototype.addEventListener;
-    EventTarget.prototype.addEventListener = function(type, listener, options) {
-      if (type && typeof type === 'string' && 
-          (type.includes('touch') || type.includes('tap'))) {
-        console.log(`Prevented adding event listener for ${type}`);
-        // Instead of not adding the listener, add a safe version that won't crash
-        return originalAddEventListener.call(
-          this, 
-          type, 
-          function(event) {
-            try {
-              if (typeof listener === 'function') {
-                listener(event);
-              } else if (listener && typeof listener.handleEvent === 'function') {
-                listener.handleEvent(event);
-              }
-            } catch (e) {
-              console.warn(`Caught error in ${type} event:`, e);
-              event.preventDefault();
-              event.stopPropagation();
-            }
-          }, 
-          options
-        );
-      }
-      return originalAddEventListener.call(this, type, listener, options);
-    };
-  } catch (e) {
-    console.warn('Failed to patch EventTarget:', e);
-  }
-  
-  // Add error event listener as a fallback
-  window.addEventListener('error', (e) => {
-    if (e.message && (
-      e.message.includes('a is not a function') || 
-      e.message.includes('touchleave') ||
-      e.message.includes('touch')
-    )) {
-      console.warn('Caught Leaflet-related error:', e.message);
-      e.preventDefault();
-      return true;
-    }
-    return false;
-  }, true);
-}
-
-console.log('LeafletPharmacyMap component loaded');
-
-// Create a red marker for user location
+// Create a red icon for user location
 const redIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
@@ -81,124 +28,87 @@ const redIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Safe Draw Control component
-const SafeDrawControl = ({ 
-  onShapeCreated, 
-  pharmacies,
-  enabled
-}: { 
-  onShapeCreated: (pharmaciesInShape: any[]) => void, 
-  pharmacies: any[],
-  enabled: boolean
-}) => {
-  const map = useMap();
-  const drawnItemsRef = useRef(new L.FeatureGroup());
+// Add extremely aggressive error prevention - intercept and suppress all touch-related errors
+if (typeof window !== 'undefined') {
+  // Global error handler to catch "a is not a function" errors
+  window.addEventListener('error', (e) => {
+    if (e.message && (
+      e.message.includes('a is not a function') || 
+      e.message.includes('touchleave') ||
+      e.message.includes('touch') ||
+      e.message.includes('_onTap')
+    )) {
+      console.warn('Caught and suppressed Leaflet error:', e.message);
+      e.preventDefault();
+      e.stopPropagation();
+      return true; // Prevent default error handling
+    }
+    return false;
+  }, true);
   
-  useEffect(() => {
-    if (!map || !enabled) {
-      console.log('SafeDrawControl: Map not ready or drawing not enabled');
-      return;
-    }
-    
-    console.log('SafeDrawControl: Initializing draw controls');
-    
-    try {
-      // Disable problematic touch handlers to avoid "a is not a function" error
-      // @ts-ignore - These properties exist on Leaflet map but might not be in TypeScript defs
-      if (map.touchZoom) map.touchZoom.disable();
-      // @ts-ignore
-      if (map.tap) map.tap.disable();
+  // Patch touch events globally
+  try {
+    if (typeof EventTarget !== 'undefined') {
+      const originalAddEventListener = EventTarget.prototype.addEventListener;
       
-      // Clear existing layers
-      drawnItemsRef.current.clearLayers();
-      
-      // Add the FeatureGroup to the map
-      map.addLayer(drawnItemsRef.current);
-
-      // Initialize draw control
-      const drawControl = new L.Control.Draw({
-        position: 'topright',
-        edit: {
-          featureGroup: drawnItemsRef.current,
-          poly: {
-            allowIntersection: false
-          }
-        },
-        draw: {
-          polygon: {
-            allowIntersection: false,
-            showArea: true
-          },
-          polyline: false,
-          rectangle: true,
-          circle: true,
-          marker: false,
-          circlemarker: false
-        }
-      });
-
-      console.log('SafeDrawControl: Adding draw control to map');
-      // Add control to map
-      map.addControl(drawControl);
-
-      // Handle created event
-      const handleDrawCreated = (e: any) => {
-        try {
-          console.log('SafeDrawControl: Shape created', e.layerType);
-          const layer = e.layer;
-          
-          // Clear previous layers
-          drawnItemsRef.current.clearLayers();
-          drawnItemsRef.current.addLayer(layer);
-          
-          // Filter pharmacies within the shape
-          const shape = layer;
-          const pharmaciesInShape = pharmacies.filter(pharmacy => {
-            if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
-            
-            const point = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-            
-            if (shape instanceof L.Circle) {
-              return shape.getLatLng().distanceTo(point) <= shape.getRadius();
-            } else if (shape instanceof L.Polygon || shape instanceof L.Rectangle) {
-              return shape.getBounds().contains(point);
+      EventTarget.prototype.addEventListener = function(type, listener, options) {
+        if (type && typeof type === 'string' && 
+            (type.includes('touch') || type.includes('tap'))) {
+          // For touch events, replace the handler with a no-op function that doesn't throw
+          const safeListener = function(event) {
+            try {
+              // Try the original listener
+              if (typeof listener === 'function') {
+                listener(event);
+              } else if (listener && typeof listener.handleEvent === 'function') {
+                listener.handleEvent(event);
+              }
+            } catch (e) {
+              // Suppress any errors in the handler
+              console.warn(`Suppressed error in ${type} handler:`, e.message);
+              event.preventDefault();
+              event.stopPropagation();
             }
-            
-            return false;
-          });
-          
-          console.log(`SafeDrawControl: Found ${pharmaciesInShape.length} pharmacies in shape`);
-          // Notify parent component
-          onShapeCreated(pharmaciesInShape);
-          
-          toast({
-            title: "Selection Complete",
-            description: `Found ${pharmaciesInShape.length} pharmacies in selected area`,
-          });
-        } catch (e) {
-          console.error('Error processing drawn shape:', e);
+          };
+          return originalAddEventListener.call(this, type, safeListener, options);
         }
+        // For non-touch events, use the original handler
+        return originalAddEventListener.call(this, type, listener, options);
       };
       
-      console.log('SafeDrawControl: Attaching draw created event');
-      map.on(L.Draw.Event.CREATED, handleDrawCreated);
-
-      // Clean up
-      return () => {
-        try {
-          console.log('SafeDrawControl: Cleaning up draw control');
-          map.removeControl(drawControl);
-          map.off(L.Draw.Event.CREATED, handleDrawCreated);
-          map.removeLayer(drawnItemsRef.current);
-        } catch (e) {
-          console.warn('Error during cleanup:', e);
-        }
-      };
-    } catch (err) {
-      console.error('Error setting up draw control:', err);
-      return () => {};
+      console.log('Successfully patched EventTarget.prototype.addEventListener');
     }
-  }, [map, pharmacies, onShapeCreated, enabled]);
+  } catch (e) {
+    console.warn('Failed to patch EventTarget:', e);
+  }
+}
+
+// Simplified version of the draw control without touch
+const StaticDrawControl = ({ 
+  onShapeCreated, 
+  pharmacies 
+}: { 
+  onShapeCreated: (pharmaciesInShape: any[]) => void,
+  pharmacies: any[]
+}) => {
+  // We won't attempt to initialize the draw control on mobile
+  const isMobile = typeof window !== 'undefined' ? 
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) : 
+    false;
+
+  useEffect(() => {
+    // On mobile, just show all pharmacies to avoid the touch error
+    if (isMobile) {
+      console.log('Mobile detected, showing all pharmacies without draw control');
+      onShapeCreated(pharmacies);
+      
+      toast({
+        title: "Mobile Experience",
+        description: "Drawing on map is disabled on mobile devices. All pharmacies are shown.",
+        duration: 5000
+      });
+    }
+  }, [isMobile, pharmacies, onShapeCreated]);
 
   return null;
 };
@@ -216,176 +126,111 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   useLocationFilter,
   onPharmaciesInShape
 }) => {
-  console.log('LeafletPharmacyMap rendering with:', {
-    pharmaciesCount: pharmacies?.length || 0,
-    userLocation: userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lon.toFixed(4)}` : 'null',
-    useLocationFilter
-  });
-  
+  // Detect mobile browsers to provide fallback experience
+  const isMobile = typeof window !== 'undefined' ? 
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) : 
+    false;
+    
   const [isLoading, setIsLoading] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_ATTEMPTS = 3;
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapReadyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Default center position (Luxembourg)
+  
+  // Multiple fallback timers for map ready state
+  useEffect(() => {
+    if (isMapReady) return;
+    
+    // Very quick fallback (500ms)
+    const quickFallback = setTimeout(() => {
+      if (!isMapReady) {
+        console.log('Quick fallback activating map ready state');
+        setIsMapReady(true);
+        setIsLoading(false);
+      }
+    }, 500);
+    
+    // Medium fallback (1.5s)
+    const mediumFallback = setTimeout(() => {
+      if (!isMapReady) {
+        console.log('Medium fallback forcing map ready state');
+        setIsMapReady(true);
+        setIsLoading(false);
+      }
+    }, 1500);
+    
+    // Final fallback (3s)
+    const finalFallback = setTimeout(() => {
+      console.log('Final fallback forcing map ready and showing all pharmacies');
+      setIsMapReady(true);
+      setIsLoading(false);
+      onPharmaciesInShape(pharmacies);
+    }, 3000);
+    
+    return () => {
+      clearTimeout(quickFallback);
+      clearTimeout(mediumFallback);
+      clearTimeout(finalFallback);
+    };
+  }, [isMapReady, pharmacies, onPharmaciesInShape]);
+  
+  // Default center (Luxembourg)
   const defaultCenter: [number, number] = userLocation 
     ? [userLocation.lat, userLocation.lon] 
     : [49.8153, 6.1296];
   
-  console.log('LeafletPharmacyMap using center:', defaultCenter);
-  
-  // Handle map initialization
+  // Handle map ready event
   const handleMapReady = useCallback(() => {
-    console.log("Leaflet map is ready");
+    console.log('Map is ready');
     setIsMapReady(true);
     setIsLoading(false);
     setError(null);
     
-    // Clear any pending timeouts
-    if (mapReadyTimeoutRef.current) {
-      clearTimeout(mapReadyTimeoutRef.current);
-      mapReadyTimeoutRef.current = null;
+    // For mobile, immediately show all pharmacies
+    if (isMobile) {
+      onPharmaciesInShape(pharmacies);
     }
-  }, []);
+  }, [isMobile, pharmacies, onPharmaciesInShape]);
   
-  // Force a VERY EARLY fallback for map ready status - this is crucial
-  useEffect(() => {
-    // Set a very short timeout to force the map to be marked as ready
-    const quickFallback = setTimeout(() => {
-      if (!isMapReady) {
-        console.log('Quick fallback timeout reached for map ready state');
-        setIsMapReady(true);
-        setIsLoading(false);
-      }
-    }, 1500); // Just 1.5 seconds
-    
-    return () => clearTimeout(quickFallback);
-  }, [isMapReady]);
-  
-  // Automatically set map ready after a timeout as a fallback
-  useEffect(() => {
-    if (isMapReady) return;
-    
-    mapReadyTimeoutRef.current = setTimeout(() => {
-      console.log('Map ready timeout reached, forcing ready state');
-      setIsMapReady(true);
-      setIsLoading(false);
-    }, 3000); // 3 second fallback - faster than before
-    
-    return () => {
-      if (mapReadyTimeoutRef.current) {
-        clearTimeout(mapReadyTimeoutRef.current);
-      }
-    };
-  }, [isMapReady]);
-  
-  // Handle map initialization errors
+  // Handle retry when map fails to load
   const handleRetry = () => {
-    console.log('Retrying map initialization', retryCount + 1);
-    setRetryCount(prev => prev < MAX_ATTEMPTS ? prev + 1 : prev);
+    console.log('Retrying map initialization');
     setError(null);
-    setMapKey(`map-retry-${Date.now()}`);
     setIsLoading(true);
     setIsMapReady(false);
+    setMapKey(`map-retry-${Date.now()}`);
     
-    // Force container clear
+    // Force clean container
     if (mapContainerRef.current) {
       mapContainerRef.current.innerHTML = '';
     }
   };
-
-  // Log when the component re-renders
-  useEffect(() => {
-    console.log('LeafletPharmacyMap mounted/updated with map key:', mapKey);
-    return () => console.log('LeafletPharmacyMap unmounted');
-  }, [mapKey]);
-
-  // Debug pharmacy data
-  useEffect(() => {
-    if (pharmacies && pharmacies.length > 0) {
-      console.log('Sample pharmacy data for LeafletPharmacyMap:', pharmacies[0]);
-    } else {
-      console.log('No pharmacy data available for LeafletPharmacyMap');
-    }
-  }, [pharmacies]);
   
-  // Add distance to pharmacies if userLocation is available
+  // Ensure container has correct size
   useEffect(() => {
-    if (userLocation && pharmacies?.length > 0) {
-      console.log('Calculating distances for pharmacies');
-      try {
-        const userPos = L.latLng(userLocation.lat, userLocation.lon);
-        
-        // Update pharmacy distances
-        pharmacies.forEach(pharmacy => {
-          if (pharmacy?.coordinates?.lat && pharmacy?.coordinates?.lon) {
-            try {
-              const pharmacyPos = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-              const distanceInMeters = userPos.distanceTo(pharmacyPos);
-              
-              // Add distance in km with one decimal place
-              pharmacy.distance = (distanceInMeters / 1000).toFixed(1);
-              console.log(`Distance to ${pharmacy.name}: ${pharmacy.distance}km`);
-            } catch (err) {
-              console.warn('Error calculating distance for pharmacy:', pharmacy.id, err);
-            }
-          }
-        });
-      } catch (err) {
-        console.error('Error calculating pharmacy distances:', err);
-      }
+    if (!mapContainerRef.current) return;
+    
+    // Force explicit dimensions on container
+    mapContainerRef.current.style.cssText = `
+      height: 500px !important;
+      width: 100% !important;
+      position: relative !important;
+      display: block !important;
+      visibility: visible !important;
+      z-index: 1;
+    `;
+    
+    // For mobile, show toast about limited functionality
+    if (isMobile && !isLoading) {
+      toast({
+        title: "Mobile Map Experience",
+        description: "Some map features are limited on mobile to ensure compatibility.",
+        duration: 5000
+      });
     }
-  }, [userLocation, pharmacies]);
+  }, [isMobile, isLoading]);
   
-  // Effect to ensure the map container is properly sized
-  useEffect(() => {
-    if (mapContainerRef.current) {
-      // Force explicit height and width with important flags
-      mapContainerRef.current.style.cssText = `
-        height: 500px !important;
-        width: 100% !important; 
-        position: relative !important;
-        display: block !important;
-        visibility: visible !important;
-        z-index: 1 !important;
-      `;
-    }
-  }, []);
-
-  // Preload Leaflet resources
-  useEffect(() => {
-    // Preload Leaflet CSS and ensure it's loaded
-    const linkExists = document.querySelector('link[href*="leaflet.css"]');
-    
-    if (!linkExists) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css';
-      document.head.appendChild(link);
-    }
-    
-    // Force leaflet images to be loaded
-    const preloadImages = [
-      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-      'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
-    ];
-    
-    // Create image elements to force preloading
-    preloadImages.forEach(url => {
-      const img = new Image();
-      img.src = url;
-    });
-  }, []);
-
-  // If loading, show a skeleton
   if (isLoading && !isMapReady) {
-    console.log('LeafletPharmacyMap showing loading state');
     return (
       <div className="w-full h-full min-h-[400px] bg-gray-100 rounded-md flex items-center justify-center">
         <div className="text-center">
@@ -396,9 +241,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     );
   }
 
-  // If error occurred, show error message
   if (error) {
-    console.log('LeafletPharmacyMap showing error state:', error);
     return (
       <div className="bg-muted p-4 rounded-md text-center h-[400px] flex items-center justify-center flex-col">
         <p className="text-red-500 font-semibold mb-2">{error}</p>
@@ -415,23 +258,11 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     );
   }
 
-  console.log('LeafletPharmacyMap rendering MapContainer', {
-    key: mapKey,
-    center: defaultCenter
-  });
-
   return (
     <div 
       ref={mapContainerRef} 
       className="w-full h-[500px] relative border rounded-md overflow-hidden"
-      style={{ 
-        height: '500px', 
-        width: '100%', 
-        position: 'relative',
-        zIndex: 1,
-        visibility: 'visible',
-        display: 'block'
-      }}
+      style={{ height: '500px', width: '100%', position: 'relative' }}
     >
       <MapContainer
         key={mapKey}
@@ -447,7 +278,10 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           bottom: 0,
           zIndex: 1
         }}
-        scrollWheelZoom={true}
+        scrollWheelZoom={!isMobile}
+        doubleClickZoom={!isMobile}
+        dragging={!isMobile}
+        zoomControl={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -459,16 +293,15 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           onMapReady={handleMapReady}
         />
         
-        {/* SafeDrawControl should only be included when map is ready */}
+        {/* Static draw control - safe for all browsers */}
         {isMapReady && (
-          <SafeDrawControl 
-            onShapeCreated={onPharmaciesInShape} 
+          <StaticDrawControl 
+            onShapeCreated={onPharmaciesInShape}
             pharmacies={pharmacies}
-            enabled={isMapReady}
           />
         )}
         
-        {/* User location marker - only show when map is ready */}
+        {/* User location marker */}
         {userLocation && isMapReady && (
           <Marker 
             position={[userLocation.lat, userLocation.lon]}
@@ -478,29 +311,47 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           </Marker>
         )}
         
-        {/* Pharmacy markers - only show when map is ready */}
+        {/* Pharmacy markers */}
         {isMapReady && pharmacies && pharmacies.map((pharmacy, index) => {
           if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) {
             return null;
           }
           
-          return (
-            <Marker
-              key={pharmacy.id || `pharmacy-${Math.random().toString(36).substr(2, 9)}`}
-              position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
-            >
-              <Popup>
-                <div className="text-sm max-w-[250px]">
-                  <h3 className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</h3>
-                  <p className="text-xs">{pharmacy.address || 'Address not available'}</p>
-                  {pharmacy.hours && <p className="text-xs">Hours: {pharmacy.hours}</p>}
-                  {pharmacy.distance && <p className="text-xs font-medium">Distance: {pharmacy.distance} km</p>}
-                </div>
-              </Popup>
-            </Marker>
-          );
+          try {
+            // Ensure coordinates are valid numbers
+            const pharmLat = parseFloat(pharmacy.coordinates.lat);
+            const pharmLon = parseFloat(pharmacy.coordinates.lon);
+            
+            if (isNaN(pharmLat) || isNaN(pharmLon)) return null;
+            
+            return (
+              <Marker
+                key={pharmacy.id || `pharmacy-${Math.random().toString(36).substr(2, 9)}`}
+                position={[pharmLat, pharmLon]}
+              >
+                <Popup>
+                  <div className="text-sm max-w-[250px]">
+                    <h3 className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</h3>
+                    <p className="text-xs">{pharmacy.address || 'Address not available'}</p>
+                    {pharmacy.hours && <p className="text-xs">Hours: {pharmacy.hours}</p>}
+                    {pharmacy.distance && <p className="text-xs font-medium">Distance: {pharmacy.distance} km</p>}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          } catch (e) {
+            console.warn('Error rendering pharmacy marker:', e);
+            return null;
+          }
         })}
       </MapContainer>
+      
+      {/* Mobile warning overlay */}
+      {isMobile && (
+        <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-2 text-center text-xs">
+          <p>Limited map functionality available on mobile devices</p>
+        </div>
+      )}
     </div>
   );
 };

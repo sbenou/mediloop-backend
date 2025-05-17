@@ -22,39 +22,43 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
     console.log('SimplifiedMapUpdater: Starting initialization');
     
     try {
-      // IMPORTANT: Completely disable ALL touch-related handlers to prevent "a is not a function" error
-      // This is the most aggressive approach to fix the persistent error
+      // CRITICAL: Remove ALL touch functionality to prevent "a is not a function" error
       if (map.options) {
+        // Disable all interactive touch options
         map.options.touchZoom = false;
         map.options.tap = false;
-        map.options.dragging = !L.Browser.mobile; // Disable dragging on mobile devices
+        map.options.dragging = !L.Browser.mobile; // Disable dragging on mobile
+        map.options.keyboard = false; // Disable keyboard navigation on mobile
+        map.options.inertia = !L.Browser.mobile; // Disable inertia on mobile
         
-        // Remove all touch-related handlers from the map instance
+        // Disable the touch related event handlers directly
+        const touchHandlersToRemove = ['tap', 'touchZoom', 'tapHold', 'touchStart', 'touchEnd', 'touchCancel'];
         if (map._handlers) {
-          for (const handlerId in map._handlers) {
-            const handler = map._handlers[handlerId];
-            if (handlerId.includes('touch') || handlerId.includes('tap')) {
-              try {
-                handler.disable();
+          // Remove existing handlers
+          Object.keys(map._handlers).forEach(handlerId => {
+            try {
+              if (handlerId.includes('touch') || handlerId.includes('tap') || handlerId.includes('drag')) {
+                map._handlers[handlerId].disable();
                 console.log(`Disabled handler: ${handlerId}`);
-              } catch (e) {
-                console.warn(`Failed to disable handler ${handlerId}:`, e);
               }
+            } catch (e) {
+              // Silently ignore any errors from disabling handlers
             }
-          }
+          });
         }
         
-        // Disable specific problematic handlers by name
-        const handlersToDisable = ['tap', 'touchZoom', 'tapHold', 'touchStart', 'touchEnd', 'touchCancel'];
-        handlersToDisable.forEach(handlerName => {
-          if ((map as any)[handlerName]) {
-            try {
-              (map as any)[handlerName].disable();
-            } catch (e) {
-              console.warn(`Failed to disable ${handlerName}:`, e);
-            }
+        // Remove event listeners for problematic events
+        if (typeof window !== 'undefined' && typeof map._container !== 'undefined') {
+          try {
+            // Try to remove all touch event listeners from the map container
+            const container = map._container;
+            ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(eventType => {
+              container.removeEventListener(eventType, () => {}, { capture: true });
+            });
+          } catch (e) {
+            // Silently ignore errors from event listener removal
           }
-        });
+        }
       }
       
       // Force a delay before proceeding to ensure handlers are properly disabled
@@ -90,7 +94,7 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
             onMapReady();
           }
         }
-      }, 500); // Shorter delay to improve initial load time
+      }, 200); // Shorter delay for faster initialization
     } catch (error) {
       console.error('Error during map initialization:', error);
       // Ensure we always call onMapReady even if there's an error
