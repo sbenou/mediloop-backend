@@ -131,8 +131,9 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       if (userLocation) {
         console.log('Adding user location marker at', [userLocation.lon, userLocation.lat]);
         const el = createUserMarker();
+        // Fix: Use LngLatLike tuple instead of array
         userMarker.current = new mapboxgl.Marker(el)
-          .setLngLat([userLocation.lon, userLocation.lat])
+          .setLngLat([userLocation.lon, userLocation.lat] as [number, number])
           .addTo(map.current);
       }
       
@@ -148,8 +149,9 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         
         try {
           const el = createPharmacyMarker(pharmacy);
+          // Fix: Use LngLatLike tuple instead of array
           const marker = new mapboxgl.Marker(el)
-            .setLngLat([pharmacy.coordinates.lon, pharmacy.coordinates.lat])
+            .setLngLat([pharmacy.coordinates.lon, pharmacy.coordinates.lat] as [number, number])
             .setPopup(new mapboxgl.Popup({ offset: 25 })
               .setHTML(`
                 <div style="max-width: 200px;">
@@ -185,7 +187,8 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         
         // Include user location in bounds if available
         if (userLocation) {
-          bounds.extend([userLocation.lon, userLocation.lat]);
+          // Fix: Use LngLatLike tuple instead of array
+          bounds.extend([userLocation.lon, userLocation.lat] as [number, number]);
         }
         
         // Include all pharmacy markers in bounds
@@ -237,7 +240,11 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         
         // Initialize map
         if (!map.current && mapContainer.current) {
-          const center = userLocation ? [userLocation.lon, userLocation.lat] : defaultCenter;
+          // Fix: Use LngLatLike tuple instead of array
+          const center = userLocation 
+            ? [userLocation.lon, userLocation.lat] as [number, number]
+            : defaultCenter;
+          
           console.log('Creating map with center:', center);
           
           map.current = new mapboxgl.Map({
