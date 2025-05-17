@@ -442,7 +442,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           zIndex: 1
         }}
         scrollWheelZoom={true}
-        attributionControl={true}
+        // Remove attributionControl prop as it's not supported in react-leaflet v5.0.0
         whenCreated={(mapInstance) => {
           // This callback runs when the map is created
           console.log('Map instance created');

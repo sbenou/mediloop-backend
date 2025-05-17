@@ -14,9 +14,13 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
   const map = useMap();
   const initCompletedRef = useRef(false);
   
+  // Primary initialization effect
   useEffect(() => {
     if (!map || initCompletedRef.current) return;
     
+    console.log('SimplifiedMapUpdater: Starting initialization');
+    
+    // Use a slightly longer delay to ensure the container is ready
     const timer = setTimeout(() => {
       try {
         console.log('SimplifiedMapUpdater: Initializing map');
@@ -49,37 +53,25 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
       } catch (error) {
         console.error('Error initializing map:', error);
       }
-    }, 800); // Increased delay to ensure the container is fully rendered
+    }, 1000); // Increased delay to ensure the container is fully rendered
     
     return () => clearTimeout(timer);
   }, [map, coordinates, onMapReady]);
   
-  // Add a secondary effect to handle potential cases where the map wasn't ready initially
+  // Secondary effect to handle coordinate changes
   useEffect(() => {
-    if (!map || !coordinates || initCompletedRef.current) return;
+    if (!map || !coordinates || !initCompletedRef.current) return;
     
-    const secondaryTimer = setTimeout(() => {
-      try {
-        console.log('SimplifiedMapUpdater: Secondary map initialization');
-        map.invalidateSize(true);
-        
-        if (coordinates && coordinates.lat && coordinates.lon) {
-          map.setView([coordinates.lat, coordinates.lon], 13);
-        }
-        
-        if (!initCompletedRef.current) {
-          initCompletedRef.current = true;
-          onMapReady();
-        }
-      } catch (error) {
-        console.error('Error in secondary map initialization:', error);
-      }
-    }, 1500);
-    
-    return () => clearTimeout(secondaryTimer);
-  }, [map, coordinates, onMapReady]);
+    try {
+      console.log('SimplifiedMapUpdater: Updating map view for new coordinates');
+      map.invalidateSize(true);
+      map.setView([coordinates.lat, coordinates.lon], 13);
+    } catch (error) {
+      console.error('Error updating map view:', error);
+    }
+  }, [map, coordinates]);
   
-  // Add a final fallback to force map ready state
+  // Final fallback to force map ready state
   useEffect(() => {
     if (initCompletedRef.current) return;
     
@@ -103,7 +95,7 @@ export const SimplifiedMapUpdater: React.FC<SimplifiedMapUpdaterProps> = ({
           onMapReady();
         }
       }
-    }, 3000); // 3 second absolute fallback
+    }, 2500); // 2.5 second absolute fallback
     
     return () => clearTimeout(fallbackTimer);
   }, [map, coordinates, onMapReady]);
