@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -212,6 +212,14 @@ const SearchPharmacyTest = () => {
     setShowDefaultLocation(checked);
   };
   
+  const [mapIsReady, setMapIsReady] = useState(false);
+  
+  // Handle map ready event
+  const handleMapReady = useCallback(() => {
+    console.log('Map is ready in SearchPharmacyTest');
+    setMapIsReady(true);
+  }, []);
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -295,7 +303,11 @@ const SearchPharmacyTest = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               
-              <SimplifiedMapUpdater coordinates={currentCoordinates} />
+              <SimplifiedMapUpdater 
+                coordinates={currentCoordinates} 
+                onMapReady={handleMapReady} 
+              />
+              
               <DrawControl />
               
               {/* Render user location marker if using location */}
