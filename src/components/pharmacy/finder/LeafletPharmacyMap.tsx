@@ -200,7 +200,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
 }) => {
   console.log('LeafletPharmacyMap rendering with:', {
     pharmaciesCount: pharmacies?.length || 0,
-    userLocation,
+    userLocation: userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lon.toFixed(4)}` : 'null',
     useLocationFilter
   });
   
@@ -238,14 +238,16 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
 
   // Log when the component re-renders
   useEffect(() => {
-    console.log('LeafletPharmacyMap mounted/updated');
+    console.log('LeafletPharmacyMap mounted/updated with map key:', mapKey);
     return () => console.log('LeafletPharmacyMap unmounted');
-  }, []);
+  }, [mapKey]);
 
   // Debug pharmacy data
   useEffect(() => {
     if (pharmacies && pharmacies.length > 0) {
-      console.log('Sample pharmacy data:', pharmacies[0]);
+      console.log('Sample pharmacy data for LeafletPharmacyMap:', pharmacies[0]);
+    } else {
+      console.log('No pharmacy data available for LeafletPharmacyMap');
     }
   }, [pharmacies]);
   

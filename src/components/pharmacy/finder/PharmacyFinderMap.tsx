@@ -51,8 +51,9 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
 }) => {
   console.log('PharmacyFinderMap rendering with:', {
     pharmaciesCount: pharmacies?.length || 0,
-    userLocation,
-    useLocationFilter
+    userLocation: userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lon.toFixed(4)}` : 'null',
+    useLocationFilter,
+    pharmacyExample: pharmacies?.length > 0 ? `${pharmacies[0].name} at ${pharmacies[0].coordinates?.lat || 'unknown'}, ${pharmacies[0].coordinates?.lon || 'unknown'}` : 'No pharmacies'
   });
   
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -92,6 +93,16 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       } catch (err) {
         console.error('Error fetching Mapbox token:', err);
         setError(new Error('Failed to load map resources'));
+        
+        // Try to use a fallback token
+        try {
+          console.log('Using fallback Mapbox token');
+          const fallbackToken = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+          mapboxgl.accessToken = fallbackToken;
+          setMapboxToken(fallbackToken);
+        } catch (fallbackErr) {
+          console.error('Failed to set fallback token too:', fallbackErr);
+        }
       }
     };
     
@@ -219,13 +230,20 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       try {
         setIsLoading(true);
         console.log('Map initialization starting', { token: mapboxToken ? 'exists' : 'missing' });
+        console.log('Container dimensions:', {
+          width: mapContainer.current?.offsetWidth,
+          height: mapContainer.current?.offsetHeight
+        });
         
         // Initialize map
         if (!map.current && mapContainer.current) {
+          const center = userLocation ? [userLocation.lon, userLocation.lat] : defaultCenter;
+          console.log('Creating map with center:', center);
+          
           map.current = new mapboxgl.Map({
             container: mapContainer.current,
             style: 'mapbox://styles/mapbox/streets-v12',
-            center: userLocation ? [userLocation.lon, userLocation.lat] : defaultCenter,
+            center: center,
             zoom: 12,
             attributionControl: true,
             trackResize: true,
@@ -306,8 +324,11 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   if (isLoading) {
     console.log('Showing loading skeleton for map');
     return (
-      <div className="w-full h-full min-h-[500px]">
-        <Skeleton className="w-full h-full min-h-[500px]" />
+      <div className="w-full h-full min-h-[500px] flex items-center justify-center">
+        <div className="text-center">
+          <Skeleton className="w-full h-[500px]" />
+          <p className="text-sm text-muted-foreground mt-2">Loading map...</p>
+        </div>
       </div>
     );
   }
@@ -333,10 +354,10 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
   console.log('Rendering final map container div');
 
   return (
-    <div className="w-full h-full min-h-[500px] relative">
+    <div className="w-full h-full min-h-[500px] relative border border-gray-200 rounded-lg overflow-hidden">
       <div 
         ref={mapContainer} 
-        className="w-full h-full absolute inset-0 rounded-lg border border-gray-200"
+        className="w-full h-full absolute inset-0 rounded-lg"
         style={{ minHeight: '500px' }}
       />
     </div>

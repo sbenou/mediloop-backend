@@ -51,6 +51,7 @@ export const usePharmacyFinder = (
         }
         
         console.log(`usePharmacyFinder: Found ${results.length} pharmacies`);
+        console.log('usePharmacyFinder: First pharmacy example:', results.length > 0 ? results[0] : 'No pharmacies');
         setPharmacies(results);
         setFilteredPharmacies(results);
       } catch (err) {
