@@ -131,7 +131,6 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
       if (userLocation) {
         console.log('Adding user location marker at', [userLocation.lon, userLocation.lat]);
         const el = createUserMarker();
-        // Fix: Use LngLatLike tuple instead of array
         userMarker.current = new mapboxgl.Marker(el)
           .setLngLat([userLocation.lon, userLocation.lat] as [number, number])
           .addTo(map.current);
@@ -149,7 +148,6 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         
         try {
           const el = createPharmacyMarker(pharmacy);
-          // Fix: Use LngLatLike tuple instead of array
           const marker = new mapboxgl.Marker(el)
             .setLngLat([pharmacy.coordinates.lon, pharmacy.coordinates.lat] as [number, number])
             .setPopup(new mapboxgl.Popup({ offset: 25 })
@@ -187,7 +185,6 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         
         // Include user location in bounds if available
         if (userLocation) {
-          // Fix: Use LngLatLike tuple instead of array
           bounds.extend([userLocation.lon, userLocation.lat] as [number, number]);
         }
         
@@ -240,7 +237,6 @@ export const PharmacyFinderMap: React.FC<PharmacyFinderMapProps> = ({
         
         // Initialize map
         if (!map.current && mapContainer.current) {
-          // Fix: Use LngLatLike tuple instead of array
           const center = userLocation 
             ? [userLocation.lon, userLocation.lat] as [number, number]
             : defaultCenter;
