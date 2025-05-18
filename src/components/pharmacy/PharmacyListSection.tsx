@@ -6,19 +6,21 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import { PharmacyList } from "./list/PharmacyList";
 import { PharmacyMap } from "./map/PharmacyMap";
 import { toast } from "@/components/ui/use-toast";
-import { calculateDistance } from '@/lib/utils/distance';
 
-// Ensure leaflet is properly initialized on the client side
+// Initialize Leaflet.draw localization and measurement formatting
 if (typeof window !== 'undefined') {
-  // Add a global error handler for the "a is not a function" error
-  window.addEventListener('error', (e) => {
-    if (e.message && (e.message.includes('a is not a function') || e.message.includes('touchleave'))) {
-      console.warn('Caught global Leaflet error:', e.message);
-      e.preventDefault();
-      return true;
-    }
-    return false;
-  }, true);
+  if (L.drawLocal) {
+    L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
+    L.drawLocal.draw.handlers.circle.radius = 'Radius';
+    L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
+    L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
+    L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
+    L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
+
+    (L.drawLocal.draw.toolbar.buttons as any).polygon = 'Draw a polygon';
+    (L.drawLocal.draw.toolbar.buttons as any).rectangle = 'Draw a rectangle';
+    (L.drawLocal.draw.toolbar.buttons as any).circle = 'Draw a circle';
+  }
 }
 
 interface PharmacyListSectionProps {
@@ -72,54 +74,10 @@ const PharmacyListSection = ({
     }
   }, [pharmacies]);
   
-  // Calculate distances and update filtered pharmacies when location or pharmacy data changes
+  // Initial setup when pharmacies or coordinates change
   useEffect(() => {
-    if (!coordinates?.lat || !coordinates?.lon) {
-      setFilteredPharmacies(pharmacies);
-      return;
-    }
-
-    try {
-      // Add distance property to all pharmacies
-      const pharmaciesWithDistance = pharmacies.map(pharmacy => {
-        const updatedPharmacy = {...pharmacy};
-        
-        if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
-          try {
-            // Calculate distance using leaflet
-            const userPos = L.latLng(coordinates.lat, coordinates.lon);
-            const pharmPos = L.latLng(pharmacy.coordinates.lat, pharmacy.coordinates.lon);
-            const distanceInMeters = userPos.distanceTo(pharmPos);
-            
-            // Add distance in km with one decimal place
-            updatedPharmacy.distance = (distanceInMeters / 1000).toFixed(1);
-            updatedPharmacy.distanceRaw = distanceInMeters; // For sorting
-            
-            console.log(`Distance to ${pharmacy.name}: ${updatedPharmacy.distance}km`);
-          } catch (e) {
-            console.error("Error calculating distance:", e);
-          }
-        }
-        
-        return updatedPharmacy;
-      });
-      
-      // Filter if showing only nearby pharmacies
-      if (showDefaultLocation) {
-        const nearbyPharmacies = pharmaciesWithDistance.filter(pharmacy => {
-          return pharmacy.distanceRaw && pharmacy.distanceRaw <= 2000; // 2km radius
-        });
-        
-        setFilteredPharmacies(nearbyPharmacies);
-      } else {
-        setFilteredPharmacies(pharmaciesWithDistance);
-      }
-      
-    } catch (error) {
-      console.error('Error processing pharmacies with location data:', error);
-      setFilteredPharmacies(pharmacies);
-    }
-  }, [showDefaultLocation, coordinates, pharmacies]);
+    setFilteredPharmacies(pharmacies);
+  }, [pharmacies]);
 
   if (!coordinates) {
     return (
