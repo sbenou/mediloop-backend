@@ -2,15 +2,48 @@
 import { calculateDistance } from '@/lib/utils/distance';
 import { LocalCache } from '@/lib/cache';
 
-// No longer trying to fetch a token from API - use a hardcoded, reliable public token
+// Public token that can be used safely in client-side code
 const MAPBOX_PUBLIC_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
 /**
  * Get Mapbox public token - simplified approach that doesn't rely on API calls
  */
 export const getMapboxToken = async (): Promise<string> => {
-  // Just return the public token directly - no more API calls that can fail
-  return MAPBOX_PUBLIC_TOKEN;
+  // Check cache first
+  const cachedToken = LocalCache.get<string>('mapbox-token');
+  if (cachedToken) {
+    console.log('Using cached Mapbox token');
+    return cachedToken;
+  }
+
+  try {
+    // Try to get from Supabase function
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mapbox-token`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.token) {
+        console.log('Retrieved Mapbox token from API');
+        // Cache the token for future use
+        LocalCache.set('mapbox-token', data.token);
+        return data.token;
+      }
+    }
+    
+    throw new Error(`Error fetching Mapbox token: ${response.status}`);
+  } catch (error) {
+    console.error('getMapboxToken: Error fetching Mapbox token:', error);
+    
+    // Cache and return the public token as fallback
+    LocalCache.set('mapbox-token', MAPBOX_PUBLIC_TOKEN);
+    return MAPBOX_PUBLIC_TOKEN;
+  }
 };
 
 /**
@@ -59,7 +92,6 @@ export const getCoordinatesWithMapbox = async (
     const luxembourgCoords = { lat: 49.8153, lng: 6.1296 };
     LocalCache.set(cacheKey, luxembourgCoords);
     return luxembourgCoords;
-    
   } catch (error) {
     console.error('getCoordinatesWithMapbox: Error:', error);
     return fallbackCoordinates || { lat: 49.8153, lng: 6.1296 }; // Luxembourg fallback

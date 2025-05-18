@@ -27,7 +27,7 @@ export function PharmacyMap({
 }: PharmacyMapProps) {
   console.log('PharmacyMap rendering with', filteredPharmacies.length, 'filtered pharmacies');
   
-  // Always use static map for stability
+  // Using only the static map approach for maximum reliability
   return (
     <StaticMapComponent
       pharmacies={filteredPharmacies || pharmacies}

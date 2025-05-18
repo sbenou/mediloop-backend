@@ -25,9 +25,12 @@ serve(async (req) => {
     const mapboxToken = Deno.env.get("MAPBOX_ACCESS_TOKEN") || 
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
-    // Return the token in a properly formatted JSON object
+    // Return the token in a properly formatted JSON response
     return new Response(
-      JSON.stringify({ token: mapboxToken, status: "success" }),
+      JSON.stringify({ 
+        token: mapboxToken, 
+        status: "success" 
+      }),
       { headers, status: 200 }
     );
   } catch (error) {
@@ -37,7 +40,10 @@ serve(async (req) => {
     const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
     
     return new Response(
-      JSON.stringify({ token: fallbackToken, status: "fallback" }),
+      JSON.stringify({ 
+        token: fallbackToken, 
+        status: "fallback" 
+      }),
       { headers, status: 200 }
     );
   }
