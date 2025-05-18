@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Pharmacy } from '@/lib/types/overpass.types';
 import { LocalCache } from '@/lib/cache';
@@ -20,12 +20,12 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
   onPharmaciesInShape
 }) => {
   // Pass all pharmacies to parent on mount
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('StaticMapComponent: Passing all pharmacies to parent');
     onPharmaciesInShape(pharmacies);
   }, [pharmacies, onPharmaciesInShape]);
   
-  // Generate a static map URL using Mapbox with caching
+  // Generate a static map URL using Mapbox with markers
   const mapUrl = useMemo(() => {
     if (!userLocation) return "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
     
@@ -42,8 +42,24 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
         return cachedUrl;
       }
       
-      // Generate new URL
-      const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${userLocation.lon},${userLocation.lat},11,0/600x400@2x?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+      // Prepare markers for the static map URL (limited to 100 markers in Mapbox static API)
+      let markersString = '';
+      const visiblePharmacies = pharmacies.slice(0, 100);
+      
+      visiblePharmacies.forEach((pharmacy, index) => {
+        if (pharmacy.coordinates && pharmacy.coordinates.lat && pharmacy.coordinates.lon) {
+          // Add pin for each pharmacy
+          markersString += `pin-s+1e88e5(${pharmacy.coordinates.lon},${pharmacy.coordinates.lat}),`;
+        }
+      });
+      
+      // Remove trailing comma
+      if (markersString.endsWith(',')) {
+        markersString = markersString.slice(0, -1);
+      }
+      
+      // Generate URL with markers
+      const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${markersString ? markersString + '/' : ''}${userLocation.lon},${userLocation.lat},11,0/600x400@2x?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
       
       // Cache the URL
       LocalCache.set(cacheKey, url);
@@ -53,7 +69,7 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
       console.error('Error generating static map URL:', error);
       return "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
     }
-  }, [userLocation]);
+  }, [userLocation, pharmacies]);
   
   return (
     <Card className="overflow-hidden h-full">

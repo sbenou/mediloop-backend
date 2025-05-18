@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PharmacyMap } from '../map/PharmacyMap';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
+import { toast } from '@/components/ui/use-toast';
 
 interface PharmacyFinderMapProps {
   pharmacies: any[];
@@ -26,6 +27,8 @@ export function PharmacyFinderMap({
   // Handle pharmacies that are filtered by the map (when drawing shapes)
   const handlePharmaciesInShape = useCallback((inShapePharmacies: any[]) => {
     console.log(`Map filtered ${inShapePharmacies.length} pharmacies`);
+    // Update filtered pharmacies
+    setFilteredPharmacies(inShapePharmacies);
   }, []);
   
   if (!userLocation) {
@@ -35,6 +38,17 @@ export function PharmacyFinderMap({
       </Card>
     );
   }
+  
+  // Success toast for when the map loads properly
+  useEffect(() => {
+    if (pharmacies.length > 0) {
+      toast({
+        title: "Pharmacy map loaded",
+        description: `${pharmacies.length} pharmacies found in this area`,
+        duration: 3000
+      });
+    }
+  }, [pharmacies.length]);
   
   return (
     <div className="w-full h-full">

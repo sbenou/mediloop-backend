@@ -7,14 +7,12 @@ import Footer from '@/components/layout/Footer';
 import { PharmacyFinderMap } from '@/components/pharmacy/finder/PharmacyFinderMap';
 import { PharmacyFinderList } from '@/components/pharmacy/finder/PharmacyFinderList';
 import { PharmacySearch } from '@/components/pharmacy/finder/PharmacySearch';
-import StaticMapComponent from '@/components/pharmacy/finder/StaticMapComponent';
 import { usePharmacyFinder } from '@/hooks/usePharmacyFinder';
 import { toast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Search } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Global error handler for Leaflet-related errors
 if (typeof window !== 'undefined') {
@@ -160,72 +158,7 @@ const FindPharmacy = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Alternative map implementation section */}
-        <div className="mt-16 mb-8">
-          <Separator className="my-8" />
-          <Card>
-            <CardHeader>
-              <CardTitle>Alternative Map Implementation</CardTitle>
-              <CardDescription>
-                A non-interactive static map implementation that reduces API calls by caching map images. This serves as a fallback option when interactive maps have issues.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-white border border-gray-200 rounded-md">
-                <div className="h-[500px] w-full relative">
-                  {/* Use the static map component */}
-                  <StaticMapComponent 
-                    pharmacies={pharmacies || []}
-                    userLocation={userLocation}
-                    onPharmaciesInShape={handlePharmaciesInShape}
-                  />
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <h3 className="font-medium mb-4">Pharmacies Found ({leafletFilteredPharmacies.length})</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {leafletFilteredPharmacies.length > 0 ? (
-                    <>
-                      {leafletFilteredPharmacies.slice(0, 3).map((pharmacy) => (
-                        <Card key={pharmacy.id || Math.random().toString(36).substr(2, 9)} className="overflow-hidden">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-lg">{pharmacy.name || 'Unnamed Pharmacy'}</CardTitle>
-                            {pharmacy.distance && (
-                              <CardDescription>
-                                {pharmacy.distance}km away
-                              </CardDescription>
-                            )}
-                          </CardHeader>
-                          <CardContent className="text-sm space-y-2">
-                            <p>{pharmacy.address || 'Address not available'}</p>
-                            {pharmacy.hours && <p>{pharmacy.hours}</p>}
-                          </CardContent>
-                        </Card>
-                      ))}
-                      
-                      {leafletFilteredPharmacies.length > 3 && (
-                        <div className="col-span-full mt-4">
-                          <p className="text-sm text-muted-foreground">
-                            {leafletFilteredPharmacies.length - 3} more pharmacies found.
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="col-span-full">
-                      <Alert>
-                        <AlertDescription>
-                          No pharmacies found in the selected area.
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Alternative map implementation section - removed to avoid duplicate maps */}
       </main>
       
       <Footer />

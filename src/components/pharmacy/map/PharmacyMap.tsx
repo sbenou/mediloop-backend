@@ -38,9 +38,30 @@ const StaticMapFallback: React.FC<PharmacyMapProps> = ({
 }) => {
   console.log('Rendering StaticMapFallback with', filteredPharmacies.length, 'pharmacies');
   
+  // Generate markers string for static Mapbox API
+  const markersString = useMemo(() => {
+    // Limit to 100 markers (Mapbox static API limit)
+    const visiblePharmacies = filteredPharmacies.slice(0, 100);
+    let markerString = '';
+    
+    visiblePharmacies.forEach(pharmacy => {
+      if (pharmacy.coordinates && pharmacy.coordinates.lat && pharmacy.coordinates.lon) {
+        markerString += `pin-s+1e88e5(${pharmacy.coordinates.lon},${pharmacy.coordinates.lat}),`;
+      }
+    });
+    
+    // Remove trailing comma
+    if (markerString.endsWith(',')) {
+      markerString = markerString.slice(0, -1);
+    }
+    
+    return markerString;
+  }, [filteredPharmacies]);
+  
   const mapUrl = useMemo(() => {
-    return `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
-  }, [coordinates]);
+    const markers = markersString ? markersString + '/' : '';
+    return `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${markers}${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+  }, [coordinates, markersString]);
   
   useEffect(() => {
     if (filteredPharmacies.length > 0) {
@@ -51,19 +72,6 @@ const StaticMapFallback: React.FC<PharmacyMapProps> = ({
   
   return (
     <div className="w-full h-full bg-gray-50 relative overflow-hidden rounded-md border border-gray-200">
-      <div className="absolute inset-0 flex items-center justify-center z-10">
-        <div className="text-center p-6 bg-white/80 rounded-lg max-w-xs">
-          <MapIcon className="h-10 w-10 text-primary/60 mx-auto mb-2" />
-          <p className="text-sm text-gray-600 mb-3">
-            Using static map view to prevent compatibility issues.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {filteredPharmacies.length} pharmacies found 
-            {showDefaultLocation ? ' near your location' : ''}
-          </p>
-        </div>
-      </div>
-      
       <img 
         src={mapUrl}
         alt="Static pharmacy map" 
@@ -74,10 +82,6 @@ const StaticMapFallback: React.FC<PharmacyMapProps> = ({
           e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
         }}
       />
-      
-      <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-2 text-center text-xs">
-        <p>Static map view (interactive maps disabled to prevent errors)</p>
-      </div>
     </div>
   );
 };
@@ -252,19 +256,7 @@ export function PharmacyMap({
     }
   }, [filteredPharmacies, isMapLoaded]);
   
-  // Show error toast when map fails
-  useEffect(() => {
-    if (isMapError) {
-      toast({
-        title: "Map Error",
-        description: "There was a problem loading the interactive map. Using static fallback.",
-        variant: "destructive",
-        duration: 5000
-      });
-    }
-  }, [isMapError]);
-  
-  // Render fallback if map loading fails
+  // Return fallback if map loading fails
   if (isMapError || !mapboxToken) {
     return (
       <StaticMapFallback
