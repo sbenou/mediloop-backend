@@ -8,18 +8,23 @@ import { PharmacyMap } from "./map/PharmacyMap";
 import { toast } from "@/components/ui/use-toast";
 
 // Initialize Leaflet.draw localization and measurement formatting
+// We're moving this inside a try/catch to prevent errors
 if (typeof window !== 'undefined') {
-  if (L.drawLocal) {
-    L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
-    L.drawLocal.draw.handlers.circle.radius = 'Radius';
-    L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
-    L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
-    L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
-    L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
+  try {
+    if (L.drawLocal) {
+      L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
+      L.drawLocal.draw.handlers.circle.radius = 'Radius';
+      L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
+      L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
+      L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
+      L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
 
-    (L.drawLocal.draw.toolbar.buttons as any).polygon = 'Draw a polygon';
-    (L.drawLocal.draw.toolbar.buttons as any).rectangle = 'Draw a rectangle';
-    (L.drawLocal.draw.toolbar.buttons as any).circle = 'Draw a circle';
+      (L.drawLocal.draw.toolbar.buttons as any).polygon = 'Draw a polygon';
+      (L.drawLocal.draw.toolbar.buttons as any).rectangle = 'Draw a rectangle';
+      (L.drawLocal.draw.toolbar.buttons as any).circle = 'Draw a circle';
+    }
+  } catch (err) {
+    console.error('Error initializing Leaflet.draw localization:', err);
   }
 }
 
@@ -78,6 +83,40 @@ const PharmacyListSection = ({
   useEffect(() => {
     setFilteredPharmacies(pharmacies);
   }, [pharmacies]);
+
+  // Filter by location effect
+  useEffect(() => {
+    if (!coordinates || !showDefaultLocation || !pharmacies.length) return;
+    
+    try {
+      const userLocation = L.latLng(coordinates.lat, coordinates.lon);
+      const nearbyPharmacies = pharmacies.filter(pharmacy => {
+        if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
+        try {
+          const pharmLat = parseFloat(pharmacy.coordinates.lat);
+          const pharmLon = parseFloat(pharmacy.coordinates.lon);
+          
+          if (isNaN(pharmLat) || isNaN(pharmLon)) return false;
+          
+          const pharmacyLocation = L.latLng(pharmLat, pharmLon);
+          const distance = userLocation.distanceTo(pharmacyLocation);
+          
+          // Add distance to pharmacy for display
+          pharmacy.distance = (distance / 1000).toFixed(1);
+          
+          return distance <= 2000; // 2km radius
+        } catch (error) {
+          console.error('Error calculating distance for pharmacy:', error);
+          return false;
+        }
+      });
+      
+      setFilteredPharmacies(nearbyPharmacies);
+    } catch (error) {
+      console.error('Error filtering pharmacies by location:', error);
+      setFilteredPharmacies(pharmacies);
+    }
+  }, [showDefaultLocation, coordinates, pharmacies]);
 
   if (!coordinates) {
     return (

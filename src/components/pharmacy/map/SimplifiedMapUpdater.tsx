@@ -15,8 +15,8 @@ export function SimplifiedMapUpdater({ coordinates, onMapReady }: SimplifiedMapU
   useEffect(() => {
     if (!map) return;
     
-    // Ensure the map has the right dimensions
-    setTimeout(() => {
+    // Ensure the map has the right dimensions after a short delay
+    const timer = setTimeout(() => {
       map.invalidateSize();
       
       // Fly to user coordinates if available
@@ -34,7 +34,7 @@ export function SimplifiedMapUpdater({ coordinates, onMapReady }: SimplifiedMapU
     
     // Cleanup function
     return () => {
-      // Nothing to clean up
+      clearTimeout(timer);
     };
   }, [map, coordinates, onMapReady]);
 

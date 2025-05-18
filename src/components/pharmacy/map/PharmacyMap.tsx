@@ -26,7 +26,7 @@ const userLocationIcon = new L.Icon({
 });
 
 // Detect if the current device is a mobile device
-const isMobileDevice = typeof navigator !== 'undefined' && 
+const isMobileDevice = typeof window !== 'undefined' && 
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // Mobile-friendly static map component that doesn't use Leaflet
@@ -100,68 +100,6 @@ export function PharmacyMap({
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapKey] = useState(`map-${Date.now()}`);
   
-  // Filter pharmacies when user location changes
-  useEffect(() => {
-    if (!pharmacies || !Array.isArray(pharmacies)) return;
-    
-    try {
-      if (showDefaultLocation && coordinates) {
-        // When location is enabled, show pharmacies nearby (2km radius)
-        const userLocation = coordinates ? L.latLng(coordinates.lat, coordinates.lon) : null;
-        
-        if (userLocation) {
-          // Use a safe filtering method that handles potential data problems
-          const nearbyPharmacies = pharmacies.filter(pharmacy => {
-            if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return false;
-            try {
-              const pharmLat = parseFloat(pharmacy.coordinates.lat);
-              const pharmLon = parseFloat(pharmacy.coordinates.lon);
-              
-              if (isNaN(pharmLat) || isNaN(pharmLon)) return false;
-              
-              const pharmacyLocation = L.latLng(pharmLat, pharmLon);
-              const distance = userLocation.distanceTo(pharmacyLocation);
-              
-              // Add distance to pharmacy for display
-              pharmacy.distance = (distance / 1000).toFixed(1) + " km";
-              
-              return distance <= 2000; // 2km radius
-            } catch (error) {
-              console.error('Error calculating distance for pharmacy:', error);
-              return false;
-            }
-          });
-          
-          if (nearbyPharmacies.length > 0) {
-            onPharmaciesInShape(nearbyPharmacies);
-            if (isMapReady) {
-              toast({
-                title: "Location Used",
-                description: `Found ${nearbyPharmacies.length} pharmacies within 2km`,
-              });
-            }
-          } else {
-            // If no nearby pharmacies found, show all pharmacies
-            onPharmaciesInShape(pharmacies);
-            if (isMapReady) {
-              toast({
-                title: "No Pharmacies Nearby",
-                description: "Showing all pharmacies instead",
-              });
-            }
-          }
-        }
-      } else if (isMapReady) {
-        // When no location filter, show all pharmacies
-        onPharmaciesInShape(pharmacies);
-      }
-    } catch (error) {
-      console.error('Error filtering pharmacies by location:', error);
-      // Fall back to showing all pharmacies
-      onPharmaciesInShape(pharmacies);
-    }
-  }, [showDefaultLocation, coordinates, pharmacies, onPharmaciesInShape, isMapReady]);
-
   // For mobile devices, return the static map component
   if (isMobileDevice) {
     return (
@@ -188,7 +126,6 @@ export function PharmacyMap({
           }}
           scrollWheelZoom={true}
           zoomControl={true}
-          dragging={true}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -235,7 +172,7 @@ export function PharmacyMap({
                     <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
                     <p>{pharmacy.address || 'Address not available'}</p>
                     <p>{pharmacy.hours || 'Hours not available'}</p>
-                    {pharmacy.distance && <p>Distance: {pharmacy.distance}</p>}
+                    {pharmacy.distance && <p>Distance: {pharmacy.distance} km</p>}
                   </div>
                 </Popup>
               </Marker>
