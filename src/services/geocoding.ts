@@ -1,15 +1,26 @@
 
-import { getMapboxToken } from './address-service';
+import { getMapboxToken } from './mapbox';
+
+// Cache for geocoding results
+const geocodingCache: Record<string, { lat: string; lon: string }> = {};
 
 export async function getCoordinates(query: string): Promise<{ lat: string; lon: string } | null> {
   if (!query) return null;
   
+  // Check cache first
+  const normalizedQuery = query.toLowerCase().trim();
+  if (geocodingCache[normalizedQuery]) {
+    console.log('Using cached coordinates for:', normalizedQuery);
+    return geocodingCache[normalizedQuery];
+  }
+  
   try {
     const mapboxToken = await getMapboxToken();
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&limit=1`;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(normalizedQuery)}.json?access_token=${mapboxToken}&limit=1`;
     
     const response = await fetch(url);
     if (!response.ok) {
+      console.error(`Mapbox API error: ${response.status}`);
       throw new Error(`Mapbox API error: ${response.status}`);
     }
     
@@ -17,13 +28,42 @@ export async function getCoordinates(query: string): Promise<{ lat: string; lon:
     
     if (data.features && data.features.length > 0) {
       const [lng, lat] = data.features[0].center;
-      // Cache the results
-      sessionStorage.setItem(`coords-${query}`, JSON.stringify({ lat: String(lat), lon: String(lng) }));
-      return { lat: String(lat), lon: String(lng) };
+      const result = { lat: String(lat), lon: String(lng) };
+      
+      // Cache the results for future use
+      geocodingCache[normalizedQuery] = result;
+      
+      return result;
     }
+    
+    // Fallback coordinates for common locations
+    const fallbacks: Record<string, { lat: string; lon: string }> = {
+      'luxembourg': { lat: '49.8153', lon: '6.1296' },
+      'luxembourg city': { lat: '49.6116', lon: '6.1319' },
+      'esch-sur-alzette': { lat: '49.4941', lon: '5.9806' },
+      'differdange': { lat: '49.5242', lon: '5.8903' }
+    };
+    
+    // Check if we have a fallback for this query
+    for (const [key, coords] of Object.entries(fallbacks)) {
+      if (normalizedQuery.includes(key)) {
+        console.log(`Using fallback coordinates for: ${normalizedQuery}`);
+        geocodingCache[normalizedQuery] = coords;
+        return coords;
+      }
+    }
+    
     return null;
   } catch (error) {
     console.error('Error getting coordinates:', error);
+    
+    // Default to Luxembourg if all else fails
+    if (normalizedQuery.includes('luxembourg')) {
+      const defaultCoords = { lat: '49.8153', lon: '6.1296' };
+      geocodingCache[normalizedQuery] = defaultCoords;
+      return defaultCoords;
+    }
+    
     return null;
   }
 }
@@ -68,7 +108,6 @@ export async function searchAddress(query: string): Promise<Array<{
   if (!query || query.length < 3) return [];
   
   try {
-    // Reuse the existing searchAddressesByQuery function from address-service.ts
     const mapboxToken = await getMapboxToken();
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&types=address&limit=5`;
     

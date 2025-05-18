@@ -1,12 +1,10 @@
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { toast } from "@/components/ui/use-toast";
 import { Map as MapIcon } from 'lucide-react';
-import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { LocalCache } from '@/lib/cache';
 import { getMapboxToken } from '@/services/mapbox';
-import { MapboxMapUpdater } from './MapboxMapUpdater';
 
 interface PharmacyMapProps {
   coordinates: { lat: number; lon: number };
@@ -17,19 +15,7 @@ interface PharmacyMapProps {
   onMapError?: () => void;
 }
 
-// Create a pharmacy marker element
-const createPharmacyMarker = () => {
-  const el = document.createElement('div');
-  el.className = 'pharmacy-marker';
-  el.style.width = '25px';
-  el.style.height = '41px';
-  el.style.backgroundImage = "url(https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png)";
-  el.style.backgroundSize = 'contain';
-  el.style.backgroundRepeat = 'no-repeat';
-  return el;
-};
-
-// Create a map fallback component
+// Simple static map component that doesn't use Mapbox GL JS
 const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
   coordinates,
   pharmacies,
@@ -42,13 +28,21 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
   // Generate static map URL with limited markers to avoid URL length issues
   const staticMapUrl = useMemo(() => {
     try {
-      // Use Luxembourg's center coordinates as default
-      const mapCenter = `${coordinates.lon},${coordinates.lat}`;
-      const zoom = 12;
-      const token = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+      // Generate a cache key based on the coordinates
+      const cacheKey = `static-map-${coordinates.lat.toFixed(4)}-${coordinates.lon.toFixed(4)}`;
+      const cachedUrl = LocalCache.get<string>(cacheKey);
       
-      // No markers for simplicity (to avoid URL length issues)
-      return `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${mapCenter},${zoom},0,0/600x400@2x?access_token=${token}`;
+      if (cachedUrl) {
+        return cachedUrl;
+      }
+      
+      // For reliability, generate a URL without markers first (always works)
+      const fallbackUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw`;
+      
+      // Cache the fallback URL
+      LocalCache.set(cacheKey, fallbackUrl);
+      
+      return fallbackUrl;
     } catch (error) {
       console.error('Error generating static map URL:', error);
       return "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
@@ -62,18 +56,39 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
     }
   }, [filteredPharmacies, onPharmaciesInShape]);
   
+  // Create a more reliable static map loader with error handling
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  
   return (
     <div className="w-full h-full bg-gray-50 relative overflow-hidden rounded-md border border-gray-200">
-      <img 
-        src={staticMapUrl}
-        alt="Static pharmacy map" 
-        className="w-full h-full object-cover"
-        loading="eager"
-        onError={(e) => {
-          e.currentTarget.onerror = null;
-          e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
-        }}
-      />
+      {!isImageLoaded && !imageError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
+      
+      {imageError ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 p-4 text-center">
+          <MapIcon className="h-12 w-12 text-gray-400 mb-2" />
+          <p className="text-gray-500">Map data is currently unavailable</p>
+          <p className="text-sm text-gray-400 mt-2">Showing {filteredPharmacies.length} pharmacies in this area</p>
+        </div>
+      ) : (
+        <img 
+          src={staticMapUrl}
+          alt="Pharmacy map" 
+          className="w-full h-full object-cover"
+          style={{opacity: isImageLoaded ? 1 : 0, transition: 'opacity 0.3s'}}
+          onLoad={() => setIsImageLoaded(true)}
+          onError={(e) => {
+            console.error('Error loading map image');
+            setImageError(true);
+            setIsImageLoaded(false);
+          }}
+        />
+      )}
+      
       <div className="absolute bottom-2 right-2 bg-white/80 text-xs text-gray-600 px-1 py-0.5 rounded">
         {filteredPharmacies.length} pharmacies found
       </div>
@@ -101,6 +116,7 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
   );
 };
 
+// Main component - always uses the static fallback for reliability
 export function PharmacyMap({ 
   coordinates, 
   pharmacies, 

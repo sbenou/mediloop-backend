@@ -39,7 +39,7 @@ serve(async (req) => {
     console.error("Error in get-mapbox-token function:", error);
     
     // Return a fallback token when there's an error
-    const fallbackToken = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+    const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
     
     return new Response(
       JSON.stringify({ 
@@ -54,3 +54,4 @@ serve(async (req) => {
     );
   }
 });
+

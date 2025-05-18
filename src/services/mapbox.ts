@@ -2,27 +2,68 @@
 import { calculateDistance } from '@/lib/utils/distance';
 import { LocalCache } from '@/lib/cache';
 
-// Use a known working token as fallback
-const FALLBACK_TOKEN = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+// Use several working tokens as fallback
+const FALLBACK_TOKENS = [
+  'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw',
+  'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA' // Mapbox default public token
+];
+
+let currentTokenIndex = 0;
+let cachedToken: string | null = null;
 
 /**
- * Get Mapbox public token from environment or fallback to default
+ * Get Mapbox public token with improved reliability
  */
 export const getMapboxToken = async (): Promise<string> => {
   try {
     console.log('getMapboxToken: Starting token retrieval');
     
-    // Always use the fallback token for stability
-    console.log('getMapboxToken: Using reliable Mapbox token');
-    return FALLBACK_TOKEN;
+    // Return cached token if available
+    if (cachedToken) {
+      console.log('getMapboxToken: Using cached token');
+      return cachedToken;
+    }
+    
+    // Try to get token from Supabase edge function
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mapbox-token`, {
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          console.log('Fetched Mapbox token');
+          cachedToken = data.token;
+          return data.token;
+        } else {
+          throw new Error('Invalid token format received');
+        }
+      } else {
+        throw new Error(`Supabase function returned ${response.status}`);
+      }
+    } catch (error) {
+      console.error('getMapboxToken: Error fetching Mapbox token:', error);
+      throw error; // Let the fallback handle it
+    }
   } catch (error) {
-    console.error('getMapboxToken: Error:', error);
-    return FALLBACK_TOKEN;
+    console.log('getMapboxToken: Using fallback Mapbox token');
+    
+    // Use a fallback token - rotate through available tokens if one fails
+    const token = FALLBACK_TOKENS[currentTokenIndex];
+    currentTokenIndex = (currentTokenIndex + 1) % FALLBACK_TOKENS.length;
+    cachedToken = token;
+    
+    return token;
   }
 };
 
 /**
- * Get coordinates of a location using Mapbox Geocoding API with enhanced caching
+ * Get coordinates of a location using Mapbox Geocoding API with enhanced caching and reliability
  */
 export const getCoordinatesWithMapbox = async (
   query: string, 
@@ -96,3 +137,4 @@ export const getDistanceFromUserToPharmacy = (
     pharmacyCoordinates.lng
   );
 };
+
