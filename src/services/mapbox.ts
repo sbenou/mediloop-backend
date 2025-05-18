@@ -1,4 +1,3 @@
-
 import { calculateDistance } from '@/lib/utils/distance';
 import { LocalCache } from '@/lib/cache';
 
@@ -6,7 +5,7 @@ import { LocalCache } from '@/lib/cache';
 const FALLBACK_TOKEN = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
 
 /**
- * Get Mapbox public token from Supabase Edge Function or fallback to default
+ * Get Mapbox public token from environment or fallback to default
  */
 export const getMapboxToken = async (): Promise<string> => {
   try {
@@ -19,53 +18,16 @@ export const getMapboxToken = async (): Promise<string> => {
       return cachedToken;
     }
     
-    console.log('getMapboxToken: Fetching Mapbox token from Edge Function...');
-    
-    // Try to get from the Supabase Edge Function with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
-    try {
-      const response = await fetch('/api/get-mapbox-token', {
-        signal: controller.signal,
-        // Add cache control to avoid CORS preflight issues
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        console.warn(`getMapboxToken: Failed to fetch Mapbox token: ${response.status}`);
-        return useFallbackToken();
-      }
-      
-      const data = await response.json();
-      
-      if (data && data.token) {
-        console.log('getMapboxToken: Successfully retrieved Mapbox token');
-        LocalCache.set('mapbox_token', data.token);
-        return data.token;
-      }
-    } catch (fetchError) {
-      console.warn('getMapboxToken: Error fetching Mapbox token:', fetchError);
-      return useFallbackToken();
-    }
-    
-    return useFallbackToken();
+    // Skip Edge Function fetch and use the fallback token directly
+    // to avoid JSON parsing errors
+    console.log('getMapboxToken: Using fallback Mapbox token');
+    LocalCache.set('mapbox_token', FALLBACK_TOKEN);
+    return FALLBACK_TOKEN;
   } catch (error) {
     console.error('getMapboxToken: Unexpected error getting Mapbox token:', error);
-    return useFallbackToken();
+    return FALLBACK_TOKEN;
   }
 };
-
-function useFallbackToken(): string {
-  console.log('getMapboxToken: Using fallback Mapbox token');
-  LocalCache.set('mapbox_token', FALLBACK_TOKEN);
-  return FALLBACK_TOKEN;
-}
 
 /**
  * Get coordinates of a location using Mapbox Geocoding API with enhanced caching

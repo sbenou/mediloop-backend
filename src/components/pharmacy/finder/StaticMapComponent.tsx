@@ -42,11 +42,12 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
         return cachedUrl;
       }
       
-      // Prepare markers for the static map URL (limited to 100 markers in Mapbox static API)
+      // Instead of adding all markers (which can cause URL length issues),
+      // just show a subset of markers (max 25) to avoid URL length limits
       let markersString = '';
-      const visiblePharmacies = pharmacies.slice(0, 100);
+      const visiblePharmacies = pharmacies.slice(0, 25);
       
-      visiblePharmacies.forEach((pharmacy, index) => {
+      visiblePharmacies.forEach((pharmacy) => {
         if (pharmacy.coordinates && pharmacy.coordinates.lat && pharmacy.coordinates.lon) {
           // Add pin for each pharmacy
           markersString += `pin-s+1e88e5(${pharmacy.coordinates.lon},${pharmacy.coordinates.lat}),`;
@@ -59,7 +60,8 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
       }
       
       // Generate URL with markers
-      const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${markersString ? markersString + '/' : ''}${userLocation.lon},${userLocation.lat},11,0/600x400@2x?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+      const token = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+      const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${markersString ? markersString + '/' : ''}${userLocation.lon},${userLocation.lat},11,0/600x400@2x?access_token=${token}`;
       
       // Cache the URL
       LocalCache.set(cacheKey, url);
@@ -86,6 +88,9 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
               e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
             }}
           />
+          <div className="absolute bottom-2 right-2 bg-white/80 text-xs text-gray-600 px-1 py-0.5 rounded">
+            {pharmacies.length} pharmacies found in this area
+          </div>
         </div>
       </CardContent>
     </Card>

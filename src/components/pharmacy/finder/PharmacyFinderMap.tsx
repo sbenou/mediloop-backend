@@ -4,6 +4,7 @@ import { PharmacyMap } from '../map/PharmacyMap';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
+import StaticMapComponent from './StaticMapComponent';
 
 interface PharmacyFinderMapProps {
   pharmacies: any[];
@@ -17,6 +18,7 @@ export function PharmacyFinderMap({
   useLocationFilter 
 }: PharmacyFinderMapProps) {
   const [filteredPharmacies, setFilteredPharmacies] = useState<any[]>([]);
+  const [useStaticMap, setUseStaticMap] = useState(false);
   
   // Initialize with all pharmacies
   useEffect(() => {
@@ -31,6 +33,12 @@ export function PharmacyFinderMap({
     setFilteredPharmacies(inShapePharmacies);
   }, []);
   
+  // If there's an error with the interactive map, fall back to static map
+  const handleMapError = useCallback(() => {
+    console.log('Falling back to static map due to errors');
+    setUseStaticMap(true);
+  }, []);
+  
   if (!userLocation) {
     return (
       <Card className="w-full h-full flex items-center justify-center">
@@ -38,27 +46,25 @@ export function PharmacyFinderMap({
       </Card>
     );
   }
-  
-  // Success toast for when the map loads properly
-  useEffect(() => {
-    if (pharmacies.length > 0) {
-      toast({
-        title: "Pharmacy map loaded",
-        description: `${pharmacies.length} pharmacies found in this area`,
-        duration: 3000
-      });
-    }
-  }, [pharmacies.length]);
-  
+
   return (
     <div className="w-full h-full">
-      <PharmacyMap
-        coordinates={userLocation}
-        pharmacies={pharmacies}
-        filteredPharmacies={filteredPharmacies}
-        onPharmaciesInShape={handlePharmaciesInShape}
-        showDefaultLocation={useLocationFilter}
-      />
+      {useStaticMap ? (
+        <StaticMapComponent
+          pharmacies={pharmacies}
+          userLocation={userLocation}
+          onPharmaciesInShape={handlePharmaciesInShape}
+        />
+      ) : (
+        <PharmacyMap
+          coordinates={userLocation}
+          pharmacies={pharmacies}
+          filteredPharmacies={filteredPharmacies}
+          onPharmaciesInShape={handlePharmaciesInShape}
+          showDefaultLocation={useLocationFilter}
+          onMapError={handleMapError}
+        />
+      )}
     </div>
   );
 }

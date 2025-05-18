@@ -15,16 +15,8 @@ serve(async (req) => {
 
   try {
     // Get the Mapbox token from environment variable
-    const mapboxToken = Deno.env.get("MAPBOX_TOKEN");
-    
-    // Use a reliable fallback token
-    const fallbackToken = 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA';
-    
-    const tokenToUse = mapboxToken || fallbackToken;
-
-    if (!tokenToUse) {
-      throw new Error("No Mapbox token available");
-    }
+    const mapboxToken = Deno.env.get("MAPBOX_TOKEN") || 
+      'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
 
     // Add cache control and CORS headers
     const headers = {
@@ -35,10 +27,10 @@ serve(async (req) => {
 
     console.log("Returning Mapbox token successfully");
     
-    // Return the token in a simple format
+    // Return the token in a simple JSON format
     return new Response(
       JSON.stringify({ 
-        token: tokenToUse,
+        token: mapboxToken,
         status: "success" 
       }),
       { headers, status: 200 }
@@ -46,17 +38,19 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in get-mapbox-token function:", error);
     
-    // Return the fallback token when there's an error
+    // Return a fallback token when there's an error
+    const fallbackToken = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+    
     return new Response(
       JSON.stringify({ 
-        token: 'pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA',
+        token: fallbackToken,
         message: "Using fallback token due to error",
         status: "fallback" 
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200, // Still return 200 with fallback
-      },
+      }
     );
   }
 });
