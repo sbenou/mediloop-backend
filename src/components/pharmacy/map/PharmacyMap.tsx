@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -60,7 +59,16 @@ if (typeof window !== 'undefined') {
           event.stopPropagation();
           return false;
         };
-        return originalAddEventListener.call(this, type, safeListener, { capture: true, ...options });
+        // Fix the spread operator issue here - options might be boolean or object
+        let optionsObj = {};
+        if (typeof options === 'object') {
+          optionsObj = { capture: true, ...options };
+        } else if (typeof options === 'boolean') {
+          optionsObj = { capture: options || true };
+        } else {
+          optionsObj = { capture: true };
+        }
+        return originalAddEventListener.call(this, type, safeListener, optionsObj);
       }
       // For non-touch events, use the original handler
       return originalAddEventListener.call(this, type, listener, options);
