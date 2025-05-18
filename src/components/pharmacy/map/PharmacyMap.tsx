@@ -1,8 +1,5 @@
 
-import { useEffect, useState, useMemo } from 'react';
-import { toast } from "@/components/ui/use-toast";
-import { Map as MapIcon } from 'lucide-react';
-import { LocalCache } from '@/lib/cache';
+import { useEffect, useState } from 'react';
 import StaticMapComponent from '../finder/StaticMapComponent';
 
 interface PharmacyMapProps {
@@ -11,23 +8,20 @@ interface PharmacyMapProps {
   filteredPharmacies: any[];
   onPharmaciesInShape: (pharmacies: any[]) => void;
   showDefaultLocation: boolean;
-  onMapError?: () => void;
 }
 
 /**
- * PharmacyMap component that uses the static map component for reliability
+ * PharmacyMap component that acts as a controller for the map display
  */
 export function PharmacyMap({ 
   coordinates, 
   pharmacies, 
   filteredPharmacies, 
   onPharmaciesInShape, 
-  showDefaultLocation,
-  onMapError
+  showDefaultLocation
 }: PharmacyMapProps) {
   console.log('PharmacyMap rendering with', filteredPharmacies.length, 'filtered pharmacies');
   
-  // Using only the static map approach for maximum reliability
   return (
     <StaticMapComponent
       pharmacies={filteredPharmacies || pharmacies}

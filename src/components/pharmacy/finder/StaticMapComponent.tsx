@@ -1,8 +1,9 @@
 
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Pharmacy } from '@/lib/types/overpass.types';
-import { MapPin, Map as MapIcon, Building, Navigation, Search } from 'lucide-react';
+import { MapPin, Map as MapIcon, Navigation, Search, ZoomIn, ZoomOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface StaticMapComponentProps {
   pharmacies: Pharmacy[];
@@ -11,8 +12,7 @@ interface StaticMapComponentProps {
 }
 
 /**
- * A completely static map component that doesn't rely on external services
- * This reduces API calls and serves as a fallback when map services are unavailable
+ * An interactive map component that visually displays pharmacies
  */
 const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
   pharmacies,
@@ -20,6 +20,12 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
   onPharmaciesInShape
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [hoveredPharmacy, setHoveredPharmacy] = useState<string | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   
   // Pass all pharmacies to parent on mount
   useEffect(() => {
@@ -67,113 +73,77 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
     return pinPositions;
   }, [pharmacies]);
 
-  // Generate some random street patterns for the map
-  const streets = useMemo(() => {
-    const streetPatterns = [];
-    
-    // Main roads
-    streetPatterns.push({
-      type: 'main',
-      paths: [
-        'M-10,50 L110,50', // Horizontal across center
-        'M50,-10 L50,110', // Vertical across center
-        'M-10,30 L110,30', // Upper horizontal
-        'M-10,70 L110,70', // Lower horizontal
-        'M30,-10 L30,110', // Left vertical
-        'M70,-10 L70,110', // Right vertical
-      ]
-    });
-    
-    // Secondary roads
-    streetPatterns.push({
-      type: 'secondary',
-      paths: [
-        'M-10,20 L110,20', // Upper horizontal
-        'M-10,40 L110,40', // Middle upper horizontal
-        'M-10,60 L110,60', // Middle lower horizontal
-        'M-10,80 L110,80', // Lower horizontal
-        'M20,-10 L20,110', // Left vertical
-        'M40,-10 L40,110', // Middle left vertical
-        'M60,-10 L60,110', // Middle right vertical
-        'M80,-10 L80,110', // Right vertical
-      ]
-    });
-    
-    // Diagonal roads for interest
-    streetPatterns.push({
-      type: 'diagonal',
-      paths: [
-        'M-10,-10 L110,110', // Diagonal from top-left to bottom-right
-        'M-10,110 L110,-10', // Diagonal from bottom-left to top-right
-        'M20,-10 L80,110', // Shorter diagonal
-        'M-10,80 L110,20', // Another diagonal
-      ]
-    });
-    
-    return streetPatterns;
-  }, []);
-  
+  // Handle mouse events for dragging
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && mapContainerRef.current) {
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
+      
+      // Add constraints to prevent dragging too far
+      const maxDrag = 1000 * zoom;
+      const constrainedX = Math.max(Math.min(newX, maxDrag), -maxDrag);
+      const constrainedY = Math.max(Math.min(newY, maxDrag), -maxDrag);
+      
+      setPosition({ 
+        x: constrainedX,
+        y: constrainedY
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Handle zoom functionality
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev * 1.2, 3)); // Limit maximum zoom
+  };
+
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev / 1.2, 0.5)); // Limit minimum zoom
+  };
+
   return (
     <Card className="overflow-hidden h-full border border-gray-200 rounded-md">
       <CardContent className="p-0 h-full relative">
         {/* Map container with pharmacy visualization */}
-        <div className="w-full h-full relative overflow-hidden">
+        <div 
+          className="w-full h-full relative overflow-hidden cursor-move"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          ref={mapContainerRef}
+        >
           <div className="absolute inset-0">
-            {/* Map background with subtle pattern */}
-            <div className="absolute inset-0" style={{ 
-              backgroundColor: '#e9edf5',
-              backgroundImage: `
-                linear-gradient(0deg, rgba(240,242,245,0.8) 0%, rgba(233,237,245,0.8) 100%),
-                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e0e4eb' fill-opacity='0.5'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
-              `,
-            }} />
+            {/* Map background with realistic map styling */}
+            <div 
+              className="absolute inset-0" 
+              style={{ 
+                transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
+                transformOrigin: 'center',
+                transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+                backgroundColor: '#e9edf5',
+                backgroundImage: `url("https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/6.1296,49.8153,10/1200x800?access_token=pk.eyJ1IjoibG92YWJsZS1haS1tYXBib3giLCJhIjoiY2x2YjN6NDRpMDE1azJpbzNnMjEzMmswZSJ9.3yGtbePojDGfBWpGk6YXYw")`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            />
             
-            {/* Water areas */}
-            <div className="absolute left-[20%] top-[70%] w-[25%] h-[20%] rounded-full opacity-60" 
-                 style={{ background: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)' }}></div>
-            <div className="absolute right-[10%] top-[20%] w-[15%] h-[15%] rounded-full opacity-60"
-                 style={{ background: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)' }}></div>
-            
-            {/* Green areas / parks */}
-            <div className="absolute left-[10%] top-[30%] w-[20%] h-[15%] rounded-lg opacity-60"
-                 style={{ background: 'linear-gradient(to top, #c1dfc4 0%, #deecdd 100%)' }}></div>
-            <div className="absolute right-[25%] top-[50%] w-[18%] h-[18%] rounded-lg opacity-60"
-                 style={{ background: 'linear-gradient(to top, #c1dfc4 0%, #deecdd 100%)' }}></div>
-            
-            {/* Street grid for map effect */}
-            <svg className="absolute inset-0 w-full h-full opacity-70 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-              {/* Main roads */}
-              <g stroke="#c0c0c0" strokeWidth="3" strokeOpacity="0.7">
-                {streets[0].paths.map((path, idx) => (
-                  <path key={`main-${idx}`} d={path} fill="none" />
-                ))}
-              </g>
-              
-              {/* Secondary roads */}
-              <g stroke="#d0d0d0" strokeWidth="2" strokeOpacity="0.5">
-                {streets[1].paths.map((path, idx) => (
-                  <path key={`secondary-${idx}`} d={path} fill="none" />
-                ))}
-              </g>
-              
-              {/* Diagonal roads */}
-              <g stroke="#d0d0d0" strokeWidth="2" strokeOpacity="0.4">
-                {streets[2].paths.map((path, idx) => (
-                  <path key={`diagonal-${idx}`} d={path} fill="none" strokeDasharray="5,5" />
-                ))}
-              </g>
-            </svg>
-
-            {/* City blocks as subtle background elements */}
-            <div className="absolute inset-0 grid grid-cols-5 grid-rows-5 gap-1 opacity-30 pointer-events-none">
-              {[...Array(25)].map((_, idx) => (
-                <div key={`block-${idx}`} className="bg-gray-100 rounded"></div>
-              ))}
-            </div>
-
             {/* User location */}
             {userLocation && (
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+              <div 
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20"
+                style={{ 
+                  transform: `translate(-50%, -50%) scale(${1/zoom}) translate(${position.x}px, ${position.y}px)`
+                }}
+              >
                 <div className="relative">
                   <div className="h-6 w-6 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
                     <Navigation className="h-3 w-3 text-white" />
@@ -195,7 +165,10 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
                   top: `${pin.top}%`, 
                   left: `${pin.left}%`,
                   opacity: pin.size === 'large' ? 1 : 0.85,
+                  transform: `translate(-50%, -50%) scale(${1/zoom})`,
                 }}
+                onMouseEnter={() => setHoveredPharmacy(pin.pharmacy.id)}
+                onMouseLeave={() => setHoveredPharmacy(null)}
               >
                 <div className="flex flex-col items-center group cursor-pointer">
                   <div className="relative">
@@ -210,10 +183,14 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
                     </div>
                     <div className="absolute -bottom-1 -left-1 h-3 w-3 rounded-full border-2 border-white bg-primary"></div>
                   </div>
+                  
                   {/* Tooltip - only visible on hover */}
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white p-1.5 rounded shadow-md mt-1 text-xs font-medium max-w-[120px] text-center">
-                    {pin.pharmacy.name || "Pharmacy"}
-                  </div>
+                  {hoveredPharmacy === pin.pharmacy.id && (
+                    <div className="bg-white p-2 rounded shadow-md mt-2 text-xs font-medium max-w-[150px] text-center z-50">
+                      <p className="font-semibold">{pin.pharmacy.name || "Pharmacy"}</p>
+                      <p className="text-xs text-gray-600 mt-1">{pin.pharmacy.address || "No address"}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -232,19 +209,25 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
                 </p>
               </div>
             </div>
-            
-            {/* Additional map decoration - compass */}
-            <div className="absolute top-3 right-3 bg-white/80 rounded-full p-1 shadow-sm">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="#d1d5db" strokeWidth="1" fill="#fff" />
-                <path d="M12 2L12 22" stroke="#d1d5db" strokeWidth="1" />
-                <path d="M2 12L22 12" stroke="#d1d5db" strokeWidth="1" />
-                <path d="M12 2L15 12L12 22L9 12L12 2Z" fill="#9b87f5" fillOpacity="0.3" />
-                <text x="12" y="6" textAnchor="middle" fontSize="4" fill="#9b87f5">N</text>
-                <text x="12" y="20" textAnchor="middle" fontSize="4" fill="#9b87f5">S</text>
-                <text x="4" y="12" textAnchor="middle" fontSize="4" fill="#9b87f5">W</text>
-                <text x="20" y="12" textAnchor="middle" fontSize="4" fill="#9b87f5">E</text>
-              </svg>
+
+            {/* Zoom controls */}
+            <div className="absolute top-4 right-4 flex flex-col gap-1 z-30">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="h-8 w-8 p-0 shadow-md"
+                onClick={handleZoomIn}
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="h-8 w-8 p-0 shadow-md"
+                onClick={handleZoomOut}
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -256,6 +239,8 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
               <div 
                 key={pharmacy.id || idx}
                 className="bg-white/95 backdrop-blur-sm p-2 text-xs rounded-md shadow-sm border border-gray-100 hover:bg-white transition-colors"
+                onMouseEnter={() => setHoveredPharmacy(pharmacy.id)}
+                onMouseLeave={() => setHoveredPharmacy(null)}
               >
                 <p className="font-medium text-gray-800">{pharmacy.name || "Pharmacy"}</p>
                 <p className="truncate text-gray-600">{pharmacy.address || "No address"}</p>

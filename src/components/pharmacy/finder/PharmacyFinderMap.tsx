@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 import StaticMapComponent from './StaticMapComponent';
 
@@ -33,7 +32,7 @@ export function PharmacyFinderMap({
   if (!userLocation) {
     return (
       <Card className="w-full h-full flex items-center justify-center">
-        <Skeleton className="w-full h-full" />
+        <p className="text-gray-500">Loading location data...</p>
       </Card>
     );
   }
