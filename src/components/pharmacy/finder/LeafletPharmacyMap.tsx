@@ -155,6 +155,18 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     }
   }, [pharmacies, onPharmaciesInShape]);
   
+  // Force setting map ready after a delay
+  useEffect(() => {
+    if (!mapIsReady) {
+      const timer = setTimeout(() => {
+        console.log('Force setting map ready state');
+        setMapIsReady(true);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [mapIsReady]);
+  
   if (isLoading && !mapIsReady) {
     return (
       <div className="w-full h-full min-h-[400px] bg-gray-100 rounded-md flex items-center justify-center">
@@ -256,16 +268,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           }
         })}
       </MapContainer>
-      
-      {/* Update ready state after render */}
-      <div style={{ display: 'none' }}>
-        {setTimeout(() => {
-          if (!mapIsReady) {
-            console.log('Force setting map ready state');
-            handleMapReady();
-          }
-        }, 1000)}
-      </div>
     </div>
   );
 };

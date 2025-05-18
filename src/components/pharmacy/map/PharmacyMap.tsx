@@ -116,6 +116,18 @@ export function PharmacyMap({
       onPharmaciesInShape(filteredPharmacies);
     }
   }, [filteredPharmacies, onPharmaciesInShape]);
+
+  // Force setting map ready after a delay
+  useEffect(() => {
+    if (!isMapReady) {
+      const timer = setTimeout(() => {
+        console.log('Force setting map ready state');
+        setIsMapReady(true);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isMapReady]);
   
   // For mobile devices, return the static map component
   if (isMobileDevice) {
@@ -209,16 +221,6 @@ export function PharmacyMap({
             }
           })}
         </MapContainer>
-      </div>
-      
-      {/* Update ready state after render */}
-      <div style={{ display: 'none' }}>
-        {setTimeout(() => {
-          if (!isMapReady) {
-            console.log('Force setting map ready state');
-            setIsMapReady(true);
-          }
-        }, 1000)}
       </div>
     </div>
   );
