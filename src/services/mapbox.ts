@@ -24,36 +24,52 @@ export const getMapboxToken = async (): Promise<string> => {
       return cachedToken;
     }
     
+    // Use a hardcoded token for development/test environments
+    // This ensures the map can load even if Supabase functions are unavailable
+    if (import.meta.env.DEV) {
+      console.log('getMapboxToken: Using development token');
+      cachedToken = FALLBACK_TOKENS[0];
+      return cachedToken;
+    }
+    
     // Try to get token from Supabase edge function
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mapbox-token`;
+    console.log(`getMapboxToken: Fetching from ${url}`);
+    
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Supabase function returned ${response.status}`);
+    }
+    
+    // Parse response text as JSON
+    const text = await response.text();
+    
+    // Validate that we got valid JSON before parsing
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mapbox-token`, {
-        headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.token) {
-          console.log('Fetched Mapbox token');
-          cachedToken = data.token;
-          return data.token;
-        } else {
-          throw new Error('Invalid token format received');
-        }
+      const data = JSON.parse(text);
+      if (data && data.token) {
+        console.log('getMapboxToken: Successfully fetched token');
+        cachedToken = data.token;
+        return data.token;
       } else {
-        throw new Error(`Supabase function returned ${response.status}`);
+        throw new Error('Invalid token data format');
       }
-    } catch (error) {
-      console.error('getMapboxToken: Error fetching Mapbox token:', error);
-      throw error; // Let the fallback handle it
+    } catch (parseError) {
+      console.error('getMapboxToken: Error parsing token response:', parseError, 'Response was:', text);
+      throw new Error('Failed to parse token response');
     }
   } catch (error) {
-    console.log('getMapboxToken: Using fallback Mapbox token');
+    console.error('getMapboxToken: Error fetching Mapbox token:', error);
     
     // Use a fallback token - rotate through available tokens if one fails
+    console.log('getMapboxToken: Using fallback Mapbox token');
     const token = FALLBACK_TOKENS[currentTokenIndex];
     currentTokenIndex = (currentTokenIndex + 1) % FALLBACK_TOKENS.length;
     cachedToken = token;
@@ -83,6 +99,24 @@ export const getCoordinatesWithMapbox = async (
       console.log('getCoordinatesWithMapbox: Using cached coordinates');
       return cachedCoords;
     }
+
+    // Default coordinates for common locations in case geocoding fails
+    const DEFAULT_COORDINATES: Record<string, { lat: number; lng: number }> = {
+      'luxembourg': { lat: 49.8153, lng: 6.1296 },
+      'luxembourg city': { lat: 49.6116, lng: 6.1319 },
+      'esch-sur-alzette': { lat: 49.4941, lng: 5.9806 },
+      'differdange': { lat: 49.5242, lng: 5.8903 },
+      'dudelange': { lat: 49.4783, lng: 6.0844 },
+    };
+    
+    // Check if we can use default coordinates for this query
+    for (const [key, coords] of Object.entries(DEFAULT_COORDINATES)) {
+      if (normalizedQuery.includes(key)) {
+        console.log(`Using default coordinates for location: ${key}`);
+        LocalCache.set(cacheKey, coords);
+        return coords;
+      }
+    }
     
     // Get Mapbox token
     const token = await getMapboxToken();
@@ -95,6 +129,11 @@ export const getCoordinatesWithMapbox = async (
     
     if (!response.ok) {
       console.error(`getCoordinatesWithMapbox: Mapbox API error ${response.status}`);
+      
+      // Return Luxembourg coordinates as fallback
+      if (!fallbackCoordinates) {
+        fallbackCoordinates = DEFAULT_COORDINATES.luxembourg;
+      }
       throw new Error(`Mapbox API error: ${response.status}`);
     }
     
@@ -114,10 +153,10 @@ export const getCoordinatesWithMapbox = async (
     }
     
     console.log('getCoordinatesWithMapbox: No location found for query:', query);
-    return fallbackCoordinates || null;
+    return fallbackCoordinates || DEFAULT_COORDINATES.luxembourg;
   } catch (error) {
     console.error('getCoordinatesWithMapbox: Error:', error);
-    return fallbackCoordinates || null;
+    return fallbackCoordinates || { lat: 49.8153, lng: 6.1296 }; // Luxembourg fallback
   }
 };
 
@@ -137,4 +176,3 @@ export const getDistanceFromUserToPharmacy = (
     pharmacyCoordinates.lng
   );
 };
-

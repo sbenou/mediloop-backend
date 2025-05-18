@@ -1,27 +1,52 @@
 
+import { LocalCache } from '@/lib/cache';
 import { getMapboxToken } from './mapbox';
 
-// Cache for geocoding results
-const geocodingCache: Record<string, { lat: string; lon: string }> = {};
+// Default coordinates for common locations
+const DEFAULT_COORDINATES: Record<string, { lat: string; lon: string }> = {
+  'luxembourg': { lat: '49.8153', lon: '6.1296' },
+  'luxembourg city': { lat: '49.6116', lon: '6.1319' },
+  'esch-sur-alzette': { lat: '49.4941', lon: '5.9806' },
+  'differdange': { lat: '49.5242', lon: '5.8903' },
+  'dudelange': { lat: '49.4783', lon: '6.0844' },
+};
 
 export async function getCoordinates(query: string): Promise<{ lat: string; lon: string } | null> {
   if (!query) return null;
   
   // Check cache first
   const normalizedQuery = query.toLowerCase().trim();
-  if (geocodingCache[normalizedQuery]) {
+  const cacheKey = `geocoding-${normalizedQuery}`;
+  const cachedCoords = LocalCache.get<{ lat: string; lon: string }>(cacheKey);
+  
+  if (cachedCoords) {
     console.log('Using cached coordinates for:', normalizedQuery);
-    return geocodingCache[normalizedQuery];
+    return cachedCoords;
+  }
+  
+  // Check if we have default coordinates for this location
+  for (const [key, coords] of Object.entries(DEFAULT_COORDINATES)) {
+    if (normalizedQuery.includes(key)) {
+      console.log(`Using default coordinates for location: ${key}`);
+      LocalCache.set(cacheKey, coords);
+      return coords;
+    }
   }
   
   try {
     const mapboxToken = await getMapboxToken();
+    console.log('Got mapbox token, fetching coordinates for:', normalizedQuery);
+    
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(normalizedQuery)}.json?access_token=${mapboxToken}&limit=1`;
     
     const response = await fetch(url);
     if (!response.ok) {
       console.error(`Mapbox API error: ${response.status}`);
-      throw new Error(`Mapbox API error: ${response.status}`);
+      
+      // Return Luxembourg as default
+      const result = DEFAULT_COORDINATES.luxembourg;
+      LocalCache.set(cacheKey, result);
+      return result;
     }
     
     const data = await response.json();
@@ -31,40 +56,27 @@ export async function getCoordinates(query: string): Promise<{ lat: string; lon:
       const result = { lat: String(lat), lon: String(lng) };
       
       // Cache the results for future use
-      geocodingCache[normalizedQuery] = result;
+      LocalCache.set(cacheKey, result);
       
       return result;
     }
     
-    // Fallback coordinates for common locations
-    const fallbacks: Record<string, { lat: string; lon: string }> = {
-      'luxembourg': { lat: '49.8153', lon: '6.1296' },
-      'luxembourg city': { lat: '49.6116', lon: '6.1319' },
-      'esch-sur-alzette': { lat: '49.4941', lon: '5.9806' },
-      'differdange': { lat: '49.5242', lon: '5.8903' }
-    };
-    
-    // Check if we have a fallback for this query
-    for (const [key, coords] of Object.entries(fallbacks)) {
+    // If no results but query has a location keyword, use default coordinates
+    for (const [key, coords] of Object.entries(DEFAULT_COORDINATES)) {
       if (normalizedQuery.includes(key)) {
-        console.log(`Using fallback coordinates for: ${normalizedQuery}`);
-        geocodingCache[normalizedQuery] = coords;
+        console.log(`Using default coordinates for location keyword: ${key}`);
+        LocalCache.set(cacheKey, coords);
         return coords;
       }
     }
     
-    return null;
+    // Default to Luxembourg if all else fails
+    return DEFAULT_COORDINATES.luxembourg;
   } catch (error) {
     console.error('Error getting coordinates:', error);
     
     // Default to Luxembourg if all else fails
-    if (normalizedQuery.includes('luxembourg')) {
-      const defaultCoords = { lat: '49.8153', lon: '6.1296' };
-      geocodingCache[normalizedQuery] = defaultCoords;
-      return defaultCoords;
-    }
-    
-    return null;
+    return DEFAULT_COORDINATES.luxembourg;
   }
 }
 
@@ -78,7 +90,8 @@ export async function searchCity(query: string): Promise<Array<{ display_name: s
     
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Mapbox API error: ${response.status}`);
+      console.warn(`Mapbox city search API error: ${response.status}`);
+      return [];
     }
     
     const data = await response.json();
@@ -113,14 +126,15 @@ export async function searchAddress(query: string): Promise<Array<{
     
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Mapbox API error: ${response.status}`);
+      console.warn(`Mapbox address search API error: ${response.status}`);
+      return [];
     }
     
     const data = await response.json();
     
     if (data.features && data.features.length > 0) {
       return data.features.map((feature: any) => {
-        // Parse the address components from the Mapbox result
+        // Parse address components from the Mapbox result
         const addressParts = feature.place_name.split(',').map((part: string) => part.trim());
         
         // Find postal code (usually in the format "12345")

@@ -2,9 +2,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { toast } from "@/components/ui/use-toast";
 import { Map as MapIcon } from 'lucide-react';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import { LocalCache } from '@/lib/cache';
-import { getMapboxToken } from '@/services/mapbox';
+import StaticMapComponent from '../finder/StaticMapComponent';
 
 interface PharmacyMapProps {
   coordinates: { lat: number; lon: number };
@@ -37,7 +36,8 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
       }
       
       // For reliability, generate a URL without markers first (always works)
-      const fallbackUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw`;
+      const token = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+      const fallbackUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=${token}`;
       
       // Cache the fallback URL
       LocalCache.set(cacheKey, fallbackUrl);
@@ -71,7 +71,7 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
       {imageError ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 p-4 text-center">
           <MapIcon className="h-12 w-12 text-gray-400 mb-2" />
-          <p className="text-gray-500">Map data is currently unavailable</p>
+          <p className="text-gray-500">Map temporarily unavailable</p>
           <p className="text-sm text-gray-400 mt-2">Showing {filteredPharmacies.length} pharmacies in this area</p>
         </div>
       ) : (
@@ -81,7 +81,7 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
           className="w-full h-full object-cover"
           style={{opacity: isImageLoaded ? 1 : 0, transition: 'opacity 0.3s'}}
           onLoad={() => setIsImageLoaded(true)}
-          onError={(e) => {
+          onError={() => {
             console.error('Error loading map image');
             setImageError(true);
             setIsImageLoaded(false);
@@ -94,24 +94,26 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
       </div>
       
       {/* Overlay with pharmacy cards for better UX */}
-      <div className="absolute top-2 left-2 max-h-[90%] w-64 overflow-y-auto">
-        <div className="space-y-2 max-h-80 overflow-auto">
-          {filteredPharmacies.slice(0, 5).map((pharmacy, index) => (
-            <div 
-              key={pharmacy.id || index}
-              className="bg-white/90 backdrop-blur-sm p-2 rounded-md shadow-sm border border-gray-100"
-            >
-              <p className="font-medium text-sm">{pharmacy.name || "Pharmacy"}</p>
-              <p className="text-xs text-gray-600">{pharmacy.address || "No address"}</p>
-            </div>
-          ))}
-          {filteredPharmacies.length > 5 && (
-            <div className="text-xs text-center text-gray-500 pt-1">
-              +{filteredPharmacies.length - 5} more pharmacies
-            </div>
-          )}
+      {isImageLoaded && !imageError && (
+        <div className="absolute top-2 left-2 max-h-[90%] w-64 overflow-y-auto">
+          <div className="space-y-2 max-h-80 overflow-auto">
+            {filteredPharmacies.slice(0, 5).map((pharmacy, index) => (
+              <div 
+                key={pharmacy.id || index}
+                className="bg-white/90 backdrop-blur-sm p-2 rounded-md shadow-sm border border-gray-100"
+              >
+                <p className="font-medium text-sm">{pharmacy.name || "Pharmacy"}</p>
+                <p className="text-xs text-gray-600">{pharmacy.address || "No address"}</p>
+              </div>
+            ))}
+            {filteredPharmacies.length > 5 && (
+              <div className="text-xs text-center text-gray-500 pt-1">
+                +{filteredPharmacies.length - 5} more pharmacies
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
