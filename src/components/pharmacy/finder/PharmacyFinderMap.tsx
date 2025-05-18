@@ -1,9 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { PharmacyMap } from '../map/PharmacyMap';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
-import { toast } from '@/components/ui/use-toast';
 import StaticMapComponent from './StaticMapComponent';
 
 interface PharmacyFinderMapProps {
@@ -18,7 +16,6 @@ export function PharmacyFinderMap({
   useLocationFilter 
 }: PharmacyFinderMapProps) {
   const [filteredPharmacies, setFilteredPharmacies] = useState<any[]>([]);
-  const [useStaticMap, setUseStaticMap] = useState(false);
   
   // Initialize with all pharmacies
   useEffect(() => {
@@ -33,12 +30,6 @@ export function PharmacyFinderMap({
     setFilteredPharmacies(inShapePharmacies);
   }, []);
   
-  // If there's an error with the interactive map, fall back to static map
-  const handleMapError = useCallback(() => {
-    console.log('Falling back to static map due to errors');
-    setUseStaticMap(true);
-  }, []);
-  
   if (!userLocation) {
     return (
       <Card className="w-full h-full flex items-center justify-center">
@@ -49,22 +40,11 @@ export function PharmacyFinderMap({
 
   return (
     <div className="w-full h-full">
-      {useStaticMap ? (
-        <StaticMapComponent
-          pharmacies={pharmacies}
-          userLocation={userLocation}
-          onPharmaciesInShape={handlePharmaciesInShape}
-        />
-      ) : (
-        <PharmacyMap
-          coordinates={userLocation}
-          pharmacies={pharmacies}
-          filteredPharmacies={filteredPharmacies}
-          onPharmaciesInShape={handlePharmaciesInShape}
-          showDefaultLocation={useLocationFilter}
-          onMapError={handleMapError}
-        />
-      )}
+      <StaticMapComponent
+        pharmacies={pharmacies}
+        userLocation={userLocation}
+        onPharmaciesInShape={handlePharmaciesInShape}
+      />
     </div>
   );
 }

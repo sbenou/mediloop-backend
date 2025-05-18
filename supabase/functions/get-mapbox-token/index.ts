@@ -8,29 +8,26 @@ import { corsHeaders } from "../_shared/cors.ts";
 console.log(`Function "get-mapbox-token" up and running!`);
 
 serve(async (req) => {
+  // Always include CORS headers in every response
+  const headers = {
+    ...corsHeaders,
+    "Content-Type": "application/json",
+    "Cache-Control": "public, max-age=86400", // Cache for 24 hours
+  };
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers });
   }
 
   try {
-    // Get the Mapbox token from environment variable
+    // Get the Mapbox token from environment variable or use reliable public token
     const mapboxToken = Deno.env.get("MAPBOX_ACCESS_TOKEN") || 
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
-    // Add cache control and CORS headers
-    const headers = {
-      ...corsHeaders, 
-      "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=86400", // Cache for 24 hours
-    };
-
     // Return the token in a properly formatted JSON object
     return new Response(
-      JSON.stringify({ 
-        token: mapboxToken,
-        status: "success" 
-      }),
+      JSON.stringify({ token: mapboxToken, status: "success" }),
       { headers, status: 200 }
     );
   } catch (error) {
@@ -40,14 +37,8 @@ serve(async (req) => {
     const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
     
     return new Response(
-      JSON.stringify({ 
-        token: fallbackToken,
-        status: "fallback" 
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200, // Still return 200 with fallback
-      }
+      JSON.stringify({ token: fallbackToken, status: "fallback" }),
+      { headers, status: 200 }
     );
   }
 });

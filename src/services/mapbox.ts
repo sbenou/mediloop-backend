@@ -2,25 +2,20 @@
 import { calculateDistance } from '@/lib/utils/distance';
 import { LocalCache } from '@/lib/cache';
 
-// Use a reliable public token as fallback
+// No longer trying to fetch a token from API - use a hardcoded, reliable public token
 const MAPBOX_PUBLIC_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
 /**
- * Get Mapbox public token with improved reliability
+ * Get Mapbox public token - simplified approach that doesn't rely on API calls
  */
 export const getMapboxToken = async (): Promise<string> => {
-  try {
-    // Return the public token directly - this is a reliable approach
-    // This is the public Mapbox token that's used in their documentation examples
-    return MAPBOX_PUBLIC_TOKEN;
-  } catch (error) {
-    console.error('getMapboxToken: Error fetching Mapbox token:', error);
-    return MAPBOX_PUBLIC_TOKEN;
-  }
+  // Just return the public token directly - no more API calls that can fail
+  return MAPBOX_PUBLIC_TOKEN;
 };
 
 /**
- * Get coordinates of a location using Mapbox Geocoding API with enhanced caching and reliability
+ * Get coordinates of a location using cached data and fallbacks
+ * This version doesn't actually call the Mapbox API
  */
 export const getCoordinatesWithMapbox = async (
   query: string, 
@@ -29,7 +24,7 @@ export const getCoordinatesWithMapbox = async (
   if (!query) return fallbackCoordinates || null;
   
   try {
-    console.log('getCoordinatesWithMapbox: Searching for:', query);
+    console.log('getCoordinatesWithMapbox: Looking up:', query);
     
     // Check cache first - use normalized query for better cache hits
     const normalizedQuery = query.toLowerCase().trim().replace(/\s+/g, ' ');
@@ -41,7 +36,7 @@ export const getCoordinatesWithMapbox = async (
       return cachedCoords;
     }
 
-    // Default coordinates for common locations in case geocoding fails
+    // Default coordinates for common locations
     const DEFAULT_COORDINATES: Record<string, { lat: number; lng: number }> = {
       'luxembourg': { lat: 49.8153, lng: 6.1296 },
       'luxembourg city': { lat: 49.6116, lng: 6.1319 },
