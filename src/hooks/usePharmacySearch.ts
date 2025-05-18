@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchPharmacies } from "@/lib/overpass";
+import { LocalCache } from "@/lib/cache";
 
 export const usePharmacySearch = (
   coordinates: { lat: number; lon: number } | null,
@@ -22,20 +23,18 @@ export const usePharmacySearch = (
           return [];
         }
         
-        // Try to get from cache first
-        const cacheKey = `pharmacies-${coordinates.lat}-${coordinates.lon}-${searchRadius}`;
-        let cachedData;
+        // Round coordinates to 4 decimal places for better cache hits
+        // This gives ~11m of precision which is plenty for our use case
+        const roundedLat = Math.round(coordinates.lat * 10000) / 10000;
+        const roundedLon = Math.round(coordinates.lon * 10000) / 10000;
         
-        try {
-          const cachedString = sessionStorage.getItem(cacheKey);
-          if (cachedString) {
-            cachedData = JSON.parse(cachedString);
-            if (Array.isArray(cachedData)) {
-              return cachedData;
-            }
-          }
-        } catch (cacheError) {
-          console.error("Error retrieving from cache:", cacheError);
+        // Try to get from cache first
+        const cacheKey = `pharmacies-${roundedLat}-${roundedLon}-${searchRadius}`;
+        const cachedData = LocalCache.get(cacheKey);
+        
+        if (cachedData) {
+          console.log('Using cached pharmacy data from LocalCache');
+          return cachedData;
         }
 
         // When searching for all pharmacies in Luxembourg, use Luxembourg's center coordinates
@@ -44,6 +43,7 @@ export const usePharmacySearch = (
         const searchLon = coordinates.lon;
         const searchDist = searchRadius;
 
+        console.log('Fetching pharmacy data from API');
         const results = await searchPharmacies(searchLat, searchLon, searchDist);
         
         if (!Array.isArray(results)) {
@@ -52,11 +52,7 @@ export const usePharmacySearch = (
         }
         
         // Cache the results
-        try {
-          sessionStorage.setItem(cacheKey, JSON.stringify(results));
-        } catch (cacheError) {
-          console.error("Error saving to cache:", cacheError);
-        }
+        LocalCache.set(cacheKey, results);
         
         return results;
       } catch (err) {

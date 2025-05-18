@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import type { Pharmacy } from '@/lib/types/overpass.types';
+import { LocalCache } from '@/lib/cache';
 
 interface StaticMapComponentProps {
   pharmacies: Pharmacy[];
@@ -27,18 +28,35 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
     
     toast({
       title: "Static Map Active",
-      description: "Using static map to avoid compatibility issues.",
+      description: "Using static map with efficient caching to reduce API calls.",
       duration: 3000
     });
   }, [pharmacies, onPharmaciesInShape]);
   
-  // Generate a static map URL using Mapbox (fallback to OpenStreetMap if URL fails)
-  const mapUrl = React.useMemo(() => {
+  // Generate a static map URL using Mapbox with caching
+  const mapUrl = useMemo(() => {
     if (!userLocation) return "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
     
     try {
-      // Use Mapbox static image API
-      return `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${userLocation.lon},${userLocation.lat},11,0/600x400@2x?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+      // Create cache key based on location (rounded to 3 decimal places for caching similar positions)
+      const roundedLat = Math.round(userLocation.lat * 1000) / 1000;
+      const roundedLon = Math.round(userLocation.lon * 1000) / 1000;
+      const cacheKey = `static-map-${roundedLat}-${roundedLon}-11`;
+      
+      // Check cache first
+      const cachedUrl = LocalCache.get<string>(cacheKey);
+      if (cachedUrl) {
+        console.log('Using cached static map URL');
+        return cachedUrl;
+      }
+      
+      // Generate new URL
+      const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${userLocation.lon},${userLocation.lat},11,0/600x400@2x?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+      
+      // Cache the URL
+      LocalCache.set(cacheKey, url);
+      
+      return url;
     } catch (error) {
       console.error('Error generating static map URL:', error);
       return "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
@@ -54,7 +72,7 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
             <MapPin className="h-10 w-10 text-primary/60 mx-auto mb-2" />
             <h3 className="text-base font-medium mb-2">Static Map View</h3>
             <p className="text-sm text-gray-600 mb-3">
-              Interactive maps are disabled to prevent compatibility issues.
+              Using cached static maps to reduce API usage.
             </p>
             <p className="text-xs text-muted-foreground">
               {pharmacies.length} pharmacies available in this area

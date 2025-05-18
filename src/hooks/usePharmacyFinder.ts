@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { searchPharmacies } from "@/lib/overpass";
 import { toast } from "@/components/ui/use-toast";
+import { LocalCache } from "@/lib/cache";
 import type { Pharmacy } from "@/lib/types/overpass.types";
 
 export const usePharmacyFinder = (
@@ -29,25 +30,26 @@ export const usePharmacyFinder = (
       
       try {
         console.log(`usePharmacyFinder: Fetching pharmacies near ${coordinates.lat}, ${coordinates.lon}`);
+        
+        // Round coordinates to 4 decimal places for consistent caching
+        const roundedLat = Math.round(coordinates.lat * 10000) / 10000;
+        const roundedLon = Math.round(coordinates.lon * 10000) / 10000;
+        
         // Check if we have cached data
-        const cacheKey = `pharmacies-${coordinates.lat.toFixed(4)}-${coordinates.lon.toFixed(4)}`;
-        const cached = sessionStorage.getItem(cacheKey);
+        const cacheKey = `pharmacies-${roundedLat}-${roundedLon}`;
+        const cachedData = LocalCache.get<Pharmacy[]>(cacheKey);
         
         let results: Pharmacy[];
         
-        if (cached) {
+        if (cachedData) {
           console.log('usePharmacyFinder: Using cached pharmacy data');
-          results = JSON.parse(cached);
+          results = cachedData;
         } else {
           console.log('usePharmacyFinder: No cache found, fetching from API');
           results = await searchPharmacies(coordinates.lat, coordinates.lon, 5000);
           
           // Cache the results
-          try {
-            sessionStorage.setItem(cacheKey, JSON.stringify(results));
-          } catch (e) {
-            console.warn('Failed to cache pharmacy results:', e);
-          }
+          LocalCache.set(cacheKey, results);
         }
         
         console.log(`usePharmacyFinder: Found ${results.length} pharmacies`);

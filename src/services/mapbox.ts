@@ -1,5 +1,6 @@
 
 import { calculateDistance } from '@/lib/utils/distance';
+import { LocalCache } from '@/lib/cache';
 
 // Use a known working token as fallback
 const FALLBACK_TOKEN = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
@@ -12,7 +13,7 @@ export const getMapboxToken = async (): Promise<string> => {
     console.log('getMapboxToken: Starting token retrieval');
     
     // Check if we have a cached token
-    const cachedToken = localStorage.getItem('mapbox_token');
+    const cachedToken = LocalCache.get<string>('mapbox_token');
     if (cachedToken) {
       console.log('getMapboxToken: Using cached Mapbox token');
       return cachedToken;
@@ -45,7 +46,7 @@ export const getMapboxToken = async (): Promise<string> => {
       
       if (data && data.token) {
         console.log('getMapboxToken: Successfully retrieved Mapbox token');
-        localStorage.setItem('mapbox_token', data.token);
+        LocalCache.set('mapbox_token', data.token);
         return data.token;
       }
     } catch (fetchError) {
@@ -62,12 +63,12 @@ export const getMapboxToken = async (): Promise<string> => {
 
 function useFallbackToken(): string {
   console.log('getMapboxToken: Using fallback Mapbox token');
-  localStorage.setItem('mapbox_token', FALLBACK_TOKEN);
+  LocalCache.set('mapbox_token', FALLBACK_TOKEN);
   return FALLBACK_TOKEN;
 }
 
 /**
- * Get coordinates of a location using Mapbox Geocoding API
+ * Get coordinates of a location using Mapbox Geocoding API with enhanced caching
  */
 export const getCoordinatesWithMapbox = async (
   query: string, 
@@ -78,20 +79,21 @@ export const getCoordinatesWithMapbox = async (
   try {
     console.log('getCoordinatesWithMapbox: Searching for:', query);
     
-    // Check cache first
-    const cacheKey = `mapbox-coords-${query}`;
-    const cachedCoords = sessionStorage.getItem(cacheKey);
+    // Check cache first - use normalized query for better cache hits
+    const normalizedQuery = query.toLowerCase().trim().replace(/\s+/g, ' ');
+    const cacheKey = `mapbox-coords-${normalizedQuery}`;
+    const cachedCoords = LocalCache.get<{lat: number; lng: number}>(cacheKey);
     
     if (cachedCoords) {
       console.log('getCoordinatesWithMapbox: Using cached coordinates');
-      return JSON.parse(cachedCoords);
+      return cachedCoords;
     }
     
     // Get Mapbox token
     const token = await getMapboxToken();
     
     // Fetch coordinates from Mapbox API
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=1`;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(normalizedQuery)}.json?access_token=${token}&limit=1`;
     console.log('getCoordinatesWithMapbox: Fetching from Mapbox API');
     
     const response = await fetch(url);
@@ -111,7 +113,7 @@ export const getCoordinatesWithMapbox = async (
       console.log('getCoordinatesWithMapbox: Found coordinates:', coordinates);
       
       // Cache the result
-      sessionStorage.setItem(cacheKey, JSON.stringify(coordinates));
+      LocalCache.set(cacheKey, coordinates);
       
       return coordinates;
     }
