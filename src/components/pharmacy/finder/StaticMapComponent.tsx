@@ -206,6 +206,7 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
                     </div>
                     <div className="absolute -bottom-1 -left-1 h-3 w-3 rounded-full border-2 border-white bg-primary"></div>
                   </div>
+                  {/* Tooltip - only visible on hover */}
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white p-1.5 rounded shadow-md mt-1 text-xs font-medium max-w-[120px] text-center">
                     {pin.pharmacy.name || "Pharmacy"}
                   </div>
@@ -244,10 +245,10 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
           </div>
         </div>
         
-        {/* Pharmacy list overlay - showing top pharmacies in the top-left area */}
+        {/* Pharmacy list overlay - showing top pharmacies in a collapsible section */}
         <div className="absolute top-3 left-3 max-w-[200px] z-30">
           <div className="space-y-1">
-            {topPharmacies.map((pharmacy, idx) => (
+            {topPharmacies.slice(0, 3).map((pharmacy, idx) => (
               <div 
                 key={pharmacy.id || idx}
                 className="bg-white/95 backdrop-blur-sm p-2 text-xs rounded-md shadow-sm border border-gray-100 hover:bg-white transition-colors"
@@ -257,9 +258,9 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
               </div>
             ))}
             
-            {pharmacies.length > 5 && (
+            {pharmacies.length > 3 && (
               <div className="text-xs text-center text-gray-500 bg-white/90 rounded-md py-1 px-2">
-                +{pharmacies.length - 5} more pharmacies
+                +{pharmacies.length - 3} more pharmacies
               </div>
             )}
           </div>
