@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { toast } from "@/components/ui/use-toast";
 import { Map as MapIcon } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-css';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { LocalCache } from '@/lib/cache';
 import { getMapboxToken } from '@/services/mapbox';
 import { MapboxMapUpdater } from './MapboxMapUpdater';
