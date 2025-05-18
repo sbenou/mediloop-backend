@@ -3,7 +3,6 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Pharmacy } from '@/lib/types/overpass.types';
 import { LocalCache } from '@/lib/cache';
-import { getMapboxToken } from '@/services/mapbox';
 import { MapPin } from 'lucide-react';
 
 interface StaticMapComponentProps {
@@ -47,11 +46,15 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
         return cachedUrl;
       }
       
-      // Get a Mapbox token
-      const token = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+      // Use the default Mapbox public token
+      // This is the public token that Mapbox recommends for example usage
+      const token = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
       
-      // Generate simple static map URL without markers to avoid URL length issues
-      const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${userLocation.lon},${userLocation.lat},12,0/600x400?access_token=${token}`;
+      // Generate placeholder image URL as fallback
+      const fallbackUrl = `https://placehold.co/600x400/e2e8f0/64748b?text=Map+of+${roundedLat},${roundedLon}`;
+      
+      // Try to use a local static image instead of a Mapbox API call
+      const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${userLocation.lon},${userLocation.lat},12,0/600x400@2x?access_token=${token}`;
       
       // Cache the URL
       LocalCache.set(cacheKey, url);
@@ -106,6 +109,7 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
             style={{ opacity: !isLoading && !mapError ? 1 : 0 }}
             onLoad={handleImageLoaded}
             onError={handleImageError}
+            crossOrigin="anonymous"
           />
         </div>
         

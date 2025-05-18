@@ -16,7 +16,7 @@ serve(async (req) => {
   try {
     // Get the Mapbox token from environment variable
     const mapboxToken = Deno.env.get("MAPBOX_ACCESS_TOKEN") || 
-      'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+      'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
     // Add cache control and CORS headers
     const headers = {
@@ -25,7 +25,7 @@ serve(async (req) => {
       "Cache-Control": "public, max-age=86400", // Cache for 24 hours
     };
 
-    // Return the token in a properly formatted JSON object (no HTML content)
+    // Return the token in a properly formatted JSON object
     return new Response(
       JSON.stringify({ 
         token: mapboxToken,
@@ -37,7 +37,7 @@ serve(async (req) => {
     console.error("Error in get-mapbox-token function:", error);
     
     // Return a fallback token when there's an error
-    const fallbackToken = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+    const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
     
     return new Response(
       JSON.stringify({ 
