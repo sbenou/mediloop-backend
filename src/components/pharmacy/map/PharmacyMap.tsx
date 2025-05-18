@@ -39,32 +39,21 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
 }) => {
   console.log('Rendering StaticMapFallback with', filteredPharmacies.length, 'pharmacies');
   
-  // Generate markers string for static Mapbox API
-  const markersString = useMemo(() => {
-    // Limit to 25 markers (to avoid URL length issues)
-    const visiblePharmacies = filteredPharmacies.slice(0, 25);
-    let markerString = '';
-    
-    visiblePharmacies.forEach(pharmacy => {
-      if (pharmacy.coordinates && pharmacy.coordinates.lat && pharmacy.coordinates.lon) {
-        markerString += `pin-s+1e88e5(${pharmacy.coordinates.lon},${pharmacy.coordinates.lat}),`;
-      }
-    });
-    
-    // Remove trailing comma
-    if (markerString.endsWith(',')) {
-      markerString = markerString.slice(0, -1);
+  // Generate static map URL with limited markers to avoid URL length issues
+  const staticMapUrl = useMemo(() => {
+    try {
+      // Use Luxembourg's center coordinates as default
+      const mapCenter = `${coordinates.lon},${coordinates.lat}`;
+      const zoom = 12;
+      const token = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
+      
+      // No markers for simplicity (to avoid URL length issues)
+      return `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${mapCenter},${zoom},0,0/600x400@2x?access_token=${token}`;
+    } catch (error) {
+      console.error('Error generating static map URL:', error);
+      return "https://placehold.co/600x400/e2e8f0/64748b?text=Map+unavailable";
     }
-    
-    return markerString;
-  }, [filteredPharmacies]);
-  
-  const mapUrl = useMemo(() => {
-    const markers = markersString ? markersString + '/' : '';
-    // Use the known working token
-    const token = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
-    return `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${markers}${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=${token}`;
-  }, [coordinates, markersString]);
+  }, [coordinates]);
   
   useEffect(() => {
     if (filteredPharmacies.length > 0) {
@@ -76,7 +65,7 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
   return (
     <div className="w-full h-full bg-gray-50 relative overflow-hidden rounded-md border border-gray-200">
       <img 
-        src={mapUrl}
+        src={staticMapUrl}
         alt="Static pharmacy map" 
         className="w-full h-full object-cover"
         loading="eager"
@@ -87,6 +76,26 @@ const StaticMapFallback: React.FC<Omit<PharmacyMapProps, 'onMapError'>> = ({
       />
       <div className="absolute bottom-2 right-2 bg-white/80 text-xs text-gray-600 px-1 py-0.5 rounded">
         {filteredPharmacies.length} pharmacies found
+      </div>
+      
+      {/* Overlay with pharmacy cards for better UX */}
+      <div className="absolute top-2 left-2 max-h-[90%] w-64 overflow-y-auto">
+        <div className="space-y-2 max-h-80 overflow-auto">
+          {filteredPharmacies.slice(0, 5).map((pharmacy, index) => (
+            <div 
+              key={pharmacy.id || index}
+              className="bg-white/90 backdrop-blur-sm p-2 rounded-md shadow-sm border border-gray-100"
+            >
+              <p className="font-medium text-sm">{pharmacy.name || "Pharmacy"}</p>
+              <p className="text-xs text-gray-600">{pharmacy.address || "No address"}</p>
+            </div>
+          ))}
+          {filteredPharmacies.length > 5 && (
+            <div className="text-xs text-center text-gray-500 pt-1">
+              +{filteredPharmacies.length - 5} more pharmacies
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -102,213 +111,14 @@ export function PharmacyMap({
 }: PharmacyMapProps) {
   console.log('PharmacyMap rendering with', filteredPharmacies.length, 'filtered pharmacies');
   
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<mapboxgl.Marker[]>([]);
-  
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [isMapError, setIsMapError] = useState(false);
-  const [mapLoadAttempted, setMapLoadAttempted] = useState(false);
-  const [errorCount, setErrorCount] = useState(0);
-  
-  // Get Mapbox token
-  useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        const token = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
-        console.log('Using hardcoded Mapbox token');
-        setMapboxToken(token);
-      } catch (err) {
-        console.error('Error setting Mapbox token:', err);
-        setIsMapError(true);
-        if (onMapError) onMapError();
-      }
-    };
-    
-    fetchToken();
-  }, [onMapError]);
-  
-  // Initialize map when container and token are available
-  useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || mapInstance.current || mapLoadAttempted || isMapError) {
-      return;
-    }
-    
-    console.log('Initializing Mapbox map');
-    setMapLoadAttempted(true);
-    
-    try {
-      // Set access token
-      mapboxgl.accessToken = mapboxToken;
-      
-      // Create map instance
-      mapInstance.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [coordinates.lon, coordinates.lat],
-        zoom: 12,
-        attributionControl: true,
-        preserveDrawingBuffer: true, // Required for some browsers
-        transformRequest: (url, resourceType) => {
-          // Workaround for CORS issues
-          if (resourceType === 'Source' && url.startsWith('http')) {
-            return {
-              url: url,
-              headers: { 'Cache-Control': 'no-cache' },
-            };
-          }
-          return { url };
-        }
-      });
-      
-      // Add navigation control
-      mapInstance.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      
-      // Handle map load
-      mapInstance.current.on('load', () => {
-        console.log('Mapbox map loaded successfully');
-        setIsMapLoaded(true);
-        setIsMapError(false);
-        
-        // Add markers immediately after map loads
-        updateMarkers();
-      });
-      
-      // Handle map error
-      mapInstance.current.on('error', (e) => {
-        console.error('Mapbox error:', e);
-        setErrorCount(prev => prev + 1);
-        
-        // If there are too many errors, fall back to static map
-        if (errorCount > 3) {
-          setIsMapError(true);
-          if (onMapError) onMapError();
-        }
-      });
-    } catch (err) {
-      console.error('Error creating Mapbox map:', err);
-      setIsMapError(true);
-      if (onMapError) onMapError();
-    }
-    
-    // Cleanup
-    return () => {
-      if (mapInstance.current) {
-        console.log('Removing Mapbox map');
-        markers.current.forEach(marker => marker.remove());
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
-    };
-  }, [mapboxToken, coordinates.lat, coordinates.lon, mapLoadAttempted, isMapError, errorCount, onMapError]);
-  
-  // Update markers when filtered pharmacies change
-  const updateMarkers = () => {
-    if (!mapInstance.current || !isMapLoaded) {
-      console.log('Cannot update markers, map not ready');
-      return;
-    }
-    
-    try {
-      // Clear existing markers
-      markers.current.forEach(marker => marker.remove());
-      markers.current = [];
-      
-      // Create new markers
-      console.log(`Adding ${filteredPharmacies.length} pharmacy markers`);
-      
-      // Limit markers to avoid performance issues
-      const displayLimit = 50;
-      const displayPharmacies = filteredPharmacies.slice(0, displayLimit);
-      
-      displayPharmacies.forEach(pharmacy => {
-        if (!pharmacy.coordinates || !pharmacy.coordinates.lat || !pharmacy.coordinates.lon) {
-          return;
-        }
-        
-        try {
-          // Create marker element
-          const el = createPharmacyMarker();
-          
-          // Create popup content
-          const popupContent = document.createElement('div');
-          popupContent.className = 'pharmacy-popup';
-          popupContent.innerHTML = `
-            <h3 style="font-weight: bold; margin-bottom: 4px;">${pharmacy.name || 'Pharmacy'}</h3>
-            <p style="font-size: 0.9rem;">${pharmacy.address || 'Address unavailable'}</p>
-            ${pharmacy.hours ? `<p style="font-size: 0.8rem; color: #666; margin-top: 4px;">${pharmacy.hours}</p>` : ''}
-          `;
-          
-          // Create popup
-          const popup = new mapboxgl.Popup({ offset: 25 })
-            .setDOMContent(popupContent);
-          
-          // Create and add marker
-          const marker = new mapboxgl.Marker(el)
-            .setLngLat([pharmacy.coordinates.lon, pharmacy.coordinates.lat])
-            .setPopup(popup)
-            .addTo(mapInstance.current!);
-          
-          // Add to markers array
-          markers.current.push(marker);
-        } catch (error) {
-          console.error('Error adding marker for pharmacy:', pharmacy.name, error);
-        }
-      });
-      
-      // If we limited the markers, show a message
-      if (filteredPharmacies.length > displayLimit) {
-        toast({
-          title: "Lots of pharmacies found",
-          description: `Showing ${displayLimit} of ${filteredPharmacies.length} pharmacies. Zoom in to see more details.`,
-          duration: 4000
-        });
-      }
-      
-      // Notify parent of pharmacies
-      onPharmaciesInShape(filteredPharmacies);
-    } catch (error) {
-      console.error('Error updating markers:', error);
-    }
-  };
-  
-  // Update markers when filtered pharmacies change or map loads
-  useEffect(() => {
-    if (isMapLoaded && mapInstance.current) {
-      updateMarkers();
-    }
-  }, [filteredPharmacies, isMapLoaded]);
-  
-  // Return fallback if map loading fails
-  if (isMapError || !mapboxToken) {
-    return (
-      <StaticMapFallback
-        coordinates={coordinates}
-        pharmacies={pharmacies}
-        filteredPharmacies={filteredPharmacies}
-        onPharmaciesInShape={onPharmaciesInShape}
-        showDefaultLocation={showDefaultLocation}
-      />
-    );
-  }
-  
+  // Always use static map for stability
   return (
-    <div className="w-full h-full relative z-10">
-      <div className="h-full w-full rounded-lg overflow-hidden border border-gray-200">
-        <div ref={mapContainer} className="h-full w-full">
-          {/* Map container */}
-        </div>
-        
-        {/* Map updater to handle coordinates changes */}
-        {isMapLoaded && mapInstance.current && (
-          <MapboxMapUpdater 
-            mapRef={mapInstance}
-            coordinates={coordinates}
-            onMapReady={updateMarkers}
-          />
-        )}
-      </div>
-    </div>
+    <StaticMapFallback
+      coordinates={coordinates}
+      pharmacies={pharmacies}
+      filteredPharmacies={filteredPharmacies || pharmacies}
+      onPharmaciesInShape={onPharmaciesInShape}
+      showDefaultLocation={showDefaultLocation}
+    />
   );
 }

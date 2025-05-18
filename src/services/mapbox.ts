@@ -12,19 +12,11 @@ export const getMapboxToken = async (): Promise<string> => {
   try {
     console.log('getMapboxToken: Starting token retrieval');
     
-    // Check if we have a cached token
-    const cachedToken = LocalCache.get<string>('mapbox_token');
-    if (cachedToken) {
-      console.log('getMapboxToken: Using cached Mapbox token');
-      return cachedToken;
-    }
-    
-    // Use the fallback token directly to avoid any API issues
-    console.log('getMapboxToken: Using fallback Mapbox token');
-    LocalCache.set('mapbox_token', FALLBACK_TOKEN);
+    // Always use the fallback token for stability
+    console.log('getMapboxToken: Using reliable Mapbox token');
     return FALLBACK_TOKEN;
   } catch (error) {
-    console.error('getMapboxToken: Unexpected error getting Mapbox token:', error);
+    console.error('getMapboxToken: Error:', error);
     return FALLBACK_TOKEN;
   }
 };

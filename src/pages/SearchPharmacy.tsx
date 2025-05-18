@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -16,7 +17,6 @@ import { useLocationSearch } from "@/hooks/useLocationSearch";
 
 const SearchPharmacy = () => {
   const [search, setSearch] = useState('');
-  const [isMapView, setIsMapView] = useState(false);
   const [mapPharmacies, setMapPharmacies] = useState<any[]>([]);
   const navigate = useNavigate();
   
@@ -35,7 +35,7 @@ const SearchPharmacy = () => {
   
   const currentCoordinates = coordinates || { lat: 49.8153, lon: 6.1296 };
   
-  const { pharmacies, isLoading, toggleView } = usePharmacySearch(currentCoordinates);
+  const { pharmacies, isLoading } = usePharmacySearch(currentCoordinates);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState<string | null>(null);
   
   const location = useLocation();
@@ -171,46 +171,8 @@ const SearchPharmacy = () => {
 
         <div className="container mx-auto py-8 px-4">
           <div className="w-full max-w-6xl mx-auto">
-            {isMapView ? (
-              <div className="w-full h-[calc(100vh-300px)]">
-                <div className="flex justify-end mb-4">
-                  <button 
-                    onClick={() => {
-                      try {
-                        toggleView();
-                      } catch (err) {
-                        console.error("Error toggling view:", err);
-                      }
-                    }}
-                    className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-                  >
-                    Switch to List View
-                  </button>
-                </div>
-                <PharmacyMap
-                  coordinates={currentCoordinates}
-                  pharmacies={pharmacies || []}
-                  filteredPharmacies={mapPharmacies}
-                  onPharmaciesInShape={handlePharmaciesInShape}
-                  showDefaultLocation={false}
-                />
-              </div>
-            ) : (
-              <div className="w-full">
-                <div className="flex justify-end mb-4">
-                  <button 
-                    onClick={() => {
-                      try {
-                        toggleView();
-                      } catch (err) {
-                        console.error("Error toggling view:", err);
-                      }
-                    }}
-                    className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-                  >
-                    Switch to Map View
-                  </button>
-                </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="w-full md:col-span-1">
                 {Array.isArray(pharmacies) ? (
                   <div className="w-full">
                     <PharmacyListSection
@@ -228,7 +190,17 @@ const SearchPharmacy = () => {
                   </div>
                 )}
               </div>
-            )}
+              
+              <div className="w-full md:col-span-1 h-[600px]">
+                <PharmacyMap
+                  coordinates={currentCoordinates}
+                  pharmacies={pharmacies || []}
+                  filteredPharmacies={mapPharmacies}
+                  onPharmaciesInShape={handlePharmaciesInShape}
+                  showDefaultLocation={false}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </main>

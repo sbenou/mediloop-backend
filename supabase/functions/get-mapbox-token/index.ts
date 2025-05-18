@@ -27,7 +27,7 @@ serve(async (req) => {
 
     console.log("Returning Mapbox token successfully");
     
-    // Return the token in a simple JSON format - note this is properly formatted JSON
+    // Return the token in a properly formatted JSON object
     return new Response(
       JSON.stringify({ 
         token: mapboxToken,
@@ -38,7 +38,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in get-mapbox-token function:", error);
     
-    // Return a fallback token when there's an error - using properly formatted JSON
+    // Return a fallback token when there's an error
     const fallbackToken = 'pk.eyJ1IjoiZGVtb2FjY291bnQyMDIwIiwiYSI6ImNrY3M1MHNxcDBrNXAycW1pcngzaGk5cDEifQ.sTh_v9zXhaUXuR2-tUMmVw';
     
     return new Response(
