@@ -1,3 +1,4 @@
+
 import { calculateDistance } from '@/lib/utils/distance';
 import { LocalCache } from '@/lib/cache';
 
@@ -18,8 +19,7 @@ export const getMapboxToken = async (): Promise<string> => {
       return cachedToken;
     }
     
-    // Skip Edge Function fetch and use the fallback token directly
-    // to avoid JSON parsing errors
+    // Use the fallback token directly to avoid any API issues
     console.log('getMapboxToken: Using fallback Mapbox token');
     LocalCache.set('mapbox_token', FALLBACK_TOKEN);
     return FALLBACK_TOKEN;

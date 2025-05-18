@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -23,6 +22,7 @@ import ProtectedPharmacyProfilePage from "@/router/roles/ProtectedPharmacyProfil
 import ProtectedPharmacyPatientsPage from "@/router/roles/ProtectedPharmacyPatientsPage";
 import Billing from "@/pages/Billing";
 import SearchPharmacy from "@/pages/SearchPharmacy";
+// Import for FindPharmacy kept but route priority changed
 import FindPharmacy from "@/pages/FindPharmacy"; // Import the new FindPharmacy page
 
 // Create a simple placeholder component for missing pages
@@ -55,9 +55,8 @@ export default function AppRoutes() {
         <Route path="/find-doctor" element={<FindDoctor />} />
         <Route path="/doctors/:id" element={<DoctorDetails />} />
         <Route path="/search-pharmacy" element={<SearchPharmacy />} />
-        <Route path="/find-pharmacy" element={<FindPharmacy />} /> {/* Add the new route */}
         <Route path="/pharmacies" element={<SearchPharmacy />} />
-        <Route path="/find-pharmacy" element={<FindPharmacy />} />
+        <Route path="/find-pharmacy" element={<SearchPharmacy />} /> {/* Use SearchPharmacy for both routes */}
         
         {/* Dashboard routes */}
         <Route path="/dashboard" element={<Dashboard />} />
@@ -67,6 +66,7 @@ export default function AppRoutes() {
         <Route path="/billing" element={<Billing />} />
         
         {/* Pharmacy specific routes - need to be protected */}
+        
         <Route path="/pharmacy/dashboard" element={
           <ProtectedRoute allowedRoles={['pharmacist', 'superadmin']}>
             <PharmacyDashboard />
