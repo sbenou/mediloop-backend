@@ -6,6 +6,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { toast } from "@/components/ui/use-toast";
 import { SimplifiedMapUpdater } from './SimplifiedMapUpdater';
+import { Map } from 'lucide-react';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -41,6 +42,7 @@ const MobileStaticMap: React.FC<PharmacyMapProps> = ({
     <div className="w-full h-full bg-gray-50 relative overflow-hidden rounded-md border border-gray-200">
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div className="text-center p-6 bg-white/80 rounded-lg max-w-xs">
+          <Map className="h-10 w-10 text-primary/60 mx-auto mb-2" />
           <p className="text-sm text-gray-600 mb-3">
             Interactive maps are disabled on mobile devices to prevent errors.
           </p>
@@ -124,8 +126,12 @@ export function PharmacyMap({
             height: '100%', 
             width: '100%' 
           }}
-          scrollWheelZoom={true}
+          scrollWheelZoom={false} // Disable scroll wheel to avoid issues
           zoomControl={true}
+          doubleClickZoom={false} // Disable double click zoom
+          tap={false} // CRITICAL: Disable tap handler
+          touchZoom={false} // Disable touch zoom
+          attributionControl={false} // Hide attribution
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

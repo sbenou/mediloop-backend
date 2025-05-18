@@ -19,13 +19,34 @@ if (typeof window !== 'undefined') {
       L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
       L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
 
-      (L.drawLocal.draw.toolbar.buttons as any).polygon = 'Draw a polygon';
-      (L.drawLocal.draw.toolbar.buttons as any).rectangle = 'Draw a rectangle';
-      (L.drawLocal.draw.toolbar.buttons as any).circle = 'Draw a circle';
+      // Use type assertion and null check for these properties
+      if (L.drawLocal.draw.toolbar.buttons) {
+        (L.drawLocal.draw.toolbar.buttons as any).polygon = 'Draw a polygon';
+        (L.drawLocal.draw.toolbar.buttons as any).rectangle = 'Draw a rectangle';
+        (L.drawLocal.draw.toolbar.buttons as any).circle = 'Draw a circle';
+      }
     }
   } catch (err) {
     console.error('Error initializing Leaflet.draw localization:', err);
   }
+}
+
+// Add global error handler to catch and suppress a is not a function errors
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (e) => {
+    if (e.message && (
+      e.message.includes('a is not a function') || 
+      e.message.includes('touchleave') ||
+      e.message.includes('touch') ||
+      e.message.includes('_onTap')
+    )) {
+      console.warn('Caught and suppressed Leaflet error:', e.message);
+      e.preventDefault();
+      e.stopPropagation();
+      return true; // Prevent default error handling
+    }
+    return false;
+  }, true);
 }
 
 interface PharmacyListSectionProps {

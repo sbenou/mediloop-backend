@@ -8,7 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Map } from 'lucide-react';
-import { SimplifiedMapUpdater } from '@/components/pharmacy/map/SimplifiedMapUpdater';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -32,25 +31,6 @@ const redIcon = new L.Icon({
 const isMobile = typeof window !== 'undefined' ? 
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) : 
   false;
-
-// Add extremely aggressive error prevention - intercept and suppress all touch-related errors
-if (typeof window !== 'undefined') {
-  // Global error handler to catch "a is not a function" errors
-  window.addEventListener('error', (e) => {
-    if (e.message && (
-      e.message.includes('a is not a function') || 
-      e.message.includes('touchleave') ||
-      e.message.includes('touch') ||
-      e.message.includes('_onTap')
-    )) {
-      console.warn('Caught and suppressed Leaflet error:', e.message);
-      e.preventDefault();
-      e.stopPropagation();
-      return true; // Prevent default error handling
-    }
-    return false;
-  }, true);
-}
 
 // Static version that doesn't use Leaflet at all for mobile devices
 const MobileMapFallback: React.FC<{
@@ -108,6 +88,21 @@ const MobileMapFallback: React.FC<{
   );
 };
 
+// Custom map updater component without any event bindings
+const SimpleMapUpdater: React.FC<{
+  coordinates: { lat: number; lon: number } | null;
+  onMapReady?: () => void;
+}> = ({ coordinates, onMapReady }) => {
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    // Just signal that the map is ready
+    if (onMapReady) onMapReady();
+  }, [onMapReady]);
+
+  return null;
+};
+
 interface LeafletPharmacyMapProps {
   pharmacies: any[];
   userLocation: { lat: number; lon: number } | null;
@@ -127,11 +122,10 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   const [error, setError] = useState<string | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   
-  // Multiple fallback timers for map ready state
+  // Quick fallback for map ready state
   useEffect(() => {
     if (isMapReady) return;
     
-    // Very quick fallback (500ms)
     const quickFallback = setTimeout(() => {
       if (!isMapReady) {
         console.log('Quick fallback activating map ready state');
@@ -140,29 +134,8 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
       }
     }, 500);
     
-    // Medium fallback (1.5s)
-    const mediumFallback = setTimeout(() => {
-      if (!isMapReady) {
-        console.log('Medium fallback forcing map ready state');
-        setIsMapReady(true);
-        setIsLoading(false);
-      }
-    }, 1500);
-    
-    // Final fallback (3s)
-    const finalFallback = setTimeout(() => {
-      console.log('Final fallback forcing map ready and showing all pharmacies');
-      setIsMapReady(true);
-      setIsLoading(false);
-      onPharmaciesInShape(pharmacies);
-    }, 3000);
-    
-    return () => {
-      clearTimeout(quickFallback);
-      clearTimeout(mediumFallback);
-      clearTimeout(finalFallback);
-    };
-  }, [isMapReady, pharmacies, onPharmaciesInShape]);
+    return () => clearTimeout(quickFallback);
+  }, [isMapReady]);
   
   // Default center (Luxembourg)
   const defaultCenter: [number, number] = userLocation 
@@ -195,21 +168,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
       mapContainerRef.current.innerHTML = '';
     }
   };
-  
-  // Ensure container has correct size
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-    
-    // Force explicit dimensions on container
-    mapContainerRef.current.style.cssText = `
-      height: 500px !important;
-      width: 100% !important;
-      position: relative !important;
-      display: block !important;
-      visibility: visible !important;
-      z-index: 1;
-    `;
-  }, []);
   
   if (isLoading && !isMapReady) {
     return (
@@ -250,7 +208,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     );
   }
 
-  // Desktop version uses Leaflet
+  // Desktop version uses Leaflet with simplified functionality
   return (
     <div 
       ref={mapContainerRef} 
@@ -271,16 +229,19 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           bottom: 0,
           zIndex: 1
         }}
-        scrollWheelZoom={true}
+        scrollWheelZoom={false} // Disable scroll wheel zoom to prevent issues
         zoomControl={true}
         dragging={true}
+        attributionControl={false}
+        tap={false} // CRITICAL: Disable tap handler which causes "a is not a function" errors
+        touchZoom={false} // Disable touch zoom which can cause issues
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <SimplifiedMapUpdater 
+        <SimpleMapUpdater 
           coordinates={userLocation} 
           onMapReady={handleMapReady}
         />
