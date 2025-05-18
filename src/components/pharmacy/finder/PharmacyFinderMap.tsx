@@ -41,7 +41,7 @@ export function PharmacyFinderMap({
     <div className="w-full h-full">
       <StaticMapComponent
         pharmacies={pharmacies}
-        userLocation={userLocation}
+        userLocation={useLocationFilter ? userLocation : null}
         onPharmaciesInShape={handlePharmaciesInShape}
       />
     </div>

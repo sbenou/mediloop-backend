@@ -24,8 +24,8 @@ export function PharmacyMap({
   
   return (
     <StaticMapComponent
-      pharmacies={filteredPharmacies || pharmacies}
-      userLocation={coordinates}
+      pharmacies={filteredPharmacies.length ? filteredPharmacies : pharmacies}
+      userLocation={showDefaultLocation ? coordinates : null}
       onPharmaciesInShape={onPharmaciesInShape}
     />
   );

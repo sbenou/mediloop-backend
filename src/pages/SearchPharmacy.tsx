@@ -44,7 +44,7 @@ const SearchPharmacy = () => {
   const isPharmacistSignup = locationState.isNewSignup && locationState.userRole === 'pharmacist';
   const isPharmacist = profile?.role === 'pharmacist' || isPharmacistSignup;
 
-  // Move this query before it's used in the useEffect below
+  // Move pharmacyAssignment query before it's used in the useEffect
   const { data: pharmacyAssignment, isLoading: checkingPharmacy } = useQuery({
     queryKey: ['pharmacistPharmacy', profile?.id],
     enabled: !!profile?.id && profile?.role === 'pharmacist',
@@ -171,6 +171,7 @@ const SearchPharmacy = () => {
 
         <div className="container mx-auto py-8 px-4">
           <div className="w-full max-w-6xl mx-auto">
+            {/* This is the ONLY section with the map - removed any duplicate map displays */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="w-full md:col-span-1">
                 {Array.isArray(pharmacies) ? (
