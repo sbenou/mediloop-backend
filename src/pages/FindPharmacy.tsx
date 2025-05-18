@@ -11,41 +11,7 @@ import { usePharmacyFinder } from '@/hooks/usePharmacyFinder';
 import { toast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Search } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-
-// Global error handler for Leaflet-related errors
-if (typeof window !== 'undefined') {
-  console.log('Setting up global error handler');
-  
-  // This error handler will catch and suppress Leaflet-related errors
-  window.addEventListener('error', (e) => {
-    console.log('Global error caught:', e.message);
-    
-    // Check if it's a known Leaflet-related error
-    if (e.message && (
-      e.message.includes('a is not a function') || 
-      e.message.includes('touchleave') ||
-      e.message.includes('_onTap') ||
-      e.message.includes('touch') ||
-      e.message.includes('undefined is not an object') ||
-      e.message.includes('is undefined')
-    )) {
-      console.log('Suppressing Leaflet-related error:', e.message);
-      e.preventDefault();
-      e.stopPropagation();
-      return true; // Prevent default error handling
-    }
-    return false; // Let other errors propagate
-  }, true);
-}
-
-// Detect if the current device is a mobile device or has touch capability
-const isTouchDevice = typeof window !== 'undefined' && (
-  'ontouchstart' in window || 
-  navigator.maxTouchPoints > 0 ||
-  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-);
+import { Card, CardContent } from '@/components/ui/card';
 
 const FindPharmacy = () => {
   console.log('FindPharmacy component rendering');
@@ -72,10 +38,10 @@ const FindPharmacy = () => {
   console.log('Loading state:', isLoading);
   console.log('Error state:', error);
 
-  // Initialize leaflet filtered pharmacies with all pharmacies
+  // Initialize filtered pharmacies with all pharmacies
   useEffect(() => {
     if (filteredPharmacies && filteredPharmacies.length > 0) {
-      console.log('Setting leaflet filtered pharmacies:', filteredPharmacies.length);
+      console.log('Setting filtered pharmacies:', filteredPharmacies.length);
       setLeafletFilteredPharmacies(filteredPharmacies);
     }
   }, [filteredPharmacies]);
@@ -157,8 +123,6 @@ const FindPharmacy = () => {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Alternative map implementation section - removed to avoid duplicate maps */}
       </main>
       
       <Footer />

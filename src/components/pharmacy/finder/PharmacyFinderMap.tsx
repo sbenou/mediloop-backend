@@ -22,7 +22,7 @@ export function PharmacyFinderMap({
     setFilteredPharmacies(pharmacies);
   }, [pharmacies]);
   
-  // Handle pharmacies filtered by the map (when drawing shapes)
+  // Handle pharmacies filtered by the map
   const handlePharmaciesInShape = useCallback((inShapePharmacies: any[]) => {
     console.log(`Map filtered ${inShapePharmacies.length} pharmacies`);
     // Update filtered pharmacies

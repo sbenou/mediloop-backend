@@ -1,53 +1,9 @@
 
 import { useEffect, useState, useCallback } from "react";
-import L from 'leaflet';
-import 'leaflet-draw';
-import 'leaflet-draw/dist/leaflet.draw.css';
 import { PharmacyList } from "./list/PharmacyList";
 import { PharmacyMap } from "./map/PharmacyMap";
 import { toast } from "@/components/ui/use-toast";
-
-// Initialize Leaflet.draw localization and measurement formatting
-// We're moving this inside a try/catch to prevent errors
-if (typeof window !== 'undefined') {
-  try {
-    if (L.drawLocal) {
-      L.drawLocal.draw.handlers.circle.tooltip.start = 'Click and drag to draw circle';
-      L.drawLocal.draw.handlers.circle.radius = 'Radius';
-      L.drawLocal.draw.handlers.polygon.tooltip.start = 'Click to start drawing area';
-      L.drawLocal.draw.handlers.polygon.tooltip.cont = 'Click to continue drawing shape';
-      L.drawLocal.draw.handlers.polygon.tooltip.end = 'Click first point to close this shape';
-      L.drawLocal.draw.handlers.rectangle.tooltip.start = 'Click and drag to draw rectangle';
-
-      // Use type assertion and null check for these properties
-      if (L.drawLocal.draw.toolbar.buttons) {
-        (L.drawLocal.draw.toolbar.buttons as any).polygon = 'Draw a polygon';
-        (L.drawLocal.draw.toolbar.buttons as any).rectangle = 'Draw a rectangle';
-        (L.drawLocal.draw.toolbar.buttons as any).circle = 'Draw a circle';
-      }
-    }
-  } catch (err) {
-    console.error('Error initializing Leaflet.draw localization:', err);
-  }
-}
-
-// Add global error handler to catch and suppress a is not a function errors
-if (typeof window !== 'undefined') {
-  window.addEventListener('error', (e) => {
-    if (e.message && (
-      e.message.includes('a is not a function') || 
-      e.message.includes('touchleave') ||
-      e.message.includes('touch') ||
-      e.message.includes('_onTap')
-    )) {
-      console.warn('Caught and suppressed Leaflet error:', e.message);
-      e.preventDefault();
-      e.stopPropagation();
-      return true; // Prevent default error handling
-    }
-    return false;
-  }, true);
-}
+import mapboxgl from 'mapbox-gl';
 
 interface PharmacyListSectionProps {
   pharmacies: any[];
@@ -110,7 +66,9 @@ const PharmacyListSection = ({
     if (!coordinates || !showDefaultLocation || !pharmacies.length) return;
     
     try {
-      const userLocation = L.latLng(coordinates.lat, coordinates.lon);
+      const userLng = coordinates.lon;
+      const userLat = coordinates.lat;
+      
       const nearbyPharmacies = pharmacies.filter(pharmacy => {
         if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return false;
         try {
@@ -119,13 +77,22 @@ const PharmacyListSection = ({
           
           if (isNaN(pharmLat) || isNaN(pharmLon)) return false;
           
-          const pharmacyLocation = L.latLng(pharmLat, pharmLon);
-          const distance = userLocation.distanceTo(pharmacyLocation);
+          // Calculate distance using Mapbox's turf.js or a simplified distance calculation
+          // Here we use the Haversine formula directly for simplicity
+          const R = 6371; // Earth radius in km
+          const dLat = (pharmLat - userLat) * Math.PI / 180;
+          const dLon = (pharmLon - userLng) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(userLat * Math.PI / 180) * Math.cos(pharmLat * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = R * c;
           
           // Add distance to pharmacy for display
-          pharmacy.distance = (distance / 1000).toFixed(1);
+          pharmacy.distance = distance.toFixed(1);
           
-          return distance <= 2000; // 2km radius
+          return distance <= 2; // 2km radius
         } catch (error) {
           console.error('Error calculating distance for pharmacy:', error);
           return false;
