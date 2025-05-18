@@ -27,7 +27,7 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
     onPharmaciesInShape(pharmacies);
   }, [pharmacies, onPharmaciesInShape]);
   
-  // Get the top 3 pharmacies with the most complete information
+  // Get the top pharmacies with the most complete information
   const topPharmacies = useMemo(() => {
     return pharmacies
       .filter(p => p.name && p.name.length > 0)
@@ -118,23 +118,27 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
       <CardContent className="p-0 h-full relative">
         {/* Map container with pharmacy visualization */}
         <div className="w-full h-full relative overflow-hidden">
-          <div className="absolute inset-0 bg-white">
+          <div className="absolute inset-0">
             {/* Map background with subtle pattern */}
             <div className="absolute inset-0" style={{ 
-              backgroundColor: '#f8f9fa',
+              backgroundColor: '#e9edf5',
               backgroundImage: `
-                radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(248,249,250,0.8) 100%),
-                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e5e7eb' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
+                linear-gradient(0deg, rgba(240,242,245,0.8) 0%, rgba(233,237,245,0.8) 100%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e0e4eb' fill-opacity='0.5'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
               `,
             }} />
             
             {/* Water areas */}
-            <div className="absolute left-[20%] top-[70%] w-[25%] h-[20%] rounded-full bg-blue-100 opacity-80"></div>
-            <div className="absolute right-[10%] top-[20%] w-[15%] h-[15%] rounded-full bg-blue-100 opacity-80"></div>
+            <div className="absolute left-[20%] top-[70%] w-[25%] h-[20%] rounded-full opacity-60" 
+                 style={{ background: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)' }}></div>
+            <div className="absolute right-[10%] top-[20%] w-[15%] h-[15%] rounded-full opacity-60"
+                 style={{ background: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)' }}></div>
             
             {/* Green areas / parks */}
-            <div className="absolute left-[10%] top-[30%] w-[20%] h-[15%] rounded-lg bg-green-100 opacity-80"></div>
-            <div className="absolute right-[25%] top-[50%] w-[18%] h-[18%] rounded-lg bg-green-100 opacity-80"></div>
+            <div className="absolute left-[10%] top-[30%] w-[20%] h-[15%] rounded-lg opacity-60"
+                 style={{ background: 'linear-gradient(to top, #c1dfc4 0%, #deecdd 100%)' }}></div>
+            <div className="absolute right-[25%] top-[50%] w-[18%] h-[18%] rounded-lg opacity-60"
+                 style={{ background: 'linear-gradient(to top, #c1dfc4 0%, #deecdd 100%)' }}></div>
             
             {/* Street grid for map effect */}
             <svg className="absolute inset-0 w-full h-full opacity-70 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
@@ -193,7 +197,7 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
                   opacity: pin.size === 'large' ? 1 : 0.85,
                 }}
               >
-                <div className="flex flex-col items-center group">
+                <div className="flex flex-col items-center group cursor-pointer">
                   <div className="relative">
                     <div className={`
                       ${pin.size === 'large' ? 'h-6 w-6' : 'h-5 w-5'} 
