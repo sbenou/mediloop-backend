@@ -1,7 +1,6 @@
 
 import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin } from 'lucide-react';
 import type { Pharmacy } from '@/lib/types/overpass.types';
 import { LocalCache } from '@/lib/cache';
 
