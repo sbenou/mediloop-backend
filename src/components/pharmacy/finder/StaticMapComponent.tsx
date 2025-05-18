@@ -40,6 +40,29 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
       .slice(0, 5);
   }, [pharmacies]);
   
+  // Distribute pins evenly across the map for visualization
+  const distributedPins = useMemo(() => {
+    if (!pharmacies.length) return [];
+    
+    // Create a grid of positions for pins
+    const pinPositions = [];
+    const gridSize = Math.ceil(Math.sqrt(Math.min(pharmacies.length, 12)));
+    
+    for (let i = 0; i < Math.min(pharmacies.length, 12); i++) {
+      const row = Math.floor(i / gridSize);
+      const col = i % gridSize;
+      
+      // Create a position spread across the map
+      pinPositions.push({
+        pharmacy: pharmacies[i],
+        top: 20 + row * (60 / gridSize), // % from top
+        left: 20 + col * (60 / gridSize), // % from left
+      });
+    }
+    
+    return pinPositions;
+  }, [pharmacies]);
+  
   return (
     <Card className="overflow-hidden h-full border border-gray-200 rounded-md">
       <CardContent className="p-0 h-full relative">
@@ -54,9 +77,17 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
                 backgroundSize: '20px 20px'
               }}></div>
               
+              {/* Roads for map effect */}
+              <div className="absolute inset-0">
+                <div className="absolute h-1 w-4/5 bg-gray-300 top-1/4 left-1/10 transform rotate-12"></div>
+                <div className="absolute h-1 w-full bg-gray-300 top-2/3 left-0 transform -rotate-6"></div>
+                <div className="absolute h-full w-1 bg-gray-300 top-0 left-1/3 transform rotate-3"></div>
+                <div className="absolute h-full w-1 bg-gray-300 top-0 left-2/3 transform -rotate-1"></div>
+              </div>
+              
               {/* User location */}
               {userLocation && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
                   <div className="relative">
                     <div className="h-6 w-6 bg-blue-500 rounded-full flex items-center justify-center">
                       <Navigation className="h-3 w-3 text-white" />
@@ -69,39 +100,35 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
                 </div>
               )}
               
-              {/* Stylized pharmacy pins - distributed around the map */}
-              {pharmacies.length > 0 && Array(Math.min(8, pharmacies.length)).fill(0).map((_, idx) => {
-                // Create visually distributed pins for decorative purposes
-                const angle = (idx / 8) * 2 * Math.PI;
-                const distance = 30 + Math.random() * 20; // Distance from center (30-50%)
-                const left = 50 + Math.cos(angle) * distance;
-                const top = 50 + Math.sin(angle) * distance;
-                
-                return (
-                  <div 
-                    key={idx}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                    style={{ 
-                      left: `${left}%`, 
-                      top: `${top}%`,
-                      zIndex: 5
-                    }}
-                  >
-                    <div className="h-4 w-4 bg-primary rounded-full flex items-center justify-center">
-                      <MapPin className="h-2 w-2 text-white" />
+              {/* Pharmacy pins distributed across the map */}
+              {distributedPins.map((pin, idx) => (
+                <div 
+                  key={`pin-${idx}`}
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10"
+                  style={{ 
+                    top: `${pin.top}%`, 
+                    left: `${pin.left}%`
+                  }}
+                >
+                  <div className="flex flex-col items-center">
+                    <div className="relative">
+                      <div className="h-5 w-5 bg-primary rounded-full flex items-center justify-center">
+                        <MapPin className="h-3 w-3 text-white" />
+                      </div>
+                      <div className="absolute -bottom-1 -left-1 h-3 w-3 rounded-full border-2 border-white bg-primary"></div>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
               
               {/* Central map info */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <MapIcon className="h-12 w-12 text-primary mb-2 opacity-90" />
-                <p className="text-gray-700 text-center font-medium">
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <MapIcon className="h-12 w-12 text-primary/50 mb-2" />
+                <p className="text-gray-700 text-center font-medium bg-white/70 px-3 py-1 rounded-full">
                   Pharmacy Finder
                 </p>
-                <p className="text-sm text-gray-500 mt-2 text-center">
-                  Showing {pharmacies.length} pharmacies in this area
+                <p className="text-sm text-gray-500 mt-2 text-center bg-white/70 px-3 py-1 rounded-full">
+                  {pharmacies.length} pharmacies in this area
                 </p>
               </div>
             </div>
