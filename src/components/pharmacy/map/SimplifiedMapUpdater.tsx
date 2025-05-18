@@ -15,18 +15,6 @@ export function SimplifiedMapUpdater({ coordinates, onMapReady }: SimplifiedMapU
   useEffect(() => {
     if (!map) return;
     
-    // Disable problematic handlers that may cause "a is not a function" errors
-    if (map.tap) map.tap.disable();
-    if (map.touchZoom) map.touchZoom.disable();
-    if (map.doubleClickZoom) map.doubleClickZoom.disable();
-    
-    // Set options directly to prevent handlers from being re-enabled
-    if (map.options) {
-      map.options.tap = false;
-      map.options.touchZoom = false;
-      map.options.doubleClickZoom = false;
-    }
-    
     // Ensure the map has the right dimensions after a short delay
     const timer = setTimeout(() => {
       map.invalidateSize();

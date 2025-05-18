@@ -129,9 +129,6 @@ export function PharmacyMap({
           scrollWheelZoom={false} // Disable scroll wheel to avoid issues
           zoomControl={true}
           doubleClickZoom={false} // Disable double click zoom
-          tap={false} // CRITICAL: Disable tap handler
-          touchZoom={false} // Disable touch zoom
-          attributionControl={false} // Hide attribution
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -232,9 +232,6 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
         scrollWheelZoom={false} // Disable scroll wheel zoom to prevent issues
         zoomControl={true}
         dragging={true}
-        attributionControl={false}
-        tap={false} // CRITICAL: Disable tap handler which causes "a is not a function" errors
-        touchZoom={false} // Disable touch zoom which can cause issues
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
