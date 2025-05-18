@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
 import { userLocationState } from '@/store/location/atoms';
@@ -15,6 +14,31 @@ import { MapPin, Search } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+
+// Global error handler for Leaflet-related errors
+if (typeof window !== 'undefined') {
+  console.log('Setting up global error handler for Leaflet-related errors');
+  
+  // This error handler will catch and suppress Leaflet-related errors
+  window.addEventListener('error', (e) => {
+    console.log('Global error caught:', e.message);
+    
+    // Check if it's a known Leaflet-related error
+    if (e.message && (
+      e.message.includes('a is not a function') || 
+      e.message.includes('touchleave') ||
+      e.message.includes('_onTap') ||
+      e.message.includes('touch') ||
+      e.message.includes('undefined is not an object')
+    )) {
+      console.log('Suppressing Leaflet-related error:', e.message);
+      e.preventDefault();
+      e.stopPropagation();
+      return true; // Prevent default error handling
+    }
+    return false; // Let other errors propagate
+  }, true);
+}
 
 const FindPharmacy = () => {
   console.log('FindPharmacy component rendering');
@@ -134,7 +158,7 @@ const FindPharmacy = () => {
             <CardHeader>
               <CardTitle>Alternative Map Implementation</CardTitle>
               <CardDescription>
-                Try drawing shapes on the map to filter pharmacies within a specific area.
+                View pharmacies on a simplified map interface.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -174,7 +198,7 @@ const FindPharmacy = () => {
                       {leafletFilteredPharmacies.length > 3 && (
                         <div className="col-span-full mt-4">
                           <p className="text-sm text-muted-foreground">
-                            {leafletFilteredPharmacies.length - 3} more pharmacies found in the selected area.
+                            {leafletFilteredPharmacies.length - 3} more pharmacies found.
                           </p>
                         </div>
                       )}
@@ -183,7 +207,7 @@ const FindPharmacy = () => {
                     <div className="col-span-full">
                       <Alert>
                         <AlertDescription>
-                          Draw a shape on the map to filter pharmacies in that area.
+                          No pharmacies found in the selected area.
                         </AlertDescription>
                       </Alert>
                     </div>

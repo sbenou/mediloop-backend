@@ -2,11 +2,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw/dist/leaflet.draw.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { toast } from "@/components/ui/use-toast";
-import { SimplifiedMapUpdater } from './SimplifiedMapUpdater';
 import { Map } from 'lucide-react';
+import { SimplifiedMapUpdater } from './SimplifiedMapUpdater';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -36,7 +35,11 @@ const MobileStaticMap: React.FC<PharmacyMapProps> = ({
   filteredPharmacies,
   showDefaultLocation 
 }) => {
-  const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+  console.log('Rendering MobileStaticMap with', filteredPharmacies.length, 'pharmacies');
+  
+  const mapUrl = useMemo(() => {
+    return `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${coordinates.lon},${coordinates.lat},12,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+  }, [coordinates]);
   
   return (
     <div className="w-full h-full bg-gray-50 relative overflow-hidden rounded-md border border-gray-200">
@@ -86,6 +89,8 @@ export function PharmacyMap({
   onPharmaciesInShape, 
   showDefaultLocation 
 }: PharmacyMapProps) {
+  console.log('PharmacyMap rendering with', filteredPharmacies.length, 'filtered pharmacies');
+  
   // Default center position for Luxembourg
   const defaultCenter: [number, number] = [49.8153, 6.1296];
   
@@ -94,16 +99,27 @@ export function PharmacyMap({
     if (coordinates && 
         typeof coordinates.lat === 'number' && !isNaN(coordinates.lat) &&
         typeof coordinates.lon === 'number' && !isNaN(coordinates.lon)) {
+      console.log('Using provided coordinates:', coordinates);
       return [coordinates.lat, coordinates.lon];
     }
+    console.log('Using default coordinates');
     return defaultCenter;
   }, [coordinates]);
   
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapKey] = useState(`map-${Date.now()}`);
   
+  useEffect(() => {
+    // When pharmacies change, pass them to the parent
+    if (filteredPharmacies.length > 0) {
+      console.log('Passing filtered pharmacies to parent:', filteredPharmacies.length);
+      onPharmaciesInShape(filteredPharmacies);
+    }
+  }, [filteredPharmacies, onPharmaciesInShape]);
+  
   // For mobile devices, return the static map component
   if (isMobileDevice) {
+    console.log('Using static map for mobile device');
     return (
       <MobileStaticMap
         coordinates={coordinates}
@@ -115,6 +131,7 @@ export function PharmacyMap({
     );
   }
 
+  console.log('Rendering desktop map with centerCoords:', centerCoords);
   return (
     <div className="w-full h-full relative z-10">
       <div className="h-full w-full rounded-lg overflow-hidden border border-gray-200">
@@ -126,9 +143,9 @@ export function PharmacyMap({
             height: '100%', 
             width: '100%' 
           }}
-          scrollWheelZoom={false} // Disable scroll wheel to avoid issues
+          scrollWheelZoom={false}
           zoomControl={true}
-          doubleClickZoom={false} // Disable double click zoom
+          doubleClickZoom={false}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -137,7 +154,10 @@ export function PharmacyMap({
           
           <SimplifiedMapUpdater 
             coordinates={coordinates}
-            onMapReady={() => setIsMapReady(true)}
+            onMapReady={() => {
+              console.log('Map is ready callback');
+              setIsMapReady(true);
+            }}
           />
           
           {/* Show user location marker if enabled */}
@@ -150,38 +170,55 @@ export function PharmacyMap({
             </Marker>
           )}
           
-          {/* Render pharmacy markers */}
-          {isMapReady && filteredPharmacies.map((pharmacy) => {
-            if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
+          {/* Render pharmacy markers - limit to 50 for performance */}
+          {isMapReady && filteredPharmacies.slice(0, 50).map((pharmacy, index) => {
+            if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) {
+              console.log('Pharmacy missing coordinates:', pharmacy.id);
+              return null;
+            }
             
             // Ensure coordinates are numbers
             let pharmLat, pharmLon;
             try {
               pharmLat = parseFloat(pharmacy.coordinates.lat);
               pharmLon = parseFloat(pharmacy.coordinates.lon);
-            } catch (e) {
+              
+              if (isNaN(pharmLat) || isNaN(pharmLon)) {
+                console.log('Invalid pharmacy coordinates (NaN):', pharmacy.id);
+                return null;
+              }
+              
+              return (
+                <Marker
+                  key={`pharmacy-${pharmacy.id || index}`}
+                  position={[pharmLat, pharmLon]}
+                >
+                  <Popup>
+                    <div className="text-sm">
+                      <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
+                      <p>{pharmacy.address || 'Address not available'}</p>
+                      <p>{pharmacy.hours || 'Hours not available'}</p>
+                      {pharmacy.distance && <p>Distance: {pharmacy.distance} km</p>}
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            } catch (err) {
+              console.error('Error adding pharmacy marker:', err);
               return null;
             }
-            
-            if (isNaN(pharmLat) || isNaN(pharmLon)) return null;
-            
-            return (
-              <Marker
-                key={`pharmacy-${pharmacy.id || Math.random().toString(36).substr(2, 9)}`}
-                position={[pharmLat, pharmLon]}
-              >
-                <Popup>
-                  <div className="text-sm">
-                    <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
-                    <p>{pharmacy.address || 'Address not available'}</p>
-                    <p>{pharmacy.hours || 'Hours not available'}</p>
-                    {pharmacy.distance && <p>Distance: {pharmacy.distance} km</p>}
-                  </div>
-                </Popup>
-              </Marker>
-            );
           })}
         </MapContainer>
+      </div>
+      
+      {/* Update ready state after render */}
+      <div style={{ display: 'none' }}>
+        {setTimeout(() => {
+          if (!isMapReady) {
+            console.log('Force setting map ready state');
+            setIsMapReady(true);
+          }
+        }, 1000)}
       </div>
     </div>
   );

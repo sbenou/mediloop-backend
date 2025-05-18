@@ -1,13 +1,14 @@
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import React, { useEffect, useState, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw/dist/leaflet.draw.css';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Map } from 'lucide-react';
+
+console.log('LeafletPharmacyMap component loaded');
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -18,7 +19,7 @@ L.Icon.Default.mergeOptions({
 });
 
 // Create a red icon for user location
-const redIcon = new L.Icon({
+const userLocationIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -40,6 +41,7 @@ const MobileMapFallback: React.FC<{
 }> = ({ userLocation, pharmacies, onPharmaciesInShape }) => {
   
   useEffect(() => {
+    console.log('MobileMapFallback: Passing all pharmacies to parent');
     // Just show all pharmacies without any filtering
     onPharmaciesInShape(pharmacies);
     
@@ -54,6 +56,8 @@ const MobileMapFallback: React.FC<{
   const mapUrl = userLocation 
     ? `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${userLocation.lon},${userLocation.lat},11,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`
     : `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/6.1296,49.8153,11,0/600x400?access_token=pk.eyJ1Ijoic2Jlbm91IiwiYSI6ImNtODNzbWIyZzBwenQyaXM3MG53b2w0a2sifQ.HJnB_hJ0GtKEudKAGO3GtA`;
+  
+  console.log('MobileMapFallback: Using static map URL:', mapUrl);
   
   return (
     <div className="w-full h-full bg-gray-50 relative overflow-hidden rounded-md border border-gray-200">
@@ -88,21 +92,6 @@ const MobileMapFallback: React.FC<{
   );
 };
 
-// Custom map updater component without any event bindings
-const SimpleMapUpdater: React.FC<{
-  coordinates: { lat: number; lon: number } | null;
-  onMapReady?: () => void;
-}> = ({ coordinates, onMapReady }) => {
-  const mapRef = useRef(null);
-
-  useEffect(() => {
-    // Just signal that the map is ready
-    if (onMapReady) onMapReady();
-  }, [onMapReady]);
-
-  return null;
-};
-
 interface LeafletPharmacyMapProps {
   pharmacies: any[];
   userLocation: { lat: number; lon: number } | null;
@@ -117,25 +106,19 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   onPharmaciesInShape
 }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isMapReady, setIsMapReady] = useState(false);
-  const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
+  const [mapKey] = useState(`map-${Date.now()}`);
   const [error, setError] = useState<string | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
   
-  // Quick fallback for map ready state
-  useEffect(() => {
-    if (isMapReady) return;
-    
-    const quickFallback = setTimeout(() => {
-      if (!isMapReady) {
-        console.log('Quick fallback activating map ready state');
-        setIsMapReady(true);
-        setIsLoading(false);
-      }
-    }, 500);
-    
-    return () => clearTimeout(quickFallback);
-  }, [isMapReady]);
+  // Handle map ready state
+  const [mapIsReady, setMapIsReady] = useState(false);
+  
+  console.log('LeafletPharmacyMap rendering:', { 
+    pharmacyCount: pharmacies?.length || 0,
+    userLocation,
+    mapIsReady,
+    error,
+    isMobile 
+  });
   
   // Default center (Luxembourg)
   const defaultCenter: [number, number] = userLocation 
@@ -145,12 +128,13 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
   // Handle map ready event
   const handleMapReady = useCallback(() => {
     console.log('Map is ready');
-    setIsMapReady(true);
+    setMapIsReady(true);
     setIsLoading(false);
     setError(null);
     
     // For mobile, immediately show all pharmacies
     if (isMobile) {
+      console.log('Mobile detected, showing all pharmacies');
       onPharmaciesInShape(pharmacies);
     }
   }, [isMobile, pharmacies, onPharmaciesInShape]);
@@ -160,16 +144,18 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     console.log('Retrying map initialization');
     setError(null);
     setIsLoading(true);
-    setIsMapReady(false);
-    setMapKey(`map-retry-${Date.now()}`);
-    
-    // Force clean container
-    if (mapContainerRef.current) {
-      mapContainerRef.current.innerHTML = '';
-    }
+    setMapIsReady(false);
   };
   
-  if (isLoading && !isMapReady) {
+  // Pass all pharmacies to parent component when they change
+  useEffect(() => {
+    if (pharmacies && pharmacies.length > 0) {
+      console.log(`Passing ${pharmacies.length} pharmacies to parent`);
+      onPharmaciesInShape(pharmacies);
+    }
+  }, [pharmacies, onPharmaciesInShape]);
+  
+  if (isLoading && !mapIsReady) {
     return (
       <div className="w-full h-full min-h-[400px] bg-gray-100 rounded-md flex items-center justify-center">
         <div className="text-center">
@@ -199,6 +185,7 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
 
   // For mobile devices, don't even try to use Leaflet
   if (isMobile) {
+    console.log('Using static map for mobile device');
     return (
       <MobileMapFallback 
         userLocation={userLocation}
@@ -208,59 +195,42 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
     );
   }
 
-  // Desktop version uses Leaflet with simplified functionality
+  // For desktop, use a very simplified Leaflet implementation
   return (
-    <div 
-      ref={mapContainerRef} 
-      className="w-full h-[500px] relative border rounded-md overflow-hidden"
-      style={{ height: '500px', width: '100%', position: 'relative' }}
-    >
+    <div className="w-full h-[500px] relative border rounded-md overflow-hidden">
       <MapContainer
         key={mapKey}
         center={defaultCenter}
-        zoom={13}
+        zoom={11}
         style={{ 
           height: '100%', 
-          width: '100%', 
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 1
+          width: '100%' 
         }}
-        scrollWheelZoom={false} // Disable scroll wheel zoom to prevent issues
+        scrollWheelZoom={false}
         zoomControl={true}
-        dragging={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <SimpleMapUpdater 
-          coordinates={userLocation} 
-          onMapReady={handleMapReady}
-        />
-        
         {/* User location marker */}
-        {userLocation && isMapReady && (
+        {userLocation && mapIsReady && (
           <Marker 
             position={[userLocation.lat, userLocation.lon]}
-            icon={redIcon}
+            icon={userLocationIcon}
           >
             <Popup>Your location</Popup>
           </Marker>
         )}
         
-        {/* Pharmacy markers */}
-        {isMapReady && pharmacies && pharmacies.map((pharmacy, index) => {
+        {/* Very basic markers, no complex interactions */}
+        {mapIsReady && pharmacies.slice(0, 50).map((pharmacy, index) => {
           if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) {
             return null;
           }
           
           try {
-            // Ensure coordinates are valid numbers
             const pharmLat = parseFloat(pharmacy.coordinates.lat);
             const pharmLon = parseFloat(pharmacy.coordinates.lon);
             
@@ -268,14 +238,13 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
             
             return (
               <Marker
-                key={pharmacy.id || `pharmacy-${Math.random().toString(36).substr(2, 9)}`}
+                key={pharmacy.id || `pharmacy-${index}`}
                 position={[pharmLat, pharmLon]}
               >
                 <Popup>
                   <div className="text-sm max-w-[250px]">
                     <h3 className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</h3>
                     <p className="text-xs">{pharmacy.address || 'Address not available'}</p>
-                    {pharmacy.hours && <p className="text-xs">Hours: {pharmacy.hours}</p>}
                     {pharmacy.distance && <p className="text-xs font-medium">Distance: {pharmacy.distance} km</p>}
                   </div>
                 </Popup>
@@ -287,6 +256,16 @@ const LeafletPharmacyMap: React.FC<LeafletPharmacyMapProps> = ({
           }
         })}
       </MapContainer>
+      
+      {/* Update ready state after render */}
+      <div style={{ display: 'none' }}>
+        {setTimeout(() => {
+          if (!mapIsReady) {
+            console.log('Force setting map ready state');
+            handleMapReady();
+          }
+        }, 1000)}
+      </div>
     </div>
   );
 };
