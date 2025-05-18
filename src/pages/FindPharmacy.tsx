@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
 import { userLocationState } from '@/store/location/atoms';
@@ -6,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 import { PharmacyFinderMap } from '@/components/pharmacy/finder/PharmacyFinderMap';
 import { PharmacyFinderList } from '@/components/pharmacy/finder/PharmacyFinderList';
 import { PharmacySearch } from '@/components/pharmacy/finder/PharmacySearch';
-import LeafletPharmacyMap from '@/components/pharmacy/finder/LeafletPharmacyMap';
+import StaticMapComponent from '@/components/pharmacy/finder/StaticMapComponent';
 import { usePharmacyFinder } from '@/hooks/usePharmacyFinder';
 import { toast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,7 +18,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Global error handler for Leaflet-related errors
 if (typeof window !== 'undefined') {
-  console.log('Setting up global error handler for Leaflet-related errors');
+  console.log('Setting up global error handler');
   
   // This error handler will catch and suppress Leaflet-related errors
   window.addEventListener('error', (e) => {
@@ -29,7 +30,8 @@ if (typeof window !== 'undefined') {
       e.message.includes('touchleave') ||
       e.message.includes('_onTap') ||
       e.message.includes('touch') ||
-      e.message.includes('undefined is not an object')
+      e.message.includes('undefined is not an object') ||
+      e.message.includes('is undefined')
     )) {
       console.log('Suppressing Leaflet-related error:', e.message);
       e.preventDefault();
@@ -39,6 +41,13 @@ if (typeof window !== 'undefined') {
     return false; // Let other errors propagate
   }, true);
 }
+
+// Detect if the current device is a mobile device or has touch capability
+const isTouchDevice = typeof window !== 'undefined' && (
+  'ontouchstart' in window || 
+  navigator.maxTouchPoints > 0 ||
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+);
 
 const FindPharmacy = () => {
   console.log('FindPharmacy component rendering');
@@ -151,23 +160,23 @@ const FindPharmacy = () => {
           </TabsContent>
         </Tabs>
 
-        {/* React-Leaflet implementation section */}
+        {/* Alternative map implementation section */}
         <div className="mt-16 mb-8">
           <Separator className="my-8" />
           <Card>
             <CardHeader>
-              <CardTitle>Alternative Map Implementation</CardTitle>
+              <CardTitle>Alternative Map View</CardTitle>
               <CardDescription>
-                View pharmacies on a simplified map interface.
+                View pharmacies using a simplified map interface.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="bg-white border border-gray-200 rounded-md">
                 <div className="h-[500px] w-full relative">
-                  <LeafletPharmacyMap 
+                  {/* Use the static map component for all devices to avoid Leaflet errors */}
+                  <StaticMapComponent 
                     pharmacies={pharmacies || []}
                     userLocation={userLocation}
-                    useLocationFilter={useLocationFilter}
                     onPharmaciesInShape={handlePharmaciesInShape}
                   />
                 </div>

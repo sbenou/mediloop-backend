@@ -13,77 +13,73 @@ export function SimplifiedMapUpdater({ coordinates, onMapReady }: SimplifiedMapU
 
   // Apply coordinates and handle map ready event
   useEffect(() => {
-    console.log('SimplifiedMapUpdater effect running');
+    console.log('[DEBUG] SimplifiedMapUpdater effect running with coordinates:', coordinates);
     
     if (!map) {
-      console.log('Map reference is not available');
+      console.log('[DEBUG] Map reference is not available');
       return;
     }
     
-    console.log('Map reference is available:', map);
+    console.log('[DEBUG] Map reference is available, disabling handlers');
     
     try {
-      // We're going to use a safer approach by disabling all handlers that might cause issues
-      console.log('Disabling potentially problematic map handlers');
+      // Disable ALL touch and interaction handlers that might cause issues
+      // This helps prevent the "a is not a function" errors
+      map.dragging?.disable();
+      map.touchZoom?.disable();
+      map.doubleClickZoom?.disable();
+      map.scrollWheelZoom?.disable();
+      map.boxZoom?.disable();
+      map.keyboard?.disable();
       
-      // Directly modify the internal handlers to prevent errors
-      // These changes should help avoid "a is not a function" errors
-      const safelyDisableHandler = (handlerName: string) => {
+      // Try to disable tap if it exists
+      if ((map as any).tap) {
+        console.log('[DEBUG] Disabling tap handler');
         try {
-          const handler = (map as any)[handlerName];
-          if (handler && typeof handler.disable === 'function') {
-            console.log(`Disabling ${handlerName} handler`);
-            handler.disable();
-          }
+          (map as any).tap?.disable();
         } catch (e) {
-          console.log(`Error disabling ${handlerName}:`, e);
+          console.log('[DEBUG] Error disabling tap:', e);
         }
-      };
+      }
       
-      // Disable all touch-related handlers
-      safelyDisableHandler('tap');
-      safelyDisableHandler('touchZoom');
-      safelyDisableHandler('doubleClickZoom');
-      safelyDisableHandler('boxZoom');
-      safelyDisableHandler('keyboard');
+      // Log the available methods on the map for debugging
+      console.log('[DEBUG] Available map methods:', 
+        Object.keys(map).filter(key => typeof (map as any)[key] === 'function').join(', ')
+      );
       
-      // Ensure the map has the right dimensions after a short delay
+      // Delay before calling invalidateSize to ensure DOM is ready
       const timer = setTimeout(() => {
-        console.log('SimplifiedMapUpdater timer callback running');
+        console.log('[DEBUG] Delayed map update running');
         
         try {
           map.invalidateSize();
-          console.log('Map size invalidated');
+          console.log('[DEBUG] Map size invalidated successfully');
           
-          // Fly to user coordinates if available
+          // Set view to coordinates if available
           if (coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lon === 'number') {
             if (!isNaN(coordinates.lat) && !isNaN(coordinates.lon)) {
-              console.log(`Setting map view to: ${coordinates.lat}, ${coordinates.lon}`);
-              map.setView([coordinates.lat, coordinates.lon], 12);
-            } else {
-              console.log('Invalid coordinates (NaN):', coordinates);
+              console.log(`[DEBUG] Setting map view to: ${coordinates.lat}, ${coordinates.lon}`);
+              map.setView([coordinates.lat, coordinates.lon], 12, { animate: false });
             }
-          } else {
-            console.log('No valid coordinates provided:', coordinates);
           }
           
           // Call the onMapReady callback
           if (onMapReady) {
-            console.log('Calling onMapReady callback');
+            console.log('[DEBUG] Calling onMapReady callback');
             onMapReady(map);
           }
         } catch (e) {
-          console.error('Error in SimplifiedMapUpdater timer callback:', e);
+          console.error('[DEBUG] Error in SimplifiedMapUpdater timeout callback:', e);
         }
-      }, 300); // Increased timeout to ensure DOM is fully ready
+      }, 300);
       
       // Cleanup function
       return () => {
-        console.log('SimplifiedMapUpdater cleanup running');
+        console.log('[DEBUG] SimplifiedMapUpdater cleanup running');
         clearTimeout(timer);
       };
     } catch (e) {
-      console.error('Unexpected error in SimplifiedMapUpdater:', e);
+      console.error('[DEBUG] Unexpected error in SimplifiedMapUpdater:', e);
     }
   }, [map, coordinates, onMapReady]);
 
