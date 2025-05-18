@@ -55,7 +55,7 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
         mapboxgl.accessToken = token;
         
         // Set default center based on user location or fallback to Luxembourg
-        const defaultCenter = userLocation 
+        const defaultCenter: [number, number] = userLocation 
           ? [userLocation.lon, userLocation.lat] 
           : [6.1296, 49.8153];
         
@@ -144,8 +144,8 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
       if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return;
       
       try {
-        const pharmLat = parseFloat(pharmacy.coordinates.lat);
-        const pharmLon = parseFloat(pharmacy.coordinates.lon);
+        const pharmLat = parseFloat(pharmacy.coordinates.lat.toString());
+        const pharmLon = parseFloat(pharmacy.coordinates.lon.toString());
         
         if (isNaN(pharmLat) || isNaN(pharmLon)) return;
         
@@ -203,7 +203,7 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
     if (!map.current || !userLocation || !mapInitializedRef.current) return;
     
     map.current.flyTo({
-      center: [userLocation.lon, userLocation.lat],
+      center: [userLocation.lon, userLocation.lat] as [number, number],
       zoom: 13,
       essential: true
     });
