@@ -19,12 +19,12 @@ export function PharmacyFinderMap({
   
   // Initialize with all pharmacies
   useEffect(() => {
+    console.log('PharmacyFinderMap: Setting filtered pharmacies', pharmacies.length);
     setFilteredPharmacies(pharmacies);
   }, [pharmacies]);
   
   // Handle pharmacies that are filtered by the map (when drawing shapes)
   const handlePharmaciesInShape = useCallback((inShapePharmacies: any[]) => {
-    // We're just passing this information up to parent components if needed
     console.log(`Map filtered ${inShapePharmacies.length} pharmacies`);
   }, []);
   

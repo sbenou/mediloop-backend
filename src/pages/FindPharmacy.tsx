@@ -165,15 +165,15 @@ const FindPharmacy = () => {
           <Separator className="my-8" />
           <Card>
             <CardHeader>
-              <CardTitle>Alternative Map View</CardTitle>
+              <CardTitle>Alternative Map Implementation</CardTitle>
               <CardDescription>
-                View pharmacies using a simplified map interface.
+                A non-interactive static map implementation that reduces API calls by caching map images. This serves as a fallback option when interactive maps have issues.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="bg-white border border-gray-200 rounded-md">
                 <div className="h-[500px] w-full relative">
-                  {/* Use the static map component for all devices to avoid Leaflet errors */}
+                  {/* Use the static map component */}
                   <StaticMapComponent 
                     pharmacies={pharmacies || []}
                     userLocation={userLocation}
@@ -183,7 +183,7 @@ const FindPharmacy = () => {
               </div>
               
               <div className="mt-6">
-                <h3 className="font-medium mb-4">Filtered Pharmacies ({leafletFilteredPharmacies.length})</h3>
+                <h3 className="font-medium mb-4">Pharmacies Found ({leafletFilteredPharmacies.length})</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {leafletFilteredPharmacies.length > 0 ? (
                     <>

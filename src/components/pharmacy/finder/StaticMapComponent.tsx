@@ -2,7 +2,6 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
 import type { Pharmacy } from '@/lib/types/overpass.types';
 import { LocalCache } from '@/lib/cache';
 
@@ -25,12 +24,6 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
   React.useEffect(() => {
     console.log('StaticMapComponent: Passing all pharmacies to parent');
     onPharmaciesInShape(pharmacies);
-    
-    toast({
-      title: "Alternative Static Map Active",
-      description: "Using static map with efficient caching to reduce API calls (for demonstration purposes).",
-      duration: 3000
-    });
   }, [pharmacies, onPharmaciesInShape]);
   
   // Generate a static map URL using Mapbox with caching
@@ -66,22 +59,6 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
   return (
     <Card className="overflow-hidden h-full">
       <CardContent className="p-0 h-full relative">
-        {/* Static map overlay with explanation */}
-        <div className="absolute inset-0 flex items-center justify-center z-10">
-          <div className="text-center p-6 bg-white/90 rounded-lg max-w-xs">
-            <MapPin className="h-10 w-10 text-primary/60 mx-auto mb-2" />
-            <h3 className="text-base font-medium mb-2">Alternative Static View</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              Using cached static maps to reduce API usage.
-              <br />
-              <span className="text-xs text-muted-foreground">(This is an example of a non-interactive alternative)</span>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {pharmacies.length} pharmacies available in this area
-            </p>
-          </div>
-        </div>
-        
         {/* Static map image */}
         <div className="w-full h-full bg-gray-100 relative">
           <img 
