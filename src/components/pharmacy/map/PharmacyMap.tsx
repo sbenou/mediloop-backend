@@ -98,6 +98,7 @@ export function PharmacyMap({
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isMapError, setIsMapError] = useState(false);
+  const [mapLoadAttempted, setMapLoadAttempted] = useState(false);
   
   // Get Mapbox token
   useEffect(() => {
@@ -131,11 +132,12 @@ export function PharmacyMap({
   
   // Initialize map when container and token are available
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || mapInstance.current) {
+    if (!mapContainer.current || !mapboxToken || mapInstance.current || mapLoadAttempted) {
       return;
     }
     
     console.log('Initializing Mapbox map');
+    setMapLoadAttempted(true);
     
     try {
       // Set access token
@@ -146,7 +148,9 @@ export function PharmacyMap({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v11',
         center: [coordinates.lon, coordinates.lat],
-        zoom: 12
+        zoom: 12,
+        attributionControl: true,
+        preserveDrawingBuffer: true // Required for some browsers
       });
       
       // Add navigation control
@@ -154,8 +158,9 @@ export function PharmacyMap({
       
       // Handle map load
       mapInstance.current.on('load', () => {
-        console.log('Mapbox map loaded');
+        console.log('Mapbox map loaded successfully');
         setIsMapLoaded(true);
+        setIsMapError(false);
       });
       
       // Handle map error
@@ -177,7 +182,7 @@ export function PharmacyMap({
         mapInstance.current = null;
       }
     };
-  }, [mapboxToken, coordinates.lat, coordinates.lon]);
+  }, [mapboxToken, coordinates.lat, coordinates.lon, mapLoadAttempted]);
   
   // Handle map ready
   const handleMapReady = (map: mapboxgl.Map | undefined) => {
@@ -206,30 +211,34 @@ export function PharmacyMap({
         return;
       }
       
-      // Create marker element
-      const el = createPharmacyMarker();
-      
-      // Create popup content
-      const popupContent = document.createElement('div');
-      popupContent.className = 'pharmacy-popup';
-      popupContent.innerHTML = `
-        <h3 style="font-weight: bold; margin-bottom: 4px;">${pharmacy.name || 'Pharmacy'}</h3>
-        <p style="font-size: 0.9rem;">${pharmacy.address || 'Address unavailable'}</p>
-        ${pharmacy.hours ? `<p style="font-size: 0.8rem; color: #666; margin-top: 4px;">${pharmacy.hours}</p>` : ''}
-      `;
-      
-      // Create popup
-      const popup = new mapboxgl.Popup({ offset: 25 })
-        .setDOMContent(popupContent);
-      
-      // Create and add marker
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([pharmacy.coordinates.lon, pharmacy.coordinates.lat])
-        .setPopup(popup)
-        .addTo(mapInstance.current!);
-      
-      // Add to markers array
-      markers.current.push(marker);
+      try {
+        // Create marker element
+        const el = createPharmacyMarker();
+        
+        // Create popup content
+        const popupContent = document.createElement('div');
+        popupContent.className = 'pharmacy-popup';
+        popupContent.innerHTML = `
+          <h3 style="font-weight: bold; margin-bottom: 4px;">${pharmacy.name || 'Pharmacy'}</h3>
+          <p style="font-size: 0.9rem;">${pharmacy.address || 'Address unavailable'}</p>
+          ${pharmacy.hours ? `<p style="font-size: 0.8rem; color: #666; margin-top: 4px;">${pharmacy.hours}</p>` : ''}
+        `;
+        
+        // Create popup
+        const popup = new mapboxgl.Popup({ offset: 25 })
+          .setDOMContent(popupContent);
+        
+        // Create and add marker
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([pharmacy.coordinates.lon, pharmacy.coordinates.lat])
+          .setPopup(popup)
+          .addTo(mapInstance.current!);
+        
+        // Add to markers array
+        markers.current.push(marker);
+      } catch (error) {
+        console.error('Error adding marker for pharmacy:', pharmacy.name, error);
+      }
     });
     
     // Notify parent of pharmacies
@@ -248,7 +257,7 @@ export function PharmacyMap({
     if (isMapError) {
       toast({
         title: "Map Error",
-        description: "There was a problem loading the map. Using fallback.",
+        description: "There was a problem loading the interactive map. Using static fallback.",
         variant: "destructive",
         duration: 5000
       });
@@ -256,7 +265,7 @@ export function PharmacyMap({
   }, [isMapError]);
   
   // Render fallback if map loading fails
-  if (isMapError) {
+  if (isMapError || !mapboxToken) {
     return (
       <StaticMapFallback
         coordinates={coordinates}
