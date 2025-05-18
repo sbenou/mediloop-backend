@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -43,16 +44,7 @@ const SearchPharmacy = () => {
   const isPharmacistSignup = locationState.isNewSignup && locationState.userRole === 'pharmacist';
   const isPharmacist = profile?.role === 'pharmacist' || isPharmacistSignup;
 
-  useEffect(() => {
-    try {
-      if (profile?.role === 'pharmacist' && pharmacyAssignment?.pharmacy_id && locationState.fromOnboarding) {
-        navigate('/pharmacy/profile');
-      }
-    } catch (err) {
-      console.error("Error in pharmacist navigation effect:", err);
-    }
-  }, [profile, pharmacyAssignment, navigate, locationState]);
-
+  // Move this query before it's used in the useEffect below
   const { data: pharmacyAssignment, isLoading: checkingPharmacy } = useQuery({
     queryKey: ['pharmacistPharmacy', profile?.id],
     enabled: !!profile?.id && profile?.role === 'pharmacist',
@@ -72,6 +64,16 @@ const SearchPharmacy = () => {
       }
     },
   });
+
+  useEffect(() => {
+    try {
+      if (profile?.role === 'pharmacist' && pharmacyAssignment?.pharmacy_id && locationState.fromOnboarding) {
+        navigate('/pharmacy/profile');
+      }
+    } catch (err) {
+      console.error("Error in pharmacist navigation effect:", err);
+    }
+  }, [profile, pharmacyAssignment, navigate, locationState]);
 
   useEffect(() => {
     // Initialize with Luxembourg City as default
