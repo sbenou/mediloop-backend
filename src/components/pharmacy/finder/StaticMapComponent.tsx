@@ -33,8 +33,8 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
       .filter(p => p.name && p.name.length > 0)
       .sort((a, b) => {
         // Score completeness of pharmacy data
-        const scoreA = (a.name ? 2 : 0) + (a.address ? 1 : 0) + (a.opening_hours ? 1 : 0);
-        const scoreB = (b.name ? 2 : 0) + (b.address ? 1 : 0) + (b.opening_hours ? 1 : 0);
+        const scoreA = (a.name ? 2 : 0) + (a.address ? 1 : 0) + (a.hours ? 1 : 0);
+        const scoreB = (b.name ? 2 : 0) + (b.address ? 1 : 0) + (b.hours ? 1 : 0);
         return scoreB - scoreA;
       })
       .slice(0, 5);
