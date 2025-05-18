@@ -9,7 +9,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { toast } from '@/components/ui/use-toast';
 
-interface StaticMapComponentProps {
+interface InteractiveMapComponentProps {
   pharmacies: Pharmacy[];
   userLocation: { lat: number; lon: number } | null;
   onPharmaciesInShape: (pharmacies: Pharmacy[]) => void;
@@ -18,7 +18,7 @@ interface StaticMapComponentProps {
 /**
  * An interactive map component that visually displays pharmacies using Mapbox GL
  */
-const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
+const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
   pharmacies,
   userLocation,
   onPharmaciesInShape
@@ -34,7 +34,7 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
 
   // Pass all pharmacies to parent on mount
   useEffect(() => {
-    console.log('StaticMapComponent: Passing pharmacies to parent:', pharmacies.length);
+    console.log('InteractiveMapComponent: Passing pharmacies to parent:', pharmacies.length);
     onPharmaciesInShape(pharmacies);
   }, [pharmacies, onPharmaciesInShape]);
 
@@ -274,4 +274,4 @@ const StaticMapComponent: React.FC<StaticMapComponentProps> = ({
   );
 };
 
-export default StaticMapComponent;
+export default InteractiveMapComponent;

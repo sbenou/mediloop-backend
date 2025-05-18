@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import StaticMapComponent from '../finder/StaticMapComponent';
+import InteractiveMapComponent from '../finder/InteractiveMapComponent';
 
 interface PharmacyMapProps {
   coordinates: { lat: number; lon: number };
@@ -23,7 +23,7 @@ export function PharmacyMap({
   console.log('PharmacyMap rendering with', filteredPharmacies.length, 'filtered pharmacies');
   
   return (
-    <StaticMapComponent
+    <InteractiveMapComponent
       pharmacies={filteredPharmacies.length ? filteredPharmacies : pharmacies}
       userLocation={showDefaultLocation ? coordinates : null}
       onPharmaciesInShape={onPharmaciesInShape}

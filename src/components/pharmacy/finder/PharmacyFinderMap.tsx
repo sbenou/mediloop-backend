@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
-import StaticMapComponent from './StaticMapComponent';
+import InteractiveMapComponent from './InteractiveMapComponent';
 
 interface PharmacyFinderMapProps {
   pharmacies: any[];
@@ -39,7 +39,7 @@ export function PharmacyFinderMap({
 
   return (
     <div className="w-full h-full">
-      <StaticMapComponent
+      <InteractiveMapComponent
         pharmacies={pharmacies}
         userLocation={useLocationFilter ? userLocation : null}
         onPharmaciesInShape={handlePharmaciesInShape}
