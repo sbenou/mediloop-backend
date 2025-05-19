@@ -164,6 +164,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
             
             // Try to clear token from cache
             try {
+              // Change from LocalCache.delete() to LocalCache.delete('mapbox-token')
               LocalCache.delete('mapbox-token');
             } catch (err) {
               console.error('Unable to clear token from cache:', err);
@@ -319,6 +320,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     
     // Try to clear token from cache
     try {
+      // Change from LocalCache.delete() to LocalCache.delete('mapbox-token')
       LocalCache.delete('mapbox-token');
     } catch (e) {
       console.error('Error clearing token cache:', e);
