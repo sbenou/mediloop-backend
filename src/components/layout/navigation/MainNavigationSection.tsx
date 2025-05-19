@@ -1,45 +1,24 @@
 
-import { Link } from 'react-router-dom';
-import { NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent } from "@/components/ui/navigation-menu";
-import { useTranslation } from 'react-i18next';
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  NavigationMenuItem,
+  NavigationMenuLink,
+} from "@/components/ui/navigation-menu";
+import { cn } from "@/lib/utils";
 
 export const MainNavigationSection = () => {
-  const { t } = useTranslation();
-  
   return (
     <NavigationMenuItem>
-      <NavigationMenuTrigger>Navigation</NavigationMenuTrigger>
-      <NavigationMenuContent>
-        <div className="grid w-[400px] gap-3 p-4 text-left">
-          <Link 
-            to="/products"
-            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-          >
-            <div className="text-sm font-medium leading-none">{t('common.products')}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-              {t('navigation.main.browseProducts')}
-            </p>
-          </Link>
-          <Link 
-            to="/services"
-            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-          >
-            <div className="text-sm font-medium leading-none">{t('common.services')}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-              {t('navigation.main.discoverServices')}
-            </p>
-          </Link>
-          <Link 
-            to="/become-partner"
-            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-          >
-            <div className="text-sm font-medium leading-none">{t('common.becomePartner')}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-              {t('navigation.main.joinNetwork')}
-            </p>
-          </Link>
-        </div>
-      </NavigationMenuContent>
+      <Link to="/products">
+        <NavigationMenuLink
+          className={cn(
+            "group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+          )}
+        >
+          Products
+        </NavigationMenuLink>
+      </Link>
     </NavigationMenuItem>
   );
 };

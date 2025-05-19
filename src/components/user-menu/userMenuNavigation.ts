@@ -38,9 +38,19 @@ export function useUserMenuNavigation() {
     if (path === '/dashboard') {
       // Get the correct dashboard route based on user role
       const dashboardRoute = getDashboardRouteByRole(userRole);
+      console.log(`Navigating to dashboard: ${dashboardRoute} for role: ${userRole}`);
       navigate(dashboardRoute, {
         replace: false,
         state: { preserveAuth: true, keepSidebar: true }
+      });
+      return;
+    }
+    
+    // Doctor profile specific path
+    if (path === '/doctor/profile') {
+      navigate('/doctor/profile', {
+        state: { preserveAuth: true, keepSidebar: true },
+        replace: false
       });
       return;
     }
@@ -74,6 +84,15 @@ export function useUserMenuNavigation() {
 
     // For referral path
     if (path === '/referral') {
+      navigate(path, {
+        state: { preserveAuth: true, keepSidebar: true },
+        replace: false
+      });
+      return;
+    }
+    
+    // For notifications and activities paths
+    if (path === '/notifications' || path === '/activities') {
       navigate(path, {
         state: { preserveAuth: true, keepSidebar: true },
         replace: false

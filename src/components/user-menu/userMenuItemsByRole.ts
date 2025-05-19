@@ -1,71 +1,111 @@
 
-import { Home, Award, User, Store, Users, FileText, ShoppingBag, CreditCard, HeartPulse, Bell, Settings, BarChart, Heart, Share, Activity, Gift, LayoutDashboard } from "lucide-react";
+import { 
+  Settings, 
+  User, 
+  CreditCard, 
+  Medal, 
+  Activity, 
+  Building, 
+  FileText,
+  Home
+} from "lucide-react";
 
-export function getMenuItemsByRole(role: string, isPharmacist: boolean) {
-  if (role === 'user' || role === 'patient') {
-    return [
-      { icon: Home, label: 'Dashboard', path: '/dashboard' },
-      { icon: Award, label: 'Account', path: '/account' },
-      { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
-      { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
-      { icon: CreditCard, label: 'Payments', path: '/dashboard?view=orders&ordersTab=payments' },
-      { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
-      { icon: HeartPulse, label: 'Consultations', path: '/dashboard?view=teleconsultations' },
-      { icon: Bell, label: 'Notifications', path: '/activities' },
-      { icon: Share, label: 'Referral', path: '/referral' },
-      { icon: Settings, label: 'Settings', path: '/settings' }
-    ];
-  }
-  if (role === 'doctor') {
-    return [
-      { icon: LayoutDashboard, label: 'Dashboard', path: '/doctor/dashboard' },
-      { icon: Award, label: 'Account', path: '/account' },
-      { icon: User, label: 'Profile', path: '/dashboard?view=profile&profileTab=personal' },
-      { icon: Store, label: 'Doctor Profile', path: '/doctor/profile' }, 
-      { icon: Users, label: 'Patients', path: '/dashboard?view=patients' },
-      { icon: ShoppingBag, label: 'Orders', path: '/dashboard?view=orders&ordersTab=orders' },
-      { icon: FileText, label: 'Prescriptions', path: '/dashboard?view=prescriptions' },
-      { icon: HeartPulse, label: 'Consultations', path: '/dashboard?view=teleconsultations' },
-      { icon: Bell, label: 'Notifications', path: '/activities' },
-      { icon: Share, label: 'Referral', path: '/referral' },
-      { icon: Settings, label: 'Settings', path: '/settings' },
-      { icon: CreditCard, label: 'Billing', path: '/billing-details' }
-    ];
-  }
-  if (isPharmacist || role === 'pharmacist') {
-    return [
-      { icon: LayoutDashboard, label: 'Dashboard', path: '/pharmacy/dashboard' },
-      { icon: Award, label: 'Account', path: '/account' },
-      { icon: User, label: 'Profile', path: '/pharmacy/dashboard?section=profile&profileTab=personal' },
-      { icon: Store, label: 'Pharmacy Profile', path: '/pharmacy/profile' },
-      { icon: ShoppingBag, label: 'Orders', path: '/pharmacy/dashboard?section=orders&ordersTab=all' },
-      { icon: Users, label: 'Patients', path: '/pharmacy/patients' },
-      { icon: FileText, label: 'Prescriptions', path: '/pharmacy/dashboard?section=prescriptions' },
-      { icon: Share, label: 'Referral', path: '/referral' },
-      { icon: Settings, label: 'Settings', path: '/pharmacy/dashboard?section=settings' },
-      { icon: CreditCard, label: 'Billing', path: '/billing-details' }
-    ];
-  }
-  if (role === 'superadmin') {
-    return [
-      { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin/dashboard' },
-      { icon: Award, label: 'Account', path: '/account' },
-      { icon: Users, label: 'Users', path: '/superadmin/users' },
-      { icon: Store, label: 'Pharmacies', path: '/superadmin/pharmacies' },
-      { icon: HeartPulse, label: 'Doctors', path: '/superadmin/doctors' },
-      { icon: ShoppingBag, label: 'Products', path: '/superadmin/products' },
-      { icon: Bell, label: 'Notifications', path: '/activities' },
-      { icon: Share, label: 'Referral', path: '/referral' },
-      { icon: Settings, label: 'Settings', path: '/superadmin/settings' }
-    ];
-  }
-  // Fallback
-  return [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: Award, label: 'Account', path: '/account' },
-    { icon: User, label: 'Profile', path: '/settings?tab=profile' },
-    { icon: Activity, label: 'Activity', path: '/activities' },
-    { icon: Gift, label: 'Referral', path: '/referral' },
-    { icon: Settings, label: 'Settings', path: '/settings' }
-  ];
+interface MenuItem {
+  label: string;
+  icon: any;
+  path: string;
 }
+
+// Common menu items for all roles
+const commonItems: MenuItem[] = [
+  {
+    label: "Dashboard",
+    icon: Home,
+    path: "/dashboard"
+  },
+  {
+    label: "Account",
+    icon: Settings,
+    path: "/account"
+  },
+  {
+    label: "Billing",
+    icon: CreditCard,
+    path: "/billing-details"
+  },
+  {
+    label: "Notifications",
+    icon: Activity,
+    path: "/notifications"
+  }
+];
+
+// Patient specific menu items
+const patientItems: MenuItem[] = [
+  {
+    label: "Upgrade",
+    icon: Medal,
+    path: "/upgrade"
+  }
+];
+
+// Doctor specific menu items
+const doctorItems: MenuItem[] = [
+  {
+    label: "Doctor Profile",
+    icon: User,
+    path: "/doctor/profile"
+  },
+  {
+    label: "Upgrade",
+    icon: Medal,
+    path: "/upgrade"
+  }
+];
+
+// Pharmacist specific menu items
+const pharmacistItems: MenuItem[] = [
+  {
+    label: "Pharmacy Dashboard",
+    icon: Building,
+    path: "/pharmacy/dashboard"
+  },
+  {
+    label: "Pharmacy Profile",
+    icon: User,
+    path: "/pharmacy/profile"
+  },
+  {
+    label: "Upgrade",
+    icon: Medal,
+    path: "/upgrade"
+  }
+];
+
+// Admin specific menu items
+const adminItems: MenuItem[] = [
+  {
+    label: "Admin Dashboard",
+    icon: Building,
+    path: "/admin/dashboard"
+  }
+];
+
+// Get menu items based on user role
+export const getMenuItemsByRole = (role?: string | null, isPharmacist?: boolean): MenuItem[] => {
+  // First, add common items that all users have
+  const items = [...commonItems];
+  
+  // Then, add role-specific items
+  if (isPharmacist || role === "pharmacist") {
+    items.push(...pharmacistItems);
+  } else if (role === "doctor") {
+    items.push(...doctorItems);
+  } else if (role === "superadmin") {
+    items.push(...adminItems);
+  } else if (role === "patient" || role === "user") {
+    items.push(...patientItems);
+  }
+  
+  return items;
+};

@@ -37,7 +37,9 @@ const NotificationBell = () => {
   // Navigate to notifications view
   const handleViewAllClick = () => {
     setIsOpen(false);
-    navigate("/notifications?view=notifications");
+    navigate("/notifications", { 
+      state: { preserveAuth: true, keepSidebar: true }
+    });
   };
 
   return (
@@ -59,6 +61,7 @@ const NotificationBell = () => {
           isLoading={isLoading}
           onMarkRead={markAsRead}
           onMarkAllRead={markAllAsRead}
+          onViewAll={handleViewAllClick}
         />
       </PopoverContent>
     </Popover>

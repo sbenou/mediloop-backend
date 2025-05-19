@@ -22,6 +22,7 @@ export const useActivitiesFetch = (userId?: string) => {
       }
       
       if (!userIdToUse) {
+        console.log("No user ID available for fetching activities");
         setActivities([]);
         setHasMore(false);
         setIsLoading(false);
@@ -30,11 +31,13 @@ export const useActivitiesFetch = (userId?: string) => {
       
       const startIndex = page * limit;
       
+      console.log(`Fetching activities for user ID: ${userIdToUse}`);
+      
       const { data, error } = await supabase
         .from('activities')
         .select('*')
         .eq('user_id', userIdToUse)
-        .order('timestamp', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(startIndex, startIndex + limit - 1);
       
       if (error) {
@@ -46,7 +49,7 @@ export const useActivitiesFetch = (userId?: string) => {
         return {
           ...activity,
           read: activity.read !== undefined ? activity.read : activity.status === 'read',
-          timestamp: activity.timestamp || new Date().toISOString(),
+          timestamp: activity.timestamp || activity.created_at || new Date().toISOString(),
         };
       });
       

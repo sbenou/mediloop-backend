@@ -1,35 +1,10 @@
 
-import { useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import NotificationItem from "./NotificationItem";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import React from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Notification } from "@/types/supabase"; // Adjust the import path as needed
+import NotificationList from "./NotificationList";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Notification } from "@/types/supabase";
 import { Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-
-// Helper function to get notification style based on type
-const getNotificationStyle = (type: string) => {
-  if (type === "payment_failed") {
-    return "border-red-500 bg-red-50";
-  } else if (type === "delivery_late" || type === "delivery_failed") {
-    return "border-amber-500 bg-amber-50";
-  } else if (type.includes("prescription")) {
-    return "border-purple-500 bg-purple-50";
-  } else if (type.includes("order")) {
-    return "border-blue-500 bg-blue-50";
-  } else if (type.includes("appointment") || type.includes("consultation")) {
-    return "border-indigo-500 bg-indigo-50";
-  } else if (type.includes("payment") || type.includes("billing")) {
-    return "border-emerald-500 bg-emerald-50";
-  } else if (type.includes("doctor") || type.includes("patient")) {
-    return "border-teal-500 bg-teal-50";
-  }
-  
-  return "border-gray-500 bg-gray-50";
-};
 
 interface NotificationTabsProps {
   notifications: Notification[];
@@ -37,6 +12,7 @@ interface NotificationTabsProps {
   isLoading: boolean;
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
+  onViewAll?: () => void;
 }
 
 const NotificationTabs = ({
@@ -45,139 +21,88 @@ const NotificationTabs = ({
   isLoading,
   onMarkRead,
   onMarkAllRead,
+  onViewAll
 }: NotificationTabsProps) => {
-  const [activeTab, setActiveTab] = useState<"all" | "alerts">("all");
-  const [viewMode, setViewMode] = useState<"list" | "card">("list");
-  const navigate = useNavigate();
-  
-  // Filter alerts (payment failures, delivery issues)
-  const alerts = notifications.filter(
-    (notif) =>
-      notif.type === "payment_failed" || 
-      notif.type === "delivery_late" || 
-      notif.type === "delivery_failed"
+  const unreadNotifications = notifications.filter(notification => !notification.read);
+  const alertNotifications = notifications.filter(notification => 
+    ['payment_failed', 'delivery_failed', 'delivery_late'].includes(notification.type)
   );
-  
-  // All other notifications
-  const allNotifications = activeTab === "all" 
-    ? notifications 
-    : alerts;
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value as "all" | "alerts");
-  };
-
-  const toggleViewMode = () => {
-    setViewMode(prev => prev === "list" ? "card" : "list");
-  };
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <span className="ml-2">Loading notifications...</span>
-        </div>
-      );
-    }
-
-    if (allNotifications.length === 0) {
-      return (
-        <div className="text-center py-8 text-muted-foreground">
-          <p>No {activeTab === "alerts" ? "alerts" : "notifications"}</p>
-        </div>
-      );
-    }
-
-    if (viewMode === "card") {
-      return (
-        <ScrollArea className="h-[400px]">
-          <div className="grid grid-cols-1 gap-3 p-1">
-            {allNotifications.map((notification) => {
-              const borderColorClass = getNotificationStyle(notification.type);
-              return (
-                <Card 
-                  key={notification.id}
-                  className={cn(
-                    "border-l-4 overflow-hidden",
-                    borderColorClass,
-                    notification.read ? "opacity-70" : ""
-                  )}
-                  onClick={() => !notification.read && onMarkRead(notification.id)}
-                >
-                  <div className="p-3">
-                    <NotificationItem
-                      notification={notification}
-                      onMarkRead={onMarkRead}
-                    />
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </ScrollArea>
-      );
-    }
-
-    return (
-      <ScrollArea className="h-[400px]">
-        <div className="px-3">
-          {allNotifications.map((notification) => (
-            <NotificationItem
-              key={notification.id}
-              notification={notification}
-              onMarkRead={onMarkRead}
-            />
-          ))}
-        </div>
-      </ScrollArea>
-    );
-  };
-
-  // Navigate to the notifications view
-  const handleViewAll = () => {
-    navigate(`/notifications?view=notifications${activeTab === "alerts" ? "&alertsOnly=true" : ""}`);
-  };
 
   return (
-    <div className="w-full">
-      <div className="flex justify-between items-center p-3 border-b">
-        <h3 className="font-semibold">Notifications</h3>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={toggleViewMode} className="text-xs">
-            {viewMode === "list" ? "Card View" : "List View"}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onMarkAllRead} disabled={unreadCount === 0 || isLoading}>
-            Mark all as read
-          </Button>
-        </div>
-      </div>
-      
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full grid grid-cols-2">
+    <Tabs defaultValue="all" className="w-full">
+      <div className="flex items-center justify-between border-b px-3 py-2">
+        <TabsList className="grid grid-cols-3">
           <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="unread" className="relative">
+            Unread
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="all" className="py-2">
-          {renderContent()}
-        </TabsContent>
-        
-        <TabsContent value="alerts" className="py-2">
-          {renderContent()}
-        </TabsContent>
-      </Tabs>
-      
-      <div className="p-3 border-t">
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={handleViewAll}
-        >
-          View all {activeTab === "alerts" ? "alerts" : "notifications"}
+        <Button variant="ghost" size="sm" onClick={onMarkAllRead} className="text-xs">
+          Mark all read
         </Button>
       </div>
-    </div>
+
+      <div className="max-h-[400px] overflow-auto">
+        <TabsContent value="all" className="m-0 p-0">
+          {isLoading ? (
+            <div className="flex justify-center items-center p-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <NotificationList 
+              notifications={notifications} 
+              onMarkRead={onMarkRead} 
+            />
+          )}
+        </TabsContent>
+        
+        <TabsContent value="unread" className="m-0 p-0">
+          {isLoading ? (
+            <div className="flex justify-center items-center p-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <NotificationList 
+              notifications={unreadNotifications} 
+              onMarkRead={onMarkRead} 
+            />
+          )}
+        </TabsContent>
+        
+        <TabsContent value="alerts" className="m-0 p-0">
+          {isLoading ? (
+            <div className="flex justify-center items-center p-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <NotificationList 
+              notifications={alertNotifications} 
+              onMarkRead={onMarkRead} 
+            />
+          )}
+        </TabsContent>
+      </div>
+      
+      {onViewAll && (
+        <div className="p-2 border-t">
+          <Button 
+            onClick={onViewAll} 
+            variant="outline" 
+            size="sm" 
+            className="w-full text-xs"
+          >
+            View all notifications
+          </Button>
+        </div>
+      )}
+    </Tabs>
   );
 };
 

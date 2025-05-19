@@ -1,175 +1,137 @@
 
-import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { UserProfile } from '@/types/user';
-import { ChevronDown } from 'lucide-react';
-import UserAvatar from '../user-menu/UserAvatar';
-import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { RefObject } from 'react';
-import { useRecoilValue } from 'recoil';
-import { userAvatarState } from '@/store/user/atoms';
-import { doctorStampUrlState, pharmacyLogoUrlState } from '@/store/images/atoms';
-import { UserMenuContent } from './menu/UserMenuContent';
-import { usePharmacyData } from '@/hooks/pharmacy/usePharmacyData';
-import { useDoctorAvailability } from '@/hooks/doctor/useDoctorAvailability';
+import React from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, User, CreditCard, Medal, Building } from "lucide-react";
+import { Profile } from "@/types/supabase";
 
 interface SidebarUserMenuProps {
-  profile: UserProfile | null;
-  userRole: string;
-  fileInputRef: RefObject<HTMLInputElement>;
-  handleAvatarClick: (e: React.MouseEvent) => void;
+  profile?: Profile | null;
+  userRole?: string | null;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  handleAvatarClick: () => void;
   getUserInitials: () => string;
-  handleLogout: () => Promise<void>;
+  handleLogout: () => void;
+  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   navigateToAccount?: () => void;
-  navigateToProfile?: () => void; 
-  navigateToBilling: () => void;
-  navigateToUpgrade: () => void;
-  navigateToPharmacyProfile?: () => void;
   navigateToDoctorProfile?: () => void;
-  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  navigateToPharmacyProfile?: () => void;
+  navigateToPharmacyDashboard?: () => void;
+  navigateToBilling?: () => void;
+  navigateToUpgrade?: () => void;
 }
 
-const SidebarUserMenu = ({
+const SidebarUserMenu: React.FC<SidebarUserMenuProps> = ({
   profile,
   userRole,
   fileInputRef,
   handleAvatarClick,
   getUserInitials,
   handleLogout,
+  handleFileChange,
   navigateToAccount,
-  navigateToProfile,
-  navigateToBilling,
-  navigateToUpgrade,
-  navigateToPharmacyProfile,
   navigateToDoctorProfile,
-  handleFileChange
-}: SidebarUserMenuProps) => {
-  const navigate = useNavigate();
-  const userAvatar = useRecoilValue(userAvatarState);
-  const doctorStampUrl = useRecoilValue(doctorStampUrlState);
-  const pharmacyLogoUrl = useRecoilValue(pharmacyLogoUrlState);
+  navigateToPharmacyProfile,
+  navigateToPharmacyDashboard,
+  navigateToBilling,
+  navigateToUpgrade
+}) => {
+  const roleName = userRole === 'patient' || userRole === 'user' ? 'Patient' : userRole;
   
-  const { pharmacyName, isAvailable: isPharmacyAvailable } = usePharmacyData(profile);
-  const { isAvailable: isDoctorAvailable } = useDoctorAvailability(profile);
-  
-  // Memoize avatar URL to prevent unnecessary re-renders
-  const avatarUrl = useMemo(() => {
-    if (userRole === 'pharmacist') {
-      return pharmacyLogoUrl || profile?.pharmacy_logo_url || null;
-    } else if (userRole === 'doctor') {
-      return doctorStampUrl || profile?.doctor_stamp_url || null;
-    } else {
-      return userAvatar || profile?.avatar_url || null;
-    }
-  }, [userRole, pharmacyLogoUrl, profile?.pharmacy_logo_url, doctorStampUrl, profile?.doctor_stamp_url, userAvatar, profile?.avatar_url]);
-  
-  // Memoize profile data
-  const enhancedProfile = useMemo(() => {
-    if (!profile) return undefined;
-    return {
-      ...profile,
-      pharmacy_name: pharmacyName || profile.pharmacy_name,
-      pharmacy_logo_url: avatarUrl || undefined
-    };
-  }, [profile, pharmacyName, avatarUrl]);
-  
-  // Determine display name based on user role
-  const displayName = userRole === 'pharmacist' 
-    ? pharmacyName || profile?.pharmacy_name || 'Pharmacy'
-    : profile?.full_name || 'User';
-  
-  // Determine email or secondary text
-  const secondaryText = userRole === 'pharmacist'
-    ? 'Pharmacy Account'
-    : profile?.email || 'user@example.com';
-
-  // Modify navigateToAccount to use state for hiding header
-  const handleNavigateToAccount = () => {
-    console.log('Navigating to account page with no header from sidebar');
-    navigate('/account', { 
-      state: { showHeader: false, preserveAuth: true },
-      replace: false 
-    });
-  };
-
-  // Improved navigation to Pharmacy Profile
-  const handleNavigateToPharmacyProfile = () => {
-    console.log('Navigating to pharmacy profile from sidebar');
-    navigate('/pharmacy/profile', { 
-      state: { preserveAuth: true },
-      replace: false
-    });
-  };
-
-  // Improved navigation to Billing
-  const handleNavigateToBilling = () => {
-    console.log('Navigating to billing details from sidebar');
-    navigate('/billing-details', { 
-      state: { preserveAuth: true, showHeader: false },
-      replace: false
-    });
-  };
-
-  // Improved navigation to Upgrade
-  const handleNavigateToUpgrade = () => {
-    console.log('Navigating to upgrade page from sidebar');
-    navigate('/upgrade', { 
-      state: { preserveAuth: true },
-      replace: false
-    });
-  };
-
   return (
-    <div className="border-t p-4">
-      <div className="flex items-center space-x-3">
-        <div 
-          onClick={handleAvatarClick}
-          className="cursor-pointer hover:opacity-80 transition-opacity"
-          data-testid="sidebar-avatar-container"
-        >
-          <UserAvatar 
-            userProfile={enhancedProfile} 
-            canUpload={true}
-            onAvatarClick={(e) => {
-              e.stopPropagation();
-              handleAvatarClick(e);
-            }}
-            fallbackText={getUserInitials()} 
-            isSquare={true}
-            isAvailable={userRole === 'pharmacist' ? isPharmacyAvailable : isDoctorAvailable}
-          />
-        </div>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <div className="overflow-hidden flex-1 flex items-center cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors">
-              <div className="flex-1">
-                <p className="text-sm font-medium truncate">{displayName}</p>
-                <p className="text-xs text-muted-foreground truncate">{secondaryText}</p>
-              </div>
-              <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
-            </div>
-          </DropdownMenuTrigger>
-          
-          <UserMenuContent
-            userRole={userRole}
-            profile={profile}
-            navigateToAccount={navigateToAccount || handleNavigateToAccount}
-            navigateToBilling={navigateToBilling || handleNavigateToBilling}
-            navigateToUpgrade={navigateToUpgrade || handleNavigateToUpgrade}
-            navigateToPharmacyProfile={navigateToPharmacyProfile || handleNavigateToPharmacyProfile}
-            navigateToDoctorProfile={navigateToDoctorProfile}
-            handleLogout={handleLogout}
-          />
-        </DropdownMenu>
-      </div>
+    <div className="py-4 px-3 border-t">
       <input
         type="file"
         ref={fileInputRef}
-        className="hidden"
-        accept="image/*"
         onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
       />
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center w-full rounded-lg p-2 hover:bg-gray-100 transition-colors">
+            <Avatar className="h-8 w-8 cursor-pointer" onClick={handleAvatarClick}>
+              <AvatarImage src={profile?.avatar_url || ''} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {getUserInitials()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="ml-3 text-left">
+              <p className="text-sm font-medium truncate max-w-[170px]">
+                {profile?.full_name || 'User'}
+              </p>
+              <p className="text-xs text-muted-foreground">{roleName}</p>
+            </div>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{profile?.full_name || 'User'}</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {profile?.email || ''}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          
+          {navigateToAccount && (
+            <DropdownMenuItem onClick={navigateToAccount}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Account</span>
+            </DropdownMenuItem>
+          )}
+          
+          {navigateToDoctorProfile && userRole === 'doctor' && (
+            <DropdownMenuItem onClick={navigateToDoctorProfile}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Doctor Profile</span>
+            </DropdownMenuItem>
+          )}
+          
+          {navigateToPharmacyDashboard && userRole === 'pharmacist' && (
+            <DropdownMenuItem onClick={navigateToPharmacyDashboard}>
+              <Building className="mr-2 h-4 w-4" />
+              <span>Pharmacy Dashboard</span>
+            </DropdownMenuItem>
+          )}
+          
+          {navigateToPharmacyProfile && userRole === 'pharmacist' && (
+            <DropdownMenuItem onClick={navigateToPharmacyProfile}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Pharmacy Profile</span>
+            </DropdownMenuItem>
+          )}
+          
+          {navigateToBilling && (
+            <DropdownMenuItem onClick={navigateToBilling}>
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>Billing</span>
+            </DropdownMenuItem>
+          )}
+          
+          {navigateToUpgrade && (
+            <DropdownMenuItem onClick={navigateToUpgrade}>
+              <Medal className="mr-2 h-4 w-4" />
+              <span>Upgrade</span>
+            </DropdownMenuItem>
+          )}
+          
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

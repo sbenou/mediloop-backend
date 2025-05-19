@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -22,8 +23,10 @@ import ProtectedPharmacyProfilePage from "@/router/roles/ProtectedPharmacyProfil
 import ProtectedPharmacyPatientsPage from "@/router/roles/ProtectedPharmacyPatientsPage";
 import Billing from "@/pages/Billing";
 import SearchPharmacy from "@/pages/SearchPharmacy";
-// Import for FindPharmacy kept but route priority changed
-import FindPharmacy from "@/pages/FindPharmacy"; // Import the new FindPharmacy page
+import FindPharmacy from "@/pages/FindPharmacy"; 
+import Products from "@/pages/Products";
+import ProtectedActivities from "@/router/roles/ProtectedActivities";
+import ProtectedDoctorProfilePage from "@/router/roles/ProtectedDoctorProfilePage";
 
 // Create a simple placeholder component for missing pages
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -50,23 +53,38 @@ export default function AppRoutes() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         
+        {/* Products route */}
+        <Route path="/products" element={<Products />} />
+        <Route path="/products/:pharmacyId" element={<Products />} />
+        
         {/* Doctor and pharmacy routes - accessible to all users */}
         <Route path="/doctors" element={<FindDoctor />} />
         <Route path="/find-doctor" element={<FindDoctor />} />
         <Route path="/doctors/:id" element={<DoctorDetails />} />
         <Route path="/search-pharmacy" element={<SearchPharmacy />} />
         <Route path="/pharmacies" element={<SearchPharmacy />} />
-        <Route path="/find-pharmacy" element={<SearchPharmacy />} /> {/* Use SearchPharmacy for both routes */}
+        <Route path="/find-pharmacy" element={<SearchPharmacy />} />
         
         {/* Dashboard routes */}
         <Route path="/dashboard" element={<Dashboard />} />
+        
+        {/* Activities routes */}
+        <Route path="/activities" element={
+          <ProtectedActivities initialView="activities" />
+        } />
+        <Route path="/notifications" element={
+          <ProtectedActivities initialView="notifications" />
+        } />
         
         {/* Add Billing Details route for all authenticated users */}
         <Route path="/billing-details" element={<ProtectedBillingDetails />} />
         <Route path="/billing" element={<Billing />} />
         
-        {/* Pharmacy specific routes - need to be protected */}
+        {/* Doctor specific routes */}
+        <Route path="/doctor/profile" element={<ProtectedDoctorProfilePage />} />
+        <Route path="/doctor/dashboard" element={<Dashboard />} />
         
+        {/* Pharmacy specific routes - need to be protected */}
         <Route path="/pharmacy/dashboard" element={
           <ProtectedRoute allowedRoles={['pharmacist', 'superadmin']}>
             <PharmacyDashboard />
