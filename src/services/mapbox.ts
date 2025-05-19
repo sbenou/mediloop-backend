@@ -2,7 +2,7 @@
 import { calculateDistance } from '@/lib/utils/distance';
 import { LocalCache } from '@/lib/cache';
 
-// This is a more recent Mapbox public token that can be used for development
+// This is a reliable Mapbox public token that can be used for development
 const MAPBOX_PUBLIC_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
 /**
@@ -17,14 +17,34 @@ export const getMapboxToken = async (): Promise<string> => {
   }
 
   try {
-    // Try to get from Supabase function
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mapbox-token`, {
+    let baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    
+    // Make sure the URL doesn't have 'undefined' in it
+    if (!baseUrl || baseUrl.includes('undefined')) {
+      console.warn('Invalid Supabase URL, falling back to public token');
+      throw new Error('Invalid Supabase URL');
+    }
+    
+    // Fix URL if it doesn't end with slash
+    if (!baseUrl.endsWith('/')) {
+      baseUrl += '/';
+    }
+    
+    // Try to get token from Supabase function
+    const response = await fetch(`${baseUrl}functions/v1/get-mapbox-token`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
       }
     });
+    
+    // First check if we have a proper JSON response
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('Edge function response is not JSON, using public token');
+      throw new Error('Invalid response format');
+    }
     
     if (response.ok) {
       const data = await response.json();

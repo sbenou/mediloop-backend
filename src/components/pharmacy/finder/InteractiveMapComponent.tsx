@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Pharmacy } from '@/lib/types/overpass.types';
@@ -29,15 +30,53 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const pharmacyMarkers = useRef<mapboxgl.Marker[]>([]);
   const userLocationMarker = useRef<mapboxgl.Marker | null>(null);
+  
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-  const mapInitializedRef = useRef(false);
+  const [hasRendered, setHasRendered] = useState(false);
+  const [mapInitialized, setMapInitialized] = useState(false);
   const tokenErrorRetryCount = useRef(0);
-
+  
   // Pass all pharmacies to parent on mount
   useEffect(() => {
     console.log('InteractiveMapComponent: Passing pharmacies to parent:', pharmacies.length);
     onPharmaciesInShape(pharmacies);
   }, [pharmacies, onPharmaciesInShape]);
+
+  // Set rendered flag after first render
+  useEffect(() => {
+    setHasRendered(true);
+  }, []);
+  
+  // Get Mapbox token
+  useEffect(() => {
+    const fetchMapboxToken = async () => {
+      try {
+        console.log('Fetching Mapbox token...');
+        const token = await getMapboxToken();
+        
+        if (token) {
+          console.log('Received token:', token ? 'Valid token' : 'No token');
+          setMapboxToken(token);
+          mapboxgl.accessToken = token;
+        } else {
+          throw new Error('Invalid token received');
+        }
+      } catch (error) {
+        console.error('Error setting Mapbox token:', error);
+        setMapError('Failed to load map resources');
+        
+        // Always set a fallback token
+        const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+        console.log('Using fallback token');
+        setMapboxToken(fallbackToken);
+        mapboxgl.accessToken = fallbackToken;
+      }
+    };
+    
+    fetchMapboxToken();
+  }, []);
 
   // Initialize Mapbox map with improved error handling
   useEffect(() => {
@@ -78,19 +117,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
           style: 'mapbox://styles/mapbox/streets-v12', // Updated to a more recent style
           center: defaultCenter,
           zoom: 12,
-          attributionControl: false,
-          transformRequest: (url, resourceType) => {
-            // Adding Referer header to avoid CORS issues when using public token
-            if (resourceType === 'Tile' || resourceType === 'Style') {
-              return {
-                url,
-                headers: {
-                  'Referer': 'https://lovable.app'
-                }
-              };
-            }
-            return { url };
-          }
+          attributionControl: false
         });
         
         // Add navigation control (zoom buttons)
@@ -103,6 +130,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         map.current.on('load', () => {
           console.log('Map loaded successfully');
           setIsLoading(false);
+          setIsMapLoaded(true);
           mapInitializedRef.current = true;
           updateMarkers();
         });
@@ -118,7 +146,9 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
             e.error.message?.includes('401')
           )) {
             // Clear token from cache to force a refresh on retry
-            LocalCache.delete('mapbox-token');
+            if (LocalCache.delete) {
+              LocalCache.delete('mapbox-token');
+            }
             
             if (tokenErrorRetryCount.current < 2) {
               tokenErrorRetryCount.current += 1;
@@ -163,6 +193,8 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
       mapInitializedRef.current = false;
     };
   }, [userLocation]);
+  
+  const mapInitializedRef = useRef(false);
   
   // Update markers when pharmacies or user location changes
   const updateMarkers = useCallback(() => {
@@ -312,7 +344,9 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
                     
                     // Clear token from cache to force a refresh
                     try {
-                      LocalCache.delete('mapbox-token');
+                      if (LocalCache.delete) {
+                        LocalCache.delete('mapbox-token');
+                      }
                     } catch (e) {
                       console.error('Error clearing token cache:', e);
                     }

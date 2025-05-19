@@ -3,27 +3,32 @@
 // https://deno.land/manual/getting_started/setup_your_environment
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+
+// CORS headers for all responses
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+};
 
 console.log(`Function "get-mapbox-token" up and running!`);
 
 serve(async (req) => {
-  // Always include CORS headers in every response
-  const headers = {
-    ...corsHeaders,
-    "Content-Type": "application/json",
-    "Cache-Control": "public, max-age=86400", // Cache for 24 hours
-  };
-
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     // Get the Mapbox token from environment variable or use reliable public token
+    // This is a working public token that can be used for development
     const mapboxToken = Deno.env.get("MAPBOX_ACCESS_TOKEN") || 
-      'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+      'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+
+    const headers = {
+      ...corsHeaders,
+      'Content-Type': 'application/json',
+    };
 
     // Return the token in a properly formatted JSON response
     return new Response(
@@ -37,14 +42,21 @@ serve(async (req) => {
     console.error("Error in get-mapbox-token function:", error);
     
     // Return a fallback token when there's an error
-    const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+    const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
     
     return new Response(
       JSON.stringify({ 
         token: fallbackToken, 
-        status: "fallback" 
+        status: "fallback",
+        error: error.message || "Unknown error" 
       }),
-      { headers, status: 200 }
+      { 
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }, 
+        status: 200 
+      }
     );
   }
 });
