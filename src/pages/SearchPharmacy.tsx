@@ -7,7 +7,6 @@ import Footer from '@/components/layout/Footer';
 import SearchHeader from '@/components/pharmacy/SearchHeader';
 import { usePharmacySearch } from '@/hooks/usePharmacySearch';
 import PharmacyListSection from '@/components/pharmacy/PharmacyListSection';
-import { PharmacyMap } from '@/components/pharmacy/map/PharmacyMap';
 import PharmacySelection from '@/components/settings/pharmacy/PharmacySelection';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/components/ui/use-toast';
@@ -171,37 +170,23 @@ const SearchPharmacy = () => {
 
         <div className="container mx-auto py-8 px-4">
           <div className="w-full max-w-6xl mx-auto">
-            {/* This is the ONLY section with the map - removed any duplicate map displays */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="w-full md:col-span-1">
-                {Array.isArray(pharmacies) ? (
-                  <div className="w-full">
-                    <PharmacyListSection
-                      pharmacies={pharmacies}
-                      isLoading={isLoading}
-                      coordinates={currentCoordinates}
-                      defaultPharmacyId={null}
-                      onPharmacySelect={handleSelectPharmacy}
-                      onSetDefaultPharmacy={() => {}}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex justify-center items-center h-64">
-                    <p className="text-gray-500">Loading pharmacies...</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="w-full md:col-span-1 h-[600px]">
-                <PharmacyMap
+            {/* Pharmacy list section containing the map */}
+            {Array.isArray(pharmacies) ? (
+              <div className="w-full">
+                <PharmacyListSection
+                  pharmacies={pharmacies}
+                  isLoading={isLoading}
                   coordinates={currentCoordinates}
-                  pharmacies={pharmacies || []}
-                  filteredPharmacies={mapPharmacies}
-                  onPharmaciesInShape={handlePharmaciesInShape}
-                  showDefaultLocation={false}
+                  defaultPharmacyId={null}
+                  onPharmacySelect={handleSelectPharmacy}
+                  onSetDefaultPharmacy={() => {}}
                 />
               </div>
-            </div>
+            ) : (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-gray-500">Loading pharmacies...</p>
+              </div>
+            )}
           </div>
         </div>
       </main>
