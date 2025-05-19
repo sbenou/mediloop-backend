@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -13,10 +12,10 @@ import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
+import SimplePharmacyMap from '@/components/pharmacy/SimplePharmacyMap';
 
 const SearchPharmacy = () => {
   const [search, setSearch] = useState('');
-  const [mapPharmacies, setMapPharmacies] = useState<any[]>([]);
   const navigate = useNavigate();
   
   const { coordinates: locationCoordinates, handleCitySearch } = useLocationSearch();
@@ -36,6 +35,7 @@ const SearchPharmacy = () => {
   
   const { pharmacies, isLoading } = usePharmacySearch(currentCoordinates);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState<string | null>(null);
+  const [filteredPharmacies, setFilteredPharmacies] = useState<any[]>([]);
   
   const location = useLocation();
   const { profile } = useAuth();
@@ -86,14 +86,11 @@ const SearchPharmacy = () => {
   }, []);
 
   useEffect(() => {
-    // Initialize map pharmacies with all pharmacies when they load
+    // Set filtered pharmacies when data loads
     if (pharmacies && pharmacies.length > 0) {
-      setMapPharmacies(pharmacies);
+      setFilteredPharmacies(pharmacies);
     }
   }, [pharmacies]);
-
-  console.log("SearchPharmacy rendering with coordinates:", currentCoordinates);
-  console.log("Pharmacies found:", pharmacies?.length);
 
   const searchPharmacy = (searchTerm: string) => {
     try {
@@ -125,9 +122,10 @@ const SearchPharmacy = () => {
     }
   };
 
-  // Handler for when pharmacies are filtered by shape on the map
+  // Handler for updating filtered pharmacies
   const handlePharmaciesInShape = (filteredPharmacies: any[]) => {
-    setMapPharmacies(filteredPharmacies);
+    // We're keeping this function but using it just to log
+    console.log(`Map has updated with ${filteredPharmacies.length} pharmacies in view`);
   };
 
   // Special case for pharmacists who need to select their pharmacy
@@ -170,21 +168,50 @@ const SearchPharmacy = () => {
 
         <div className="container mx-auto py-8 px-4">
           <div className="w-full max-w-6xl mx-auto">
-            {/* Pharmacy list section containing the map */}
-            {Array.isArray(pharmacies) ? (
-              <div className="w-full">
-                <PharmacyListSection
-                  pharmacies={pharmacies}
-                  isLoading={isLoading}
-                  coordinates={currentCoordinates}
-                  defaultPharmacyId={null}
-                  onPharmacySelect={handleSelectPharmacy}
-                  onSetDefaultPharmacy={() => {}}
-                />
-              </div>
-            ) : (
+            {isLoading ? (
               <div className="flex justify-center items-center h-64">
                 <p className="text-gray-500">Loading pharmacies...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
+                {/* Pharmacy List */}
+                <div className="space-y-4 overflow-y-auto pr-2">
+                  {filteredPharmacies.length === 0 ? (
+                    <p className="text-center py-8">No pharmacies found</p>
+                  ) : (
+                    filteredPharmacies.map((pharmacy) => (
+                      <Card key={pharmacy.id} className="overflow-hidden">
+                        <CardContent className="p-4">
+                          <div className="space-y-2">
+                            <h3 className="font-semibold text-lg">{pharmacy.name}</h3>
+                            <p className="text-sm text-gray-500">{pharmacy.address}</p>
+                            {pharmacy.phone && (
+                              <p className="text-sm">📞 {pharmacy.phone}</p>
+                            )}
+                            {pharmacy.email && (
+                              <p className="text-sm">✉️ {pharmacy.email}</p>
+                            )}
+                            {pharmacy.hours && (
+                              <p className="text-sm">⏰ {pharmacy.hours}</p>
+                            )}
+                            {pharmacy.distance && (
+                              <p className="text-sm font-medium">📍 {pharmacy.distance} km</p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+                
+                {/* Map */}
+                <div className="h-full">
+                  <SimplePharmacyMap
+                    pharmacies={filteredPharmacies}
+                    userLocation={currentCoordinates}
+                    height="calc(100vh - 220px)"
+                  />
+                </div>
               </div>
             )}
           </div>
