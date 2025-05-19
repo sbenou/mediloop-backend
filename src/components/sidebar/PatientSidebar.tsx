@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -72,6 +71,19 @@ const PatientSidebar = () => {
   // Use consistent icon sizes for the sidebar
   const iconSize = "w-5 h-5";
   const subIconSize = "w-4 h-4";
+
+  // Add navigation handlers
+  const navigateToProfile = () => {
+    navigateToPatientView("profile", "personal", "profileTab");
+  };
+  
+  const navigateToBilling = () => {
+    navigate("/billing-details");
+  };
+  
+  const navigateToUpgrade = () => {
+    navigateToLink("/upgrade");
+  };
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
@@ -187,9 +199,9 @@ const PatientSidebar = () => {
         handleAvatarClick={handleAvatarClick}
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
-        navigateToProfile={() => navigateToPatientView("profile", "personal", "profileTab")}
-        navigateToBilling={() => navigate("/billing-details")}
-        navigateToUpgrade={() => navigateToLink("/upgrade")}
+        navigateToProfile={navigateToProfile}
+        navigateToBilling={navigateToBilling}
+        navigateToUpgrade={navigateToUpgrade}
         handleFileChange={handleFileChange}
       />
     </aside>

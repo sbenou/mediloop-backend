@@ -21,6 +21,7 @@ const UnifiedSidebar = () => {
     handleFileChange
   } = useSidebarUserProfile(profile);
 
+  // Navigation handlers
   const navigateToPharmacyProfile = () => {
     console.log('Navigating to pharmacy profile from UnifiedSidebar');
     navigate('/pharmacy/profile');
@@ -34,6 +35,14 @@ const UnifiedSidebar = () => {
   const navigateToAccount = () => {
     console.log('Navigating to Account page from sidebar menu with no header');
     navigate('/account', { state: { showHeader: false } });
+  };
+  
+  const navigateToBilling = () => {
+    navigate('/dashboard?view=orders&ordersTab=payments');
+  };
+  
+  const navigateToUpgrade = () => {
+    navigate('/upgrade');
   };
 
   return (
@@ -60,8 +69,8 @@ const UnifiedSidebar = () => {
         getUserInitials={getUserInitials}
         handleLogout={handleLogout}
         navigateToAccount={navigateToAccount}
-        navigateToBilling={() => navigate('/dashboard?view=orders&ordersTab=payments')}
-        navigateToUpgrade={() => navigate('/upgrade')}
+        navigateToBilling={navigateToBilling}
+        navigateToUpgrade={navigateToUpgrade}
         navigateToPharmacyProfile={userRole === 'pharmacist' ? navigateToPharmacyProfile : undefined}
         navigateToDoctorProfile={userRole === 'doctor' ? navigateToDoctorProfile : undefined}
         handleFileChange={handleFileChange}

@@ -1,26 +1,30 @@
 
-import React, { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import React from "react";
 
 interface SidebarLinkProps {
-  icon: ReactNode;
+  icon: React.ReactNode;
   label: string;
   onClick: () => void;
   active?: boolean;
 }
 
-const SidebarLink = ({ icon, label, onClick, active = false }: SidebarLinkProps) => {
+const SidebarLink: React.FC<SidebarLinkProps> = ({
+  icon,
+  label,
+  onClick,
+  active = false,
+}) => {
   return (
     <button
+      className={`flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors ${
+        active
+          ? "bg-accent text-accent-foreground font-medium"
+          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+      }`}
       onClick={onClick}
-      className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm w-full text-left",
-        "transition-colors hover:bg-muted",
-        active ? "bg-muted font-medium" : "text-muted-foreground"
-      )}
     >
-      <span className="flex shrink-0 items-center justify-center">{icon}</span>
-      <span className="truncate">{label}</span>
+      <div className="mr-3">{icon}</div>
+      <span>{label}</span>
     </button>
   );
 };

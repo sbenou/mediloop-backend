@@ -21,7 +21,7 @@ const PharmacistSidebar = ({
   canEditProducts = false,
   canManageStaff = false,
   canManagePrescriptions = true,
-  canViewPrescriptions = true  // Always visible
+  canViewPrescriptions = true
 }: PharmacistSidebarProps) => {
   const { profile } = useAuth();
   const location = useLocation();
@@ -36,7 +36,7 @@ const PharmacistSidebar = ({
   
   const { handleLogout } = useSidebarLogout();
   
-  // Direct navigation functions - avoid using parameterized routes
+  // Direct navigation functions
   const navigateToPharmacyProfile = () => {
     console.log("Navigating to pharmacy profile");
     navigate('/pharmacy/profile', { 
@@ -83,7 +83,7 @@ const PharmacistSidebar = ({
           canViewProducts={canViewProducts}
           canEditProducts={canEditProducts}
           canManagePrescriptions={canManagePrescriptions}
-          canViewPrescriptions={true} // Always true to ensure always visible
+          canViewPrescriptions={true}
         />
       </div>
       
