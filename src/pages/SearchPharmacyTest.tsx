@@ -12,130 +12,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLocationSearch } from '@/hooks/useLocationSearch';
 import { useAuth } from '@/hooks/auth/useAuth';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw/dist/leaflet.draw.css';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { SimplifiedMapUpdater } from '@/components/pharmacy/map/SimplifiedMapUpdater';
-
-// Fix for default marker icons in Leaflet with Vite
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Add global error handling specifically to catch the "a is not a function" error
-if (typeof window !== 'undefined') {
-  window.addEventListener('error', (e) => {
-    if (e.message && (
-      e.message.includes('a is not a function') || 
-      e.message.includes('touchleave') ||
-      e.message.includes('touch')
-    )) {
-      console.warn('Caught Leaflet-related error in SearchPharmacyTest:', e.message);
-      e.preventDefault();
-      return true;
-    }
-    return false;
-  }, true);
-}
-
-// Create a red icon for user location
-const userLocationIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-// Component to init the draw control
-function DrawControl() {
-  const map = useMap();
-  const drawControlRef = useRef<L.Control.Draw | null>(null);
-  const drawnItemsRef = useRef(new L.FeatureGroup());
-  const initCompletedRef = useRef(false);
-  
-  useEffect(() => {
-    if (!map || initCompletedRef.current) return;
-    
-    console.log('DrawControl: Initializing draw control');
-    initCompletedRef.current = true;
-
-    try {
-      // Disable problematic touch handlers to avoid "a is not a function" error
-      // @ts-ignore - These properties exist on Leaflet map but might not be in TypeScript defs
-      if (map.touchZoom) map.touchZoom.disable();
-      // @ts-ignore
-      if (map.tap) map.tap.disable();
-      
-      // Some browsers have issues with these handlers
-      if (map.options) {
-        map.options.touchZoom = false;
-        map.options.tap = false;
-      }
-      
-      // Add the FeatureGroup to the map
-      map.addLayer(drawnItemsRef.current);
-
-      // Initialize the draw control and pass it the FeatureGroup of editable layers
-      const drawControl = new L.Control.Draw({
-        edit: {
-          featureGroup: drawnItemsRef.current,
-          poly: {
-            allowIntersection: false
-          }
-        },
-        draw: {
-          polygon: {
-            allowIntersection: false,
-            showArea: true
-          },
-          polyline: false,
-          rectangle: true,
-          circle: true,
-          marker: false,
-          circlemarker: false
-        }
-      });
-
-      // Add the draw control to the map
-      map.addControl(drawControl);
-      drawControlRef.current = drawControl;
-
-      // Handle the created event
-      map.on(L.Draw.Event.CREATED, (e: any) => {
-        const layer = e.layer;
-        drawnItemsRef.current.addLayer(layer);
-        
-        // You can perform filtering or other actions here
-        console.log('Shape created', layer);
-      });
-    } catch (error) {
-      console.error('Error setting up draw control:', error);
-    }
-
-    // Clean up on component unmount
-    return () => {
-      if (!map) return;
-      
-      try {
-        if (drawControlRef.current) {
-          map.removeControl(drawControlRef.current);
-        }
-        map.removeLayer(drawnItemsRef.current);
-        map.off(L.Draw.Event.CREATED);
-      } catch (error) {
-        console.warn('Error cleaning up draw control:', error);
-      }
-    };
-  }, [map]);
-
-  return null;
-}
+import { getMapboxToken } from '@/services/mapbox';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-css';
+import { MapPin, RefreshCw, Map } from 'lucide-react';
 
 // Check if this is a mobile device
 const isMobile = typeof window !== 'undefined' ? 
@@ -147,7 +27,13 @@ const SearchPharmacyTest = () => {
   const [searchQuery, setSearchQuery] = useState('Luxembourg');
   const [showDefaultLocation, setShowDefaultLocation] = useState(false);
   const [filteredPharmacies, setFilteredPharmacies] = useState<any[]>([]);
-  const [mapKey, setMapKey] = useState(`map-${Date.now()}`);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const markers = useRef<mapboxgl.Marker[]>([]);
+  const userMarker = useRef<mapboxgl.Marker | null>(null);
   
   const { coordinates: locationCoordinates, handleCitySearch } = useLocationSearch();
   const { profile } = useAuth();
@@ -200,6 +86,125 @@ const SearchPharmacyTest = () => {
     }
   }, [pharmacies]);
   
+  // Initialize Mapbox
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+    
+    const initMap = async () => {
+      try {
+        // Get Mapbox token
+        const token = await getMapboxToken();
+        if (!token) {
+          setMapError('Failed to load Mapbox token');
+          return;
+        }
+        
+        mapboxgl.accessToken = token;
+        
+        // Create map
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [currentCoordinates.lon, currentCoordinates.lat],
+          zoom: 12
+        });
+        
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        
+        // Handle map load
+        map.current.on('load', () => {
+          setIsMapLoaded(true);
+          updateMarkers();
+        });
+        
+        // Handle map errors
+        map.current.on('error', (e) => {
+          console.error('Map error:', e);
+          setMapError('Failed to load map');
+        });
+        
+      } catch (error) {
+        console.error('Error initializing Mapbox:', error);
+        setMapError('Failed to initialize map');
+      }
+    };
+    
+    initMap();
+    
+    // Clean up
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [currentCoordinates]);
+  
+  // Update markers when map is loaded and data changes
+  const updateMarkers = useCallback(() => {
+    if (!map.current || !isMapLoaded || !pharmacies) return;
+    
+    // Clear existing markers
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
+    
+    if (userMarker.current) {
+      userMarker.current.remove();
+      userMarker.current = null;
+    }
+    
+    // Add user location marker if available and using location
+    if (showDefaultLocation && currentCoordinates) {
+      const el = document.createElement('div');
+      el.className = 'user-location-marker';
+      el.style.width = '20px';
+      el.style.height = '20px';
+      el.style.borderRadius = '50%';
+      el.style.backgroundColor = '#3b82f6';
+      el.style.border = '2px solid white';
+      
+      userMarker.current = new mapboxgl.Marker(el)
+        .setLngLat([currentCoordinates.lon, currentCoordinates.lat])
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
+        .addTo(map.current);
+    }
+    
+    // Add pharmacy markers
+    filteredPharmacies.forEach((pharmacy) => {
+      if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return;
+      
+      try {
+        const pharmLat = parseFloat(pharmacy.coordinates.lat);
+        const pharmLon = parseFloat(pharmacy.coordinates.lon);
+        
+        if (isNaN(pharmLat) || isNaN(pharmLon)) return;
+        
+        const popupContent = document.createElement('div');
+        popupContent.className = 'text-sm p-2';
+        popupContent.innerHTML = `
+          <div class="font-semibold">${pharmacy.name || 'Unnamed Pharmacy'}</div>
+          <p>${pharmacy.address || 'Address not available'}</p>
+          ${pharmacy.distance ? `<p class="text-xs font-medium mt-1">Distance: ${pharmacy.distance} km</p>` : ''}
+        `;
+        
+        const marker = new mapboxgl.Marker()
+          .setLngLat([pharmLon, pharmLat])
+          .setPopup(new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent))
+          .addTo(map.current!);
+        
+        markers.current.push(marker);
+      } catch (error) {
+        console.error('Error adding pharmacy marker:', error);
+      }
+    });
+  }, [currentCoordinates, filteredPharmacies, isMapLoaded, showDefaultLocation]);
+  
+  // Update markers when filtered pharmacies change
+  useEffect(() => {
+    updateMarkers();
+  }, [filteredPharmacies, updateMarkers]);
+  
   // Handle search submission
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
@@ -250,21 +255,67 @@ const SearchPharmacyTest = () => {
   // Toggle location usage
   const handleLocationToggle = (checked: boolean) => {
     setShowDefaultLocation(checked);
+    
+    // Filter pharmacies based on location
+    if (checked && currentCoordinates && pharmacies) {
+      const nearbyPharmacies = pharmacies.filter(pharmacy => {
+        if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return false;
+        
+        try {
+          const pharmLat = parseFloat(pharmacy.coordinates.lat);
+          const pharmLon = parseFloat(pharmacy.coordinates.lon);
+          
+          if (isNaN(pharmLat) || isNaN(pharmLon)) return false;
+          
+          // Calculate distance using the Haversine formula
+          const R = 6371; // Earth radius in km
+          const dLat = (pharmLat - currentCoordinates.lat) * Math.PI / 180;
+          const dLon = (pharmLon - currentCoordinates.lon) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(currentCoordinates.lat * Math.PI / 180) * Math.cos(pharmLat * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = R * c;
+          
+          // Add distance to pharmacy for display
+          pharmacy.distance = distance.toFixed(1);
+          
+          return distance <= 2; // 2km radius
+        } catch (error) {
+          console.error('Error calculating distance for pharmacy:', error);
+          return false;
+        }
+      });
+      
+      setFilteredPharmacies(nearbyPharmacies);
+      
+      // Fly to user location
+      if (map.current && currentCoordinates) {
+        map.current.flyTo({
+          center: [currentCoordinates.lon, currentCoordinates.lat],
+          zoom: 13,
+          essential: true
+        });
+      }
+    } else {
+      // Show all pharmacies when location filtering is disabled
+      setFilteredPharmacies(pharmacies || []);
+    }
   };
   
-  const [mapIsReady, setMapIsReady] = useState(false);
-  
-  // Handle map ready event
-  const handleMapReady = useCallback(() => {
-    console.log('Map is ready in SearchPharmacyTest');
-    setMapIsReady(true);
-  }, []);
-  
-  // Force map re-render when coordinates change
-  useEffect(() => {
-    console.log('Coordinates changed, updating map key');
-    setMapKey(`map-${Date.now()}`);
-  }, [currentCoordinates?.lat, currentCoordinates?.lon]);
+  // Handle retry button click
+  const handleRetry = () => {
+    setMapError(null);
+    
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
+    
+    // Force component re-render
+    setIsMapLoaded(false);
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -337,58 +388,19 @@ const SearchPharmacyTest = () => {
           
           {/* Map */}
           <div className="rounded-lg overflow-hidden border border-gray-200 h-[calc(100vh-250px)]">
-            <MapContainer
-              key={mapKey}
-              center={[currentCoordinates.lat, currentCoordinates.lon]}
-              zoom={12}
-              scrollWheelZoom={!isMobile}
-              style={{ height: '100%', width: '100%' }}
-              // Use conditional props for different devices
-              {...(isMobile ? { dragging: false } : { dragging: true })}
-              zoomControl={true}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              
-              <SimplifiedMapUpdater 
-                coordinates={currentCoordinates} 
-                onMapReady={handleMapReady} 
-              />
-              
-              <DrawControl />
-              
-              {/* Render user location marker if using location */}
-              {showDefaultLocation && currentCoordinates && mapIsReady && (
-                <Marker 
-                  position={[currentCoordinates.lat, currentCoordinates.lon]}
-                  icon={userLocationIcon}
-                >
-                  <Popup>Your location</Popup>
-                </Marker>
-              )}
-              
-              {/* Render pharmacy markers */}
-              {mapIsReady && filteredPharmacies.map((pharmacy) => {
-                if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return null;
-                
-                return (
-                  <Marker
-                    key={`pharmacy-${pharmacy.id}`}
-                    position={[pharmacy.coordinates.lat, pharmacy.coordinates.lon]}
-                  >
-                    <Popup>
-                      <div className="text-sm">
-                        <p className="font-semibold">{pharmacy.name || 'Unnamed Pharmacy'}</p>
-                        <p>{pharmacy.address || 'Address not available'}</p>
-                        <p>{pharmacy.hours || 'Hours not available'}</p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                );
-              })}
-            </MapContainer>
+            {mapError ? (
+              <div className="flex flex-col items-center justify-center h-full bg-gray-50 p-4">
+                <MapPin className="h-10 w-10 text-red-400 mb-2" />
+                <h3 className="text-lg font-medium mb-2">Map Error</h3>
+                <p className="text-sm text-gray-600 mb-4">{mapError}</p>
+                <Button onClick={handleRetry}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Retry Loading Map
+                </Button>
+              </div>
+            ) : (
+              <div ref={mapContainer} className="w-full h-full" />
+            )}
           </div>
         </div>
       </main>

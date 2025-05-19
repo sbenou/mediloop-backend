@@ -9,6 +9,7 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+  'Content-Type': 'application/json'
 };
 
 console.log(`Function "get-mapbox-token" up and running!`);
@@ -16,7 +17,9 @@ console.log(`Function "get-mapbox-token" up and running!`);
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(JSON.stringify({ status: "ok" }), { 
+      headers: corsHeaders 
+    });
   }
 
   try {
@@ -25,18 +28,13 @@ serve(async (req) => {
     const mapboxToken = Deno.env.get("MAPBOX_ACCESS_TOKEN") || 
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
-    const headers = {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-    };
-
     // Return the token in a properly formatted JSON response
     return new Response(
       JSON.stringify({ 
         token: mapboxToken, 
         status: "success" 
       }),
-      { headers, status: 200 }
+      { headers: corsHeaders, status: 200 }
     );
   } catch (error) {
     console.error("Error in get-mapbox-token function:", error);
@@ -50,13 +48,7 @@ serve(async (req) => {
         status: "fallback",
         error: error.message || "Unknown error" 
       }),
-      { 
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }, 
-        status: 200 
-      }
+      { headers: corsHeaders, status: 200 }
     );
   }
 });

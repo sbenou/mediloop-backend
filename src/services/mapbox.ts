@@ -39,27 +39,27 @@ export const getMapboxToken = async (): Promise<string> => {
       }
     });
     
-    // First check if we have a proper JSON response
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.warn('Edge function response is not JSON, using public token');
-      throw new Error('Invalid response format');
-    }
-    
+    // Handle response
     if (response.ok) {
-      const data = await response.json();
-      if (data?.token) {
-        console.log('Retrieved Mapbox token from API');
-        // Cache the token for future use
-        LocalCache.set('mapbox-token', data.token);
-        return data.token;
+      try {
+        const text = await response.text();
+        const data = JSON.parse(text);
+        
+        if (data?.token) {
+          console.log('Retrieved Mapbox token from API');
+          // Cache the token for future use
+          LocalCache.set('mapbox-token', data.token);
+          return data.token;
+        } else {
+          throw new Error('Invalid token in response');
+        }
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        throw new Error('Invalid JSON response');
       }
+    } else {
+      throw new Error(`API returned status ${response.status}`);
     }
-    
-    console.warn('Could not fetch token from API, using default public token');
-    // Cache and return the public token as fallback
-    LocalCache.set('mapbox-token', MAPBOX_PUBLIC_TOKEN);
-    return MAPBOX_PUBLIC_TOKEN;
   } catch (error) {
     console.error('getMapboxToken: Error fetching Mapbox token:', error);
     
