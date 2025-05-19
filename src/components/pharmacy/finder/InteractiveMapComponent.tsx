@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Map as MapIcon, Navigation, RefreshCw } from 'lucide-react';
@@ -5,8 +6,11 @@ import { Button } from '@/components/ui/button';
 import { getMapboxToken } from '@/services/mapbox';
 import { LocalCache } from '@/lib/cache';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import 'mapbox-gl/dist/mapbox-css';
 import { toast } from '@/components/ui/use-toast';
+
+// Fix the mapbox-gl CSS import path
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface Pharmacy {
   id: string;
@@ -54,15 +58,19 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     // Make sure we clean up the map instance on unmount
     return () => {
       if (map.current) {
-        // Remove event listeners with proper arguments structure
-        // The second argument is a listener function which can be null when removing all listeners
-        map.current.off('load', undefined);
-        map.current.off('error', undefined);
-        map.current.off('move', undefined);
-        map.current.off('moveend', undefined);
-        // Destroy map instance
-        map.current.remove();
-        map.current = null;
+        try {
+          // Remove event listeners with proper arguments structure
+          // Pass null as the second argument to remove all listeners for a specific event
+          map.current.off('load', null);
+          map.current.off('error', null);
+          map.current.off('move', null);
+          map.current.off('moveend', null);
+          // Destroy map instance
+          map.current.remove();
+          map.current = null;
+        } catch (error) {
+          console.error('Error during map cleanup:', error);
+        }
       }
     };
   }, []);
@@ -105,7 +113,6 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     }
     
     // Create a local function to handle map initialization
-    // This prevents any closures from capturing non-cloneable objects
     const initializeMap = () => {
       try {
         setIsLoading(true);
@@ -127,67 +134,83 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
           attributionControl: false,
           trackResize: true,
           minZoom: 2,
-          preserveDrawingBuffer: true // This helps with some cloning issues
+          // Remove preserveDrawingBuffer to fix cloning issue
+          // preserveDrawingBuffer: true
         };
 
-        const mapInstance = new mapboxgl.Map(mapOptions);
-        map.current = mapInstance;
-        
-        // Use safer event binding
-        mapInstance.once('load', () => {
-          console.log('Map loaded successfully');
-          setIsLoading(false);
-          setIsMapLoaded(true);
-          mapInitialized.current = true;
+        // Use try/catch to handle potential initialization errors
+        try {
+          const mapInstance = new mapboxgl.Map(mapOptions);
+          map.current = mapInstance;
           
-          // Add navigation control after map is loaded
-          mapInstance.addControl(
-            new mapboxgl.NavigationControl({ showCompass: false }),
-            'top-right'
-          );
+          // Use safer event binding
+          const onLoadHandler = () => {
+            console.log('Map loaded successfully');
+            setIsLoading(false);
+            setIsMapLoaded(true);
+            mapInitialized.current = true;
+            
+            // Add navigation control after map is loaded
+            mapInstance.addControl(
+              new mapboxgl.NavigationControl({ showCompass: false }),
+              'top-right'
+            );
+            
+            updateMarkers();
+          };
           
-          updateMarkers();
-        });
-        
-        // Handle map errors with a safer approach
-        mapInstance.on('error', (e) => {
-          console.error('Map error:', e);
-          
-          if (retryCount < 2) {
-            // Increment retry count but don't trigger a re-render immediately
-            const newRetryCount = retryCount + 1;
-            setRetryCount(newRetryCount);
+          // Handle map errors with a safer approach
+          const onErrorHandler = (e: any) => {
+            console.error('Map error:', e);
             
-            // Clean up current map instance
-            if (mapInstance) {
-              mapInstance.remove();
-            }
-            map.current = null;
-            mapInitialized.current = false;
-            
-            // Clear token from cache - Use LocalCache.delete with the correct key
-            try {
-              // Correct way to call delete with just the key parameter
-              LocalCache.delete('mapbox-token');
-              console.log('Cleared mapbox token from cache');
-            } catch (err) {
-              console.error('Unable to clear token from cache:', err);
-            }
-            
-            // Try again with a delay
-            setTimeout(() => {
-              getMapboxToken().then(newToken => {
-                if (newToken) {
-                  setMapboxToken(newToken);
-                  mapboxgl.accessToken = newToken;
+            if (retryCount < 2) {
+              // Increment retry count but don't trigger a re-render immediately
+              const newRetryCount = retryCount + 1;
+              setRetryCount(newRetryCount);
+              
+              // Clean up current map instance
+              if (mapInstance) {
+                try {
+                  mapInstance.remove();
+                } catch (err) {
+                  console.error('Error removing map during error handling:', err);
                 }
-              });
-            }, 1000);
-          } else {
-            setMapError('Error loading map - Please try refreshing the page');
-          }
-        });
-        
+              }
+              map.current = null;
+              mapInitialized.current = false;
+              
+              // Clear token from cache
+              try {
+                // Correct way to call delete with just the key parameter
+                LocalCache.delete('mapbox-token');
+                console.log('Cleared mapbox token from cache');
+              } catch (err) {
+                console.error('Unable to clear token from cache:', err);
+              }
+              
+              // Try again with a delay
+              setTimeout(() => {
+                getMapboxToken().then(newToken => {
+                  if (newToken) {
+                    setMapboxToken(newToken);
+                    mapboxgl.accessToken = newToken;
+                  }
+                });
+              }, 1000);
+            } else {
+              setMapError('Error loading map - Please try refreshing the page');
+            }
+          };
+          
+          // Add event listeners explicitly
+          mapInstance.once('load', onLoadHandler);
+          mapInstance.on('error', onErrorHandler);
+          
+        } catch (mapInitError) {
+          console.error('Error creating map instance:', mapInitError);
+          setMapError('Failed to create map - Please try again');
+          setIsLoading(false);
+        }
       } catch (error) {
         console.error('Error initializing map:', error);
         setMapError('Failed to initialize map - Please check your network connection');
@@ -322,7 +345,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     setIsLoading(true);
     setRetryCount(0);
     
-    // Clear token from cache - Use LocalCache.delete with the correct key
+    // Clear token from cache
     try {
       // Correct way to call delete with just the key parameter
       LocalCache.delete('mapbox-token');
@@ -335,11 +358,11 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     if (map.current) {
       try {
         // Remove event listeners with proper arguments structure
-        // The second argument is a listener function which can be null when removing all listeners
-        map.current.off('load', undefined);
-        map.current.off('error', undefined);
-        map.current.off('move', undefined);
-        map.current.off('moveend', undefined);
+        // Use null as the second argument to remove all listeners for a specific event
+        map.current.off('load', null);
+        map.current.off('error', null);
+        map.current.off('move', null);
+        map.current.off('moveend', null);
         // Then remove the map
         map.current.remove();
       } catch (e) {
