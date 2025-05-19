@@ -28,7 +28,7 @@ serve(async (req) => {
     const mapboxToken = Deno.env.get("MAPBOX_ACCESS_TOKEN") || 
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
-    // Construct the JSON response - ensure it's properly formatted
+    // Construct the response JSON - ensure it's properly formatted
     const responseData = JSON.stringify({
       token: mapboxToken,
       status: "success"
@@ -49,7 +49,7 @@ serve(async (req) => {
     const responseData = JSON.stringify({
       token: fallbackToken,
       status: "fallback",
-      error: error.message || "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error"
     });
     
     return new Response(responseData, { 

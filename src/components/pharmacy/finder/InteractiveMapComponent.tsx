@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Map as MapIcon, Navigation, RefreshCw } from 'lucide-react';
@@ -50,7 +51,18 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
   useEffect(() => {
     console.log('InteractiveMapComponent: Passing pharmacies to parent:', pharmacies.length);
     onPharmaciesInShape(pharmacies);
-  }, [pharmacies, onPharmaciesInShape]);
+
+    // Make sure we clean up the map instance on unmount
+    return () => {
+      if (map.current) {
+        // Remove event listeners
+        map.current.off();
+        // Destroy map instance
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
 
   // Get Mapbox token
   useEffect(() => {
@@ -70,7 +82,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         console.error('Error setting Mapbox token:', error);
         setMapError('Failed to load map resources. Please retry.');
         
-        // Always set a fallback token
+        // Set a fallback token
         const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
         console.log('Using fallback token');
         setMapboxToken(fallbackToken);
@@ -89,7 +101,9 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
       return;
     }
     
-    const initializeMap = async () => {
+    // Create a local function to handle map initialization
+    // This prevents any closures from capturing non-cloneable objects
+    const initializeMap = () => {
       try {
         setIsLoading(true);
         setMapError(null);
@@ -101,69 +115,72 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
           ? [userLocation.lon, userLocation.lat] 
           : [6.1296, 49.8153];
         
-        // Create map with basic options first
-        map.current = new mapboxgl.Map({
-          container: mapContainer.current,
+        // Create map with basic options first using a safer approach
+        const mapOptions: mapboxgl.MapOptions = {
+          container: mapContainer.current!,
           style: 'mapbox://styles/mapbox/streets-v12',
           center: defaultCenter,
           zoom: 12,
           attributionControl: false,
           trackResize: true,
-          minZoom: 2
-        });
+          minZoom: 2,
+          preserveDrawingBuffer: true // This helps with some cloning issues
+        };
+
+        const mapInstance = new mapboxgl.Map(mapOptions);
+        map.current = mapInstance;
         
-        // Add navigation control
-        map.current.addControl(
-          new mapboxgl.NavigationControl({ showCompass: false }),
-          'top-right'
-        );
-        
-        // Initialize markers when the map loads
-        map.current.on('load', () => {
+        // Use safer event binding
+        mapInstance.once('load', () => {
           console.log('Map loaded successfully');
           setIsLoading(false);
           setIsMapLoaded(true);
           mapInitialized.current = true;
+          
+          // Add navigation control after map is loaded
+          mapInstance.addControl(
+            new mapboxgl.NavigationControl({ showCompass: false }),
+            'top-right'
+          );
+          
           updateMarkers();
         });
         
-        // Handle map errors
-        map.current.on('error', (e) => {
+        // Handle map errors with a safer approach
+        mapInstance.on('error', (e) => {
           console.error('Map error:', e);
           
-          if (e.error && retryCount < 2) {
-            // Attempt to recover by trying again
-            setRetryCount(prevCount => prevCount + 1);
+          if (retryCount < 2) {
+            // Increment retry count but don't trigger a re-render immediately
+            const newRetryCount = retryCount + 1;
+            setRetryCount(newRetryCount);
             
             // Clean up current map instance
-            if (map.current) {
-              map.current.remove();
-              map.current = null;
+            if (mapInstance) {
+              mapInstance.remove();
             }
-            
+            map.current = null;
             mapInitialized.current = false;
             
             // Try to clear token from cache
             try {
-              if (typeof LocalCache.delete === 'function') {
-                LocalCache.delete('mapbox-token');
-              }
+              LocalCache.delete('mapbox-token');
             } catch (err) {
               console.error('Unable to clear token from cache:', err);
             }
             
-            // Try again after a delay
+            // Try again with a delay
             setTimeout(() => {
               getMapboxToken().then(newToken => {
-                setMapboxToken(newToken);
-                mapboxgl.accessToken = newToken;
+                if (newToken) {
+                  setMapboxToken(newToken);
+                  mapboxgl.accessToken = newToken;
+                }
               });
             }, 1000);
-            
-            return;
+          } else {
+            setMapError('Error loading map - Please try refreshing the page');
           }
-          
-          setMapError('Error loading map - Please try refreshing the page');
         });
         
       } catch (error) {
@@ -174,24 +191,19 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     };
     
     initializeMap();
-    
-    // Clean up on unmount
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-      mapInitialized.current = false;
-    };
   }, [mapboxToken, userLocation, retryCount]);
   
   // Update markers when pharmacies or user location changes
   const updateMarkers = useCallback(() => {
-    if (!map.current || !isMapLoaded) return;
+    // Use a safer check to see if we can update markers
+    if (!map.current || !map.current.loaded()) {
+      return;
+    }
     
     // Clear existing pharmacy markers
-    pharmacyMarkers.current.forEach(marker => marker.remove());
-    pharmacyMarkers.current = [];
+    while (pharmacyMarkers.current.length > 0) {
+      pharmacyMarkers.current.pop()?.remove();
+    }
     
     // Clear user location marker
     if (userLocationMarker.current) {
@@ -213,19 +225,18 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
       
       userLocationMarker.current = new mapboxgl.Marker(userEl)
         .setLngLat([userLocation.lon, userLocation.lat])
-        .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
         .addTo(map.current);
     }
     
     // Add pharmacy markers
-    pharmacies.forEach(pharmacy => {
-      if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return;
+    for (const pharmacy of pharmacies) {
+      if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) continue;
       
       try {
         const pharmLat = parseFloat(pharmacy.coordinates.lat.toString());
         const pharmLon = parseFloat(pharmacy.coordinates.lon.toString());
         
-        if (isNaN(pharmLat) || isNaN(pharmLon)) return;
+        if (isNaN(pharmLat) || isNaN(pharmLon)) continue;
         
         // Create custom marker element
         const el = document.createElement('div');
@@ -257,7 +268,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
           .setLngLat([pharmLon, pharmLat])
           .addTo(map.current!);
         
-        // Only show popup on hover
+        // Only attach events if map is fully loaded
         el.addEventListener('mouseenter', () => {
           marker.setPopup(popup);
           popup.addTo(map.current!);
@@ -274,23 +285,30 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
       } catch (error) {
         console.error('Error adding pharmacy marker:', error);
       }
-    });
-  }, [pharmacies, userLocation, isMapLoaded]);
+    }
+  }, [pharmacies, userLocation]);
   
   // Update markers when pharmacies or user location changes
   useEffect(() => {
-    updateMarkers();
-  }, [pharmacies, userLocation, updateMarkers]);
+    if (isMapLoaded && map.current) {
+      updateMarkers();
+    }
+  }, [pharmacies, userLocation, isMapLoaded, updateMarkers]);
   
   // Fly to user location when it changes
   useEffect(() => {
     if (!map.current || !userLocation || !mapInitialized.current || !isMapLoaded) return;
     
-    map.current.flyTo({
-      center: [userLocation.lon, userLocation.lat] as [number, number],
-      zoom: 13,
-      essential: true
-    });
+    // Use try/catch to handle potential errors in map operations
+    try {
+      map.current.flyTo({
+        center: [userLocation.lon, userLocation.lat] as [number, number],
+        zoom: 13,
+        essential: true
+      });
+    } catch (error) {
+      console.error("Error flying to user location:", error);
+    }
   }, [userLocation, isMapLoaded]);
   
   // Handle retry button click
@@ -308,7 +326,14 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     
     // Clean up existing map
     if (map.current) {
-      map.current.remove();
+      try {
+        // Remove all listeners
+        map.current.off();
+        // Then remove the map
+        map.current.remove();
+      } catch (e) {
+        console.error('Error removing map:', e);
+      }
       map.current = null;
     }
     
@@ -317,8 +342,10 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     
     // Get a new token and retry
     getMapboxToken().then(newToken => {
-      setMapboxToken(newToken);
-      mapboxgl.accessToken = newToken;
+      if (newToken) {
+        setMapboxToken(newToken);
+        mapboxgl.accessToken = newToken;
+      }
     });
   };
 
