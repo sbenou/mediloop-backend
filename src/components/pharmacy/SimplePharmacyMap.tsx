@@ -50,27 +50,15 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
       mapboxgl.accessToken = DEFAULT_MAPBOX_TOKEN;
       
       // Create the map instance with basic options
-      // Using a simpler style that's more reliable
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11', // Using light style instead of streets-v12
+        style: 'mapbox://styles/mapbox/streets-v11', // Using streets-v11 for more consistent loading
         center: userLocation ? [userLocation.lon, userLocation.lat] : [6.1296, 49.8153], // Default: Luxembourg
         zoom: 11,
         attributionControl: false,
-        crossSourceCollisions: false, // Disable cross-source collisions for better performance
-        transformRequest: (url, resourceType) => {
-          // Handle CORS for specific resources
-          if (resourceType === 'Source' || resourceType === 'Tile') {
-            return {
-              url: url,
-              headers: {
-                'Cache-Control': 'max-age=600',
-              },
-              credentials: 'same-origin'
-            };
-          }
-          return { url };
-        }
+        maxPitch: 0, // Disable pitch to prevent rendering issues
+        renderWorldCopies: true, // Improve world-view rendering
+        preserveDrawingBuffer: true, // Help with rendering on some browsers
       });
 
       // Add navigation controls
@@ -236,10 +224,12 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
     if (mapContainer.current) {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11', // Using light style instead of streets-v12
+        style: 'mapbox://styles/mapbox/streets-v11', // Using streets-v11 instead of light-v11
         center: userLocation ? [userLocation.lon, userLocation.lat] : [6.1296, 49.8153],
         zoom: 11,
-        attributionControl: false
+        attributionControl: false,
+        maxPitch: 0,
+        preserveDrawingBuffer: true
       });
       
       map.current.addControl(new mapboxgl.NavigationControl({
