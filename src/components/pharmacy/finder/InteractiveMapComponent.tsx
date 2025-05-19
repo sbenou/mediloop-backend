@@ -6,11 +6,8 @@ import { Button } from '@/components/ui/button';
 import { getMapboxToken } from '@/services/mapbox';
 import { LocalCache } from '@/lib/cache';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-css';
-import { toast } from '@/components/ui/use-toast';
-
-// Fix the mapbox-gl CSS import path
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { toast } from '@/components/ui/use-toast';
 
 interface Pharmacy {
   id: string;
@@ -133,9 +130,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
           zoom: 12,
           attributionControl: false,
           trackResize: true,
-          minZoom: 2,
-          // Remove preserveDrawingBuffer to fix cloning issue
-          // preserveDrawingBuffer: true
+          minZoom: 2
         };
 
         // Use try/catch to handle potential initialization errors
