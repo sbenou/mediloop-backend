@@ -25,11 +25,10 @@ serve(async (req) => {
 
   try {
     // Get the Mapbox token from environment variable or use reliable public token
-    // This is a public token that can be used for development
     const mapboxToken = Deno.env.get("MAPBOX_ACCESS_TOKEN") || 
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
-    // Construct the JSON response
+    // Construct the JSON response - ensure it's properly formatted
     const responseData = JSON.stringify({
       token: mapboxToken,
       status: "success"
@@ -46,7 +45,7 @@ serve(async (req) => {
     // Return a fallback token when there's an error
     const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
     
-    // Construct the JSON response with fallback token
+    // Construct the error JSON response - ensure proper formatting
     const responseData = JSON.stringify({
       token: fallbackToken,
       status: "fallback",

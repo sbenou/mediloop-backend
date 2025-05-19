@@ -17,13 +17,14 @@ export const getMapboxToken = async (): Promise<string> => {
   }
 
   try {
-    // Use absolute URL for Supabase functions to avoid undefined issues
+    // Use absolute URL for Supabase functions
     const baseUrl = import.meta.env.VITE_SUPABASE_URL || '';
     
-    // Don't proceed with invalid URL
+    // Fall back to public token if we don't have a valid Supabase URL
     if (!baseUrl || baseUrl.includes('undefined')) {
       console.warn('Invalid Supabase URL, falling back to public token');
-      throw new Error('Invalid Supabase URL');
+      LocalCache.set('mapbox-token', MAPBOX_PUBLIC_TOKEN);
+      return MAPBOX_PUBLIC_TOKEN;
     }
     
     // Construct the function URL carefully
@@ -60,7 +61,9 @@ export const getMapboxToken = async (): Promise<string> => {
       }
     } catch (parseError) {
       console.error('Error parsing response:', parseError, 'Raw response:', text);
-      throw new Error('Invalid JSON response');
+      // Cache and return the public token as fallback
+      LocalCache.set('mapbox-token', MAPBOX_PUBLIC_TOKEN);
+      return MAPBOX_PUBLIC_TOKEN;
     }
   } catch (error) {
     console.error('getMapboxToken: Error fetching Mapbox token:', error);

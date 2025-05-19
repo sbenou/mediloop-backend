@@ -1,9 +1,9 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Map as MapIcon, Navigation, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMapboxToken } from '@/services/mapbox';
+import { LocalCache } from '@/lib/cache';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { toast } from '@/components/ui/use-toast';
@@ -301,9 +301,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     
     // Try to clear token from cache
     try {
-      if (typeof LocalCache.delete === 'function') {
-        LocalCache.delete('mapbox-token');
-      }
+      LocalCache.delete('mapbox-token');
     } catch (e) {
       console.error('Error clearing token cache:', e);
     }
