@@ -1,14 +1,21 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Pharmacy } from '@/lib/types/overpass.types';
-import { MapPin, Map as MapIcon, Navigation, ZoomIn, ZoomOut } from 'lucide-react';
+import { MapPin, Map as MapIcon, Navigation, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMapboxToken } from '@/services/mapbox';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { toast } from '@/components/ui/use-toast';
-import { LocalCache } from '@/lib/cache';
+
+interface Pharmacy {
+  id: string;
+  name: string;
+  address?: string;
+  coordinates?: { lat: number | string; lon: number | string } | null;
+  distance?: string;
+  [key: string]: any; // Allow for other pharmacy properties
+}
 
 interface InteractiveMapComponentProps {
   pharmacies: Pharmacy[];
@@ -34,9 +41,10 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [hasRendered, setHasRendered] = useState(false);
-  const [mapInitialized, setMapInitialized] = useState(false);
-  const tokenErrorRetryCount = useRef(0);
+  const [retryCount, setRetryCount] = useState(0);
+  
+  // Track map initialization status
+  const mapInitialized = useRef(false);
   
   // Pass all pharmacies to parent on mount
   useEffect(() => {
@@ -44,11 +52,6 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     onPharmaciesInShape(pharmacies);
   }, [pharmacies, onPharmaciesInShape]);
 
-  // Set rendered flag after first render
-  useEffect(() => {
-    setHasRendered(true);
-  }, []);
-  
   // Get Mapbox token
   useEffect(() => {
     const fetchMapboxToken = async () => {
@@ -57,7 +60,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         const token = await getMapboxToken();
         
         if (token) {
-          console.log('Received token:', token ? 'Valid token' : 'No token');
+          console.log('Received Mapbox token successfully');
           setMapboxToken(token);
           mapboxgl.accessToken = token;
         } else {
@@ -65,7 +68,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         }
       } catch (error) {
         console.error('Error setting Mapbox token:', error);
-        setMapError('Failed to load map resources');
+        setMapError('Failed to load map resources. Please retry.');
         
         // Always set a fallback token
         const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
@@ -75,52 +78,41 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
       }
     };
     
-    fetchMapboxToken();
+    if (!mapboxToken) {
+      fetchMapboxToken();
+    }
   }, []);
 
   // Initialize Mapbox map with improved error handling
   useEffect(() => {
+    if (!mapContainer.current || !mapboxToken || mapInitialized.current) {
+      return;
+    }
+    
     const initializeMap = async () => {
-      if (!mapContainer.current || mapInitializedRef.current) return;
-      
       try {
         setIsLoading(true);
         setMapError(null);
         
-        // Get Mapbox token with retry mechanism
-        const getTokenWithRetry = async (retries = 2): Promise<string> => {
-          try {
-            const token = await getMapboxToken();
-            if (!token) throw new Error("Failed to get Mapbox token");
-            return token;
-          } catch (err) {
-            if (retries > 0) {
-              console.log(`Retrying token fetch, ${retries} attempts left`);
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              return getTokenWithRetry(retries - 1);
-            }
-            throw err;
-          }
-        };
-
-        const token = await getTokenWithRetry();
-        mapboxgl.accessToken = token;
+        console.log('Initializing map with token:', mapboxToken);
         
         // Set default center based on user location or fallback to Luxembourg
         const defaultCenter: [number, number] = userLocation 
           ? [userLocation.lon, userLocation.lat] 
           : [6.1296, 49.8153];
         
-        // Create the map
+        // Create map with basic options first
         map.current = new mapboxgl.Map({
           container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/streets-v12', // Updated to a more recent style
+          style: 'mapbox://styles/mapbox/streets-v12',
           center: defaultCenter,
           zoom: 12,
-          attributionControl: false
+          attributionControl: false,
+          trackResize: true,
+          minZoom: 2
         });
         
-        // Add navigation control (zoom buttons)
+        // Add navigation control
         map.current.addControl(
           new mapboxgl.NavigationControl({ showCompass: false }),
           'top-right'
@@ -131,7 +123,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
           console.log('Map loaded successfully');
           setIsLoading(false);
           setIsMapLoaded(true);
-          mapInitializedRef.current = true;
+          mapInitialized.current = true;
           updateMarkers();
         });
         
@@ -139,37 +131,36 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         map.current.on('error', (e) => {
           console.error('Map error:', e);
           
-          // Check if error is related to token or style
-          if (e.error && (
-            e.error.message?.includes('access token') || 
-            e.error.message?.includes('Unauthorized') ||
-            e.error.message?.includes('401')
-          )) {
-            // Clear token from cache to force a refresh on retry
-            if (LocalCache.delete) {
-              LocalCache.delete('mapbox-token');
+          if (e.error && retryCount < 2) {
+            // Attempt to recover by trying again
+            setRetryCount(prevCount => prevCount + 1);
+            
+            // Clean up current map instance
+            if (map.current) {
+              map.current.remove();
+              map.current = null;
             }
             
-            if (tokenErrorRetryCount.current < 2) {
-              tokenErrorRetryCount.current += 1;
-              console.log(`Token error, retrying (${tokenErrorRetryCount.current}/2)`);
-              
-              // Clean up current map instance
-              if (map.current) {
-                map.current.remove();
-                map.current = null;
+            mapInitialized.current = false;
+            
+            // Try to clear token from cache
+            try {
+              if (typeof LocalCache.delete === 'function') {
+                LocalCache.delete('mapbox-token');
               }
-              
-              // Reset initialization flag to allow retrying
-              mapInitializedRef.current = false;
-              
-              // Retry initialization after a delay
-              setTimeout(() => {
-                initializeMap();
-              }, 1500);
-              
-              return;
+            } catch (err) {
+              console.error('Unable to clear token from cache:', err);
             }
+            
+            // Try again after a delay
+            setTimeout(() => {
+              getMapboxToken().then(newToken => {
+                setMapboxToken(newToken);
+                mapboxgl.accessToken = newToken;
+              });
+            }, 1000);
+            
+            return;
           }
           
           setMapError('Error loading map - Please try refreshing the page');
@@ -190,15 +181,13 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         map.current.remove();
         map.current = null;
       }
-      mapInitializedRef.current = false;
+      mapInitialized.current = false;
     };
-  }, [userLocation]);
-  
-  const mapInitializedRef = useRef(false);
+  }, [mapboxToken, userLocation, retryCount]);
   
   // Update markers when pharmacies or user location changes
   const updateMarkers = useCallback(() => {
-    if (!map.current || !mapInitializedRef.current) return;
+    if (!map.current || !isMapLoaded) return;
     
     // Clear existing pharmacy markers
     pharmacyMarkers.current.forEach(marker => marker.remove());
@@ -248,15 +237,20 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         el.style.backgroundRepeat = 'no-repeat';
         el.style.cursor = 'pointer';
         
-        // Create popup but don't attach it immediately
-        const popup = new mapboxgl.Popup({ offset: 25 })
-          .setHTML(`
-            <div class="p-2">
-              <h3 class="font-semibold">${pharmacy.name || 'Pharmacy'}</h3>
-              <p class="text-xs text-gray-600">${pharmacy.address || 'No address'}</p>
-              ${pharmacy.distance ? `<p class="text-xs font-medium mt-1">Distance: ${pharmacy.distance} km</p>` : ''}
-            </div>
-          `);
+        // Create popup content
+        const popupHTML = `
+          <div class="p-2">
+            <h3 class="font-semibold">${pharmacy.name || 'Pharmacy'}</h3>
+            <p class="text-xs text-gray-600">${pharmacy.address || 'No address'}</p>
+            ${pharmacy.distance ? `<p class="text-xs font-medium mt-1">Distance: ${pharmacy.distance} km</p>` : ''}
+          </div>
+        `;
+        
+        const popup = new mapboxgl.Popup({ 
+          offset: 25,
+          closeButton: false,
+          maxWidth: '300px'
+        }).setHTML(popupHTML);
         
         // Create marker
         const marker = new mapboxgl.Marker(el)
@@ -265,7 +259,8 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         
         // Only show popup on hover
         el.addEventListener('mouseenter', () => {
-          marker.setPopup(popup).togglePopup();
+          marker.setPopup(popup);
+          popup.addTo(map.current!);
           setHoveredPharmacy(pharmacy.id);
         });
         
@@ -280,7 +275,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         console.error('Error adding pharmacy marker:', error);
       }
     });
-  }, [pharmacies, userLocation]);
+  }, [pharmacies, userLocation, isMapLoaded]);
   
   // Update markers when pharmacies or user location changes
   useEffect(() => {
@@ -289,25 +284,45 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
   
   // Fly to user location when it changes
   useEffect(() => {
-    if (!map.current || !userLocation || !mapInitializedRef.current) return;
+    if (!map.current || !userLocation || !mapInitialized.current || !isMapLoaded) return;
     
     map.current.flyTo({
       center: [userLocation.lon, userLocation.lat] as [number, number],
       zoom: 13,
       essential: true
     });
-  }, [userLocation]);
+  }, [userLocation, isMapLoaded]);
   
-  // Show toast notification for map errors
-  useEffect(() => {
-    if (mapError) {
-      toast({
-        title: "Map Error",
-        description: mapError,
-        variant: "destructive",
-      });
+  // Handle retry button click
+  const handleRetry = () => {
+    setMapError(null);
+    setIsLoading(true);
+    setRetryCount(0);
+    
+    // Try to clear token from cache
+    try {
+      if (typeof LocalCache.delete === 'function') {
+        LocalCache.delete('mapbox-token');
+      }
+    } catch (e) {
+      console.error('Error clearing token cache:', e);
     }
-  }, [mapError]);
+    
+    // Clean up existing map
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
+    
+    // Reset initialization flag
+    mapInitialized.current = false;
+    
+    // Get a new token and retry
+    getMapboxToken().then(newToken => {
+      setMapboxToken(newToken);
+      mapboxgl.accessToken = newToken;
+    });
+  };
 
   // Render the component
   return (
@@ -333,41 +348,21 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
               <div className="text-center p-4 max-w-md">
                 <MapIcon className="h-10 w-10 text-red-400 mx-auto mb-2" />
                 <h3 className="text-lg font-medium mb-2">Map Error</h3>
-                <p className="text-sm text-gray-600">{mapError}</p>
+                <p className="text-sm text-gray-600 mb-4">{mapError}</p>
                 <Button 
                   variant="outline" 
-                  className="mt-4"
-                  onClick={() => {
-                    setMapError(null);
-                    mapInitializedRef.current = false;
-                    tokenErrorRetryCount.current = 0;
-                    
-                    // Clear token from cache to force a refresh
-                    try {
-                      if (LocalCache.delete) {
-                        LocalCache.delete('mapbox-token');
-                      }
-                    } catch (e) {
-                      console.error('Error clearing token cache:', e);
-                    }
-                    
-                    if (map.current) {
-                      map.current.remove();
-                      map.current = null;
-                    }
-                    
-                    // Force component re-render
-                    setIsLoading(true);
-                  }}
+                  onClick={handleRetry}
+                  className="flex items-center"
                 >
-                  Retry
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry Loading Map
                 </Button>
               </div>
             </div>
           )}
         </div>
         
-        {/* Pharmacy list overlay */}
+        {/* Pharmacy count overlay */}
         <div className="absolute top-3 left-3 max-w-[200px] z-30 bg-white/95 backdrop-blur-sm p-2 rounded-md shadow-sm">
           <h3 className="text-sm font-medium mb-1 flex items-center">
             <MapPin className="h-3 w-3 mr-1" />

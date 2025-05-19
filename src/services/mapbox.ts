@@ -17,21 +17,22 @@ export const getMapboxToken = async (): Promise<string> => {
   }
 
   try {
-    let baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    // Use absolute URL for Supabase functions to avoid undefined issues
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL || '';
     
-    // Make sure the URL doesn't have 'undefined' in it
+    // Don't proceed with invalid URL
     if (!baseUrl || baseUrl.includes('undefined')) {
       console.warn('Invalid Supabase URL, falling back to public token');
       throw new Error('Invalid Supabase URL');
     }
     
-    // Fix URL if it doesn't end with slash
-    if (!baseUrl.endsWith('/')) {
-      baseUrl += '/';
-    }
+    // Construct the function URL carefully
+    const functionsUrl = baseUrl.endsWith('/') 
+      ? `${baseUrl}functions/v1/get-mapbox-token`
+      : `${baseUrl}/functions/v1/get-mapbox-token`;
     
     // Try to get token from Supabase function
-    const response = await fetch(`${baseUrl}functions/v1/get-mapbox-token`, {
+    const response = await fetch(functionsUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -39,26 +40,27 @@ export const getMapboxToken = async (): Promise<string> => {
       }
     });
     
-    // Handle response
-    if (response.ok) {
-      try {
-        const text = await response.text();
-        const data = JSON.parse(text);
-        
-        if (data?.token) {
-          console.log('Retrieved Mapbox token from API');
-          // Cache the token for future use
-          LocalCache.set('mapbox-token', data.token);
-          return data.token;
-        } else {
-          throw new Error('Invalid token in response');
-        }
-      } catch (parseError) {
-        console.error('Error parsing response:', parseError);
-        throw new Error('Invalid JSON response');
-      }
-    } else {
+    if (!response.ok) {
       throw new Error(`API returned status ${response.status}`);
+    }
+    
+    // Safely parse the response
+    const text = await response.text();
+    
+    try {
+      const data = JSON.parse(text);
+      
+      if (data?.token) {
+        console.log('Retrieved Mapbox token from API');
+        // Cache the token for future use
+        LocalCache.set('mapbox-token', data.token, 86400); // Cache for 24 hours
+        return data.token;
+      } else {
+        throw new Error('Invalid token in response');
+      }
+    } catch (parseError) {
+      console.error('Error parsing response:', parseError, 'Raw response:', text);
+      throw new Error('Invalid JSON response');
     }
   } catch (error) {
     console.error('getMapboxToken: Error fetching Mapbox token:', error);

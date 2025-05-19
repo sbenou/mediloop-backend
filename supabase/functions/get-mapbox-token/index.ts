@@ -17,38 +17,45 @@ console.log(`Function "get-mapbox-token" up and running!`);
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(JSON.stringify({ status: "ok" }), { 
-      headers: corsHeaders 
+    return new Response('', { 
+      headers: corsHeaders,
+      status: 204
     });
   }
 
   try {
     // Get the Mapbox token from environment variable or use reliable public token
-    // This is a working public token that can be used for development
+    // This is a public token that can be used for development
     const mapboxToken = Deno.env.get("MAPBOX_ACCESS_TOKEN") || 
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
+    // Construct the JSON response
+    const responseData = JSON.stringify({
+      token: mapboxToken,
+      status: "success"
+    });
+
     // Return the token in a properly formatted JSON response
-    return new Response(
-      JSON.stringify({ 
-        token: mapboxToken, 
-        status: "success" 
-      }),
-      { headers: corsHeaders, status: 200 }
-    );
+    return new Response(responseData, { 
+      headers: corsHeaders,
+      status: 200
+    });
   } catch (error) {
     console.error("Error in get-mapbox-token function:", error);
     
     // Return a fallback token when there's an error
     const fallbackToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
     
-    return new Response(
-      JSON.stringify({ 
-        token: fallbackToken, 
-        status: "fallback",
-        error: error.message || "Unknown error" 
-      }),
-      { headers: corsHeaders, status: 200 }
-    );
+    // Construct the JSON response with fallback token
+    const responseData = JSON.stringify({
+      token: fallbackToken,
+      status: "fallback",
+      error: error.message || "Unknown error"
+    });
+    
+    return new Response(responseData, { 
+      headers: corsHeaders,
+      status: 200  // Still return 200 to make it easier for clients to handle
+    });
   }
 });
