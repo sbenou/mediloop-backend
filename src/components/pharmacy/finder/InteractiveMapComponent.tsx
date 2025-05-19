@@ -54,12 +54,12 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     // Make sure we clean up the map instance on unmount
     return () => {
       if (map.current) {
-        // Remove all event listeners with specified events
-        // This satisfies TypeScript by providing the expected arguments
-        map.current.off('load');
-        map.current.off('error');
-        map.current.off('move');
-        map.current.off('moveend');
+        // Remove event listeners with proper arguments structure
+        // The second argument is a listener function which can be null when removing all listeners
+        map.current.off('load', undefined);
+        map.current.off('error', undefined);
+        map.current.off('move', undefined);
+        map.current.off('moveend', undefined);
         // Destroy map instance
         map.current.remove();
         map.current = null;
@@ -334,11 +334,12 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     // Clean up existing map
     if (map.current) {
       try {
-        // Remove specific event listeners to satisfy TypeScript
-        map.current.off('load');
-        map.current.off('error');
-        map.current.off('move');
-        map.current.off('moveend');
+        // Remove event listeners with proper arguments structure
+        // The second argument is a listener function which can be null when removing all listeners
+        map.current.off('load', undefined);
+        map.current.off('error', undefined);
+        map.current.off('move', undefined);
+        map.current.off('moveend', undefined);
         // Then remove the map
         map.current.remove();
       } catch (e) {
