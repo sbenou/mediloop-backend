@@ -1,13 +1,13 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Map as MapIcon, Navigation, RefreshCw } from 'lucide-react';
+import { MapPin, Map as MapIcon, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMapboxToken } from '@/services/mapbox';
 import { LocalCache } from '@/lib/cache';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { toast } from '@/components/ui/use-toast';
+import { Navigation } from 'lucide-react';
 
 interface Pharmacy {
   id: string;
@@ -56,12 +56,14 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     return () => {
       if (map.current) {
         try {
-          // Remove event listeners with proper arguments structure
-          // Pass null as the second argument to remove all listeners for a specific event
-          map.current.off('load', null);
-          map.current.off('error', null);
-          map.current.off('move', null);
-          map.current.off('moveend', null);
+          // Properly remove event listeners
+          if (map.current.off) {
+            map.current.off('load', null);
+            map.current.off('error', null);
+            map.current.off('move', null);
+            map.current.off('moveend', null);
+          }
+          
           // Destroy map instance
           map.current.remove();
           map.current = null;
@@ -122,7 +124,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
           ? [userLocation.lon, userLocation.lat] 
           : [6.1296, 49.8153];
         
-        // Create map with basic options first using a safer approach
+        // Create map with basic options, avoiding unnecessary features
         const mapOptions: mapboxgl.MapOptions = {
           container: mapContainer.current!,
           style: 'mapbox://styles/mapbox/streets-v12',
@@ -130,16 +132,30 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
           zoom: 12,
           attributionControl: false,
           trackResize: true,
-          minZoom: 2
+          minZoom: 2,
+          cooperativeGestures: true, // Disable ctrl+scroll zoom
+          transformRequest: (url, resourceType) => {
+            // Handle CORS for specific resources
+            if (resourceType === 'Source' || resourceType === 'Tile') {
+              return {
+                url: url,
+                headers: {
+                  'Cache-Control': 'max-age=600',
+                },
+                credentials: 'same-origin'
+              };
+            }
+            return { url };
+          }
         };
 
-        // Use try/catch to handle potential initialization errors
         try {
+          // Create map instance
           const mapInstance = new mapboxgl.Map(mapOptions);
           map.current = mapInstance;
           
-          // Use safer event binding
-          const onLoadHandler = () => {
+          // Simple load handler
+          mapInstance.once('load', () => {
             console.log('Map loaded successfully');
             setIsLoading(false);
             setIsMapLoaded(true);
@@ -151,39 +167,51 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
               'top-right'
             );
             
+            // Disable pitch and rotation to reduce WebGL errors
+            mapInstance.dragRotate.disable();
+            mapInstance.touchZoomRotate.disableRotation();
+            
             updateMarkers();
-          };
+          });
           
-          // Handle map errors with a safer approach
-          const onErrorHandler = (e: any) => {
+          // Handle errors
+          mapInstance.on('error', (e) => {
             console.error('Map error:', e);
             
+            // Don't retry on CORS and WebGL errors (which we can't fix)
+            const errorMsg = e.error ? e.error.message || '' : '';
+            const isCorsError = errorMsg.includes('CORS') || errorMsg.includes('cross-origin');
+            const isWebGLError = errorMsg.includes('WebGL') || errorMsg.includes('context');
+            
+            if (isCorsError || isWebGLError) {
+              // For CORS/WebGL errors, we'll keep the map running but log the issue
+              console.warn('Non-fatal map error (continuing):', errorMsg);
+              return;
+            }
+            
             if (retryCount < 2) {
-              // Increment retry count but don't trigger a re-render immediately
               const newRetryCount = retryCount + 1;
               setRetryCount(newRetryCount);
               
               // Clean up current map instance
-              if (mapInstance) {
-                try {
-                  mapInstance.remove();
-                } catch (err) {
-                  console.error('Error removing map during error handling:', err);
-                }
+              try {
+                mapInstance.remove();
+              } catch (err) {
+                console.error('Error removing map during error handling:', err);
               }
+              
               map.current = null;
               mapInitialized.current = false;
               
               // Clear token from cache
               try {
-                // Correct way to call delete with just the key parameter
                 LocalCache.delete('mapbox-token');
                 console.log('Cleared mapbox token from cache');
               } catch (err) {
                 console.error('Unable to clear token from cache:', err);
               }
               
-              // Try again with a delay
+              // Try again with delay
               setTimeout(() => {
                 getMapboxToken().then(newToken => {
                   if (newToken) {
@@ -195,11 +223,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
             } else {
               setMapError('Error loading map - Please try refreshing the page');
             }
-          };
-          
-          // Add event listeners explicitly
-          mapInstance.once('load', onLoadHandler);
-          mapInstance.on('error', onErrorHandler);
+          });
           
         } catch (mapInitError) {
           console.error('Error creating map instance:', mapInitError);
@@ -218,14 +242,15 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
   
   // Update markers when pharmacies or user location changes
   const updateMarkers = useCallback(() => {
-    // Use a safer check to see if we can update markers
+    // Safety check for map state
     if (!map.current || !map.current.loaded()) {
       return;
     }
     
     // Clear existing pharmacy markers
     while (pharmacyMarkers.current.length > 0) {
-      pharmacyMarkers.current.pop()?.remove();
+      const marker = pharmacyMarkers.current.pop();
+      if (marker) marker.remove();
     }
     
     // Clear user location marker
@@ -236,7 +261,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     
     // Add user location marker if available
     if (userLocation) {
-      // Create a custom element for user location
+      // Create a user location element
       const userEl = document.createElement('div');
       userEl.className = 'user-location-marker';
       userEl.style.width = '20px';
@@ -246,9 +271,13 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
       userEl.style.border = '2px solid white';
       userEl.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.3)';
       
-      userLocationMarker.current = new mapboxgl.Marker(userEl)
-        .setLngLat([userLocation.lon, userLocation.lat])
-        .addTo(map.current);
+      try {
+        userLocationMarker.current = new mapboxgl.Marker(userEl)
+          .setLngLat([userLocation.lon, userLocation.lat])
+          .addTo(map.current);
+      } catch (err) {
+        console.error("Error adding user marker:", err);
+      }
     }
     
     // Add pharmacy markers
@@ -261,15 +290,16 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         
         if (isNaN(pharmLat) || isNaN(pharmLon)) continue;
         
-        // Create custom marker element
+        // Create simple marker element to avoid cloning issues
         const el = document.createElement('div');
         el.className = 'pharmacy-marker';
         el.style.width = '30px';
         el.style.height = '30px';
-        el.style.backgroundImage = 'url("https://cdn0.iconfinder.com/data/icons/medical-services-2/256/Drugstore-512.png")';
-        el.style.backgroundSize = 'contain';
-        el.style.backgroundRepeat = 'no-repeat';
+        el.style.backgroundColor = '#10b981';
+        el.style.borderRadius = '50%';
+        el.style.border = '3px solid white';
         el.style.cursor = 'pointer';
+        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
         
         // Create popup content
         const popupHTML = `
@@ -289,21 +319,29 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         // Create marker
         const marker = new mapboxgl.Marker(el)
           .setLngLat([pharmLon, pharmLat])
-          .addTo(map.current!);
+          .addTo(map.current);
         
-        // Only attach events if map is fully loaded
+        // Attach simpler event handlers
         el.addEventListener('mouseenter', () => {
-          marker.setPopup(popup);
-          popup.addTo(map.current!);
-          setHoveredPharmacy(pharmacy.id);
+          try {
+            marker.setPopup(popup);
+            popup.addTo(map.current!);
+            setHoveredPharmacy(pharmacy.id);
+          } catch (err) {
+            console.error("Error showing popup:", err);
+          }
         });
         
         el.addEventListener('mouseleave', () => {
-          popup.remove();
-          setHoveredPharmacy(null);
+          try {
+            popup.remove();
+            setHoveredPharmacy(null);
+          } catch (err) {
+            console.error("Error removing popup:", err);
+          }
         });
         
-        // Track all markers for later cleanup
+        // Track markers for cleanup
         pharmacyMarkers.current.push(marker);
       } catch (error) {
         console.error('Error adding pharmacy marker:', error);
@@ -311,7 +349,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     }
   }, [pharmacies, userLocation]);
   
-  // Update markers when pharmacies or user location changes
+  // Update markers when data changes
   useEffect(() => {
     if (isMapLoaded && map.current) {
       updateMarkers();
@@ -322,10 +360,9 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
   useEffect(() => {
     if (!map.current || !userLocation || !mapInitialized.current || !isMapLoaded) return;
     
-    // Use try/catch to handle potential errors in map operations
     try {
       map.current.flyTo({
-        center: [userLocation.lon, userLocation.lat] as [number, number],
+        center: [userLocation.lon, userLocation.lat],
         zoom: 13,
         essential: true
       });
@@ -342,7 +379,6 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     
     // Clear token from cache
     try {
-      // Correct way to call delete with just the key parameter
       LocalCache.delete('mapbox-token');
       console.log('Cleared mapbox token from cache');
     } catch (e) {
@@ -352,13 +388,15 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     // Clean up existing map
     if (map.current) {
       try {
-        // Remove event listeners with proper arguments structure
-        // Use null as the second argument to remove all listeners for a specific event
-        map.current.off('load', null);
-        map.current.off('error', null);
-        map.current.off('move', null);
-        map.current.off('moveend', null);
-        // Then remove the map
+        // Remove event listeners
+        if (map.current.off) {
+          map.current.off('load', null);
+          map.current.off('error', null);
+          map.current.off('move', null);
+          map.current.off('moveend', null);
+        }
+        
+        // Remove map
         map.current.remove();
       } catch (e) {
         console.error('Error removing map:', e);

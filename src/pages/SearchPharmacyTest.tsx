@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -14,7 +13,7 @@ import { useLocationSearch } from '@/hooks/useLocationSearch';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { getMapboxToken } from '@/services/mapbox';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-css';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { MapPin, RefreshCw, Map } from 'lucide-react';
 
 // Check if this is a mobile device
@@ -24,6 +23,8 @@ const isMobile = typeof window !== 'undefined' ?
 
 // Main page component
 const SearchPharmacyTest = () => {
+  // ... keep existing code (state variables and hooks)
+
   const [searchQuery, setSearchQuery] = useState('Luxembourg');
   const [showDefaultLocation, setShowDefaultLocation] = useState(false);
   const [filteredPharmacies, setFilteredPharmacies] = useState<any[]>([]);
@@ -86,7 +87,7 @@ const SearchPharmacyTest = () => {
     }
   }, [pharmacies]);
   
-  // Initialize Mapbox
+  // Initialize Mapbox with improved error handling
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
     
@@ -101,27 +102,41 @@ const SearchPharmacyTest = () => {
         
         mapboxgl.accessToken = token;
         
-        // Create map
-        map.current = new mapboxgl.Map({
+        // Create map with safer options
+        const mapOptions: mapboxgl.MapOptions = {
           container: mapContainer.current,
           style: 'mapbox://styles/mapbox/streets-v12',
           center: [currentCoordinates.lon, currentCoordinates.lat],
-          zoom: 12
-        });
+          zoom: 12,
+          cooperativeGestures: true, // Better touch handling
+          attributionControl: false
+        };
+        
+        // Create the map
+        const mapInstance = new mapboxgl.Map(mapOptions);
+        map.current = mapInstance;
         
         // Add navigation controls
-        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        
+        // Disable rotation to prevent WebGL errors
+        mapInstance.dragRotate.disable();
+        mapInstance.touchZoomRotate.disableRotation();
         
         // Handle map load
-        map.current.on('load', () => {
+        mapInstance.once('load', () => {
           setIsMapLoaded(true);
           updateMarkers();
         });
         
-        // Handle map errors
-        map.current.on('error', (e) => {
+        // Handle map errors without breaking
+        mapInstance.on('error', (e) => {
           console.error('Map error:', e);
-          setMapError('Failed to load map');
+          // Only set error message for non-CORS errors
+          const errorMessage = e.error?.message || 'Unknown error';
+          if (!errorMessage.includes('CORS') && !errorMessage.includes('WebGL')) {
+            setMapError('Map error encountered');
+          }
         });
         
       } catch (error) {
@@ -135,13 +150,17 @@ const SearchPharmacyTest = () => {
     // Clean up
     return () => {
       if (map.current) {
-        map.current.remove();
+        try {
+          map.current.remove();
+        } catch (e) {
+          console.error('Error removing map:', e);
+        }
         map.current = null;
       }
     };
   }, [currentCoordinates]);
   
-  // Update markers when map is loaded and data changes
+  // Update markers with safer approach
   const updateMarkers = useCallback(() => {
     if (!map.current || !isMapLoaded || !pharmacies) return;
     
@@ -154,23 +173,27 @@ const SearchPharmacyTest = () => {
       userMarker.current = null;
     }
     
-    // Add user location marker if available and using location
+    // Add user location marker if available and enabled
     if (showDefaultLocation && currentCoordinates) {
-      const el = document.createElement('div');
-      el.className = 'user-location-marker';
-      el.style.width = '20px';
-      el.style.height = '20px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = '#3b82f6';
-      el.style.border = '2px solid white';
-      
-      userMarker.current = new mapboxgl.Marker(el)
-        .setLngLat([currentCoordinates.lon, currentCoordinates.lat])
-        .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
-        .addTo(map.current);
+      try {
+        const el = document.createElement('div');
+        el.className = 'user-location-marker';
+        el.style.width = '20px';
+        el.style.height = '20px';
+        el.style.borderRadius = '50%';
+        el.style.backgroundColor = '#3b82f6';
+        el.style.border = '2px solid white';
+        
+        userMarker.current = new mapboxgl.Marker(el)
+          .setLngLat([currentCoordinates.lon, currentCoordinates.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
+          .addTo(map.current);
+      } catch (error) {
+        console.error('Error adding user marker:', error);
+      }
     }
     
-    // Add pharmacy markers
+    // Add pharmacy markers with simplified styling
     filteredPharmacies.forEach((pharmacy) => {
       if (!pharmacy?.coordinates?.lat || !pharmacy?.coordinates?.lon) return;
       
@@ -180,6 +203,16 @@ const SearchPharmacyTest = () => {
         
         if (isNaN(pharmLat) || isNaN(pharmLon)) return;
         
+        // Create a simple marker element to avoid image loading issues
+        const el = document.createElement('div');
+        el.className = 'pharmacy-marker';
+        el.style.width = '25px';
+        el.style.height = '25px';
+        el.style.backgroundColor = '#10b981';
+        el.style.borderRadius = '50%';
+        el.style.border = '3px solid white';
+        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+        
         const popupContent = document.createElement('div');
         popupContent.className = 'text-sm p-2';
         popupContent.innerHTML = `
@@ -188,7 +221,7 @@ const SearchPharmacyTest = () => {
           ${pharmacy.distance ? `<p class="text-xs font-medium mt-1">Distance: ${pharmacy.distance} km</p>` : ''}
         `;
         
-        const marker = new mapboxgl.Marker()
+        const marker = new mapboxgl.Marker(el)
           .setLngLat([pharmLon, pharmLat])
           .setPopup(new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent))
           .addTo(map.current!);
@@ -198,14 +231,9 @@ const SearchPharmacyTest = () => {
         console.error('Error adding pharmacy marker:', error);
       }
     });
-  }, [currentCoordinates, filteredPharmacies, isMapLoaded, showDefaultLocation]);
+  }, [currentCoordinates, filteredPharmacies, isMapLoaded, showDefaultLocation, pharmacies]);
   
-  // Update markers when filtered pharmacies change
-  useEffect(() => {
-    updateMarkers();
-  }, [filteredPharmacies, updateMarkers]);
-  
-  // Handle search submission
+  // ... keep existing code (handleSearch, handleSetDefault, handleLocationToggle, handleRetry functions)
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     
@@ -216,7 +244,6 @@ const SearchPharmacyTest = () => {
     });
   };
   
-  // Handle "Set as Default" for pharmacy
   const handleSetDefault = async (pharmacyId: string) => {
     if (!profile?.id) {
       toast({
@@ -228,12 +255,10 @@ const SearchPharmacyTest = () => {
     }
     
     try {
-      // Using a type assertion to bypass TypeScript check
-      // since we know pharmacy_id exists in the database
       const { error } = await supabase.from('profiles')
         .update({ 
           pharmacy_id: pharmacyId 
-        } as any)  // Type assertion to bypass TypeScript check
+        } as any)
         .eq('id', profile.id);
       
       if (error) throw error;
@@ -252,7 +277,6 @@ const SearchPharmacyTest = () => {
     }
   };
   
-  // Toggle location usage
   const handleLocationToggle = (checked: boolean) => {
     setShowDefaultLocation(checked);
     
@@ -304,7 +328,6 @@ const SearchPharmacyTest = () => {
     }
   };
   
-  // Handle retry button click
   const handleRetry = () => {
     setMapError(null);
     
