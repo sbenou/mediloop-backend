@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Pharmacy } from '@/lib/types/overpass.types';
@@ -8,6 +7,7 @@ import { getMapboxToken } from '@/services/mapbox';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { toast } from '@/components/ui/use-toast';
+import { LocalCache } from '@/lib/cache';
 
 interface InteractiveMapComponentProps {
   pharmacies: Pharmacy[];
@@ -31,6 +31,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
   const userLocationMarker = useRef<mapboxgl.Marker | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const mapInitializedRef = useRef(false);
+  const tokenErrorRetryCount = useRef(0);
 
   // Pass all pharmacies to parent on mount
   useEffect(() => {
@@ -38,20 +39,32 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     onPharmaciesInShape(pharmacies);
   }, [pharmacies, onPharmaciesInShape]);
 
-  // Initialize Mapbox map
+  // Initialize Mapbox map with improved error handling
   useEffect(() => {
     const initializeMap = async () => {
       if (!mapContainer.current || mapInitializedRef.current) return;
       
       try {
         setIsLoading(true);
+        setMapError(null);
         
-        // Get Mapbox token
-        const token = await getMapboxToken();
-        if (!token) {
-          throw new Error("Failed to get Mapbox token");
-        }
-        
+        // Get Mapbox token with retry mechanism
+        const getTokenWithRetry = async (retries = 2): Promise<string> => {
+          try {
+            const token = await getMapboxToken();
+            if (!token) throw new Error("Failed to get Mapbox token");
+            return token;
+          } catch (err) {
+            if (retries > 0) {
+              console.log(`Retrying token fetch, ${retries} attempts left`);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              return getTokenWithRetry(retries - 1);
+            }
+            throw err;
+          }
+        };
+
+        const token = await getTokenWithRetry();
         mapboxgl.accessToken = token;
         
         // Set default center based on user location or fallback to Luxembourg
@@ -62,10 +75,22 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         // Create the map
         map.current = new mapboxgl.Map({
           container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/streets-v11',
+          style: 'mapbox://styles/mapbox/streets-v12', // Updated to a more recent style
           center: defaultCenter,
           zoom: 12,
-          attributionControl: false
+          attributionControl: false,
+          transformRequest: (url, resourceType) => {
+            // Adding Referer header to avoid CORS issues when using public token
+            if (resourceType === 'Tile' || resourceType === 'Style') {
+              return {
+                url,
+                headers: {
+                  'Referer': 'https://lovable.app'
+                }
+              };
+            }
+            return { url };
+          }
         });
         
         // Add navigation control (zoom buttons)
@@ -85,12 +110,44 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
         // Handle map errors
         map.current.on('error', (e) => {
           console.error('Map error:', e);
-          setMapError('Error loading map');
+          
+          // Check if error is related to token or style
+          if (e.error && (
+            e.error.message?.includes('access token') || 
+            e.error.message?.includes('Unauthorized') ||
+            e.error.message?.includes('401')
+          )) {
+            // Clear token from cache to force a refresh on retry
+            LocalCache.delete('mapbox-token');
+            
+            if (tokenErrorRetryCount.current < 2) {
+              tokenErrorRetryCount.current += 1;
+              console.log(`Token error, retrying (${tokenErrorRetryCount.current}/2)`);
+              
+              // Clean up current map instance
+              if (map.current) {
+                map.current.remove();
+                map.current = null;
+              }
+              
+              // Reset initialization flag to allow retrying
+              mapInitializedRef.current = false;
+              
+              // Retry initialization after a delay
+              setTimeout(() => {
+                initializeMap();
+              }, 1500);
+              
+              return;
+            }
+          }
+          
+          setMapError('Error loading map - Please try refreshing the page');
         });
         
       } catch (error) {
         console.error('Error initializing map:', error);
-        setMapError('Failed to initialize map');
+        setMapError('Failed to initialize map - Please check your network connection');
         setIsLoading(false);
       }
     };
@@ -209,7 +266,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     });
   }, [userLocation]);
   
-  // Reset view if there's an error
+  // Show toast notification for map errors
   useEffect(() => {
     if (mapError) {
       toast({
@@ -220,6 +277,7 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     }
   }, [mapError]);
 
+  // Render the component
   return (
     <Card className="overflow-hidden h-full border border-gray-200 rounded-md">
       <CardContent className="p-0 h-full relative">
@@ -250,8 +308,22 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
                   onClick={() => {
                     setMapError(null);
                     mapInitializedRef.current = false;
-                    if (map.current) map.current.remove();
-                    map.current = null;
+                    tokenErrorRetryCount.current = 0;
+                    
+                    // Clear token from cache to force a refresh
+                    try {
+                      LocalCache.delete('mapbox-token');
+                    } catch (e) {
+                      console.error('Error clearing token cache:', e);
+                    }
+                    
+                    if (map.current) {
+                      map.current.remove();
+                      map.current = null;
+                    }
+                    
+                    // Force component re-render
+                    setIsLoading(true);
                   }}
                 >
                   Retry

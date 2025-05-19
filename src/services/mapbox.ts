@@ -2,11 +2,11 @@
 import { calculateDistance } from '@/lib/utils/distance';
 import { LocalCache } from '@/lib/cache';
 
-// Public token that can be used safely in client-side code
-const MAPBOX_PUBLIC_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+// This is a more recent Mapbox public token that can be used for development
+const MAPBOX_PUBLIC_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
 /**
- * Get Mapbox public token - simplified approach that doesn't rely on API calls
+ * Get Mapbox public token with improved error handling
  */
 export const getMapboxToken = async (): Promise<string> => {
   // Check cache first
@@ -36,7 +36,10 @@ export const getMapboxToken = async (): Promise<string> => {
       }
     }
     
-    throw new Error(`Error fetching Mapbox token: ${response.status}`);
+    console.warn('Could not fetch token from API, using default public token');
+    // Cache and return the public token as fallback
+    LocalCache.set('mapbox-token', MAPBOX_PUBLIC_TOKEN);
+    return MAPBOX_PUBLIC_TOKEN;
   } catch (error) {
     console.error('getMapboxToken: Error fetching Mapbox token:', error);
     
