@@ -162,10 +162,11 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
             map.current = null;
             mapInitialized.current = false;
             
-            // Try to clear token from cache
+            // Try to clear token from cache - Using dummy callback function to match expected signature
             try {
-              // Change from LocalCache.delete() to LocalCache.delete('mapbox-token')
-              LocalCache.delete('mapbox-token');
+              // The TS error suggests this function expects 2-3 arguments
+              // Using a key and a no-op function as the second argument
+              LocalCache.delete('mapbox-token', () => {});
             } catch (err) {
               console.error('Unable to clear token from cache:', err);
             }
@@ -318,10 +319,11 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     setIsLoading(true);
     setRetryCount(0);
     
-    // Try to clear token from cache
+    // Try to clear token from cache - Using dummy callback function to match expected signature
     try {
-      // Change from LocalCache.delete() to LocalCache.delete('mapbox-token')
-      LocalCache.delete('mapbox-token');
+      // The TS error suggests this function expects 2-3 arguments
+      // Using a key and a no-op function as the second argument
+      LocalCache.delete('mapbox-token', () => {});
     } catch (e) {
       console.error('Error clearing token cache:', e);
     }
