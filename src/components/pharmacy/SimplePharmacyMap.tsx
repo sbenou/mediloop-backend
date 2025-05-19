@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, MapPin } from 'lucide-react';
 
-// Default mapbox public token - fallback if service fails
+// Default mapbox public token - using a reliable token for development
 const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
 interface Pharmacy {
@@ -18,6 +18,9 @@ interface Pharmacy {
     lon: number | string;
   };
   distance?: string;
+  email?: string;
+  phone?: string;
+  hours?: string;
 }
 
 interface SimplePharmacyMapProps {
@@ -35,15 +38,16 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Initialize the map once when the component mounts
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
-
-    // Use default token for simplicity
-    mapboxgl.accessToken = DEFAULT_MAPBOX_TOKEN;
-
+    
     try {
+      // Configure Mapbox with the token
+      mapboxgl.accessToken = DEFAULT_MAPBOX_TOKEN;
+      
       // Create the map instance with basic options
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -53,21 +57,20 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
         attributionControl: false
       });
 
-      // Add simple navigation controls
+      // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl({
         showCompass: false
       }), 'top-right');
 
-      // Handle successful map load
+      // Handle map load event
       map.current.on('load', () => {
         console.log('Map loaded successfully');
-        addMarkers();
+        setMapLoaded(true);
       });
 
       // Handle map errors
       map.current.on('error', (e) => {
         console.error('Map error:', e);
-        // Only set user-facing errors for critical failures
         if (e.error && !e.error.message?.includes('source has no data')) {
           setError('Map could not be loaded correctly');
         }
@@ -84,36 +87,45 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
         map.current = null;
       }
     };
-  }, []);
+  }, [userLocation]);
 
-  // Add markers for pharmacies and user location
-  const addMarkers = () => {
-    if (!map.current) return;
-
+  // Add markers when the map is loaded or when pharmacies/userLocation change
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+    
     // Clear any existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
-
+    
+    console.log('Adding markers for', pharmacies.length, 'pharmacies');
+    
     // Add user location marker if available
     if (userLocation) {
-      const el = document.createElement('div');
-      el.className = 'user-location-marker';
-      el.style.width = '20px';
-      el.style.height = '20px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = '#3b82f6';
-      el.style.border = '2px solid white';
-      el.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.3)';
+      try {
+        const el = document.createElement('div');
+        el.className = 'user-location-marker';
+        el.style.width = '20px';
+        el.style.height = '20px';
+        el.style.borderRadius = '50%';
+        el.style.backgroundColor = '#3b82f6';
+        el.style.border = '2px solid white';
+        el.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.3)';
 
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([userLocation.lon, userLocation.lat])
-        .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
-        .addTo(map.current);
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([userLocation.lon, userLocation.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your location'))
+          .addTo(map.current);
 
-      markers.current.push(marker);
+        markers.current.push(marker);
+      } catch (error) {
+        console.error('Error adding user location marker:', error);
+      }
     }
 
     // Add pharmacy markers
+    const bounds = new mapboxgl.LngLatBounds();
+    let validCoordinates = false;
+
     pharmacies.forEach(pharmacy => {
       if (!pharmacy.coordinates?.lat || !pharmacy.coordinates?.lon) return;
       
@@ -148,52 +160,35 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
           .addTo(map.current!);
 
         markers.current.push(marker);
+        
+        // Extend bounds with this marker
+        bounds.extend([lon, lat]);
+        validCoordinates = true;
       } catch (error) {
         console.error('Error adding pharmacy marker:', error);
       }
     });
 
-    // Adjust the map view to fit all markers if we have pharmacies
-    if (pharmacies.length > 0 && map.current) {
-      // Find bounds that include all markers
-      const bounds = new mapboxgl.LngLatBounds();
-      
-      pharmacies.forEach(pharmacy => {
-        if (pharmacy.coordinates?.lat && pharmacy.coordinates?.lon) {
-          const lat = parseFloat(String(pharmacy.coordinates.lat));
-          const lon = parseFloat(String(pharmacy.coordinates.lon));
-          
-          if (!isNaN(lat) && !isNaN(lon)) {
-            bounds.extend([lon, lat]);
-          }
-        }
+    // If user location is available, include it in bounds
+    if (userLocation) {
+      bounds.extend([userLocation.lon, userLocation.lat]);
+      validCoordinates = true;
+    }
+    
+    // Adjust map view to fit bounds if we have any valid coordinates
+    if (validCoordinates && !bounds.isEmpty() && map.current) {
+      console.log('Fitting map to bounds');
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 15
       });
-      
-      // Add user location to bounds if available
-      if (userLocation) {
-        bounds.extend([userLocation.lon, userLocation.lat]);
-      }
-      
-      // Only fit bounds if we have valid coordinates
-      if (!bounds.isEmpty()) {
-        map.current.fitBounds(bounds, {
-          padding: 50,
-          maxZoom: 15
-        });
-      }
     }
-  };
-
-  // Update markers when pharmacies or user location change
-  useEffect(() => {
-    if (map.current && map.current.loaded()) {
-      addMarkers();
-    }
-  }, [pharmacies, userLocation]);
+  }, [pharmacies, userLocation, mapLoaded]);
 
   // Handle retry button click
   const handleRetry = () => {
     setError(null);
+    setMapLoaded(false);
     
     if (map.current) {
       map.current.remove();
@@ -214,7 +209,10 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
         showCompass: false
       }), 'top-right');
       
-      map.current.on('load', () => addMarkers());
+      map.current.on('load', () => {
+        console.log('Map reloaded after retry');
+        setMapLoaded(true);
+      });
     }
   };
 

@@ -113,6 +113,7 @@ const SearchPharmacy = () => {
   useEffect(() => {
     // Set filtered pharmacies when data loads
     if (pharmacies && pharmacies.length > 0) {
+      console.log("Setting filtered pharmacies:", pharmacies.length);
       setFilteredPharmacies(pharmacies);
     }
   }, [pharmacies]);
@@ -204,12 +205,12 @@ const SearchPharmacy = () => {
 
   // Handler for updating filtered pharmacies
   const handlePharmaciesInShape = (pharmaciesInView: any[]) => {
-    // We're keeping this function but using it just to log
     console.log(`Map has updated with ${pharmaciesInView.length} pharmacies in view`);
   };
 
   const toggleLocationDisplay = (checked: boolean) => {
     setShowLocation(checked);
+    console.log("Location display toggled:", checked);
   };
 
   // Special case for pharmacists who need to select their pharmacy
@@ -320,7 +321,7 @@ const SearchPharmacy = () => {
                   <SimplePharmacyMap
                     pharmacies={filteredPharmacies}
                     userLocation={showLocation ? currentCoordinates : null}
-                    height="calc(100vh-220px)"
+                    height="calc(100vh - 220px)"
                   />
                 </div>
               </div>
