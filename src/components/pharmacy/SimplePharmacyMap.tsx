@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, MapPin } from 'lucide-react';
 
 // Default mapbox public token - using a reliable token for development
+// Note: In production, this should be replaced with an environment variable
 const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
 interface Pharmacy {
@@ -49,12 +50,27 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
       mapboxgl.accessToken = DEFAULT_MAPBOX_TOKEN;
       
       // Create the map instance with basic options
+      // Using a simpler style that's more reliable
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
+        style: 'mapbox://styles/mapbox/light-v11', // Using light style instead of streets-v12
         center: userLocation ? [userLocation.lon, userLocation.lat] : [6.1296, 49.8153], // Default: Luxembourg
         zoom: 11,
-        attributionControl: false
+        attributionControl: false,
+        crossSourceCollisions: false, // Disable cross-source collisions for better performance
+        transformRequest: (url, resourceType) => {
+          // Handle CORS for specific resources
+          if (resourceType === 'Source' || resourceType === 'Tile') {
+            return {
+              url: url,
+              headers: {
+                'Cache-Control': 'max-age=600',
+              },
+              credentials: 'same-origin'
+            };
+          }
+          return { url };
+        }
       });
 
       // Add navigation controls
@@ -62,8 +78,12 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
         showCompass: false
       }), 'top-right');
 
+      // Disable rotation to prevent WebGL errors
+      map.current.dragRotate.disable();
+      map.current.touchZoomRotate.disableRotation();
+
       // Handle map load event
-      map.current.on('load', () => {
+      map.current.once('load', () => {
         console.log('Map loaded successfully');
         setMapLoaded(true);
       });
@@ -83,8 +103,16 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
     // Clean up on unmount
     return () => {
       if (map.current) {
-        map.current.remove();
-        map.current = null;
+        try {
+          if (map.current.off) {
+            map.current.off('load', null);
+            map.current.off('error', null);
+          }
+          map.current.remove();
+          map.current = null;
+        } catch (err) {
+          console.error('Error cleaning up map:', err);
+        }
       }
     };
   }, [userLocation]);
@@ -145,7 +173,7 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
         el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
         el.style.cursor = 'pointer';
 
-        const popup = new mapboxgl.Popup({ offset: 25 })
+        const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
           .setHTML(`
             <div class="p-2">
               <h3 class="font-semibold">${pharmacy.name || 'Pharmacy'}</h3>
@@ -158,6 +186,15 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
           .setLngLat([lon, lat])
           .setPopup(popup)
           .addTo(map.current!);
+
+        // Add hover events to show/hide the popup
+        el.addEventListener('mouseenter', () => {
+          marker.getPopup().addTo(map.current!);
+        });
+        
+        el.addEventListener('mouseleave', () => {
+          marker.getPopup().remove();
+        });
 
         markers.current.push(marker);
         
@@ -199,7 +236,7 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
     if (mapContainer.current) {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
+        style: 'mapbox://styles/mapbox/light-v11', // Using light style instead of streets-v12
         center: userLocation ? [userLocation.lon, userLocation.lat] : [6.1296, 49.8153],
         zoom: 11,
         attributionControl: false
@@ -208,6 +245,10 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
       map.current.addControl(new mapboxgl.NavigationControl({
         showCompass: false
       }), 'top-right');
+
+      // Disable rotation
+      map.current.dragRotate.disable();
+      map.current.touchZoomRotate.disableRotation();
       
       map.current.on('load', () => {
         console.log('Map reloaded after retry');
