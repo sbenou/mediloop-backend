@@ -6,9 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, MapPin } from 'lucide-react';
 
-// Default mapbox public token - using a reliable token for development
-// Note: In production, this should be replaced with an environment variable
-const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+// Use fallback token (Note: In production, use an environment variable)
+const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z3UycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
 interface Pharmacy {
   id: string;
@@ -40,28 +39,32 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapStyle, setMapStyle] = useState('streets-v11');
 
-  // Initialize the map once when the component mounts
+  // Initialize the map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
     
+    // Clear any previous errors
+    setError(null);
+    
     try {
-      // Configure Mapbox with the token
+      // Use mapbox token
       mapboxgl.accessToken = DEFAULT_MAPBOX_TOKEN;
       
-      // Create the map instance with basic options
-      map.current = new mapboxgl.Map({
+      // Map configuration options - try with minimal config first
+      const mapOptions: mapboxgl.MapOptions = {
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11', // Using streets-v11 for more consistent loading
-        center: userLocation ? [userLocation.lon, userLocation.lat] : [6.1296, 49.8153], // Default: Luxembourg
+        style: `mapbox://styles/mapbox/${mapStyle}`,
+        center: userLocation ? [userLocation.lon, userLocation.lat] : [6.1296, 49.8153],
         zoom: 11,
         attributionControl: false,
-        maxPitch: 0, // Disable pitch to prevent rendering issues
-        renderWorldCopies: true, // Improve world-view rendering
-        preserveDrawingBuffer: true, // Help with rendering on some browsers
-      });
+      };
+      
+      // Create map instance
+      map.current = new mapboxgl.Map(mapOptions);
 
-      // Add navigation controls
+      // Add minimal navigation controls
       map.current.addControl(new mapboxgl.NavigationControl({
         showCompass: false
       }), 'top-right');
@@ -75,35 +78,75 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
         console.log('Map loaded successfully');
         setMapLoaded(true);
       });
+      
+      // Add specific error handling for style loading failures
+      map.current.on('styledata', () => {
+        const style = map.current?.getStyle();
+        if (style && Object.keys(style.sources || {}).length === 0) {
+          console.log('Style loaded but no sources found, may need to retry with a different style');
+          if (mapStyle === 'streets-v11') {
+            // If streets-v11 fails, try basic-v9
+            setMapStyle('basic-v9');
+          }
+        }
+      });
 
       // Handle map errors
       map.current.on('error', (e) => {
         console.error('Map error:', e);
-        if (e.error && !e.error.message?.includes('source has no data')) {
-          setError('Map could not be loaded correctly');
+        
+        // Only set user-facing error for certain types of errors
+        if (e.error && 
+            !e.error.message?.includes('source has no data') && 
+            !e.error.message?.includes('Failed to fetch')) {
+          setError('Map could not be loaded correctly. Please try a different style or refresh.');
+        }
+        
+        // If we get a specific tile or style error, try a different style
+        if (e.error && (
+            e.error.message?.includes('could not load') || 
+            e.error.message?.includes('style') ||
+            e.error.message?.includes('source')
+        )) {
+          if (mapStyle === 'streets-v11') {
+            setMapStyle('basic-v9');
+          } else if (mapStyle === 'basic-v9') {
+            setMapStyle('light-v10');
+          }
         }
       });
     } catch (err) {
       console.error('Error initializing map:', err);
-      setError('Could not initialize map');
+      setError('Could not initialize map. Please check your network connection and try again.');
     }
 
     // Clean up on unmount
     return () => {
       if (map.current) {
         try {
-          if (map.current.off) {
-            map.current.off('load', null);
-            map.current.off('error', null);
-          }
           map.current.remove();
-          map.current = null;
         } catch (err) {
           console.error('Error cleaning up map:', err);
         }
+        map.current = null;
       }
     };
-  }, [userLocation]);
+  }, [userLocation, mapStyle]);
+
+  // Try a different map style when style changes
+  useEffect(() => {
+    if (!map.current || !mapContainer.current) return;
+    
+    try {
+      // Only update the style if map is already initialized and style changed
+      if (map.current.getStyle()?.name !== mapStyle) {
+        console.log(`Changing map style to: ${mapStyle}`);
+        map.current.setStyle(`mapbox://styles/mapbox/${mapStyle}`);
+      }
+    } catch (err) {
+      console.error('Error updating map style:', err);
+    }
+  }, [mapStyle]);
 
   // Add markers when the map is loaded or when pharmacies/userLocation change
   useEffect(() => {
@@ -210,40 +253,20 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
     }
   }, [pharmacies, userLocation, mapLoaded]);
 
-  // Handle retry button click
+  // Handle retry button click with more robust reset
   const handleRetry = () => {
     setError(null);
     setMapLoaded(false);
     
+    // Try a different map style
+    const styles = ['streets-v11', 'light-v10', 'basic-v9', 'dark-v10'];
+    const currentIndex = styles.indexOf(mapStyle);
+    const nextStyle = styles[(currentIndex + 1) % styles.length];
+    setMapStyle(nextStyle);
+    
     if (map.current) {
       map.current.remove();
       map.current = null;
-    }
-    
-    // Re-initialize map
-    if (mapContainer.current) {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11', // Using streets-v11 instead of light-v11
-        center: userLocation ? [userLocation.lon, userLocation.lat] : [6.1296, 49.8153],
-        zoom: 11,
-        attributionControl: false,
-        maxPitch: 0,
-        preserveDrawingBuffer: true
-      });
-      
-      map.current.addControl(new mapboxgl.NavigationControl({
-        showCompass: false
-      }), 'top-right');
-
-      // Disable rotation
-      map.current.dragRotate.disable();
-      map.current.touchZoomRotate.disableRotation();
-      
-      map.current.on('load', () => {
-        console.log('Map reloaded after retry');
-        setMapLoaded(true);
-      });
     }
   };
 
@@ -252,6 +275,7 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
       <div 
         ref={mapContainer} 
         style={{ height, width: '100%', position: 'relative' }}
+        className="bg-gray-100" // Add a background color in case the map fails to load
       >
         {error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10 p-4 text-center">
@@ -260,7 +284,7 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
             <p className="text-sm text-gray-600 mb-4">{error}</p>
             <Button onClick={handleRetry} variant="outline">
               <RefreshCw className="mr-2 h-4 w-4" />
-              Retry Loading Map
+              Try a Different Map Style
             </Button>
           </div>
         )}
