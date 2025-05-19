@@ -5,9 +5,11 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, MapPin } from 'lucide-react';
+import { getMapboxToken } from '@/services/mapbox';
+import { toast } from '@/components/ui/use-toast';
 
-// Use fallback token (Note: In production, use an environment variable)
-const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z3UycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+// Mapbox requires a valid token - this is a more reliable public token for development
+const MAPBOX_PUBLIC_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z3UycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
 interface Pharmacy {
   id: string;
@@ -39,9 +41,39 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapStyle, setMapStyle] = useState('streets-v11');
+  const [mapStyle, setMapStyle] = useState('streets-v12'); // Use v12 styles which are more reliable
+  const [styleIndex, setStyleIndex] = useState(0);
+  const [mapToken, setMapToken] = useState<string>(MAPBOX_PUBLIC_TOKEN);
+  
+  // Available map styles to cycle through
+  const availableStyles = [
+    'streets-v12', 
+    'light-v11', 
+    'dark-v11', 
+    'outdoors-v12', 
+    'satellite-v9',
+    'satellite-streets-v12'
+  ];
 
-  // Initialize the map
+  // Get mapbox token
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const token = await getMapboxToken();
+        if (token) {
+          setMapToken(token);
+          console.log('Mapbox token loaded successfully');
+        }
+      } catch (err) {
+        console.error('Error fetching Mapbox token:', err);
+        // Continue with public token
+      }
+    };
+    
+    fetchToken();
+  }, []);
+
+  // Initialize the map with improved error handling and options
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
     
@@ -49,71 +81,67 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
     setError(null);
     
     try {
-      // Use mapbox token
-      mapboxgl.accessToken = DEFAULT_MAPBOX_TOKEN;
+      console.log('Initializing map with style:', mapStyle);
       
-      // Map configuration options - try with minimal config first
+      // Set the token
+      mapboxgl.accessToken = mapToken;
+      
+      // Map configuration with optimized settings
       const mapOptions: mapboxgl.MapOptions = {
         container: mapContainer.current,
         style: `mapbox://styles/mapbox/${mapStyle}`,
         center: userLocation ? [userLocation.lon, userLocation.lat] : [6.1296, 49.8153],
         zoom: 11,
-        attributionControl: false,
+        minZoom: 2, // Prevent zooming out too far
+        maxPitch: 45, // Limit pitch to improve tile loading
+        attributionControl: true, // Show attribution for Mapbox requirements
+        preserveDrawingBuffer: true, // Improve stability
+        antialias: true, // Better rendering
+        renderWorldCopies: true // Helps with global views
       };
       
-      // Create map instance
-      map.current = new mapboxgl.Map(mapOptions);
+      // Create and store map instance
+      const mapInstance = new mapboxgl.Map(mapOptions);
+      map.current = mapInstance;
 
-      // Add minimal navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl({
-        showCompass: false
+      // Add navigation controls but simplified
+      mapInstance.addControl(new mapboxgl.NavigationControl({
+        showCompass: false,
+        visualizePitch: false
       }), 'top-right');
 
-      // Disable rotation to prevent WebGL errors
-      map.current.dragRotate.disable();
-      map.current.touchZoomRotate.disableRotation();
-
       // Handle map load event
-      map.current.once('load', () => {
-        console.log('Map loaded successfully');
+      mapInstance.once('load', () => {
+        console.log('Map loaded successfully with style:', mapStyle);
         setMapLoaded(true);
+        setError(null);
       });
       
-      // Add specific error handling for style loading failures
-      map.current.on('styledata', () => {
-        const style = map.current?.getStyle();
-        if (style && Object.keys(style.sources || {}).length === 0) {
-          console.log('Style loaded but no sources found, may need to retry with a different style');
-          if (mapStyle === 'streets-v11') {
-            // If streets-v11 fails, try basic-v9
-            setMapStyle('basic-v9');
-          }
-        }
-      });
-
-      // Handle map errors
-      map.current.on('error', (e) => {
+      // Add explicit error handling
+      mapInstance.on('error', (e) => {
         console.error('Map error:', e);
         
-        // Only set user-facing error for certain types of errors
+        // Only set user-facing error for critical errors
         if (e.error && 
-            !e.error.message?.includes('source has no data') && 
+            !e.error.message?.includes('source has no data') &&
+            !e.error.message?.includes('Tile does not exist') &&
             !e.error.message?.includes('Failed to fetch')) {
           setError('Map could not be loaded correctly. Please try a different style or refresh.');
         }
-        
-        // If we get a specific tile or style error, try a different style
-        if (e.error && (
-            e.error.message?.includes('could not load') || 
-            e.error.message?.includes('style') ||
-            e.error.message?.includes('source')
-        )) {
-          if (mapStyle === 'streets-v11') {
-            setMapStyle('basic-v9');
-          } else if (mapStyle === 'basic-v9') {
-            setMapStyle('light-v10');
+      });
+
+      // Add style error detection
+      mapInstance.on('styledata', () => {
+        // Check if style loaded properly
+        setTimeout(() => {
+          if (mapInstance.loaded() && mapInstance.isStyleLoaded()) {
+            const style = mapInstance.getStyle();
+            if (!style || Object.keys(style.sources || {}).length === 0) {
+              console.log('Style loaded but no sources found, retrying with a different style');
+              setError('Map style could not be loaded. Please try a different style.');
+            }
           }
-        }
+        }, 1500); // Give style some time to fully load
       });
     } catch (err) {
       console.error('Error initializing map:', err);
@@ -131,22 +159,7 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
         map.current = null;
       }
     };
-  }, [userLocation, mapStyle]);
-
-  // Try a different map style when style changes
-  useEffect(() => {
-    if (!map.current || !mapContainer.current) return;
-    
-    try {
-      // Only update the style if map is already initialized and style changed
-      if (map.current.getStyle()?.name !== mapStyle) {
-        console.log(`Changing map style to: ${mapStyle}`);
-        map.current.setStyle(`mapbox://styles/mapbox/${mapStyle}`);
-      }
-    } catch (err) {
-      console.error('Error updating map style:', err);
-    }
-  }, [mapStyle]);
+  }, [userLocation, mapStyle, mapToken]);
 
   // Add markers when the map is loaded or when pharmacies/userLocation change
   useEffect(() => {
@@ -181,7 +194,7 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
       }
     }
 
-    // Add pharmacy markers
+    // Add pharmacy markers with bounds calculation
     const bounds = new mapboxgl.LngLatBounds();
     let validCoordinates = false;
 
@@ -253,21 +266,32 @@ const SimplePharmacyMap: React.FC<SimplePharmacyMapProps> = ({
     }
   }, [pharmacies, userLocation, mapLoaded]);
 
-  // Handle retry button click with more robust reset
+  // Implement a proper retry function that actually cycles through different styles
   const handleRetry = () => {
+    // Clear error and reset map state
     setError(null);
     setMapLoaded(false);
     
-    // Try a different map style
-    const styles = ['streets-v11', 'light-v10', 'basic-v9', 'dark-v10'];
-    const currentIndex = styles.indexOf(mapStyle);
-    const nextStyle = styles[(currentIndex + 1) % styles.length];
+    // Select the next style in the array
+    const nextIndex = (styleIndex + 1) % availableStyles.length;
+    const nextStyle = availableStyles[nextIndex];
+    
+    console.log(`Changing map style from ${mapStyle} to ${nextStyle}`);
+    setStyleIndex(nextIndex);
     setMapStyle(nextStyle);
     
+    // Remove the current map instance
     if (map.current) {
+      markers.current.forEach(marker => marker.remove());
+      markers.current = [];
       map.current.remove();
       map.current = null;
     }
+    
+    toast({
+      title: "Changing map style",
+      description: `Trying ${nextStyle} style`,
+    });
   };
 
   return (
