@@ -22,7 +22,7 @@ export const ActivityFeed = () => {
     isLoading, 
     markAsRead,
     markAllAsRead
-  } = useActivities("current-user-id");
+  } = useActivities();
   
   const [selectedTypes, setSelectedTypes] = useState<ActivityType[]>([]);
   

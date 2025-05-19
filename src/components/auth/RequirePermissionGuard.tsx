@@ -10,7 +10,7 @@ interface RequirePermissionGuardProps {
 }
 
 const RequirePermissionGuard = ({ requiredPermissions, children }: RequirePermissionGuardProps) => {
-  const { isAuthenticated, isLoading, permissions } = useAuth();
+  const { isAuthenticated, isLoading, permissions = [], hasPermission } = useAuth();
   const navigate = useNavigate();
 
   // If still loading authentication state, show a loading spinner
@@ -27,7 +27,7 @@ const RequirePermissionGuard = ({ requiredPermissions, children }: RequirePermis
 
   // Check if the user has all the required permissions
   const hasAllPermissions = requiredPermissions.every(
-    permission => permissions.includes(permission)
+    permission => hasPermission(permission)
   );
 
   // If not authenticated or missing required permissions, redirect

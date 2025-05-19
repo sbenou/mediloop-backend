@@ -22,7 +22,7 @@ export const useActivities = () => {
   const refreshActivities = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      await fetchActivities(user?.id);
+      await fetchActivities();
     } catch (err) {
       console.error('Error refreshing activities:', err);
       toast({
@@ -33,7 +33,7 @@ export const useActivities = () => {
     } finally {
       setIsRefreshing(false);
     }
-  }, [fetchActivities, user?.id]);
+  }, [fetchActivities]);
 
   // Mark an activity as read
   const markAsRead = useCallback(async (activityId: string) => {

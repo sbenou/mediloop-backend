@@ -1,34 +1,45 @@
 
-import React from "react";
+import React, { RefObject, MouseEvent } from "react";
+import { useAuth } from "@/hooks/auth/useAuth";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import {
   DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, CreditCard, Medal, Building } from "lucide-react";
-import { Profile } from "@/types/supabase";
+import { 
+  CreditCard, 
+  LogOut, 
+  Settings, 
+  User, 
+  Building, 
+  Home 
+} from "lucide-react";
 
 interface SidebarUserMenuProps {
-  profile?: Profile | null;
-  userRole?: string | null;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  profile: any;
+  userRole: string;
+  fileInputRef: RefObject<HTMLInputElement>;
   handleAvatarClick: () => void;
-  getUserInitials: () => string;
+  getUserInitials: (name?: string) => string;
   handleLogout: () => void;
   handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   navigateToAccount?: () => void;
-  navigateToDoctorProfile?: () => void;
-  navigateToPharmacyProfile?: () => void;
-  navigateToPharmacyDashboard?: () => void;
   navigateToBilling?: () => void;
   navigateToUpgrade?: () => void;
+  navigateToPharmacyProfile?: () => void;
+  navigateToDoctorProfile?: () => void;
+  navigateToProfile?: () => void;
+  navigateToPharmacyDashboard?: () => void;
 }
 
-const SidebarUserMenu: React.FC<SidebarUserMenuProps> = ({
+const SidebarUserMenu = ({
   profile,
   userRole,
   fileInputRef,
@@ -37,77 +48,79 @@ const SidebarUserMenu: React.FC<SidebarUserMenuProps> = ({
   handleLogout,
   handleFileChange,
   navigateToAccount,
-  navigateToDoctorProfile,
-  navigateToPharmacyProfile,
-  navigateToPharmacyDashboard,
   navigateToBilling,
-  navigateToUpgrade
-}) => {
-  const roleName = userRole === 'patient' || userRole === 'user' ? 'Patient' : userRole;
-  
+  navigateToUpgrade,
+  navigateToPharmacyProfile,
+  navigateToDoctorProfile,
+  navigateToProfile,
+  navigateToPharmacyDashboard
+}: SidebarUserMenuProps) => {
   return (
-    <div className="py-4 px-3 border-t">
+    <div className="mt-auto p-4 border-t">
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept="image/*"
         className="hidden"
+        accept="image/*"
       />
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center w-full rounded-lg p-2 hover:bg-gray-100 transition-colors">
-            <Avatar className="h-8 w-8 cursor-pointer" onClick={handleAvatarClick}>
-              <AvatarImage src={profile?.avatar_url || ''} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {getUserInitials()}
+          <button
+            onClick={handleAvatarClick}
+            className="flex items-center w-full p-2 rounded-md hover:bg-muted transition-colors"
+          >
+            <Avatar className="h-8 w-8 border">
+              <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || "User"} />
+              <AvatarFallback>
+                {getUserInitials(profile?.full_name)}
               </AvatarFallback>
             </Avatar>
             <div className="ml-3 text-left">
-              <p className="text-sm font-medium truncate max-w-[170px]">
-                {profile?.full_name || 'User'}
+              <p className="text-sm font-medium line-clamp-1">
+                {profile?.full_name || "User"}
               </p>
-              <p className="text-xs text-muted-foreground">{roleName}</p>
+              <p className="text-xs text-muted-foreground capitalize">
+                {userRole}
+              </p>
             </div>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{profile?.full_name || 'User'}</p>
-              <p className="text-xs leading-none text-muted-foreground">
-                {profile?.email || ''}
-              </p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          
+        
+        <DropdownMenuContent align="start" className="w-56">
           {navigateToAccount && (
             <DropdownMenuItem onClick={navigateToAccount}>
               <User className="mr-2 h-4 w-4" />
-              <span>Account</span>
+              <span>My Account</span>
             </DropdownMenuItem>
           )}
           
-          {navigateToDoctorProfile && userRole === 'doctor' && (
-            <DropdownMenuItem onClick={navigateToDoctorProfile}>
+          {navigateToProfile && (
+            <DropdownMenuItem onClick={navigateToProfile}>
               <User className="mr-2 h-4 w-4" />
-              <span>Doctor Profile</span>
+              <span>Profile</span>
             </DropdownMenuItem>
           )}
           
-          {navigateToPharmacyDashboard && userRole === 'pharmacist' && (
-            <DropdownMenuItem onClick={navigateToPharmacyDashboard}>
+          {navigateToPharmacyProfile && (
+            <DropdownMenuItem onClick={navigateToPharmacyProfile}>
               <Building className="mr-2 h-4 w-4" />
+              <span>Pharmacy Profile</span>
+            </DropdownMenuItem>
+          )}
+          
+          {navigateToPharmacyDashboard && (
+            <DropdownMenuItem onClick={navigateToPharmacyDashboard}>
+              <Home className="mr-2 h-4 w-4" />
               <span>Pharmacy Dashboard</span>
             </DropdownMenuItem>
           )}
           
-          {navigateToPharmacyProfile && userRole === 'pharmacist' && (
-            <DropdownMenuItem onClick={navigateToPharmacyProfile}>
+          {navigateToDoctorProfile && (
+            <DropdownMenuItem onClick={navigateToDoctorProfile}>
               <User className="mr-2 h-4 w-4" />
-              <span>Pharmacy Profile</span>
+              <span>Doctor Profile</span>
             </DropdownMenuItem>
           )}
           
@@ -120,13 +133,14 @@ const SidebarUserMenu: React.FC<SidebarUserMenuProps> = ({
           
           {navigateToUpgrade && (
             <DropdownMenuItem onClick={navigateToUpgrade}>
-              <Medal className="mr-2 h-4 w-4" />
+              <Settings className="mr-2 h-4 w-4" />
               <span>Upgrade</span>
             </DropdownMenuItem>
           )}
           
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+          
+          <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
           </DropdownMenuItem>

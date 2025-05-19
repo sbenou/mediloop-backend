@@ -8,10 +8,10 @@ export function useAuth() {
   const [state, setState] = useRecoilState(authState);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  const { user, session, profile, permissions = [] } = state;
+  const { user, profile, permissions = [] } = state;
   
   // Determine if the user is authenticated
-  const isAuthenticated = !!session && !!user;
+  const isAuthenticated = !!state.user && !!profile;
   
   // Get the user role from the profile if available
   const userRole = profile?.role || null;
@@ -61,8 +61,8 @@ export function useAuth() {
   
   return {
     user,
-    session,
     profile,
+    permissions,
     isAuthenticated,
     userRole,
     isPharmacist,
