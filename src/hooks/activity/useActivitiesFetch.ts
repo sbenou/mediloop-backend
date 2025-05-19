@@ -9,13 +9,13 @@ export const useActivitiesFetch = (userId?: string) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [hasMore, setHasMore] = useState(true);
   
-  const fetchActivities = useCallback(async (id?: string, page = 0, limit = 20) => {
+  const fetchActivities = useCallback(async (page = 0, limit = 20) => {
     setIsLoading(true);
     setError(null);
     
     try {
       // If no user ID provided, get current user's ID
-      let userIdToUse = id;
+      let userIdToUse = userId;
       if (!userIdToUse) {
         const { data: { session } } = await supabase.auth.getSession();
         userIdToUse = session?.user?.id;
@@ -69,7 +69,7 @@ export const useActivitiesFetch = (userId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   return {
     activities,

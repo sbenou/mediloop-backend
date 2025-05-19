@@ -1,6 +1,6 @@
 
 import { useRecoilState } from 'recoil';
-import { authState } from '@/contexts/AuthContext';
+import { authState } from '@/store/auth/atoms';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
 
@@ -8,7 +8,7 @@ export function useAuth() {
   const [state, setState] = useRecoilState(authState);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  const { user, session, profile, permissions } = state;
+  const { user, session, profile, permissions = [] } = state;
   
   // Determine if the user is authenticated
   const isAuthenticated = !!session && !!user;
