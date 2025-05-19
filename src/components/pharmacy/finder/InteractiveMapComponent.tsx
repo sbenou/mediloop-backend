@@ -162,9 +162,9 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
             map.current = null;
             mapInitialized.current = false;
             
-            // Clear token from cache - Directly use localStorage
+            // Clear token from cache - Use LocalCache.delete with the correct key
             try {
-              localStorage.removeItem('cache_mapbox-token');
+              LocalCache.delete('mapbox-token');
               console.log('Cleared mapbox token from cache');
             } catch (err) {
               console.error('Unable to clear token from cache:', err);
@@ -318,9 +318,9 @@ const InteractiveMapComponent: React.FC<InteractiveMapComponentProps> = ({
     setIsLoading(true);
     setRetryCount(0);
     
-    // Clear token from cache - Directly use localStorage instead
+    // Clear token from cache - Use LocalCache.delete with the correct key
     try {
-      localStorage.removeItem('cache_mapbox-token');
+      LocalCache.delete('mapbox-token');
       console.log('Cleared mapbox token from cache');
     } catch (e) {
       console.error('Error clearing token cache:', e);
