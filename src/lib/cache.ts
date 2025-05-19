@@ -76,6 +76,29 @@ export class LocalCache {
     }
   }
   
+  static delete(key: string): boolean {
+    try {
+      if (!key) {
+        console.error('Cannot delete cache with empty key');
+        return false;
+      }
+      
+      // Check if item exists in cache
+      const item = sessionStorage.getItem(key);
+      if (!item) {
+        return false;
+      }
+      
+      // Remove the item
+      sessionStorage.removeItem(key);
+      console.log(`Cache item deleted for key: ${key}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting item from cache:', error);
+      return false;
+    }
+  }
+  
   static clearOldestItems(): void {
     try {
       const keys = [];
