@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { MapPin, Navigation, MapPinOff } from 'lucide-react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
@@ -41,7 +40,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
   const [pharmacyCoordinates, setPharmacyCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [distance, setDistance] = useState<string | null>(null);
+  const [distance, setDistance] = useState<string | number | null>(null);  // Updated type to accept string or number
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [hasRendered, setHasRendered] = useState(false);
@@ -205,7 +204,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
       try {
         const distanceValue = getDistanceFromUserToPharmacy(userLocation, pharmacyCoordinates);
         console.log('Distance calculated:', distanceValue);
-        setDistance(distanceValue);
+        setDistance(distanceValue); // Now accepts string or number
       } catch (error) {
         console.error('Error calculating distance:', error);
         setDistance(null);
@@ -372,7 +371,7 @@ const PharmacyMap: React.FC<PharmacyMapProps> = ({ pharmacy }) => {
             </p>
           ) : isUsingLocation && distance ? (
             <p className="text-sm font-medium text-primary">
-              Distance: {distance}
+              Distance: {typeof distance === 'number' ? `${distance.toFixed(1)} km` : distance}
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">
