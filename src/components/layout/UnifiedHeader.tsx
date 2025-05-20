@@ -10,7 +10,6 @@ import { CurrencySelector } from '@/components/CurrencySelector';
 import LanguageSelector from '@/components/LanguageSelector';
 import NotificationBell from '@/components/NotificationBell';
 import { TenantDisplay } from '@/components/tenant/TenantDisplay';
-import { NavigationMenu } from "@/components/ui/navigation-menu";
 
 const UnifiedHeader = () => {
   const { isAuthenticated } = useAuth();
@@ -29,7 +28,7 @@ const UnifiedHeader = () => {
             <img
               src="/lovable-uploads/187ef6ec-1e9e-4364-af00-215ade5361d3.png"
               alt="Mediloop"
-              className="h-8 w-auto"
+              className="h-10 w-auto" // Increased from h-8 to h-10
             />
           </Link>
           <TenantDisplay />
