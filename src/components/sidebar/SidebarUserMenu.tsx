@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, User, Settings, LogOut, CreditCard, Rocket, Home } from "lucide-react";
-import { UserProfile } from "@/types/auth";
+import { UserProfile } from "@/types/user";
 
 interface SidebarUserMenuProps {
   profile?: UserProfile | null;
@@ -53,7 +53,10 @@ const SidebarUserMenu: React.FC<SidebarUserMenuProps> = ({
         <DropdownMenuTrigger asChild>
           <button className="flex items-center justify-between w-full rounded-md px-2 py-2 hover:bg-accent">
             <div className="flex items-center">
-              <Avatar className="h-8 w-8 cursor-pointer" onClick={handleAvatarClick}>
+              <Avatar className="h-8 w-8 cursor-pointer" onClick={handleAvatarClick ? (e) => {
+                e.stopPropagation();
+                handleAvatarClick();
+              } : undefined}>
                 <AvatarImage src={profile?.avatar_url || ""} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                   {initials}

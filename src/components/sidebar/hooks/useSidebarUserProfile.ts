@@ -26,8 +26,7 @@ export const useSidebarUserProfile = (profile: UserProfile | null) => {
     return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
   };
 
-  const handleAvatarClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
 
