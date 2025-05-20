@@ -107,7 +107,13 @@ const DoctorMap = ({
               doctorLat,
               doctorLon
             );
-            distanceStr = `(${distance.toFixed(1)} km)`;
+            
+            // Check if distance is a number before using toFixed
+            if (typeof distance === 'number') {
+              distanceStr = `(${distance.toFixed(1)} km)`;
+            } else {
+              distanceStr = `(${distance})`;
+            }
           }
           
           // Create marker element
@@ -165,7 +171,8 @@ const DoctorMap = ({
       <div ref={mapContainer} className="w-full h-full" />
       
       {/* User location pulse animation */}
-      <style jsx>{`
+      <style>
+        {`
         .pulse::before {
           content: "";
           position: absolute;
@@ -187,7 +194,8 @@ const DoctorMap = ({
             opacity: 0;
           }
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };

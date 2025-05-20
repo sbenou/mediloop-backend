@@ -39,6 +39,13 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
 }) => {
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingHours, setIsEditingHours] = useState(false);
+  
+  // Convert profile data to the format expected by DoctorMap
+  const doctorForMap = {
+    id: doctorData.id,
+    full_name: doctorData.name,
+    coordinates: { lat: 0, lon: 0 } // You might want to add actual coordinates here
+  };
 
   return (
     <div className="space-y-6">
@@ -127,8 +134,11 @@ const DoctorProfileContent: React.FC<DoctorProfileContentProps> = ({
           <CardTitle>Location</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Use SingleDoctorMapProps interface for the map */}
-          <DoctorMap doctor={doctorData} />
+          <DoctorMap 
+            doctors={[doctorForMap]} 
+            userCoordinates={null}
+            onDoctorSelect={() => {}} 
+          />
         </CardContent>
       </Card>
     </div>

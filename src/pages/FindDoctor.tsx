@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRecoilState, useRecoilValue } from 'recoil';
@@ -20,6 +19,7 @@ import { RefreshCcw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import DoctorMap from "@/components/doctor/DoctorMap";
 
 const FindDoctor = () => {
   const { isAuthenticated } = useAuth();
