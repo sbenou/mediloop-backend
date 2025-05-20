@@ -51,21 +51,10 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       ordersTab,
       searchParams: Object.fromEntries(searchParams.entries()),
       location: location.pathname + location.search,
-      hasInitialParams: !!initialParams
+      hasInitialParams: !!initialParams,
+      userRole
     });
-  }, [currentView, section, profileTab, ordersTab, searchParams, location, initialParams]);
-  
-  // Make sure we have a default section for doctors
-  useEffect(() => {
-    if (!isInitialLoad) {
-      console.log("Checking doctor params:", { currentView, section });
-      
-      if (currentView !== 'doctor' && !section) {
-        console.log("Setting default doctor params");
-        setSearchParams({ view: 'doctor', section: 'dashboard' }, { replace: true });
-      }
-    }
-  }, [setSearchParams, currentView, section, isInitialLoad]);
+  }, [currentView, section, profileTab, ordersTab, searchParams, location, initialParams, userRole]);
   
   // Track initial load to avoid flashing loading state during navigation
   useEffect(() => {
@@ -73,6 +62,14 @@ const DoctorDashboard = ({ initialParams }: DoctorDashboardProps = {}) => {
       setIsInitialLoad(false);
     }
   }, [isLoading]);
+  
+  // Prevent unmounting if the userRole isn't 'doctor'
+  // This check allows the component to remain mounted even if auth state isn't fully loaded yet
+  const shouldRender = !isLoading || isInitialLoad || userRole === 'doctor' || userRole === 'superadmin';
+  
+  if (!shouldRender) {
+    return null;
+  }
   
   const getContent = () => {
     console.log("Getting content for section:", section, "with ordersTab:", ordersTab);

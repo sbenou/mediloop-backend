@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Info } from 'lucide-react';
 
 export const TenantDisplay = () => {
-  const { currentTenant, isLoading, error } = useTenant();
+  const { currentTenant, isLoading, error, isPreviewMode } = useTenant();
   
   if (isLoading) {
     return <Skeleton className="h-4 w-32" />;
@@ -26,11 +26,10 @@ export const TenantDisplay = () => {
     );
   }
   
-  // Check if we're in a Lovable preview environment
-  const isPreviewEnvironment = window.location.hostname.includes('lovable.app');
-  
+  // If no current tenant is found
   if (!currentTenant) {
-    if (isPreviewEnvironment) {
+    // Only show preview mode badge in Lovable preview environments
+    if (isPreviewMode) {
       return (
         <Badge variant="outline" className="text-sm bg-gray-100">
           <Info className="h-3 w-3 mr-1" /> Preview Mode
@@ -38,13 +37,11 @@ export const TenantDisplay = () => {
       );
     }
     
-    return (
-      <Badge variant="outline" className="text-sm">
-        Default Instance
-      </Badge>
-    );
+    // Return nothing for regular environments with no tenant
+    return null;
   }
   
+  // If we have a tenant, show the tenant info
   return (
     <Badge variant="outline" className="text-sm">
       {currentTenant.name} ({currentTenant.domain})

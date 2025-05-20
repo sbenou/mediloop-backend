@@ -27,8 +27,8 @@ const UnifiedHeader = () => {
           />
           <Link to="/" className="flex items-center space-x-2">
             <img
-              src="/lovable-uploads/1d4b50b5-2725-470b-a070-5227c3aa24b6.png"
-              alt="MediLoop"
+              src="/lovable-uploads/187ef6ec-1e9e-4364-af00-215ade5361d3.png"
+              alt="Mediloop"
               className="h-8 w-auto"
             />
           </Link>
