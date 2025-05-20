@@ -2,6 +2,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { searchDoctors } from "@/lib/overpass";
+import { useRecoilValue } from 'recoil';
+import { selectedCountryState } from '@/store/location/atoms';
 
 interface Doctor {
   id: string;
@@ -16,15 +18,17 @@ export const useDoctorSearch = (
   coordinates: { lat: number; lon: number } | null,
   searchRadius: number
 ) => {
+  const selectedCountry = useRecoilValue(selectedCountryState);
+  
   const { data: doctors, isLoading } = useQuery({
-    queryKey: ["doctors", coordinates?.lat, coordinates?.lon, searchRadius],
+    queryKey: ["doctors", coordinates?.lat, coordinates?.lon, searchRadius, selectedCountry],
     queryFn: async () => {
       if (!coordinates) {
         console.log('No coordinates provided for doctor search');
         return [];
       }
       
-      console.log('Fetching doctors with coordinates:', coordinates, 'radius:', searchRadius);
+      console.log('Fetching doctors with coordinates:', coordinates, 'radius:', searchRadius, 'country:', selectedCountry);
       
       try {
         // Get doctors from database first
@@ -56,13 +60,17 @@ export const useDoctorSearch = (
           return formattedDbDoctors;
         }
 
-        // Get doctors from Overpass API with current radius
+        // Get doctors from Overpass API with current radius and country code
         let formattedOverpassDoctors = [];
         try {
+          const countryCode = selectedCountry || 'LU';
+          console.log(`Searching for doctors in country: ${countryCode}`);
+          
           const overpassDoctors = await searchDoctors(
             coordinates.lat,
             coordinates.lon,
-            searchRadius
+            searchRadius,
+            countryCode
           );
           
           // Handle unexpected response format safely

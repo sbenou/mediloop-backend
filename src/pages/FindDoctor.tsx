@@ -1,12 +1,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import { supabase } from "@/lib/supabase";
 import { useLocationSearch } from "@/hooks/useLocationSearch";
 import { useDoctorSearch } from "@/hooks/useDoctorSearch";
 import { usePharmacyState, LUXEMBOURG_COORDINATES } from "@/hooks/usePharmacyState";
-import { userLocationState, isUsingLocationState } from "@/store/location/atoms";
+import { userLocationState, isUsingLocationState, selectedCountryState } from "@/store/location/atoms";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchHeader from "@/components/pharmacy/SearchHeader";
@@ -15,6 +15,8 @@ import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { LocationToggle } from "@/components/shared/LocationToggle";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { RefreshCcw } from "lucide-react";
 
 const FindDoctor = () => {
   const { isAuthenticated } = useAuth();
@@ -34,6 +36,7 @@ const FindDoctor = () => {
 
   const [userLocation, setUserLocation] = useRecoilState(userLocationState);
   const [isUsingLocation, setIsUsingLocation] = useRecoilState(isUsingLocationState);
+  const selectedCountry = useRecoilValue(selectedCountryState);
   const { userProfile } = usePharmacyState(session);
   
   const [searchRadius, setSearchRadius] = useState(2000);
@@ -150,6 +153,18 @@ const FindDoctor = () => {
     setSearchRadius(2000);
   }, [handleCitySearch, setIsUsingLocation, setUserLocation, userProfile?.city]);
 
+  // Function to manually retry search with a wider radius
+  const handleExpandSearch = () => {
+    const newRadius = Math.min(searchRadius + 2000, 20000);
+    setSearchRadius(newRadius);
+    toast({
+      title: "Expanding Search",
+      description: `Searching with a larger radius of ${newRadius/1000}km`,
+    });
+  };
+
+  console.log(`Rendering doctors in ${selectedCountry || 'unknown country'}, found ${doctors?.length || 0} doctors`);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -157,12 +172,32 @@ const FindDoctor = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="w-full max-w-6xl mx-auto">
             <SearchHeader onSearch={handleCitySearch} title="Find a Doctor Near You" />
-            <div className="mb-4">
-              <LocationToggle
-                showDefaultLocation={isUsingLocation}
-                onLocationToggle={handleLocationToggle}
-              />
+            
+            <div className="flex flex-col md:flex-row gap-4 items-start justify-between mb-4">
+              <div className="flex-1">
+                <LocationToggle
+                  showDefaultLocation={isUsingLocation}
+                  onLocationToggle={handleLocationToggle}
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {selectedCountry ? `Showing doctors in ${selectedCountry}` : 'Select a country on the home page'}
+                </span>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExpandSearch}
+                  disabled={isSearching || isDoctorsLoading || searchRadius >= 20000}
+                >
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  Expand Search
+                </Button>
+              </div>
             </div>
+            
             <div className="w-full mt-6">
               {isSearching ? (
                 <div className="flex justify-center items-center h-64">

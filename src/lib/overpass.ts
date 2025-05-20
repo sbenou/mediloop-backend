@@ -122,17 +122,38 @@ export const searchPharmacies = async (lat: number, lon: number, radius: number 
   }
 };
 
-export const searchDoctors = async (lat: number, lon: number, radius: number = 5000): Promise<Doctor[]> => {
-  const cacheKey = `doctors-${lat}-${lon}-${radius}`;
+export const searchDoctors = async (
+  lat: number, 
+  lon: number, 
+  radius: number = 5000,
+  countryCode: string = 'LU'
+): Promise<Doctor[]> => {
+  const cacheKey = `doctors-${countryCode}-${lat}-${lon}-${radius}`;
   const cached = LocalCache.get<Doctor[]>(cacheKey);
   if (cached) return cached;
 
+  // More comprehensive query that searches both by radius and within the country
   const query = `
-    [out:json][timeout:25];
+    [out:json][timeout:60];
+    // First search within specific radius
     (
       node["healthcare"="doctor"](around:${radius},${lat},${lon});
       node["amenity"="doctors"](around:${radius},${lat},${lon});
-    );
+      way["healthcare"="doctor"](around:${radius},${lat},${lon});
+      way["amenity"="doctors"](around:${radius},${lat},${lon});
+    )->.nearby;
+    
+    // Then search within the country (if country code is provided)
+    area["ISO3166-1"="${countryCode}"][admin_level=2]->.country;
+    (
+      node["healthcare"="doctor"](area.country);
+      node["amenity"="doctors"](area.country);
+      way["healthcare"="doctor"](area.country);
+      way["amenity"="doctors"](area.country);
+    )->.incountry;
+    
+    // Combine results and output
+    (.nearby; .incountry;);
     out body;
     >;
     out skel qt;
@@ -147,35 +168,51 @@ export const searchDoctors = async (lat: number, lon: number, radius: number = 5
       return [];
     }
     
-    const results = data.elements
+    console.log(`Found ${data.elements.length} doctors from Overpass API`);
+    
+    // Process and deduplicate results
+    const doctorMap = new Map();
+    
+    data.elements
       .filter(element => element && typeof element === 'object' && 'id' in element)
-      .map(element => {
+      .forEach(element => {
+        // Skip if we already processed this element
+        if (doctorMap.has(String(element.id))) return;
+        
         // Make sure all required properties exist with fallbacks
         const lat = typeof element.lat === 'number' ? element.lat : null;
         const lon = typeof element.lon === 'number' ? element.lon : null;
         const tags = element.tags || {};
         
-        return {
-          id: String(element.id || ''),
-          full_name: tags?.name || 'Unnamed Doctor',
-          name: tags?.name || 'Unnamed Doctor',
-          address: [
-            tags?.['addr:housenumber'],
-            tags?.['addr:street'],
-            tags?.['addr:city'],
-            tags?.['addr:postcode']
-          ].filter(Boolean).join(', ') || 'Address not available',
-          city: tags?.['addr:city'] || '',
-          license_number: tags?.['healthcare:speciality'] || 'General Practice',
-          email: tags?.['contact:email'] || tags?.email || '',
-          coordinates: {
-            lat: lat,
-            lon: lon
-          }
-        };
-      })
-      .filter(doctor => doctor.coordinates.lat !== null && doctor.coordinates.lon !== null);
+        // Only process elements with coordinates
+        if (lat !== null && lon !== null) {
+          const doctor = {
+            id: String(element.id || ''),
+            full_name: tags?.name || 'Unnamed Doctor',
+            name: tags?.name || 'Unnamed Doctor',
+            address: [
+              tags?.['addr:housenumber'],
+              tags?.['addr:street'],
+              tags?.['addr:city'],
+              tags?.['addr:postcode']
+            ].filter(Boolean).join(', ') || 'Address not available',
+            city: tags?.['addr:city'] || '',
+            license_number: tags?.['healthcare:speciality'] || 'General Practice',
+            email: tags?.['contact:email'] || tags?.email || '',
+            coordinates: {
+              lat: lat,
+              lon: lon
+            },
+            source: 'overpass' as const
+          };
+          
+          doctorMap.set(String(element.id), doctor);
+        }
+      });
 
+    const results = Array.from(doctorMap.values());
+    console.log(`Processed ${results.length} unique doctors with coordinates`);
+    
     LocalCache.set(cacheKey, results);
     return results;
   } catch (error) {
