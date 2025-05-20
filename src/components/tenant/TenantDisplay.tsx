@@ -13,7 +13,8 @@ export const TenantDisplay = () => {
     return <Skeleton className="h-4 w-32" />;
   }
   
-  if (error) {
+  // Only show error in development mode
+  if (error && process.env.NODE_ENV === 'development') {
     return (
       <Alert variant="destructive" className="mb-4">
         <AlertCircle className="h-4 w-4" />

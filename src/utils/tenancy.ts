@@ -15,6 +15,20 @@ export interface Tenant {
  * Get tenant domain from hostname
  */
 export const getTenantFromHostname = (hostname: string): string | null => {
+  // For preview environments in Lovable
+  if (hostname.includes('lovable.app')) {
+    // Check if this is a direct tenant parameter in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tenantParam = urlParams.get('tenant');
+    if (tenantParam) {
+      return tenantParam;
+    }
+    
+    console.log('Running in Lovable preview environment - using default tenant');
+    // For preview environments, return null to use the default tenant
+    return null;
+  }
+  
   // For development environments
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
     // Allow testing with localhost:8080?tenant=example
@@ -39,6 +53,8 @@ export const getTenantFromHostname = (hostname: string): string | null => {
  */
 export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | null> => {
   try {
+    console.log('Fetching tenant info for domain:', tenantDomain);
+    
     const { data, error } = await supabase
       .from('tenants')
       .select('*')
@@ -46,8 +62,13 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
       .eq('is_active', true)
       .single();
     
-    if (error || !data) {
+    if (error) {
       console.error('Error fetching tenant info:', error);
+      return null;
+    }
+    
+    if (!data) {
+      console.warn('No tenant found with domain:', tenantDomain);
       return null;
     }
     

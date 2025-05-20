@@ -38,7 +38,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       const tenantDomain = getTenantFromHostname(window.location.hostname);
       
       if (!tenantDomain) {
-        console.log('No tenant domain found in URL');
+        console.log('No tenant domain found in URL - using default tenant');
         setIsLoading(false);
         return;
       }
@@ -49,7 +49,8 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       const tenant = await fetchTenantInfo(tenantDomain);
       
       if (!tenant) {
-        setError(new Error(`Tenant "${tenantDomain}" not found or inactive`));
+        console.warn(`Tenant "${tenantDomain}" not found or inactive`);
+        // Don't set an error here, just leave currentTenant as null
         setIsLoading(false);
         return;
       }
@@ -64,7 +65,8 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       
     } catch (err) {
       console.error('Error initializing tenant:', err);
-      setError(err instanceof Error ? err : new Error('Unknown error initializing tenant'));
+      // Don't set error state, just log the error and continue
+      console.warn('Continuing without tenant context');
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +83,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       setTenantInSession(currentTenant.id, currentTenant.schema).then(success => {
         if (!success) {
           toast({
-            title: "Tenant Error",
+            title: "Tenant Context",
             description: "Failed to set tenant context. Some features may be limited.",
             variant: "destructive",
           });
