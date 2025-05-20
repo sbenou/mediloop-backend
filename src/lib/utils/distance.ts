@@ -1,4 +1,5 @@
-export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): string {
+
+export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number | string {
   const R = 6371; // Earth's radius in kilometers
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
@@ -12,7 +13,7 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
   if (d < 1) {
     return `${Math.round(d * 1000)} meters`;
   }
-  return `${d.toFixed(1)} km`;
+  return d;
 }
 
 function toRad(value: number): number {

@@ -108,7 +108,6 @@ const DoctorMap = ({
               doctorLon
             );
             
-            // Check if distance is a number before using toFixed
             if (typeof distance === 'number') {
               distanceStr = `(${distance.toFixed(1)} km)`;
             } else {
