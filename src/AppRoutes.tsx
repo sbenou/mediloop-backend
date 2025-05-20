@@ -2,6 +2,7 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import Contact from "@/components/layout/Footer"; // Temporarily using Footer as Contact page
 import About from "@/components/layout/Footer"; // Temporarily using Footer as About page
@@ -48,6 +49,7 @@ export default function AppRoutes() {
         {/* Public routes that don't require authentication */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} /> {/* Added Signup route */}
         <Route path="/register" element={<Register />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/about" element={<About />} />
