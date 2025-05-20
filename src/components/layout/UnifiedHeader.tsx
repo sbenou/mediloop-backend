@@ -10,25 +10,29 @@ import { CurrencySelector } from '@/components/CurrencySelector';
 import LanguageSelector from '@/components/LanguageSelector';
 import NotificationBell from '@/components/NotificationBell';
 import { TenantDisplay } from '@/components/tenant/TenantDisplay';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const UnifiedHeader = () => {
   const { isAuthenticated } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
-          <MobileMenu 
-            isOpen={isMobileMenuOpen} 
-            onOpenChange={setIsMobileMenuOpen} 
-          />
+          {isMobile && (
+            <MobileMenu 
+              isOpen={isMobileMenuOpen} 
+              onOpenChange={setIsMobileMenuOpen} 
+            />
+          )}
           <Link to="/" className="flex items-center space-x-2">
             <img
               src="/lovable-uploads/187ef6ec-1e9e-4364-af00-215ade5361d3.png"
               alt="Mediloop"
-              className="h-10 w-auto" // Increased from h-8 to h-10
+              className="h-10 w-auto" 
             />
           </Link>
           <TenantDisplay />

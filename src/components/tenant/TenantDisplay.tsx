@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
 export const TenantDisplay = () => {
-  const { currentTenant, isLoading, error, isPreviewMode } = useTenant();
+  const { currentTenant, error, isPreviewMode } = useTenant();
   
   // Only show error in development mode
   if (error && process.env.NODE_ENV === 'development') {
@@ -22,7 +22,7 @@ export const TenantDisplay = () => {
   }
   
   // If loading, no tenant, or in preview mode, return null (render nothing)
-  if (isLoading || !currentTenant || isPreviewMode) {
+  if (!currentTenant || isPreviewMode) {
     return null;
   }
   
