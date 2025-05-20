@@ -3,6 +3,8 @@ import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { sendDoctorConnectionNotification } from '@/utils/notificationHelpers';
 
 export function useDoctorActivity() {
   const logDoctorView = useCallback(async (doctorId: string) => {
@@ -49,6 +51,7 @@ export function useDoctorActivity() {
 }
 
 export function useDoctorConnections() {
+  const { profile } = useAuth();
   const { data: connections = [], isLoading } = useQuery({
     queryKey: ['doctor-connections'],
     queryFn: async () => {
@@ -70,12 +73,26 @@ export function useDoctorConnections() {
   });
 
   const requestConnection = useCallback(async (doctorId: string) => {
+    const { profile } = useAuth();
+    
+    if (!profile) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to request a connection.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
     try {
-      const { error } = await supabase.from('doctor_connections').insert([
-        { doctor_id: doctorId, status: 'pending' }
+      const { error } = await supabase.from('doctor_patient_connections').insert([
+        { doctor_id: doctorId, patient_id: profile.id, status: 'pending' }
       ]);
       
       if (error) throw error;
+      
+      // Send notification to doctor
+      await sendDoctorConnectionNotification(doctorId, profile.full_name || "A patient");
       
       toast({
         title: "Connection Requested",

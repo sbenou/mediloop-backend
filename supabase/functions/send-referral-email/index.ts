@@ -36,6 +36,17 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhycmxlZmduaGtienV3eWtsZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTk4MDgsImV4cCI6MjA1MDgzNTgwOH0.U2ErpuuwTRYq6DryXR1VbFWGiTUcTnRReeS0oiSSP9U";
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
+    // Create notification for the referrer
+    await supabase
+      .from('notifications')
+      .insert({
+        user_id: referrer_id,
+        type: 'new_referral',
+        title: 'Referral Sent',
+        message: `You've referred ${emails.length} friends to MediLoop. You'll earn points when they join!`,
+        meta: { emails_count: emails.length }
+      });
+    
     // Send emails to each recipient
     const results = await Promise.all(
       emails.map(async (email) => {
