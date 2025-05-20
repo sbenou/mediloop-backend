@@ -1043,6 +1043,39 @@ export type Database = {
         }
         Relationships: []
       }
+      tenants: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          is_active: boolean
+          name: string
+          schema: string
+          status: Database["public"]["Enums"]["tenant_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          is_active?: boolean
+          name: string
+          schema: string
+          status?: Database["public"]["Enums"]["tenant_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          schema?: string
+          status?: Database["public"]["Enums"]["tenant_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_permissions: {
         Row: {
           created_at: string | null
@@ -1246,6 +1279,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      add_user_to_tenant: {
+        Args: { p_user_id: string; p_tenant_id: string; p_role?: string }
+        Returns: boolean
+      }
       can_truncate_products: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1299,6 +1336,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_tenant_schema: {
+        Args: { tenant_name: string; tenant_domain: string }
+        Returns: string
+      }
       extend_boost: {
         Args: { p_boost_id: string; p_duration: string; p_price: number }
         Returns: boolean
@@ -1315,6 +1356,10 @@ export type Database = {
           total_permissions: number
           total_products: number
         }[]
+      }
+      get_current_tenant: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_doctor_workplace: {
         Args: { p_user_id: string }
@@ -1366,6 +1411,10 @@ export type Database = {
           p_subscription_purchased?: boolean
         }
         Returns: boolean
+      }
+      set_tenant_search_path: {
+        Args: { tenant_schema: string }
+        Returns: undefined
       }
       soft_delete_team_member: {
         Args: { member_id: string }
@@ -1422,6 +1471,7 @@ export type Database = {
         | "confirmed"
         | "cancelled"
         | "completed"
+      tenant_status: "active" | "inactive" | "pending"
       wearable_device_type:
         | "apple_watch"
         | "fitbit"
@@ -1561,6 +1611,7 @@ export const Constants = {
         "cancelled",
         "completed",
       ],
+      tenant_status: ["active", "inactive", "pending"],
       wearable_device_type: [
         "apple_watch",
         "fitbit",

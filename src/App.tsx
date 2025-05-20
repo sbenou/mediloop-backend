@@ -1,30 +1,40 @@
 
-import React from 'react';
-import AppRoutes from './AppRoutes';
-import { AuthProviderWithRecoil as AuthProvider } from '@/contexts/AuthContext';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from "@/components/ui/toaster"
+import { useState, useEffect } from 'react'
+import './App.css'
 import { BrowserRouter } from 'react-router-dom';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+import AppRoutes from './AppRoutes';
+import { RecoilRoot } from 'recoil';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from '@/providers/AuthProvider';
+import { ThemeProvider } from './components/theme-provider';
+import { TenantProvider } from './contexts/TenantContext';
 
 function App() {
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        retry: 1,
+      },
+    },
+  }));
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-          <Toaster />
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+    <RecoilRoot>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <AuthProvider>
+            <TenantProvider>
+              <BrowserRouter>
+                <AppRoutes />
+                <Toaster />
+              </BrowserRouter>
+            </TenantProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </RecoilRoot>
   );
 }
 

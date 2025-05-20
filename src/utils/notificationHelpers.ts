@@ -1,6 +1,8 @@
 
 import { createNotification, NotificationType } from "@/utils/notifications";
 import { supabase } from "@/lib/supabase";
+import { useTenantSupabase } from "@/hooks/useTenantSupabase";
+import { useCallback } from "react";
 
 // Helper function to send doctor connection notifications
 export async function sendDoctorConnectionNotification(doctorId: string, patientName: string) {
@@ -91,4 +93,99 @@ export async function sendReferralConversionNotification(referrerId: string, poi
     console.error('Error sending referral conversion notification:', error);
     return null;
   }
+}
+
+// Tenant-aware notification hooks
+export function useTenantNotifications() {
+  const { tenantTable, currentTenant } = useTenantSupabase();
+  
+  const sendTenantDoctorConnectionNotification = useCallback(async (doctorId: string, patientName: string) => {
+    if (!currentTenant) {
+      return sendDoctorConnectionNotification(doctorId, patientName);
+    }
+    
+    try {
+      // Get doctor profile from tenant schema
+      const { data: doctorProfile, error } = await tenantTable('profiles')
+        .select('id, full_name, email')
+        .eq('id', doctorId)
+        .single();
+      
+      if (error || !doctorProfile) {
+        console.error(`Could not find doctor profile in tenant ${currentTenant.name}:`, error);
+        return null;
+      }
+      
+      // Create notification in tenant schema
+      const { data: notification, error: notifError } = await tenantTable('notifications')
+        .insert({
+          user_id: doctorId,
+          type: "patient_connected",
+          title: "New Patient Connection Request",
+          message: `${patientName} has requested to connect with you as a patient.`,
+          link: "/dashboard?section=patients&profileTab=active",
+          meta: {
+            patientName,
+            timestamp: new Date().toISOString(),
+            tenantId: currentTenant.id,
+            tenantName: currentTenant.name
+          },
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (notifError) {
+        console.error(`Error creating notification in tenant ${currentTenant.name}:`, notifError);
+        return null;
+      }
+      
+      return notification;
+    } catch (error) {
+      console.error(`Error sending tenant doctor connection notification for ${currentTenant.name}:`, error);
+      return null;
+    }
+  }, [tenantTable, currentTenant]);
+  
+  const sendTenantPurchaseNotification = useCallback(async (userId: string, orderTotal: number, orderId: string) => {
+    if (!currentTenant) {
+      return sendPurchaseNotification(userId, orderTotal, orderId);
+    }
+    
+    try {
+      const { data: notification, error } = await tenantTable('notifications')
+        .insert({
+          user_id: userId,
+          type: "payment_successful",
+          title: "Purchase Completed",
+          message: `Your order for €${orderTotal.toFixed(2)} has been successfully processed.`,
+          link: `/dashboard?section=orders&orderId=${orderId}`,
+          meta: {
+            orderId,
+            amount: orderTotal,
+            timestamp: new Date().toISOString(),
+            tenantId: currentTenant.id,
+            tenantName: currentTenant.name
+          },
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error(`Error creating purchase notification in tenant ${currentTenant.name}:`, error);
+        return null;
+      }
+      
+      return notification;
+    } catch (error) {
+      console.error(`Error sending tenant purchase notification for ${currentTenant.name}:`, error);
+      return null;
+    }
+  }, [tenantTable, currentTenant]);
+  
+  return {
+    sendTenantDoctorConnectionNotification,
+    sendTenantPurchaseNotification
+  };
 }
