@@ -8,28 +8,36 @@ import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
  * Hook to use Supabase with the current tenant's schema
  */
 export function useTenantSupabase() {
-  const { currentTenant } = useTenant();
+  const { currentTenant, isPreviewMode } = useTenant();
   
   /**
    * Get a reference to a table in the current tenant's schema
    */
   const tenantTable = useCallback(<T>(tableName: string) => {
     if (!currentTenant) {
-      console.warn('Attempting to access tenant table without an active tenant');
-      // Return a query that will likely return no results (empty tenant name)
+      if (isPreviewMode) {
+        console.log(`Preview mode: Using default schema for table ${tableName}`);
+      } else {
+        console.warn(`No active tenant: Using default schema for table ${tableName}`);
+      }
+      // Return a query that will use the public schema
       return supabase.from(tableName);
     }
     
     // Use the tenant's schema for the table
     return supabase.from(`${currentTenant.schema}.${tableName}`);
-  }, [currentTenant]);
+  }, [currentTenant, isPreviewMode]);
   
   /**
    * Execute an RPC in the context of the current tenant
    */
   const tenantRpc = useCallback(async (functionName: string, params?: object) => {
     if (!currentTenant) {
-      console.warn('Attempting to call tenant RPC without an active tenant');
+      if (isPreviewMode) {
+        console.log(`Preview mode: Calling RPC ${functionName} without tenant context`);
+      } else {
+        console.warn(`No active tenant: Calling RPC ${functionName} without tenant context`);
+      }
       return { data: null, error: new Error('No active tenant') };
     }
     
@@ -38,14 +46,18 @@ export function useTenantSupabase() {
       _tenant_schema: currentTenant.schema,
       _tenant_id: currentTenant.id
     });
-  }, [currentTenant]);
+  }, [currentTenant, isPreviewMode]);
   
   /**
    * Set tenant ID in the user's JWT claims
    */
   const setTenantInJWT = useCallback(async (): Promise<boolean> => {
     if (!currentTenant) {
-      console.warn('Attempting to set tenant in JWT without an active tenant');
+      if (isPreviewMode) {
+        console.log('Preview mode: Cannot set tenant in JWT');
+      } else {
+        console.warn('No active tenant: Cannot set tenant in JWT');
+      }
       return false;
     }
     
@@ -75,12 +87,13 @@ export function useTenantSupabase() {
       console.error('Exception when setting tenant in JWT:', error);
       return false;
     }
-  }, [currentTenant]);
+  }, [currentTenant, isPreviewMode]);
   
   return {
     tenantTable,
     tenantRpc,
     currentTenant,
-    setTenantInJWT
+    setTenantInJWT,
+    isPreviewMode
   };
 }

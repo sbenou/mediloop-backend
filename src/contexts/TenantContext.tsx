@@ -9,6 +9,7 @@ interface TenantContextType {
   currentTenant: Tenant | null;
   isLoading: boolean;
   error: Error | null;
+  isPreviewMode: boolean;
   switchTenant: (domain: string) => Promise<boolean>;
 }
 
@@ -16,6 +17,7 @@ const TenantContext = createContext<TenantContextType>({
   currentTenant: null,
   isLoading: true,
   error: null,
+  isPreviewMode: false,
   switchTenant: async () => false,
 });
 
@@ -27,12 +29,17 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
   const { user, isAuthenticated } = useAuth();
   
   const initTenant = async () => {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Check if we're in a preview environment
+      const isPreview = window.location.hostname.includes('lovable.app');
+      setIsPreviewMode(isPreview);
       
       // Get tenant from hostname
       const tenantDomain = getTenantFromHostname(window.location.hostname);
@@ -170,6 +177,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
         currentTenant,
         isLoading,
         error,
+        isPreviewMode,
         switchTenant,
       }}
     >

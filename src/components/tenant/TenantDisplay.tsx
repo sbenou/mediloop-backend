@@ -4,7 +4,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 
 export const TenantDisplay = () => {
   const { currentTenant, isLoading, error } = useTenant();
@@ -26,7 +26,18 @@ export const TenantDisplay = () => {
     );
   }
   
+  // Check if we're in a Lovable preview environment
+  const isPreviewEnvironment = window.location.hostname.includes('lovable.app');
+  
   if (!currentTenant) {
+    if (isPreviewEnvironment) {
+      return (
+        <Badge variant="outline" className="text-sm bg-gray-100">
+          <Info className="h-3 w-3 mr-1" /> Preview Mode
+        </Badge>
+      );
+    }
+    
     return (
       <Badge variant="outline" className="text-sm">
         Default Instance
