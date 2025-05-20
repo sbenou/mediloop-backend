@@ -101,7 +101,6 @@ export function useTenantReferralProcessing() {
       
       // Find the referral record in the tenant schema
       const { data: referral, error: referralError } = await tenantTable<any>('referrals')
-        .select('id, referrer_id')
         .eq('referral_email', referralEmail)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
@@ -115,7 +114,6 @@ export function useTenantReferralProcessing() {
       
       // Get referrer information
       const { data: referrerProfile, error: profileError } = await tenantTable<any>('profiles')
-        .select('full_name, email')
         .eq('id', referral.referrer_id)
         .single();
         
@@ -146,7 +144,8 @@ export function useTenantReferralProcessing() {
             points: REFERRAL_POINTS,
             referralName: referredUserName
           }
-        });
+        })
+        .select();
       
       // Send tenant-specific congratulatory email
       const response = await fetch('/api/functions/v1/send-tenant-referral-success-email', {

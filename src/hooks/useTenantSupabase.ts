@@ -13,15 +13,15 @@ export function useTenantSupabase() {
   /**
    * Get a reference to a table in the current tenant's schema
    */
-  const tenantTable = useCallback(<T>(tableName: string): PostgrestFilterBuilder<any, any, T[], unknown> => {
+  const tenantTable = useCallback(<T>(tableName: string) => {
     if (!currentTenant) {
       console.warn('Attempting to access tenant table without an active tenant');
       // Return a query that will likely return no results (empty tenant name)
-      return supabase.from(tableName);
+      return supabase.from(tableName).select() as PostgrestFilterBuilder<any, any, T[], unknown>;
     }
     
     // Use the tenant's schema for the table
-    return supabase.from(`${currentTenant.schema}.${tableName}`);
+    return supabase.from(`${currentTenant.schema}.${tableName}`).select() as PostgrestFilterBuilder<any, any, T[], unknown>;
   }, [currentTenant]);
   
   /**

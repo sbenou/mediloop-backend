@@ -106,8 +106,7 @@ export function useTenantNotifications() {
     
     try {
       // Get doctor profile from tenant schema
-      const { data: doctorProfile, error } = await tenantTable('profiles')
-        .select('id, full_name, email')
+      const { data: doctorProfile, error } = await tenantTable<any>('profiles')
         .eq('id', doctorId)
         .single();
       
@@ -117,7 +116,7 @@ export function useTenantNotifications() {
       }
       
       // Create notification in tenant schema
-      const { data: notification, error: notifError } = await tenantTable('notifications')
+      const { data: notification, error: notifError } = await tenantTable<any>('notifications')
         .insert({
           user_id: doctorId,
           type: "patient_connected",
@@ -153,7 +152,7 @@ export function useTenantNotifications() {
     }
     
     try {
-      const { data: notification, error } = await tenantTable('notifications')
+      const { data: notification, error } = await tenantTable<any>('notifications')
         .insert({
           user_id: userId,
           type: "payment_successful",
