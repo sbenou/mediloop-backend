@@ -22,14 +22,14 @@ export const useNotifications = () => {
         // Fetch notifications from tenant schema
         query = tenantTable<Notification>('notifications')
           .select('*')
-          .filter('deleted_at', 'is', null)
+          .eq('deleted_at', null)
           .order('created_at', { ascending: false });
       } else {
         // Fetch notifications from public schema
         query = supabase
           .from('notifications')
           .select('*')
-          .filter('deleted_at', 'is', null)
+          .eq('deleted_at', null)
           .order('created_at', { ascending: false });
       }
 
@@ -59,7 +59,7 @@ export const useNotifications = () => {
     try {
       if (currentTenant) {
         // Use tenant schema for marking read
-        const { error } = await tenantTable('notifications')
+        const { error } = await tenantTable<Notification>('notifications')
           .update({ read: true })
           .eq('id', id);
           
@@ -98,7 +98,7 @@ export const useNotifications = () => {
     try {
       if (currentTenant) {
         // Use tenant schema for marking all read
-        const { error } = await tenantTable('notifications')
+        const { error } = await tenantTable<Notification>('notifications')
           .update({ read: true })
           .eq('read', false);
           
