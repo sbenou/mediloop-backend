@@ -17,7 +17,7 @@ export interface Tenant {
 export const getTenantFromHostname = (hostname: string): string | null => {
   // For development environments
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-    // Allow testing with localhost:3000?tenant=example
+    // Allow testing with localhost:8080?tenant=example
     const urlParams = new URLSearchParams(window.location.search);
     const tenantParam = urlParams.get('tenant');
     return tenantParam;
@@ -67,28 +67,53 @@ export const fetchTenantInfo = async (tenantDomain: string): Promise<Tenant | nu
 };
 
 /**
- * Set tenant in Supabase JWT claims (for server operations)
+ * Associate a user with a tenant
  */
-export const setTenantInSession = async (tenantSchema: string): Promise<boolean> => {
+export const associateUserWithTenant = async (userId: string, tenantId: string, role: string = 'user'): Promise<boolean> => {
   try {
-    // Update the user's JWT claims to include the tenant schema
-    // This will be used by the database RLS policies
-    const { error } = await supabase.rpc('set_claim', { 
-      name: 'tenant', 
-      value: tenantSchema 
-    });
+    // Update the user's profile with the tenant ID
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ tenant_id: tenantId })
+      .eq('id', userId);
     
-    if (error) {
-      console.error('Error setting tenant claim:', error);
+    if (profileError) {
+      console.error('Error updating profile with tenant ID:', profileError);
       return false;
     }
-
-    // Force refresh the session to include the new claim
-    await supabase.auth.refreshSession();
     
+    // Also add the user to tenant_users in the tenant schema (if tenant-specific schema is used)
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('schema')
+      .eq('id', tenantId)
+      .single();
+    
+    if (tenant?.schema) {
+      // Add user to tenant_users table in tenant schema
+      await supabase.rpc('add_user_to_tenant', { 
+        p_user_id: userId, 
+        p_tenant_id: tenantId,
+        p_role: role
+      });
+    }
+
     return true;
   } catch (error) {
-    console.error('Exception when setting tenant in session:', error);
+    console.error('Exception when associating user with tenant:', error);
     return false;
+  }
+};
+
+/**
+ * Get current tenant ID from Supabase session
+ */
+export const getCurrentTenantId = async (): Promise<string | null> => {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.user.app_metadata?.tenant_id || null;
+  } catch (error) {
+    console.error('Error getting current tenant ID:', error);
+    return null;
   }
 };

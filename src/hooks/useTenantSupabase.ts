@@ -35,13 +35,52 @@ export function useTenantSupabase() {
     
     return supabase.rpc(functionName, {
       ...(params || {}),
-      _tenant_schema: currentTenant.schema
+      _tenant_schema: currentTenant.schema,
+      _tenant_id: currentTenant.id
     });
+  }, [currentTenant]);
+  
+  /**
+   * Set tenant ID in the user's JWT claims
+   */
+  const setTenantInJWT = useCallback(async (): Promise<boolean> => {
+    if (!currentTenant) {
+      console.warn('Attempting to set tenant in JWT without an active tenant');
+      return false;
+    }
+    
+    try {
+      // Update tenant_id claim in JWT
+      const { error } = await supabase.rpc('set_claim', { 
+        name: 'tenant_id', 
+        value: currentTenant.id 
+      });
+      
+      if (error) {
+        console.error('Error setting tenant_id claim:', error);
+        return false;
+      }
+      
+      // Also update the schema claim for backward compatibility
+      await supabase.rpc('set_claim', { 
+        name: 'tenant', 
+        value: currentTenant.schema 
+      });
+      
+      // Force refresh the session to include the new claims
+      await supabase.auth.refreshSession();
+      
+      return true;
+    } catch (error) {
+      console.error('Exception when setting tenant in JWT:', error);
+      return false;
+    }
   }, [currentTenant]);
   
   return {
     tenantTable,
     tenantRpc,
-    currentTenant
+    currentTenant,
+    setTenantInJWT
   };
 }

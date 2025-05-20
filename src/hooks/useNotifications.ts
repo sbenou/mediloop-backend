@@ -3,20 +3,37 @@ import { useCallback, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Notification } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
+import { useTenant } from '@/contexts/TenantContext';
+import { useTenantSupabase } from './useTenantSupabase';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { currentTenant } = useTenant();
+  const { tenantTable } = useTenantSupabase();
 
   const fetchNotifications = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
+      let query;
+      
+      if (currentTenant) {
+        // Fetch notifications from tenant schema
+        query = tenantTable<Notification>('notifications')
+          .select('*')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false });
+      } else {
+        // Fetch notifications from public schema
+        query = supabase
+          .from('notifications')
+          .select('*')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false });
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
@@ -36,16 +53,20 @@ export const useNotifications = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentTenant, tenantTable]);
 
   const markAsRead = useCallback(async (id: string) => {
     try {
-      const { error } = await supabase.rpc('mark_notification_read', {
-        notification_id: id
-      });
-
-      if (error) {
-        throw error;
+      if (currentTenant) {
+        // Use tenant schema for marking read
+        await tenantTable('notifications')
+          .update({ read: true })
+          .eq('id', id);
+      } else {
+        // Use public schema function
+        await supabase.rpc('mark_notification_read', {
+          notification_id: id
+        });
       }
 
       // Update local state
@@ -67,14 +88,18 @@ export const useNotifications = () => {
         variant: 'destructive',
       });
     }
-  }, []);
+  }, [currentTenant, tenantTable]);
 
   const markAllAsRead = useCallback(async () => {
     try {
-      const { error } = await supabase.rpc('mark_all_notifications_read');
-
-      if (error) {
-        throw error;
+      if (currentTenant) {
+        // Use tenant schema for marking all read
+        await tenantTable('notifications')
+          .update({ read: true })
+          .eq('read', false);
+      } else {
+        // Use public schema function
+        await supabase.rpc('mark_all_notifications_read');
       }
 
       // Update local state
@@ -94,24 +119,40 @@ export const useNotifications = () => {
         variant: 'destructive',
       });
     }
-  }, []);
+  }, [currentTenant, tenantTable]);
 
   const setupRealtimeSubscription = useCallback(() => {
-    const channel = supabase
-      .channel('notifications_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'notifications'
-      }, (payload) => {
-        fetchNotifications();
-      })
-      .subscribe();
+    // If we have a tenant, subscribe to tenant-specific table
+    if (currentTenant?.schema) {
+      const tenantChannel = supabase
+        .channel(`${currentTenant.schema}_notifications`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: currentTenant.schema,
+          table: 'notifications'
+        }, (payload) => {
+          console.log('Tenant notification change:', payload);
+          fetchNotifications();
+        })
+        .subscribe();
+        
+      return () => { supabase.removeChannel(tenantChannel); };
+    } else {
+      // Default public schema subscription
+      const channel = supabase
+        .channel('notifications_changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'notifications'
+        }, (payload) => {
+          fetchNotifications();
+        })
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchNotifications]);
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [currentTenant, fetchNotifications]);
 
   return {
     notifications,

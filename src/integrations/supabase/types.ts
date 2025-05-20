@@ -418,6 +418,7 @@ export type Database = {
           message: string
           meta: Json | null
           read: boolean
+          tenant_id: string | null
           title: string
           type: string
           user_id: string
@@ -430,6 +431,7 @@ export type Database = {
           message: string
           meta?: Json | null
           read?: boolean
+          tenant_id?: string | null
           title: string
           type: string
           user_id: string
@@ -442,11 +444,19 @@ export type Database = {
           message?: string
           meta?: Json | null
           read?: boolean
+          tenant_id?: string | null
           title?: string
           type?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
@@ -791,6 +801,7 @@ export type Database = {
           pharmacy_name: string | null
           role: string
           role_id: string | null
+          tenant_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -817,6 +828,7 @@ export type Database = {
           pharmacy_name?: string | null
           role: string
           role_id?: string | null
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -843,6 +855,7 @@ export type Database = {
           pharmacy_name?: string | null
           role?: string
           role_id?: string | null
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -858,6 +871,13 @@ export type Database = {
             columns: ["role_id"]
             isOneToOne: false
             referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1283,6 +1303,10 @@ export type Database = {
         Args: { p_user_id: string; p_tenant_id: string; p_role?: string }
         Returns: boolean
       }
+      belongs_to_tenant: {
+        Args: { tenant_id: string }
+        Returns: boolean
+      }
       can_truncate_products: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1368,6 +1392,10 @@ export type Database = {
       get_record_by_id: {
         Args: { p_table_name: string; p_record_id: string }
         Returns: Json
+      }
+      get_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_user_loyalty_status: {
         Args: { p_user_id: string }

@@ -1,5 +1,6 @@
 
 import { supabase } from "@/lib/supabase";
+import { useTenant } from "@/contexts/TenantContext";
 
 export type NotificationType = 
   | "payment_failed" 
@@ -24,6 +25,7 @@ interface CreateNotificationParams {
   message: string;
   link?: string;
   meta?: Record<string, any>;
+  tenantId?: string;
 }
 
 export async function createNotification({
@@ -32,7 +34,8 @@ export async function createNotification({
   title,
   message,
   link,
-  meta
+  meta,
+  tenantId
 }: CreateNotificationParams) {
   try {
     const { data, error } = await supabase
@@ -43,7 +46,8 @@ export async function createNotification({
         title,
         message,
         link,
-        meta
+        meta,
+        tenant_id: tenantId
       })
       .select()
       .single();
@@ -65,12 +69,28 @@ export async function createSystemNotification(
   userId: string,
   type: NotificationType, 
   title: string, 
-  message: string
+  message: string,
+  tenantId?: string
 ) {
   return createNotification({
     userId,
     type,
     title,
-    message
+    message,
+    tenantId
   });
+}
+
+// Hook to create tenant-aware notifications
+export function useTenantNotifications() {
+  const { currentTenant } = useTenant();
+  
+  const createTenantNotification = async (params: Omit<CreateNotificationParams, 'tenantId'>) => {
+    return createNotification({
+      ...params,
+      tenantId: currentTenant?.id
+    });
+  };
+  
+  return { createTenantNotification };
 }
