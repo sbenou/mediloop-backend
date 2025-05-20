@@ -16,24 +16,24 @@ export const useNotifications = () => {
   const fetchNotifications = useCallback(async () => {
     setIsLoading(true);
     try {
-      let query;
+      let response;
       
       if (currentTenant) {
         // Fetch notifications from tenant schema
-        query = tenantTable<Notification>('notifications')
+        response = await tenantTable<Notification>('notifications')
           .select('*')
-          .is('deleted_at', null)
+          .filter('deleted_at', 'is', null)
           .order('created_at', { ascending: false });
       } else {
         // Fetch notifications from public schema
-        query = supabase
+        response = await supabase
           .from('notifications')
           .select('*')
-          .is('deleted_at', null)
+          .filter('deleted_at', 'is', null)
           .order('created_at', { ascending: false });
       }
 
-      const { data, error } = await query;
+      const { data, error } = response;
 
       if (error) {
         throw error;
@@ -60,8 +60,8 @@ export const useNotifications = () => {
       if (currentTenant) {
         // Use tenant schema for marking read
         const { error } = await tenantTable<Notification>('notifications')
-          .eq('id', id)
-          .update({ read: true });
+          .update({ read: true })
+          .match({ id });
           
         if (error) throw error;
       } else {
@@ -99,8 +99,8 @@ export const useNotifications = () => {
       if (currentTenant) {
         // Use tenant schema for marking all read
         const { error } = await tenantTable<Notification>('notifications')
-          .eq('read', false)
-          .update({ read: true });
+          .update({ read: true })
+          .match({ read: false });
           
         if (error) throw error;
       } else {
